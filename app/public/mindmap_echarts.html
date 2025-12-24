@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>卷了么 (JuanLeMe) 项目架构思维导图</title>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #f4f6f8; }
+    #container { width: 100%; height: 100%; }
+    .loading {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: sans-serif;
+      color: #666;
+      font-size: 14px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading" class="loading">正在渲染思维导图...<br>(如果长时间无反应，请检查网络连接)</div>
+  <div id="container"></div>
+
+  <script>
+    // 数据结构
+    const data = {
+      name: "卷了么 (JuanLeMe)\n项目全景",
+      children: [
+        {
+          name: "核心战略\n(Strategy)",
+          itemStyle: { color: '#FF6B6B' },
+          children: [
+            {
+              name: "纯前端先行 (Mock Mode)",
+              children: [
+                { name: "Mock 数据模拟" },
+                { name: "快速验证交互 (UI/UX)" },
+                { name: "本地状态管理 (Pinia)" }
+              ]
+            },
+            {
+              name: "后端集成 (Phase 2)",
+              collapsed: true,
+              children: [
+                { name: "Supabase (PostgreSQL)" },
+                { name: "RLS 安全策略" },
+                { name: "真实 AI 接口调用" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "功能模块\n(Modules)",
+          itemStyle: { color: '#4ECDC4' },
+          children: [
+            {
+              name: "公共区域",
+              children: [
+                { name: "落地页 (Landing)" },
+                { name: "登录/注册 (Auth)" }
+              ]
+            },
+            {
+              name: "仪表盘 (Dashboard)",
+              children: [
+                { name: "工作坊列表 (我的/管理的)" },
+                { name: "加入/创建工作坊" }
+              ]
+            },
+            {
+              name: "工作坊详情",
+              children: [
+                {
+                  name: "路线图 (Roadmap)",
+                  children: [
+                    { name: "节点状态 (未开始/进行中/完成)" },
+                    { name: "拖拽排序 (组织者)" }
+                  ]
+                },
+                {
+                  name: "任务编辑器 (Editor)",
+                  children: [
+                    { name: "Tiptap 富文本" },
+                    { name: "AI 侧边栏助手" },
+                    { name: "自动保存" }
+                  ]
+                },
+                { name: "导出 (PDF/MD)" }
+              ]
+            },
+            {
+              name: "个人中心",
+              collapsed: true,
+              children: [
+                { name: "资料编辑" },
+                { name: "头像上传" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "技术栈\n(Tech Stack)",
+          itemStyle: { color: '#FFE66D' },
+          children: [
+            {
+              name: "前端 (Frontend)",
+              children: [
+                { name: "Vue 3.4+" },
+                { name: "Vite 5.x" },
+                { name: "TailwindCSS" },
+                { name: "Pinia" },
+                { name: "Tiptap" }
+              ]
+            },
+            {
+              name: "后端 (Backend)",
+              collapsed: true,
+              children: [
+                { name: "Supabase Auth" },
+                { name: "PostgreSQL" },
+                { name: "Edge Functions" }
+              ]
+            }
+          ]
+        },
+        {
+          name: "文件结构\n(File Structure)",
+          itemStyle: { color: '#1A535C' },
+          collapsed: true,
+          children: [
+            { name: "src/components (组件库)" },
+            { name: "src/views (页面视图)" },
+            { name: "src/stores (状态管理)" },
+            { name: "src/services (API服务)" }
+          ]
+        }
+      ]
+    };
+
+    // 初始化 ECharts
+    const dom = document.getElementById('container');
+    const myChart = echarts.init(dom);
+    
+    // 移除 Loading
+    document.getElementById('loading').style.display = 'none';
+
+    const option = {
+      tooltip: {
+        trigger: 'item',
+        triggerOn: 'mousemove'
+      },
+      series: [
+        {
+          type: 'tree',
+          data: [data],
+          top: '5%',
+          left: '10%',
+          bottom: '5%',
+          right: '20%',
+          symbolSize: 7,
+          initialTreeDepth: 2, // 默认展开层级
+          label: {
+            position: 'left',
+            verticalAlign: 'middle',
+            align: 'right',
+            fontSize: 14,
+            fontWeight: 'bold'
+          },
+          leaves: {
+            label: {
+              position: 'right',
+              verticalAlign: 'middle',
+              align: 'left',
+              fontSize: 12,
+              fontWeight: 'normal'
+            }
+          },
+          emphasis: {
+            focus: 'descendant'
+          },
+          expandAndCollapse: true,
+          animationDuration: 550,
+          animationDurationUpdate: 750,
+          lineStyle: {
+            color: '#ccc',
+            width: 2,
+            curveness: 0.5
+          },
+          itemStyle: {
+            color: '#fff',
+            borderColor: '#666',
+            borderWidth: 2
+          }
+        }
+      ]
+    };
+
+    myChart.setOption(option);
+
+    // 响应式调整
+    window.addEventListener('resize', function() {
+      myChart.resize();
+    });
+  </script>
+</body>
+</html>

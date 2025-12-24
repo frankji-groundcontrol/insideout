@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>卷了么 (JuanLeMe) 项目架构全景图</title>
+<style>
+/* Reset and basic layout */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body, html { height: 100%; width: 100%; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+/* Header styling */
+header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 1rem 2rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid #eee;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+h1 { font-size: 1.25rem; color: #333; font-weight: 600; }
+.badge {
+  background: #3b82f6;
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* SVG Container for Markmap */
+svg#mindmap { width: 100%; height: 100%; background: #f8fafc; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>卷了么 (JuanLeMe) 项目架构全景图</h1>
+  <span class="badge">当前阶段: 纯前端 Mock 开发</span>
+</header>
+
+<svg id="mindmap"></svg>
+
+<!-- 
+  Markdown Content for the Mindmap 
+  Edit this block to update the mindmap structure
+-->
+<script type="text/template" id="markmap-content">
+# 卷了么 (JuanLeMe)
+## 1. 核心战略 (Strategy)
+- **纯前端先行** (Mock Mode)
+  - ⚡️ 快速验证交互
+  - 🧱 Mock 数据 (本地 JSON)
+  - 🎯 重点: 用户体验 / UI
+- **后端集成** (Phase 2)
+  - 🔌 Supabase (PostgreSQL)
+  - 🔒 RLS 安全策略
+  - 🤖 真实 AI 调用
+
+## 2. 功能模块 (Modules)
+- **公共区域**
+  - 🏠 落地页 (Slogan)
+  - 🔐 登录/注册 (Auth)
+- **仪表盘 (Dashboard)**
+  - 📋 工作坊列表
+    - 我参与的
+    - 我管理的
+  - ➕ 操作
+    - 加入 (邀请码)
+    - 创建 (表单)
+- **工作坊详情**
+  - 🗺️ 路线图 (Roadmap)
+    - 🔒 未开始
+    - 🔵 进行中
+    - ✅ 已完成
+  - 📝 任务编辑器
+    - Tiptap 富文本
+    - Markdown 支持
+    - 💾 自动保存
+  - 🤖 AI 侧边栏
+    - 对话辅助
+    - 一键采纳
+  - 📤 导出 (PDF/MD)
+- **个人中心**
+  - 👤 资料编辑
+  - 🖼️ 头像上传
+
+## 3. 技术栈 (Tech Stack)
+- **前端 (Frontend)**
+  - Vue 3.4+
+  - Vite 5.x
+  - TailwindCSS
+  - Pinia (Store)
+  - Vue Router
+  - Tiptap (Editor)
+- **后端 (Backend)**
+  - Supabase Auth
+  - PostgreSQL
+  - Edge Functions
+
+## 4. 文件结构 (Files)
+- src/
+  - components/
+    - common/ (Btn, Input)
+    - layout/ (Nav, Footer)
+    - workshop/ (Card, Map)
+  - views/
+    - auth/
+    - dashboard/
+    - workshop/
+  - stores/ (User, Workshop)
+  - services/ (Mock API)
+</script>
+
+<!-- Load Markmap scripts -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-view@0.16"></script>
+<script src="https://cdn.jsdelivr.net/npm/markmap-autoloader@0.16"></script>
+
+</body>
+</html>
