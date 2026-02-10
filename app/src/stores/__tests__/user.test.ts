@@ -45,7 +45,7 @@ describe('useUserStore', () => {
       const store = useUserStore()
       await store.login('test@test.com', 'any')
 
-      store.logout()
+      await store.logout()
 
       expect(store.isAuthenticated).toBe(false)
       expect(store.user).toBeNull()
@@ -56,7 +56,7 @@ describe('useUserStore', () => {
       const store = useUserStore()
       await store.login('test@test.com', 'any')
 
-      store.logout()
+      await store.logout()
 
       expect(localStorage.getItem('juanleme-token')).toBeNull()
       expect(localStorage.getItem('juanleme-user')).toBeNull()
