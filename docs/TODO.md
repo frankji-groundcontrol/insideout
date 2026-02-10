@@ -58,7 +58,7 @@ src/
     - [x] 封装基础输入框 `src/components/common/BaseInput.vue` (支持 label, error message)
     - *负责人: Trae | 完成日期: 2025-12-24*
 
-- [ ] **1.3 类型定义与 Mock 数据 (Types & Mocks)**
+- [x] **1.3 类型定义与 Mock 数据 (Types & Mocks)**
     - [x] 定义核心类型 `src/types/user.ts` (UserProfile)
     - [x] 定义核心类型 `src/types/workshop.ts` (Workshop, RoadmapNode)
     - [x] 创建 Mock 服务 `src/services/mock/mockData.ts` (包含 3 个预设工作坊, 5 个节点)
@@ -67,13 +67,13 @@ src/
 
 ### 🎨 Step 2: 核心页面 UI 实现 (Core Views)
 
-- [ ] **2.1 认证模块 (Auth Views)**
-    - [ ] 实现登录页 `src/views/auth/LoginPage.vue` (静态 UI)
-    - [ ] 实现注册页 `src/views/auth/RegisterPage.vue` (静态 UI)
-    - [ ] 实现 Pinia `userStore` (模拟登录/注册/退出逻辑)
-    - *负责人: 待定 | 完成日期: -*
+- [x] **2.1 认证模块 (Auth Views)**
+    - [x] 实现登录页 `src/views/auth/LoginPage.vue` (Mock 登录流程)
+    - [x] 注册页需求调整：本阶段不实现 `RegisterPage.vue`（按产品约束）
+    - [x] 实现 Pinia `userStore` (模拟登录/退出逻辑 + 本地持久化)
+    - *负责人: Trae | 完成日期: 2026-02-10*
 
-- [ ] **2.2 工作坊列表 (Dashboard)**
+- [x] **2.2 工作坊列表 (Dashboard)**
     - [x] 创建工作坊列表页 `src/views/dashboard/DashboardView.vue` (卡片式布局)
     - [x] 封装工作坊卡片组件 `src/components/workshop/WorkshopCard.vue`
     - [x] 实现列表响应式适配 (auto-fit grid layout)
@@ -82,38 +82,38 @@ src/
     - [x] 封装任务详情组件 `src/components/workshop/TaskDetail.vue`
     - *负责人: Trae | 完成日期: 2025-12-24*
 
-- [ ] **2.3 个人中心 (Profile)**
-    - [ ] 实现个人资料页 `src/views/profile/UserProfile.vue`
-    - [ ] 实现头像上传 (Mock: 仅本地预览) 与表单编辑
-    - *负责人: 待定 | 完成日期: -*
+- [x] **2.3 个人中心 (Profile)**
+    - [x] 实现个人资料页 `src/views/profile/UserProfile.vue`
+    - [x] 实现头像上传 (Mock: 仅本地预览) 与表单编辑
+    - *负责人: Trae | 完成日期: 2026-02-10*
 
 ### 🧩 Step 3: 流程与内容系统 (Roadmap & Editor)
 
-- [ ] **3.1 路线图页 (Roadmap View)**
-    - [ ] 实现路线图节点组件 `src/components/workshop/RoadmapItem.vue`
-    - [ ] 实现路线图详情页 `src/views/workshop/WorkshopDetail.vue`
-    - [ ] 实现节点状态逻辑 (未开始/进行中/已完成 样式区分)
-    - [ ] 实现 Pinia `workshopStore` (管理当前工作坊数据)
-    - *负责人: 待定 | 完成日期: -*
+- [x] **3.1 路线图页 (Roadmap View)**
+    - [x] 实现路线图节点组件 `src/components/workshop/RoadmapItem.vue`
+    - [x] 实现路线图详情页 `src/views/workshop/WorkshopDetailView.vue`（三栏/移动端 Tab）
+    - [x] 实现节点状态逻辑 (未开始/进行中/已完成 样式区分)
+    - [x] 实现 Pinia `workshopStore` (管理当前工作坊数据)
+    - *负责人: Trae | 完成日期: 2026-02-10*
 
-- [ ] **3.2 富文本编辑器 (Task Editor)**
-    - [ ] 集成 Tiptap 编辑器 (`npm install @tiptap/vue-3 ...`)
-    - [ ] 实现编辑器组件 `src/views/workshop/TaskEditor.vue`
-    - [ ] 自定义编辑器工具栏 (加粗, 列表, 标题)
-    - [ ] 实现 Markdown 快捷键支持
-    - [ ] 实现 Pinia `editorStore` (自动保存草稿到 localStorage)
-    - *负责人: 待定 | 完成日期: -*
+- [x] **3.2 富文本编辑器 (Task Editor)**
+    - [x] 集成 Tiptap 编辑器 (`@tiptap/vue-3`)
+    - [x] 实现编辑器组件 `src/views/workshop/TaskEditor.vue`
+    - [x] 自定义编辑器工具栏 (加粗, 列表, 标题)
+    - [x] 实现 Markdown 快捷键支持
+    - [x] 实现 Pinia `editorStore` (自动保存草稿到 localStorage)
+    - *负责人: Trae | 完成日期: 2026-02-10*
 
-- [ ] **3.3 AI 协作侧边栏 (AI Chatbot)**
-    - [ ] 实现侧边栏组件 `src/components/workshop/AiSidebar.vue`
-    - [ ] 模拟 AI 对话逻辑 (发送消息 -> 随机延迟 -> 返回预设回复)
-    - [ ] 实现“一键采纳”功能 (将 AI 回复插入编辑器)
-    - *负责人: 待定 | 完成日期: -*
+- [x] **3.3 AI 协作侧边栏 (AI Chatbot)**
+    - [x] 实现侧边栏组件 `src/components/workshop/AiSidebar.vue`
+    - [x] 模拟 AI 对话逻辑 (发送消息 -> 随机延迟 -> 返回预设回复)
+    - [x] 实现“一键采纳”功能 (将 AI 回复插入编辑器)
+    - *负责人: Trae | 完成日期: 2026-02-10*
 
-- [ ] **3.4 导出功能 (Export)**
-    - [ ] 实现导出预览页 `src/views/workshop/ExportPreview.vue`
-    - [ ] 实现 Markdown/PDF 导出逻辑 (使用 `html2canvas` + `jspdf` 或纯文本生成)
-    - *负责人: 待定 | 完成日期: -*
+- [x] **3.4 导出功能 (Export)**
+    - [x] 实现导出预览页 `src/views/workshop/ExportPreview.vue`
+    - [x] 实现 Markdown/PDF 导出逻辑（Markdown 下载 + Print CSS + `window.print()`）
+    - *负责人: Trae | 完成日期: 2026-02-10*
 
 ---
 
@@ -135,3 +135,4 @@ src/
 ## 📝 变更日志 (Changelog)
 
 - **2025-12-10**: 初始化 `TODO.md`，确立纯前端开发阶段 (Mock Mode) 的详细任务清单。
+- **2026-02-10**: 完成阶段一（Mock Mode）核心链路验收：登录 → 工作坊 → 编辑器 → AI 采纳 → 导出 → 个人资料；补齐 dark mode / i18n / 移动端适配验证。
