@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { mockApi } from '@/services/mock'
+import { services } from '@/services/registry'
 import type { Workshop, UserProfile } from '@/types'
 import WorkshopCard from '@/components/workshop/WorkshopCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -27,8 +27,8 @@ const managedWorkshops = computed(() => workshops.value.filter(w => w.creator_id
 onMounted(async () => {
   try {
     const [userData, workshopData] = await Promise.all([
-      mockApi.auth.getCurrentUser(),
-      mockApi.workshop.list()
+      services.auth.getCurrentUser(),
+      services.workshop.getWorkshops()
     ])
     user.value = userData
     workshops.value = workshopData
