@@ -115,6 +115,16 @@ const enUS = {
     emptyState: 'Ask AI for inspiration',
     send: 'Send',
   },
+  export: {
+    title: 'Export Document',
+    preview: 'Preview',
+    downloadMarkdown: 'Download Markdown',
+    exportPdf: 'Export PDF (Print)',
+    backToWorkshop: 'Back to Workshop',
+    notCompleted: '[Not completed]',
+    generatedAt: 'Generated at {date}',
+    noContent: 'No content yet',
+  },
 }
 
 export default enUS

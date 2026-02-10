@@ -4,8 +4,8 @@
 /* biome-ignore-all lint/correctness/noUnusedVariables: 模板中会使用变量 */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
-import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
+import { useRoute, useRouter } from 'vue-router'
+import { ArrowLeftIcon, ArrowUpTrayIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/common/BaseButton.vue'
 import AiSidebar from '@/components/workshop/AiSidebar.vue'
 import RoadmapSidebar from '@/components/workshop/RoadmapSidebar.vue'
@@ -17,6 +17,7 @@ import TaskEditor from './TaskEditor.vue'
 type MobileTab = 'roadmap' | 'editor' | 'ai'
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 const workshopStore = useWorkshopStore()
 const editorStore = useEditorStore()
@@ -79,6 +80,13 @@ async function handleCompleteNode() {
       workshopStore.selectNode(nextPending.id)
     }
   }
+}
+
+function goToExportPage() {
+  if (!workshopId.value) {
+    return
+  }
+  void router.push(`/workshop/${workshopId.value}/export`)
 }
 
 watch(
@@ -185,9 +193,17 @@ onBeforeUnmount(async () => {
           <div v-show="mobileTab === 'editor'" class="flex h-full min-h-0 flex-col overflow-y-auto bg-gray-50 px-4 py-4 dark:bg-gray-900">
             <div class="mb-3 flex items-center justify-between">
               <h2 class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ activeNode.title }}</h2>
-              <BaseButton size="sm" @click="handleCompleteNode">
-                {{ t('workshop.submitButton') }}
-              </BaseButton>
+              <div class="flex items-center gap-2">
+                <BaseButton size="sm" variant="outline" @click="goToExportPage">
+                  <span class="inline-flex items-center gap-1.5">
+                    <ArrowUpTrayIcon class="h-4 w-4" />
+                    {{ t('export.title') }}
+                  </span>
+                </BaseButton>
+                <BaseButton size="sm" @click="handleCompleteNode">
+                  {{ t('workshop.submitButton') }}
+                </BaseButton>
+              </div>
             </div>
             <KeepAlive>
               <TaskEditor :draft-key="activeDraftKey" />
@@ -214,9 +230,17 @@ onBeforeUnmount(async () => {
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ t('workshop.step') }} {{ activeNode.order }}</p>
               <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ activeNode.title }}</h1>
             </div>
-            <BaseButton size="sm" @click="handleCompleteNode">
-              {{ t('workshop.submitButton') }}
-            </BaseButton>
+            <div class="flex items-center gap-2">
+              <BaseButton size="sm" variant="outline" @click="goToExportPage">
+                <span class="inline-flex items-center gap-1.5">
+                  <ArrowUpTrayIcon class="h-4 w-4" />
+                  {{ t('export.title') }}
+                </span>
+              </BaseButton>
+              <BaseButton size="sm" @click="handleCompleteNode">
+                {{ t('workshop.submitButton') }}
+              </BaseButton>
+            </div>
           </header>
 
           <TaskEditor :draft-key="activeDraftKey" />
