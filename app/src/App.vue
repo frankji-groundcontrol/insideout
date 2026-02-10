@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { RouterView, useRoute } from 'vue-router'
 import NavBar from '@/components/layout/NavBar.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
+import { useUserStore } from '@/stores/user'
 
 const route = useRoute()
 const isLayoutEmpty = computed(() => route.meta.layout === 'empty')
+
+const userStore = useUserStore()
+onMounted(() => {
+  userStore.initFromStorage()
+})
 </script>
 
 <template>
