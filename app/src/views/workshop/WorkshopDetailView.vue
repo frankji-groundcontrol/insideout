@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { mockApi } from '@/services/mock'
+import { services } from '@/services/registry'
 import type { Workshop, RoadmapNode } from '@/types'
 import RoadmapSidebar from '@/components/workshop/RoadmapSidebar.vue'
 import TaskDetail from '@/components/workshop/TaskDetail.vue'
@@ -19,8 +19,8 @@ onMounted(async () => {
   const workshopId = route.params.id as string
   try {
     const [workshopData, nodesData] = await Promise.all([
-      mockApi.workshop.getById(workshopId),
-      mockApi.workshop.getRoadmap(workshopId)
+      services.workshop.getWorkshop(workshopId),
+      services.workshop.getRoadmap(workshopId)
     ])
     
     if (workshopData) workshop.value = workshopData
