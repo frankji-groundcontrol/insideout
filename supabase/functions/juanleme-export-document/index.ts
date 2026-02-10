@@ -121,7 +121,7 @@ function renderMarkdown(workspace: WorkspaceRow, nodes: NodeRow[], includeEmptyN
     sequence += 1
   }
 
-  return lines.join("\n").trim() + "\n"
+  return `${lines.join("\n").trim()}\n`
 }
 
 function renderHtmlDocument(markdown: string, title: string): string {
@@ -153,35 +153,25 @@ async function resolveWorkspace(
   client: ReturnType<typeof createClient>,
   workshopId: string,
 ): Promise<WorkspaceRow | null> {
-  const { data, error } = await client
-    .schema("juanleme")
-    .from("projects")
-    .select("id, workspace_id, workspaces!inner(id, title, description)")
-    .or(`id.eq.${workshopId},workspace_id.eq.${workshopId}`)
-    .order("created_at", { ascending: true })
-    .limit(1)
+  const { data, error } = await client.rpc("export_resolve_workspace", {
+    p_workshop_id: workshopId,
+  })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  const row = data?.[0] as
-    | {
-      id: string
-      workspace_id: string
-      workspaces: { id: string; title: string; description: string }
-    }
-    | undefined
+  const row = data?.[0] as WorkspaceRow | undefined
 
   if (!row) {
     return null
   }
 
   return {
-    project_id: row.id,
+    project_id: row.project_id,
     workspace_id: row.workspace_id,
-    title: row.workspaces.title,
-    description: row.workspaces.description,
+    title: row.title,
+    description: row.description,
   }
 }
 
@@ -190,19 +180,16 @@ async function ensureMembership(
   workspaceId: string,
   userId: string,
 ): Promise<boolean> {
-  const { data, error } = await client
-    .schema("juanleme")
-    .from("workspace_memberships")
-    .select("workspace_id")
-    .eq("workspace_id", workspaceId)
-    .eq("user_id", userId)
-    .maybeSingle()
+  const { data, error } = await client.rpc("ai_get_workspace_membership_me", {
+    p_workspace_id: workspaceId,
+  })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  return Boolean(data)
+  const row = data?.[0] as { user_id: string } | undefined
+  return Boolean(row?.user_id && row.user_id === userId)
 }
 
 async function findIdempotentJob(
@@ -211,22 +198,17 @@ async function findIdempotentJob(
   userId: string,
   idempotencyKey: string,
 ): Promise<ExportJobRow | null> {
-  const { data, error } = await client
-    .schema("juanleme")
-    .from("export_jobs")
-    .select("id, status, format, created_at, artifact_url, artifact_path, error_message")
-    .eq("workspace_id", workspaceId)
-    .eq("user_id", userId)
-    .eq("idempotency_key", idempotencyKey)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
+  const { data, error } = await client.rpc("export_find_idempotent_job", {
+    p_workspace_id: workspaceId,
+    p_user_id: userId,
+    p_idempotency_key: idempotencyKey,
+  })
 
   if (error) {
     throw new Error(error.message)
   }
 
-  return (data as ExportJobRow | null) ?? null
+  return (data?.[0] as ExportJobRow | undefined) ?? null
 }
 
 async function createExportJob(
@@ -239,18 +221,17 @@ async function createExportJob(
   const payload = {
     workspace_id: workspaceId,
     user_id: userId,
-    format,
-    status: "pending",
     idempotency_key: idempotencyKey ?? null,
   }
 
   const attempt = async (dbFormat: string) =>
-    client
-      .schema("juanleme")
-      .from("export_jobs")
-      .insert({ ...payload, format: dbFormat })
-      .select("id, status, format, created_at")
-      .single()
+    client.rpc("export_create_job_service", {
+      p_workspace_id: payload.workspace_id,
+      p_user_id: payload.user_id,
+      p_format: dbFormat,
+      p_status: "pending",
+      p_idempotency_key: payload.idempotency_key,
+    })
 
   let insertResult = await attempt(format)
 
@@ -262,11 +243,13 @@ async function createExportJob(
     insertResult = await attempt("print")
   }
 
-  if (insertResult.error || !insertResult.data) {
+  const createdRow = insertResult.data?.[0] as ExportJobRow | undefined
+
+  if (insertResult.error || !createdRow) {
     throw new Error(insertResult.error?.message ?? "failed to create export job")
   }
 
-  return insertResult.data as ExportJobRow
+  return createdRow
 }
 
 async function updateExportJobFailure(
@@ -274,15 +257,10 @@ async function updateExportJobFailure(
   jobId: string,
   errorMessage: string,
 ): Promise<void> {
-  const { error } = await client
-    .schema("juanleme")
-    .from("export_jobs")
-    .update({
-      status: "failed",
-      error_message: errorMessage.slice(0, 2000),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", jobId)
+  const { error } = await client.rpc("export_update_job_failure_service", {
+    p_job_id: jobId,
+    p_error_message: errorMessage,
+  })
 
   if (error) {
     throw new Error(error.message)
@@ -294,41 +272,33 @@ async function updateExportJobSuccess(
   jobId: string,
   artifactPath: string,
 ): Promise<void> {
-  const updateWithColumn = async (column: "artifact_url" | "artifact_path") =>
-    client
-      .schema("juanleme")
-      .from("export_jobs")
-      .update({
-        status: "succeeded",
-        [column]: artifactPath,
-        error_message: null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", jobId)
+  const { error } = await client.rpc("export_update_job_success_service", {
+    p_job_id: jobId,
+    p_artifact_path: artifactPath,
+  })
 
-  let result = await updateWithColumn("artifact_url")
-  if (result.error && result.error.message.toLowerCase().includes("artifact_url")) {
-    result = await updateWithColumn("artifact_path")
-  }
-
-  if (result.error) {
-    throw new Error(result.error.message)
+  if (error) {
+    throw new Error(error.message)
   }
 }
 
 async function generateContent(
   client: ReturnType<typeof createClient>,
   workspaceId: string,
-  userId: string,
   includeEmptyNodes: boolean,
   format: ExportFormat,
 ): Promise<{ content: string; title: string }> {
-  const { data: workspaceData, error: workspaceError } = await client
-    .schema("juanleme")
-    .from("workspaces")
-    .select("id, title, description")
-    .eq("id", workspaceId)
-    .single()
+  const { data: workspaceRows, error: workspaceError } = await client.rpc("export_get_workspace", {
+    p_workspace_id: workspaceId,
+  })
+
+  const workspaceData = workspaceRows?.[0] as
+    | {
+      id: string
+      title: string | null
+      description: string | null
+    }
+    | undefined
 
   if (workspaceError || !workspaceData) {
     throw new Error(workspaceError?.message ?? "workspace not found")
@@ -341,18 +311,9 @@ async function generateContent(
     description: (workspaceData.description as string) ?? "",
   }
 
-  const { data: nodeRows, error: nodesError } = await client
-    .schema("juanleme")
-    .from("workshop_nodes")
-    .select(`
-      id,
-      title,
-      description,
-      order,
-      documents!left(content, user_id)
-    `)
-    .eq("workspace_id", workspaceId)
-    .order("order", { ascending: true })
+  const { data: nodeRows, error: nodesError } = await client.rpc("export_get_workspace_nodes_me", {
+    p_workspace_id: workspaceId,
+  })
 
   if (nodesError) {
     throw new Error(nodesError.message)
@@ -360,15 +321,12 @@ async function generateContent(
 
   const nodes = (nodeRows ?? []).map((row) => {
     const record = row as Record<string, unknown>
-    const documents = (record.documents as Array<Record<string, unknown>> | null) ?? []
-    const userDocument = documents.find((doc) => doc.user_id === userId)
-
     return {
       id: record.id as string,
       title: (record.title as string) ?? "Untitled",
       description: (record.description as string) ?? "",
       order: (record.order as number) ?? 0,
-      content: userDocument?.content ?? null,
+      content: record.content ?? null,
     } satisfies NodeRow
   })
 
@@ -525,7 +483,6 @@ Deno.serve(async (req: Request) => {
     const { content } = await generateContent(
       jwtClient,
       workspace.workspace_id,
-      user.id,
       includeEmptyNodes,
       format,
     )
