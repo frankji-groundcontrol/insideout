@@ -52,6 +52,14 @@ export const useWorkshopStore = defineStore('workshop', () => {
     currentNodeId.value = nodeId
   }
 
+  function setNodeContent(nodeId: string, content: string) {
+    const node = roadmapNodes.value.find((item) => item.id === nodeId)
+    if (!node) {
+      return
+    }
+    node.content = content
+  }
+
   async function completeNode(nodeId: string) {
     const nodeIndex = roadmapNodes.value.findIndex((node) => node.id === nodeId)
     if (nodeIndex === -1) {
@@ -80,6 +88,7 @@ export const useWorkshopStore = defineStore('workshop', () => {
     loading,
     loadWorkshop,
     selectNode,
+    setNodeContent,
     completeNode,
   }
 })
