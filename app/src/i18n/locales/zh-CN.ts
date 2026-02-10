@@ -87,6 +87,15 @@ const zhCN = {
       redo: '重做',
     },
   },
+  ai: {
+    title: 'AI 助手',
+    placeholder: '输入你的问题...',
+    thinking: 'AI 正在思考...',
+    adopt: '采纳',
+    adopted: '已采纳',
+    emptyState: '向 AI 助手提问，获取灵感',
+    send: '发送',
+  },
 }
 
 export default zhCN
