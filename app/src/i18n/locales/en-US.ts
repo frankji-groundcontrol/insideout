@@ -28,6 +28,11 @@ const enUS = {
   workshop: {
     roadmap: 'Roadmap',
     roadmapDesc: 'Follow the steps and complete challenges',
+    tabs: {
+      roadmap: 'Roadmap',
+      editor: 'Editor',
+      ai: 'AI Assistant',
+    },
     selectTask: 'Select a task from the left to begin',
     step: 'Step',
     status: {
