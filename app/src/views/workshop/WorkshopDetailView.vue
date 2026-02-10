@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { mockApi } from '@/services/mock'
 import type { Workshop, RoadmapNode } from '@/types'
@@ -35,10 +35,6 @@ onMounted(async () => {
 })
 
 const activeNode = computed(() => nodes.value.find(n => n.id === activeNodeId.value))
-</script>
-
-<script lang="ts">
-import { computed } from 'vue'
 </script>
 
 <template>

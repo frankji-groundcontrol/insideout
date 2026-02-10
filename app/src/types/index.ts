@@ -30,3 +30,40 @@ export interface RoadmapNode {
   order: number
   content?: string // 用户填写的内容
 }
+
+// 编辑器草稿
+export interface EditorDraft {
+  key: string
+  content: unknown
+  updatedAt: string
+  revision: number
+}
+
+// AI 消息
+export interface AiMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: string
+}
+
+// AI 对话
+export interface AiConversation {
+  nodeId: string
+  messages: AiMessage[]
+}
+
+// 导出配置
+export interface ExportConfig {
+  workshopId: string
+  format: 'markdown' | 'print'
+  includeEmptyNodes: boolean
+}
+
+// 用户提交内容
+export interface UserSubmission {
+  nodeId: string
+  userId: string
+  content: unknown
+  submittedAt: string
+}

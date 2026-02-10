@@ -53,7 +53,7 @@ export const mockApi = {
         created_at: new Date().toISOString()
       }
     },
-    getRoadmap: async (workshopId: string): Promise<RoadmapNode[]> => {
+    getRoadmap: async (_workshopId: string): Promise<RoadmapNode[]> => {
       await delay()
       return MOCK_NODES.filter(node => node.workshop_id === 'ws_001') // 暂时只返回 ws_001 的数据用于演示
     }
