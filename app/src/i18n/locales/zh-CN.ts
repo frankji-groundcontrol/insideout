@@ -1,0 +1,75 @@
+const zhCN = {
+  common: {
+    loading: '加载中...',
+  },
+  nav: {
+    brand: '卷了么',
+    login: '登录',
+    startJourney: '开始旅程',
+    greeting: '你好, {name}',
+    logout: '退出',
+  },
+  dashboard: {
+    friend: '朋友',
+    greeting: {
+      morning: '早上好',
+      afternoon: '下午好',
+      evening: '晚上好',
+    },
+    vibeMessage: '今天也要充满 Vibe 地写代码吗？',
+    joinWorkshop: '加入工作坊',
+    createWorkshop: '创建新工作坊',
+    joinedTitle: '我参与的',
+    managedTitle: '我管理的',
+    emptyJoined: '你还没有加入任何组织，快去输入邀请码吧！',
+    createNewTitle: '创建新工作坊',
+    createNewDesc: '发起一个新的 Vibe Coding 活动',
+  },
+  workshop: {
+    roadmap: '路线图',
+    roadmapDesc: '按部就班，完成挑战',
+    selectTask: '选择左侧的一个任务开始吧',
+    step: '步骤',
+    status: {
+      active: '进行中',
+      completed: '已结束',
+      draft: '草稿',
+      unknown: '未知',
+      inProgress: '进行中',
+      pending: '待开始',
+      locked: '未解锁',
+    },
+    taskDescription: '任务说明',
+    submitHomework: '提交作业',
+    submitButton: '提交作业',
+    textareaPlaceholder: '在这里写下你的思考，或者粘贴你的代码链接...',
+    discussion: '讨论区',
+    comingSoon: '即将上线',
+    discussionHint: '大家可以在这里交流心得...',
+    members: '{count} 成员',
+    codeLabel: '编号',
+  },
+  login: {
+    title: '登录',
+    welcome: '你好，欢迎回来！',
+    noAccount: '还没有账号？',
+    register: '注册',
+    username: '用户名',
+    password: '密码',
+    forgotPassword: '忘记密码？',
+    loginButton: '登录',
+    socialLogin: '或使用社交平台登录',
+  },
+  footer: {
+    copyright: '© {year} 卷了么 (JuanLeMe). Built for Vibe Coding Workshop.',
+  },
+  theme: {
+    toggleDark: '切换暗色模式',
+    toggleLight: '切换亮色模式',
+  },
+  lang: {
+    switchTo: '切换语言',
+  },
+}
+
+export default zhCN

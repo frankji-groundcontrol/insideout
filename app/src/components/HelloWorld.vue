@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { SwatchIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 
@@ -11,7 +12,10 @@ const errorInput = ref('invalid-email')
   <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
     <div class="text-center mb-12">
       <h1 class="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
-        组件展示厅 🎨
+        <span class="inline-flex items-center gap-2">
+          <SwatchIcon class="h-10 w-10 text-indigo-500" />
+          <span>组件展示厅</span>
+        </span>
       </h1>
       <p class="mt-5 max-w-xl mx-auto text-xl text-gray-500">
         这里展示了我们刚刚造好的基础零件。它们是构建整个应用的基石。
