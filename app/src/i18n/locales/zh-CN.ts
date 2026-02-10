@@ -70,6 +70,23 @@ const zhCN = {
   lang: {
     switchTo: '切换语言',
   },
+  editor: {
+    placeholder: '在这里写下你的思考...',
+    toolbar: {
+      bold: '加粗',
+      italic: '斜体',
+      h1: '标题 1',
+      h2: '标题 2',
+      h3: '标题 3',
+      bulletList: '无序列表',
+      orderedList: '有序列表',
+      codeBlock: '代码块',
+      blockquote: '引用',
+      horizontalRule: '分割线',
+      undo: '撤销',
+      redo: '重做',
+    },
+  },
 }
 
 export default zhCN
