@@ -7,7 +7,8 @@ describe('juanleme schema isolation', () => {
     vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key')
 
     const mod = await import('@/lib/supabase')
-    expect(mod.supabase).toBeDefined()
+    expect(mod.getSupabase).toBeDefined()
+    expect(typeof mod.getSupabase).toBe('function')
 
     vi.unstubAllEnvs()
   })

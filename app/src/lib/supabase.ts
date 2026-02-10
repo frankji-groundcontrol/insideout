@@ -1,13 +1,17 @@
-// Supabase 客户端配置
-// 仅在 VITE_API_MODE=supabase 时使用
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-import { createClient } from '@supabase/supabase-js'
+let _client: SupabaseClient | null = null
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables')
+export function getSupabase(): SupabaseClient {
+  if (!_client) {
+    const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+    if (!url || !key) {
+      throw new Error(
+        'VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are required when using Supabase mode',
+      )
+    }
+    _client = createClient(url, key)
+  }
+  return _client
 }
-
-export const supabase = createClient(supabaseUrl, supabaseKey)
