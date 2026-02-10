@@ -4,20 +4,27 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { UserIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
+const errorMsg = ref('')
 const { t } = useI18n()
 
 const handleLogin = async () => {
   loading.value = true
-  // 模拟登录延迟
-  setTimeout(() => {
+  errorMsg.value = ''
+  try {
+    await userStore.login(username.value, password.value)
+    router.push('/dashboard')
+  } catch {
+    errorMsg.value = t('login.error', 'Login failed')
+  } finally {
     loading.value = false
-    router.push('/')
-  }, 1000)
+  }
 }
 </script>
 
