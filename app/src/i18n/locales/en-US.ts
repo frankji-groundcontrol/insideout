@@ -1,0 +1,75 @@
+const enUS = {
+  common: {
+    loading: 'Loading...',
+  },
+  nav: {
+    brand: 'JuanLeMe',
+    login: 'Login',
+    startJourney: 'Start Journey',
+    greeting: 'Hi, {name}',
+    logout: 'Logout',
+  },
+  dashboard: {
+    friend: 'friend',
+    greeting: {
+      morning: 'Good morning',
+      afternoon: 'Good afternoon',
+      evening: 'Good evening',
+    },
+    vibeMessage: 'Ready to code with great vibe today?',
+    joinWorkshop: 'Join Workshop',
+    createWorkshop: 'Create Workshop',
+    joinedTitle: 'Joined Workshops',
+    managedTitle: 'Managed Workshops',
+    emptyJoined: 'You have not joined any workshop yet. Enter an invite code to start!',
+    createNewTitle: 'Create New Workshop',
+    createNewDesc: 'Start a new Vibe Coding activity',
+  },
+  workshop: {
+    roadmap: 'Roadmap',
+    roadmapDesc: 'Follow the steps and complete challenges',
+    selectTask: 'Select a task from the left to begin',
+    step: 'Step',
+    status: {
+      active: 'Active',
+      completed: 'Completed',
+      draft: 'Draft',
+      unknown: 'Unknown',
+      inProgress: 'In Progress',
+      pending: 'Pending',
+      locked: 'Locked',
+    },
+    taskDescription: 'Task Description',
+    submitHomework: 'Submit Homework',
+    submitButton: 'Submit Homework',
+    textareaPlaceholder: 'Write your thoughts here, or paste your code link...',
+    discussion: 'Discussion',
+    comingSoon: 'Coming Soon',
+    discussionHint: 'Share your ideas and feedback here...',
+    members: '{count} members',
+    codeLabel: 'Code',
+  },
+  login: {
+    title: 'Login',
+    welcome: 'Hello, Welcome!',
+    noAccount: "Don't have an account?",
+    register: 'Register',
+    username: 'Username',
+    password: 'Password',
+    forgotPassword: 'Forgot password?',
+    loginButton: 'Login',
+    socialLogin: 'or login with social platforms',
+  },
+  footer: {
+    copyright: '© {year} JuanLeMe. Built for Vibe Coding Workshop.',
+  },
+  theme: {
+    toggleDark: 'Switch to dark mode',
+    toggleLight: 'Switch to light mode',
+  },
+  lang: {
+    switchTo: 'Switch language',
+  },
+}
+
+export default enUS

@@ -9,7 +9,7 @@ const isLayoutEmpty = computed(() => route.meta.layout === 'empty')
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-sans">
+  <div class="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-sans dark:bg-gray-900 dark:text-gray-100">
     <NavBar v-if="!isLayoutEmpty" />
 
     <main class="flex-grow">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { UserIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
@@ -8,6 +9,7 @@ const router = useRouter()
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
+const { t } = useI18n()
 
 const handleLogin = async () => {
   loading.value = true
@@ -20,94 +22,94 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-    <!-- Main Card -->
+  <div class="flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-900">
+    <!-- 主卡片 -->
     <div
-      class="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col md:flex-row min-h-[600px]"
+      class="flex min-h-[600px] w-full max-w-4xl flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl dark:bg-gray-800 md:flex-row"
     >
-      <!-- Left Side (Blue Area) -->
+      <!-- 左侧品牌区 -->
       <div
         class="w-full md:w-[40%] bg-[#6C63FF] p-12 flex flex-col justify-center items-center text-white relative overflow-hidden"
       >
-        <!-- The curved shape effect -->
+        <!-- 曲线背景 -->
         <div
           class="absolute top-0 right-0 w-full h-full bg-[#6C63FF] z-0"
           style="border-radius: 0 0 0 0"
         ></div>
-        <!-- Decorative Circle -->
+        <!-- 装饰圆形 -->
         <div
           class="absolute -right-24 top-1/2 transform -translate-y-1/2 w-64 h-64 bg-white opacity-10 rounded-full"
         ></div>
 
         <div class="relative z-10 text-center">
-          <h2 class="text-3xl font-bold mb-4">Hello, Welcome!</h2>
-          <p class="mb-8 text-blue-100">Don't have an account?</p>
+          <h2 class="mb-4 text-3xl font-bold">{{ t('login.welcome') }}</h2>
+          <p class="mb-8 text-blue-100">{{ t('login.noAccount') }}</p>
           <button
             class="px-8 py-2 border-2 border-white rounded-full text-white hover:bg-white hover:text-[#6C63FF] transition-colors duration-300 font-medium"
           >
-            Register
+            {{ t('login.register') }}
           </button>
         </div>
       </div>
 
-      <!-- Right Side (Form Area) -->
+      <!-- 右侧表单区 -->
       <div class="w-full md:w-[60%] p-12 flex flex-col justify-center relative">
         <div class="max-w-md mx-auto w-full">
-          <h2 class="text-3xl font-bold text-gray-800 mb-12 text-center">
-            Login
+          <h2 class="mb-12 text-center text-3xl font-bold text-gray-800 dark:text-gray-100">
+            {{ t('login.title') }}
           </h2>
 
           <form @submit.prevent="handleLogin" class="space-y-6">
-            <!-- Username Input -->
+            <!-- 用户名输入 -->
             <div class="relative">
               <input
                 v-model="username"
                 type="text"
-                placeholder="Username"
-                class="w-full bg-gray-100 rounded-lg py-3 px-4 pl-4 pr-10 outline-none focus:ring-2 focus:ring-[#6C63FF] transition-all"
+                :placeholder="t('login.username')"
+                class="w-full rounded-lg bg-gray-100 py-3 pl-4 pr-10 outline-none transition-all focus:ring-2 focus:ring-[#6C63FF] dark:bg-gray-700 dark:text-gray-100"
               />
-              <UserIcon class="h-5 w-5 text-gray-400 absolute right-3 top-3.5" />
+              <UserIcon class="absolute right-3 top-3.5 h-5 w-5 text-gray-400 dark:text-gray-300" />
             </div>
 
-            <!-- Password Input -->
+            <!-- 密码输入 -->
             <div class="relative">
               <input
                 v-model="password"
                 type="password"
-                placeholder="Password"
-                class="w-full bg-gray-100 rounded-lg py-3 px-4 pl-4 pr-10 outline-none focus:ring-2 focus:ring-[#6C63FF] transition-all"
+                :placeholder="t('login.password')"
+                class="w-full rounded-lg bg-gray-100 py-3 pl-4 pr-10 outline-none transition-all focus:ring-2 focus:ring-[#6C63FF] dark:bg-gray-700 dark:text-gray-100"
               />
               <LockClosedIcon
-                class="h-5 w-5 text-gray-400 absolute right-3 top-3.5"
+                class="absolute right-3 top-3.5 h-5 w-5 text-gray-400 dark:text-gray-300"
               />
             </div>
 
-            <!-- Forgot Password -->
+            <!-- 忘记密码 -->
             <div class="text-center">
-              <a href="#" class="text-sm text-gray-500 hover:text-[#6C63FF]">
-                Forgot password?
+              <a href="#" class="text-sm text-gray-500 hover:text-[#6C63FF] dark:text-gray-400">
+                {{ t('login.forgotPassword') }}
               </a>
             </div>
 
-            <!-- Login Button -->
+            <!-- 登录按钮 -->
             <BaseButton
               type="submit"
               :loading="loading"
               class="w-full py-3 rounded-lg bg-[#6C63FF] hover:bg-[#5a52d5] text-white font-semibold shadow-lg shadow-indigo-200"
             >
-              Login
+              {{ t('login.loginButton') }}
             </BaseButton>
 
-            <!-- Social Login -->
+            <!-- 社交登录 -->
             <div class="mt-8">
-              <p class="text-center text-gray-400 text-sm mb-4">
-                or login with social platforms
+              <p class="mb-4 text-center text-sm text-gray-400 dark:text-gray-500">
+                {{ t('login.socialLogin') }}
               </p>
               <div class="flex justify-center space-x-4">
-                <!-- Google -->
+                <!-- 谷歌 -->
                 <button
                   type="button"
-                  class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  class="rounded-lg border border-gray-200 p-2 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                 >
                   <img
                     src="https://www.svgrepo.com/show/475656/google-color.svg"
@@ -115,10 +117,10 @@ const handleLogin = async () => {
                     alt="Google"
                   />
                 </button>
-                <!-- Facebook -->
+                <!-- 脸书 -->
                 <button
                   type="button"
-                  class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  class="rounded-lg border border-gray-200 p-2 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                 >
                   <img
                     src="https://www.svgrepo.com/show/475647/facebook-color.svg"
@@ -126,10 +128,10 @@ const handleLogin = async () => {
                     alt="Facebook"
                   />
                 </button>
-                <!-- Github -->
+                <!-- GitHub -->
                 <button
                   type="button"
-                  class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  class="rounded-lg border border-gray-200 p-2 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                 >
                   <img
                     src="https://www.svgrepo.com/show/475654/github-color.svg"
@@ -137,10 +139,10 @@ const handleLogin = async () => {
                     alt="Github"
                   />
                 </button>
-                <!-- LinkedIn -->
+                <!-- 领英 -->
                 <button
                   type="button"
-                  class="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  class="rounded-lg border border-gray-200 p-2 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-700"
                 >
                   <img
                     src="https://www.svgrepo.com/show/475661/linkedin-color.svg"
@@ -158,7 +160,7 @@ const handleLogin = async () => {
 </template>
 
 <style scoped>
-/* Custom rounded corner for the left panel to match the design */
+/* 左侧面板圆角效果 */
 .custom-curve {
   border-radius: 0;
 }
@@ -170,14 +172,14 @@ const handleLogin = async () => {
     margin-right: -50px;
   }
   
-  /* Make sure the blue panel content is above the curve background */
+  /* 确保蓝色面板内容在曲线背景之上 */
   .bg-\[\#6C63FF\] > div.relative {
     z-index: 20;
   }
 }
 
 @media (max-width: 767px) {
-  /* On mobile, use a wave or bottom curve */
+  /* 移动端使用底部曲线 */
   .custom-curve {
     border-bottom-left-radius: 50px;
     border-bottom-right-radius: 50px;

@@ -1,25 +1,33 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
 import type { Workshop } from '@/types'
-import { UserGroupIcon, ClockIcon, CheckCircleIcon, DocumentIcon } from '@heroicons/vue/24/outline'
+import {
+  UserGroupIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  DocumentIcon,
+  PhotoIcon,
+} from '@heroicons/vue/24/outline'
 
 interface Props {
   workshop: Workshop
 }
 
 const props = defineProps<Props>()
+const { t } = useI18n()
 
 const statusConfig = computed(() => {
   switch (props.workshop.status) {
     case 'active':
-      return { label: '进行中', color: 'text-green-600 bg-green-50', icon: ClockIcon }
+      return { label: t('workshop.status.active'), color: 'text-green-700 bg-green-50 dark:text-green-300 dark:bg-green-900/40', icon: ClockIcon }
     case 'completed':
-      return { label: '已结束', color: 'text-gray-600 bg-gray-50', icon: CheckCircleIcon }
+      return { label: t('workshop.status.completed'), color: 'text-gray-600 bg-gray-50 dark:text-gray-300 dark:bg-gray-700', icon: CheckCircleIcon }
     case 'draft':
-      return { label: '草稿', color: 'text-yellow-600 bg-yellow-50', icon: DocumentIcon }
+      return { label: t('workshop.status.draft'), color: 'text-yellow-700 bg-yellow-50 dark:text-yellow-300 dark:bg-yellow-900/40', icon: DocumentIcon }
     default:
-      return { label: '未知', color: 'text-gray-400 bg-gray-50', icon: DocumentIcon }
+      return { label: t('workshop.status.unknown'), color: 'text-gray-400 bg-gray-50 dark:text-gray-300 dark:bg-gray-700', icon: DocumentIcon }
   }
 })
 </script>
@@ -27,25 +35,25 @@ const statusConfig = computed(() => {
 <template>
   <RouterLink 
     :to="`/workshop/${workshop.id}`"
-    class="group bg-white rounded-xl shadow-sm hover:shadow-md border border-gray-100 transition-all duration-200 overflow-hidden cursor-pointer flex flex-col h-full block"
+    class="group block h-full cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
   >
     <!-- Cover Image (16:9) -->
-    <div class="aspect-video w-full bg-gray-100 relative overflow-hidden">
+    <div class="relative aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-700">
       <img 
         v-if="workshop.cover_url" 
         :src="workshop.cover_url" 
         :alt="workshop.title"
         class="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-500"
       />
-      <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-        <span class="text-4xl">🌯</span>
+      <div v-else class="flex h-full w-full items-center justify-center text-gray-400 dark:text-gray-300">
+        <PhotoIcon class="h-12 w-12" />
       </div>
       
       <!-- Status Badge -->
       <div class="absolute top-3 right-3">
         <span 
-          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium backdrop-blur-sm bg-white/90 shadow-sm"
-          :class="statusConfig.color.replace('bg-', 'text-')"
+          class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-sm"
+          :class="statusConfig.color"
         >
           <component :is="statusConfig.icon" class="w-3 h-3 mr-1" />
           {{ statusConfig.label }}
@@ -55,21 +63,21 @@ const statusConfig = computed(() => {
 
     <!-- Content -->
     <div class="p-5 flex-grow flex flex-col">
-      <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+      <h3 class="mb-2 line-clamp-1 text-lg font-bold text-gray-900 transition-colors group-hover:text-indigo-600 dark:text-gray-100 dark:group-hover:text-indigo-300">
         {{ workshop.title }}
       </h3>
-      <p class="text-sm text-gray-500 line-clamp-2 mb-4 flex-grow">
+      <p class="mb-4 flex-grow line-clamp-2 text-sm text-gray-500 dark:text-gray-400">
         {{ workshop.description }}
       </p>
 
       <!-- Footer Info -->
-      <div class="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-50 mt-auto">
+      <div class="mt-auto flex items-center justify-between border-t border-gray-100 pt-4 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-400">
         <div class="flex items-center">
           <UserGroupIcon class="w-4 h-4 mr-1" />
-          <span>{{ workshop.member_count }} 成员</span>
+          <span>{{ t('workshop.members', { count: workshop.member_count }) }}</span>
         </div>
         <div>
-          ID: {{ workshop.code }}
+          {{ t('workshop.codeLabel') }}: {{ workshop.code }}
         </div>
       </div>
     </div>
