@@ -28,6 +28,11 @@ const zhCN = {
   workshop: {
     roadmap: '路线图',
     roadmapDesc: '按部就班，完成挑战',
+    tabs: {
+      roadmap: '路线图',
+      editor: '编辑器',
+      ai: 'AI 助手',
+    },
     selectTask: '选择左侧的一个任务开始吧',
     step: '步骤',
     status: {

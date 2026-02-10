@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* biome-ignore-all lint/correctness/noUnusedVariables: 模板中会使用变量与方法 */
 import type { Editor } from '@tiptap/vue-3'
 import { useI18n } from 'vue-i18n'
 
@@ -98,7 +99,7 @@ function canRedo() {
         :title="t('editor.toolbar.codeBlock')"
         @click="run((e) => e.chain().focus().toggleCodeBlock().run())"
       >
-        {'</>'}
+        &lt;/&gt;
       </button>
       <button
         type="button"
