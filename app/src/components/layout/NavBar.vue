@@ -48,7 +48,24 @@ const handleLogout = () => {
           </template>
 
           <template v-else>
-            <span class="text-gray-700 dark:text-gray-200">{{ t('nav.greeting', { name: userStore.user?.username ?? '' }) }}</span>
+            <RouterLink
+              to="/profile"
+              class="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white"
+            >
+              <img
+                v-if="userStore.user?.avatar_url"
+                :src="userStore.user.avatar_url"
+                :alt="userStore.user?.username ?? ''"
+                class="h-7 w-7 rounded-full object-cover"
+              />
+              <span
+                v-else
+                class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200"
+              >
+                {{ (userStore.user?.username?.charAt(0) ?? 'U').toUpperCase() }}
+              </span>
+              <span class="text-sm font-medium">{{ userStore.user?.username ?? '' }}</span>
+            </RouterLink>
             <BaseButton variant="outline" size="sm" @click="handleLogout">
               {{ t('nav.logout') }}
             </BaseButton>

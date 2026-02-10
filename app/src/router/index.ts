@@ -3,6 +3,8 @@ import HelloWorld from '../components/HelloWorld.vue'
 import LoginPage from '@/views/auth/LoginPage.vue'
 import DashboardView from '@/views/dashboard/DashboardView.vue'
 import WorkshopDetailView from '@/views/workshop/WorkshopDetailView.vue'
+import ExportPreview from '@/views/workshop/ExportPreview.vue'
+import UserProfile from '@/views/profile/UserProfile.vue'
 import { useUserStore } from '@/stores/user'
 
 const routes = [
@@ -21,6 +23,16 @@ const routes = [
     path: '/workshop/:id',
     name: 'WorkshopDetail',
     component: WorkshopDetailView,
+  },
+  {
+    path: '/workshop/:id/export',
+    name: 'WorkshopExport',
+    component: ExportPreview,
+  },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: UserProfile,
   },
   {
     path: '/login',
