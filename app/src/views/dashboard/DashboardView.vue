@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { mockApi } from '@/services/mock'
 import type { Workshop, UserProfile } from '@/types'
 import WorkshopCard from '@/components/workshop/WorkshopCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { PlusIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 
-const router = useRouter()
 const loading = ref(true)
 const user = ref<UserProfile | null>(null)
 const workshops = ref<Workshop[]>([])
