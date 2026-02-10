@@ -4,6 +4,7 @@ export interface UserProfile {
   username: string
   avatar_url?: string
   bio?: string
+  keywords?: string[]
   role: 'admin' | 'user'
   created_at: string
 }

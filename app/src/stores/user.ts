@@ -62,5 +62,19 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  return { user, token, isAuthenticated, login, logout, initFromStorage }
+  // 更新用户资料
+  function updateProfile(payload: Partial<UserProfile>) {
+    if (!user.value) {
+      return
+    }
+
+    user.value = {
+      ...user.value,
+      ...payload,
+    }
+
+    localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+  }
+
+  return { user, token, isAuthenticated, login, logout, initFromStorage, updateProfile }
 })
