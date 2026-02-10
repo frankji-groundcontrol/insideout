@@ -5,6 +5,7 @@ type GenerateRequest = {
   nodeId?: string
   message?: string
   idempotencyKey?: string
+  history?: AnthropicMessage[]
 }
 
 type AiRunStatus = "pending" | "succeeded" | "failed"
@@ -16,6 +17,29 @@ type AiMessageResponse = {
   timestamp: string
 }
 
+type AnthropicMessage = {
+  role: "user" | "assistant"
+  content: string
+}
+
+type AnthropicResponse = {
+  id: string
+  type: string
+  role: string
+  content: Array<{ type: string; text: string }>
+  model: string
+  stop_reason: string
+  usage: {
+    input_tokens: number
+    output_tokens: number
+  }
+}
+
+type AiConfig = {
+  base_url: string | null
+  auth_token: string | null
+}
+
 const JSON_HEADERS = {
   "Content-Type": "application/json",
 }
@@ -25,6 +49,8 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 }
+
+const SYSTEM_PROMPT = "你是卷了么 AI 助手。回答简洁、结构化，不编造信息。"
 
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -43,15 +69,61 @@ function extractBearerToken(req: Request): string | null {
   return match?.[1] ?? null
 }
 
-function buildTemplateReply(message: string, hasApiKey: boolean): string {
-  if (!hasApiKey) {
-    return `收到你的消息：${message}\n\n已启用模板回复（尚未配置 AI_API_KEY）。请稍后在环境变量中接入真实模型。`
-  }
-  return `我理解你的输入是：“${message}”。当前仍使用占位模板，后续会切换到真实 AI Provider。`
-}
-
 function isTerminalStatus(status: string): status is Extract<AiRunStatus, "succeeded" | "failed"> {
   return status === "succeeded" || status === "failed"
+}
+
+async function loadAiConfig(serviceClient: ReturnType<typeof createClient>): Promise<AiConfig> {
+  const { data, error } = await serviceClient
+    .schema("juanleme")
+    .rpc("get_ai_config")
+
+  if (error) {
+    throw new Error(`Failed to load AI config: ${error.message}`)
+  }
+
+  return data as AiConfig
+}
+
+async function callAnthropicApi(
+  config: AiConfig,
+  message: string,
+  history: AnthropicMessage[]
+): Promise<string> {
+  if (!config.base_url || !config.auth_token) {
+    return `收到你的消息：${message}\n\n已启用模板回复（尚未配置 AI 凭据）。请在 Vault 中配置 base_url 和 auth_token。`
+  }
+
+  const messages: AnthropicMessage[] = [
+    ...history,
+    { role: "user", content: message },
+  ]
+
+  const requestBody = {
+    model: "claude-sonnet-4-20250514",
+    max_tokens: 2048,
+    system: SYSTEM_PROMPT,
+    messages,
+  }
+
+  const response = await fetch(`${config.base_url}/v1/messages`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": config.auth_token,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify(requestBody),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text()
+    throw new Error(`Anthropic API error: ${response.status} ${errorText}`)
+  }
+
+  const data = (await response.json()) as AnthropicResponse
+  const textContent = data.content.find((c) => c.type === "text")
+  return textContent?.text ?? ""
 }
 
 Deno.serve(async (req: Request) => {
@@ -98,6 +170,7 @@ Deno.serve(async (req: Request) => {
   const nodeId = body.nodeId?.trim()
   const message = body.message?.trim()
   const idempotencyKey = body.idempotencyKey?.trim() || undefined
+  const history = body.history ?? []
 
   if (!nodeId || !message) {
     return jsonResponse({ error: "nodeId and message are required" }, 400)
@@ -196,8 +269,8 @@ Deno.serve(async (req: Request) => {
   const runId = insertedRun.id as string
 
   try {
-    const hasApiKey = Boolean(Deno.env.get("AI_API_KEY"))
-    const aiContent = buildTemplateReply(message, hasApiKey)
+    const aiConfig = await loadAiConfig(serviceClient)
+    const aiContent = await callAnthropicApi(aiConfig, message, history)
 
     const { error: updateError } = await serviceClient
       .schema("juanleme")
