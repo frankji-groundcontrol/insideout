@@ -70,6 +70,23 @@ const enUS = {
   lang: {
     switchTo: 'Switch language',
   },
+  editor: {
+    placeholder: 'Write down your thoughts here...',
+    toolbar: {
+      bold: 'Bold',
+      italic: 'Italic',
+      h1: 'Heading 1',
+      h2: 'Heading 2',
+      h3: 'Heading 3',
+      bulletList: 'Bullet List',
+      orderedList: 'Ordered List',
+      codeBlock: 'Code Block',
+      blockquote: 'Blockquote',
+      horizontalRule: 'Horizontal Rule',
+      undo: 'Undo',
+      redo: 'Redo',
+    },
+  },
 }
 
 export default enUS
