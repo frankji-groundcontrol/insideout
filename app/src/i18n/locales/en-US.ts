@@ -87,6 +87,15 @@ const enUS = {
       redo: 'Redo',
     },
   },
+  ai: {
+    title: 'AI Assistant',
+    placeholder: 'Type your question...',
+    thinking: 'AI is thinking...',
+    adopt: 'Adopt',
+    adopted: 'Adopted',
+    emptyState: 'Ask AI for inspiration',
+    send: 'Send',
+  },
 }
 
 export default enUS
