@@ -153,7 +153,7 @@ async function resolveWorkspace(
   client: ReturnType<typeof createClient>,
   workshopId: string,
 ): Promise<WorkspaceRow | null> {
-  const { data, error } = await client.rpc("export_resolve_workspace", {
+  const { data, error } = await client.schema("juanleme").rpc("export_resolve_workspace", {
     p_workshop_id: workshopId,
   })
 
@@ -180,7 +180,7 @@ async function ensureMembership(
   workspaceId: string,
   userId: string,
 ): Promise<boolean> {
-  const { data, error } = await client.rpc("ai_get_workspace_membership_me", {
+  const { data, error } = await client.schema("juanleme").rpc("ai_get_workspace_membership_me", {
     p_workspace_id: workspaceId,
   })
 
@@ -198,7 +198,7 @@ async function findIdempotentJob(
   userId: string,
   idempotencyKey: string,
 ): Promise<ExportJobRow | null> {
-  const { data, error } = await client.rpc("export_find_idempotent_job", {
+  const { data, error } = await client.schema("juanleme").rpc("export_find_idempotent_job", {
     p_workspace_id: workspaceId,
     p_user_id: userId,
     p_idempotency_key: idempotencyKey,
@@ -225,7 +225,7 @@ async function createExportJob(
   }
 
   const attempt = async (dbFormat: string) =>
-    client.rpc("export_create_job_service", {
+    client.schema("juanleme").rpc("export_create_job_service", {
       p_workspace_id: payload.workspace_id,
       p_user_id: payload.user_id,
       p_format: dbFormat,
@@ -257,7 +257,7 @@ async function updateExportJobFailure(
   jobId: string,
   errorMessage: string,
 ): Promise<void> {
-  const { error } = await client.rpc("export_update_job_failure_service", {
+  const { error } = await client.schema("juanleme").rpc("export_update_job_failure_service", {
     p_job_id: jobId,
     p_error_message: errorMessage,
   })
@@ -272,7 +272,7 @@ async function updateExportJobSuccess(
   jobId: string,
   artifactPath: string,
 ): Promise<void> {
-  const { error } = await client.rpc("export_update_job_success_service", {
+  const { error } = await client.schema("juanleme").rpc("export_update_job_success_service", {
     p_job_id: jobId,
     p_artifact_path: artifactPath,
   })
@@ -288,7 +288,7 @@ async function generateContent(
   includeEmptyNodes: boolean,
   format: ExportFormat,
 ): Promise<{ content: string; title: string }> {
-  const { data: workspaceRows, error: workspaceError } = await client.rpc("export_get_workspace", {
+  const { data: workspaceRows, error: workspaceError } = await client.schema("juanleme").rpc("export_get_workspace", {
     p_workspace_id: workspaceId,
   })
 
@@ -311,7 +311,7 @@ async function generateContent(
     description: (workspaceData.description as string) ?? "",
   }
 
-  const { data: nodeRows, error: nodesError } = await client.rpc("export_get_workspace_nodes_me", {
+  const { data: nodeRows, error: nodesError } = await client.schema("juanleme").rpc("export_get_workspace_nodes_me", {
     p_workspace_id: workspaceId,
   })
 
