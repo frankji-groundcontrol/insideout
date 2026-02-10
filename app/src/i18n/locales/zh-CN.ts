@@ -115,6 +115,16 @@ const zhCN = {
     emptyState: '向 AI 助手提问，获取灵感',
     send: '发送',
   },
+  export: {
+    title: '导出文档',
+    preview: '预览',
+    downloadMarkdown: '下载 Markdown',
+    exportPdf: '导出 PDF (打印)',
+    backToWorkshop: '返回工作坊',
+    notCompleted: '[未完成]',
+    generatedAt: '生成于 {date}',
+    noContent: '暂无内容',
+  },
 }
 
 export default zhCN
