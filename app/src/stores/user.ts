@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { UserProfile } from '@/types'
+import { services } from '@/services/registry'
 
 // localStorage 键名
 const TOKEN_KEY = 'juanleme-token'
@@ -14,38 +15,33 @@ export const useUserStore = defineStore('user', () => {
   // 计算属性
   const isAuthenticated = computed(() => !!token.value && !!user.value)
 
-  // 登录 — mock 模式接受任何凭证
-  async function login(email: string, _password: string) {
-    // 模拟网络延迟
-    await new Promise((resolve) => setTimeout(resolve, 500))
-
-    const username = email.split('@')[0] ?? email
-    const mockUser: UserProfile = {
-      id: `user_${Date.now()}`,
-      email,
-      username,
-      avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
-      bio: '',
-      role: 'user',
-      created_at: new Date().toISOString(),
-    }
-
-    const mockToken = `mock_token_${Date.now()}`
-
-    user.value = mockUser
-    token.value = mockToken
-
-    // 持久化到 localStorage
-    localStorage.setItem(TOKEN_KEY, mockToken)
-    localStorage.setItem(USER_KEY, JSON.stringify(mockUser))
+  // 持久化用户会话到 localStorage
+  function persistSession(profile: UserProfile, sessionToken: string) {
+    user.value = profile
+    token.value = sessionToken
+    localStorage.setItem(TOKEN_KEY, sessionToken)
+    localStorage.setItem(USER_KEY, JSON.stringify(profile))
   }
 
-  // 登出
-  function logout() {
+  // 清除本地会话状态
+  function clearSession() {
     user.value = null
     token.value = null
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+  }
+
+  // 登录 — 委托给 auth 服务
+  async function login(email: string, _password: string) {
+    const profile = await services.auth.login(email)
+    const sessionToken = `session_${Date.now()}`
+    persistSession(profile, sessionToken)
+  }
+
+  // 登出 — 委托给 auth 服务并清理本地状态
+  async function logout() {
+    await services.auth.logout()
+    clearSession()
   }
 
   // 从 localStorage 恢复会话
@@ -57,23 +53,20 @@ export const useUserStore = defineStore('user', () => {
         token.value = savedToken
         user.value = JSON.parse(savedUser) as UserProfile
       } catch {
-        logout()
+        clearSession()
       }
     }
   }
 
-  // 更新用户资料
-  function updateProfile(payload: Partial<UserProfile>) {
+  // 更新用户资料 — 委托给 auth 服务
+  async function updateProfile(payload: Partial<UserProfile>) {
     if (!user.value) {
       return
     }
 
-    user.value = {
-      ...user.value,
-      ...payload,
-    }
-
-    localStorage.setItem(USER_KEY, JSON.stringify(user.value))
+    const updated = await services.auth.updateProfile(payload)
+    user.value = updated
+    localStorage.setItem(USER_KEY, JSON.stringify(updated))
   }
 
   return { user, token, isAuthenticated, login, logout, initFromStorage, updateProfile }

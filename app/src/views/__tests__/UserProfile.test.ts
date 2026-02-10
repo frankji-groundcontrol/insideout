@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
 import UserProfile from '@/views/profile/UserProfile.vue'
@@ -68,7 +68,11 @@ describe('UserProfile', () => {
     await wrapper.get('[data-testid="profile-username"]').setValue('new-name')
     await wrapper.get('[data-testid="profile-bio"]').setValue('new bio')
     await wrapper.get('[data-testid="profile-keywords"]').setValue('frontend,vue,ts')
+    vi.useFakeTimers()
     await wrapper.get('[data-testid="profile-form"]').trigger('submit')
+    await vi.advanceTimersByTimeAsync(2000)
+    await flushPromises()
+    vi.useRealTimers()
 
     expect(userStore.user?.username).toBe('new-name')
     expect(userStore.user?.bio).toBe('new bio')
@@ -92,11 +96,11 @@ describe('UserProfile', () => {
     expect(wrapper.text()).toContain('用户名不能为空')
   })
 
-  it('updateProfile 会合并用户字段并持久化到 localStorage', () => {
+  it('updateProfile 会合并用户字段并持久化到 localStorage', async () => {
     const userStore = useUserStore()
     userStore.user = createMockUser()
 
-    userStore.updateProfile({ username: 'merged-name', keywords: ['ai', 'workflow'] })
+    await userStore.updateProfile({ username: 'merged-name', keywords: ['ai', 'workflow'] })
 
     expect(userStore.user?.username).toBe('merged-name')
     expect(userStore.user?.keywords).toEqual(['ai', 'workflow'])

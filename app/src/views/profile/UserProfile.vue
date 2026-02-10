@@ -37,7 +37,7 @@ const handleAvatarChange = (event: Event) => {
   avatarPreview.value = URL.createObjectURL(file)
 }
 
-const handleSave = () => {
+const handleSave = async () => {
   const trimmedUsername = username.value.trim()
   if (!trimmedUsername) {
     errorMsg.value = t('profile.usernameRequired')
@@ -50,7 +50,7 @@ const handleSave = () => {
     .map((item) => item.trim())
     .filter(Boolean)
 
-  userStore.updateProfile({
+  await userStore.updateProfile({
     username: trimmedUsername,
     bio: bio.value.trim(),
     keywords,
