@@ -74,7 +74,7 @@ function isTerminalStatus(status: string): status is Extract<AiRunStatus, "succe
 }
 
 async function loadAiConfig(serviceClient: ReturnType<typeof createClient>): Promise<AiConfig> {
-  const { data, error } = await serviceClient.rpc("get_ai_config")
+  const { data, error } = await serviceClient.schema("juanleme").rpc("get_ai_config")
 
   if (error) {
     throw new Error(`Failed to load AI config: ${error.message}`)
@@ -183,9 +183,8 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: userError?.message ?? "Unauthorized" }, 401)
   }
 
-  // RPC bridge: 通过 public schema RPC 访问 juanleme 表（避免 PostgREST 未暴露 juanleme schema 的问题）
   const { data: nodeRows, error: nodeError } = await jwtClient
-    .rpc("ai_get_workshop_node", { p_node_id: nodeId })
+    .schema("juanleme").rpc("ai_get_workshop_node", { p_node_id: nodeId })
 
   if (nodeError || !nodeRows || nodeRows.length === 0) {
     return jsonResponse({ error: "Node not found" }, 404)
@@ -194,7 +193,7 @@ Deno.serve(async (req: Request) => {
   const workspaceId = nodeRows[0].workspace_id as string
 
   const { data: memberRows, error: memberError } = await jwtClient
-    .rpc("ai_get_workspace_membership_me", { p_workspace_id: workspaceId })
+    .schema("juanleme").rpc("ai_get_workspace_membership_me", { p_workspace_id: workspaceId })
 
   if (memberError) {
     return jsonResponse({ error: memberError.message }, 500)
@@ -206,7 +205,7 @@ Deno.serve(async (req: Request) => {
 
   if (idempotencyKey) {
     const { data: existingRuns, error: idempotencyError } = await jwtClient
-      .rpc("ai_get_run_by_idempotency_me", { p_idempotency_key: idempotencyKey })
+      .schema("juanleme").rpc("ai_get_run_by_idempotency_me", { p_idempotency_key: idempotencyKey })
 
     if (idempotencyError) {
       return jsonResponse({ error: idempotencyError.message }, 500)
@@ -232,7 +231,7 @@ Deno.serve(async (req: Request) => {
   }
 
   const { data: runId, error: insertError } = await serviceClient
-    .rpc("ai_create_run_service", {
+    .schema("juanleme").rpc("ai_create_run_service", {
       p_workspace_id: workspaceId,
       p_node_id: nodeId,
       p_user_id: user.id,
@@ -253,7 +252,7 @@ Deno.serve(async (req: Request) => {
     const aiContent = await callAnthropicApi(aiConfig, message, history)
 
     const { data: updated, error: updateError } = await serviceClient
-      .rpc("ai_update_run_service", {
+      .schema("juanleme").rpc("ai_update_run_service", {
         p_run_id: runId,
         p_status: "succeeded",
         p_response: aiContent,
@@ -274,7 +273,7 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     await serviceClient
-      .rpc("ai_update_run_service", {
+      .schema("juanleme").rpc("ai_update_run_service", {
         p_run_id: runId,
         p_status: "failed",
         p_error_message: errorMessage,
