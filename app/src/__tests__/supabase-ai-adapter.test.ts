@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { IAiService } from '@/types/services'
+import { AiRateLimitError, AiServiceUnavailableError } from '@/types'
 
 const mockInvoke = vi.fn()
 
@@ -103,5 +104,55 @@ describe('Supabase AI 适配器', () => {
     await service.clearConversation('node_clear')
 
     expect(localStorage.getItem('ai-conv:node_clear')).toBeNull()
+  })
+
+  it('reply 在 429 时抛出 AiRateLimitError 并携带 retryAfterSeconds', async () => {
+    mockInvoke.mockResolvedValue({
+      data: {
+        error: 'Rate limit exceeded',
+        code: 'APP_THROTTLE',
+        retry_after_seconds: 45,
+        current_count: 10,
+        max_requests: 10,
+      },
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: {
+          status: 429,
+        },
+      },
+    })
+
+    const promise = service.reply('node_429', 'hello')
+    await expect(promise).rejects.toBeInstanceOf(AiRateLimitError)
+    await expect(promise).rejects.toMatchObject({
+      retryAfterSeconds: 45,
+      currentCount: 10,
+      maxRequests: 10,
+    })
+  })
+
+  it('reply 在 503 时抛出 AiServiceUnavailableError', async () => {
+    mockInvoke.mockResolvedValue({
+      data: {
+        error: 'AI service temporarily unavailable',
+        code: 'CIRCUIT_OPEN',
+        retry_after_seconds: 30,
+        circuit_state: 'open',
+      },
+      error: {
+        message: 'Edge Function returned a non-2xx status code',
+        context: {
+          status: 503,
+        },
+      },
+    })
+
+    const promise = service.reply('node_503', 'hello')
+    await expect(promise).rejects.toBeInstanceOf(AiServiceUnavailableError)
+    await expect(promise).rejects.toMatchObject({
+      retryAfterSeconds: 30,
+      circuitState: 'open',
+    })
   })
 })
