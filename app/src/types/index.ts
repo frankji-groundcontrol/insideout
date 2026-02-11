@@ -54,6 +54,37 @@ export interface AiConversation {
   messages: AiMessage[]
 }
 
+export class AiRateLimitError extends Error {
+  retryAfterSeconds: number
+  currentCount?: number
+  maxRequests?: number
+
+  constructor(
+    message: string,
+    retryAfterSeconds: number,
+    currentCount?: number,
+    maxRequests?: number,
+  ) {
+    super(message)
+    this.name = 'AiRateLimitError'
+    this.retryAfterSeconds = retryAfterSeconds
+    this.currentCount = currentCount
+    this.maxRequests = maxRequests
+  }
+}
+
+export class AiServiceUnavailableError extends Error {
+  retryAfterSeconds: number
+  circuitState?: string
+
+  constructor(message: string, retryAfterSeconds: number, circuitState?: string) {
+    super(message)
+    this.name = 'AiServiceUnavailableError'
+    this.retryAfterSeconds = retryAfterSeconds
+    this.circuitState = circuitState
+  }
+}
+
 // 导出配置
 export interface ExportConfig {
   workshopId: string

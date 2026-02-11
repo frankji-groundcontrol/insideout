@@ -40,6 +40,29 @@ type AiConfig = {
   auth_token: string | null
 }
 
+type RateLimitCheck = {
+  allowed: boolean
+  current_count: number
+  max_requests: number
+  retry_after_seconds: number
+}
+
+type CircuitCheck = {
+  allowed: boolean
+  state: string
+  retry_after_seconds: number
+}
+
+class ProviderRateLimitError extends Error {
+  retryAfterSeconds: number
+
+  constructor(message: string, retryAfterSeconds: number) {
+    super(message)
+    this.name = "ProviderRateLimitError"
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
 const JSON_HEADERS = {
   "Content-Type": "application/json",
 }
@@ -51,6 +74,7 @@ const CORS_HEADERS = {
 }
 
 const SYSTEM_PROMPT = "你是卷了么 AI 助手。回答简洁、结构化，不编造信息。"
+const MAX_MESSAGE_LENGTH = 10_000
 
 function jsonResponse(body: Record<string, unknown>, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -115,6 +139,12 @@ async function callAnthropicApi(
   })
 
   if (!response.ok) {
+    if (response.status === 429) {
+      const retryAfter = Number.parseInt(response.headers.get("retry-after") ?? "", 10)
+      const safeRetryAfter = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : 60
+      throw new ProviderRateLimitError("Anthropic provider rate limited", safeRetryAfter)
+    }
+
     const errorText = await response.text()
     throw new Error(`Anthropic API error: ${response.status} ${errorText}`)
   }
@@ -174,6 +204,16 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ error: "nodeId and message are required" }, 400)
   }
 
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return jsonResponse(
+      {
+        error: "Message too long",
+        max_length: MAX_MESSAGE_LENGTH,
+      },
+      400,
+    )
+  }
+
   const {
     data: { user },
     error: userError,
@@ -201,6 +241,54 @@ Deno.serve(async (req: Request) => {
 
   if (!memberRows || memberRows.length === 0) {
     return jsonResponse({ error: "Forbidden" }, 403)
+  }
+
+  const { data: circuitRows, error: circuitError } = await serviceClient
+    .schema("juanleme")
+    .rpc("ai_check_circuit")
+
+  if (circuitError) {
+    return jsonResponse({ error: circuitError.message }, 500)
+  }
+
+  const circuit = (Array.isArray(circuitRows) ? circuitRows[0] : null) as CircuitCheck | null
+  if (circuit && !circuit.allowed) {
+    const retryAfter = circuit.retry_after_seconds > 0 ? circuit.retry_after_seconds : 30
+    return jsonResponse(
+      {
+        error: "AI service temporarily unavailable",
+        code: "CIRCUIT_OPEN",
+        retry_after_seconds: retryAfter,
+        circuit_state: circuit.state,
+      },
+      503,
+    )
+  }
+
+  const { data: rateRows, error: rateError } = await serviceClient
+    .schema("juanleme")
+    .rpc("ai_check_rate_limit", {
+      p_user_id: user.id,
+      p_workspace_id: workspaceId,
+    })
+
+  if (rateError) {
+    return jsonResponse({ error: rateError.message }, 500)
+  }
+
+  const rateLimit = (Array.isArray(rateRows) ? rateRows[0] : null) as RateLimitCheck | null
+  if (rateLimit && !rateLimit.allowed) {
+    const retryAfter = rateLimit.retry_after_seconds > 0 ? rateLimit.retry_after_seconds : 60
+    return jsonResponse(
+      {
+        error: "Rate limit exceeded",
+        code: "APP_THROTTLE",
+        retry_after_seconds: retryAfter,
+        current_count: rateLimit.current_count,
+        max_requests: rateLimit.max_requests,
+      },
+      429,
+    )
   }
 
   if (idempotencyKey) {
@@ -251,6 +339,10 @@ Deno.serve(async (req: Request) => {
     const aiConfig = await loadAiConfig(serviceClient)
     const aiContent = await callAnthropicApi(aiConfig, message, history)
 
+    await serviceClient
+      .schema("juanleme")
+      .rpc("ai_record_circuit_result", { p_success: true })
+
     const { data: updated, error: updateError } = await serviceClient
       .schema("juanleme").rpc("ai_update_run_service", {
         p_run_id: runId,
@@ -271,6 +363,21 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse(responseBody, 200)
   } catch (error) {
+    await serviceClient
+      .schema("juanleme")
+      .rpc("ai_record_circuit_result", { p_success: false })
+
+    if (error instanceof ProviderRateLimitError) {
+      return jsonResponse(
+        {
+          error: "AI provider is rate limited",
+          code: "ANTHROPIC_RATE_LIMIT",
+          retry_after_seconds: error.retryAfterSeconds,
+        },
+        503,
+      )
+    }
+
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     await serviceClient
       .schema("juanleme").rpc("ai_update_run_service", {

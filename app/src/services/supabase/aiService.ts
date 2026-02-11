@@ -1,5 +1,10 @@
 import { getSupabase } from '@/lib/supabase'
-import type { AiConversation, AiMessage } from '@/types'
+import {
+  AiRateLimitError,
+  AiServiceUnavailableError,
+  type AiConversation,
+  type AiMessage,
+} from '@/types'
 import type { IAiService } from '@/types/services'
 
 const CONVERSATION_PREFIX = 'ai-conv:'
@@ -9,6 +14,39 @@ type GenerateResponse = {
   role: 'assistant'
   content: string
   timestamp: string
+}
+
+type GenerateErrorResponse = {
+  error?: string
+  code?: string
+  retry_after_seconds?: number
+  current_count?: number
+  max_requests?: number
+  circuit_state?: string
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
+}
+
+function extractStatus(error: unknown): number | undefined {
+  const raw = asRecord(error)
+  const context = asRecord(raw.context)
+  const status = context.status
+  return typeof status === 'number' ? status : undefined
+}
+
+function parseGenerateError(data: unknown): GenerateErrorResponse {
+  const raw = asRecord(data)
+  return {
+    error: typeof raw.error === 'string' ? raw.error : undefined,
+    code: typeof raw.code === 'string' ? raw.code : undefined,
+    retry_after_seconds:
+      typeof raw.retry_after_seconds === 'number' ? raw.retry_after_seconds : undefined,
+    current_count: typeof raw.current_count === 'number' ? raw.current_count : undefined,
+    max_requests: typeof raw.max_requests === 'number' ? raw.max_requests : undefined,
+    circuit_state: typeof raw.circuit_state === 'string' ? raw.circuit_state : undefined,
+  }
 }
 
 function buildUserMessage(message: string): AiMessage {
@@ -51,6 +89,25 @@ export function createSupabaseAiService(): IAiService {
       })
 
       if (error) {
+        const status = extractStatus(error)
+        const payload = parseGenerateError(data)
+        if (status === 429) {
+          throw new AiRateLimitError(
+            payload.error ?? 'Rate limit exceeded',
+            payload.retry_after_seconds ?? 60,
+            payload.current_count,
+            payload.max_requests,
+          )
+        }
+
+        if (status === 503) {
+          throw new AiServiceUnavailableError(
+            payload.error ?? 'AI service temporarily unavailable',
+            payload.retry_after_seconds ?? 30,
+            payload.circuit_state,
+          )
+        }
+
         throw new Error(error.message)
       }
 

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+/* biome-ignore-all assist/source/organizeImports: Vue SFC 按语义分组导入 */
+/* biome-ignore-all lint/correctness/noUnusedImports: 模板中会使用导入内容 */
+/* biome-ignore-all lint/correctness/noUnusedVariables: 模板中会使用变量 */
 import { toRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PaperAirplaneIcon } from '@heroicons/vue/24/outline'
@@ -11,7 +14,21 @@ interface Props {
 const props = defineProps<Props>()
 const { t } = useI18n()
 const nodeId = toRef(props, 'nodeId')
-const { draft, isThinking, listEl, messages, adoptedIds, canSend, formatTime, adoptMessage, sendMessage } =
+const {
+  draft,
+  isThinking,
+  listEl,
+  messages,
+  retryCountdown,
+  isRateLimited,
+  adoptedIds,
+  hasNode,
+  canSend,
+  formatTime,
+  adoptMessage,
+  sendMessage,
+  startNewConversation,
+} =
   useAiConversation({ nodeId })
 
 // 通过显式引用避免 noUnusedLocals 对模板 ref 的误判。
@@ -20,14 +37,27 @@ void listEl
 
 <template>
   <aside class="ai-sidebar flex h-full min-h-0 flex-col">
-    <header class="border-b border-white/60 px-4 py-4 dark:border-gray-700/70 sm:px-5">
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ t('ai.title') }}</h3>
+    <header class="border-b border-border-default px-4 py-4 sm:px-5">
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="text-lg font-bold text-content-primary">{{ t('ai.title') }}</h3>
+        <button
+          type="button"
+          class="new-chat-btn"
+          :disabled="!hasNode || isThinking"
+          @click="startNewConversation"
+        >
+          {{ t('ai.newConversation') }}
+        </button>
+      </div>
+      <div v-if="isRateLimited" class="rate-limit-banner mt-3">
+        {{ t('ai.rateLimited', { seconds: retryCountdown }) }}
+      </div>
     </header>
 
     <section ref="listEl" class="flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-5">
       <div
         v-if="messages.length === 0 && !isThinking"
-        class="rounded-2xl border border-dashed border-gray-300/90 bg-white/70 px-4 py-6 text-center text-sm text-gray-500 shadow-sm dark:border-gray-600/80 dark:bg-gray-900/50 dark:text-gray-400"
+        class="rounded-none border border-dashed border-border-default bg-surface-elevated px-4 py-6 text-center text-sm text-content-secondary shadow-brutal-sm"
       >
         {{ t('ai.emptyState') }}
       </div>
@@ -53,7 +83,7 @@ void listEl
             {{ message.content }}
           </div>
           <p
-            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            class="mt-1 text-xs text-content-secondary"
             :class="message.role === 'user' ? 'text-right' : 'text-left'"
           >
             {{ formatTime(message.timestamp) }}
@@ -91,13 +121,14 @@ void listEl
       </div>
     </section>
 
-    <footer class="border-t border-white/65 p-3 dark:border-gray-700/70 sm:p-4">
+    <footer class="border-t border-border-default p-3 sm:p-4">
       <form class="flex items-center gap-2" @submit.prevent="sendMessage">
         <input
           v-model="draft"
           type="text"
           class="input-field"
-          :placeholder="t('ai.placeholder')"
+          :placeholder="hasNode ? t('ai.placeholder') : t('ai.selectTaskFirst')"
+          :disabled="!hasNode || isThinking || isRateLimited"
           @keydown.enter.prevent="sendMessage"
         />
         <button type="submit" class="send-btn" :disabled="!canSend">
@@ -105,23 +136,16 @@ void listEl
           <span class="hidden sm:inline">{{ t('ai.send') }}</span>
         </button>
       </form>
+      <p v-if="!hasNode" class="mt-2 text-xs text-content-secondary">
+        {{ t('ai.selectTaskFirst') }}
+      </p>
     </footer>
   </aside>
 </template>
 
 <style scoped>
 .ai-sidebar {
-  background:
-    radial-gradient(circle at 8% 8%, rgb(199 210 254 / 30%), transparent 42%),
-    radial-gradient(circle at 95% 88%, rgb(191 219 254 / 26%), transparent 48%),
-    linear-gradient(180deg, rgb(248 250 252), rgb(241 245 249));
-}
-
-:global(.dark) .ai-sidebar {
-  background:
-    radial-gradient(circle at 10% 10%, rgb(30 58 138 / 26%), transparent 45%),
-    radial-gradient(circle at 92% 92%, rgb(15 23 42 / 36%), transparent 52%),
-    linear-gradient(180deg, rgb(15 23 42), rgb(3 7 18));
+  background: var(--jlm-surface-base);
 }
 
 .avatar {
@@ -138,23 +162,18 @@ void listEl
 }
 
 .user-avatar {
-  color: rgb(255 255 255);
-  background: linear-gradient(135deg, rgb(79 70 229), rgb(37 99 235));
-  box-shadow: 0 8px 18px rgb(37 99 235 / 28%);
+  color: var(--jlm-content-inverse);
+  background: var(--jlm-interactive-default);
+  box-shadow: 3px 3px 0 0 var(--jlm-shadow-color);
 }
 
 .ai-avatar {
-  color: rgb(30 64 175);
-  background: rgb(224 231 255);
-}
-
-:global(.dark) .ai-avatar {
-  color: rgb(191 219 254);
-  background: rgb(30 41 59);
+  color: var(--jlm-accent-primary);
+  background: var(--jlm-surface-muted);
 }
 
 .bubble {
-  border-radius: 1rem;
+  border-radius: 0;
   padding: 0.7rem 0.82rem;
   font-size: 0.875rem;
   line-height: 1.45;
@@ -163,30 +182,22 @@ void listEl
 }
 
 .user-bubble {
-  border-top-right-radius: 0.35rem;
-  color: rgb(255 255 255);
-  background: linear-gradient(140deg, rgb(79 70 229), rgb(29 78 216));
-  box-shadow: 0 10px 24px rgb(37 99 235 / 28%);
+  color: var(--jlm-content-inverse);
+  background: var(--jlm-interactive-default);
+  box-shadow: 3px 3px 0 0 var(--jlm-shadow-color);
 }
 
 .assistant-bubble {
-  border: 1px solid rgb(229 231 235);
-  border-top-left-radius: 0.35rem;
-  color: rgb(17 24 39);
-  background: rgb(255 255 255 / 92%);
-}
-
-:global(.dark) .assistant-bubble {
-  border-color: rgb(71 85 105 / 60%);
-  color: rgb(226 232 240);
-  background: rgb(15 23 42 / 72%);
+  border: 1px solid var(--jlm-border-default);
+  color: var(--jlm-content-primary);
+  background: var(--jlm-surface-elevated);
 }
 
 .adopt-btn {
-  border: 1px solid rgb(99 102 241 / 45%);
-  border-radius: 9999px;
-  color: rgb(67 56 202);
-  background: rgb(238 242 255 / 75%);
+  border: 1px solid var(--jlm-interactive-default);
+  border-radius: 0;
+  color: var(--jlm-interactive-default);
+  background: var(--jlm-surface-elevated);
   padding: 0.18rem 0.72rem;
   font-size: 0.74rem;
   line-height: 1.5;
@@ -194,32 +205,46 @@ void listEl
 }
 
 .adopt-btn:hover:not(:disabled) {
-  border-color: rgb(79 70 229);
-  background: rgb(224 231 255);
+  border-color: var(--jlm-interactive-hover);
+  color: var(--jlm-interactive-hover);
+  background: var(--jlm-surface-muted);
 }
 
 .adopt-btn:disabled {
   cursor: not-allowed;
-  color: rgb(107 114 128);
-  border-color: rgb(209 213 219);
-  background: rgb(243 244 246);
+  color: var(--jlm-content-secondary);
+  border-color: var(--jlm-border-default);
+  background: var(--jlm-surface-muted);
 }
 
-:global(.dark) .adopt-btn {
-  color: rgb(199 210 254);
-  border-color: rgb(129 140 248 / 45%);
-  background: rgb(30 41 59 / 70%);
+.new-chat-btn {
+  border: 1px solid var(--jlm-border-default);
+  border-radius: 0;
+  color: var(--jlm-content-primary);
+  background: var(--jlm-surface-elevated);
+  padding: 0.28rem 0.62rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  transition: all 160ms ease;
 }
 
-:global(.dark) .adopt-btn:hover:not(:disabled) {
-  border-color: rgb(129 140 248 / 80%);
-  background: rgb(51 65 85 / 90%);
+.new-chat-btn:hover:not(:disabled) {
+  border-color: var(--jlm-interactive-default);
+  color: var(--jlm-interactive-default);
 }
 
-:global(.dark) .adopt-btn:disabled {
-  color: rgb(148 163 184);
-  border-color: rgb(71 85 105);
-  background: rgb(30 41 59);
+.new-chat-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.rate-limit-banner {
+  border: 1px solid color-mix(in srgb, var(--jlm-warning, #d97706) 45%, var(--jlm-border-default));
+  background: color-mix(in srgb, var(--jlm-warning, #d97706) 14%, var(--jlm-surface-elevated));
+  color: var(--jlm-content-primary);
+  padding: 0.45rem 0.55rem;
+  font-size: 0.74rem;
+  line-height: 1.4;
 }
 
 .typing {
@@ -238,12 +263,8 @@ void listEl
   height: 0.28rem;
   width: 0.28rem;
   border-radius: 9999px;
-  background: rgb(100 116 139);
+  background: var(--jlm-content-secondary);
   animation: dotPulse 1s infinite ease-in-out;
-}
-
-:global(.dark) .typing-dots i {
-  background: rgb(148 163 184);
 }
 
 .typing-dots i:nth-child(2) {
@@ -270,34 +291,24 @@ void listEl
 .input-field {
   width: 100%;
   min-width: 0;
-  border: 1px solid rgb(209 213 219);
-  border-radius: 0.8rem;
-  color: rgb(17 24 39);
-  background: rgb(255 255 255 / 92%);
+  border: 1px solid var(--jlm-border-default);
+  border-radius: 0;
+  color: var(--jlm-content-primary);
+  background: var(--jlm-surface-muted);
   padding: 0.62rem 0.8rem;
   font-size: 0.875rem;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 85%);
+  box-shadow: inset 3px 3px 0 0 color-mix(in srgb, var(--jlm-shadow-color) 5%, transparent);
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
 }
 
 .input-field::placeholder {
-  color: rgb(107 114 128);
+  color: var(--jlm-content-secondary);
 }
 
 .input-field:focus {
   outline: none;
-  border-color: rgb(99 102 241);
-  box-shadow: 0 0 0 3px rgb(99 102 241 / 20%);
-}
-
-:global(.dark) .input-field {
-  border-color: rgb(71 85 105 / 70%);
-  color: rgb(241 245 249);
-  background: rgb(15 23 42 / 88%);
-}
-
-:global(.dark) .input-field::placeholder {
-  color: rgb(148 163 184);
+  border-color: var(--jlm-interactive-default);
+  box-shadow: inset 3px 3px 0 0 color-mix(in srgb, var(--jlm-shadow-color) 5%, transparent);
 }
 
 .send-btn {
@@ -307,9 +318,10 @@ void listEl
   align-items: center;
   gap: 0.35rem;
   border: 0;
-  border-radius: 0.8rem;
-  color: rgb(255 255 255);
-  background: linear-gradient(140deg, rgb(79 70 229), rgb(37 99 235));
+  border-radius: 0;
+  color: var(--jlm-content-inverse);
+  background: var(--jlm-interactive-default);
+  box-shadow: 3px 3px 0 0 var(--jlm-shadow-color);
   padding: 0 0.85rem;
   font-size: 0.82rem;
   font-weight: 600;
@@ -317,8 +329,8 @@ void listEl
 }
 
 .send-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.06);
+  transform: translate(-1px, -1px);
+  background: var(--jlm-interactive-hover);
 }
 
 .send-btn:disabled {
