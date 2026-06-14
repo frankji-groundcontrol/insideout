@@ -1,5 +1,16 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { createMockAuthService } from '@/services/mock/authService'
+
+// 用真实的 mock auth 服务驱动 store，保留登录/用户名派生等真实行为。
+// useServices() 在运行时由 Nuxt 插件提供；单元测试里直接 mock 该 composable，
+// 避免依赖 Nuxt 应用上下文（useNuxtApp）。
+const mockAuth = createMockAuthService()
+
+vi.mock('@/composables/useServices', () => ({
+  useServices: () => ({ auth: mockAuth }),
+}))
+
 import { useUserStore } from '@/stores/user'
 
 describe('useUserStore', () => {

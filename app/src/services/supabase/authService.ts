@@ -1,6 +1,6 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { IAuthService } from '@/types/services'
 import type { UserProfile } from '@/types'
-import { getSupabase } from '@/lib/supabase'
 
 const ALLOWED_UPDATE_FIELDS: ReadonlyArray<keyof UserProfile> = [
   'username',
@@ -22,8 +22,9 @@ function toUserProfile(row: Record<string, unknown>): UserProfile {
   }
 }
 
-async function getAuthUser(): Promise<{ id: string; email: string }> {
-  const supabase = getSupabase()
+async function getAuthUser(
+  supabase: SupabaseClient,
+): Promise<{ id: string; email: string }> {
   const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) {
     throw new Error(error?.message ?? '未登录')
@@ -31,10 +32,9 @@ async function getAuthUser(): Promise<{ id: string; email: string }> {
   return { id: data.user.id, email: data.user.email ?? '' }
 }
 
-export function createSupabaseAuthService(): IAuthService {
+export function createSupabaseAuthService(supabase: SupabaseClient): IAuthService {
   return {
     async login(email: string): Promise<UserProfile> {
-      const supabase = getSupabase()
       const { error } = await supabase.auth.signInWithOtp({ email })
 
       if (error) {
@@ -69,8 +69,7 @@ export function createSupabaseAuthService(): IAuthService {
     },
 
     async getCurrentUser(): Promise<UserProfile> {
-      const supabase = getSupabase()
-      const authUser = await getAuthUser()
+      const authUser = await getAuthUser(supabase)
 
       const { data: profile, error } = await supabase
         .schema('juanleme')
@@ -106,8 +105,7 @@ export function createSupabaseAuthService(): IAuthService {
     },
 
     async updateProfile(data: Partial<UserProfile>): Promise<UserProfile> {
-      const supabase = getSupabase()
-      const authUser = await getAuthUser()
+      const authUser = await getAuthUser(supabase)
 
       const sanitized: Record<string, unknown> = {}
       for (const field of ALLOWED_UPDATE_FIELDS) {
@@ -132,7 +130,6 @@ export function createSupabaseAuthService(): IAuthService {
     },
 
     async logout(): Promise<void> {
-      const supabase = getSupabase()
       const { error } = await supabase.auth.signOut()
       if (error) {
         throw new Error(error.message)

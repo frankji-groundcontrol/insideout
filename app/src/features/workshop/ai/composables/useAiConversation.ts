@@ -1,5 +1,5 @@
 import { computed, nextTick, type Ref, ref, watch } from "vue";
-import { requireServices } from "@/services/registry";
+import { useServices } from "@/composables/useServices";
 import { useEditorStore } from "@/stores/editor";
 import {
 	AiRateLimitError,
@@ -139,7 +139,7 @@ export function useAiConversation(options: UseAiConversationOptions) {
 		const nodeAtRequest = options.nodeId.value;
 
 		try {
-			const reply = await requireServices().ai.reply(nodeAtRequest, content);
+			const reply = await useServices().ai.reply(nodeAtRequest, content);
 			if (
 				token !== requestToken.value ||
 				nodeAtRequest !== options.nodeId.value
@@ -177,7 +177,7 @@ export function useAiConversation(options: UseAiConversationOptions) {
 		}
 
 		try {
-			const conversation = await requireServices().ai.getConversation(nodeId);
+			const conversation = await useServices().ai.getConversation(nodeId);
 			if (token !== requestToken.value || nodeId !== options.nodeId.value) {
 				return;
 			}
@@ -205,7 +205,7 @@ export function useAiConversation(options: UseAiConversationOptions) {
 		messages.value = [];
 		adoptedIds.value = new Set();
 
-		await requireServices().ai.clearConversation(nodeId);
+		await useServices().ai.clearConversation(nodeId);
 		await scrollToBottom();
 	}
 

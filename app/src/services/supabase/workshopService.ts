@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RoadmapNode, UserSubmission, Workshop } from '@/types'
 import type { IWorkshopService } from '@/types/services'
 
@@ -84,16 +84,19 @@ function mapRoadmapWithLockStatus(rows: DbRoadmapRow[]): RoadmapNode[] {
   return result
 }
 
-async function getCurrentUserId(): Promise<string> {
-  const { data, error } = await getSupabase().auth.getUser()
+async function getCurrentUserId(supabase: SupabaseClient): Promise<string> {
+  const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) {
     throw new Error(error?.message ?? '未登录')
   }
   return data.user.id
 }
 
-async function getNodeById(nodeId: string): Promise<DbNodeRow> {
-  const { data, error } = await getSupabase()
+async function getNodeById(
+  supabase: SupabaseClient,
+  nodeId: string,
+): Promise<DbNodeRow> {
+  const { data, error } = await supabase
     .schema('juanleme')
     .from('workshop_nodes')
     .select('id, workspace_id, title, description, order')
@@ -107,10 +110,12 @@ async function getNodeById(nodeId: string): Promise<DbNodeRow> {
   return data as DbNodeRow
 }
 
-export function createSupabaseWorkshopService(): IWorkshopService {
+export function createSupabaseWorkshopService(
+  supabase: SupabaseClient,
+): IWorkshopService {
   return {
     async getWorkshops(): Promise<Workshop[]> {
-      const { data, error } = await getSupabase()
+      const { data, error } = await supabase
         .schema('juanleme')
         .from('v_workshop_summary')
         .select('*')
@@ -123,7 +128,7 @@ export function createSupabaseWorkshopService(): IWorkshopService {
     },
 
     async getWorkshop(id: string): Promise<Workshop | undefined> {
-      const { data, error } = await getSupabase()
+      const { data, error } = await supabase
         .schema('juanleme')
         .from('v_workshop_summary')
         .select('*')
@@ -138,7 +143,7 @@ export function createSupabaseWorkshopService(): IWorkshopService {
     },
 
     async getRoadmap(workshopId: string): Promise<RoadmapNode[]> {
-      const { data, error } = await getSupabase()
+      const { data, error } = await supabase
         .schema('juanleme')
         .rpc('get_workshop_roadmap', { p_workspace_id: workshopId })
 
@@ -150,7 +155,7 @@ export function createSupabaseWorkshopService(): IWorkshopService {
     },
 
     async joinWorkshop(code: string): Promise<boolean> {
-      const { error } = await getSupabase()
+      const { error } = await supabase
         .schema('juanleme')
         .rpc('join_workshop', { p_code: code })
 
@@ -167,7 +172,7 @@ export function createSupabaseWorkshopService(): IWorkshopService {
         throw new Error('工作坊标题不能为空')
       }
 
-      const { data: workspaceId, error } = await getSupabase()
+      const { data: workspaceId, error } = await supabase
         .schema('juanleme')
         .rpc('create_workspace', {
           p_title: title,
@@ -192,9 +197,9 @@ export function createSupabaseWorkshopService(): IWorkshopService {
       nodeId: string,
       status: RoadmapNode['status'],
     ): Promise<RoadmapNode> {
-      const userId = await getCurrentUserId()
-      const node = await getNodeById(nodeId)
-      const client = getSupabase().schema('juanleme')
+      const userId = await getCurrentUserId(supabase)
+      const node = await getNodeById(supabase, nodeId)
+      const client = supabase.schema('juanleme')
 
       if (status === 'completed') {
         const { error } = await client.rpc('complete_node', {
@@ -247,8 +252,8 @@ export function createSupabaseWorkshopService(): IWorkshopService {
     },
 
     async getSubmission(nodeId: string): Promise<UserSubmission | undefined> {
-      const userId = await getCurrentUserId()
-      const { data, error } = await getSupabase()
+      const userId = await getCurrentUserId(supabase)
+      const { data, error } = await supabase
         .schema('juanleme')
         .from('documents')
         .select('node_id, user_id, content, updated_at')
@@ -274,7 +279,7 @@ export function createSupabaseWorkshopService(): IWorkshopService {
     },
 
     async saveSubmission(submission: UserSubmission): Promise<UserSubmission> {
-      const { error } = await getSupabase()
+      const { error } = await supabase
         .schema('juanleme')
         .rpc('complete_node', {
           p_node_id: submission.nodeId,

@@ -1,7 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import type { Workshop, RoadmapNode } from '@/types'
-import { services } from '@/services/registry'
+import { createMockWorkshopService } from '@/services/mock/workshopService'
+import type { ServiceRegistry } from '@/services/registry'
+
+// 用真实的 mock workshop 服务构造一个 registry-shaped 对象，store 通过 useServices() 访问它。
+// 单元测试直接 mock 该 composable，避免依赖 Nuxt 应用上下文（useNuxtApp）。
+const services = { workshop: createMockWorkshopService() } as unknown as ServiceRegistry
+
+vi.mock('@/composables/useServices', () => ({
+  useServices: () => services,
+}))
+
 import { useWorkshopStore } from '@/stores/workshop'
 
 const mockWorkshop: Workshop = {

@@ -2,11 +2,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import UserProfile from '@/views/profile/UserProfile.vue'
-import { useUserStore } from '@/stores/user'
+import { createMockAuthService } from '@/services/mock/authService'
 import zhCN from '@/i18n/locales/zh-CN'
 import enUS from '@/i18n/locales/en-US'
 import type { UserProfile as UserProfileType } from '@/types'
+
+// userStore.updateProfile 现在通过 useServices() 委托给 auth 服务（运行时由 Nuxt 插件提供）。
+// 单元测试里 mock 该 composable，返回真实的 mock auth 服务以保留字段合并行为，
+// 避免依赖 Nuxt 应用上下文（useNuxtApp）。
+vi.mock('@/composables/useServices', () => ({
+  useServices: () => ({ auth: createMockAuthService() }),
+}))
+
+import UserProfile from '@/pages/profile.vue'
+import { useUserStore } from '@/stores/user'
 
 const createTestI18n = () =>
   createI18n({

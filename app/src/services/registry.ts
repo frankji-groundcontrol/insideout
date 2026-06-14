@@ -27,15 +27,26 @@ export type BundleModes = {
   aiExport: AdapterMode
 }
 
-let _services: ServiceRegistry | null = null
-let _servicesPromise: Promise<ServiceRegistry> | null = null
+// 由调用方（plugins/services.ts）从 useRuntimeConfig().public 读取后传入，
+// 不再在本模块内读取 import.meta.env，保证 registry 在 SSR / 测试中可纯导入。
+export interface BundleConfig {
+  apiMode?: string
+  bundleAuth?: string
+  bundleData?: string
+  bundleAiExport?: string
+}
 
-export function resolveBundleModes(): BundleModes {
-  const globalMode = (import.meta.env.VITE_API_MODE || 'mock') as AdapterMode
+export interface ServiceDeps {
+  // 由插件注入的 Supabase 客户端（仅在选择 supabase bundle 时才会构建）。
+  supabase?: import('@supabase/supabase-js').SupabaseClient
+}
+
+export function resolveBundleModes(cfg: BundleConfig): BundleModes {
+  const globalMode = (cfg.apiMode || 'mock') as AdapterMode
   return {
-    auth: (import.meta.env.VITE_BUNDLE_AUTH as AdapterMode) || globalMode,
-    data: (import.meta.env.VITE_BUNDLE_DATA as AdapterMode) || globalMode,
-    aiExport: (import.meta.env.VITE_BUNDLE_AI_EXPORT as AdapterMode) || globalMode,
+    auth: (cfg.bundleAuth as AdapterMode) || globalMode,
+    data: (cfg.bundleData as AdapterMode) || globalMode,
+    aiExport: (cfg.bundleAiExport as AdapterMode) || globalMode,
   }
 }
 
@@ -75,12 +86,15 @@ function createMockServices(): ServiceRegistry {
   }
 }
 
-async function createBundledServices(modes: BundleModes): Promise<ServiceRegistry> {
+async function createBundledServices(
+  modes: BundleModes,
+  deps: ServiceDeps,
+): Promise<ServiceRegistry> {
   const registry: Partial<ServiceRegistry> = {}
 
   if (modes.auth === 'supabase') {
     const mod = await import('./supabase/authService')
-    registry.auth = mod.createSupabaseAuthService()
+    registry.auth = mod.createSupabaseAuthService(deps.supabase!)
   } else {
     registry.auth = createMockAuthService()
   }
@@ -90,8 +104,8 @@ async function createBundledServices(modes: BundleModes): Promise<ServiceRegistr
       import('./supabase/workshopService'),
       import('./supabase/editorService'),
     ])
-    registry.workshop = workshopMod.createSupabaseWorkshopService()
-    registry.editor = editorMod.createSupabaseEditorService()
+    registry.workshop = workshopMod.createSupabaseWorkshopService(deps.supabase!)
+    registry.editor = editorMod.createSupabaseEditorService(deps.supabase!)
   } else {
     registry.workshop = createMockWorkshopService()
     registry.editor = createMockEditorService()
@@ -102,8 +116,8 @@ async function createBundledServices(modes: BundleModes): Promise<ServiceRegistr
       import('./supabase/aiService'),
       import('./supabase/exportService'),
     ])
-    registry.ai = aiMod.createSupabaseAiService()
-    registry.export = exportMod.createSupabaseExportService()
+    registry.ai = aiMod.createSupabaseAiService(deps.supabase!)
+    registry.export = exportMod.createSupabaseExportService(deps.supabase!)
   } else {
     registry.ai = createMockAiService()
     registry.export = createMockExportService()
@@ -112,43 +126,28 @@ async function createBundledServices(modes: BundleModes): Promise<ServiceRegistr
   return registry as ServiceRegistry
 }
 
-export function getServices(): ServiceRegistry {
-  if (!_services) {
-    const modes = resolveBundleModes()
-    validateBundleModes(modes)
-    if (isAllMock(modes)) {
-      _services = createMockServices()
-    } else {
-      throw new Error(
-        '同步模式仅支持全 mock 配置，请使用 getServicesAsync() 初始化含 supabase 的 bundle',
-      )
-    }
-  }
-  return _services
-}
-
-export async function getServicesAsync(): Promise<ServiceRegistry> {
-  if (_services) return _services
-  const modes = resolveBundleModes()
+// 插件使用的纯异步构建器。此处不做单例缓存（由 Nuxt 按 app/请求提供）。
+export async function buildServices(
+  modes: BundleModes,
+  deps: ServiceDeps,
+): Promise<ServiceRegistry> {
   validateBundleModes(modes)
-
-  if (isAllMock(modes)) {
-    _services = createMockServices()
-    return _services
-  }
-
-  if (!_servicesPromise) {
-    _servicesPromise = createBundledServices(modes).then((s) => {
-      _services = s
-      return s
-    })
-  }
-  return _servicesPromise
+  if (isAllMock(modes)) return createMockServices()
+  return createBundledServices(modes, deps)
 }
 
-export function resetRegistry(): void {
-  _services = null
-  _servicesPromise = null
-}
+// 兼容旧名：getServicesAsync 现在指向新的 buildServices(modes, deps)。
+export const getServicesAsync = buildServices
 
-export const services = getServices()
+// 供无法 await 的 composable/component 使用的同步访问器。
+// 背后由 Nuxt 插件通过 _setProvidedServices 写入（见 useServices()）。未就绪时抛错。
+let _provided: ServiceRegistry | null = null
+export function _setProvidedServices(s: ServiceRegistry): void {
+  _provided = s
+}
+export function requireServices(): ServiceRegistry {
+  if (!_provided) {
+    throw new Error('services not initialized: ensure plugins/services.ts has run')
+  }
+  return _provided
+}

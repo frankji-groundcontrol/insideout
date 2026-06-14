@@ -1,16 +1,17 @@
 // 验证 juanleme schema 配置正确
-import { describe, test, expect, vi } from 'vitest'
+import { describe, test, expect } from 'vitest'
+import { createSupabaseClient } from '@/lib/supabase'
 
 describe('juanleme schema isolation', () => {
-  test('supabase client is properly configured', async () => {
-    vi.stubEnv('VITE_SUPABASE_URL', 'https://test.supabase.co')
-    vi.stubEnv('VITE_SUPABASE_ANON_KEY', 'test-anon-key')
+  test('supabase client factory builds a client from literal url/key', () => {
+    // 工厂取代了模块单例 getSupabase()，直接接收 url/key 字面量参数（不读取 import.meta.env）。
+    const client = createSupabaseClient('https://test.supabase.co', 'test-anon-key')
+    expect(client).toBeDefined()
+    expect(typeof client.schema).toBe('function')
+  })
 
-    const mod = await import('@/lib/supabase')
-    expect(mod.getSupabase).toBeDefined()
-    expect(typeof mod.getSupabase).toBe('function')
-
-    vi.unstubAllEnvs()
+  test('supabase client factory 缺少 url/key 时抛出错误', () => {
+    expect(() => createSupabaseClient('', '')).toThrow()
   })
 
   test('expected app tables are defined for juanleme schema only', () => {
@@ -31,10 +32,10 @@ describe('juanleme schema isolation', () => {
     }
   })
 
-  test('environment variable names follow VITE_ convention', () => {
-    const requiredVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'VITE_API_MODE']
+  test('environment variable names follow NUXT_PUBLIC_ convention', () => {
+    const requiredVars = ['NUXT_PUBLIC_SUPABASE_URL', 'NUXT_PUBLIC_SUPABASE_ANON_KEY', 'NUXT_PUBLIC_API_MODE']
     for (const v of requiredVars) {
-      expect(v).toMatch(/^VITE_/)
+      expect(v).toMatch(/^NUXT_PUBLIC_/)
     }
   })
 })

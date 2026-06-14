@@ -1,18 +1,16 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRouter } from 'vue-router'
 import BaseButton from '../common/BaseButton.vue'
 import ThemeToggle from '../common/ThemeToggle.vue'
 import LangToggle from '../common/LangToggle.vue'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
-const router = useRouter()
 const { t } = useI18n()
 
-const handleLogout = () => {
-  userStore.logout()
-  router.push('/login')
+const handleLogout = async () => {
+  await userStore.logout()
+  await navigateTo('/login')
 }
 </script>
 
@@ -22,9 +20,9 @@ const handleLogout = () => {
       <div class="flex justify-between h-16">
         <!-- 品牌区 -->
         <div class="flex">
-          <RouterLink to="/" class="flex-shrink-0 flex items-center">
+          <NuxtLink to="/" class="flex-shrink-0 flex items-center">
             <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">{{ t('nav.brand') }}</span>
-          </RouterLink>
+          </NuxtLink>
         </div>
 
         <!-- 右侧操作 -->
@@ -33,22 +31,22 @@ const handleLogout = () => {
           <ThemeToggle />
 
           <template v-if="!userStore.isAuthenticated">
-            <RouterLink
+            <NuxtLink
               to="/login"
               class="text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
             >
               {{ t('nav.login') }}
-            </RouterLink>
-            <RouterLink
+            </NuxtLink>
+            <NuxtLink
               to="/login"
               class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
             >
               {{ t('nav.startJourney') }}
-            </RouterLink>
+            </NuxtLink>
           </template>
 
           <template v-else>
-            <RouterLink
+            <NuxtLink
               to="/profile"
               class="inline-flex items-center gap-2 rounded-lg px-2 py-1 text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-white"
             >
@@ -65,7 +63,7 @@ const handleLogout = () => {
                 {{ (userStore.user?.username?.charAt(0) ?? 'U').toUpperCase() }}
               </span>
               <span class="text-sm font-medium">{{ userStore.user?.username ?? '' }}</span>
-            </RouterLink>
+            </NuxtLink>
             <BaseButton variant="outline" size="sm" @click="handleLogout">
               {{ t('nav.logout') }}
             </BaseButton>
