@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { UserIcon, LockClosedIcon } from '@heroicons/vue/24/solid'
 import { useUserStore } from '@/stores/user'
 
-const router = useRouter()
+// 登录页使用空布局（无导航栏 / 页脚），并对未认证用户公开。
+definePageMeta({
+  public: true,
+  layout: 'empty',
+})
+
 const userStore = useUserStore()
 const username = ref('')
 const password = ref('')
@@ -19,7 +23,7 @@ const handleLogin = async () => {
   errorMsg.value = ''
   try {
     await userStore.login(username.value, password.value)
-    router.push('/dashboard')
+    await navigateTo('/dashboard')
   } catch {
     errorMsg.value = t('login.error', 'Login failed')
   } finally {
@@ -178,7 +182,7 @@ const handleLogin = async () => {
     border-bottom-right-radius: 100px;
     margin-right: -50px;
   }
-  
+
   /* 确保蓝色面板内容在曲线背景之上 */
   .bg-\[\#6C63FF\] > div.relative {
     z-index: 20;

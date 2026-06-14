@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { UserProfile } from '@/types'
 import type { IAuthService } from '@/types/services'
+import { createSupabaseAuthService } from '@/services/supabase/authService'
 
 const mockSignInWithOtp = vi.fn()
 const mockGetUser = vi.fn()
@@ -20,8 +22,10 @@ function createQueryBuilder(resolvedValue: unknown) {
   return builder
 }
 
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: () => ({
+// 注入式 stub 客户端：适配器工厂现在接收 SupabaseClient 参数（请求作用域），
+// 不再从 @/lib/supabase 取模块单例。
+function createStubClient(): SupabaseClient {
+  return {
     auth: {
       signInWithOtp: mockSignInWithOtp,
       getUser: mockGetUser,
@@ -29,8 +33,8 @@ vi.mock('@/lib/supabase', () => ({
     },
     schema: () => ({ from: mockFrom }),
     from: mockFrom,
-  }),
-}))
+  } as unknown as SupabaseClient
+}
 
 const FAKE_USER_ID = '550e8400-e29b-41d4-a716-446655440000'
 const FAKE_EMAIL = 'test@juanleme.com'
@@ -48,11 +52,10 @@ const FAKE_PROFILE: UserProfile = {
 describe('Supabase Auth 适配器', () => {
   let authService: IAuthService
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
 
-    const mod = await import('@/services/supabase/authService')
-    authService = mod.createSupabaseAuthService()
+    authService = createSupabaseAuthService(createStubClient())
   })
 
   describe('login', () => {

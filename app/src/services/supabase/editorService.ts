@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { EditorDraft } from '@/types'
 import type { IEditorService } from '@/types/services'
 
@@ -9,16 +9,19 @@ type DbDocumentRow = {
   updated_at: string
 }
 
-async function getCurrentUserId(): Promise<string> {
-  const { data, error } = await getSupabase().auth.getUser()
+async function getCurrentUserId(supabase: SupabaseClient): Promise<string> {
+  const { data, error } = await supabase.auth.getUser()
   if (error || !data.user) {
     throw new Error(error?.message ?? '未登录')
   }
   return data.user.id
 }
 
-async function getRevisionCount(documentId: string): Promise<number> {
-  const { count, error } = await getSupabase()
+async function getRevisionCount(
+  supabase: SupabaseClient,
+  documentId: string,
+): Promise<number> {
+  const { count, error } = await supabase
     .schema('juanleme')
     .from('document_revisions')
     .select('*', { count: 'exact', head: true })
@@ -40,11 +43,13 @@ function toEditorDraft(row: DbDocumentRow, revision: number): EditorDraft {
   }
 }
 
-export function createSupabaseEditorService(): IEditorService {
+export function createSupabaseEditorService(
+  supabase: SupabaseClient,
+): IEditorService {
   return {
     async loadDraft(key: EditorDraft['key']): Promise<EditorDraft | undefined> {
-      const userId = await getCurrentUserId()
-      const { data, error } = await getSupabase()
+      const userId = await getCurrentUserId(supabase)
+      const { data, error } = await supabase
         .schema('juanleme')
         .from('documents')
         .select('id, node_id, content, updated_at')
@@ -61,13 +66,13 @@ export function createSupabaseEditorService(): IEditorService {
       }
 
       const row = data as DbDocumentRow
-      const revision = await getRevisionCount(row.id)
+      const revision = await getRevisionCount(supabase, row.id)
       return toEditorDraft(row, revision)
     },
 
     async saveDraft(draft: EditorDraft): Promise<EditorDraft> {
-      const userId = await getCurrentUserId()
-      const { data, error } = await getSupabase()
+      const userId = await getCurrentUserId(supabase)
+      const { data, error } = await supabase
         .schema('juanleme')
         .from('documents')
         .upsert(
@@ -87,13 +92,13 @@ export function createSupabaseEditorService(): IEditorService {
       }
 
       const row = data as DbDocumentRow
-      const revision = await getRevisionCount(row.id)
+      const revision = await getRevisionCount(supabase, row.id)
       return toEditorDraft(row, revision)
     },
 
     async deleteDraft(key: EditorDraft['key']): Promise<void> {
-      const userId = await getCurrentUserId()
-      const { error } = await getSupabase()
+      const userId = await getCurrentUserId(supabase)
+      const { error } = await supabase
         .schema('juanleme')
         .from('documents')
         .delete()

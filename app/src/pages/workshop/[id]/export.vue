@@ -4,7 +4,6 @@
 /* biome-ignore-all lint/correctness/noUnusedVariables: 模板中会使用变量 */
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
 import { ArrowDownTrayIcon, ArrowLeftIcon, PrinterIcon } from '@heroicons/vue/24/outline'
 import BaseButton from '@/components/common/BaseButton.vue'
 import { useWorkshopStore } from '@/stores/workshop'
@@ -13,7 +12,6 @@ import '@/assets/print.css'
 
 const { t, locale } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const workshopStore = useWorkshopStore()
 
 const workshopId = computed(() => String(route.params.id ?? ''))
@@ -43,10 +41,10 @@ function downloadCurrentWorkshopMarkdown(): void {
 
 function goBackToWorkshop(): void {
   if (!workshopId.value) {
-    void router.push('/dashboard')
+    void navigateTo('/dashboard')
     return
   }
-  void router.push(`/workshop/${workshopId.value}`)
+  void navigateTo(`/workshop/${workshopId.value}`)
 }
 
 onMounted(async () => {

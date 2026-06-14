@@ -1,6 +1,7 @@
 import type { IAiService } from '@/types/services'
 import type { AiMessage, AiConversation } from '@/types'
 import { AI_TEMPLATES, AI_DEFAULT_RESPONSE } from './data'
+import { safeStorage } from '@/lib/safeStorage'
 
 const CONVERSATION_PREFIX = 'ai-conv:'
 
@@ -39,7 +40,7 @@ export function createMockAiService(): IAiService {
       }
 
       const messages = conv ? [...conv.messages, userMsg, aiMessage] : [userMsg, aiMessage]
-      localStorage.setItem(
+      safeStorage.setItem(
         `${CONVERSATION_PREFIX}${nodeId}`,
         JSON.stringify({ nodeId, messages }),
       )
@@ -48,12 +49,12 @@ export function createMockAiService(): IAiService {
     },
 
     async getConversation(nodeId: string): Promise<AiConversation | undefined> {
-      const raw = localStorage.getItem(`${CONVERSATION_PREFIX}${nodeId}`)
+      const raw = safeStorage.getItem(`${CONVERSATION_PREFIX}${nodeId}`)
       return raw ? (JSON.parse(raw) as AiConversation) : undefined
     },
 
     async clearConversation(nodeId: string): Promise<void> {
-      localStorage.removeItem(`${CONVERSATION_PREFIX}${nodeId}`)
+      safeStorage.removeItem(`${CONVERSATION_PREFIX}${nodeId}`)
     },
   }
 }

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { services } from '@/services/registry'
+import { useServices } from '@/composables/useServices'
 import type { EditorDraft } from '@/types'
 
 export const useEditorStore = defineStore('editor', () => {
@@ -42,7 +42,8 @@ export const useEditorStore = defineStore('editor', () => {
       revision: draftRevision.value,
     }
 
-    await services.editor.saveDraft(draft)
+    const { editor } = useServices()
+    await editor.saveDraft(draft)
     isDirty.value = false
   }
 
@@ -56,7 +57,8 @@ export const useEditorStore = defineStore('editor', () => {
 
   async function loadDraft(key: string) {
     currentDraftKey.value = key
-    const draft = await services.editor.loadDraft(key)
+    const { editor } = useServices()
+    const draft = await editor.loadDraft(key)
 
     if (draft) {
       content.value = draft.content

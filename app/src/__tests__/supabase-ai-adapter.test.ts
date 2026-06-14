@@ -1,26 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { IAiService } from '@/types/services'
 import { AiRateLimitError, AiServiceUnavailableError } from '@/types'
+import { createSupabaseAiService } from '@/services/supabase/aiService'
 
 const mockInvoke = vi.fn()
 
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: () => ({
+// 注入式 stub 客户端：适配器工厂现在接收 SupabaseClient 参数。
+function createStubClient(): SupabaseClient {
+  return {
     functions: {
       invoke: mockInvoke,
     },
-  }),
-}))
+  } as unknown as SupabaseClient
+}
 
 describe('Supabase AI 适配器', () => {
   let service: IAiService
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
     localStorage.clear()
 
-    const mod = await import('@/services/supabase/aiService')
-    service = mod.createSupabaseAiService()
+    service = createSupabaseAiService(createStubClient())
   })
 
   it('reply 会调用 Edge Function 并返回 AiMessage 结构', async () => {

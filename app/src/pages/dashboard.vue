@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { services } from '@/services/registry'
+import { useServices } from '@/composables/useServices'
 import type { Workshop, UserProfile } from '@/types'
 import WorkshopCard from '@/components/workshop/WorkshopCard.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
@@ -25,10 +25,11 @@ const joinedWorkshops = computed(() => workshops.value.filter(w => w.is_joined))
 const managedWorkshops = computed(() => workshops.value.filter(w => w.creator_id === user.value?.id))
 
 onMounted(async () => {
+  const { auth, workshop } = useServices()
   try {
     const [userData, workshopData] = await Promise.all([
-      services.auth.getCurrentUser(),
-      services.workshop.getWorkshops()
+      auth.getCurrentUser(),
+      workshop.getWorkshops()
     ])
     user.value = userData
     workshops.value = workshopData
@@ -92,15 +93,15 @@ const handleJoin = () => {
           <FolderIcon class="mr-2 h-5 w-5 text-indigo-500 dark:text-indigo-400" />
           {{ t('dashboard.joinedTitle') }} ({{ joinedWorkshops.length }})
         </h3>
-        
+
         <div v-if="joinedWorkshops.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
-          <WorkshopCard 
-            v-for="workshop in joinedWorkshops" 
-            :key="workshop.id" 
-            :workshop="workshop" 
+          <WorkshopCard
+            v-for="workshop in joinedWorkshops"
+            :key="workshop.id"
+            :workshop="workshop"
           />
         </div>
-        
+
         <!-- 我参与的空态 -->
         <div v-else class="rounded-xl border border-dashed border-gray-300 bg-white py-12 text-center dark:border-gray-700 dark:bg-gray-800">
           <p class="text-gray-500 dark:text-gray-400">{{ t('dashboard.emptyJoined') }}</p>
@@ -115,14 +116,14 @@ const handleJoin = () => {
         </h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <WorkshopCard 
-            v-for="workshop in managedWorkshops" 
-            :key="workshop.id" 
-            :workshop="workshop" 
+          <WorkshopCard
+            v-for="workshop in managedWorkshops"
+            :key="workshop.id"
+            :workshop="workshop"
           />
-          
+
           <!-- 创建工作坊占位卡 -->
-          <button 
+          <button
             @click="handleCreate"
             class="group flex h-full min-h-[280px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 p-6 text-center transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-50 dark:border-gray-700 dark:hover:border-indigo-400 dark:hover:bg-gray-700"
           >

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import type { RoadmapNode, Workshop } from '@/types'
-import { services } from '@/services/registry'
+import { useServices } from '@/composables/useServices'
 
 export const useWorkshopStore = defineStore('workshop', () => {
   const currentWorkshop = ref<Workshop | null>(null)
@@ -16,9 +16,10 @@ export const useWorkshopStore = defineStore('workshop', () => {
   async function loadWorkshop(id: string) {
     loading.value = true
     try {
+      const { workshop: workshopService } = useServices()
       const [workshop, nodes] = await Promise.all([
-        services.workshop.getWorkshop(id),
-        services.workshop.getRoadmap(id),
+        workshopService.getWorkshop(id),
+        workshopService.getRoadmap(id),
       ])
 
       if (workshop) {

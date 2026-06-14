@@ -1,5 +1,4 @@
 import { computed, onBeforeUnmount, ref, watch, type ComputedRef } from 'vue'
-import type { Router } from 'vue-router'
 import { useEditorStore } from '@/stores/editor'
 import { useWorkshopStore } from '@/stores/workshop'
 
@@ -7,7 +6,6 @@ interface UseWorkshopDetailSessionOptions {
   workshopId: ComputedRef<string>
   activeNodeId: ComputedRef<string>
   createDraftKey: (nodeId: string) => string
-  router: Router
 }
 
 function toPlainText(content: unknown): string {
@@ -106,7 +104,8 @@ export function useWorkshopDetailSession(options: UseWorkshopDetailSessionOption
     if (!options.workshopId.value) {
       return
     }
-    void options.router.push(`/workshop/${options.workshopId.value}/export`)
+    // navigateTo 由 Nuxt 自动导入，替代 vue-router 的 router.push。
+    void navigateTo(`/workshop/${options.workshopId.value}/export`)
   }
 
   watch(

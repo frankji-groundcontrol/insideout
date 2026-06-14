@@ -1,6 +1,7 @@
 import type { IAuthService } from '@/types/services'
 import type { UserProfile } from '@/types'
 import { MOCK_USER } from './data'
+import { safeStorage } from '@/lib/safeStorage'
 
 const delay = (ms = 500) =>
   new Promise(resolve => setTimeout(resolve, ms + Math.random() * 500))
@@ -25,8 +26,8 @@ export function createMockAuthService(): IAuthService {
 
     async logout(): Promise<void> {
       await delay(100)
-      localStorage.removeItem('juanleme-token')
-      localStorage.removeItem('juanleme-user')
+      safeStorage.removeItem('juanleme-token')
+      safeStorage.removeItem('juanleme-user')
     },
   }
 }

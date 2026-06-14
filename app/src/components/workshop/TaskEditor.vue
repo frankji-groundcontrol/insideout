@@ -16,6 +16,8 @@ const editorStore = useEditorStore()
 const { t } = useI18n()
 
 const editor = useEditor({
+  // Nuxt SSR：延迟到客户端再构建编辑器，避免服务端渲染时访问 document 报错与水合不一致
+  immediatelyRender: false,
   extensions: [
     StarterKit,
     Placeholder.configure({

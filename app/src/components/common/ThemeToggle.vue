@@ -9,16 +9,22 @@ const { t } = useI18n()
 
 const applyTheme = (theme: 'dark' | 'light') => {
   isDark.value = theme === 'dark'
-  document.documentElement.classList.toggle('dark', isDark.value)
+  // document 仅在客户端可用，SSR 下不可触碰。
+  if (import.meta.client) {
+    document.documentElement.classList.toggle('dark', isDark.value)
+  }
 }
 
 const toggleTheme = () => {
   const nextTheme = isDark.value ? 'light' : 'dark'
   applyTheme(nextTheme)
-  localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+  if (import.meta.client) {
+    localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+  }
 }
 
 onMounted(() => {
+  // onMounted 仅在客户端运行，这里读取 localStorage 进行首屏主题同步。
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY)
   const theme = savedTheme === 'dark' ? 'dark' : 'light'
   applyTheme(theme)
