@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { getServices } from '@/services/registry'
+import { buildServices, resolveBundleModes } from '@/services/registry'
+
+// 全 mock bundle（空配置 → resolveBundleModes 全部回退到 'mock'）。
+// buildServices 为纯异步构建器，替代了已移除的同步 getServices()。
+function getServices() {
+  return buildServices(resolveBundleModes({}), {})
+}
 
 describe('ServiceRegistry', () => {
   beforeEach(() => {
@@ -8,7 +14,7 @@ describe('ServiceRegistry', () => {
 
   describe('workshop', () => {
     it('getWorkshops 返回工作坊数组', async () => {
-      const { workshop } = getServices()
+      const { workshop } = await getServices()
       const workshops = await workshop.getWorkshops()
 
       expect(Array.isArray(workshops)).toBe(true)
@@ -18,7 +24,7 @@ describe('ServiceRegistry', () => {
     })
 
     it('saveSubmission 持久化后 getSubmission 可以读取', async () => {
-      const { workshop } = getServices()
+      const { workshop } = await getServices()
       const submission = {
         nodeId: 'node_test',
         userId: 'user_001',
@@ -36,7 +42,7 @@ describe('ServiceRegistry', () => {
 
   describe('editor', () => {
     it('saveDraft 后 loadDraft 可以正确读取', async () => {
-      const { editor } = getServices()
+      const { editor } = await getServices()
       const draft = {
         key: 'test-draft-key',
         content: { text: '草稿内容' },
@@ -51,7 +57,7 @@ describe('ServiceRegistry', () => {
     })
 
     it('deleteDraft 后 loadDraft 返回 undefined', async () => {
-      const { editor } = getServices()
+      const { editor } = await getServices()
       const draft = {
         key: 'to-delete',
         content: 'temp',
@@ -69,7 +75,7 @@ describe('ServiceRegistry', () => {
 
   describe('ai', () => {
     it('reply 对包含产品关键词的消息返回非空 AiMessage', async () => {
-      const { ai } = getServices()
+      const { ai } = await getServices()
       const msg = await ai.reply('node_1', '产品灵感')
 
       expect(msg).toHaveProperty('id')
@@ -79,7 +85,7 @@ describe('ServiceRegistry', () => {
     })
 
     it('reply 对无匹配关键词的消息返回默认回复', async () => {
-      const { ai } = getServices()
+      const { ai } = await getServices()
       const msg = await ai.reply('node_1', 'hello random text')
 
       expect(msg.role).toBe('assistant')
@@ -89,7 +95,7 @@ describe('ServiceRegistry', () => {
 
   describe('export', () => {
     it('generateMarkdown 返回包含工作坊标题的 markdown 字符串', async () => {
-      const { export: exportService } = getServices()
+      const { export: exportService } = await getServices()
       const md = await exportService.generateMarkdown({
         workshopId: 'ws_001',
         format: 'markdown',
@@ -102,7 +108,7 @@ describe('ServiceRegistry', () => {
     })
 
     it('generatePrintHTML 返回有效的 HTML 文档', async () => {
-      const { export: exportService } = getServices()
+      const { export: exportService } = await getServices()
       const html = await exportService.generatePrintHTML({
         workshopId: 'ws_001',
         format: 'print',

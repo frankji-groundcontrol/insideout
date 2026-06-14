@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RoadmapNode, UserSubmission, Workshop } from '@/types'
 import type { IWorkshopService } from '@/types/services'
+import { createSupabaseWorkshopService } from '@/services/supabase/workshopService'
 
 type QueryResult<T> = Promise<{ data: T; error: { message: string } | null }>
 
@@ -29,12 +31,13 @@ const mockRpc = vi.fn()
 const mockFrom = vi.fn()
 const mockSchema = vi.fn()
 
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: () => ({
+// 注入式 stub 客户端：适配器工厂现在接收 SupabaseClient 参数。
+function createStubClient(): SupabaseClient {
+  return {
     auth: { getUser: mockAuthGetUser },
     schema: mockSchema,
-  }),
-}))
+  } as unknown as SupabaseClient
+}
 
 const FAKE_USER_ID = '550e8400-e29b-41d4-a716-446655440000'
 const FAKE_WORKSHOP_ID = '550e8400-e29b-41d4-a716-446655440001'
@@ -43,7 +46,7 @@ const FAKE_NODE_ID = '550e8400-e29b-41d4-a716-446655440011'
 describe('Supabase Workshop adapter', () => {
   let service: IWorkshopService
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
 
     mockSchema.mockReturnValue({
@@ -56,8 +59,7 @@ describe('Supabase Workshop adapter', () => {
       error: null,
     })
 
-    const mod = await import('@/services/supabase/workshopService')
-    service = mod.createSupabaseWorkshopService()
+    service = createSupabaseWorkshopService(createStubClient())
   })
 
   it('getWorkshops returns Workshop[] with summary fields', async () => {

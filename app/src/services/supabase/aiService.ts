@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import {
   AiRateLimitError,
   AiServiceUnavailableError,
@@ -6,6 +6,7 @@ import {
   type AiMessage,
 } from '@/types'
 import type { IAiService } from '@/types/services'
+import { safeStorage } from '@/lib/safeStorage'
 
 const CONVERSATION_PREFIX = 'ai-conv:'
 
@@ -78,11 +79,9 @@ function validateAssistantMessage(data: unknown): AiMessage {
   }
 }
 
-export function createSupabaseAiService(): IAiService {
+export function createSupabaseAiService(supabase: SupabaseClient): IAiService {
   return {
     async reply(nodeId: string, message: string): Promise<AiMessage> {
-      const supabase = getSupabase()
-
       // 先调用服务端函数生成回复，再把用户消息与助手消息一起落到本地会话。
       const { data, error } = await supabase.functions.invoke('juanleme-ai-generate', {
         body: { nodeId, message },
@@ -118,7 +117,7 @@ export function createSupabaseAiService(): IAiService {
         ? [...conv.messages, userMessage, assistantMessage]
         : [userMessage, assistantMessage]
 
-      localStorage.setItem(
+      safeStorage.setItem(
         `${CONVERSATION_PREFIX}${nodeId}`,
         JSON.stringify({ nodeId, messages }),
       )
@@ -127,7 +126,7 @@ export function createSupabaseAiService(): IAiService {
     },
 
     async getConversation(nodeId: string): Promise<AiConversation | undefined> {
-      const raw = localStorage.getItem(`${CONVERSATION_PREFIX}${nodeId}`)
+      const raw = safeStorage.getItem(`${CONVERSATION_PREFIX}${nodeId}`)
       if (!raw) {
         return undefined
       }
@@ -136,13 +135,13 @@ export function createSupabaseAiService(): IAiService {
         return JSON.parse(raw) as AiConversation
       } catch {
         // 本地缓存损坏时清理，避免后续反复解析失败。
-        localStorage.removeItem(`${CONVERSATION_PREFIX}${nodeId}`)
+        safeStorage.removeItem(`${CONVERSATION_PREFIX}${nodeId}`)
         return undefined
       }
     },
 
     async clearConversation(nodeId: string): Promise<void> {
-      localStorage.removeItem(`${CONVERSATION_PREFIX}${nodeId}`)
+      safeStorage.removeItem(`${CONVERSATION_PREFIX}${nodeId}`)
     },
   }
 }

@@ -1,6 +1,7 @@
 import type { IWorkshopService } from '@/types/services'
 import type { Workshop, RoadmapNode, UserSubmission } from '@/types'
 import { MOCK_WORKSHOPS, MOCK_NODES } from './data'
+import { safeStorage } from '@/lib/safeStorage'
 
 const delay = (ms = 500) =>
   new Promise(resolve => setTimeout(resolve, ms + Math.random() * 500))
@@ -58,13 +59,13 @@ export function createMockWorkshopService(): IWorkshopService {
 
     async getSubmission(nodeId: string): Promise<UserSubmission | undefined> {
       await delay(200)
-      const raw = localStorage.getItem(`${SUBMISSION_PREFIX}${nodeId}`)
+      const raw = safeStorage.getItem(`${SUBMISSION_PREFIX}${nodeId}`)
       return raw ? (JSON.parse(raw) as UserSubmission) : undefined
     },
 
     async saveSubmission(submission: UserSubmission): Promise<UserSubmission> {
       await delay(300)
-      localStorage.setItem(
+      safeStorage.setItem(
         `${SUBMISSION_PREFIX}${submission.nodeId}`,
         JSON.stringify(submission),
       )

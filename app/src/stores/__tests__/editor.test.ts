@@ -7,13 +7,13 @@ const { loadDraftMock, saveDraftMock } = vi.hoisted(() => ({
   saveDraftMock: vi.fn<(draft: EditorDraft) => Promise<EditorDraft>>(),
 }))
 
-vi.mock('@/services/registry', () => ({
-  services: {
+vi.mock('@/composables/useServices', () => ({
+  useServices: () => ({
     editor: {
       loadDraft: loadDraftMock,
       saveDraft: saveDraftMock,
     },
-  },
+  }),
 }))
 
 import { useEditorStore } from '@/stores/editor'

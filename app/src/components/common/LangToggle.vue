@@ -8,7 +8,10 @@ const { locale, t } = useI18n()
 const toggleLanguage = () => {
   const nextLocale = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
   locale.value = nextLocale
-  localStorage.setItem(LANG_STORAGE_KEY, nextLocale)
+  // localStorage 仅在客户端可用，SSR 下不可触碰。
+  if (import.meta.client) {
+    localStorage.setItem(LANG_STORAGE_KEY, nextLocale)
+  }
 }
 
 const currentCode = computed(() => (locale.value === 'zh-CN' ? 'CN' : 'EN'))

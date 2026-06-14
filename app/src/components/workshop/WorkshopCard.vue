@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
 import type { Workshop } from '@/types'
 import {
   UserGroupIcon,
@@ -33,7 +32,7 @@ const statusConfig = computed(() => {
 </script>
 
 <template>
-  <RouterLink 
+  <NuxtLink
     :to="`/workshop/${workshop.id}`"
     class="group block h-full cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-200 hover:shadow-md dark:border-gray-700 dark:bg-gray-800"
   >
@@ -81,5 +80,5 @@ const statusConfig = computed(() => {
         </div>
       </div>
     </div>
-  </RouterLink>
+  </NuxtLink>
 </template>

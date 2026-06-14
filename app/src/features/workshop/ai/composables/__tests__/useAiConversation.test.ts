@@ -7,8 +7,8 @@ const getConversationMock = vi.hoisted(() => vi.fn());
 const clearConversationMock = vi.hoisted(() => vi.fn());
 const enqueueInsertMock = vi.hoisted(() => vi.fn());
 
-vi.mock("@/services/registry", () => ({
-	requireServices: () => ({
+vi.mock("@/composables/useServices", () => ({
+	useServices: () => ({
 		ai: {
 			reply: replyMock,
 			getConversation: getConversationMock,

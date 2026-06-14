@@ -4,7 +4,6 @@
 /* biome-ignore-all lint/correctness/noUnusedVariables: 模板中会使用变量 */
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import AiSidebar from '@/components/workshop/AiSidebar.vue'
 import RoadmapSidebar from '@/components/workshop/RoadmapSidebar.vue'
@@ -14,12 +13,12 @@ import WorkshopActionBar from './components/WorkshopActionBar.vue'
 import { useWorkshopDraftKey } from './composables/useWorkshopDraftKey'
 import { useWorkshopDetailSession } from './composables/useWorkshopDetailSession'
 import { useWorkshopViewport } from './composables/useWorkshopViewport'
-import TaskEditor from '@/views/workshop/TaskEditor.vue'
+import TaskEditor from '@/components/workshop/TaskEditor.vue'
 
 type MobileTab = 'roadmap' | 'editor' | 'ai'
 
+// useRoute 由 Nuxt 自动导入（@/composables 无需手动引入 vue-router）。
 const route = useRoute()
-const router = useRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const workshopStore = useWorkshopStore()
@@ -41,7 +40,6 @@ const useWorkshopDetailSessionInstance = useWorkshopDetailSession({
   workshopId,
   activeNodeId,
   createDraftKey,
-  router,
 })
 
 const { nodes, activeNode, loading, switchNodeWithDraft, handleCompleteNode, goToExportPage } =

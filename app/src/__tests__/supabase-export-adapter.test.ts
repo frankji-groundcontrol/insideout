@@ -1,23 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { IExportService } from '@/types/services'
+import { createSupabaseExportService } from '@/services/supabase/exportService'
 
 const mockInvoke = vi.fn()
 
-vi.mock('@/lib/supabase', () => ({
-  getSupabase: () => ({
+// 注入式 stub 客户端：适配器工厂现在接收 SupabaseClient 参数。
+function createStubClient(): SupabaseClient {
+  return {
     functions: {
       invoke: mockInvoke,
     },
-  }),
-}))
+  } as unknown as SupabaseClient
+}
 
 describe('Supabase 导出适配器', () => {
   let service: IExportService
 
-  beforeEach(async () => {
+  beforeEach(() => {
     vi.clearAllMocks()
-    const mod = await import('@/services/supabase/exportService')
-    service = mod.createSupabaseExportService()
+    service = createSupabaseExportService(createStubClient())
   })
 
   it('generateMarkdown 使用 markdown 格式调用 Edge Function 并返回文本', async () => {

@@ -1,4 +1,4 @@
-import { getSupabase } from '@/lib/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ExportConfig } from '@/types'
 import type { IExportService } from '@/types/services'
 
@@ -20,9 +20,10 @@ type ExportFunctionResponse = {
 }
 
 async function invokeExportFunction(
+  supabase: SupabaseClient,
   payload: ExportFunctionPayload,
 ): Promise<ExportFunctionResponse> {
-  const { data, error } = await getSupabase().functions.invoke('juanleme-export-document', {
+  const { data, error } = await supabase.functions.invoke('juanleme-export-document', {
     body: payload,
   })
 
@@ -56,10 +57,12 @@ async function resolveExportContent(response: ExportFunctionResponse): Promise<s
   return result.text()
 }
 
-export function createSupabaseExportService(): IExportService {
+export function createSupabaseExportService(
+  supabase: SupabaseClient,
+): IExportService {
   return {
     async generateMarkdown(config: ExportConfig): Promise<string> {
-      const response = await invokeExportFunction({
+      const response = await invokeExportFunction(supabase, {
         workshopId: config.workshopId,
         format: 'markdown',
         includeEmptyNodes: config.includeEmptyNodes,
@@ -69,7 +72,7 @@ export function createSupabaseExportService(): IExportService {
     },
 
     async generatePrintHTML(config: ExportConfig): Promise<string> {
-      const response = await invokeExportFunction({
+      const response = await invokeExportFunction(supabase, {
         workshopId: config.workshopId,
         format: 'html',
         includeEmptyNodes: config.includeEmptyNodes,
