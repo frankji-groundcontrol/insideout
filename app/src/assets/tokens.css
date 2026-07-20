@@ -1,0 +1,117 @@
+/**
+ * Design tokens — runtime source of truth (设计系统交付物 §4).
+ *
+ * Theme: 国风留白 / Ink & Seal — a soft celadon (青) ground with sumi-ink text and a
+ * single vermilion 印泥 (cinnabar-seal) accent. Source of truth is the Figma matrix page
+ * "Ink&Seal · 全部" (iPhone/iPad/Web × light/dark, all screens + the presets sheet).
+ *
+ * Two-tier model: the SEMANTIC tokens below are the only names components reference.
+ * Values are CHANNEL TRIPLETS ("200 64 47") so Tailwind's `<alpha-value>` opacity
+ * modifiers keep working (bg-surface-overlay/50, etc.). The `.dark` block re-defines the
+ * same vars so a single class flip themes the app — no per-utility `dark:` sprawl.
+ * Dark status -bg values are pre-composited as solid colors so they flip cleanly.
+ *
+ * Signature roles (--color-seal / -carve / -btn) carry the Ink & Seal language: the
+ * vermilion chop, the paper "carve" color drawn on a seal/ink fill, and the ink primary
+ * button surface (which inverts to paper on dark). Loaded before style.css via the Nuxt
+ * `css` array so :root is defined before paint.
+ */
+:root {
+  /* Brand — 印泥 vermilion is the signature accent (was indigo) */
+  --color-brand: 200 64 47; /* seal / cinnabar */
+  --color-brand-hover: 168 52 38; /* pressed seal */
+  --color-brand-subtle: 242 221 215; /* pale vermilion wash */
+  --color-brand-ring: 200 64 47;
+  --brand-gradient-from: 200 64 47; /* seal */
+  --brand-gradient-to: 143 46 34; /* deep cinnabar */
+
+  /* Surface (page / card / input well / scrim) — celadon 青 */
+  --color-surface-base: 228 234 228; /* celadon ground */
+  --color-surface-raised: 238 241 235; /* raised panel */
+  --color-surface-sunken: 216 224 216; /* sunken celadon */
+  --color-surface-overlay: 0 0 0; /* scrim, used with /50 */
+
+  /* Border — thin ink hairlines */
+  --color-stroke-subtle: 194 202 191; /* celadon hairline */
+  --color-stroke-strong: 169 179 165;
+  --color-stroke-focus: 200 64 47; /* vermilion focus ring */
+
+  /* Text — sumi ink */
+  --color-fg-primary: 33 30 26; /* ink */
+  --color-fg-secondary: 70 67 60; /* body */
+  --color-fg-muted: 94 91 82; /* meta */
+  --color-fg-inverse: 242 244 238; /* paper — text on ink/seal fills */
+  --color-fg-brand: 200 64 47; /* seal-colored text */
+  --color-fg-danger: 181 54 42;
+
+  /* Status (lifecycle): -bg / -fg pairs, harmonized to the Ink & Seal palette */
+  --color-status-neutral-bg: 221 224 218; /* grey chop wash (locked) */
+  --color-status-neutral-fg: 94 91 82;
+  --color-status-info-bg: 242 222 217; /* seal wash (评审中 / 进行中) */
+  --color-status-info-fg: 168 54 42;
+  --color-status-warn-bg: 243 234 214; /* aged-paper amber */
+  --color-status-warn-fg: 138 106 32;
+  --color-status-success-bg: 220 232 220; /* sage celadon (通过 / 完成) */
+  --color-status-success-fg: 62 107 74;
+  --color-status-danger-bg: 244 222 218;
+  --color-status-danger-fg: 168 54 42;
+
+  /* 国风留白 / Ink & Seal — signature roles */
+  --color-seal: 200 64 47; /* 印泥 vermilion — status/identity chops, accent */
+  --color-seal-strong: 168 52 38; /* hover / pressed seal */
+  --color-seal-locked: 140 138 128; /* grey chop (locked / neutral) */
+  --color-carve: 242 244 238; /* paper carve — text drawn on a seal/ink fill */
+  --color-btn: 33 30 26; /* primary action surface (ink in light) */
+  --color-btn-fg: 242 244 238; /* text on the primary action surface */
+
+  /* Radius / z (theme-invariant) */
+  --radius-control: 0.625rem; /* 10px — buttons, inputs */
+  --radius-card: 1rem; /* 2xl — cards */
+  --radius-pill: 9999px;
+  --radius-hero: 1.5rem; /* 3xl — login/brand shells */
+}
+
+.dark {
+  /* Ink-night ground; the vermilion seal lifts slightly so chops glow on dark */
+  --color-brand: 216 74 49;
+  --color-brand-hover: 200 64 47;
+  --color-brand-subtle: 58 32 26; /* deep seal wash */
+  --color-brand-ring: 216 74 49;
+  --color-fg-brand: 224 106 82; /* seal text lifts for contrast */
+  --color-fg-danger: 232 133 122;
+  --brand-gradient-from: 216 74 49;
+  --brand-gradient-to: 168 52 38;
+
+  --color-surface-base: 22 26 23; /* ink-night ground */
+  --color-surface-raised: 30 36 31;
+  --color-surface-sunken: 18 22 19;
+  --color-surface-overlay: 0 0 0;
+
+  --color-stroke-subtle: 46 52 46;
+  --color-stroke-strong: 58 66 58;
+
+  --color-fg-primary: 230 233 225; /* rice-paper text */
+  --color-fg-secondary: 185 190 178;
+  --color-fg-muted: 140 145 134;
+  --color-fg-inverse: 22 26 23; /* dark text on the paper-fill primary button */
+
+  /* Status: pre-composited solid -bg on the ink-night ground; -fg lifts */
+  --color-status-neutral-bg: 42 46 42;
+  --color-status-neutral-fg: 170 174 166;
+  --color-status-info-bg: 58 32 26;
+  --color-status-info-fg: 232 144 126;
+  --color-status-warn-bg: 58 50 32;
+  --color-status-warn-fg: 216 182 106;
+  --color-status-success-bg: 30 46 34;
+  --color-status-success-fg: 143 179 155;
+  --color-status-danger-bg: 58 32 28;
+  --color-status-danger-fg: 232 144 126;
+
+  /* Ink & Seal signature roles (dark): the primary button inverts to paper */
+  --color-seal: 216 74 49;
+  --color-seal-strong: 200 64 47;
+  --color-seal-locked: 112 116 108;
+  --color-carve: 236 231 219;
+  --color-btn: 230 233 225;
+  --color-btn-fg: 22 26 23;
+}
