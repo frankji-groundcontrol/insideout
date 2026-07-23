@@ -18,10 +18,10 @@ const reduce = useReducedMotion()
 const ease = [0.16, 1, 0.3, 1] as const
 
 const steps = [
-  { n: 1, chop: '落墨', title: 'landing.step1Title', body: 'landing.step1Body', kind: 'idea' as const },
-  { n: 2, chop: '成文', title: 'landing.step2Title', body: 'landing.step2Body', kind: 'prd' as const },
-  { n: 3, chop: '分枝', title: 'landing.step3Title', body: 'landing.step3Body', kind: 'roadmap' as const },
-  { n: 4, chop: '盖印', title: 'landing.step4Title', body: 'landing.step4Body', kind: 'shipped' as const },
+  { n: 1, chop: '落墨', seal: '/seals/luomo.webp', title: 'landing.step1Title', body: 'landing.step1Body', kind: 'idea' as const },
+  { n: 2, chop: '成文', seal: '/seals/chengwen.webp', title: 'landing.step2Title', body: 'landing.step2Body', kind: 'prd' as const },
+  { n: 3, chop: '分枝', seal: '/seals/fenzhi.webp', title: 'landing.step3Title', body: 'landing.step3Body', kind: 'roadmap' as const },
+  { n: 4, chop: '盖印', seal: '/seals/gaiyin.webp', title: 'landing.step4Title', body: 'landing.step4Body', kind: 'shipped' as const },
 ]
 </script>
 
@@ -41,10 +41,14 @@ const steps = [
         :viewport="{ once: true, margin: '-80px' }"
         :transition="{ duration: 0.7, ease }"
       >
-        <span
+        <img
+          src="/seals/yin.webp"
+          alt="印"
           aria-hidden="true"
-          class="mx-auto flex h-14 w-14 select-none items-center justify-center rounded-lg bg-seal font-serif text-xl font-bold text-carve"
-        >印</span>
+          class="mx-auto h-14 w-14 select-none object-contain"
+          loading="lazy"
+          decoding="async"
+        />
         <h2 class="mt-6 font-serif text-3xl font-bold tracking-tight text-fg-primary sm:text-4xl">
           {{ t('landing.ctaCloseTitle') }}
         </h2>

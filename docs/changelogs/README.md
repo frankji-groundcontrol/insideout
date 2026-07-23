@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-24 — AI-generated baiwen seals for landing + navbar](2026-07-24-seal-image-generation.md)
+  — replaced the landing's hand-drawn `bg-seal` chops and the text-only navbar
+  brand with six codex-generated baiwen seal impressions (落墨/成文/分枝/盖印,
+  印, 内外), margin-knocked-out to transparency, normalized to the
+  `--color-seal` token, and served as 320px WebP.
 - [2026-07-23 — WOFF2 fonts + scratch cleanup](2026-07-23-woff2-fonts-and-scratch-cleanup.md)
   — converted the 4 self-hosted PuHuiTi weights from TTF (~32 MB) to WOFF2
   (~16 MB, full CJK coverage kept) and deleted the Prisma-detour scratch

@@ -55,7 +55,14 @@ const handleLogout = async () => {
       <div class="flex h-16 items-center justify-between">
         <!-- 品牌区 + 主导航 -->
         <div class="flex items-center gap-8">
-          <NuxtLink :to="brandTo" class="flex flex-shrink-0 items-center">
+          <NuxtLink :to="brandTo" class="flex flex-shrink-0 items-center gap-2">
+            <img
+              src="/seals/neiwei.webp"
+              alt=""
+              aria-hidden="true"
+              class="h-7 w-7 select-none object-contain"
+              decoding="async"
+            />
             <span class="font-serif text-xl font-bold text-seal">{{ t('nav.brand') }}</span>
           </NuxtLink>
           <NuxtLink

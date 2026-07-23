@@ -11,6 +11,7 @@ import { useReducedMotion } from '@/composables/useReducedMotion'
 interface Props {
   n: number
   chop: string
+  seal: string
   title: string
   body: string
   kind: 'idea' | 'prd' | 'roadmap' | 'shipped'
@@ -45,10 +46,14 @@ const ease = [0.16, 1, 0.3, 1] as const
         :transition="{ duration: 0.65, ease }"
       >
         <div class="flex items-center gap-3">
-          <span
+          <img
+            :src="seal"
+            :alt="chop"
             aria-hidden="true"
-            class="flex h-10 w-10 select-none items-center justify-center rounded-md bg-seal font-serif text-xs font-bold leading-none text-carve"
-          >{{ chop }}</span>
+            class="h-10 w-10 select-none object-contain"
+            loading="lazy"
+            decoding="async"
+          />
           <span class="text-sm font-medium text-fg-muted">{{ t('landing.stepLabel', { n }) }}</span>
         </div>
         <h2 class="mt-5 font-serif text-3xl font-bold tracking-tight text-fg-primary sm:text-4xl">
