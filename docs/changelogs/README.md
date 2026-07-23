@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-23 — WOFF2 fonts + scratch cleanup](2026-07-23-woff2-fonts-and-scratch-cleanup.md)
+  — converted the 4 self-hosted PuHuiTi weights from TTF (~32 MB) to WOFF2
+  (~16 MB, full CJK coverage kept) and deleted the Prisma-detour scratch
+  screenshots/mock.
 - [2026-07-23 — Bring the frontend rewrite + infra under version control](2026-07-23-frontend-version-control.md)
   — tracked the Nuxt 4 SSR frontend rewrite and deployment infra
   (docker-compose + Dockerfiles), removed the superseded `supabase/` backend,

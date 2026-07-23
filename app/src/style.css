@@ -1,29 +1,29 @@
-/* Alibaba PuHuiTi — self-hosted global font (Latin + full CJK), served from
-   /public/fonts so it renders with no external font CDN. Weights 400–800. */
+/* Alibaba PuHuiTi — self-hosted global font (Latin + full CJK), served as
+   WOFF2 from /public/fonts so it renders with no external font CDN. Weights 400–800. */
 @font-face {
   font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-Regular.ttf') format('truetype');
+  src: url('/fonts/AlibabaPuHuiTi-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-Medium.ttf') format('truetype');
+  src: url('/fonts/AlibabaPuHuiTi-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-Bold.ttf') format('truetype');
+  src: url('/fonts/AlibabaPuHuiTi-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-ExtraBold.ttf') format('truetype');
+  src: url('/fonts/AlibabaPuHuiTi-ExtraBold.woff2') format('woff2');
   font-weight: 800;
   font-style: normal;
   font-display: swap;
