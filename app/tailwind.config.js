@@ -92,13 +92,13 @@ export default {
         toast: '1040',
         tooltip: '1050'
       },
-      // Inter (matches the Figma source of truth) + Noto Sans SC (designed Han face),
-      // degrading to system-ui so SSR first paint is never blank. Self-hosting via
-      // @nuxt/fonts is an open delivery decision (§11) — the stack works as a graceful
-      // cascade today.
+      // Alibaba PuHuiTi is the universal sans — self-hosted (see style.css
+      // @font-face), covers Latin + full CJK. `serif` is the Ink & Seal display
+      // face: a Song/Mincho serif (Noto Serif SC) for headings + chop labels,
+      // falling back to PuHuiTi when no Song face is available.
       fontFamily: {
         sans: [
-          'Inter',
+          '"Alibaba PuHuiTi"',
           '"Noto Sans SC"',
           'system-ui',
           '-apple-system',
@@ -106,14 +106,12 @@ export default {
           '"Microsoft YaHei"',
           'sans-serif'
         ],
-        // Ink & Seal display: a Song/Mincho serif for headings + chop labels (font-serif).
-        // The Ma Shan Zheng brush face (watermark/卷 mark) remains an open self-hosting
-        // decision (§11); add it via @nuxt/fonts before relying on a `font-brush` utility.
         serif: [
           '"Noto Serif SC"',
+          '"Songti SC"',
+          '"Alibaba PuHuiTi"',
           'Georgia',
           'Cambria',
-          '"Songti SC"',
           '"Times New Roman"',
           'serif'
         ]

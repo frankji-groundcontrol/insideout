@@ -31,14 +31,21 @@ class MemoryStorage implements Storage {
   }
 }
 
+function isUsableStorage(value: unknown): value is Storage {
+  return typeof (value as Storage | undefined)?.clear === 'function'
+}
+
 function ensureStorage(name: 'localStorage' | 'sessionStorage'): void {
   const g = globalThis as unknown as Record<string, unknown>
-  if (g[name] == null) {
+  // happy-dom@20 defines globalThis.localStorage as a non-null stub that's
+  // missing methods like .clear() in some Node/happy-dom combinations, so a
+  // plain `== null` check no longer detects the broken case.
+  if (!isUsableStorage(g[name])) {
     const storage = new MemoryStorage()
     g[name] = storage
     // 同步挂到 window 上，便于通过 window.localStorage 访问的代码。
     const win = g.window as Record<string, unknown> | undefined
-    if (win && win[name] == null) {
+    if (win && !isUsableStorage(win[name])) {
       win[name] = storage
     }
   }

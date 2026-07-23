@@ -8,6 +8,9 @@ interface Props {
   loading?: boolean
   disabled?: boolean
   type?: 'button' | 'submit' | 'reset'
+  // When set, render as a single styled NuxtLink instead of a <button> — so
+  // call-to-action links stay one interactive element (never <a><button>).
+  to?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -16,21 +19,21 @@ const props = withDefaults(defineProps<Props>(), {
   block: false,
   loading: false,
   disabled: false,
-  type: 'button'
+  type: 'button',
+  to: undefined
 })
 
 const classes = computed(() => {
   const base =
-    'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed dark:focus:ring-offset-gray-900'
+    'inline-flex items-center justify-center rounded-control font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-stroke-focus disabled:opacity-50 disabled:cursor-not-allowed'
 
+  // Primary is INK (bg-btn/text-btn-fg, inverts to paper on dark) — the
+  // vermilion seal is reserved for accents/status, not the primary action.
   const variants = {
-    primary:
-      'bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500',
-    secondary:
-      'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600',
-    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-    outline:
-      'border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-indigo-500 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-700'
+    primary: 'bg-btn text-btn-fg hover:opacity-90',
+    secondary: 'bg-surface-sunken text-fg-primary hover:bg-surface-raised',
+    danger: 'bg-fg-danger text-fg-inverse hover:opacity-90',
+    outline: 'border border-stroke-subtle bg-transparent text-fg-secondary hover:bg-surface-sunken',
   }
 
   const sizes = {
@@ -49,7 +52,10 @@ const classes = computed(() => {
 </script>
 
 <template>
-  <button :type="type" :class="classes" :disabled="disabled || loading">
+  <NuxtLink v-if="to" :to="to" :class="classes">
+    <slot />
+  </NuxtLink>
+  <button v-else :type="type" :class="classes" :disabled="disabled || loading">
     <svg
       v-if="loading"
       class="animate-spin -ml-1 mr-2 h-4 w-4"

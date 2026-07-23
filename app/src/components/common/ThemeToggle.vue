@@ -37,7 +37,7 @@ const label = computed(() => (isDark.value ? t('theme.toggleLight') : t('theme.t
   <button
     type="button"
     data-testid="theme-toggle"
-    class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+    class="inline-flex h-9 w-9 items-center justify-center rounded-control border border-stroke-subtle bg-surface-raised text-fg-secondary transition-colors hover:bg-surface-sunken hover:text-fg-primary"
     :aria-label="label"
     :title="label"
     @click="toggleTheme"

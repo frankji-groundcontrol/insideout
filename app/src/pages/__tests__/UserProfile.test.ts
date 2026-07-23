@@ -1,18 +1,16 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { createI18n } from 'vue-i18n'
-import { createMockAuthService } from '@/services/mock/authService'
 import zhCN from '@/i18n/locales/zh-CN'
 import enUS from '@/i18n/locales/en-US'
 import type { UserProfile as UserProfileType } from '@/types'
 
-// userStore.updateProfile 现在通过 useServices() 委托给 auth 服务（运行时由 Nuxt 插件提供）。
-// 单元测试里 mock 该 composable，返回真实的 mock auth 服务以保留字段合并行为，
-// 避免依赖 Nuxt 应用上下文（useNuxtApp）。
-vi.mock('@/composables/useServices', () => ({
-  useServices: () => ({ auth: createMockAuthService() }),
-}))
+// Only the pure client-side validation is tested here — it runs and
+// short-circuits before any service call, so it needs no backend and no
+// mock. Save/update behavior now requires a real Go server; see
+// docs/plans/2026-07-20-go-rewrite/02-backend-go.md §5 for the
+// integration-test plan once DATABASE_URL is available.
 
 import UserProfile from '@/pages/profile.vue'
 import { useUserStore } from '@/stores/user'
@@ -22,100 +20,45 @@ const createTestI18n = () =>
     legacy: false,
     locale: 'zh-CN',
     fallbackLocale: 'zh-CN',
-    messages: {
-      'zh-CN': zhCN,
-      'en-US': enUS,
-    },
+    messages: { 'zh-CN': zhCN, 'en-US': enUS },
   })
 
 const createMockUser = (): UserProfileType => ({
   id: 'user_1',
   email: 'tester@example.com',
   username: 'tester',
-  avatar_url: 'https://example.com/avatar.png',
+  avatarUrl: 'https://example.com/avatar.png',
   bio: 'hello bio',
   keywords: ['product', 'design'],
-  role: 'user',
-  created_at: '2026-02-10T00:00:00.000Z',
 })
 
 describe('UserProfile', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorage.clear()
   })
 
   it('表单会回显 userStore 中的用户名、邮箱和简介', () => {
     const userStore = useUserStore()
     userStore.user = createMockUser()
 
-    const wrapper = mount(UserProfile, {
-      global: {
-        plugins: [createTestI18n()],
-      },
-    })
+    const wrapper = mount(UserProfile, { global: { plugins: [createTestI18n()] } })
 
-    const usernameInput = wrapper.get('[data-testid="profile-username"]')
-    const emailInput = wrapper.get('[data-testid="profile-email"]')
-    const bioInput = wrapper.get('[data-testid="profile-bio"]')
-
-    expect((usernameInput.element as HTMLInputElement).value).toBe('tester')
-    expect((emailInput.element as HTMLInputElement).value).toBe('tester@example.com')
-    expect((bioInput.element as HTMLTextAreaElement).value).toBe('hello bio')
+    expect((wrapper.get('[data-testid="profile-username"]').element as HTMLInputElement).value).toBe('tester')
+    expect((wrapper.get('[data-testid="profile-email"]').element as HTMLInputElement).value).toBe(
+      'tester@example.com',
+    )
+    expect((wrapper.get('[data-testid="profile-bio"]').element as HTMLTextAreaElement).value).toBe('hello bio')
   })
 
-  it('点击保存后会更新 userStore 中的资料', async () => {
+  it('用户名为空时会显示校验错误（不发起任何服务调用）', async () => {
     const userStore = useUserStore()
     userStore.user = createMockUser()
 
-    const wrapper = mount(UserProfile, {
-      global: {
-        plugins: [createTestI18n()],
-      },
-    })
-
-    await wrapper.get('[data-testid="profile-username"]').setValue('new-name')
-    await wrapper.get('[data-testid="profile-bio"]').setValue('new bio')
-    await wrapper.get('[data-testid="profile-keywords"]').setValue('frontend,vue,ts')
-    vi.useFakeTimers()
-    await wrapper.get('[data-testid="profile-form"]').trigger('submit')
-    await vi.advanceTimersByTimeAsync(2000)
-    await flushPromises()
-    vi.useRealTimers()
-
-    expect(userStore.user?.username).toBe('new-name')
-    expect(userStore.user?.bio).toBe('new bio')
-    expect(userStore.user?.keywords).toEqual(['frontend', 'vue', 'ts'])
-    expect(wrapper.text()).toContain('保存成功')
-  })
-
-  it('用户名为空时会显示校验错误', async () => {
-    const userStore = useUserStore()
-    userStore.user = createMockUser()
-
-    const wrapper = mount(UserProfile, {
-      global: {
-        plugins: [createTestI18n()],
-      },
-    })
+    const wrapper = mount(UserProfile, { global: { plugins: [createTestI18n()] } })
 
     await wrapper.get('[data-testid="profile-username"]').setValue('')
     await wrapper.get('[data-testid="profile-form"]').trigger('submit')
 
     expect(wrapper.text()).toContain('用户名不能为空')
-  })
-
-  it('updateProfile 会合并用户字段并持久化到 localStorage', async () => {
-    const userStore = useUserStore()
-    userStore.user = createMockUser()
-
-    await userStore.updateProfile({ username: 'merged-name', keywords: ['ai', 'workflow'] })
-
-    expect(userStore.user?.username).toBe('merged-name')
-    expect(userStore.user?.keywords).toEqual(['ai', 'workflow'])
-
-    const savedUser = JSON.parse(localStorage.getItem('juanleme-user') ?? '{}') as UserProfileType
-    expect(savedUser.username).toBe('merged-name')
-    expect(savedUser.keywords).toEqual(['ai', 'workflow'])
   })
 })

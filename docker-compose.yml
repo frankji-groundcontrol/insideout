@@ -1,0 +1,69 @@
+services:
+  # Self-hosted default. Not used when DATABASE_URL points at an external
+  # remote instance instead (e.g. during development) — see .env.example.
+  # 自托管默认项。当 DATABASE_URL 指向外部远程实例时（如开发期间）不使用此服务——见 .env.example。
+  postgres:
+    image: postgres:17
+    container_name: insideout_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: insideout
+      # Bootstrap superuser (image default POSTGRES_USER=postgres). Never
+      # the app's runtime role — see docker/postgres-init/ below.
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-insideout_dev_password}
+      # Read by docker/postgres-init/001-create-app-role.sh to create the
+      # actual runtime role, insideout_app, as a non-superuser OWNER of
+      # the insideout database — matching the provisioning model in
+      # docs/plans/2026-07-20-go-rewrite/01-database.md §2. A superuser
+      # bootstrap-user shortcut would bypass the REVOKE CREATE ON SCHEMA
+      # public lockdown that migration #1 relies on.
+      INSIDEOUT_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?set POSTGRES_APP_PASSWORD in .env}
+    ports:
+      - "${POSTGRES_PORT:-5442}:5432"
+    volumes:
+      - insideout_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d insideout"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: ./server
+    container_name: insideout_server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      INSIDEOUT_ADDR: ":8080"
+      # Compose can't nest ${...} inside a :- default, so DATABASE_URL has
+      # no derived default here — set it explicitly in .env. Pointing it at
+      # the bundled `postgres` service above, or overriding it entirely to
+      # a remote instance, are both supported. See .env.example.
+      # Compose 不支持在 :- 默认值里嵌套 ${...}，因此这里不为 DATABASE_URL 提供派生默认值——
+      # 请在 .env 中显式设置。可指向上面自带的 postgres 服务，也可完全指向远程实例。见 .env.example。
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
+      INSIDEOUT_JWT_SECRET: ${INSIDEOUT_JWT_SECRET:?set a real secret in .env}
+      ANTHROPIC_BASE_URL: ${ANTHROPIC_BASE_URL:-}
+      ANTHROPIC_AUTH_TOKEN: ${ANTHROPIC_AUTH_TOKEN:-}
+      AI_MODEL: ${AI_MODEL:-claude-sonnet-4-20250514}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+  app:
+    build:
+      context: ./app
+    container_name: insideout_app
+    restart: unless-stopped
+    depends_on:
+      - server
+    environment:
+      NUXT_API_INTERNAL_BASE: http://server:8080/api/v1
+    ports:
+      - "${APP_PORT:-3000}:3000"
+
+volumes:
+  insideout_pgdata:

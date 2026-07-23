@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { computed, useId } from 'vue'
+
+defineOptions({ inheritAttrs: false })
+
 interface Props {
   modelValue: string | number
   label?: string
@@ -9,39 +13,46 @@ interface Props {
   id?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   placeholder: '',
   required: false,
-  id: () => `input-${Math.random().toString(36).substring(2, 9)}`
+  id: undefined,
 })
 
 defineEmits<{
   (e: 'update:modelValue', value: string | number): void
 }>()
+
+// Math.random() produced a different id on the server vs. the client,
+// causing an SSR hydration mismatch on every unlabeled BaseInput —
+// useId() is Vue 3.5's SSR-stable id generator, built for exactly this.
+const autoId = useId()
+const inputId = computed(() => props.id ?? `input-${autoId}`)
 </script>
 
 <template>
   <div class="w-full">
     <label
       v-if="label"
-      :for="id"
-      class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300"
+      :for="inputId"
+      class="mb-1 block text-sm font-medium text-fg-secondary"
     >
       {{ label }}
-      <span v-if="required" class="text-red-500">*</span>
+      <span v-if="required" class="text-fg-danger">*</span>
     </label>
     <input
-      :id="id"
+      v-bind="$attrs"
+      :id="inputId"
       :type="type"
       :value="modelValue"
       :placeholder="placeholder"
-      class="block w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-900 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm dark:border-gray-700 dark:bg-gray-700 dark:text-gray-100"
-      :class="{ 'border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-500': error }"
+      class="block w-full rounded-control border border-stroke-subtle bg-surface-sunken px-3 py-2 text-fg-primary shadow-sm focus:border-stroke-focus focus:ring-stroke-focus sm:text-sm"
+      :class="{ 'border-fg-danger focus:border-fg-danger focus:ring-fg-danger': error }"
       @input="
         $emit('update:modelValue', ($event.target as HTMLInputElement).value)
       "
     />
-    <p v-if="error" class="mt-1 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+    <p v-if="error" class="mt-1 text-sm text-fg-danger">{{ error }}</p>
   </div>
 </template>

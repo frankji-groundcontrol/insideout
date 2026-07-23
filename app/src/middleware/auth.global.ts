@@ -1,12 +1,13 @@
 import { useUserStore } from '@/stores/user'
 
-// 导航守卫：未认证用户只能访问公开页面
-export default defineNuxtRouteMiddleware((to) => {
-  // 会话仅存于 localStorage，SSR 阶段恒为未认证；
-  // 跳过服务端以避免把所有受保护路由都重定向到 /login。
-  if (import.meta.server) return
-
+// Runs on both server and client now that sessions live in httpOnly
+// cookies (previously skipped the server entirely because the session
+// was localStorage-only — see docs/plans/2026-07-20-go-rewrite/04-frontend.md §2).
+export default defineNuxtRouteMiddleware(async (to) => {
   const userStore = useUserStore()
+  if (!userStore.hydrated) {
+    await userStore.hydrate()
+  }
 
   if (to.path === '/login' && userStore.isAuthenticated) {
     return navigateTo('/dashboard')

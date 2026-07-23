@@ -148,6 +148,9 @@
 - Theme/locale still live in localStorage, not cookies (possible SSR
   first-paint flash).
 - PRD section editors are plain textareas — no rich-text editor.
+- Self-hosted PuHuiTi fonts are full TTFs (~32 MB for 4 weights) — convert to
+  WOFF2 (+ CJK subsetting) to shrink; see
+  [2026-07-23 frontend VC changelog](changelogs/2026-07-23-frontend-version-control.md).
 - GitHub sync is owner/admin + unauthenticated public API (no private repos);
   roadmap tree has no drag-to-reorder in the UI yet (API `move` exists).
 - Open structural question: tracked coding-tool scratch directories, see

@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-23 — Bring the frontend rewrite + infra under version control](2026-07-23-frontend-version-control.md)
+  — tracked the Nuxt 4 SSR frontend rewrite and deployment infra
+  (docker-compose + Dockerfiles), removed the superseded `supabase/` backend,
+  and self-hosted the PuHuiTi fonts. Completes the cutover: the whole new
+  stack is now in git.
 - [2026-07-23 — Coach markdown rendering + idea-shaping positioning](2026-07-23-coach-markdown-and-positioning.md)
   — coach messages render real markdown (marked + dompurify, SSR-safe) via a
   token-styled `MarkdownBody`, and copy was reframed from "build/code" to

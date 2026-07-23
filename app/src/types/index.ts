@@ -1,57 +1,161 @@
+// Domain types matching the Go API's camelCase JSON contract — see
+// docs/plans/2026-07-20-go-rewrite/02-backend-go.md §3.
+
 export interface UserProfile {
   id: string
   email: string
   username: string
-  avatar_url?: string
-  bio?: string
-  keywords?: string[]
-  role: 'admin' | 'user'
-  created_at: string
+  avatarUrl?: string | null
+  bio: string
+  keywords: string[]
 }
 
-export interface Workshop {
+export interface Workspace {
   id: string
   title: string
   description: string
-  cover_url?: string
+  coverUrl?: string | null
   code: string // 6位邀请码
-  creator_id: string
   status: 'draft' | 'active' | 'completed'
-  created_at: string
-  member_count: number
-  is_joined?: boolean // 当前用户是否已加入
+  memberCount: number
+  myRole: 'admin' | 'member'
+  createdAt: string
 }
 
+export interface WorkspaceMember {
+  userId: string
+  username: string
+  email: string
+  role: 'admin' | 'member'
+}
+
+export type ProjectStatus = 'planning' | 'active' | 'paused' | 'done' | 'archived'
+export type ProjectUpdateKind = 'progress' | 'blocker' | 'note'
+
+export interface Project {
+  id: string
+  workspaceId: string
+  title: string
+  description: string
+  ownerId?: string | null
+  status: ProjectStatus
+  repoUrl?: string
+  createdAt: string
+  latestUpdateKind?: ProjectUpdateKind
+  latestUpdateContent?: string
+  latestUpdateAt?: string
+}
+
+export interface ProjectDetail extends Project {
+  updates: ProjectUpdate[]
+}
+
+export interface ProjectUpdate {
+  id: string
+  projectId: string
+  authorId: string
+  kind: ProjectUpdateKind
+  content: string
+  createdAt: string
+}
+
+export type RoadmapStatus = 'locked' | 'pending' | 'in_progress' | 'done'
+
+/** One node in a project's branched roadmap tree (flat form, as the API returns it). */
 export interface RoadmapNode {
   id: string
-  workshop_id: string
+  projectId: string
+  parentId: string | null
   title: string
   description: string
-  status: 'locked' | 'pending' | 'in_progress' | 'completed'
-  order: number
-  content?: string // 用户填写的内容
-}
-
-// 编辑器草稿
-export interface EditorDraft {
-  key: string
-  content: unknown
+  status: RoadmapStatus
+  position: number
+  createdAt: string
   updatedAt: string
-  revision: number
 }
 
-// AI 消息
-export interface AiMessage {
+/** A roadmap node with its children assembled — the recursive tree the UI renders. */
+export interface RoadmapTreeNode extends RoadmapNode {
+  children: RoadmapTreeNode[]
+}
+
+export type IdeaStatus = 'inbox' | 'refining' | 'converted' | 'dropped'
+
+export interface Idea {
+  id: string
+  workspaceId: string
+  authorId: string
+  title: string
+  content: string
+  status: IdeaStatus
+  prdId?: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+// The 8 fixed PRD sections, in display order — see
+// docs/plans/2026-07-20-go-rewrite/03-agents.md §2.
+export const PRD_SECTION_KEYS = [
+  'background',
+  'users',
+  'goals',
+  'nonGoals',
+  'stories',
+  'requirements',
+  'constraints',
+  'risks',
+] as const
+export type PrdSectionKey = (typeof PRD_SECTION_KEYS)[number]
+
+export type PrdStatus = 'draft' | 'reviewing' | 'approved' | 'rejected'
+
+export interface Prd {
+  id: string
+  workspaceId: string
+  ideaId?: string | null
+  projectId?: string | null
+  authorId: string
+  title: string
+  sections: Record<PrdSectionKey, string>
+  status: PrdStatus
+  currentRevision: number
+  updatedAt: string
+}
+
+export interface PrdRevision {
+  id: string
+  revision: number
+  sections: Record<PrdSectionKey, string>
+  createdBy: string
+  note?: string | null
+  createdAt: string
+}
+
+export type CoachStage = 'clarify' | 'draft' | 'critique' | 'finalize'
+
+export interface Conversation {
+  id: string
+  workspaceId: string
+  prdId: string
+  stage: CoachStage
+  status: 'active' | 'completed' | 'abandoned'
+  updatedAt: string
+}
+
+export interface CoachMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
-  timestamp: string
+  createdAt: string
 }
 
-// AI 对话
-export interface AiConversation {
-  nodeId: string
-  messages: AiMessage[]
+/** One entry in the coach's evidence ledger — see fact_recorded in the
+ * SSE contract (docs/plans/2026-07-21-prd-agent-harness/plan.md §4.1). */
+export interface CoachFact {
+  id: string
+  kind: string
+  text: string
+  status: 'attested' | 'assumed' | 'needs-validation'
 }
 
 export class AiRateLimitError extends Error {
@@ -85,17 +189,4 @@ export class AiServiceUnavailableError extends Error {
   }
 }
 
-// 导出配置
-export interface ExportConfig {
-  workshopId: string
-  format: 'markdown' | 'print'
-  includeEmptyNodes: boolean
-}
-
-// 用户提交内容
-export interface UserSubmission {
-  nodeId: string
-  userId: string
-  content: unknown
-  submittedAt: string
-}
+export type ExportFormat = 'markdown' | 'print'

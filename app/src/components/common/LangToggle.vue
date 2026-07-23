@@ -21,7 +21,7 @@ const currentCode = computed(() => (locale.value === 'zh-CN' ? 'CN' : 'EN'))
   <button
     type="button"
     data-testid="lang-toggle"
-    class="inline-flex h-9 min-w-12 items-center justify-center rounded-lg border border-gray-200 bg-white px-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+    class="inline-flex h-9 min-w-12 items-center justify-center rounded-control border border-stroke-subtle bg-surface-raised px-2 text-xs font-semibold text-fg-secondary transition-colors hover:bg-surface-sunken hover:text-fg-primary"
     :aria-label="t('lang.switchTo')"
     :title="t('lang.switchTo')"
     @click="toggleLanguage"
