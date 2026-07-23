@@ -141,3 +141,22 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 .trae/
+.playwright-mcp/
+
+# Go (server/)
+# Compiled binaries and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+server/insideout
+# Test binary built with `go test -c`
+*.test
+# Output of the go coverage tool
+*.out
+# Dependency/vendor directory (modules are the source of truth)
+vendor/
+# Go workspace files
+go.work
+go.work.sum

@@ -1,0 +1,39 @@
+-- Fix "stack depth limit exceeded" (SQLSTATE 54001), found by running the
+-- authorization-checklist integration tests against a live database with
+-- real rows (the earlier _is_member/_is_admin SECURITY DEFINER fix in
+-- 20260720151500 only masked the problem on an empty table).
+--
+-- The root issue: SECURITY DEFINER does not change *which role* RLS
+-- checks against when the function's owner is the same as the table's
+-- owner (insideout_app, in both cases) — FORCE ROW LEVEL SECURITY still
+-- applies inside the function. So _is_member(workspace_id, user_id)'s own
+-- query against workspace_memberships still re-triggers
+-- workspace_memberships_select's policy, which calls _is_member again,
+-- forever — genuine runtime recursion, not just a static planning-time
+-- cycle. There is no way to break this while insideout_app is both the
+-- sole connecting role and the table owner under FORCE, short of adding
+-- a second, more-privileged role purely to bypass RLS for this one check
+-- — which is exactly the DB-role-split complexity D2 (see
+-- docs/plans/2026-07-20-go-rewrite/README.md) deliberately avoided.
+--
+-- Fix: stop forcing RLS on workspace_memberships specifically. Postgres's
+-- normal (non-forced) behavior already exempts the table owner
+-- (insideout_app) from its own policies — which is fine here because:
+--   - insideout_app is the *only* role that will ever connect (single-
+--     role model), so "owner bypasses this table's RLS" has no other-
+--     role blast radius the way it would with multiple app roles.
+--   - Go's requireMember/requireAdminMember (internal/store/
+--     memberships.go) already enforce every rule this table's RLS would
+--     have, transactionally and TOCTOU-safe — RLS here would have been
+--     a second, redundant layer, not the only one.
+--   - Every *other* table's RLS policies that reference
+--     workspace_memberships (projects_select, ideas_select, etc.) are
+--     cross-table, non-recursive, and keep working exactly as before —
+--     un-forcing this one table doesn't weaken those at all, since they
+--     query it fresh each time regardless of this table's own policy
+--     enforcement status.
+-- The workspace_memberships_select/update/delete policies stay defined
+-- (harmless, and correct if a future lower-privileged role ever needs
+-- direct access) — they just no longer apply to insideout_app itself.
+
+ALTER TABLE insideout.workspace_memberships NO FORCE ROW LEVEL SECURITY;

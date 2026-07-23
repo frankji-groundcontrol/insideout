@@ -1,6 +1,6 @@
 # Design System Changelog
 
-> Tracks the **design system** — token foundation, primitives, icon/identity maps, and these docs — not app features. Source plan: [`docs/plans/2026-06-19-frontend-design-system-deliverable.md`](../plans/2026-06-19-frontend-design-system-deliverable.md). For _why_ a value is what it is, cite the relevant doc ([`README.md`](./README.md)); this file records _what changed and when_.
+> Tracks the **design system** — token foundation, primitives, icon/identity maps, and these docs — not app features. (The original source plan and companion README predate this repo's current docs layout and were never carried over — see git history if needed.) The live token wiring is described in [`docs/architecture/frontend.md`](../architecture/frontend.md); this file records _what changed and when_.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grouped under a version (`## [x.y.z] — YYYY-MM-DD`). Until the token layer ships in code, the system is **pre-`0.1.0`** — the spec is authored, the code substrate is not.
 
@@ -13,6 +13,48 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grou
 Every token/primitive entry **must** name the file it lands in (e.g. `app/src/assets/tokens.css`, `app/tailwind.config.js`, `app/src/lib/icons.ts`) so the diff is traceable.
 
 ---
+
+## [0.4.0] — 2026-07-23
+
+Reverted the `0.3.0` Prisma cinematic detour back to the committed **国风留白 / Ink & Seal** world, and rebuilt the public landing on that foundation. Token _keys_ are unchanged (the `0.2.0` values are restored), so this is a backward-compatible minor bump; the new landing is a new themeable surface. Record: [`docs/changelogs/2026-07-23-ink-seal-landing/`](../changelogs/2026-07-23-ink-seal-landing/index.md).
+
+### Changed — palette re-theme, reverted (token _keys_ unchanged; only values)
+
+- [`app/src/assets/tokens.css`](../../app/src/assets/tokens.css) — restored the HEAD **Ink & Seal** values in both `:root` and `.dark`: celadon/ink ground, vermilion `seal`, paper `carve`, the ink `btn`/`btn-fg` that inverts to paper on dark, and the five `status-*` ramps. The `0.3.0` pure-black + cream re-value is discarded; dark is no longer the forced default.
+- [`app/nuxt.config.ts`](../../app/nuxt.config.ts) — the FOUC default reverted from forced-dark to `prefers-color-scheme`; added the Noto Serif SC display link.
+
+### Changed — typography back to Ink & Seal
+
+- [`app/tailwind.config.js`](../../app/tailwind.config.js) — `fontFamily.serif` leads with **Noto Serif SC** (the Song/Mincho display face); `fontFamily.sans` stays on self-hosted **Alibaba PuHuiTi**. The `0.3.0` PuHuiTi-for-everything + Impeccable-display mapping is removed.
+- [`app/src/style.css`](../../app/src/style.css) — kept the PuHuiTi `@font-face`; dropped the Prisma `.noise-overlay`/`.bg-noise` utilities.
+
+### Added — landing surface (「The Assembly」)
+
+- [`app/src/pages/index.vue`](../../app/src/pages/index.vue) + `app/src/components/landing/{AssemblyHero,AssemblyStep,AssemblyDiagram,StepPeek}.vue` — the public landing rebuilt as an ink build-instruction narrative (idea spark → PRD → branched roadmap → shipped seal), fully on semantic tokens in light + dark.
+- [`app/src/components/common/BaseButton.vue`](../../app/src/components/common/BaseButton.vue) — new `to` prop renders a single styled `NuxtLink` (so CTA links stay one interactive element, never `<a><button>`).
+
+> **License note retired:** the Impeccable display font (personal-use) is no longer referenced after this revert; the `0.3.0` license caveat applies only to that version's usage.
+
+## [0.3.0] — 2026-07-22
+
+Re-themed the semantic token palette from **国风留白 / Ink & Seal** to **Prisma cinematic** — a pure-black ground with a warm cream ink (`#E1E0CC` / `#DEDBC8`) and the cream itself as the accent (the vermilion 印泥 accent is retired). Reference: the Prisma studio landing page built earlier the same day. Light mode becomes the **warm-paper inversion** (cream ground, ink text). **Dark is now the default theme.**
+
+### Changed — palette re-theme (token _keys_ unchanged; only values)
+
+- [`app/src/assets/tokens.css`](../../app/src/assets/tokens.css) — both `:root` and `.dark` re-valued: `surface-*` celadon/ink-night→pure black + `#101010`/`#1c1c1c` (dark) and warm cream paper (light); `fg-*`→warm cream ink on dark, ink on paper light; `seal`/`brand` vermilion→cream (dark) / ink (light); `carve`→black on cream fills; `btn`/`btn-fg`→cream button (dark) / ink button (light); the five `status-*` ramps re-harmonized to the warm palette.
+
+### Added — Prisma typography + texture + motion
+
+- [`app/src/style.css`](../../app/src/style.css) — `@font-face` for **Alibaba PuHuiTi** (self-hosted from `app/public/fonts/`, weights 400/500/700/800) — the universal font covering Latin + full CJK, so no external font CDN and no CJK fallback gap. Also `@font-face` for **Impeccable** (Latin-only monoline handwritten script) as the elegant display/accent face. Also `.noise-overlay` + `.bg-noise` SVG fractal-noise (feTurbulence) texture utilities.
+- [`app/tailwind.config.js`](../../app/tailwind.config.js) — `fontFamily.sans` and `fontFamily.serif` both → **Alibaba PuHuiTi** (display headings render PuHuiTi heavy weights; no separate serif face); `fontFamily.display` → **Impeccable** (Latin accent only — no Han glyphs, so never on CJK text).
+- [`app/nuxt.config.ts`](../../app/nuxt.config.ts) — all external font links removed (fully self-hosted); the FOUC script's default theme is now **dark**.
+- [`app/src/components/layout/NavBar.vue`](../../app/src/components/layout/NavBar.vue) — brand wordmark uses `font-display` (Impeccable script).
+- `motion-v` dependency — cinematic pull-up / fade / scale reveals (landing page so far).
+- [`app/src/pages/index.vue`](../../app/src/pages/index.vue) — landing hero + journey pillars rebuilt with motion-v reveals and the noise texture.
+
+> **License note:** Impeccable is a **personal-use / demo** font (author: Paily
+> Studio). The full/commercial license must be purchased before InsideOut is
+> used commercially — see `app/public/fonts/Impeccable.ttf`'s source readme.
 
 ## [0.2.0] — 2026-06-20
 
