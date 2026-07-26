@@ -1,4 +1,4 @@
-import { AiRateLimitError, AiServiceUnavailableError } from '@/types'
+import { AiRateLimitError, AiServiceUnavailableError, RoadmapReplaceConflictError } from '@/types'
 
 /**
  * Base URL for API calls. On the server we hit the Go backend directly
@@ -27,9 +27,13 @@ interface ApiErrorShape {
   current_count?: number
   max_requests?: number
   circuit_state?: string
+  liveCount?: number
 }
 
 export function toApiError(status: number | undefined, body: ApiErrorShape): Error {
+  if (status === 409 && body.code === 'replace_conflict') {
+    return new RoadmapReplaceConflictError(body.error || 'Roadmap replace not confirmed', body.liveCount ?? 0)
+  }
   if (status === 429 && body.code === 'APP_THROTTLE') {
     return new AiRateLimitError(
       body.error || 'Rate limit exceeded',
@@ -38,7 +42,11 @@ export function toApiError(status: number | undefined, body: ApiErrorShape): Err
       body.max_requests,
     )
   }
-  if (status === 503 && (body.code === 'CIRCUIT_OPEN' || body.code === 'ANTHROPIC_RATE_LIMIT')) {
+  // CIRCUIT_OPEN arrives pre-stream with a real 503; ANTHROPIC_RATE_LIMIT only
+  // ever surfaces as a mid-stream SSE `error` event whose HTTP status is already
+  // gone (undefined), so match it on code alone — otherwise the provider backoff
+  // countdown never fires and Send stays enabled into an upstream rate limit.
+  if ((status === 503 && body.code === 'CIRCUIT_OPEN') || body.code === 'ANTHROPIC_RATE_LIMIT') {
     return new AiServiceUnavailableError(
       body.error || 'AI service temporarily unavailable',
       body.retry_after_seconds ?? 30,

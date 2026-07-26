@@ -6,6 +6,15 @@ narrating progress only here.
 
 ## Active
 
+- [2026-07-24 — Roadmap canvas: collaborative model](2026-07-24-roadmap-canvas-collab.md)
+  — close the gap between the single-player canvas and the product's
+  collaborative rhythms: partial-update correctness (lost-update fix),
+  silent refresh-on-focus, tree-replace guard, atomic AI expand,
+  review/present mode, freshness/attribution, and an edge-semantics rethink.
+  Status: implementing — Workstream A (T1–T5) and the review-mode + edge
+  re-semantics frontend lanes (T7–T8, live-verified light/dark × 中文/EN)
+  have landed, plus the single-player hardening pass; T6 (the B3 attribution
+  schema migration) is next and needs an explicit go, then T9 (Workstream D).
 - [2026-07-23 — Comprehensive frontend: page structure + design](2026-07-23-frontend-pages.md)
   — whole-app IA (global chrome, workspace settings/members, PRD revisions), a
   detachable CoachPanel with inline suggested-prompt cards, and every page
@@ -18,6 +27,11 @@ narrating progress only here.
 
 ## Completed
 
+- [2026-07-24 — Roadmap: tree on a canvas](2026-07-24-roadmap-canvas.md)
+  — replaced the indented-list roadmap with a hand-rolled pan/zoom canvas tree
+  (tidy layout, bezier edges, drag-to-reparent), one component in the project
+  page and a full-viewport route; closed out and hardened by the
+  2026-07-25 adversarial-review pass. Status: implemented (single-player).
 - [2026-07-23 — Ink & Seal reconciliation + landing rethink](2026-07-23-ink-seal-landing.md)
   — reverted the Prisma detour to the committed Ink & Seal world, recorded it in
   PRODUCT.md/DESIGN.md, and rebuilt the landing as 「The Assembly」 (plus three

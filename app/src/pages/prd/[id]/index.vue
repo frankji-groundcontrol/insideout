@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useServices } from '@/composables/useServices'
 import { useUserStore } from '@/stores/user'
-import { PRD_SECTION_KEYS, type Prd, type Workspace } from '@/types'
+import { PRD_SECTION_KEYS, RoadmapReplaceConflictError, type Prd, type Workspace } from '@/types'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseCard from '@/components/common/BaseCard.vue'
 import BaseEmptyState from '@/components/common/BaseEmptyState.vue'
@@ -107,10 +107,23 @@ async function buildMVP() {
   building.value = true
   buildError.value = ''
   try {
+    // First attempt carries no expectedCount. If the live roadmap is non-empty
+    // the API 409s with its node count; confirm, then retry with that count.
     const res = await useServices().prd.build(prdId)
     await navigateTo(`/projects/${res.projectId}`)
   } catch (e) {
-    buildError.value = (e as Error).message
+    if (e instanceof RoadmapReplaceConflictError) {
+      if (window.confirm(t('prd.buildReplaceConfirm', { count: e.liveCount }))) {
+        try {
+          const res = await useServices().prd.build(prdId, e.liveCount)
+          await navigateTo(`/projects/${res.projectId}`)
+        } catch (e2) {
+          buildError.value = (e2 as Error).message
+        }
+      }
+    } else {
+      buildError.value = (e as Error).message
+    }
   } finally {
     building.value = false
   }

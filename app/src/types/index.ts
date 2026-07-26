@@ -72,6 +72,10 @@ export interface RoadmapNode {
   position: number
   createdAt: string
   updatedAt: string
+  /** Display name of the creator / last editor (B3 attribution). Absent for
+   *  pre-migration rows or a removed author — the card then shows "unknown". */
+  creatorName?: string | null
+  editorName?: string | null
 }
 
 /** A roadmap node with its children assembled — the recursive tree the UI renders. */
@@ -186,6 +190,17 @@ export class AiServiceUnavailableError extends Error {
     this.name = 'AiServiceUnavailableError'
     this.retryAfterSeconds = retryAfterSeconds
     this.circuitState = circuitState
+  }
+}
+
+/** 409 from build-from-PRD when the live roadmap has nodes the user hasn't confirmed replacing. */
+export class RoadmapReplaceConflictError extends Error {
+  liveCount: number
+
+  constructor(message: string, liveCount: number) {
+    super(message)
+    this.name = 'RoadmapReplaceConflictError'
+    this.liveCount = liveCount
   }
 }
 

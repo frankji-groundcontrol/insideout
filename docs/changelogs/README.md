@@ -15,6 +15,48 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-26 — Roadmap canvas: Workstream D (transitions + sibling bands + minimap) — collab T9](2026-07-26-roadmap-canvas-workstream-d.md)
+  — closes the collaborative-canvas plan. Cards glide (keyed wrappers + a
+  reduced-motion-gated `transform` transition), parallel tracks get a neutral
+  sibling band, and the full route gains a pointer-only minimap — plus a
+  load-bearing routing fix (a `pages/x/[id].vue` without `<NuxtPage />` was
+  silently swallowing the canvas route) and a one-line popover stacking fix the
+  adversarial pass surfaced (a trapped Add button could silently reparent a
+  node). Live-verified light/dark × embedded/full; 52/52 tests + clean typecheck.
+- [2026-07-26 — Roadmap canvas: B3 attribution (collab T6)](2026-07-26-roadmap-canvas-collab-attribution.md)
+  — roadmap nodes gain provenance: `created_by`/`updated_by`
+  (`uuid → users ON DELETE SET NULL`), resolved to display names via a
+  `LEFT JOIN`, surfaced as a neutral last-editor initial + "created by X ·
+  edited by Y" tooltip on each card; the insert policy now checks
+  `created_by = current_user_id()`. Live-verified against this repo as
+  subject: GitHub sync persisted 20 commits (idempotent re-sync `added:0`)
+  and attribution columns round-tripped through the real DB, and the card
+  visual (neutral roundel + tooltip) is now confirmed in light and dark.
+  The earlier browser pass was blocked not by Node 25 but by an IPv4/IPv6
+  bind split in the Nuxt dev server (fixed with `HOST=127.0.0.1`).
+- [2026-07-26 — Roadmap canvas: review mode + edge re-semantics (collab T7–T8)](2026-07-26-roadmap-canvas-collab-review-and-edges.md)
+  — frontend-only collab lanes: a truly read-only review/present mode
+  (`v-if` + `:disabled`, `?review=1` deep-link, drag disabled) with a quiet
+  chip, i18n-aware card freshness, a prospective drag edge, and neutral
+  hairline edges with 7-day hot-branch emphasis (2.5px in dark). Live-verified
+  light/dark × 中文/EN; 44/44 tests + clean typecheck.
+- [2026-07-26 — Roadmap node actions get explicit `aria-label`s](2026-07-26-roadmap-node-action-aria-labels.md)
+  — the five per-node canvas action buttons (status-cycle, Break down with AI,
+  Add sub-task, Edit, Delete) relied on `title` alone for their accessible name;
+  they now carry an explicit `:aria-label` mirroring `:title`, matching the
+  toolbar buttons.
+- [2026-07-26 — Backend optimization pass](2026-07-26-backend-optimization-pass.md)
+  — five confirmed audit findings fixed at root cause: a 1 MiB request-body
+  cap + server timeouts (unauth DoS), the dispatcher conversation-lock TOCTOU,
+  the roadmap move/create per-project advisory-lock cycle race, the coach
+  success-path detached-context persist, and checked SSE frame-index
+  assertions. Deferred findings (incl. a HIGH invite-code brute-force) tracked
+  in the [bug book](../issues/2026-07-26-backend-optimization-deferred.md).
+- [2026-07-25 — Roadmap canvas: single-player hardening pass](2026-07-25-roadmap-canvas-hardening.md)
+  — eight adversarial-review fixes close out the pan/zoom roadmap canvas
+  (toolbar-aware fit, load-error state, pointercancel, mid-stream rate-limit
+  mapping, popover flip, keyboard/touch action reveal, focus restore, mutation
+  error surfacing); the single-player canvas is now implemented + hardened.
 - [2026-07-24 — AI-generated baiwen seals for landing + navbar](2026-07-24-seal-image-generation.md)
   — replaced the landing's hand-drawn `bg-seal` chops and the text-only navbar
   brand with six codex-generated baiwen seal impressions (落墨/成文/分枝/盖印,

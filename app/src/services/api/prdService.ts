@@ -18,8 +18,12 @@ export function createApiPrdService(): IPrdService {
     updateStatus(id, status) {
       return apiFetch(`/prds/${id}/status`, { method: 'POST', body: { status } })
     },
-    build(id) {
-      return apiFetch(`/prds/${id}/build`, { method: 'POST' })
+    build(id, expectedCount) {
+      // Omit the body entirely on the first call — only a confirm retry sends the count.
+      return apiFetch(`/prds/${id}/build`, {
+        method: 'POST',
+        body: expectedCount === undefined ? undefined : { expectedCount },
+      })
     },
   }
 }

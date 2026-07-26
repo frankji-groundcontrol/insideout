@@ -27,6 +27,11 @@ type roadmapNodeView struct {
 	Position    int     `json:"position"`
 	CreatedAt   string  `json:"createdAt"`
 	UpdatedAt   string  `json:"updatedAt"`
+	// B3 attribution (D10): display names, not ids — the card shows the last
+	// editor's initial plus a "created by X · edited by Y" tooltip. Omitted when
+	// unknown (pre-migration rows, or a removed author → ON DELETE SET NULL).
+	CreatorName *string `json:"creatorName,omitempty"`
+	EditorName  *string `json:"editorName,omitempty"`
 }
 
 func roadmapNodeResponse(n store.RoadmapNode) roadmapNodeView {
@@ -39,6 +44,8 @@ func roadmapNodeResponse(n store.RoadmapNode) roadmapNodeView {
 		id := n.ParentID.String()
 		v.ParentID = &id
 	}
+	v.CreatorName = n.CreatorName
+	v.EditorName = n.EditorName
 	return v
 }
 
@@ -120,9 +127,9 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 }
 
 type updateRoadmapNodeRequest struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Status      string `json:"status"`
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	Status      *string `json:"status"`
 }
 
 func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request) {
@@ -136,12 +143,20 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
-	req.Title = strings.TrimSpace(req.Title)
-	if req.Title == "" || len(req.Title) > 200 {
-		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
+	// Partial update: at least one field must be present. Only present fields
+	// are validated and written; absent fields are left untouched (D1/D9).
+	if req.Title == nil && req.Description == nil && req.Status == nil {
+		httpx.WriteError(w, http.StatusBadRequest, "at least one of title, description, or status is required", "", nil)
 		return
 	}
-	if !validRoadmapStatuses[req.Status] {
+	if req.Title != nil {
+		*req.Title = strings.TrimSpace(*req.Title)
+		if *req.Title == "" || len(*req.Title) > 200 {
+			httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
+			return
+		}
+	}
+	if req.Status != nil && !validRoadmapStatuses[*req.Status] {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid status", "", nil)
 		return
 	}

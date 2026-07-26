@@ -71,8 +71,10 @@ export interface IPrdService {
   listRevisions(id: string): Promise<PrdRevision[]>
   createRevision(id: string, note?: string): Promise<PrdRevision>
   updateStatus(id: string, status: Prd['status']): Promise<Prd>
-  /** Turns the PRD into a project with an AI-generated branched roadmap. */
-  build(id: string): Promise<{ projectId: string; nodeCount: number }>
+  /** Turns the PRD into a project with an AI-generated branched roadmap.
+   *  If the live roadmap is non-empty, the call 409s with the live count;
+   *  confirm by retrying with that expectedCount. */
+  build(id: string, expectedCount?: number): Promise<{ projectId: string; nodeCount: number }>
 }
 
 export interface ICoachService {
@@ -106,7 +108,8 @@ export interface IExportService {
 export interface IRoadmapService {
   list(projectId: string): Promise<RoadmapNode[]>
   create(projectId: string, data: { parentId?: string | null; title: string; description?: string }): Promise<RoadmapNode>
-  update(nodeId: string, data: { title: string; description: string; status: RoadmapStatus }): Promise<RoadmapNode>
+  /** Partial update — only the keys passed are written; the rest are untouched. */
+  update(nodeId: string, data: Partial<{ title: string; description: string; status: RoadmapStatus }>): Promise<RoadmapNode>
   move(nodeId: string, parentId: string | null, position: number): Promise<RoadmapNode>
   remove(nodeId: string): Promise<void>
   /** AI: break a node into subtasks (appended as its children). */

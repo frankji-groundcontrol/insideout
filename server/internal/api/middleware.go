@@ -74,6 +74,24 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 	})
 }
 
+// maxBodyBytes caps every request body. All payloads here are JSON text
+// (auth, ideas, PRD sections, coach messages); 1 MiB is generous for any
+// real request and stops an unauthenticated client from parking a
+// slow-drip multi-GB body on an open connection. Complements the
+// ReadHeaderTimeout/ReadTimeout/IdleTimeout set on the http.Server.
+const maxBodyBytes = 1 << 20 // 1 MiB
+
+// withMaxBody wraps the request body in an http.MaxBytesReader so an
+// oversized body fails the decode instead of being buffered without bound.
+// ponytail: returns the generic decode 400 rather than a precise 413 —
+// the connection is cut at the cap either way, which is the whole point.
+func (s *Server) withMaxBody(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *Server) withRecover(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {

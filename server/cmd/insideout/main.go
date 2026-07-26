@@ -106,6 +106,12 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 		Addr:              cfg.Addr,
 		Handler:           srv.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
+		// ReadTimeout bounds a slow-drip body (pairs with the 1 MiB
+		// body cap in api/middleware.go); IdleTimeout reaps keep-alive
+		// connections. No WriteTimeout: the coach SSE stream must stay
+		// open indefinitely.
+		ReadTimeout: 15 * time.Second,
+		IdleTimeout: 60 * time.Second,
 	}
 
 	go runReaper(ctx, log, st)

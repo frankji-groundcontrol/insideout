@@ -11,6 +11,7 @@ const enUS = {
     optional: 'Optional',
     copy: 'Copy',
     copied: 'Copied!',
+    retry: 'Retry',
   },
   nav: {
     brand: 'InsideOut',
@@ -164,6 +165,25 @@ const enUS = {
       in_progress: 'In progress',
       done: 'Done',
     },
+    canvas: {
+      openFull: 'Open full canvas',
+      zoomIn: 'Zoom in',
+      zoomOut: 'Zoom out',
+      fitView: 'Fit to view',
+      minimap: 'Minimap',
+    },
+    reviewToggle: 'Review mode',
+    reviewing: 'Reviewing · read-only',
+    updatedAgo: 'updated {when}',
+    attribution: 'created by {creator} · edited by {editor}',
+    unknownAuthor: 'unknown',
+  },
+  time: {
+    today: 'today',
+    yesterday: 'yesterday',
+    days: '{n}d ago',
+    months: '{n}mo ago',
+    years: '{n}y ago',
   },
   github: {
     title: 'GitHub sync',
@@ -221,6 +241,8 @@ const enUS = {
     exportMarkdown: 'Download Markdown',
     buildMVP: 'Draft the roadmap',
     buildingMVP: 'Drafting your roadmap…',
+    buildReplaceConfirm:
+      'This project already has a roadmap with {count} nodes. Replace it with a freshly drafted one? The current tree will be lost.',
     exportPrint: 'Print / Save as PDF',
     revisionsTitle: 'Version history',
     revisionN: 'Version {n}',

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
@@ -21,6 +22,10 @@ func (s *Server) registerRoadmapAIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/roadmap/{nid}/expand", s.requireAuth(s.handleExpandNode))
 }
 
+type buildFromPrdRequest struct {
+	ExpectedCount *int `json:"expectedCount"`
+}
+
 // handleBuildFromPrd turns a refined PRD into a project with a generated
 // branched roadmap — the "build the MVP" step that carries an idea past the
 // PRD into execution.
@@ -32,6 +37,14 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.planner == nil {
 		httpx.WriteError(w, http.StatusServiceUnavailable, "roadmap planner is not configured", "", nil)
+		return
+	}
+
+	// The body is optional: the first build call omits it, and a confirm retry
+	// sends the live count the user agreed to replace.
+	var req buildFromPrdRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil && !errors.Is(err, io.EOF) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
 
@@ -64,7 +77,12 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, *tree)
+	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, req.ExpectedCount, *tree)
+	var rc *store.ReplaceConflictError
+	if errors.As(err, &rc) {
+		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount})
+		return
+	}
 	if errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
 		return
@@ -116,15 +134,23 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	created := make([]roadmapNodeView, 0, len(children))
-	for _, c := range children {
-		n, err := s.store.CreateRoadmapNode(r.Context(), userID, node.ProjectID, &nid, c.Title, c.Description)
-		if err != nil {
-			s.log.Error("create expanded child", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-			return
-		}
-		created = append(created, roadmapNodeResponse(*n))
+	created, err := s.store.ExpandRoadmapNode(r.Context(), userID, nid, children)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
+		return
 	}
-	httpx.WriteJSON(w, http.StatusCreated, created)
+	if errors.Is(err, store.ErrForbidden) {
+		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("expand roadmap node", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	views := make([]roadmapNodeView, len(created))
+	for i, n := range created {
+		views[i] = roadmapNodeResponse(n)
+	}
+	httpx.WriteJSON(w, http.StatusCreated, views)
 }

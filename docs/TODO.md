@@ -152,3 +152,39 @@
   roadmap tree has no drag-to-reorder in the UI yet (API `move` exists).
 - Open structural question: tracked coding-tool scratch directories, see
   [docs/issues/2026-07-21-tracked-tool-scratch-dirs.md](issues/2026-07-21-tracked-tool-scratch-dirs.md).
+
+## Design debt — from 2026-07-24 plan-design-review
+
+Deferred by owner decision ("Add to docs/TODO.md") during the roadmap-canvas
+collaborative-model design review. Plan:
+[2026-07-24 — Roadmap canvas: collaborative model](plans/2026-07-24-roadmap-canvas-collab.md).
+
+### Keyboard-only canvas operation
+- **What:** Operate the roadmap tree without a mouse — focus a node, cycle its
+  status, add a child, reparent, all by keyboard.
+- **Why:** The review specced only the *disable* side of a11y (B1 review mode:
+  `v-if` + `:disabled`, 44px targets). The *operate* side is unspecced — the
+  canvas is currently mouse-only (drag to reparent, click seals, hover chrome).
+- **Pros:** WCAG keyboard operability; power-user speed; makes the canvas
+  reachable for non-mouse users.
+- **Cons:** Real design + build cost — roving tabindex, a focus-visible model,
+  a keyboard reparent affordance, and screen-reader announcements for tree
+  state.
+- **Context:** B1 (review mode) already establishes the tab-order and
+  touch-target baseline; this extends it to full operation. Deferred as out of
+  scope for the collaborative pass, whose point is collaborative correctness.
+- **Depends on / blocked by:** B1 review mode (lands in the collab pass).
+
+### Undo for cascade delete + tree-replace
+- **What:** A recovery affordance for the two destructive roadmap operations —
+  cascade delete and build-from-PRD tree-replace.
+- **Why:** Both are guarded only by `window.confirm`; a confirmed wipe is
+  unrecoverable. The collab plan deliberately defers undo (NOT in scope).
+- **Pros:** Removes the highest-blast-radius unrecoverable action in the
+  collaborative model.
+- **Cons:** Needs a soft-delete or snapshot/restore mechanism across both
+  delete and tree-replace — non-trivial schema + lifecycle work.
+- **Context:** A4 (tree-replace count-guard) and the delete descendant-count
+  confirm reduce *accidental* wipes; undo is the *recovery* layer on top.
+- **Depends on / blocked by:** A4 tree-replace guard (lands in the collab
+  pass); a soft-delete vs. snapshot design decision.

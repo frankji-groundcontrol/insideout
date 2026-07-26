@@ -217,17 +217,24 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		return
 	}
 
-	if err := c.store.MarkAIRunSucceeded(ctx, userID, run.ID, finalText); err != nil {
+	// The stream finished; persist the success on a detached context. If the
+	// client disconnects right after the last token, ctx is cancelled and
+	// these writes would fail — leaving the run stuck "running" with an empty
+	// message while `succeeded` still flipped true so the failure defer skips.
+	// Mirror the defer's cleanup_ctx treatment for the success path.
+	persistCtx := context.WithoutCancel(ctx)
+	if err := c.store.MarkAIRunSucceeded(persistCtx, userID, run.ID, finalText); err != nil {
 		c.log.Error("mark ai run succeeded", "error", err)
 	}
-	_ = c.store.RecordCircuitResult(ctx, true)
-	_ = c.store.UpdateAgentMessageContent(ctx, userID, assistantMsg.ID, finalText, nil)
+	_ = c.store.RecordCircuitResult(persistCtx, true)
+	_ = c.store.UpdateAgentMessageContent(persistCtx, userID, assistantMsg.ID, finalText, nil)
 	succeeded = true
 
+	// Critic streams further SSE to the client — drop it if they're gone.
 	c.maybeRunCritic(ctx, userID, conv.PrdID, conversationID, run.ID, executor.currentStage, sectionUpdated, waited, sse)
 
 	if executor.currentStage == StageFinalize && strings.Contains(finalText, "NO OPEN QUESTIONS") {
-		if err := c.store.CompleteConversation(ctx, userID, conversationID); err != nil {
+		if err := c.store.CompleteConversation(persistCtx, userID, conversationID); err != nil {
 			c.log.Error("complete conversation", "error", err)
 		}
 	}

@@ -45,6 +45,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 
 	var h http.Handler = mux
+	h = s.withMaxBody(h)
 	h = s.withRecover(h)
 	h = s.withLogging(h)
 	h = s.withRequestID(h)

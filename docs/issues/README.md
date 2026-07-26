@@ -7,7 +7,7 @@ evidence get a dated folder. English only.
 
 Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
-records continue the numbering (next: BUG-012).
+records continue the numbering (next: BUG-014).
 
 ## Bug records
 
@@ -48,13 +48,41 @@ records continue the numbering (next: BUG-012).
   — `ListProjectsForWorkspace`'s `LEFT JOIN LATERAL` yields `NULL` `lu.*`
   columns for projects with no updates; scanning them into value
   `string`/`time.Time` 500'd the workspace board. Fix: pointer fields.
+- [BUG-013 — GitHub-sync repo link is a relative URL](2026-07-25-bug-013-github-sync-relative-repo-link.md)
+  — the sync card binds the stored `owner/repo` straight into the anchor
+  `href`, so an `owner/repo` link (the placeholder invites it) resolves
+  relative to the app origin and 404s. Fix: normalize to
+  `https://github.com/…` for display only.
 
 ## Other open issues
 
+- [2026-07-26 — Roadmap canvas: adversarial-verify follow-ups (Workstream D)](2026-07-26-roadmap-canvas-adversarial-followups.md)
+  — from the T9 adversarial pass: the popover-trapped-under-sibling defect is
+  **fixed** (one-line `.rm-card:focus-within` lift; it could silently reparent a
+  node); two pre-existing low items remain open — no keyboard directional pan and
+  two pre-existing motions not reduced-motion-gated — each with a bounded fix prompt.
+- [2026-07-26 — Canvas fit-to-view zooms wide roadmaps out too small](2026-07-26-canvas-fit-too-small-on-wide-trees.md)
+  — `fitTo` clamps a wide tidy-tree to ~0.35–0.5, so the first impression of a
+  large roadmap is tiny. Enhancement, not a defect: add a readable-min fit clamp
+  (~0.6) with root-anchoring, keeping the user zoom floor untouched.
+- [2026-07-25 — Build-from-PRD runs the LLM before the conflict guard](2026-07-25-build-from-prd-runs-llm-before-conflict-guard.md)
+  — `handleBuildFromPrd` calls `PlanMVP` (LLM) before `ReplaceRoadmapTree`
+  returns the non-empty 409, so a first build on a populated roadmap pays the
+  call then discards it. Correctness is safe (in-tx advisory-locked guard is
+  authoritative); deferred as a wasted-cost/latency fix.
+- [2026-07-25 — Canvas failure feedback is a banner, not the specced toast](2026-07-25-canvas-failure-feedback-is-a-banner-not-the-specced-toast.md)
+  — collab A3's stacked `useToast` + delete descendant-count confirm shipped
+  as a simpler in-canvas error banner + static confirm; corrects the collab
+  plan's T4 line. No mutation fails silently, so the intent is met.
 - [2026-07-23 — Backend pre-commit review findings](2026-07-23-backend-precommit-review-findings.md)
   — deferred hardening/correctness follow-ups from the adversarial review before
   the first public backend commit (2 medium concurrency/data-integrity bugs, 6
   low items). No push-blockers.
+- [2026-07-26 — Backend optimization review, deferred findings](2026-07-26-backend-optimization-deferred.md)
+  — the items NOT fixed in the 2026-07-26 optimization pass, headed by a HIGH
+  6-digit invite-code brute-force (cross-tenant membership), plus a ConvertIdea
+  double-create race, auth rate-limiting, a PRD CAS race, and six low SQL/error
+  items — each with a bounded fix prompt.
 - [2026-07-21 — Tracked coding-tool scratch directories](2026-07-21-tracked-tool-scratch-dirs.md)
   — `.sisyphus/`, `.trae/`, `review/` are committed but are JuanLeMe-era tool
   scratch; untracking them needs a user decision.

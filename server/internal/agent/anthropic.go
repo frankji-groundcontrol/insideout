@@ -221,7 +221,11 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 			}
 
 		case "content_block_start":
-			index := int(event["index"].(float64))
+			idx, ok := event["index"].(float64)
+			if !ok {
+				continue
+			}
+			index := int(idx)
 			cb, _ := event["content_block"].(map[string]any)
 			acc := &contentBlockAcc{blockType: fmt.Sprint(cb["type"])}
 			if acc.blockType == "tool_use" {
@@ -232,8 +236,11 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 			order = append(order, index)
 
 		case "content_block_delta":
-			index := int(event["index"].(float64))
-			acc := blocks[index]
+			idx, ok := event["index"].(float64)
+			if !ok {
+				continue
+			}
+			acc := blocks[int(idx)]
 			if acc == nil {
 				continue
 			}

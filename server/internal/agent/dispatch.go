@@ -35,26 +35,32 @@ func newDispatcher(maxConcurrent int, queueWait time.Duration) *dispatcher {
 // caller should respond 409 CONVERSATION_BUSY immediately, no queuing.
 func (d *dispatcher) tryLockConversation(conversationID uuid.UUID) (unlock func(), ok bool) {
 	d.mu.Lock()
+	defer d.mu.Unlock()
+
 	l, exists := d.locks[conversationID]
 	if !exists {
 		l = &sync.Mutex{}
 		d.locks[conversationID] = l
 	}
-	d.mu.Unlock()
-
+	// Take the conversation lock while still holding d.mu. TryLock never
+	// blocks, so this is safe, and it closes the TOCTOU that existed when
+	// acquire/release ran outside d.mu: a releaser can no longer delete
+	// the map entry between a new acquirer reading it and TryLocking it.
+	// Every holder of a pointer to l now holds the lock, so the entry is
+	// only reclaimed when no pointer escapes unreleased.
 	if !l.TryLock() {
 		return nil, false
 	}
 	return func() {
-		l.Unlock()
 		d.mu.Lock()
-		// Drop the entry if nothing is waiting on it, so the map doesn't
-		// grow forever — a lock only matters while a turn is in flight.
-		if l.TryLock() {
+		defer d.mu.Unlock()
+		l.Unlock()
+		// Drop the entry only if the map still points at our instance and
+		// nobody is waiting on it, so the map doesn't grow forever.
+		if d.locks[conversationID] == l && l.TryLock() {
 			l.Unlock()
 			delete(d.locks, conversationID)
 		}
-		d.mu.Unlock()
 	}, true
 }
 
