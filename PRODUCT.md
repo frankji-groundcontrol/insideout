@@ -99,7 +99,7 @@ connected journey from a one-line idea to shipped software.
 - **Visual identity (confirmed 2026-07-23; binding across the whole product):**
   国风留白 / "Ink & Seal" — a soft celadon (青) ground, sumi-ink text, and a
   single vermilion 印泥 (cinnabar-seal) accent; a Song/Mincho display serif
-  (Noto Serif SC) over a self-hosted PuHuiTi sans; light (celadon) + dark
+  (Noto Serif SC) over a referenced (not bundled) PuHuiTi sans; light (celadon) + dark
   (ink-night) themes. Applies across landing, dashboard, roadmap tree, coach,
   and board. Documented in `DESIGN.md`. (The uncommitted "Prisma cinematic"
   black+cream detour from 2026-07-22 was reverted 2026-07-23.)

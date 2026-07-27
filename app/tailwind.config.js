@@ -92,10 +92,12 @@ export default {
         toast: '1040',
         tooltip: '1050'
       },
-      // Alibaba PuHuiTi is the universal sans — self-hosted (see style.css
-      // @font-face), covers Latin + full CJK. `serif` is the Ink & Seal display
-      // face: a Song/Mincho serif (Noto Serif SC) for headings + chop labels,
-      // falling back to PuHuiTi when no Song face is available.
+      // Alibaba PuHuiTi is the intended universal sans, named first so a visitor
+      // who has it installed gets it — but it is NOT bundled (proprietary "free
+      // to use", not redistributable; see style.css + README attribution).
+      // Everyone else falls through to Noto Sans SC / system CJK. `serif` is the
+      // Ink & Seal display face: Noto Serif SC (Song/Mincho) for headings + chop
+      // labels, referenced via Google Fonts, falling back when it can't render.
       fontFamily: {
         sans: [
           '"Alibaba PuHuiTi"',

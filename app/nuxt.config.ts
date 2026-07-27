@@ -51,11 +51,12 @@ export default defineNuxtConfig({
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
-        // The universal sans (Alibaba PuHuiTi) is self-hosted (style.css
-        // @font-face), covering Latin + CJK. The Ink & Seal display serif
+        // Fonts are referenced, never bundled. The Ink & Seal display serif
         // (Noto Serif SC — Song/Mincho for headings + chop labels) loads from
-        // Google Fonts as progressive enhancement; the tailwind `serif` stack
-        // falls back to PuHuiTi when a Song face can't render.
+        // Google Fonts as progressive enhancement. The body sans (Alibaba
+        // PuHuiTi) is named in the tailwind stack but NOT hosted here — it is
+        // proprietary "free to use", not redistributable (see README); visitors
+        // without it fall through to Noto Sans SC and the platform CJK face.
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {

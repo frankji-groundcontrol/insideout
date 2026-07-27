@@ -1,33 +1,12 @@
-/* Alibaba PuHuiTi — self-hosted global font (Latin + full CJK), served as
-   WOFF2 from /public/fonts so it renders with no external font CDN. Weights 400–800. */
-@font-face {
-  font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Alibaba PuHuiTi';
-  src: url('/fonts/AlibabaPuHuiTi-ExtraBold.woff2') format('woff2');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
+/* Typography is referenced, never bundled. The design names Alibaba PuHuiTi 2.0
+   as the universal sans (tailwind.config.js `fontFamily.sans`), but the font
+   FILE is intentionally not shipped: PuHuiTi is proprietary — free to use, not
+   an open-source/OFL license, "All rights reserved" — so redistributing the
+   binary via this repo would exceed the grant. We name it only; a visitor who
+   has PuHuiTi installed renders it, everyone else falls through the sans stack
+   to Noto Sans SC (Google Fonts) and the platform CJK face. The display serif
+   (Noto Serif SC) is likewise referenced via Google Fonts in nuxt.config.ts.
+   Attribution: "Third-party assets" in README.md. */
 
 @tailwind base;
 @tailwind components;

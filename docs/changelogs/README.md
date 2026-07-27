@@ -15,6 +15,13 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-27 — PuHuiTi fonts: reference, don't redistribute](2026-07-27-puhuiti-reference-only.md)
+  — removed the 4 self-hosted PuHuiTi WOFF2 binaries and purged them from git
+  history (the font is proprietary "free to use", not redistributable — an
+  open-source-style grant it does not carry). The font is now named in the sans
+  stack as a reference only; rendering falls back to Noto Sans SC / system CJK.
+  Honest attribution added to the README; self-host claims corrected in
+  DESIGN.md / PRODUCT.md.
 - [2026-07-27 — Repository structure cleanup](2026-07-27-repo-structure-cleanup.md)
   — deleted 12 unreferenced root verification screenshots, gitignored `.claude/`,
   and (user-approved) untracked the JuanLeMe-era `.sisyphus/` / `.trae/` /

@@ -72,3 +72,16 @@ docker compose up -d
 - 开发计划 / Development plan: [`docs/PLAN.md`](docs/PLAN.md)
 - 完整技术方案 / Full technical plan: [`docs/plans/2026-07-20-go-rewrite/`](docs/plans/2026-07-20-go-rewrite/README.md)
 - 开发进度 / Progress tracker: [`docs/TODO.md`](docs/TODO.md)
+
+## 第三方资源 / Third-party assets
+
+**字体 / Fonts.** 本项目的界面字体是 **阿里巴巴普惠体 2.0（Alibaba PuHuiTi 2.0）**，设计上是全局无衬线体（见 `app/tailwind.config.js` 的 `fontFamily.sans`）。
+
+- 版权 / Copyright: © 2020-2021 阿里巴巴（中国）有限公司，版权所有 / Alibaba (China) Co., Ltd. All rights reserved.
+- 商标 / Trademark: 阿里巴巴是阿里巴巴集团控股有限公司的商标 / Alibaba is a trademark of Alibaba Group Holding Limited.
+- 制作 / Manufacturer: Alibaba Design；汉仪字库 / Hanyi Fonts. 版本 2.00，字符集 GB18030-2000。
+- 官方发布 / Official source: <https://alibabafont.taobao.com/>（阿里巴巴字体官方门户 / the Alibaba Fonts portal).
+
+**许可说明 / License note.** 阿里巴巴普惠体由阿里巴巴官方免费发布，允许个人与商业**使用**；但它**不是**开源许可证（非 OSI/OFL），字体文件标注「版权所有（All rights reserved）」，嵌入权限为 Preview & Print（fsType=4）。因此「免费使用」不等于「可再分发字体文件」——把字体二进制提交进本仓库属于再分发，超出了授权范围。**本仓库不包含、不分发任何字体文件**：我们只在字体栈中按名称**引用**它。已安装该字体的访问者会看到它，其他访问者回退到 Noto Sans SC（经 Google Fonts）及系统 CJK 字体。展示衬线体 Noto Serif SC 同样通过 Google Fonts 引用。如需在你的环境还原完全一致的观感，请自行从上方官方渠道获取并安装（这属于你自己的「使用」）。
+
+**Body typeface.** The app's UI sans is **Alibaba PuHuiTi 2.0** (see `fontFamily.sans` in `app/tailwind.config.js`). It is published by Alibaba for free personal and commercial **use**, but it is **not** an open-source (OSI/OFL) license — the font file is marked "All rights reserved" with Preview & Print embedding (fsType=4). "Free to use" is not "free to redistribute the font file," so committing the binary to this repo would exceed the grant. **This repository contains and distributes no font files.** We reference the font by name only: visitors who have it installed render it; everyone else falls back to Noto Sans SC (via Google Fonts) and the platform CJK face. The display serif, Noto Serif SC, is likewise referenced via Google Fonts. To reproduce the exact look in your own environment, obtain and install the font yourself from the official source above (that is your own "use").

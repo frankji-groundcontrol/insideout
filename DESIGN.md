@@ -78,8 +78,8 @@ a seal pressed.
 - One vermilion accent on a celadon field; the seal is rare on purpose.
 - Generous negative space (留白) — density is earned, never default.
 - Sumi-ink text; the primary action is **ink**, not the accent color.
-- A Song/Mincho display serif (Noto Serif SC) for headings, over a self-hosted
-  PuHuiTi sans for body and UI.
+- A Song/Mincho display serif (Noto Serif SC) for headings, over an Alibaba
+  PuHuiTi sans for body and UI (referenced, not bundled — see README).
 - Light (celadon) and dark (ink-night) themes; the seal lifts slightly on dark
   so chops keep their glow.
 - Bilingual by construction: EN and 中文 are first-class in every component.
@@ -125,10 +125,12 @@ never the seal. Vermilion is the accent and the signature; ink is the verb.
 
 ## Typography
 
-**Display Font:** Noto Serif SC (Song/Mincho serif), falling back to Songti SC
-then PuHuiTi.
-**Body Font:** Alibaba PuHuiTi (self-hosted, covers Latin + full CJK), falling
-back to Noto Sans SC then system-ui.
+**Display Font:** Noto Serif SC (Song/Mincho serif, from Google Fonts), falling
+back to Songti SC then PuHuiTi.
+**Body Font:** Alibaba PuHuiTi — **referenced by name, not bundled** (it is
+proprietary "free to use", not redistributable; see README attribution). It
+leads the stack so anyone with it installed renders it; everyone else falls back
+to Noto Sans SC then system-ui / the platform CJK face.
 
 **Character:** A Song serif does the talking at headline scale — it carries the
 brush-adjacent, carved 国风 voice — while a clean modern CJK sans keeps body and

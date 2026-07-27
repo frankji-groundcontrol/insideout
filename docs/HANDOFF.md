@@ -61,6 +61,16 @@ constraint). Plan:
 changelog:
 [docs/changelogs/2026-07-27-security-hardening-pass.md](changelogs/2026-07-27-security-hardening-pass.md).
 
+Also on 2026-07-27 the **Alibaba PuHuiTi font binaries were removed** from the
+repo and from git history: the font is proprietary ("free to use", *not* an
+open-source/OFL license, "All rights reserved"), so bundling it was
+redistribution beyond the grant. It is now **referenced by name only** (kept
+first in the tailwind `sans` stack) with honest attribution in the README;
+body text falls back to Noto Sans SC / system CJK, and the display serif was
+already a Google-Fonts reference. Because the history was rewritten, clones
+must re-clone (gotcha below). See
+[docs/changelogs/2026-07-27-puhuiti-reference-only.md](changelogs/2026-07-27-puhuiti-reference-only.md).
+
 ## In flight / next steps
 
 - Collaborative-canvas plan is **complete** (2026-07-26): all workstreams A–D
@@ -117,6 +127,15 @@ changelog:
   dev server with `HOST=127.0.0.1` (one IPv4 socket serves the app), or
   reach it via `http://[::1]:PORT`. See the
   [learning note](learning/2026-07-26-nuxt-dev-ipv6-426.md).
+- **Fonts are referenced, never bundled.** No font file ships in the repo.
+  Body = Alibaba PuHuiTi named in the sans stack (used only if a visitor has it
+  installed) → Noto Sans SC (Google Fonts) → platform CJK; display = Noto Serif
+  SC via Google Fonts. To reproduce the exact body look, install PuHuiTi from
+  its official source yourself (permitted "use") — see the README "Third-party
+  assets" section. Do not re-add the font binary (licensing).
+- **History was rewritten on 2026-07-27** (JuanLeMe-era scratch purge, then the
+  PuHuiTi removal): commit SHAs changed and `main` was force-pushed. A stale
+  clone must `git fetch origin && git reset --hard origin/main` (or re-clone).
 - Bug records live in [docs/issues/](issues/README.md) as dated English
   files keeping their `BUG-NNN` identity (the former bilingual
   `docs/en/BUGS/` + `docs/cn/BUGS/` pair was retired on 2026-07-21 per user
