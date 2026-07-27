@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-27 — Repository structure cleanup](2026-07-27-repo-structure-cleanup.md)
+  — deleted 12 unreferenced root verification screenshots, gitignored `.claude/`,
+  and (user-approved) untracked the JuanLeMe-era `.sisyphus/` / `.trae/` /
+  `review/` tool scratch and purged it from git history (`git filter-repo` +
+  force-push). Closes the tracked-tool-scratch-dirs issue.
 - [2026-07-27 — Live end-to-end smoke test for all five surfaces](2026-07-27-live-smoke-test.md)
   — `server/scripts/smoke.sh`: one rerun-safe script that boots the server and
   drives the PRD coach SSE, AI roadmap, GitHub sync, project-updates timeline,

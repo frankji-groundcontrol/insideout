@@ -1,6 +1,6 @@
 # 2026-07-21 — Tracked coding-tool scratch directories from the JuanLeMe era
 
-Status: open (needs a user decision).
+Status: **resolved (2026-07-27)** — see [Resolution](#resolution-2026-07-27) below.
 
 ## Problem
 
@@ -51,3 +51,19 @@ user-level judgment call, deliberately not made unilaterally during the
 - The three directories are untracked and ignored; working tree preserved.
 - No doc links reference them.
 - A dated changelog entry records the removal.
+
+## Resolution (2026-07-27)
+
+Resolved with the user's explicit go-ahead ("clean the current repo structure"),
+choosing the full option: untrack, gitignore, **and** purge from history.
+
+- `git rm -r --cached .sisyphus .trae` (24 files) — kept on disk, untracked.
+- `.sisyphus/` added to `.gitignore` (`.trae/` was already ignored; `.claude/`
+  gitignored in the same pass).
+- `git filter-repo --invert-paths --path .sisyphus --path .trae --path review`
+  stripped all three paths from *every* commit (rewriting history; `main`
+  force-pushed). A full-history backup bundle was taken first.
+- `review/` was already absent from disk, so there were no workshop notes to
+  preserve into `docs/learning/`; nothing of durable product value was lost.
+- All three acceptance checks met. Record:
+  [docs/changelogs/2026-07-27-repo-structure-cleanup.md](../changelogs/2026-07-27-repo-structure-cleanup.md).

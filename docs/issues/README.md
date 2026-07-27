@@ -86,5 +86,6 @@ records continue the numbering (next: BUG-014).
   argon2 timing, `loadHistory` over-fetch, the `ai_runs` reaper index, the
   `ListWorkspacesForUser` correlated count, and the join-endpoint rate limit.
 - [2026-07-21 — Tracked coding-tool scratch directories](2026-07-21-tracked-tool-scratch-dirs.md)
-  — `.sisyphus/`, `.trae/`, `review/` are committed but are JuanLeMe-era tool
-  scratch; untracking them needs a user decision.
+  — **resolved 2026-07-27**: `.sisyphus/`, `.trae/`, `review/` (JuanLeMe-era
+  tool scratch) untracked, gitignored, and purged from history. See the
+  [cleanup changelog](../changelogs/2026-07-27-repo-structure-cleanup.md).
