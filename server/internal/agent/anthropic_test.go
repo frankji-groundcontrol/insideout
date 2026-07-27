@@ -1,8 +1,14 @@
 package agent
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 )
 
 // realThinkingThenTextStream is a real SSE response captured from a live
@@ -130,6 +136,95 @@ func TestParseAnthropicStream_Empty(t *testing.T) {
 	}
 }
 
+// textStreamWithStop builds a minimal one-block text stream whose
+// message_delta carries the given stop_reason, for exercising the
+// max_tokens (truncated) vs end_turn (complete) distinction (F13).
+func textStreamWithStop(stopReason string) string {
+	return `event: message_start
+data: {"type":"message_start","message":{"usage":{"input_tokens":1,"output_tokens":0}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"partial answer"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"` + stopReason + `"},"usage":{"output_tokens":4}}
+
+event: message_stop
+data: {"type":"message_stop"}
+`
+}
+
+func TestParseAnthropicStream_MaxTokensIsTruncated(t *testing.T) {
+	turn, err := parseAnthropicStream(strings.NewReader(textStreamWithStop("max_tokens")), nil, nil)
+	if err != nil {
+		t.Fatalf("parseAnthropicStream: %v", err)
+	}
+	if turn.Text != "partial answer" {
+		t.Fatalf("turn.Text = %q, want the partial text preserved", turn.Text)
+	}
+	if !turn.Truncated {
+		t.Fatal("turn.Truncated = false, want true for stop_reason=max_tokens")
+	}
+}
+
+func TestParseAnthropicStream_EndTurnNotTruncated(t *testing.T) {
+	turn, err := parseAnthropicStream(strings.NewReader(textStreamWithStop("end_turn")), nil, nil)
+	if err != nil {
+		t.Fatalf("parseAnthropicStream: %v", err)
+	}
+	if turn.Truncated {
+		t.Fatal("turn.Truncated = true, want false for a natural end_turn")
+	}
+}
+
+// errorEventStream is a one-line SSE "error" event of the given provider
+// error.type / message — the in-stream failure shape F17 must classify
+// instead of collapsing into an opaque message.
+func errorEventStream(errType, msg string) string {
+	return "event: error\ndata: {\"type\":\"error\",\"error\":{\"type\":\"" + errType + "\",\"message\":\"" + msg + "\"}}\n"
+}
+
+func TestParseAnthropicStream_ErrorEventTaxonomy(t *testing.T) {
+	cases := []struct {
+		errType string
+		msg     string
+		want    error
+	}{
+		{"rate_limit_error", "too many requests", ErrProviderRateLimited},
+		{"overloaded_error", "server busy", ErrProviderTransient},
+		{"api_error", "boom", ErrProviderTransient},
+		{"invalid_request_error", "prompt is too long: context window exceeded", ErrContextLength},
+		{"authentication_error", "bad key", ErrProviderConfig},
+		{"permission_error", "no", ErrProviderConfig},
+	}
+	for _, tc := range cases {
+		_, err := parseAnthropicStream(strings.NewReader(errorEventStream(tc.errType, tc.msg)), nil, nil)
+		if !errors.Is(err, tc.want) {
+			t.Fatalf("error.type=%q → %v, want errors.Is %v", tc.errType, err, tc.want)
+		}
+	}
+}
+
+func TestParseAnthropicStream_ErrorEventUnknownType(t *testing.T) {
+	// An unrecognized type still surfaces an error, but maps to none of the
+	// taxonomy sentinels — it must not be mislabeled transient/rate-limited.
+	_, err := parseAnthropicStream(strings.NewReader(errorEventStream("weird_new_error", "?")), nil, nil)
+	if err == nil {
+		t.Fatal("want an error for an unknown in-stream error event")
+	}
+	for _, s := range []error{ErrProviderRateLimited, ErrProviderTransient, ErrContextLength, ErrProviderConfig} {
+		if errors.Is(err, s) {
+			t.Fatalf("unknown error type should not classify as %v", s)
+		}
+	}
+}
+
 func TestToAnthropicMessages_ToolRoundTrip(t *testing.T) {
 	msgs := []Message{
 		{Role: RoleUser, Content: "hi"},
@@ -179,5 +274,71 @@ func TestToAnthropicTools(t *testing.T) {
 	out := toAnthropicTools(tools)
 	if len(out) != 1 || out[0].Name != "get_prd" || out[0].Description != "reads the prd" {
 		t.Fatalf("toAnthropicTools = %+v", out)
+	}
+}
+
+// newStallingServer sends SSE headers plus one ping, then goes silent until
+// the client gives up — a real hung-upstream over real HTTP (no mocks). The
+// idle watchdog must trip while the request is still alive.
+func newStallingServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprint(w, "event: ping\ndata: {\"type\":\"ping\"}\n\n")
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		<-r.Context().Done() // go silent; wait for the client to tear down
+	}))
+}
+
+func newTestStreamer(url string, idle time.Duration) *AnthropicStreamer {
+	return &AnthropicStreamer{
+		baseURL:     url,
+		authToken:   "test-token",
+		model:       "claude-test",
+		maxTokens:   16,
+		client:      &http.Client{},
+		idleTimeout: idle,
+	}
+}
+
+// TestStreamChat_UpstreamStall is the F7 regression: a provider that goes
+// silent on an otherwise-healthy, still-connected request must surface
+// ErrUpstreamStall — NOT context.Canceled, which coach.go would silently
+// treat as a routine client disconnect (no SSE error, no circuit failure).
+func TestStreamChat_UpstreamStall(t *testing.T) {
+	srv := newStallingServer(t)
+	defer srv.Close()
+
+	a := newTestStreamer(srv.URL, 50*time.Millisecond) // short leash so the watchdog trips fast
+	_, err := a.StreamChat(context.Background(), "sys", []Message{{Role: RoleUser, Content: "hi"}}, nil, nil)
+	if !errors.Is(err, ErrUpstreamStall) {
+		t.Fatalf("err = %v, want ErrUpstreamStall", err)
+	}
+	if errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v wraps context.Canceled — a stall must not be mislabeled as a disconnect", err)
+	}
+}
+
+// TestStreamChat_ClientDisconnect is the other half: when the client really
+// does hang up, the failure stays a routine context.Canceled, not a stall.
+func TestStreamChat_ClientDisconnect(t *testing.T) {
+	srv := newStallingServer(t)
+	defer srv.Close()
+
+	a := newTestStreamer(srv.URL, 5*time.Second) // long leash; the client cancels first
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(50 * time.Millisecond)
+		cancel() // the "client" disconnects while the stream is silent
+	}()
+	_, err := a.StreamChat(ctx, "sys", []Message{{Role: RoleUser, Content: "hi"}}, nil, nil)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, want context.Canceled", err)
+	}
+	if errors.Is(err, ErrUpstreamStall) {
+		t.Fatalf("err = %v, a genuine disconnect must not be reported as an upstream stall", err)
 	}
 }

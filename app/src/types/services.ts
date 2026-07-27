@@ -63,9 +63,12 @@ export interface IIdeaService {
 
 export interface IPrdService {
   get(id: string): Promise<Prd>
+  /** title is optional: pass null on a section-only save so the stored title
+   *  is left untouched (a section save must never clobber a concurrent title
+   *  edit). Pass a string only to deliberately rename the PRD. */
   updateSections(
     id: string,
-    title: string,
+    title: string | null,
     sections: Partial<Prd['sections']>,
   ): Promise<Prd>
   listRevisions(id: string): Promise<PrdRevision[]>

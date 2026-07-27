@@ -27,6 +27,11 @@ const titleDraft = ref('')
 
 const isAuthor = computed(() => prd.value && userStore.user && prd.value.authorId === userStore.user.id)
 const isAdmin = computed(() => workspace.value?.myRole === 'admin')
+// canEdit mirrors the backend's handleUpdatePrd rule (403 "only the author or
+// a workspace admin can edit this PRD"). Gating the inputs on it stops a
+// non-editor from typing edits the server will only reject — and from being
+// left with phantom text stuck in a box after that rejection (F8).
+const canEdit = computed(() => !!(isAuthor.value || isAdmin.value))
 
 const breadcrumb = computed(() => [
   { label: t('nav.dashboard'), to: '/dashboard' },
@@ -71,16 +76,27 @@ watch(coachOpen, (v) => {
   if (import.meta.client) localStorage.setItem(COACH_KEY, v ? '1' : '0')
 })
 
-async function saveSection(key: (typeof PRD_SECTION_KEYS)[number], value: string) {
-  if (!prd.value) return
-  prd.value = await useServices().prd.updateSections(prdId, prd.value.title, { [key]: value })
+async function saveSection(key: (typeof PRD_SECTION_KEYS)[number], el: HTMLTextAreaElement) {
+  if (!prd.value || !canEdit.value) return
+  const value = el.value
+  try {
+    // title=null: a section save must never rewrite the title — resending the
+    // locally-held title here is how a concurrent rename gets silently clobbered.
+    prd.value = await useServices().prd.updateSections(prdId, null, { [key]: value })
+  } catch {
+    // Rejected (a 403 racing a role change, a lost-update 409, or the network):
+    // revert the box to the last server value so no phantom edit lingers (F8).
+    el.value = prd.value.sections[key] ?? ''
+  }
 }
 
 async function saveTitle() {
-  if (!prd.value || !titleDraft.value.trim() || titleDraft.value.trim() === prd.value.title) return
+  if (!prd.value || !canEdit.value || !titleDraft.value.trim() || titleDraft.value.trim() === prd.value.title) return
   savingTitle.value = true
   try {
     prd.value = await useServices().prd.updateSections(prdId, titleDraft.value.trim(), {})
+  } catch {
+    titleDraft.value = prd.value.title // revert to the last good server title
   } finally {
     savingTitle.value = false
   }
@@ -153,7 +169,8 @@ async function buildMVP() {
             <input
               v-model="titleDraft"
               :aria-label="t('prd.title')"
-              class="min-w-0 flex-1 rounded-control border border-transparent bg-transparent px-2 py-1 font-serif text-3xl font-semibold tracking-tight text-fg-primary transition-colors hover:border-stroke-subtle focus:border-stroke-focus focus:bg-surface-raised focus:outline-none"
+              :readonly="!canEdit"
+              class="min-w-0 flex-1 rounded-control border border-transparent bg-transparent px-2 py-1 font-serif text-3xl font-semibold tracking-tight text-fg-primary transition-colors hover:border-stroke-subtle focus:border-stroke-focus focus:bg-surface-raised focus:outline-none read-only:cursor-default"
               @blur="saveTitle"
               @keyup.enter="($event.target as HTMLInputElement).blur()"
             />
@@ -199,9 +216,10 @@ async function buildMVP() {
           <h3 class="mb-2 text-sm font-semibold text-fg-secondary">{{ t(`prd.sections.${key}`) }}</h3>
           <textarea
             :value="prd.sections[key]"
+            :readonly="!canEdit"
             rows="4"
-            class="w-full resize-y rounded-control border border-stroke-subtle bg-surface-sunken p-3 text-sm leading-relaxed text-fg-primary focus:border-stroke-focus focus:outline-none focus:ring-1 focus:ring-stroke-focus"
-            @blur="saveSection(key, ($event.target as HTMLTextAreaElement).value)"
+            class="w-full resize-y rounded-control border border-stroke-subtle bg-surface-sunken p-3 text-sm leading-relaxed text-fg-primary focus:border-stroke-focus focus:outline-none focus:ring-1 focus:ring-stroke-focus read-only:cursor-default"
+            @blur="saveSection(key, $event.target as HTMLTextAreaElement)"
           />
         </BaseCard>
       </div>

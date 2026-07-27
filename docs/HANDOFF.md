@@ -45,6 +45,22 @@ code). See
 [docs/changelogs/2026-07-23-coach-markdown-and-positioning.md](changelogs/2026-07-23-coach-markdown-and-positioning.md)
 and [BUG-012](issues/2026-07-23-bug-012-project-list-null-latest-update-scan.md).
 
+On 2026-07-27 a **cross-surface security hardening pass** landed: 22
+workflow-surfaced findings (F1–F22) plus 4 independently code-traced items
+(R1–R4) across the PRD coach, AI roadmap, GitHub sync, the project-updates
+timeline, and cross-cutting authz — each fixed at root cause and backed by a
+real (no-mock) test where deterministically triggerable. Highlights: invite
+code raised to 128 bits (was a brute-forceable 10^6), ConvertIdea /
+EnsureProject / PRD-section CAS / revision-snapshot races closed, DecodeJSON
+now rejects trailing bytes, and upstream error detail no longer reaches
+clients. It also resolved six items from the 2026-07-26 deferred list and made
+`TestSessions_RotateIsReuseSafe` rerun-safe (fixed token-hash literals
+collided with a prior run's revoked row under a table-global unique
+constraint). Plan:
+[docs/plans/2026-07-27-hardening/](plans/2026-07-27-hardening/README.md);
+changelog:
+[docs/changelogs/2026-07-27-security-hardening-pass.md](changelogs/2026-07-27-security-hardening-pass.md).
+
 ## In flight / next steps
 
 - Collaborative-canvas plan is **complete** (2026-07-26): all workstreams A–D
@@ -59,6 +75,19 @@ and [BUG-012](issues/2026-07-23-bug-012-project-list-null-latest-update-scan.md)
   [docs/plans/2026-07-24-roadmap-canvas-collab.md](plans/2026-07-24-roadmap-canvas-collab.md);
   changelog:
   [docs/changelogs/2026-07-26-roadmap-canvas-workstream-d.md](changelogs/2026-07-26-roadmap-canvas-workstream-d.md).
+- **Live end-to-end smoke test is now the standing check** (2026-07-27):
+  `server/scripts/smoke.sh` drives all five surfaces — PRD coach SSE, AI
+  roadmap, GitHub sync, project-updates timeline, and cross-tenant authz — over
+  real HTTP against the real DB (curl + jq, no mocks), 48 assertions, rerun-safe,
+  exits non-zero on any failure. It closed task #75; the old "httpOnly blocks
+  curl" blocker was a false premise (curl replays the cookie via its jar).
+  Changelog:
+  [docs/changelogs/2026-07-27-live-smoke-test.md](changelogs/2026-07-27-live-smoke-test.md).
+- Still-open hardening items (from the
+  [2026-07-26 deferred list](issues/2026-07-26-backend-optimization-deferred.md)):
+  a join-endpoint failed-attempt rate limit, login/register rate limiting +
+  argon2 timing-equalization (MEDIUM), `loadHistory` SQL LIMIT pushdown, the
+  `ai_runs` reaper index, and the `ListWorkspacesForUser` correlated count.
 - Open follow-ups live in [docs/TODO.md](TODO.md)
   ("Known Limitations": avatar upload placeholder, theme/locale in
   localStorage, plain-textarea PRD editors, GitHub sync is owner/admin +
@@ -99,6 +128,8 @@ and [BUG-012](issues/2026-07-23-bug-012-project-list-null-latest-update-scan.md)
 cd server && go build ./... && go vet ./... && go test ./...
 # with a real DATABASE_URL in ../.env:
 set -a && source ../.env && set +a && go test ./internal/store/... -run TestAuthz -v
+# live end-to-end smoke test of all five surfaces (curl + jq, no mocks):
+./scripts/smoke.sh          # boots its own server on a random high port
 cd ../app && pnpm test && npx nuxi typecheck && pnpm build
 docker compose build
 ```

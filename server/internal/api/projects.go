@@ -134,17 +134,26 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updates, err := s.store.ListProjectUpdates(r.Context(), userID, pid)
+	updates, err := s.store.ListProjectUpdates(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil)
 	if err != nil {
 		s.log.Error("list project updates", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
 
+	// Embed only the newest page; a full page signals there's older history,
+	// surfaced as nextCursor for a future load-more (frontend follow-up).
+	var nextCursor *string
+	if len(updates) == store.ProjectUpdatesPageSize {
+		last := updates[len(updates)-1].ID.String()
+		nextCursor = &last
+	}
+
 	resp := struct {
 		projectView
-		Updates []projectUpdateView `json:"updates"`
-	}{projectView: projectResponse(store.ProjectWithLatest{Project: *p}), Updates: make([]projectUpdateView, len(updates))}
+		Updates    []projectUpdateView `json:"updates"`
+		NextCursor *string             `json:"nextCursor"`
+	}{projectView: projectResponse(store.ProjectWithLatest{Project: *p}), Updates: make([]projectUpdateView, len(updates)), NextCursor: nextCursor}
 	for i, u := range updates {
 		resp.Updates[i] = projectUpdateResponse(u)
 	}

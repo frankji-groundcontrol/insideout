@@ -33,11 +33,33 @@ const historyLimit = 20
 // auto-tighten retry (§5.2) — one attempt, then surface honestly.
 const tightenedHistoryLimit = 6
 
+// truncatedMarker is appended to a final answer the provider cut off at its
+// output-token cap (stop_reason=max_tokens, surfaced via Turn.Truncated). The
+// partial answer is still persisted, but the marker keeps it from being read —
+// and replayed into future context — as a finished response (F13).
+const truncatedMarker = "\n\n[response truncated — hit the token limit; ask me to continue]"
+
 // AI_MAX_CONCURRENT / AI_QUEUE_WAIT defaults — see plan §9 open question 2.
 const (
 	defaultMaxConcurrent = 4
 	defaultQueueWait     = 15 * time.Second
 )
+
+// persistTimeout bounds the detached terminal writes (cleanup/persist) that
+// must survive a client disconnect but must not outlive the process. Without a
+// bound, a wedged DB write on a WithoutCancel context hangs its goroutine — and
+// the dispatch permit it holds — forever. 10s is generous for a few small
+// writes; raise it if the store ever does something slow on this path.
+const persistTimeout = 10 * time.Second
+
+// detachedContext returns a context detached from the (possibly already
+// canceled) request ctx — so terminal persistence survives a client disconnect
+// — but bounded by persistTimeout so a wedged write can't hang forever. Use for
+// the cleanup/persist writes that must outlive the request, never for the
+// request's own work.
+func detachedContext(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.WithoutCancel(ctx), persistTimeout)
+}
 
 type Coach struct {
 	store    *store.Store
@@ -160,7 +182,8 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		if succeeded {
 			return
 		}
-		cleanupCtx := context.WithoutCancel(ctx)
+		cleanupCtx, cancel := detachedContext(ctx)
+		defer cancel()
 		partial := streamed.String()
 		if partial != "" {
 			partial += "\n\n[interrupted]"
@@ -200,12 +223,19 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	}
 
 	finalText, loopErr := c.runLoop(ctx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, history, executor, onDelta)
-	if errors.Is(loopErr, ErrContextLength) {
-		// One auto-tighten attempt: rebuild with a much smaller window,
-		// same stage/prd (the ledger, once H2 lands, rides along inside
-		// systemPrompt). Reset what streamed so far — it belongs to the
-		// failed attempt, not this one.
-		streamed.Reset()
+	// One auto-tighten attempt on a context-length failure: rebuild with a much
+	// smaller window, same stage/prd (the ledger, once H2 lands, rides along
+	// inside systemPrompt). Only retry when NOTHING has reached the client yet
+	// (streamed.Len()==0 — onDelta writes to `streamed` and flushes the SSE
+	// delta in lockstep, so this is exactly "the bubble is still empty").
+	// If deltas already flushed, retrying would append a second, different
+	// answer onto the live bubble while `streamed` was reset to hold only the
+	// retry's text — the displayed answer and the persisted one would diverge.
+	// In that case we fall through to failTurn instead, so what the user saw is
+	// exactly what gets persisted (F16). A context-length error almost always
+	// arrives as a pre-stream 400 (empty bubble), so the retry still fires for
+	// the common case.
+	if errors.Is(loopErr, ErrContextLength) && streamed.Len() == 0 {
 		tightHistory, herr := c.loadHistory(ctx, userID, conversationID, tightenedHistoryLimit)
 		if herr == nil {
 			tightHistory = append(tightHistory, Message{Role: RoleUser, Content: content})
@@ -222,7 +252,8 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	// these writes would fail — leaving the run stuck "running" with an empty
 	// message while `succeeded` still flipped true so the failure defer skips.
 	// Mirror the defer's cleanup_ctx treatment for the success path.
-	persistCtx := context.WithoutCancel(ctx)
+	persistCtx, cancel := detachedContext(ctx)
+	defer cancel()
 	if err := c.store.MarkAIRunSucceeded(persistCtx, userID, run.ID, finalText); err != nil {
 		c.log.Error("mark ai run succeeded", "error", err)
 	}
@@ -248,7 +279,8 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 // detached from the (possibly already-canceled) request context, same
 // reasoning as the HandleMessage defer.
 func (c *Coach) failTurn(ctx context.Context, userID uuid.UUID, runID uuid.UUID, loopErr error, sse *sseWriter) {
-	cleanupCtx := context.WithoutCancel(ctx)
+	cleanupCtx, cancel := detachedContext(ctx)
+	defer cancel()
 	_ = c.store.MarkAIRunFailed(cleanupCtx, userID, runID, loopErr.Error())
 
 	switch {
@@ -266,6 +298,14 @@ func (c *Coach) failTurn(ctx context.Context, userID uuid.UUID, runID uuid.UUID,
 		sse.errorEvent(loopErr.Error(), "PROVIDER_CONFIG")
 	case errors.Is(loopErr, ErrContentRefusal):
 		sse.errorEvent("the model declined to respond", "CONTENT_REFUSAL")
+	case errors.Is(loopErr, ErrUpstreamStall):
+		// The provider went silent and the idle watchdog killed the stream
+		// while the client was still connected — a hung upstream, not a
+		// disconnect. Counts against the circuit breaker, and the still-there
+		// user gets an honest error instead of a silently dead bubble.
+		_ = c.store.RecordCircuitResult(cleanupCtx, false)
+		c.log.Error("agent loop: upstream stream stalled (idle watchdog)", "error", loopErr)
+		sse.errorEvent("AI provider stopped responding — try again", "UPSTREAM_STALL")
 	case errors.Is(loopErr, context.Canceled):
 		// Client disconnected. No circuit result — routine, not provider health.
 	default:
@@ -297,6 +337,9 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 			return "", err
 		}
 		if turn.ToolCall == nil {
+			if turn.Truncated {
+				return turn.Text + truncatedMarker, nil
+			}
 			return turn.Text, nil
 		}
 

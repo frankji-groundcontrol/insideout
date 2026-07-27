@@ -79,10 +79,12 @@ records continue the numbering (next: BUG-014).
   the first public backend commit (2 medium concurrency/data-integrity bugs, 6
   low items). No push-blockers.
 - [2026-07-26 — Backend optimization review, deferred findings](2026-07-26-backend-optimization-deferred.md)
-  — the items NOT fixed in the 2026-07-26 optimization pass, headed by a HIGH
-  6-digit invite-code brute-force (cross-tenant membership), plus a ConvertIdea
-  double-create race, auth rate-limiting, a PRD CAS race, and six low SQL/error
-  items — each with a bounded fix prompt.
+  — the items NOT fixed in the 2026-07-26 optimization pass. Six were resolved
+  in the [2026-07-27 hardening pass](../changelogs/2026-07-27-security-hardening-pass.md)
+  (invite-code keyspace, ConvertIdea race, PRD CAS race, EnsureProject race,
+  GitHub sync N+1, provider error leaks); still open: auth rate-limiting +
+  argon2 timing, `loadHistory` over-fetch, the `ai_runs` reaper index, the
+  `ListWorkspacesForUser` correlated count, and the join-endpoint rate limit.
 - [2026-07-21 — Tracked coding-tool scratch directories](2026-07-21-tracked-tool-scratch-dirs.md)
   — `.sisyphus/`, `.trae/`, `review/` are committed but are JuanLeMe-era tool
   scratch; untracking them needs a user decision.

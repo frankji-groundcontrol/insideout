@@ -27,6 +27,11 @@ narrating progress only here.
 
 ## Completed
 
+- [2026-07-27 — Cross-surface security hardening pass](2026-07-27-hardening/README.md)
+  — 22 workflow findings (F1–F22) + 4 code-traced items (R1–R4) fixed at root
+  cause across the PRD coach, AI roadmap, GitHub sync, project-updates
+  timeline, and authz; real-DB tests throughout. Resolves six 2026-07-26
+  deferred items. Status: complete, verified green.
 - [2026-07-24 — Roadmap: tree on a canvas](2026-07-24-roadmap-canvas.md)
   — replaced the indented-list roadmap with a hand-rolled pan/zoom canvas tree
   (tidy layout, bezier edges, drag-to-reparent), one component in the project

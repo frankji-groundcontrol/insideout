@@ -29,15 +29,25 @@ func (s *Server) withRequestID(next http.Handler) http.Handler {
 }
 
 // statusRecorder captures the status code written so logging middleware
-// can report it after the handler completes.
+// can report it after the handler completes. wroteHeader records whether
+// the response has been committed (headers sent) — a bare Write commits
+// them implicitly with a 200, so it must set the flag too, or withRecover
+// can't tell a not-yet-started response from a mid-stream one (F21).
 type statusRecorder struct {
 	http.ResponseWriter
-	status int
+	status      int
+	wroteHeader bool
 }
 
 func (rec *statusRecorder) WriteHeader(code int) {
 	rec.status = code
+	rec.wroteHeader = true
 	rec.ResponseWriter.WriteHeader(code)
+}
+
+func (rec *statusRecorder) Write(b []byte) (int, error) {
+	rec.wroteHeader = true
+	return rec.ResponseWriter.Write(b)
 }
 
 // Flush forwards to the underlying ResponseWriter's Flush, if it has
@@ -97,7 +107,14 @@ func (s *Server) withRecover(next http.Handler) http.Handler {
 		defer func() {
 			if rec := recover(); rec != nil {
 				s.log.Error("panic", "error", rec, "path", r.URL.Path)
-				httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+				// Only write a JSON error if the response hasn't been
+				// committed. Once headers are out (e.g. an SSE stream is
+				// mid-flight) a JSON error body would be appended onto the
+				// event stream and corrupt it — log and let the stream's own
+				// error handling / client timeout take over instead (F21).
+				if sr, ok := w.(*statusRecorder); !ok || !sr.wroteHeader {
+					httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+				}
 			}
 		}()
 		next.ServeHTTP(w, r)

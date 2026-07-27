@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type PrdRevision struct {
@@ -58,6 +59,14 @@ func (s *Store) CreateRevision(ctx context.Context, actorID, prdID uuid.UUID, no
 			RETURNING id, prd_id, revision, sections, created_by, note, created_at`,
 			prdID, nextRevision, string(sectionsJSON), actorID, note,
 		).Scan(&rev.ID, &rev.PrdID, &rev.Revision, &rev.Sections, &rev.CreatedBy, &rev.Note, &rev.CreatedAt)
+		// Two concurrent snapshots both read the same current_revision and both
+		// compute MAX+1 — the loser trips the (prd_id, revision) unique
+		// constraint (23505). Map it to ErrConflict so the API answers 409 "try
+		// again" instead of an opaque 500 (F14); the winner's row stands.
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return ErrConflict
+		}
 		if err != nil {
 			return err
 		}

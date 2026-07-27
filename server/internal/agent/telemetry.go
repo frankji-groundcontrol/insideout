@@ -17,7 +17,11 @@ func (c *Coach) recordTelemetry(ctx context.Context, runID uuid.UUID, role strin
 		eventType = role + "_error_" + class
 	}
 	inputTokens, outputTokens := usage.InputTokens, usage.OutputTokens
-	if err := c.store.InsertAIRunEvent(context.WithoutCancel(ctx), runID, eventType, c.streamer.Model(), &inputTokens, &outputTokens, &latencyMs, nil, nil); err != nil {
+	// Detached so a telemetry write survives the client leaving, but bounded so
+	// a wedged write can't hang forever (F11).
+	persistCtx, cancel := detachedContext(ctx)
+	defer cancel()
+	if err := c.store.InsertAIRunEvent(persistCtx, runID, eventType, c.streamer.Model(), &inputTokens, &outputTokens, &latencyMs, nil, nil); err != nil {
 		c.log.Error("insert ai run event", "error", err)
 	}
 }

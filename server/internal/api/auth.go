@@ -155,7 +155,16 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newExpiry := time.Now().Add(s.cfg.RefreshTTL)
-	if _, err := s.store.RotateSession(r.Context(), sess.ID, sess.UserID, newHash, newExpiry); err != nil {
+	_, err = s.store.RotateSession(r.Context(), sess.ID, sess.UserID, newHash, newExpiry)
+	if errors.Is(err, store.ErrConflict) {
+		// A concurrent refresh already rotated this token — this request is a
+		// replay. Refuse it and drop the (now-dead) cookie, same contract as
+		// the "already used" path above.
+		s.clearAuthCookies(w)
+		httpx.WriteError(w, http.StatusUnauthorized, "refresh token expired or already used", "", nil)
+		return
+	}
+	if err != nil {
 		s.log.Error("rotate session", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -27,6 +28,26 @@ func projectUpdateResponse(u store.ProjectUpdate) projectUpdateView {
 
 var validUpdateKinds = map[string]bool{"progress": true, "blocker": true, "note": true}
 
+// maxUpdateContentRunes bounds a project update's content — a progress note,
+// blocker, or comment is a few paragraphs at most. The 1 MiB request-body cap
+// is a transport ceiling, not a per-field bound; this check turns an overlong
+// field into a clean 400 instead of storing a multi-MB blob.
+const maxUpdateContentRunes = 5000
+
+// validateUpdateContent trims raw and returns the cleaned content, or an error
+// message if it's empty or overlong. Shared by add and edit so the bound is
+// enforced in exactly one place.
+func validateUpdateContent(raw string) (string, string) {
+	content := strings.TrimSpace(raw)
+	if content == "" {
+		return "", "content is required"
+	}
+	if utf8.RuneCountInString(content) > maxUpdateContentRunes {
+		return "", "content too long"
+	}
+	return content, ""
+}
+
 type addProjectUpdateRequest struct {
 	Kind    string `json:"kind"`
 	Content string `json:"content"`
@@ -47,13 +68,13 @@ func (s *Server) handleAddProjectUpdate(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusBadRequest, "kind must be \"progress\", \"blocker\", or \"note\"", "", nil)
 		return
 	}
-	req.Content = strings.TrimSpace(req.Content)
-	if req.Content == "" {
-		httpx.WriteError(w, http.StatusBadRequest, "content is required", "", nil)
+	content, errMsg := validateUpdateContent(req.Content)
+	if errMsg != "" {
+		httpx.WriteError(w, http.StatusBadRequest, errMsg, "", nil)
 		return
 	}
 
-	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, req.Kind, req.Content)
+	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, req.Kind, content)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
 		return
@@ -85,13 +106,13 @@ func (s *Server) handleEditProjectUpdate(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
-	req.Content = strings.TrimSpace(req.Content)
-	if req.Content == "" {
-		httpx.WriteError(w, http.StatusBadRequest, "content is required", "", nil)
+	content, errMsg := validateUpdateContent(req.Content)
+	if errMsg != "" {
+		httpx.WriteError(w, http.StatusBadRequest, errMsg, "", nil)
 		return
 	}
 
-	u, err := s.store.UpdateProjectUpdate(r.Context(), userID, uid, req.Content)
+	u, err := s.store.UpdateProjectUpdate(r.Context(), userID, uid, content)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "update not found", "", nil)
 		return

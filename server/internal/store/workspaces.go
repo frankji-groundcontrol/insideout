@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -33,19 +34,24 @@ type WorkspaceSummary struct {
 	MyRole      string
 }
 
+// generateInviteCode returns the workspace join credential. The code is the
+// SOLE gate on joining a workspace and the join endpoint is authenticated but
+// not rate-limited, so it must be unguessable: 128 bits from crypto/rand,
+// hex-encoded (32 chars). The old `%06d` crushed those random bytes to a
+// 10^6 keyspace that was brute-forceable (R2). The `code` column is `text`,
+// so the longer code fits unchanged, and the collision-retry loop in
+// createWorkspaceTx still guards uniqueness (collisions are now negligible).
 func generateInviteCode() (string, error) {
-	var n uint32
-	buf := make([]byte, 4)
+	buf := make([]byte, 16)
 	if _, err := rand.Read(buf); err != nil {
 		return "", err
 	}
-	n = uint32(buf[0])<<24 | uint32(buf[1])<<16 | uint32(buf[2])<<8 | uint32(buf[3])
-	return fmt.Sprintf("%06d", n%1_000_000), nil
+	return hex.EncodeToString(buf), nil
 }
 
 const maxCodeAttempts = 8
 
-// CreateWorkspace creates a workspace with a collision-checked 6-digit
+// CreateWorkspace creates a workspace with a collision-checked 128-bit
 // invite code (fixing the old RPC's no-retry bug — see
 // docs/plans/2026-07-20-go-rewrite/02-backend-go.md §3) and makes the
 // creator its first admin member, atomically.

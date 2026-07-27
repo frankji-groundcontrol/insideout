@@ -70,18 +70,50 @@ func (s *Store) ProjectRepoSync(ctx context.Context, actorID, projectID uuid.UUI
 	return repoURL, lastSHA, err
 }
 
-// RecordRepoSyncSHA advances the sync cursor to the newest commit SHA seen.
-func (s *Store) RecordRepoSyncSHA(ctx context.Context, actorID, projectID uuid.UUID, sha string) error {
-	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+// SyncRepoCommits appends synced GitHub commits to a project's progress
+// timeline AND advances the sync cursor in ONE transaction. contents are
+// inserted in the order given (caller orders them oldest-first so the
+// timeline reads chronologically); newestSHA becomes the new cursor.
+//
+// Doing both in a single transaction is the fix for duplicate timeline
+// entries: previously each commit was its own transaction followed by a
+// separate cursor write, so a crash (or any error) between the inserts and
+// the cursor advance left commits written with the cursor still behind them —
+// and the next sync re-inserted the same commits. Now either the whole batch
+// plus the cursor land, or nothing does, so a re-sync after a failure retries
+// cleanly. The owner/admin check (requireProjectOwnerOrAdmin) matches what
+// ProjectRepoSync already enforced on the read side of the sync.
+func (s *Store) SyncRepoCommits(ctx context.Context, actorID, projectID uuid.UUID, contents []string, newestSHA string) (int, error) {
+	if len(contents) == 0 {
+		return 0, nil // nothing new: leave the cursor exactly where it is
+	}
+	added := 0
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		if err := requireProjectOwnerOrAdmin(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
-		_, err := tx.Exec(ctx, `
+		for _, content := range contents {
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO insideout.project_updates (project_id, author_id, kind, content)
+				VALUES ($1, $2, 'progress', $3)`,
+				projectID, actorID, content,
+			); err != nil {
+				return err
+			}
+		}
+		if _, err := tx.Exec(ctx, `
 			UPDATE insideout.projects
 			SET meta = jsonb_set(meta, '{github_last_sha}', to_jsonb($2::text))
 			WHERE id = $1`,
-			projectID, sha,
-		)
-		return err
+			projectID, newestSHA,
+		); err != nil {
+			return err
+		}
+		added = len(contents)
+		return nil
 	})
+	if err != nil {
+		return 0, err
+	}
+	return added, nil
 }

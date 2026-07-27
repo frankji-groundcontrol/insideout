@@ -15,6 +15,23 @@ code) with relative links.
 
 ## Records
 
+- [2026-07-27 — Live end-to-end smoke test for all five surfaces](2026-07-27-live-smoke-test.md)
+  — `server/scripts/smoke.sh`: one rerun-safe script that boots the server and
+  drives the PRD coach SSE, AI roadmap, GitHub sync, project-updates timeline,
+  and cross-tenant authz over real HTTP against the real DB (curl + jq, no
+  mocks), exiting non-zero on any failure. Closes task #75; 48/48 green twice.
+- [2026-07-27 — Cross-surface security hardening pass](2026-07-27-security-hardening-pass.md)
+  — 22 workflow findings (F1–F22) + 4 code-traced items (R1–R4) fixed at root
+  cause across the PRD coach, AI roadmap, GitHub sync, project-updates
+  timeline, and authz: invite code raised to 128 bits, four concurrency races
+  closed (ConvertIdea, EnsureProject, PRD-section CAS, revision snapshot),
+  DecodeJSON rejects trailing bytes, upstream error detail kept off the wire.
+  Resolves six 2026-07-26 deferred items; real-DB tests throughout.
+- [2026-07-26 — Backend optimization pass](2026-07-26-backend-optimization-pass.md)
+  — five audit findings fixed at root cause: request-body cap + server
+  timeouts, the dispatcher conversation-lock TOCTOU, the roadmap move/create
+  cycle race, the coach success-path detached-context persist, and unchecked
+  SSE frame-index assertions.
 - [2026-07-26 — Roadmap canvas: Workstream D (transitions + sibling bands + minimap) — collab T9](2026-07-26-roadmap-canvas-workstream-d.md)
   — closes the collaborative-canvas plan. Cards glide (keyed wrappers + a
   reduced-motion-gated `transform` transition), parallel tracks get a neutral

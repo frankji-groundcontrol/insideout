@@ -165,6 +165,16 @@ func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (
 func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*Project, error) {
 	var p *Project
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		// Serialize concurrent first-builds of this PRD for the rest of the tx
+		// (mirror ReplaceRoadmapTree's advisory lock). Without it two
+		// overlapping builds both read project_id NULL below and both insert a
+		// project, leaving one orphaned under a divergent roadmap. The loser
+		// blocks until the winner commits, then reads the committed link and
+		// returns the existing project.
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, prdID.String()); err != nil {
+			return err
+		}
+
 		var workspaceID uuid.UUID
 		var linkedProject *uuid.UUID
 		var title string

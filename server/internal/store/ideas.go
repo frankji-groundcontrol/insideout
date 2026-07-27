@@ -187,7 +187,23 @@ func (s *Store) ConvertIdea(ctx context.Context, actorID, ideaID uuid.UUID) (*Pr
 		if idea.AuthorID != actorID {
 			return ErrForbidden
 		}
-		if idea.Status == "converted" {
+
+		// Claim the conversion atomically BEFORE inserting anything. The plain
+		// SELECT above holds no lock, so two concurrent converters both read
+		// status='pending' and both pass a read-then-check guard — each would
+		// insert its own PRD + conversation and commit, orphaning one (the
+		// idea's prd_id can only point at one). The guard therefore lives in
+		// this UPDATE: only a row still <> 'converted' is claimed, and because
+		// concurrent UPDATEs on one row serialize, exactly one tx sees
+		// RowsAffected==1 and the rest get 0 → ErrConflict (409). FOR UPDATE is
+		// NOT an option here: the ideas SELECT policy joins
+		// workspace_memberships, which returns zero rows under EvalPlanQual
+		// re-evaluation and would silently break the lock (R1).
+		tag, err := tx.Exec(ctx, `UPDATE insideout.ideas SET status = 'converted' WHERE id = $1 AND status <> 'converted'`, ideaID)
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
 			return ErrConflict
 		}
 
@@ -201,7 +217,7 @@ func (s *Store) ConvertIdea(ctx context.Context, actorID, ideaID uuid.UUID) (*Pr
 			return err
 		}
 
-		_, err = tx.Exec(ctx, `UPDATE insideout.ideas SET status = 'converted', prd_id = $2 WHERE id = $1`, ideaID, prd.ID)
+		_, err = tx.Exec(ctx, `UPDATE insideout.ideas SET prd_id = $2 WHERE id = $1`, ideaID, prd.ID)
 		return err
 	})
 	if err != nil {

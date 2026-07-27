@@ -124,13 +124,13 @@ func TestUpdateSections_CASConflict(t *testing.T) {
 	staleRev := prd.UpdatedAt
 
 	// Simulate a human's manual save landing first (no CAS check).
-	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, prd.Title, map[string]string{"background": "human wrote this"}, nil); err != nil {
+	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"background": "human wrote this"}, nil); err != nil {
 		t.Fatalf("manual save: %v", err)
 	}
 
 	// The coach's tool call, still holding the pre-human-edit rev, must
 	// be rejected — not silently overwrite the human's edit.
-	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, prd.Title, map[string]string{"background": "coach tries to overwrite"}, &staleRev); err != ErrConflict {
+	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"background": "coach tries to overwrite"}, &staleRev); err != ErrConflict {
 		t.Fatalf("stale CAS write: want ErrConflict, got %v", err)
 	}
 
@@ -143,7 +143,58 @@ func TestUpdateSections_CASConflict(t *testing.T) {
 	}
 
 	// A coach write with the CURRENT rev succeeds normally.
-	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, prd.Title, map[string]string{"background": "coach re-read then wrote"}, &current.UpdatedAt); err != nil {
+	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"background": "coach re-read then wrote"}, &current.UpdatedAt); err != nil {
 		t.Fatalf("fresh CAS write: %v", err)
+	}
+}
+
+// TestUpdateSections_OptionalTitle verifies the F4 fix: a section-only edit
+// (title=nil) must leave the stored title untouched, and only a request that
+// deliberately carries a title changes it. Before this, every section save
+// resent the client's (possibly stale) title and so could clobber a concurrent
+// rename — the PRD title lost-update.
+func TestUpdateSections_OptionalTitle(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	author := mkUser(t, st)
+	ws, err := st.CreateWorkspace(ctx, author.ID, "OptTitle WS", "")
+	if err != nil {
+		t.Fatalf("create workspace: %v", err)
+	}
+	idea, err := st.CreateIdea(ctx, author.ID, ws.ID, "original title", "content")
+	if err != nil {
+		t.Fatalf("create idea: %v", err)
+	}
+	prd, _, err := st.ConvertIdea(ctx, author.ID, idea.ID)
+	if err != nil {
+		t.Fatalf("convert idea: %v", err)
+	}
+	origTitle := prd.Title
+
+	// A section-only save (nil title) writes the section and leaves the title.
+	got, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"goals": "ship it"}, nil)
+	if err != nil {
+		t.Fatalf("section-only save: %v", err)
+	}
+	if got.Title != origTitle {
+		t.Fatalf("nil title must not change it: got %q, want %q", got.Title, origTitle)
+	}
+	if got.Sections["goals"] != "ship it" {
+		t.Fatalf("section not written: %q", got.Sections["goals"])
+	}
+
+	// An explicit title renames the PRD...
+	newTitle := "renamed by hand"
+	got, err = st.UpdateSections(ctx, author.ID, prd.ID, &newTitle, nil, nil)
+	if err != nil {
+		t.Fatalf("title save: %v", err)
+	}
+	if got.Title != newTitle {
+		t.Fatalf("explicit title not applied: got %q, want %q", got.Title, newTitle)
+	}
+	// ...without clobbering the section written earlier.
+	if got.Sections["goals"] != "ship it" {
+		t.Fatalf("title-only write clobbered a section: %q", got.Sections["goals"])
 	}
 }

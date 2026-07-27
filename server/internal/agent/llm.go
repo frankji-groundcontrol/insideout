@@ -51,6 +51,11 @@ type Turn struct {
 	Text     string
 	ToolCall *ToolCallRequest
 	Usage    Usage
+	// Truncated is set when the provider stopped at its output-token cap
+	// (stop_reason=max_tokens) rather than finishing naturally. The Text is
+	// still usable, but it was cut off mid-answer — the coach surfaces this
+	// to the user instead of silently presenting it as complete (F13).
+	Truncated bool
 }
 
 // Usage is token accounting for one provider call — metadata only, never
@@ -82,6 +87,12 @@ var (
 	// ErrContentRefusal: the model refused or returned empty content.
 	// Not a circuit failure.
 	ErrContentRefusal = errors.New("agent: content refused")
+	// ErrUpstreamStall: the provider stream went silent and the idle
+	// watchdog canceled it while the client was still connected — a hung
+	// upstream, NOT a client disconnect. Circuit failure (it's a
+	// provider-health signal), and the still-connected user gets an SSE
+	// error rather than a silently dead stream.
+	ErrUpstreamStall = errors.New("agent: upstream stream stalled")
 )
 
 // ChatStreamer sends one turn to a model: system prompt, message history,

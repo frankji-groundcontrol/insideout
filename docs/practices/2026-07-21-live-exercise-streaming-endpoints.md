@@ -23,6 +23,8 @@ Any work on an SSE or streaming endpoint (here: `POST /api/v1/conversations/{id}
 
 A live `curl -N` transcript showing incremental, well-formed SSE events end to end through the full middleware chain and the real provider path.
 
+Standing automation: `server/scripts/smoke.sh` performs exactly this check (plus the other four surfaces) on every run — it boots the server, drives `POST /conversations/{id}/messages` with `curl -N`, and fails unless `message_start`, `delta`, and `message_end` all arrive. See [docs/changelogs/2026-07-27-live-smoke-test.md](../changelogs/2026-07-27-live-smoke-test.md).
+
 ## Failure signals
 
 - `sse: response writer does not support flushing` — a wrapper in the middleware chain dropped `http.Flusher` (BUG-010: the logging middleware's `statusRecorder` did exactly this, unconditionally, for every SSE request).

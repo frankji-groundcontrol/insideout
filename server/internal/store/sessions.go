@@ -60,6 +60,18 @@ func (s *Store) RevokeSession(ctx context.Context, id uuid.UUID) error {
 // RotateSession revokes the old session and creates a new one atomically,
 // implementing the rotate-on-every-refresh policy from
 // docs/plans/2026-07-20-go-rewrite/02-backend-go.md §2.
+//
+// Reuse safety: the revoke carries `AND revoked_at IS NULL` and we check the
+// affected-row count. If two concurrent refreshes (or a replayed token) race
+// on the same old session, exactly one revokes it; the loser touches zero
+// rows and bails with ErrConflict WITHOUT minting a second live session.
+// Without the guard both would revoke-then-insert, leaving two valid
+// sessions from one token. RevokeSession's identical guard is the precedent.
+//
+// ponytail: on detected reuse we only refuse this rotation. Full reuse
+// detection would also revoke the whole session family (force logout
+// everywhere); that's a policy call and needs session lineage this schema
+// doesn't track. Add it if replay becomes a real concern.
 func (s *Store) RotateSession(ctx context.Context, oldID, userID uuid.UUID, newTokenHash string, expiresAt time.Time) (*Session, error) {
 	tx, err := s.Pool.Begin(ctx)
 	if err != nil {
@@ -67,8 +79,12 @@ func (s *Store) RotateSession(ctx context.Context, oldID, userID uuid.UUID, newT
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, `UPDATE insideout.sessions SET revoked_at = now() WHERE id = $1`, oldID); err != nil {
+	tag, err := tx.Exec(ctx, `UPDATE insideout.sessions SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL`, oldID)
+	if err != nil {
 		return nil, err
+	}
+	if tag.RowsAffected() == 0 {
+		return nil, ErrConflict // already rotated/revoked — refuse to mint a second session
 	}
 
 	var sess Session

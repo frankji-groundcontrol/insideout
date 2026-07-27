@@ -83,6 +83,13 @@ func (s *Server) handleListConversationMessages(w http.ResponseWriter, r *http.R
 		if m.Role == "tool" {
 			continue // internal tool-call bookkeeping, not shown in the chat UI / 内部工具调用记录，不在聊天界面展示
 		}
+		// A tool-call-only assistant turn is persisted with empty Content (the
+		// tool mechanics live in tool_calls, not shown). Rendering it would
+		// surface an empty chat bubble, so skip it here — the same filter
+		// loadHistory applies when rebuilding model context (coach.go) (F22).
+		if m.Role == "assistant" && m.Content == "" {
+			continue
+		}
 		views = append(views, messageView{ID: m.ID.String(), Role: m.Role, Content: m.Content, CreatedAt: m.CreatedAt.Format(timeLayout)})
 	}
 	httpx.WriteJSON(w, http.StatusOK, views)

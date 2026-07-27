@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -32,6 +33,10 @@ type AnthropicStreamer struct {
 	model     string
 	maxTokens int
 	client    *http.Client
+	// idleTimeout bounds how long the stream may go silent before the
+	// watchdog cancels it. Defaults to idleStreamTimeout; overridable so a
+	// test can trip the watchdog in milliseconds. Zero means "use default".
+	idleTimeout time.Duration
 }
 
 func NewAnthropicStreamer(baseURL, authToken, model string) (*AnthropicStreamer, error) {
@@ -47,11 +52,12 @@ func NewAnthropicStreamer(baseURL, authToken, model string) (*AnthropicStreamer,
 		ResponseHeaderTimeout: 30 * time.Second,
 	}
 	return &AnthropicStreamer{
-		baseURL:   strings.TrimSuffix(baseURL, "/"),
-		authToken: authToken,
-		model:     model,
-		maxTokens: 4096,
-		client:    &http.Client{Transport: transport}, // no overall Timeout: SSE streams legitimately run minutes; idleWatchdog covers stalls
+		baseURL:     strings.TrimSuffix(baseURL, "/"),
+		authToken:   authToken,
+		model:       model,
+		maxTokens:   4096,
+		client:      &http.Client{Transport: transport}, // no overall Timeout: SSE streams legitimately run minutes; idleWatchdog covers stalls
+		idleTimeout: idleStreamTimeout,
 	}, nil
 }
 
@@ -134,6 +140,7 @@ func (a *AnthropicStreamer) doStreamChat(ctx context.Context, system string, msg
 		return Turn{}, fmt.Errorf("agent: marshal anthropic request: %w", err)
 	}
 
+	parent := ctx
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -159,15 +166,26 @@ func (a *AnthropicStreamer) doStreamChat(ctx context.Context, system string, msg
 		return Turn{}, anthropicHTTPError(resp)
 	}
 
-	tick, stop := idleWatchdog(cancel, idleStreamTimeout)
+	idle := a.idleTimeout
+	if idle <= 0 {
+		idle = idleStreamTimeout
+	}
+	tick, stop := idleWatchdog(cancel, idle)
 	defer stop()
 
 	turn, err := parseAnthropicStream(resp.Body, tick, onDelta)
 	if err != nil && ctx.Err() != nil {
-		// The derived ctx was canceled (parent canceled, or the idle
-		// watchdog fired) — that's the authoritative reason, not
-		// whatever wrapped error the transport surfaced for it.
-		return Turn{}, ctx.Err()
+		// The derived ctx was canceled — that's the authoritative reason,
+		// not whatever wrapped error the transport surfaced for it. The two
+		// causes are told apart by the parent (request) ctx: if it's still
+		// alive, the idle watchdog fired on a healthy connection — a hung
+		// upstream (ErrUpstreamStall, a provider-health signal). If the
+		// parent is done too, the client really disconnected — a routine
+		// context.Canceled that coach.go treats as no-one's fault.
+		if parent.Err() == nil {
+			return Turn{}, ErrUpstreamStall
+		}
+		return Turn{}, parent.Err()
 	}
 	return turn, err
 }
@@ -267,7 +285,9 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 
 		case "error":
 			errBody, _ := event["error"].(map[string]any)
-			return Turn{}, fmt.Errorf("agent: anthropic stream error: %v", errBody)
+			errType, _ := errBody["type"].(string)
+			errMsg, _ := errBody["message"].(string)
+			return Turn{}, classifyInStreamError(errType, errMsg)
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -298,7 +318,34 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	if text.Len() == 0 {
 		return Turn{}, fmt.Errorf("%w: empty text response", ErrContentRefusal)
 	}
-	return Turn{Text: text.String(), Usage: usage}, nil
+	// stop_reason=max_tokens means the provider hit its output cap and cut
+	// the answer off mid-thought. It's still a usable partial answer, but
+	// flag it so the coach doesn't present it as a finished response (F13).
+	return Turn{Text: text.String(), Usage: usage, Truncated: stopReason == "max_tokens"}, nil
+}
+
+// classifyInStreamError maps an SSE "error" event's error.type onto the same
+// sentinels anthropicHTTPError uses for non-200 responses, so coach.go's
+// taxonomy (retry / circuit / user-message policy) treats a mid-stream
+// provider error identically to an HTTP-level one — instead of collapsing
+// every in-stream error into a single opaque message that loses the type
+// (F17). There's no retry here: the returned sentinel flows back through
+// streamChat, whose single built-in retry already honors it.
+func classifyInStreamError(errType, msg string) error {
+	full := fmt.Sprintf("agent: anthropic stream error %s: %s", errType, msg)
+	switch {
+	case errType == "rate_limit_error":
+		return &rateLimitError{msg: full} // no Retry-After in-stream; streamChat caps its own wait
+	case errType == "overloaded_error" || errType == "api_error":
+		return fmt.Errorf("%w: %s", ErrProviderTransient, full)
+	case errType == "invalid_request_error" && strings.Contains(strings.ToLower(msg), "context"):
+		return fmt.Errorf("%w: %s", ErrContextLength, full)
+	case errType == "authentication_error" || errType == "permission_error" ||
+		errType == "not_found_error" || errType == "invalid_request_error":
+		return fmt.Errorf("%w: %s", ErrProviderConfig, full)
+	default:
+		return errors.New(full)
+	}
 }
 
 // readUsage reads {"input_tokens": N, "output_tokens": N} into usage,

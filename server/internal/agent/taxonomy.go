@@ -162,6 +162,8 @@ func telemetryErrorClass(err error) string {
 		return "config"
 	case errors.Is(err, ErrContentRefusal):
 		return "refusal"
+	case errors.Is(err, ErrUpstreamStall):
+		return "upstream_stall"
 	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
 		return "canceled"
 	default:

@@ -48,16 +48,33 @@ func (s *Store) AddProjectUpdate(ctx context.Context, actorID, projectID uuid.UU
 	return &u, nil
 }
 
+// ProjectUpdatesPageSize bounds one timeline page — a long-lived project's
+// history must not ship in full on every project fetch (the GetProject embed).
+const ProjectUpdatesPageSize = 50
+
 // ListProjectUpdates requires the caller to have already verified
 // membership (via GetProjectForMember), mirroring the ListMembers pattern.
-func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.UUID) ([]ProjectUpdate, error) {
+// It returns one page of the timeline, newest first, capped at limit (<=0
+// means ProjectUpdatesPageSize). `before` (optional) is the id of the oldest
+// row the caller already has; the page starts just after it. Keyset pagination
+// is on (created_at, id): created_at alone is ambiguous because rows written in
+// one transaction share a statement-time timestamp (e.g. a GitHub sync batch),
+// so the id breaks ties and keeps the cursor stable across pages.
+func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.UUID, limit int, before *uuid.UUID) ([]ProjectUpdate, error) {
+	if limit <= 0 {
+		limit = ProjectUpdatesPageSize
+	}
 	var out []ProjectUpdate
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT id, project_id, author_id, kind, content, created_at
 			FROM insideout.project_updates
 			WHERE project_id = $1
-			ORDER BY created_at DESC`, projectID,
+			  AND ($2::uuid IS NULL OR (created_at, id) < (
+			    SELECT created_at, id FROM insideout.project_updates WHERE id = $2
+			  ))
+			ORDER BY created_at DESC, id DESC
+			LIMIT $3`, projectID, before, limit,
 		)
 		if err != nil {
 			return err
@@ -108,12 +125,20 @@ func (s *Store) UpdateProjectUpdate(ctx context.Context, actorID, updateID uuid.
 			}
 		}
 
-		return tx.QueryRow(ctx, `
+		err = tx.QueryRow(ctx, `
 			UPDATE insideout.project_updates SET content = $2
 			WHERE id = $1
 			RETURNING id, project_id, author_id, kind, content, created_at`,
 			updateID, content,
 		).Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt)
+		// A concurrent delete between the SELECT above and this UPDATE removes
+		// the row, so RETURNING yields nothing and Scan returns ErrNoRows — map
+		// it to ErrNotFound (404) instead of leaking an opaque error as a 500,
+		// mirroring the SELECT's own mapping just above (R4).
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
 	})
 	if err != nil {
 		return nil, err

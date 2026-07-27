@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -78,7 +79,11 @@ var validSectionKey = func() map[string]bool {
 }()
 
 type updatePrdRequest struct {
-	Title    string            `json:"title"`
+	// Title is optional: a section-only save omits it (JSON null / absent) and
+	// leaves the stored title untouched. Only a payload that deliberately
+	// carries a title changes it — so a section save can't clobber a title
+	// someone else edited concurrently.
+	Title    *string           `json:"title"`
 	Sections map[string]string `json:"sections"`
 }
 
@@ -93,10 +98,13 @@ func (s *Server) handleUpdatePrd(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
-	req.Title = strings.TrimSpace(req.Title)
-	if req.Title == "" || len(req.Title) > 200 {
-		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
-		return
+	if req.Title != nil {
+		trimmed := strings.TrimSpace(*req.Title)
+		if trimmed == "" || len(trimmed) > 200 {
+			httpx.WriteError(w, http.StatusBadRequest, "title must be 1-200 characters when provided", "", nil)
+			return
+		}
+		req.Title = &trimmed
 	}
 	for key := range req.Sections {
 		if !validSectionKey[key] {
@@ -176,8 +184,13 @@ func (s *Server) handleCreateRevision(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// note is optional and a body-less POST is fine (io.EOF) — but a genuinely
+	// malformed body is a client error, not a silent no-op (F15).
 	var req createRevisionRequest
-	_ = httpx.DecodeJSON(r, &req) // note is optional; a body-less POST is fine
+	if err := httpx.DecodeJSON(r, &req); err != nil && !errors.Is(err, io.EOF) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
 
 	rev, err := s.store.CreateRevision(r.Context(), userID, pid, req.Note)
 	if errors.Is(err, store.ErrNotFound) {
@@ -186,6 +199,12 @@ func (s *Server) handleCreateRevision(w http.ResponseWriter, r *http.Request) {
 	}
 	if errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusForbidden, "only the author can snapshot a revision", "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrConflict) {
+		// MAX+1 race: a concurrent snapshot already took this revision number
+		// (F14). The winner's row stands; tell the loser to refresh + retry.
+		httpx.WriteError(w, http.StatusConflict, "a revision was just created — refresh and try again", "", nil)
 		return
 	}
 	if err != nil {

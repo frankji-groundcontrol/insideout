@@ -1,9 +1,16 @@
 # Backend optimization review — deferred findings
 
 **Date:** 2026-07-26
-**Status:** open — bounded fix prompts below; none are push-blockers for the
-current pass. The five highest-value findings from this review were fixed
-in the same pass (see `docs/changelogs/2026-07-26-backend-optimization-pass.md`):
+**Status:** partially resolved. Six items below were fixed at root cause in the
+[2026-07-27 hardening pass](../changelogs/2026-07-27-security-hardening-pass.md)
+and are marked ✅ inline: the invite-code keyspace (HIGH, entropy half — the
+join-endpoint rate limit is still open), the ConvertIdea double-create race,
+the PRD UpdateSections CAS, the EnsureProjectForPrd race, the GitHub sync N+1,
+and the provider/error detail leaks. Still open: login/register rate limiting +
+argon2 timing, `loadHistory` over-fetch, the `ai_runs` reaper index, the
+`ListWorkspacesForUser` correlated count, and the join-endpoint rate limit.
+The five highest-value findings from the original review were fixed in the same
+pass (see `docs/changelogs/2026-07-26-backend-optimization-pass.md`):
 request-body cap + server timeouts, the dispatcher conversation-lock TOCTOU,
 the roadmap move/create cycle race, the coach success-path detached-context
 persist, and the unchecked SSE frame-index assertions.
@@ -12,6 +19,10 @@ Two independent adversarial workflow audits (security/concurrency/SQL lenses)
 confirmed the items below against source. Ranked most-severe first.
 
 ## HIGH — invite code is a brute-forceable cross-tenant credential
+
+✅ **Resolved (2026-07-27, R2)** — `generateInviteCode` now draws 128 bits from
+`crypto/rand` (hex, 32 chars), removing the brute-force. The *second* suggested
+mitigation — a join-endpoint failed-attempt rate limit — is **still open**.
 
 `generateInviteCode` (`server/internal/store/workspaces.go:36-43`) returns
 `fmt.Sprintf("%06d", n%1_000_000)` — ~20 bits. `JoinWorkspace`
@@ -36,6 +47,12 @@ ideas, and PRDs.
 > joins and that N rapid wrong codes start returning 429.
 
 ## MEDIUM — ConvertIdea double-create race
+
+✅ **Resolved (2026-07-27, R1)** — atomic conditional `UPDATE … WHERE
+status<>'converted'` claim before inserting; loser → `ErrConflict` and rolls
+back. Covered by `TestConvertIdea_ConcurrentConvert` (real DB). The optional
+partial unique index on `prds(idea_id)` was NOT added — the conditional UPDATE
+is sufficient and a migration wasn't warranted.
 
 `ConvertIdea` (`server/internal/store/ideas.go:174-211`) reads the idea with
 an unlocked `SELECT`, guards `status == "converted"`, then inserts a PRD +
@@ -68,6 +85,10 @@ class of gap as the join endpoint above.
 
 ## MEDIUM — PRD UpdateSections check-then-act CAS
 
+✅ **Resolved (2026-07-27, F4)** — now an atomic `updated_at` compare-and-swap
+→ `ErrConflict` (409), so concurrent editor saves can't silently drop a section
+edit.
+
 `UpdateSections` (`server/internal/store/prds.go:118-155`) reads `updated_at`,
 compares in Go, then writes — a classic check-then-act that two concurrent
 editor saves can both pass, last-writer-wins silently dropping a section edit.
@@ -77,6 +98,10 @@ editor saves can both pass, last-writer-wins silently dropping a section edit.
 > updated_at=$expected` and return `ErrConflict` when `RowsAffected()==0`.
 
 ## LOW — `EnsureProjectForPrd` double-create race
+
+✅ **Resolved (2026-07-27, F3)** — `pg_advisory_xact_lock(hashtext(prdID))` at
+the top of the tx (mirroring `ReplaceRoadmapTree`). Covered by
+`TestEnsureProjectForPrd_ConcurrentFirstBuild` (real DB).
 
 `roadmap_plan.go:165-210`: two concurrent `POST /prds/{pid}/build` both see
 `prds.project_id NULL`, each insert a project (with a generated roadmap), and
@@ -97,6 +122,9 @@ filter into SQL.
 
 ## LOW — GitHub sync N+1 (one tx per commit)
 
+✅ **Resolved (2026-07-27, F6)** — all synced commits now insert in one store
+tx, so a partial failure can't leave duplicates + a divergent cursor.
+
 `github.go:106` / `project_updates.go:23` open a transaction per synced commit.
 Batch into a single multi-row insert in one tx.
 
@@ -114,6 +142,11 @@ member/project counts into the main query with `LEFT JOIN … GROUP BY` or
 lateral counts.
 
 ## LOW — provider/error detail leaks to clients
+
+✅ **Resolved (2026-07-27, F12 + F17)** — the GitHub 502 branch now logs the
+transport error server-side and returns a generic message; in-stream Anthropic
+errors flow through `classifyInStreamError` onto the existing sentinels with
+raw provider detail kept off the wire.
 
 Two spots return raw upstream detail: `github.go:90-93` echoes the GitHub API
 error verbatim, and `anthropic.go:154,263` forwards provider error detail over

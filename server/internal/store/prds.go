@@ -107,6 +107,12 @@ func (s *Store) GetPrdForMember(ctx context.Context, prdID, viewerID uuid.UUID) 
 // caller's responsibility to validate against PrdSectionKeys before
 // calling (kept here so store stays a thin, honest persistence layer).
 //
+// title is optional (nil leaves the stored title untouched via COALESCE).
+// A section-only edit must never rewrite the title: resending a stale
+// title on every section save is exactly how a concurrent title edit gets
+// silently clobbered. Only a request that deliberately carries a title
+// changes it.
+//
 // expectedUpdatedAt, when non-nil, is a compare-and-swap check against
 // the PRD's current updated_at: if it doesn't match, ErrConflict is
 // returned and nothing is written — this is how the coach's
@@ -115,7 +121,7 @@ func (s *Store) GetPrdForMember(ctx context.Context, prdID, viewerID uuid.UUID) 
 // saves via the PATCH endpoint pass nil: no CAS, last-write-wins, which
 // is what makes a human's direct edit always win over a stale coach
 // write rather than the reverse.
-func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, title string, patch map[string]string, expectedUpdatedAt *time.Time) (*Prd, error) {
+func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, title *string, patch map[string]string, expectedUpdatedAt *time.Time) (*Prd, error) {
 	var updated *Prd
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		prd, err := requirePrdAuthorOrAdmin(ctx, tx, prdID, actorID)
@@ -139,7 +145,7 @@ func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, ti
 		}
 
 		row := tx.QueryRow(ctx, `
-			UPDATE insideout.prds SET title = $2, sections = $3::jsonb
+			UPDATE insideout.prds SET title = COALESCE($2, title), sections = $3::jsonb
 			WHERE id = $1
 			RETURNING `+prdColumns,
 			prdID, title, string(mergedJSON),

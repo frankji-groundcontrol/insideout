@@ -125,6 +125,18 @@ DATABASE_URL=... go test ./internal/store/... -run TestAuthz -v   # store/RLS in
 The integration tests skip themselves when `DATABASE_URL` is unset. Run them
 against a migrated database (they exercise the RLS policies).
 
+Live end-to-end smoke test (all five surfaces over real HTTP, no mocks — needs
+`curl` + `jq` and a reachable `DATABASE_URL` in `../.env`):
+
+```bash
+./scripts/smoke.sh                              # boots its own server on a random high port
+SMOKE_BASE=http://127.0.0.1:54321 ./scripts/smoke.sh   # reuse an already-running server
+```
+
+It registers fresh uniquely-named users each run (rerun-safe) and exits non-zero
+on any failed assertion. See
+[docs/changelogs/2026-07-27-live-smoke-test.md](../changelogs/2026-07-27-live-smoke-test.md).
+
 Frontend (from `app/`):
 
 ```bash

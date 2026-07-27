@@ -86,45 +86,49 @@ func (s *Server) handleSyncGithub(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	commits, err := github.FetchCommits(r.Context(), repoURL, 20)
+	// Walk pagination back to the last-synced cursor so a repo that landed
+	// more than one page of commits since the last sync doesn't silently drop
+	// the ones past the first page. fresh is newest-first.
+	fresh, err := github.FetchCommitsSince(r.Context(), repoURL, lastSHA, 20, 5)
 	if err != nil {
-		s.log.Error("github fetch", "error", err)
-		httpx.WriteError(w, http.StatusBadGateway, err.Error(), "GITHUB_UPSTREAM", nil)
+		var rle *github.RateLimitError
+		switch {
+		case errors.As(err, &rle):
+			httpx.WriteError(w, http.StatusTooManyRequests, "GitHub rate limit hit — try again shortly", "GITHUB_RATE_LIMITED", map[string]any{"retry_after_seconds": rle.RetryAfterSeconds})
+		case errors.Is(err, github.ErrRepoNotFound):
+			httpx.WriteError(w, http.StatusNotFound, "GitHub repository not found — private repo, or check the name", "GITHUB_NOT_FOUND", nil)
+		default:
+			// Log the transport detail but return a generic message, so upstream
+			// internals (URLs, headers) never reach the client (F12).
+			s.log.Error("github fetch", "error", err)
+			httpx.WriteError(w, http.StatusBadGateway, "GitHub sync failed", "GITHUB_UPSTREAM", nil)
+		}
+		return
+	}
+	if len(fresh) == 0 {
+		httpx.WriteJSON(w, http.StatusOK, map[string]any{"added": 0, "repoUrl": repoURL})
 		return
 	}
 
-	// New commits are those before the cursor in the newest-first list.
-	var fresh []github.Commit
-	for _, c := range commits {
-		if c.SHA == lastSHA {
-			break
-		}
-		fresh = append(fresh, c)
-	}
-
-	// Insert oldest-first so created_at ordering matches commit order.
-	added := 0
+	// Build the timeline entries oldest-first (so they read chronologically);
+	// the newest SHA becomes the cursor.
+	contents := make([]string, 0, len(fresh))
 	for i := len(fresh) - 1; i >= 0; i-- {
 		c := fresh[i]
 		sha := c.SHA
 		if len(sha) > 7 {
 			sha = sha[:7]
 		}
-		content := fmt.Sprintf("[github %s] %s — %s", sha, c.Message, c.Author)
-		if _, err := s.store.AddProjectUpdate(r.Context(), userID, pid, "progress", content); err != nil {
-			s.log.Error("insert synced update", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-			return
-		}
-		added++
+		contents = append(contents, fmt.Sprintf("[github %s] %s — %s", sha, c.Message, c.Author))
 	}
 
-	if len(fresh) > 0 {
-		if err := s.store.RecordRepoSyncSHA(r.Context(), userID, pid, fresh[0].SHA); err != nil {
-			s.log.Error("record sync cursor", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-			return
-		}
+	// One transaction: the batch and the cursor advance land together, so a
+	// failure can't leave commits written with the cursor still behind them.
+	added, err := s.store.SyncRepoCommits(r.Context(), userID, pid, contents, fresh[0].SHA)
+	if err != nil {
+		s.log.Error("sync repo commits", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
 	}
 
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"added": added, "repoUrl": repoURL})

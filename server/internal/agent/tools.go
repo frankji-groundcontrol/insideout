@@ -176,7 +176,9 @@ func (e *toolExecutor) updateSection(ctx context.Context, argsJSON string) (stri
 	if err != nil {
 		return "", err
 	}
-	if _, err := e.store.UpdateSections(ctx, e.actorID, e.prdID, prd.Title, map[string]string{args.Section: args.Markdown}, &prd.UpdatedAt); err != nil {
+	// title=nil: a section edit never rewrites the title (COALESCE leaves it
+	// untouched) — the coach only owns section content, not the PRD title.
+	if _, err := e.store.UpdateSections(ctx, e.actorID, e.prdID, nil, map[string]string{args.Section: args.Markdown}, &prd.UpdatedAt); err != nil {
 		if err == store.ErrConflict {
 			return "", fmt.Errorf("agent: this section was edited by someone else since you last read it — call get_prd again to see the current content before retrying")
 		}
