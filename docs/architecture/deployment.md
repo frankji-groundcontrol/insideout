@@ -44,8 +44,13 @@ The same migration files support two targets without modification (see
    transaction pooling. Session-mode poolers and direct connections use the
    faster default mode.
 
-Migrations run via `go run ./cmd/insideout migrate` (or the container binary
-with the `migrate` argument) — the server does not auto-migrate on boot.
+Migrations can be run explicitly via `go run ./cmd/insideout migrate` (or the
+container binary with the `migrate` argument), and the server **also applies
+them on boot**: `runServe` calls `store.Migrate` before it starts listening and
+exits non-zero if that fails
+([`server/cmd/insideout/main.go`](../../server/cmd/insideout/main.go)). The
+explicit subcommand exists so a deploy can migrate as a separate, observable
+step rather than as a side effect of the first container start.
 
 ## Environment
 
