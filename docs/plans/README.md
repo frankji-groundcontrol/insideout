@@ -1,60 +1,61 @@
-# Plans
+# Plans and task board
 
-Live and historical task plans for this repository. Each plan states scope,
-decisions, and status; update the plan in place as work proceeds rather than
-narrating progress only here.
+This is the authoritative status board for concurrent repository work. Update
+the table whenever a task starts, changes state, becomes blocked, or reaches a
+checkpoint. Each linked plan owns its detailed checklist and decisions;
+`docs/HANDOFF.md` only explains how the next agent should resume.
 
-## Active
+## Current board
 
-- [2026-07-24 — Roadmap canvas: collaborative model](2026-07-24-roadmap-canvas-collab.md)
-  — close the gap between the single-player canvas and the product's
-  collaborative rhythms: partial-update correctness (lost-update fix),
-  silent refresh-on-focus, tree-replace guard, atomic AI expand,
-  review/present mode, freshness/attribution, and an edge-semantics rethink.
-  Status: implementing — Workstream A (T1–T5) and the review-mode + edge
-  re-semantics frontend lanes (T7–T8, live-verified light/dark × 中文/EN)
-  have landed, plus the single-player hardening pass; T6 (the B3 attribution
-  schema migration) is next and needs an explicit go, then T9 (Workstream D).
-- [2026-07-23 — Comprehensive frontend: page structure + design](2026-07-23-frontend-pages.md)
-  — whole-app IA (global chrome, workspace settings/members, PRD revisions), a
-  detachable CoachPanel with inline suggested-prompt cards, and every page
-  brought to the Ink & Seal standard. Status: in progress.
-- [2026-07-21 — PRD agent harness redesign](2026-07-21-prd-agent-harness/index.md)
-  — research-backed design for the PRD coaching harness (fact ledger,
-  mechanical stage gates, fresh-context critic, dispatch/queueing/failure
-  hardening), reviewed via gstack plan-ceo-review + plan-eng-review.
-  Status: reviewed, ready to implement (pending plan §9 user decisions).
+| Priority | Task | Status | Next action | Blocker / note |
+| --- | --- | --- | --- | --- |
+| P1 | [Environment workflow](2026-07-30-env-catalog-propagate.md) | **Finished — awaiting checkpoint** | Rerun the focused environment checks, then partial-stage and checkpoint this task independently. | Shared documentation files contain changes from other tasks. |
+| P1 | [Shared auth modal](../changelogs/2026-07-27-auth-door-modal.md) + [Design-QA record](../changelogs/2026-07-27-design-qa-surface.md) | **Finished — awaiting checkpoint** | Rerun the focused frontend checks, then partial-stage and checkpoint this task independently. | Shared routers and indexes contain changes from other tasks. |
+| P1 | [Product-experience baseline](2026-08-13-product-experience-baseline.md) | **Finished — awaiting checkpoint** | Recheck the documentation diff and links, then partial-stage and checkpoint it independently. | Shared README and index files contain changes from other tasks. |
+| P2 | First version-first product slice from [`PRODUCT.md`](../../PRODUCT.md) | **Pending — ready to plan** | After the finished workstreams are checkpointed, create a dated implementation plan for the smallest useful slice and run its engineering review. | None; planning has not started. |
+
+**Status meanings:** In flight = active work; Pending = not started; Finished
+= recorded scope and verification complete in the local worktree; Completed =
+a checkpoint commit exists; Blocked = work cannot safely progress. Because
+several tasks share documentation files, do not use `git add .`; review and
+stage the appropriate hunks for one task at a time.
+
+Unscheduled limitations and debt stay in [`docs/TODO.md`](../TODO.md) and
+[`docs/issues/`](../issues/README.md). Promote one to this board when it is
+selected for work; backlog is not in-flight work.
 
 ## Completed
 
+- [2026-08-13 — Task board and handoff responsibility correction](2026-08-13-task-board-and-handoff.md)
+  — `docs/plans/README.md` is now the authoritative concurrent task board and
+  `docs/HANDOFF.md` a concise resume guide; agent routers and the doc map
+  state the responsibility split. Documentation governance only.
 - [2026-07-27 — Cross-surface security hardening pass](2026-07-27-hardening/README.md)
-  — 22 workflow findings (F1–F22) + 4 code-traced items (R1–R4) fixed at root
-  cause across the PRD coach, AI roadmap, GitHub sync, project-updates
-  timeline, and authz; real-DB tests throughout. Resolves six 2026-07-26
-  deferred items. Status: complete, verified green.
-- [2026-07-24 — Roadmap: tree on a canvas](2026-07-24-roadmap-canvas.md)
-  — replaced the indented-list roadmap with a hand-rolled pan/zoom canvas tree
-  (tidy layout, bezier edges, drag-to-reparent), one component in the project
-  page and a full-viewport route; closed out and hardened by the
-  2026-07-25 adversarial-review pass. Status: implemented (single-player).
-- [2026-07-23 — Ink & Seal reconciliation + landing rethink](2026-07-23-ink-seal-landing.md)
-  — reverted the Prisma detour to the committed Ink & Seal world, recorded it in
-  PRODUCT.md/DESIGN.md, and rebuilt the landing as 「The Assembly」 (plus three
-  a11y fixes from an adversarial critique). Status: complete.
+  — security and concurrency fixes across the Coach, Roadmap, GitHub sync,
+  project updates, and authorization; real-DB verification recorded.
+- [2026-07-24 — Roadmap canvas: collaborative model](2026-07-24-roadmap-canvas-collab.md)
+  — partial-update safety, guarded tree replacement, review mode, attribution,
+  freshness, transitions, sibling bands, and minimap; all planned work complete.
+- [2026-07-23 — Comprehensive frontend](2026-07-23-frontend-pages.md)
+  — shared application chrome, workspace/member surfaces, PRD revisions, and
+  the detachable Coach panel; all phases complete.
+- [2026-07-23 — Ink & Seal landing](2026-07-23-ink-seal-landing.md)
+  — current visual world and public landing, complete.
+- [2026-07-21 — Documentation reorganization](2026-07-21-clean-repo-org.md)
+  — modular documentation and record surfaces, complete.
+
+## Superseded or historical foundations
+
+- [2026-07-24 — Roadmap tree on a canvas](2026-07-24-roadmap-canvas.md)
+  — completed foundation, superseded by the collaborative-canvas follow-up.
 - [2026-07-22 — Idea → Reality](2026-07-22-idea-to-reality.md)
-  — branched-tree roadmap, GitHub progress sync, AI "build the MVP", and the
-  (since-reverted) Prisma UI re-theme. Status: implemented.
-- [2026-07-21 — Reorganize repo docs per clean-repo-org](2026-07-21-clean-repo-org.md)
-  — thin router files, modular `docs/` records, a 23-agent staleness audit
-  of every doc against the code, bug book merged into `docs/issues/`
-  (English-only), guardrail installed. Status: complete.
-
-## Historical
-
-- [2026-07-20 — Go rewrite](2026-07-20-go-rewrite/README.md) — the backend
-  rewrite from Supabase/TypeScript to Go + direct PostgreSQL, JWT+RLS
-  defense-in-depth, the `juanleme` real-data cutover, and the langchaingo
-  removal. This is also this repo's primary current-state architecture
-  source until [`docs/architecture/`](../architecture/index.md) fully absorbs
-  it. Status: implemented; a few DB-gated items remain open (see the plan's
-  own phase table and [`docs/TODO.md`](../TODO.md)).
+  — completed implementation record; its Prisma styling was later reverted,
+  and its linear product assumptions are superseded by `PRODUCT.md`.
+- [2026-07-21 — PRD agent harness redesign](2026-07-21-prd-agent-harness/index.md)
+  — historical plan whose core hardening, fact-ledger, critic, streaming, and
+  run-lifecycle mechanics largely shipped. Do not reimplement them or execute
+  its superseded fixed-stage, fixed-section, and completion-gate experience;
+  regenerate the next implementation plan from `PRODUCT.md` and current code.
+- [2026-07-20 — Go rewrite](2026-07-20-go-rewrite/README.md)
+  — completed historical foundation. Current runtime authority is
+  [`docs/architecture/`](../architecture/index.md).

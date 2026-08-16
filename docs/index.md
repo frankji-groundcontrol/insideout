@@ -12,8 +12,10 @@ keeps its original bilingual text as a historical record).
 - [PLAN.md](PLAN.md) — high-level development overview: architecture table,
   repo layout, information architecture, conventions.
 - [TODO.md](TODO.md) — live progress tracker and known limitations.
-- [HANDOFF.md](HANDOFF.md) — the living agent-handoff document (updated at
-  every checkpoint commit).
+- [plans/README.md](plans/README.md) — authoritative concurrent task board:
+  priorities, status, next actions, and blockers.
+- [HANDOFF.md](HANDOFF.md) — concise next-agent resume path and worktree
+  warnings; links to plans instead of repeating task history.
 
 ## For agents
 
@@ -28,7 +30,8 @@ keeps its original bilingual text as a historical record).
   guides.
 - [changelogs/](changelogs/README.md) — dated change records (folder form
   for large changes).
-- [plans/](plans/README.md) — live and historical task plans.
+- [plans/](plans/README.md) — concurrent task board plus detailed live and
+  historical task plans.
 - [issues/](issues/README.md) — the bug book (BUG-001…) and other dated
   issue records.
 - [learning/](learning/README.md) — reusable lessons from real failures.

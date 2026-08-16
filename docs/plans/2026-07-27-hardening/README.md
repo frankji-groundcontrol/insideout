@@ -1,7 +1,7 @@
 # Hardening pass — PRD coach, roadmap, GitHub sync, experience-marking, authz
 
 **Date:** 2026-07-27
-**Status:** in progress (live checklist — tick boxes as fixes land and tests pass)
+**Status:** complete (all findings resolved and verified)
 
 ## Context
 

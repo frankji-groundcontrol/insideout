@@ -7,11 +7,15 @@ repository. Keep this file a thin router to the modular docs under `docs/`
 ## Before editing
 
 - Read the [doc map](docs/index.md), the relevant
-  [architecture doc](docs/architecture/index.md), and
-  [docs/HANDOFF.md](docs/HANDOFF.md) for in-flight state.
+  [architecture doc](docs/architecture/index.md), the concurrent task status in
+  [docs/plans/README.md](docs/plans/README.md), and the concise resume guide in
+  [docs/HANDOFF.md](docs/HANDOFF.md).
 - For multi-step work, open a dated plan in
   [docs/plans/](docs/plans/README.md) **before editing** and maintain it as
-  the live checklist; close it only when every item is resolved.
+  the live checklist; close it only when every item is resolved. Keep its row
+  in `docs/plans/README.md` accurate when status, priority, next action, or
+  blocker changes. Keep `docs/HANDOFF.md` short: one resume path and current
+  worktree warnings, with links instead of duplicated history or plan detail.
 - Preserve user changes; do not revert unrelated work.
 - Karpathy-inspired coding baseline: state assumptions, prefer the simplest
   useful change, edit surgically, define verification against explicit

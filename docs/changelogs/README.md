@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-13 — Task board and handoff responsibility correction](2026-08-13-task-board-and-handoff.md)
+  — makes `docs/plans/README.md` the authoritative concurrent task board and
+  reduces `docs/HANDOFF.md` to one human-readable resume path with worktree
+  warnings; docs only.
 - [2026-07-27 — PuHuiTi fonts: reference, don't redistribute](2026-07-27-puhuiti-reference-only.md)
   — removed the 4 self-hosted PuHuiTi WOFF2 binaries and purged them from git
   history (the font is proprietary "free to use", not redistributable — an

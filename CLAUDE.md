@@ -11,10 +11,13 @@ projects, capturing ideas, and refining them into PRDs with an agent coach.
 
 1. Read the [doc map](docs/index.md) and the relevant
    [architecture doc](docs/architecture/index.md) for the area you touch.
-2. For multi-step work, open a dated plan in [docs/plans/](docs/plans/README.md)
-   **before editing** and drive the task from it as a live checklist.
-3. Check [docs/HANDOFF.md](docs/HANDOFF.md) and [docs/TODO.md](docs/TODO.md)
-   for in-flight state and known limitations.
+2. Read the concurrent task board in [docs/plans/README.md](docs/plans/README.md).
+   For multi-step work, open a dated plan there **before editing**, drive the
+   task from its checklist, and keep the board's status, priority, next action,
+   and blocker current.
+3. Read [docs/HANDOFF.md](docs/HANDOFF.md) only for the concise resume path and
+   worktree warnings; use [docs/TODO.md](docs/TODO.md) for known limitations.
+   Do not duplicate plan history or detailed task status in the handoff.
 
 ## Key commands
 
