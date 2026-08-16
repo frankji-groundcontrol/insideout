@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onBeforeUnmount, useId } from 'vue'
+import { ref, toRef, useId } from 'vue'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { useI18n } from 'vue-i18n'
+import { useDialogA11y } from '@/composables/useDialogA11y'
 
 interface Props {
   open: boolean
@@ -14,64 +15,10 @@ const { t } = useI18n()
 
 const panelRef = ref<HTMLElement | null>(null)
 const titleId = `modal-title-${useId()}`
-let previouslyFocused: HTMLElement | null = null
 
-const FOCUSABLE =
-  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-
-function visibleFocusables(): HTMLElement[] {
-  if (!panelRef.value) return []
-  return Array.from(panelRef.value.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-    (el) => el.offsetParent !== null,
-  )
-}
-
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Escape') {
-    e.stopPropagation()
-    emit('close')
-    return
-  }
-  if (e.key !== 'Tab') return
-  const focusables = visibleFocusables()
-  if (!focusables.length) return
-  const first = focusables[0]!
-  const last = focusables[focusables.length - 1]!
-  const active = document.activeElement as HTMLElement | null
-  if (e.shiftKey && active === first) {
-    e.preventDefault()
-    last.focus()
-  } else if (!e.shiftKey && active === last) {
-    e.preventDefault()
-    first.focus()
-  }
-}
-
-watch(
-  () => props.open,
-  async (isOpen) => {
-    if (!import.meta.client) return
-    if (isOpen) {
-      previouslyFocused = document.activeElement as HTMLElement | null
-      document.body.style.overflow = 'hidden'
-      document.addEventListener('keydown', onKeydown, true)
-      await nextTick()
-      const target = visibleFocusables()[0] ?? panelRef.value
-      target?.focus()
-    } else {
-      document.body.style.overflow = ''
-      document.removeEventListener('keydown', onKeydown, true)
-      previouslyFocused?.focus?.()
-      previouslyFocused = null
-    }
-  },
-)
-
-onBeforeUnmount(() => {
-  if (!import.meta.client) return
-  document.body.style.overflow = ''
-  document.removeEventListener('keydown', onKeydown, true)
-})
+// Focus trap, scroll lock, and focus save/restore live in the shared composable
+// (extracted from this component — behavior unchanged).
+useDialogA11y(panelRef, toRef(props, 'open'), () => emit('close'))
 
 const maxWidth = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' }
 </script>
@@ -92,7 +39,9 @@ const maxWidth = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-lg' }
         role="presentation"
         @click.self="emit('close')"
       >
-        <div class="absolute inset-0 bg-surface-overlay" aria-hidden="true" />
+        <!-- pointer-events-none so clicks fall through to the container's
+             @click.self above — an opaque scrim child would otherwise eat them -->
+        <div class="pointer-events-none absolute inset-0 bg-surface-overlay" aria-hidden="true" />
         <div
           ref="panelRef"
           role="dialog"

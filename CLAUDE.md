@@ -75,6 +75,11 @@ change, [docs/learning/](docs/learning/README.md) for reusable lessons,
 nearest README index for every added or moved record. Verify links point at
 existing files.
 
+- **Design QA**: when the user posts comments about how a page looks or the
+  frontend, record them in [docs/design-qa/](docs/design-qa/README.md) —
+  append to the relevant dated file there (creating one if needed) and keep
+  its README index current.
+
 ## References
 
 - Doc map: [docs/index.md](docs/index.md)

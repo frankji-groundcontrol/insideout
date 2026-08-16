@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import AuthDoor from '@/components/auth/AuthDoor.vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import BaseInput from '@/components/common/BaseInput.vue'
 import { useUserStore } from '@/stores/user'
@@ -31,41 +32,29 @@ async function handleRegister() {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-surface-base p-4">
-    <div class="w-full max-w-sm">
-      <!-- Ink & Seal door: vermilion seal stamp + serif wordmark -->
-      <div class="mb-6 flex flex-col items-center text-center">
-        <div class="mb-4 flex h-14 w-14 items-center justify-center rounded-card border-2 border-seal bg-surface-raised shadow-card">
-          <span class="font-serif text-2xl font-bold text-seal">{{ t('nav.brand').charAt(0) }}</span>
-        </div>
-        <p class="font-serif text-xl font-semibold text-fg-primary">{{ t('nav.brand') }}</p>
+  <AuthDoor @close="navigateTo('/')">
+    <h2 class="mb-6 text-center font-serif text-2xl font-bold text-fg-primary">
+      {{ t('register.title') }}
+    </h2>
+
+    <form class="space-y-4" @submit.prevent="handleRegister">
+      <BaseInput v-model="email" type="email" :label="t('register.email')" required />
+      <BaseInput v-model="username" type="text" :label="t('register.username')" required />
+      <div>
+        <BaseInput v-model="password" type="password" :label="t('register.password')" required />
+        <p class="mt-1 text-xs text-fg-muted">{{ t('register.passwordHint') }}</p>
       </div>
 
-      <div class="rounded-hero border border-stroke-subtle bg-surface-raised p-8 shadow-modal">
-        <h1 class="mb-6 text-center font-serif text-2xl font-bold text-fg-primary">
-          {{ t('register.title') }}
-        </h1>
+      <p v-if="errorMsg" class="text-sm text-fg-danger">{{ errorMsg }}</p>
 
-        <form class="space-y-4" @submit.prevent="handleRegister">
-          <BaseInput v-model="email" type="email" :label="t('register.email')" required />
-          <BaseInput v-model="username" type="text" :label="t('register.username')" required />
-          <div>
-            <BaseInput v-model="password" type="password" :label="t('register.password')" required />
-            <p class="mt-1 text-xs text-fg-muted">{{ t('register.passwordHint') }}</p>
-          </div>
+      <BaseButton type="submit" block :loading="loading">{{ t('register.submit') }}</BaseButton>
+    </form>
 
-          <p v-if="errorMsg" class="text-sm text-fg-danger">{{ errorMsg }}</p>
-
-          <BaseButton type="submit" block :loading="loading">{{ t('register.submit') }}</BaseButton>
-        </form>
-
-        <p class="mt-6 text-center text-sm text-fg-muted">
-          {{ t('register.haveAccount') }}
-          <NuxtLink to="/login" class="font-medium text-seal hover:underline">
-            {{ t('register.login') }}
-          </NuxtLink>
-        </p>
-      </div>
-    </div>
-  </div>
+    <p class="mt-6 text-center text-sm text-fg-muted">
+      {{ t('register.haveAccount') }}
+      <NuxtLink to="/login" class="font-medium text-seal hover:underline">
+        {{ t('register.login') }}
+      </NuxtLink>
+    </p>
+  </AuthDoor>
 </template>

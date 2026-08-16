@@ -38,6 +38,8 @@ keeps its original bilingual text as a historical record).
   historical task plans.
 - [issues/](issues/README.md) — the bug book (BUG-001…) and other dated
   issue records.
+- [design-qa/](design-qa/README.md) — verbatim user design-QA feedback on
+  page appearance and the frontend, with resolutions and files touched.
 - [learning/](learning/README.md) — reusable lessons from real failures.
 - [practices/](practices/README.md) — repeatable guardrails and methods.
 - [history/](history/README.md) — retired JuanLeMe-era records.

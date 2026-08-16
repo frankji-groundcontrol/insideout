@@ -73,6 +73,11 @@ values and generates `app/.env` from the root; `scripts/dev.sh` preflights
   mixed-responsibility file that can't be split now gets a dated
   modularity issue in [docs/issues/](docs/issues/README.md) with the
   target structure and a bounded fix prompt.
+- **Design QA**: when the user posts comments about how a page looks or
+  the frontend, record them in
+  [docs/design-qa/](docs/design-qa/README.md) — append to the relevant
+  dated file there (creating one if needed) and keep its README index
+  current.
 
 ## Review checklist
 

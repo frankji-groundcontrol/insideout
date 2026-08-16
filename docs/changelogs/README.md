@@ -58,6 +58,24 @@ code) with relative links.
   headings), and added `server/scripts/dev.sh` so `./scripts/dev.sh <cmd>`
   replaces the hand-typed `set -a && source ../.env` incantation in CLAUDE.md,
   local-development.md, and HANDOFF.md. No behavior change.
+- [2026-07-27 — Auth pages become one shared prompted floating modal](2026-07-27-auth-door-modal.md)
+  — `/login` and `/register` are now thin pages rendering a shared `AuthDoor`
+  shell: a paper panel over a dimmed scrim with real dialog semantics
+  (focus trap, Escape, backdrop close → `/`, scroll lock, focus restore)
+  extracted from `BaseModal` into `composables/useDialogA11y.ts` and reused by
+  `BaseModal` unchanged; reduced-motion-gated seal stamp + surfacing motion;
+  register loses its fake bordered-glyph placeholder for the real 印 seal.
+  Frontend-only; routes, i18n, and the auth flow are unchanged.
+- [2026-07-27 — New docs/design-qa/ record surface](2026-07-27-design-qa-surface.md)
+  — a records surface for verbatim user design-QA feedback on page appearance
+  and the frontend (each comment quoted exactly, with its resolution and files
+  touched), plus a standing rule added identically to AGENTS.md and CLAUDE.md
+  to record such comments there. Seeded with the auth-door QA thread.
+- [2026-07-27 — Login page refined into the Ink & Seal door](2026-07-27-login-page-refinement.md)
+  — the real 印 baiwen seal (was a fake bordered letter), the serif wordmark,
+  and a paper card that surfaces like a modal, animated with the landing's
+  reduced-motion-aware stamp + rise. Notes the pre-existing product-wide
+  motion hydration warning (shared composable, not a regression).
 - [2026-07-27 — PuHuiTi fonts: reference, don't redistribute](2026-07-27-puhuiti-reference-only.md)
   — removed the 4 self-hosted PuHuiTi WOFF2 binaries and purged them from git
   history (the font is proprietary "free to use", not redistributable — an
