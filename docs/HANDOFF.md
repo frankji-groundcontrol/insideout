@@ -31,11 +31,10 @@ existing revision path in
 
 ## Worktree to preserve
 
-Three independent tasks are finished but have not been checkpointed. Their
+Two independent tasks are finished but have not been checkpointed. Their
 files overlap in shared documentation, so do not mix, revert, or stage them as
 one change:
 
-- environment-management workflow;
 - shared login/register modal and Design-QA record surface;
 - product-experience baseline.
 

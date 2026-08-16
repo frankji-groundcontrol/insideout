@@ -9,7 +9,6 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Environment workflow](2026-07-30-env-catalog-propagate.md) | **Finished — awaiting checkpoint** | Rerun the focused environment checks, then partial-stage and checkpoint this task independently. | Shared documentation files contain changes from other tasks. |
 | P1 | [Shared auth modal](../changelogs/2026-07-27-auth-door-modal.md) + [Design-QA record](../changelogs/2026-07-27-design-qa-surface.md) | **Finished — awaiting checkpoint** | Rerun the focused frontend checks, then partial-stage and checkpoint this task independently. | Shared routers and indexes contain changes from other tasks. |
 | P1 | [Product-experience baseline](2026-08-13-product-experience-baseline.md) | **Finished — awaiting checkpoint** | Recheck the documentation diff and links, then partial-stage and checkpoint it independently. | Shared README and index files contain changes from other tasks. |
 | P2 | First version-first product slice from [`PRODUCT.md`](../../PRODUCT.md) | **Pending — ready to plan** | After the finished workstreams are checkpointed, create a dated implementation plan for the smallest useful slice and run its engineering review. | None; planning has not started. |
@@ -26,6 +25,10 @@ selected for work; backlog is not in-flight work.
 
 ## Completed
 
+- [2026-07-30 — Env catalog, TUI, and contract-scoped propagation](2026-07-30-env-catalog-propagate.md)
+  — `env.sh init|edit|check|propagate` around a machine-honest `.env.example`
+  catalog, contract-scoped `app/.env` generation, and a `dev.sh` preflight
+  gate; env unit batteries 83/83 green.
 - [2026-08-13 — Task board and handoff responsibility correction](2026-08-13-task-board-and-handoff.md)
   — `docs/plans/README.md` is now the authoritative concurrent task board and
   `docs/HANDOFF.md` a concise resume guide; agent routers and the doc map

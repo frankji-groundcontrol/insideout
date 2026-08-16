@@ -29,6 +29,9 @@ The bundled `postgres` service is the self-hosted default. When
 
 ## Environment (compose reads `.env`)
 
+The full variable reference is [environment.md](environment.md); the tables
+below cover only what the compose topology needs.
+
 Required — compose fails fast (`:?`) without them:
 
 | Variable | Used by | Notes |

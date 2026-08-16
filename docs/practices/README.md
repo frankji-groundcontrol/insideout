@@ -9,5 +9,6 @@ Repeatable sequences and guardrails distilled from real failures in this repo. E
 | 2026-07-21 | [Live-exercise streaming (SSE) endpoints before completion](2026-07-21-live-exercise-streaming-endpoints.md) |
 | 2026-07-21 | [Discover provider models before assuming a model id works](2026-07-21-provider-model-discovery.md) |
 | 2026-07-21 | [Docs-recording guardrail (git hooks + checkpoint gate)](2026-07-21-docs-recording-guardrail.md) |
+| 2026-07-30 | [Verifying a tty-only tool, and guards that fail closed](2026-07-30-verifying-a-tty-only-tool.md) |
 
 Related: [learning records](../learning/README.md), [bug book](../issues/README.md).

@@ -22,17 +22,16 @@ projects, capturing ideas, and refining them into PRDs with an agent coach.
 ## Key commands
 
 ```bash
-cd server && go build ./... && go vet ./... && go test ./...   # backend
-set -a && source ../.env && set +a && \
-  go test ./internal/store/... -run TestAuthz -v               # real-DB integration tests
-go run ./cmd/insideout migrate    # apply SQL migrations
-go run ./cmd/insideout seed       # dev demo data
-cd app && pnpm dev                # frontend (pnpm, not npm)
-cd app && pnpm test && npx nuxi typecheck && pnpm build
+(cd server && go build ./... && go vet ./... && go test ./...)              # backend: build, vet, unit tests
+./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v   # real-DB integration tests (exports .env)
+./scripts/dev.sh -C server go run ./cmd/insideout migrate                   # apply SQL migrations
+./scripts/dev.sh -C server go run ./cmd/insideout seed                      # dev demo data
+./scripts/dev.sh -C app pnpm dev                                            # frontend (pnpm, not npm)
+(cd app && pnpm test && npx nuxi typecheck && pnpm build)                   # frontend checks
 docker compose build
 ```
 
-Environment reference: [docs/usage/local-development.md](docs/usage/local-development.md).
+Environment reference: [docs/SETENV.md](docs/SETENV.md) (hands-on key setup), [docs/usage/environment.md](docs/usage/environment.md) (variables), [docs/usage/local-development.md](docs/usage/local-development.md) (workflow). `scripts/env.sh init|edit|check|propagate` sets, inspects and validates `.env` (never printing values) and generates `app/.env` from it; `scripts/dev.sh` preflights `env.sh check <component>` before launching, so a stale generated copy blocks that launch.
 
 ## Hard rules
 

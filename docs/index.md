@@ -28,6 +28,10 @@ keeps its original bilingual text as a historical record).
   database and RLS, PRD Coach agent, frontend, deployment.
 - [usage/](usage/README.md) — local development and operator/deployment
   guides.
+- [SETENV.md](SETENV.md) — the environment operating manual: create the file,
+  choose each key, see and set everything (`env.sh edit`), propagate to the
+  components, prove it works (companion to the variable reference in
+  usage/environment.md).
 - [changelogs/](changelogs/README.md) — dated change records (folder form
   for large changes).
 - [plans/](plans/README.md) — concurrent task board plus detailed live and

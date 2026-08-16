@@ -147,6 +147,10 @@ vite.config.ts.timestamp-*
 # JuanLeMe-era coding-tool scratch (untracked + purged from history 2026-07-27)
 .sisyphus/
 
+# Python (scripts/ tooling)
+__pycache__/
+*.pyc
+
 # Go (server/)
 # Compiled binaries and plugins
 *.exe

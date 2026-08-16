@@ -14,37 +14,47 @@ This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git histo
 
 ## Environment
 
-Copy the example file and edit it:
+Interactive setup — prompts for the keys that need a choice, generates the
+JWT secret on request, never prints values (manual alternative:
+`cp .env.example .env` and edit):
 
 ```bash
-cp .env.example .env
+./scripts/env.sh init
 ```
 
-The Go server reads plain environment variables (it does not load `.env`
-itself — docker-compose does; for a bare `go run`, export them or use a
-wrapper like `env $(cat .env | xargs)`).
+The two required values are `DATABASE_URL` and `INSIDEOUT_JWT_SECRET`
+(min 32 chars) — they are the only two left uncommented in `.env.example`,
+because they are the only two the server refuses to boot without.
+`./scripts/env.sh check` validates them at any time — and shows the defaults
+in effect for every unset optional, tagged by consumer — while the `dev.sh`
+wrapper below runs that check automatically before launching.
+`./scripts/env.sh edit` lists every variable with its live state (set,
+default-from-the-skeleton, missing, placeholder, unset) and lets you set or
+clear one; secrets stay masked both on screen and while typing.
 
-Authoritative list (`server/internal/config/config.go`):
+Neither process loads the root `.env` itself — the Go server reads plain
+environment variables and Nuxt reads `NUXT_*` ones; docker-compose interpolates
+the file directly. For a bare `go run`/`go test`/`pnpm dev`, use the root
+wrapper that preflights `env.sh check <component>`, exports `.env`, and then
+execs inside the directory you name (it never prints values):
 
-| Variable | Required | Default | Meaning |
-|----------|----------|---------|---------|
-| `DATABASE_URL` | **yes** | — | Postgres connection string |
-| `INSIDEOUT_JWT_SECRET` | **yes** | — | JWT signing secret, **min 32 chars** (fail-fast) |
-| `INSIDEOUT_ADDR` | no | `:8080` | HTTP listen address |
-| `INSIDEOUT_ACCESS_TTL` | no | `15m` | Access-token lifetime (Go duration) |
-| `INSIDEOUT_REFRESH_TTL` | no | `720h` | Refresh-token lifetime (Go duration) |
-| `ANTHROPIC_BASE_URL` | no | — | Anthropic-Messages-API-compatible endpoint |
-| `ANTHROPIC_AUTH_TOKEN` | no | — | AI auth token; **unset = offline mode** (see below) |
-| `AI_MODEL` | no | `claude-sonnet-4-20250514` | Model id sent to the AI endpoint |
-| `INSIDEOUT_COOKIE_SECURE` | no | on | Set `0` for plain-http local dev, or the browser drops the auth cookies |
-| `INSIDEOUT_DEV_CORS` | no | off | Set `1` to enable permissive CORS in dev |
+```bash
+./scripts/dev.sh -C server go run ./cmd/insideout                              # dev server
+./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v      # integration tests
+./scripts/dev.sh -C app pnpm dev                                               # frontend picking up .env
+```
 
-docker-compose additionally reads `POSTGRES_PORT`, `POSTGRES_APP_PASSWORD`,
-`POSTGRES_SUPERUSER_PASSWORD`, `SERVER_PORT`, `APP_PORT` — see
+After editing the root `.env`, run `./scripts/env.sh propagate` to regenerate
+`app/.env` — the Nuxt component's copy, scoped to what `app/.env.example`
+declares and stamped with the root file's checksum. `dev.sh -C app` refuses to
+launch on a stale copy and names the fix; never hand-write that file
+([why](../SETENV.md#propagating-to-the-components)).
+
+The full variable reference — every variable grouped by consumer, with
+required/default/meaning, the `.env`→process bridges, database setups,
+recipes, and troubleshooting — lives in
+[environment.md](environment.md). docker-compose topology vars are in
 [deployment.md](deployment.md).
-
-The frontend/Nitro reads one variable: `NUXT_API_INTERNAL_BASE` (default
-`http://127.0.0.1:8080/api/v1`), the internal base URL of the Go API.
 
 ### Offline AI mode
 
@@ -52,7 +62,8 @@ If `ANTHROPIC_AUTH_TOKEN` is unset, the server logs
 `ANTHROPIC_AUTH_TOKEN not set — using offline template-reply coach` and swaps
 in a template-reply streamer (`server/internal/agent`). The PRD coach works
 end-to-end (stages, tools, SSE) with canned replies — no network, no cost.
-This is the recommended default for local dev.
+This is the recommended default for local dev (see the recipes in
+[environment.md](environment.md)).
 
 ## Database setup
 
@@ -74,11 +85,11 @@ multi-tenant instance, `insideout_app` owns only the `insideout` schema.
 Migrations create and stay inside the `insideout` schema — they never touch
 `public` objects belonging to other tenants.
 
-Then, from `server/`:
+Then, from the repo root (the wrapper exports `.env` first):
 
 ```bash
-go run ./cmd/insideout migrate   # apply embedded SQL migrations (server/db/migrations/) and exit
-go run ./cmd/insideout seed      # optional: demo user, workspace, project, idea, PRD
+./scripts/dev.sh -C server go run ./cmd/insideout migrate   # apply embedded SQL migrations (server/db/migrations/) and exit
+./scripts/dev.sh -C server go run ./cmd/insideout seed      # optional: demo user, workspace, project, idea, PRD
 ```
 
 `seed` logs the demo login on completion: `demo@insideout.local` /
@@ -94,10 +105,10 @@ action needed — just don't strip that query parameter.
 
 ## Running
 
-Server (from `server/`):
+Server (from the repo root):
 
 ```bash
-go run ./cmd/insideout            # listens on INSIDEOUT_ADDR, default :8080
+./scripts/dev.sh -C server go run ./cmd/insideout   # listens on INSIDEOUT_ADDR, default :8080
 ```
 
 Remember `INSIDEOUT_COOKIE_SECURE=0` when serving over plain http locally.
@@ -110,16 +121,18 @@ pnpm dev                          # Nuxt dev server on :3000
 ```
 
 The browser only ever talks to the Nuxt origin; Nitro proxies `/api/v1/**` to
-the Go server at `NUXT_API_INTERNAL_BASE`. If your Go server isn't at
-`http://127.0.0.1:8080/api/v1`, set that variable before `pnpm dev`.
+the Go server at `NUXT_API_INTERNAL_BASE`. The default needs nothing from
+`.env`; if your Go server isn't at `http://127.0.0.1:8080/api/v1`, set that
+variable and run `pnpm dev` through the root wrapper so it is exported (Nuxt
+does not auto-load the root `.env`): `./scripts/dev.sh -C app pnpm dev`.
 
 ## Testing
 
-Backend (from `server/`):
+Backend:
 
 ```bash
-go test ./...                                          # pure unit tests, no DB needed
-DATABASE_URL=... go test ./internal/store/... -run TestAuthz -v   # store/RLS integration tests
+go test ./...                                          # pure unit tests, no DB needed (from server/)
+./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v   # store/RLS integration tests (repo root)
 ```
 
 The integration tests skip themselves when `DATABASE_URL` is unset. Run them
@@ -129,8 +142,8 @@ Live end-to-end smoke test (all five surfaces over real HTTP, no mocks — needs
 `curl` + `jq` and a reachable `DATABASE_URL` in `../.env`):
 
 ```bash
-./scripts/smoke.sh                              # boots its own server on a random high port
-SMOKE_BASE=http://127.0.0.1:54321 ./scripts/smoke.sh   # reuse an already-running server
+./server/scripts/smoke.sh                              # boots its own server on a random high port
+SMOKE_BASE=http://127.0.0.1:54321 ./server/scripts/smoke.sh   # reuse an already-running server
 ```
 
 It registers fresh uniquely-named users each run (rerun-safe) and exits non-zero

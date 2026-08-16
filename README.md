@@ -43,21 +43,27 @@ Export any PRD to Markdown for download, or use your browser's print function to
 
 ## 本地开发 / Local Development
 
+全部命令在仓库根目录执行 / all commands from the repo root:
+
 ```bash
+# 配置环境 / Set up the environment
+./scripts/env.sh init            # 交互式，绝不打印值 / interactive, never prints values
+
 # 后端 / Backend
-cd server
-go run ./cmd/insideout migrate   # 应用数据库迁移 / apply migrations
-go run ./cmd/insideout seed      # 可选：创建演示数据 / optional: create demo data
-go run ./cmd/insideout           # 启动服务 / start the server
+./scripts/dev.sh -C server go run ./cmd/insideout migrate   # 应用数据库迁移 / apply migrations
+./scripts/dev.sh -C server go run ./cmd/insideout seed      # 可选：演示数据 / optional: demo data
+./scripts/dev.sh -C server go run ./cmd/insideout           # 启动服务 / start the server
 
 # 前端 / Frontend
-cd app
-pnpm install
-pnpm dev
+(cd app && pnpm install)
+./scripts/dev.sh -C app pnpm dev
 ```
 
-需要在 `.env` 中设置 `DATABASE_URL`（任意 PostgreSQL 14+ 实例）和 `INSIDEOUT_JWT_SECRET`；未设置 `ANTHROPIC_AUTH_TOKEN` 时教练会用离线模板回复，方便本地开发。完整变量说明见 `.env.example`。
-You need `DATABASE_URL` (any PostgreSQL 14+ instance) and `INSIDEOUT_JWT_SECRET` set in `.env`; without `ANTHROPIC_AUTH_TOKEN` the coach falls back to an offline template reply, handy for local dev. See `.env.example` for every variable.
+`dev.sh` 是必需的：应用本身不读取 `.env`（Go 只读进程环境变量，Nuxt 只读 `NUXT_*`），必须先由 `dev.sh` 导出。它每次启动前都会执行 `env.sh check`，缺项时明确报错。
+`dev.sh` is not optional: nothing in the app reads `.env` itself (Go reads the process environment, Nuxt reads `NUXT_*`), so it must be exported first — a bare `cd server && go run` sees none of your values. `dev.sh` also runs `env.sh check` before every launch and names what is missing.
+
+只有两个变量是必填的：`DATABASE_URL`（任意 PostgreSQL 14+ 实例）和 `INSIDEOUT_JWT_SECRET`（至少 32 字符）。未设置 `ANTHROPIC_AUTH_TOKEN` 时教练使用离线模板回复，适合本地开发。
+Only two variables are required: `DATABASE_URL` (any PostgreSQL 14+ instance) and `INSIDEOUT_JWT_SECRET` (min 32 chars) — they are the only two left uncommented in `.env.example`. Without `ANTHROPIC_AUTH_TOKEN` the coach falls back to an offline template reply, handy for local dev. Step-by-step: [docs/SETENV.md](docs/SETENV.md); every variable: [docs/usage/environment.md](docs/usage/environment.md).
 
 或者直接用 docker-compose 一键启动完整技术栈：
 Or bring up the whole stack with docker-compose:

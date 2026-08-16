@@ -19,6 +19,45 @@ code) with relative links.
   — makes `docs/plans/README.md` the authoritative concurrent task board and
   reduces `docs/HANDOFF.md` to one human-readable resume path with worktree
   warnings; docs only.
+- [2026-07-30 — Env catalog + TUI, contract-scoped propagation, honest schema](2026-07-30-env-catalog-propagate.md)
+  — `env.sh edit` (curses catalog of every variable and its state, secrets
+  masked both ways) and `env.sh propagate` (generate `app/.env` scoped to the
+  component's contract and stamped with the root file's checksum); `check`
+  becomes component- and staleness-aware and `dev.sh` gates on it, so a stale
+  copy blocks that launch instead of silently disagreeing with the root.
+  `.env.example` corrected — nine optional variables were marked required and
+  two consumed variables were absent — and `env.sh` split into three files,
+  closing the ~350-line budget issue.
+- [2026-07-28 — env.sh: interactive .env setup + validation; dev.sh preflights it](2026-07-28-envsh.md)
+  — new `scripts/env.sh` (`init` = interactive tty-only setup that never
+  prints values; `check` = non-interactive required-key validation) and
+  `scripts/dev.sh` now runs `check` before launching anything, aborting with
+  the named missing keys. Companion to the same-day SETENV.md guide.
+- [2026-07-28 — Hands-on .env key-set guide](2026-07-28-setenv-guide.md)
+  — new `docs/SETENV.md` walkthrough (create → choose each key → prove it)
+  as the hands-on companion to `docs/usage/environment.md`'s variable
+  reference; cross-links wired through the doc map, agent routers,
+  environment.md, local-development.md, and the `.env.example` header.
+- [2026-07-28 — dev.sh moves to the repo root with `-C <dir>`](2026-07-28-devsh-root.md)
+  — the server-only env-export wrapper becomes one root `scripts/dev.sh -C
+  server|app <cmd>` for any consumer (and grows the frontend propagation path
+  for a non-default `NUXT_API_INTERNAL_BASE`); doc commands repointed
+  root-relative, fixing bare `go run` invocations that never exported `.env`.
+  No behavior change.
+- [2026-07-27 — Canonical environment configuration guide](2026-07-27-env-guide.md)
+  — new `docs/usage/environment.md` is the single source of truth for every
+  environment variable (grouped by consumer, with required/default/meaning,
+  the `.env`→process bridges, database setups, recipes, and fail-fast
+  troubleshooting); the duplicated var tables in local-development.md collapse
+  into links, and README/CLAUDE.md/deployment.md repoint at it. Companion to
+  the same-day environment hygiene pass. Docs only, no behavior change.
+- [2026-07-27 — Environment hygiene pass](2026-07-27-env-hygiene.md)
+  — deleted the Supabase-era `app/.env.example` fossil, regrouped the root
+  `.env.example` by consumer (Go backend / AI provider / docker-compose
+  only — fixing `SERVER_PORT`/`APP_PORT` misfiled under Go/frontend
+  headings), and added `server/scripts/dev.sh` so `./scripts/dev.sh <cmd>`
+  replaces the hand-typed `set -a && source ../.env` incantation in CLAUDE.md,
+  local-development.md, and HANDOFF.md. No behavior change.
 - [2026-07-27 — PuHuiTi fonts: reference, don't redistribute](2026-07-27-puhuiti-reference-only.md)
   — removed the 4 self-hosted PuHuiTi WOFF2 binaries and purged them from git
   history (the font is proprietary "free to use", not redistributable — an

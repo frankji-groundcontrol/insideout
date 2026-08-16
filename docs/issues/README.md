@@ -56,6 +56,11 @@ records continue the numbering (next: BUG-014).
 
 ## Other open issues
 
+- [2026-07-29 — env.sh over the ~350-line modular-file budget](2026-07-29-envsh-line-budget.md)
+  — **resolved 2026-07-30**: split at the next structural touch, as planned,
+  into `env.sh` / `env-lib.sh` / `env-write.sh` (227 / 110 / 278 lines). The
+  duplicated `KNOWN_NAMES` list was deleted rather than moved — it had already
+  drifted from the skeletons it copied.
 - [2026-07-26 — Roadmap canvas: adversarial-verify follow-ups (Workstream D)](2026-07-26-roadmap-canvas-adversarial-followups.md)
   — from the T9 adversarial pass: the popover-trapped-under-sibling defect is
   **fixed** (one-line `.rm-card:focus-within` lift; it could silently reparent a
