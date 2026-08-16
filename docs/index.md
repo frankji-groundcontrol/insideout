@@ -7,11 +7,13 @@ keeps its original bilingual text as a historical record).
 ## Product and planning
 
 - [README.md](../README.md) — product-facing introduction and quick start.
-- [INIT.md](INIT.md) — product definition: what InsideOut is, the three
-  pillars, roles, technology decisions.
+- [PRODUCT.md](../PRODUCT.md) — canonical target product experience and
+  product-language baseline.
+- [INIT.md](INIT.md) — compatibility pointer from the former product
+  definition to PRODUCT.md and the current architecture.
 - [PLAN.md](PLAN.md) — high-level development overview: architecture table,
   repo layout, information architecture, conventions.
-- [TODO.md](TODO.md) — live progress tracker and known limitations.
+- [TODO.md](TODO.md) — shipped-system tracker and known limitations.
 - [plans/README.md](plans/README.md) — authoritative concurrent task board:
   priorities, status, next actions, and blockers.
 - [HANDOFF.md](HANDOFF.md) — concise next-agent resume path and worktree

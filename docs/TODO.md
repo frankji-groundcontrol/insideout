@@ -4,7 +4,17 @@
 > [`docs/plans/2026-07-20-go-rewrite/`](plans/2026-07-20-go-rewrite/README.md);
 > current system shape: [`docs/architecture/`](architecture/index.md).
 >
-> **Last updated**: 2026-07-21
+> **Last updated**: 2026-08-13
+
+## Current target delta — 2026-08-13
+
+[`PRODUCT.md`](../PRODUCT.md) is the target product authority;
+[`docs/architecture/`](architecture/index.md) describes the running system.
+The current build does not yet implement the version-first Coach, audience
+projections, Product Branches and human version authority, private Ideas,
+project roles, deadline-bound Now work, automatic Roadmap evidence, or shared
+CLI/MCP/Agent context defined there. Historical completed sections below record
+what shipped at their time; they are not the target product specification.
 
 ## P1 — Database
 

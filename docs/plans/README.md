@@ -9,8 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Product-experience baseline](2026-08-13-product-experience-baseline.md) | **Finished — awaiting checkpoint** | Recheck the documentation diff and links, then partial-stage and checkpoint it independently. | Shared README and index files contain changes from other tasks. |
-| P2 | First version-first product slice from [`PRODUCT.md`](../../PRODUCT.md) | **Pending — ready to plan** | After the finished workstreams are checkpointed, create a dated implementation plan for the smallest useful slice and run its engineering review. | None; planning has not started. |
+| P2 | First version-first product slice from [`PRODUCT.md`](../../PRODUCT.md) | **Pending — ready to plan** | Create a dated implementation plan for the smallest useful slice and run its engineering review. | None; planning has not started. |
 
 **Status meanings:** In flight = active work; Pending = not started; Finished
 = recorded scope and verification complete in the local worktree; Completed =
@@ -24,6 +23,10 @@ selected for work; backlog is not in-flight work.
 
 ## Completed
 
+- [2026-08-13 — Product-experience baseline](2026-08-13-product-experience-baseline.md)
+  — `PRODUCT.md` rewritten as the canonical target experience from the
+  completed product interview; `docs/INIT.md` reduced to a compatibility
+  pointer. Docs only.
 - [2026-07-27 — Shared auth modal + Design-QA record surface](../changelogs/2026-07-27-auth-door-modal.md)
   — `/login` + `/register` rebuilt on one shared `AuthDoor` dialog with the
   a11y behavior extracted from `BaseModal` into `useDialogA11y`; new

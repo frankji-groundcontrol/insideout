@@ -19,6 +19,12 @@ code) with relative links.
   — makes `docs/plans/README.md` the authoritative concurrent task board and
   reduces `docs/HANDOFF.md` to one human-readable resume path with worktree
   warnings; docs only.
+- [2026-08-13 — Canonical product-experience baseline](2026-08-13-product-experience-baseline.md)
+  — consolidates the completed product interview into `PRODUCT.md`: a
+  version-first Coach, audience projections, human Commit/Branch/Diff/Merge,
+  one role-aware and deadline-bound Roadmap Graph, Git evidence, and shared
+  Web/CLI/MCP/Agent context. Docs only; target experience is kept distinct
+  from current implementation.
 - [2026-07-30 — Env catalog + TUI, contract-scoped propagation, honest schema](2026-07-30-env-catalog-propagate.md)
   — `env.sh edit` (curses catalog of every variable and its state, secrets
   masked both ways) and `env.sh propagate` (generate `app/.env` scoped to the

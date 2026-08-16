@@ -2,6 +2,9 @@
 
 > **跟踪进展、打磨想法、写出更好的 PRD**
 > **Track the work. Refine the ideas. Ship better PRDs.**
+>
+> This README describes the current runnable build. The confirmed target
+> product experience is in [`PRODUCT.md`](PRODUCT.md).
 
 ---
 
@@ -74,7 +77,7 @@ docker compose up -d
 
 ## 了解更多 / Learn More
 
-- 产品定义 / Product definition: [`docs/INIT.md`](docs/INIT.md)
+- 产品定义 / Product definition: [`PRODUCT.md`](PRODUCT.md)
 - 开发计划 / Development plan: [`docs/PLAN.md`](docs/PLAN.md)
 - 完整技术方案 / Full technical plan: [`docs/plans/2026-07-20-go-rewrite/`](docs/plans/2026-07-20-go-rewrite/README.md)
 - 开发进度 / Progress tracker: [`docs/TODO.md`](docs/TODO.md)

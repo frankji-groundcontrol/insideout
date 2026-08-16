@@ -7,13 +7,8 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-Resume in this order:
-
-1. Independently rerun the focused verification and checkpoint each of the
-   three finished workstreams listed on the task board. Their shared files
-   require hunk-level staging.
-2. Then create and engineering-review the first implementation plan derived
-   from `PRODUCT.md`.
+1. Create and engineering-review the first implementation plan derived from
+   `PRODUCT.md`.
 
 Scope that plan to the smallest version-first slice:
 
@@ -31,11 +26,10 @@ existing revision path in
 
 ## Worktree to preserve
 
-One task is finished but has not been checkpointed. Its files overlap in
-shared documentation, so do not mix, revert, or stage it with unrelated
-changes:
-
-- product-experience baseline.
+None — the four finished workstreams (task board and handoff correction,
+environment workflow, shared auth modal + Design-QA record, product
+baseline) are checkpointed and the worktree is clean. Start new work from a
+dated plan registered on the [task board](plans/README.md).
 
 Their exact status, next action, blocker, and plan or record link are on the
 [task board](plans/README.md). Review and checkpoint them one task at a time;
