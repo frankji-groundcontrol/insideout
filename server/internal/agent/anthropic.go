@@ -44,7 +44,7 @@ func NewAnthropicStreamer(baseURL, authToken, model string) (*AnthropicStreamer,
 		return nil, fmt.Errorf("agent: anthropic auth token is required")
 	}
 	if baseURL == "" {
-		baseURL = "https://api.anthropic.com"
+		baseURL = "https://api.anthropic.com/v1"
 	}
 	transport := &http.Transport{
 		DialContext:           (&net.Dialer{Timeout: 10 * time.Second}).DialContext,
@@ -144,7 +144,7 @@ func (a *AnthropicStreamer) doStreamChat(ctx context.Context, system string, msg
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, a.baseURL+"/v1/messages", bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, LLMChatURL(a.baseURL, "messages"), bytes.NewReader(body))
 	if err != nil {
 		return Turn{}, fmt.Errorf("agent: build anthropic request: %w", err)
 	}

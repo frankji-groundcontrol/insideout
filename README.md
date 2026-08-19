@@ -57,16 +57,17 @@ Export any PRD to Markdown for download, or use your browser's print function to
 ./scripts/dev.sh -C server go run ./cmd/insideout seed      # 可选：演示数据 / optional: demo data
 ./scripts/dev.sh -C server go run ./cmd/insideout           # 启动服务 / start the server
 
-# 前端 / Frontend
-(cd app && pnpm install)
-./scripts/dev.sh -C app pnpm dev
+# 前端 / Frontend (production is Flutter web)
+cd client && flutter run -d chrome
 ```
 
-`dev.sh` 是必需的：应用本身不读取 `.env`（Go 只读进程环境变量，Nuxt 只读 `NUXT_*`），必须先由 `dev.sh` 导出。它每次启动前都会执行 `env.sh check`，缺项时明确报错。
-`dev.sh` is not optional: nothing in the app reads `.env` itself (Go reads the process environment, Nuxt reads `NUXT_*`), so it must be exported first — a bare `cd server && go run` sees none of your values. `dev.sh` also runs `env.sh check` before every launch and names what is missing.
+托管站点 / hosted: `https://app-production-591e.up.railway.app`
 
-只有两个变量是必填的：`DATABASE_URL`（任意 PostgreSQL 14+ 实例）和 `INSIDEOUT_JWT_SECRET`（至少 32 字符）。未设置 `ANTHROPIC_AUTH_TOKEN` 时教练使用离线模板回复，适合本地开发。
-Only two variables are required: `DATABASE_URL` (any PostgreSQL 14+ instance) and `INSIDEOUT_JWT_SECRET` (min 32 chars) — they are the only two left uncommented in `.env.example`. Without `ANTHROPIC_AUTH_TOKEN` the coach falls back to an offline template reply, handy for local dev. Step-by-step: [docs/SETENV.md](docs/SETENV.md); every variable: [docs/usage/environment.md](docs/usage/environment.md).
+`dev.sh` 是必需的：应用本身不读取 `.env`（Go 只读进程环境变量），必须先由 `dev.sh` 导出。它每次启动前都会执行 `env.sh check`，缺项时明确报错。
+`dev.sh` is not optional: nothing in the app reads `.env` itself (Go reads the process environment), so it must be exported first — a bare `cd server && go run` sees none of your values. `dev.sh` also runs `env.sh check` before every launch and names what is missing.
+
+只有两个变量是必填的：`DATABASE_URL`（任意 PostgreSQL 14+ 实例）和 `INSIDEOUT_JWT_SECRET`（至少 32 字符）。未设置 `INSIDEOUT_LLM_API_KEY` 时教练使用离线模板回复，适合本地开发。
+Only two variables are required: `DATABASE_URL` (any PostgreSQL 14+ instance) and `INSIDEOUT_JWT_SECRET` (min 32 chars) — they are the only two left uncommented in `.env.example`. Without `INSIDEOUT_LLM_API_KEY` the coach falls back to an offline template reply, handy for local dev. Step-by-step: [docs/SETENV.md](docs/SETENV.md); every variable: [docs/usage/environment.md](docs/usage/environment.md).
 
 或者直接用 docker-compose 一键启动完整技术栈：
 Or bring up the whole stack with docker-compose:
@@ -84,7 +85,8 @@ docker compose up -d
 
 ## 第三方资源 / Third-party assets
 
-**字体 / Fonts.** 本项目的界面字体是 **阿里巴巴普惠体 2.0（Alibaba PuHuiTi 2.0）**，设计上是全局无衬线体（见 `app/tailwind.config.js` 的 `fontFamily.sans`）。
+**字体 / Fonts.** The hosted Flutter UI uses Material 3 type. This
+repository ships no font files.
 
 - 版权 / Copyright: © 2020-2021 阿里巴巴（中国）有限公司，版权所有 / Alibaba (China) Co., Ltd. All rights reserved.
 - 商标 / Trademark: 阿里巴巴是阿里巴巴集团控股有限公司的商标 / Alibaba is a trademark of Alibaba Group Holding Limited.
@@ -93,4 +95,6 @@ docker compose up -d
 
 **许可说明 / License note.** 阿里巴巴普惠体由阿里巴巴官方免费发布，允许个人与商业**使用**；但它**不是**开源许可证（非 OSI/OFL），字体文件标注「版权所有（All rights reserved）」，嵌入权限为 Preview & Print（fsType=4）。因此「免费使用」不等于「可再分发字体文件」——把字体二进制提交进本仓库属于再分发，超出了授权范围。**本仓库不包含、不分发任何字体文件**：我们只在字体栈中按名称**引用**它。已安装该字体的访问者会看到它，其他访问者回退到 Noto Sans SC（经 Google Fonts）及系统 CJK 字体。展示衬线体 Noto Serif SC 同样通过 Google Fonts 引用。如需在你的环境还原完全一致的观感，请自行从上方官方渠道获取并安装（这属于你自己的「使用」）。
 
-**Body typeface.** The app's UI sans is **Alibaba PuHuiTi 2.0** (see `fontFamily.sans` in `app/tailwind.config.js`). It is published by Alibaba for free personal and commercial **use**, but it is **not** an open-source (OSI/OFL) license — the font file is marked "All rights reserved" with Preview & Print embedding (fsType=4). "Free to use" is not "free to redistribute the font file," so committing the binary to this repo would exceed the grant. **This repository contains and distributes no font files.** We reference the font by name only: visitors who have it installed render it; everyone else falls back to Noto Sans SC (via Google Fonts) and the platform CJK face. The display serif, Noto Serif SC, is likewise referenced via Google Fonts. To reproduce the exact look in your own environment, obtain and install the font yourself from the official source above (that is your own "use").
+**Body typeface.** Flutter Material 3 uses the platform / fallback faces.
+**This repository contains and distributes no font files.** The Alibaba
+PuHuiTi notes above are historical (the deleted Nuxt Ink & Seal UI).

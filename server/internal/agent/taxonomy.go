@@ -28,9 +28,15 @@ const idleStreamTimeout = 90 * time.Second
 // Every other classified error (context length, config, refusal,
 // context.Canceled) is never retried here.
 func (a *AnthropicStreamer) streamChat(ctx context.Context, system string, msgs []Message, tools []Tool, forceTool string, onDelta func(string)) (Turn, error) {
+	return retryStreamChat(ctx, func(ctx context.Context) (Turn, error) {
+		return a.doStreamChat(ctx, system, msgs, tools, forceTool, onDelta)
+	})
+}
+
+func retryStreamChat(ctx context.Context, do func(context.Context) (Turn, error)) (Turn, error) {
 	var lastErr error
 	for attempt := 0; attempt < 2; attempt++ {
-		turn, err := a.doStreamChat(ctx, system, msgs, tools, forceTool, onDelta)
+		turn, err := do(ctx)
 		if err == nil {
 			return turn, nil
 		}

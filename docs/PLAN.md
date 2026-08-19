@@ -13,8 +13,8 @@
 | Database | PostgreSQL, single `insideout_app` role, `insideout` schema, SQL migrations in `server/db/migrations/` applied by the Go server's own embedded runner; JWT+RLS defense-in-depth |
 | Backend | Go 1.25+, stdlib `net/http` (1.22+ method routing), `pgx/v5`, `golang-jwt/v5`, argon2id |
 | Agent | Direct Anthropic Messages API client (`server/internal/agent/anthropic.go`), SSE streaming, four-stage state machine (clarify/draft/critique/finalize) |
-| Frontend | Nuxt 4 Universal SSR, Pinia, Tailwind (Ink & Seal semantic tokens), vue-i18n (zh-CN default, en-US) |
-| Deployment | docker-compose (postgres:17 + server + app), or point `DATABASE_URL` at any PostgreSQL 14+ instance |
+| Frontend | Flutter 3 Material 3 (`client/`), go_router, Dio, zh-CN default / en-US |
+| Deployment | docker-compose (postgres:17 + server), Railway Flutter web + Go, or point `DATABASE_URL` at any PostgreSQL 14+ instance |
 
 ## Repository layout
 
@@ -30,13 +30,12 @@ server/                        # Go backend
 │   └── config/                # env parsing
 └── db/migrations/             # SQL migrations (embedded in the binary)
 
-app/                           # Nuxt 4 frontend
-└── src/
-    ├── services/api/          # Go API adapters (the only service implementation)
-    ├── stores/                # Pinia: user
-    ├── composables/           # useCoachStream, useTimeAgo
-    ├── pages/                 # routed pages, see IA below
-    └── components/common/     # BaseButton, BaseInput, BaseCard, BaseBadge, PrdStatusBadge
+client/                        # Flutter 3 frontend (web + iOS + Android)
+└── lib/
+    ├── api/                   # Dio client, models, errors
+    ├── features/              # landing, auth, dashboard, workspace, project, prd
+    ├── session/               # Session, Appearance, auth redirect
+    └── l10n/                  # zh-CN + en-US
 
 docs/                          # see docs/index.md for the documentation map
 ```
@@ -58,8 +57,8 @@ docs/                          # see docs/index.md for the documentation map
 
 - **Naming**: backend uses snake_case (DB columns/Go internals); the API
   JSON boundary is camelCase throughout; frontend uses camelCase.
-- **Auth**: httpOnly cookies (access + refresh), same-origin via Nuxt's
-  Nitro proxy to the Go server — works for both the browser and SSR.
+- **Auth**: Bearer access + refresh tokens for Flutter; the server still
+  sets httpOnly cookies. Hosted web is same-origin `/api/v1` via nginx.
 - **Testing**: no mocks, real dependencies; the Go side has integration
   tests against real PostgreSQL (gated on `DATABASE_URL`), the frontend has
   real-logic unit tests; AI-touching tests only run when

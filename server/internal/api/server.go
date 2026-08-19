@@ -51,6 +51,8 @@ func (s *Server) Handler() http.Handler {
 	h = s.withRequestID(h)
 	if s.cfg.DevPermissiveCORS {
 		h = s.withDevCORS(h)
+	} else if len(s.cfg.CORSOrigins) > 0 {
+		h = s.withAllowlistCORS(h)
 	}
 	return h
 }

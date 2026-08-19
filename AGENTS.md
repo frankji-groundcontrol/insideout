@@ -27,8 +27,8 @@ Commands and environment reference:
 [docs/usage/local-development.md](docs/usage/local-development.md); hands-on
 `.env` setup: [docs/SETENV.md](docs/SETENV.md) (`scripts/env.sh
 init|edit|check|propagate` sets, inspects and validates keys without printing
-values and generates `app/.env` from the root; `scripts/dev.sh` preflights
-`env.sh check <component>` before launching). The non-negotiables:
+values; `scripts/dev.sh` preflights `env.sh check <component>` before
+launching). The non-negotiables:
 
 - No mocks. DB-dependent changes must pass the `DATABASE_URL`-gated
   integration tests (`server/internal/store/authz_test.go`) against real

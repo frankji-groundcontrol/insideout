@@ -85,18 +85,22 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 	var streamer agent.ChatStreamer
 	var planner agent.RoadmapPlanner
 	if cfg.AIAuthToken == "" {
-		log.Info("ANTHROPIC_AUTH_TOKEN not set — using offline template-reply coach")
+		log.Info("INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach")
 		streamer = agent.NewTemplateStreamer()
 		planner = agent.NewTemplateRoadmapPlanner()
 	} else {
-		s, err := agent.NewAnthropicStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel)
+		s, err := agent.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
 		if err != nil {
-			log.Error("create anthropic streamer", "error", err)
+			log.Error("create llm streamer", "error", err)
 			os.Exit(1)
 		}
 		streamer = s
 		planner = agent.NewAnthropicRoadmapPlanner(s)
-		checkModelAtStartup(ctx, log, s, cfg.AIModel)
+		if checker, ok := s.(interface {
+			CheckModel(context.Context) (bool, []string, error)
+		}); ok {
+			checkModelAtStartup(ctx, log, checker, cfg.AIModel)
+		}
 	}
 	coach := agent.New(st, streamer, log)
 
@@ -138,16 +142,20 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 // only at the first real user request) into a loud boot-time signal.
 // Gateways sometimes don't implement /v1/models faithfully, so a check
 // failure only warns — it never blocks startup.
-func checkModelAtStartup(ctx context.Context, log *slog.Logger, s *agent.AnthropicStreamer, model string) {
+type modelChecker interface {
+	CheckModel(context.Context) (bool, []string, error)
+}
+
+func checkModelAtStartup(ctx context.Context, log *slog.Logger, s modelChecker, model string) {
 	checkCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 	ok, available, err := s.CheckModel(checkCtx)
 	if err != nil {
-		log.Warn("could not verify AI_MODEL against the provider's /v1/models — proceeding anyway", "model", model, "error", err)
+		log.Warn("could not verify INSIDEOUT_LLM_MODEL against the provider's /models — proceeding anyway", "model", model, "error", err)
 		return
 	}
 	if !ok {
-		log.Warn("AI_MODEL is not in the provider's model list — the coach will fail at the first request", "model", model, "available", available)
+		log.Warn("INSIDEOUT_LLM_MODEL is not in the provider's model list — the coach will fail at the first request", "model", model, "available", available)
 	}
 }
 

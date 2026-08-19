@@ -14,22 +14,26 @@ and the bug records it links to.
   migrations, JWT+RLS defense-in-depth, known Postgres gotchas.
 - [PRD Coach agent](prd-coach-agent.md) — the four-stage coaching agent,
   tool calling, SSE streaming, the direct Anthropic client.
-- [Frontend](frontend.md) — Nuxt 4 SSR app, service layer, design tokens.
+- [Frontend](frontend.md) — Flutter Material 3 client (`client/`) on
+  Railway; the Nuxt tree was deleted 2026-08-18.
 - [Deployment](deployment.md) — docker-compose topology, environment
-  configuration, the two supported database-provisioning models.
+  configuration, the two supported database-provisioning models; the
+  hosted Railway instance is documented in
+  [usage/deployment.md](../usage/deployment.md#railway-current-public-deploy).
 
 ## System overview
 
 ```
 Browser
-  │  same-origin (httpOnly cookies)
+  │  same-origin /api/v1 (Bearer; cookies still accepted)
   ▼
-Nuxt 4 (SSR) ── Nitro routeRules proxy /api/v1/** ──▶ Go API server
-                                                          │
-                                                          ├── PostgreSQL (insideout schema, RLS)
-                                                          └── Anthropic Messages API (direct client)
+Flutter web (nginx) ── /api/ proxy ──▶ Go API server
+                                         │
+                                         ├── PostgreSQL (insideout schema, RLS)
+                                         └── LLM {base}/messages or {base}/responses
 ```
 
 The frontend never talks to Postgres or the LLM provider directly — the Go
-server is the sole backend, and the Nitro proxy keeps everything same-origin
-so cookie-based auth works for both the browser and SSR without CORS.
+server is the sole backend. Hosted Flutter web keeps `/api/v1` same-origin
+through nginx on the `app` service. Native Flutter talks to the public
+`server` URL with Bearer tokens.

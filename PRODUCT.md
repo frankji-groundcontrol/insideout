@@ -421,7 +421,7 @@ Workspace admin approves all PRDs, captured Ideas are automatically visible to
 the Workspace, Roadmap status alone proves completion, or a manually synced
 public-commit timeline is an independent source of progress truth.
 
-The current Go, PostgreSQL/RLS, Nuxt, PRD Coach, Roadmap Canvas, and public
+The current Go, PostgreSQL/RLS, Flutter, PRD Coach, Roadmap Canvas, and public
 GitHub-sync implementation remains the running foundation. It does **not** yet
 implement this whole target experience. Delivery should evolve that foundation
 in small vertical slices and reuse its existing PRD revisions, Roadmap tree,

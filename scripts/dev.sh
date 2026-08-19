@@ -9,17 +9,15 @@
 # `env.sh check`，缺少必需项时拒绝启动——校验输出会指明缺什么、如何补。
 #
 # Nothing in the app loads .env itself — the Go server reads plain process
-# env (os.Getenv) and Nuxt reads NUXT_* env — so .env must be exported before
-# the process starts. -C selects which directory to run in. docker-compose is
-# the other bridge: it interpolates ${VAR} from .env on its own.
-# 应用本身都不读取 .env——Go 服务读进程环境变量（os.Getenv），Nuxt 读 NUXT_*
-# 环境变量——因此 .env 必须在进程启动前导出。-C 指定在哪个子模块中运行；
-# docker-compose 是另一座桥，会自行对 .env 做 ${VAR} 插值。
+# env (os.Getenv) and Flutter web uses --dart-define=API_BASE — so .env must
+# be exported before the server starts. -C selects which directory to run in.
+# docker-compose interpolates ${VAR} from .env on its own.
+# 应用本身都不读取 .env——Go 服务读进程环境变量。-C 指定在哪个子模块中运行。
 #
 # Usage / 用法 (from the repo root / 在仓库根目录执行):
 #   ./scripts/dev.sh -C server go run ./cmd/insideout
 #   ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v
-#   ./scripts/dev.sh -C app pnpm dev
+#   ./scripts/dev.sh -C client flutter run -d chrome
 #
 # It never prints env values; the env.sh preflight fails loudly on missing or
 # invalid required keys (run ./scripts/env.sh init to set them).
@@ -27,7 +25,7 @@
 set -euo pipefail
 
 if [ "${1:-}" != "-C" ] || [ "$#" -lt 3 ]; then
-  echo "usage: ./scripts/dev.sh -C <server|app> <command> [args...]" >&2
+  echo "usage: ./scripts/dev.sh -C <server|client> <command> [args...]" >&2
   echo "  e.g. ./scripts/dev.sh -C server go run ./cmd/insideout" >&2
   exit 2
 fi
@@ -36,8 +34,8 @@ dir="$2"
 shift 2
 
 case "$dir" in
-  server|app) ;;
-  *) echo "dev.sh: unknown component '$dir' — expected 'server' or 'app'" >&2; exit 2 ;;
+  server|client) ;;
+  *) echo "dev.sh: unknown component '$dir' — expected 'server' or 'client'" >&2; exit 2 ;;
 esac
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,12 +48,9 @@ fi
 
 # Preflight: validate required keys (never prints values). On failure env.sh
 # tells the user exactly what is missing and exits non-zero, so we stop here.
-# Passing the component makes the gate specific: a generated component .env
-# that was built from an OLDER root file is a FAILURE for that component (it
-# would silently supply stale values to `cd <dir> && pnpm dev`) and only a
-# warning for the others, so a stale app/.env cannot block a server test run.
-# 预检：校验必需项（绝不打印值）。传入组件名后，该组件的陈旧副本会导致失败，
-# 其它组件仅告警——避免陈旧的 app/.env 阻塞 server 端测试。
+# Passing the component makes the gate specific if that component later
+# grows a generated .env. Today only the root file is checked.
+# 预检：校验必需项（绝不打印值）。
 "$here/env.sh" check "$dir" || exit 1
 
 set -a

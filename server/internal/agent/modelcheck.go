@@ -7,13 +7,13 @@ import (
 	"net/http"
 )
 
-// CheckModel calls GET /v1/models and reports whether a.model is in the
-// list — a loud startup signal instead of BUG-009's silent
+// CheckModel calls GET {base}/models and reports whether a.model is in
+// the list — a loud startup signal instead of BUG-009's silent
 // model_not_found surfacing only at the first real user request.
 // Gateways sometimes omit or misreport this endpoint, so a request
 // error is not fatal — the caller logs and continues either way.
 func (a *AnthropicStreamer) CheckModel(ctx context.Context) (ok bool, available []string, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, a.baseURL+"/v1/models", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, LLMModelsURL(a.baseURL), nil)
 	if err != nil {
 		return false, nil, err
 	}
@@ -26,7 +26,7 @@ func (a *AnthropicStreamer) CheckModel(ctx context.Context) (ok bool, available 
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return false, nil, fmt.Errorf("agent: GET /v1/models returned %s", resp.Status)
+		return false, nil, fmt.Errorf("agent: GET /models returned %s", resp.Status)
 	}
 
 	var body struct {

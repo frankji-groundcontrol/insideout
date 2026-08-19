@@ -3,7 +3,7 @@
 # env-write.sh——env.sh 中会写文件的两个子命令。
 #
 #   ./scripts/env.sh init                 # interactive: create .env, fill gaps
-#   ./scripts/env.sh propagate [component] # generate app/.env from the root
+#   ./scripts/env.sh propagate [component] # regenerate component .env copies (none today)
 #
 # Sourced by env.sh, never run directly: it relies on that script's variables
 # ($repo, $ENV_FILE, $EXAMPLE_FILE) and on env-lib.sh's helpers. Everything
@@ -22,7 +22,7 @@ do_propagate() {
     echo "FAIL: no $ENV_FILE — run ./scripts/env.sh init" >&2; return 1; }
   # INSIDEOUT_ENV_FILE redirects the SOURCE but cannot redirect the
   # DESTINATION — the component directories belong to this checkout. Writing a
-  # scratch file's values into the real app/.env is exactly the accident a
+  # scratch file's values into a real component .env is exactly the accident a
   # testing knob must not cause, so refuse rather than half-honour it.
   # 测试用的环境变量只能改来源、改不了目标，故直接拒绝而非部分生效。
   if [ "$ENV_FILE" != "$repo/.env" ]; then
@@ -40,9 +40,8 @@ do_propagate() {
       return 2
     fi
     if [ "$dir" = - ]; then
-      echo "skip: $comp — the Go binary reads process env only (os.Getenv, no"
-      echo "      dotenv dependency), so a $comp/.env would be a file nothing"
-      echo "      loads. Use ./scripts/dev.sh -C $comp <cmd>."
+      echo "skip: $comp — no dotenv file (process env / dart-define only)."
+      echo "      Use ./scripts/dev.sh -C $comp <cmd>."
       continue
     fi
     contract="$repo/$dir/.env.example"
@@ -242,22 +241,26 @@ do_init() {
   IFS= read -r choice
   case "$choice" in
     p|P)
-      printf 'ANTHROPIC_AUTH_TOKEN: '
+      printf 'INSIDEOUT_LLM_API_KEY: '
       IFS= read -r -s tok; echo
-      if [ -n "$tok" ]; then ANTHROPIC_AUTH_TOKEN="$tok"; stage ANTHROPIC_AUTH_TOKEN "$tok"; fi
-      printf 'ANTHROPIC_BASE_URL [%s]: ' "${ANTHROPIC_BASE_URL:-https://api.anthropic.com}"
+      if [ -n "$tok" ]; then INSIDEOUT_LLM_API_KEY="$tok"; stage INSIDEOUT_LLM_API_KEY "$tok"; fi
+      printf 'INSIDEOUT_LLM_BASE_URL [%s]: ' "${INSIDEOUT_LLM_BASE_URL:-https://api.anthropic.com/v1}"
       IFS= read -r base
-      base="${base:-${ANTHROPIC_BASE_URL:-https://api.anthropic.com}}"
-      stage ANTHROPIC_BASE_URL "$base"
-      printf 'AI_MODEL [%s]: ' "${AI_MODEL:-claude-sonnet-4-20250514}"
+      base="${base:-${INSIDEOUT_LLM_BASE_URL:-https://api.anthropic.com/v1}}"
+      stage INSIDEOUT_LLM_BASE_URL "$base"
+      printf 'INSIDEOUT_LLM_MODEL [%s]: ' "${INSIDEOUT_LLM_MODEL:-claude-sonnet-4-20250514}"
       IFS= read -r model
-      model="${model:-${AI_MODEL:-claude-sonnet-4-20250514}}"
-      stage AI_MODEL "$model"
-      echo "configured — token $(mask_secret "${ANTHROPIC_AUTH_TOKEN:-}")" ;;
+      model="${model:-${INSIDEOUT_LLM_MODEL:-claude-sonnet-4-20250514}}"
+      stage INSIDEOUT_LLM_MODEL "$model"
+      printf 'INSIDEOUT_LLM_SCHEMA [%s]: ' "${INSIDEOUT_LLM_SCHEMA:-messages}"
+      IFS= read -r schema
+      schema="${schema:-${INSIDEOUT_LLM_SCHEMA:-messages}}"
+      stage INSIDEOUT_LLM_SCHEMA "$schema"
+      echo "configured — token $(mask_secret "${INSIDEOUT_LLM_API_KEY:-}")" ;;
     *)
       # Only write an empty value if one was previously set; otherwise leave
       # the line commented so the file keeps the skeleton's shape.
-      if [ -n "${ANTHROPIC_AUTH_TOKEN:-}" ]; then stage ANTHROPIC_AUTH_TOKEN ""; fi
+      if [ -n "${INSIDEOUT_LLM_API_KEY:-}" ]; then stage INSIDEOUT_LLM_API_KEY ""; fi
       echo "offline mode — template-reply coach" ;;
   esac
   # (d) GITHUB_TOKEN — optional / 可选

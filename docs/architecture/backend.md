@@ -76,9 +76,10 @@ paragraph-wrapped HTML on demand — no object storage, no background jobs.
 
 `internal/config/config.go` parses and fail-fast validates: `INSIDEOUT_ADDR`,
 `DATABASE_URL` (required), `INSIDEOUT_JWT_SECRET` (required, ≥32 chars),
-`INSIDEOUT_ACCESS_TTL`/`INSIDEOUT_REFRESH_TTL`, `ANTHROPIC_BASE_URL`,
-`ANTHROPIC_AUTH_TOKEN`, `AI_MODEL`, `INSIDEOUT_COOKIE_SECURE`,
-`INSIDEOUT_DEV_CORS`. Missing `ANTHROPIC_AUTH_TOKEN` is not an error — the PRD
+`INSIDEOUT_ACCESS_TTL`/`INSIDEOUT_REFRESH_TTL`, `INSIDEOUT_LLM_BASE_URL`,
+`INSIDEOUT_LLM_API_KEY`, `INSIDEOUT_LLM_MODEL`, `INSIDEOUT_LLM_SCHEMA`,
+`INSIDEOUT_COOKIE_SECURE`,
+`INSIDEOUT_DEV_CORS`. Missing `INSIDEOUT_LLM_API_KEY` is not an error — the PRD
 Coach falls back to an offline template reply (`internal/agent/template.go`),
 which doubles as local dev mode. See [usage](../usage/local-development.md)
 for the full environment variable reference.

@@ -4,7 +4,7 @@ Guidance for Claude Code in this repository. Keep this file a thin router:
 short rules and links, with the substance in modular docs under `docs/` (see
 the [doc map](docs/index.md)).
 
-InsideOut is a Go + PostgreSQL + Nuxt 4 SSR app for tracking others'
+InsideOut is a Go + PostgreSQL + Flutter app for tracking others'
 projects, capturing ideas, and refining them into PRDs with an agent coach.
 
 ## Before editing
@@ -26,12 +26,12 @@ projects, capturing ideas, and refining them into PRDs with an agent coach.
 ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v   # real-DB integration tests (exports .env)
 ./scripts/dev.sh -C server go run ./cmd/insideout migrate                   # apply SQL migrations
 ./scripts/dev.sh -C server go run ./cmd/insideout seed                      # dev demo data
-./scripts/dev.sh -C app pnpm dev                                            # frontend (pnpm, not npm)
-(cd app && pnpm test && npx nuxi typecheck && pnpm build)                   # frontend checks
+./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+(cd client && flutter analyze --no-fatal-infos && flutter test)            # frontend checks
 docker compose build
 ```
 
-Environment reference: [docs/SETENV.md](docs/SETENV.md) (hands-on key setup), [docs/usage/environment.md](docs/usage/environment.md) (variables), [docs/usage/local-development.md](docs/usage/local-development.md) (workflow). `scripts/env.sh init|edit|check|propagate` sets, inspects and validates `.env` (never printing values) and generates `app/.env` from it; `scripts/dev.sh` preflights `env.sh check <component>` before launching, so a stale generated copy blocks that launch.
+Environment reference: [docs/SETENV.md](docs/SETENV.md) (hands-on key setup), [docs/usage/environment.md](docs/usage/environment.md) (variables), [docs/usage/local-development.md](docs/usage/local-development.md) (workflow). `scripts/env.sh init|edit|check|propagate` sets, inspects and validates `.env` (never printing values); `scripts/dev.sh` preflights `env.sh check <component>` before launching.
 
 ## Hard rules
 

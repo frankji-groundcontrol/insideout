@@ -4,26 +4,26 @@
 
 ## Trigger
 
-Configuring or changing `AI_MODEL`, pointing `ANTHROPIC_BASE_URL` at a new endpoint (proxy, gateway, or the provider directly), or debugging AI-path errors that don't reproduce elsewhere. Proxies and gateways serve **different model sets** than the upstream provider — a model id that is valid at Anthropic may not exist behind a given gateway, and vice versa.
+Configuring or changing `INSIDEOUT_LLM_MODEL`, pointing `INSIDEOUT_LLM_BASE_URL` at a new endpoint (proxy, gateway, or the provider directly), or debugging AI-path errors that don't reproduce elsewhere. Proxies and gateways serve **different model sets** than the upstream provider — a model id that is valid at one vendor may not exist behind a given gateway, and vice versa.
 
 ## Sequence / guardrail
 
 1. List what the endpoint actually serves:
    ```bash
-   curl -s "$ANTHROPIC_BASE_URL/v1/models" \
-     -H "x-api-key: $ANTHROPIC_AUTH_TOKEN" \
+   curl -s "$INSIDEOUT_LLM_BASE_URL/models" \
+     -H "x-api-key: $INSIDEOUT_LLM_API_KEY" \
      -H "anthropic-version: 2023-06-01" | jq '.data[].id'
    ```
 2. Pick a model id from that list and smoke-test one real request against the same endpoint the app will use:
    ```bash
-   curl -s "$ANTHROPIC_BASE_URL/v1/messages" \
-     -H "x-api-key: $ANTHROPIC_AUTH_TOKEN" \
+   curl -s "$INSIDEOUT_LLM_BASE_URL/messages" \
+     -H "x-api-key: $INSIDEOUT_LLM_API_KEY" \
      -H "anthropic-version: 2023-06-01" \
      -H 'Content-Type: application/json' \
      -d '{"model":"<id from step 1>","max_tokens":64,"messages":[{"role":"user","content":"ping"}]}'
    ```
    Inspect the raw response shape too — the same model-discovery `curl` work during BUG-009 revealed that this account's model emits `thinking` content blocks, which is what broke the old client.
-3. Only then set `AI_MODEL` (default `claude-sonnet-4-20250514` in `server/internal/config/config.go`) and exercise the app path.
+3. Only then set `INSIDEOUT_LLM_MODEL` (default `claude-sonnet-4-20250514` in `server/internal/config/config.go`) and exercise the app path.
 
 ## Verification
 

@@ -1,63 +1,48 @@
 # Frontend
 
-Nuxt 4 Universal SSR app under `app/` (`srcDir: 'src'`), package-managed with
-pnpm. Pinia for state, vue-i18n for zh-CN (default) + en-US, Tailwind CSS with
-the "Ink & Seal" (国风留白) semantic token system.
+Railway production serves the **Flutter 3 Material 3** client under
+`client/` (see
+[`docs/plans/2026-08-17-flutter-client.md`](../plans/2026-08-17-flutter-client.md)).
+The Nuxt 4 tree was deleted 2026-08-18
+([changelog](../changelogs/2026-08-18-delete-nuxt-app.md)).
 
-## Transport: same-origin only
+## Production: Flutter (`client/`)
 
-The browser and Nuxt SSR both hit same-origin `/api/v1/**`; a Nitro
-`routeRules` proxy in `app/nuxt.config.ts` forwards those to the Go server
-(`NUXT_API_INTERNAL_BASE`, default `http://127.0.0.1:8080/api/v1`). This keeps
-the httpOnly auth cookies first-party — no CORS, no `SameSite` pitfalls, and
-SSR requests carry the same cookies. There is no other backend path: the mock
-service mode and the Supabase adapters from the JuanLeMe era were deleted
-outright (the frontend's only service implementation is `src/services/api/`).
+Hand-written Dart HTTP client (Dio), Bearer access tokens,
+`flutter_secure_storage`, `go_router`, Provider, zh-CN / en-US strings
+(default zh-CN). Targets: web, iOS, Android.
 
-## Layout
+### Transport
+
+Hosted web is built with `--dart-define=API_BASE=/api/v1`. nginx on the
+Railway `app` service serves the static Flutter bundle and proxies
+`/api/` to `http://server.railway.internal:8080/api/` (buffering off for
+Coach SSE). Native and `flutter run` use the public Go URL
+(`https://server-production-9c338.up.railway.app/api/v1`). Login and
+register still set httpOnly cookies (unused by Flutter web) and also
+return top-level `accessToken` / `refreshToken`.
+
+Web uses `usePathUrlStrategy()` so product paths (`/login`,
+`/dashboard`, `/workspace/:id`, …) are real URLs; nginx `try_files`
+falls back to `index.html`.
+
+### Layout
 
 ```
-app/src/
-  pages/          route components: landing, login/register, dashboard,
-                  workspace/[id] (project board), workspace/[id]/ideas,
-                  projects/[id], prd/[id] (PRD workspace + coach chat),
-                  prd/[id]/export, profile
-  components/     common/ (BaseButton, BaseInput, BaseCard, BaseBadge,
-                  PrdStatusBadge, LangToggle, ThemeToggle), layout/ (NavBar,
-                  AppFooter)
-  services/       api/ — one adapter per backend resource (auth, workspace,
-                  project, idea, prd, coach, export); http.ts holds apiFetch
-                  and the 429/503 error mapping; registry.ts wires the bundle
-  stores/         user.ts — session state hydrated from the cookie session
-  composables/    useCoachStream.ts (SSE-driven coach chat state), useTimeAgo
-  middleware/     auth.global.ts — runs on server and client
-  i18n/           locales/zh-CN.ts, en-US.ts + a key-parity test
-  assets/         tokens.css — the Ink & Seal CSS custom properties
-  types/          domain types + service interfaces
+client/lib/
+  main.dart           hydrate session + appearance; path URL strategy
+  app.dart            MaterialApp.router + signed-in AppScaffold
+  router.dart         current product paths
+  session/            Session, Appearance, auth redirect
+  api/                Dio client, models, request builders, errors
+  features/           landing, auth, dashboard, workspace, project,
+                      roadmap, prd, profile
+  l10n/               zh-CN + en-US
 ```
 
-## Design tokens
+### Coach chat
 
-`src/assets/tokens.css` defines semantic CSS custom properties (light + dark
-under a `.dark` class); `tailwind.config.js` maps them to utilities
-(`bg-surface-*`, `text-fg-*`, `border-stroke-*`, `bg-btn`/`text-btn-fg`,
-`bg-status-*-bg/-fg`, `text-seal`, `rounded-control/card/pill/hero`).
-Components use only these semantic utilities — no raw Tailwind palette colors
-and no `dark:` variant sprawl. Two gotchas already hit and recorded: Tailwind
-cannot see dynamically interpolated class strings
-([BUG-003](../issues/2026-07-20-bug-003-tailwind-dynamic-class-interpolation.md)), and
-token CSS must be loaded via `nuxt.config.ts` `css:` before Tailwind's layers.
-
-## Coach chat
-
-`src/composables/useCoachStream.ts` consumes the SSE contract described in
-[the agent doc](prd-coach-agent.md): it maintains messages, streaming text,
-PRD-section refresh triggers, stage changes, and the rate-limit countdown
-(the preserved `APP_THROTTLE`/`CIRCUIT_OPEN` error shapes). History loads
-from `GET /api/v1/conversations/{id}/messages`.
-
-## Known limitations
-
-Tracked in [`docs/TODO.md`](../TODO.md): avatar upload is a local-preview
-placeholder; theme/locale persistence still uses `localStorage` (not cookies,
-so SSR first paint can flash); PRD section editors are plain textareas.
+The PRD page consumes the SSE contract in
+[the agent doc](prd-coach-agent.md): deltas, stage changes, throttle
+countdown (`APP_THROTTLE` / `CIRCUIT_OPEN`). History is
+`GET /api/v1/conversations/{id}/messages`.

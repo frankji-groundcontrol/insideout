@@ -40,10 +40,10 @@ def t_required_vs_optional():
 
 def t_value_equal_to_the_example_is_a_default_not_a_choice():
     with tempfile.TemporaryDirectory() as d:
-        root = scaffold(Path(d), "#AI_MODEL=claude-sonnet-4-20250514\n#X=\n",
-                        "AI_MODEL=claude-sonnet-4-20250514\nX=mine\n")
+        root = scaffold(Path(d), "#INSIDEOUT_LLM_MODEL=claude-sonnet-4-20250514\n#X=\n",
+                        "INSIDEOUT_LLM_MODEL=claude-sonnet-4-20250514\nX=mine\n")
         v = {x.name: x for x in cat.build(root)}
-        check("copied from the skeleton => default", v["AI_MODEL"].status == "default")
+        check("copied from the skeleton => default", v["INSIDEOUT_LLM_MODEL"].status == "default")
         check("a value you supplied     => set", v["X"].status == "set")
 
 
@@ -96,32 +96,32 @@ def t_secrets_are_masked_by_name():
     with tempfile.TemporaryDirectory() as d:
         root = scaffold(Path(d),
                         "DATABASE_URL=\nINSIDEOUT_JWT_SECRET=\n#GITHUB_TOKEN=\n"
-                        "#ANTHROPIC_AUTH_TOKEN=\n#POSTGRES_APP_PASSWORD=\n#AI_MODEL=\n",
+                        "#INSIDEOUT_LLM_API_KEY=\n#POSTGRES_APP_PASSWORD=\n#INSIDEOUT_LLM_MODEL=\n",
                         "DATABASE_URL=postgres://u:hunter2@10.0.0.1/db\n"
                         "INSIDEOUT_JWT_SECRET=deadbeef" + "0" * 40 + "\n"
                         "GITHUB_TOKEN=ghp_realtoken123\n"
-                        "ANTHROPIC_AUTH_TOKEN=sk-ant-real\n"
+                        "INSIDEOUT_LLM_API_KEY=sk-ant-real\n"
                         "POSTGRES_APP_PASSWORD=pw123\n"
-                        "AI_MODEL=claude-opus-5\n")
+                        "INSIDEOUT_LLM_MODEL=claude-opus-5\n")
         v = {x.name: x for x in cat.build(root)}
         for name in ("DATABASE_URL", "INSIDEOUT_JWT_SECRET", "GITHUB_TOKEN",
-                     "ANTHROPIC_AUTH_TOKEN", "POSTGRES_APP_PASSWORD"):
+                     "INSIDEOUT_LLM_API_KEY", "POSTGRES_APP_PASSWORD"):
             check(f"{name} is masked", v[name].display() == "•" * 6)
         check("DATABASE_URL password never rendered",
               "hunter2" not in v["DATABASE_URL"].display())
         check("GITHUB_TOKEN value never rendered",
               "ghp_realtoken123" not in v["GITHUB_TOKEN"].display())
-        check("a non-secret is shown plainly", v["AI_MODEL"].display() == "claude-opus-5")
+        check("a non-secret is shown plainly", v["INSIDEOUT_LLM_MODEL"].display() == "claude-opus-5")
 
 
 def t_no_repo_variable_is_a_secret_by_accident():
     # The masking rule is a NAME regex; assert it does not sweep in the
     # non-secrets, or the TUI becomes useless for the values worth reading.
-    # ANTHROPIC_BASE_URL is deliberately absent: it is classified as a secret
+    # INSIDEOUT_LLM_BASE_URL is deliberately absent: it is classified as a secret
     # (see t_provider_endpoint_is_treated_as_sensitive).
-    plain = ("AI_MODEL", "SERVER_PORT", "APP_PORT", "POSTGRES_PORT",
+    plain = ("INSIDEOUT_LLM_MODEL", "INSIDEOUT_LLM_SCHEMA", "SERVER_PORT", "APP_PORT", "POSTGRES_PORT",
              "INSIDEOUT_ADDR", "INSIDEOUT_ACCESS_TTL", "INSIDEOUT_DEV_CORS",
-             "NUXT_API_INTERNAL_BASE")
+             "INSIDEOUT_CORS_ORIGINS")
     for name in plain:
         check(f"{name} is not treated as a secret", cat.Var(name).secret is False)
 
@@ -129,20 +129,30 @@ def t_no_repo_variable_is_a_secret_by_accident():
 # ── attribution · 归属 ───────────────────────────────────────────────────────
 
 def t_component_attribution():
-    with tempfile.TemporaryDirectory() as d:
-        root = scaffold(Path(d), "DATABASE_URL=\n", "",
-                        {"app": "#NUXT_API_INTERNAL_BASE=\n"})
-        v = {x.name: x for x in cat.build(root)}
-        check("app var attributed to app",
-              v["NUXT_API_INTERNAL_BASE"].components == ["app"])
-        check("a root-only var has no component", v["DATABASE_URL"].components == [])
+    old = cat.COMPONENT_DIRS
+    cat.COMPONENT_DIRS = {"web": "web"}
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            root = scaffold(Path(d), "DATABASE_URL=\n", "",
+                            {"web": "#WEB_ONLY=\n"})
+            v = {x.name: x for x in cat.build(root)}
+            check("component var attributed",
+                  v["WEB_ONLY"].components == ["web"])
+            check("a root-only var has no component", v["DATABASE_URL"].components == [])
+    finally:
+        cat.COMPONENT_DIRS = old
 
 
 def t_required_anywhere_wins():
-    with tempfile.TemporaryDirectory() as d:
-        root = scaffold(Path(d), "#SHARED=\n", "", {"app": "SHARED=x\n"})
-        check("required in a component => required overall",
-              {v.name: v for v in cat.build(root)}["SHARED"].required is True)
+    old = cat.COMPONENT_DIRS
+    cat.COMPONENT_DIRS = {"web": "web"}
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            root = scaffold(Path(d), "#SHARED=\n", "", {"web": "SHARED=x\n"})
+            check("required in a component => required overall",
+                  {v.name: v for v in cat.build(root)}["SHARED"].required is True)
+    finally:
+        cat.COMPONENT_DIRS = old
 
 
 def t_missing_sorts_first():
@@ -182,13 +192,11 @@ def t_repo_skeleton_marks_only_the_fail_fast_vars_required():
     check(f"root skeleton required set == {sorted(want)} (got {sorted(got)})", got == want)
 
 
-def t_repo_app_contract_declares_only_what_nuxt_reads():
-    declared = {n for n, _, _, _ in cat.parse_skeleton(REPO / "app" / ".env.example")}
-    check("app contract == {NUXT_API_INTERNAL_BASE}",
-          declared == {"NUXT_API_INTERNAL_BASE"})
-    check("and it is optional (nuxt.config.ts has a working default)",
-          all(not req for _, req, _, _ in
-              cat.parse_skeleton(REPO / "app" / ".env.example")))
+def t_repo_has_no_component_dotenv_contracts():
+    check("COMPONENT_DIRS is empty after Nuxt removal",
+          cat.COMPONENT_DIRS == {})
+    check("no leftover app/.env.example",
+          not (REPO / "app" / ".env.example").exists())
 
 
 def t_repo_skeleton_declares_nothing_dead():
@@ -202,7 +210,7 @@ def t_repo_skeleton_declares_nothing_dead():
     """
     consumers = sorted(
         [p for p in (REPO / "server").rglob("*.go") if "_test.go" not in p.name]
-        + [REPO / "app" / "nuxt.config.ts", REPO / "docker-compose.yml"])
+        + [REPO / "docker-compose.yml"])
     haystack = "\n".join(p.read_text(errors="replace")
                          for p in consumers if p.is_file())
     # Match the CONSUMPTION syntax, not the bare token. A plain word-boundary
@@ -215,8 +223,7 @@ def t_repo_skeleton_declares_nothing_dead():
         n = re.escape(name)
         return bool(re.search(rf'"{n}"|process\.env\.{n}\b|\$\{{{n}[:}}]', haystack))
 
-    declared = {n for f in (REPO / ".env.example", REPO / "app" / ".env.example")
-                for n, _, _, _ in cat.parse_skeleton(f)}
+    declared = {n for n, _, _, _ in cat.parse_skeleton(REPO / ".env.example")}
     dead = sorted(n for n in declared if not read_somewhere(n))
     check(f"every declared variable has a consumer (orphans: {dead})", not dead)
 
@@ -242,21 +249,21 @@ def t_a_name_test_always_beats_a_content_test():
     credential in the clear as soon as it happened to contain `change_me`.
     """
     with tempfile.TemporaryDirectory() as d:
-        root = scaffold(Path(d), "DATABASE_URL=\n#GITHUB_TOKEN=\n#AI_MODEL=x\n",
+        root = scaffold(Path(d), "DATABASE_URL=\n#GITHUB_TOKEN=\n#INSIDEOUT_LLM_MODEL=x\n",
                         "DATABASE_URL=postgres://u:change_me_but_REAL@h/db\n"
                         "GITHUB_TOKEN=ghp_change_me_yet_REAL\n"
-                        "AI_MODEL=x\n")
+                        "INSIDEOUT_LLM_MODEL=x\n")
         v = {x.name: x for x in cat.build(root)}
         check("placeholder DATABASE_URL still masked", v["DATABASE_URL"].display() == "•" * 6)
         check("placeholder GITHUB_TOKEN still masked", v["GITHUB_TOKEN"].display() == "•" * 6)
         check("no real material rendered",
               not any("REAL" in x.display() for x in v.values()))
-        check("a non-secret default is still shown", v["AI_MODEL"].display() == "x")
+        check("a non-secret default is still shown", v["INSIDEOUT_LLM_MODEL"].display() == "x")
 
 
 def t_provider_endpoint_is_treated_as_sensitive():
     # A gateway base URL routinely carries the API key in its path, and repo
     # policy treats a provider identifier as sensitive regardless.
-    check("ANTHROPIC_BASE_URL is a secret", cat.Var("ANTHROPIC_BASE_URL").secret is True)
+    check("INSIDEOUT_LLM_BASE_URL is a secret", cat.Var("INSIDEOUT_LLM_BASE_URL").secret is True)
 
 raise SystemExit(run(globals()))

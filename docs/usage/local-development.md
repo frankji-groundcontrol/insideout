@@ -1,14 +1,14 @@
 # Local Development
 
-Developer setup for InsideOut: a Go 1.25 API server (`server/`) and a Nuxt 4
-Universal SSR frontend (`app/`), backed by PostgreSQL.
+Developer setup for InsideOut: a Go 1.25 API server (`server/`) and the
+Flutter client (`client/`, web + iOS + Android), backed by PostgreSQL.
 
 This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git history).
 
 ## Prerequisites
 
 - **Go 1.25+** (see `server/go.mod`)
-- **Node 22 + pnpm** (the app Dockerfile builds on `node:22-alpine`; pnpm is the package manager)
+- **Flutter 3** (for `client/`; see [`client/README.md`](../../client/README.md))
 - **PostgreSQL 14+** reachable via `DATABASE_URL` — either your own instance or the bundled one below
 - **Docker** (optional) — only needed for the bundled Postgres / full-compose runs
 
@@ -33,22 +33,17 @@ default-from-the-skeleton, missing, placeholder, unset) and lets you set or
 clear one; secrets stay masked both on screen and while typing.
 
 Neither process loads the root `.env` itself — the Go server reads plain
-environment variables and Nuxt reads `NUXT_*` ones; docker-compose interpolates
-the file directly. For a bare `go run`/`go test`/`pnpm dev`, use the root
-wrapper that preflights `env.sh check <component>`, exports `.env`, and then
-execs inside the directory you name (it never prints values):
+environment variables; docker-compose interpolates the file directly.
+Flutter uses `--dart-define=API_BASE`. For a bare `go run`/`go test`,
+use the root wrapper that preflights `env.sh check <component>`, exports
+`.env`, and then execs inside the directory you name (it never prints
+values):
 
 ```bash
 ./scripts/dev.sh -C server go run ./cmd/insideout                              # dev server
 ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v      # integration tests
-./scripts/dev.sh -C app pnpm dev                                               # frontend picking up .env
+./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
-
-After editing the root `.env`, run `./scripts/env.sh propagate` to regenerate
-`app/.env` — the Nuxt component's copy, scoped to what `app/.env.example`
-declares and stamped with the root file's checksum. `dev.sh -C app` refuses to
-launch on a stale copy and names the fix; never hand-write that file
-([why](../SETENV.md#propagating-to-the-components)).
 
 The full variable reference — every variable grouped by consumer, with
 required/default/meaning, the `.env`→process bridges, database setups,
@@ -58,8 +53,8 @@ recipes, and troubleshooting — lives in
 
 ### Offline AI mode
 
-If `ANTHROPIC_AUTH_TOKEN` is unset, the server logs
-`ANTHROPIC_AUTH_TOKEN not set — using offline template-reply coach` and swaps
+If `INSIDEOUT_LLM_API_KEY` is unset, the server logs
+`INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach` and swaps
 in a template-reply streamer (`server/internal/agent`). The PRD coach works
 end-to-end (stages, tools, SSE) with canned replies — no network, no cost.
 This is the recommended default for local dev (see the recipes in
@@ -113,18 +108,15 @@ Server (from the repo root):
 
 Remember `INSIDEOUT_COOKIE_SECURE=0` when serving over plain http locally.
 
-Frontend (from `app/`):
+Frontend (from `client/`):
 
 ```bash
-pnpm install
-pnpm dev                          # Nuxt dev server on :3000
+flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
 
-The browser only ever talks to the Nuxt origin; Nitro proxies `/api/v1/**` to
-the Go server at `NUXT_API_INTERNAL_BASE`. The default needs nothing from
-`.env`; if your Go server isn't at `http://127.0.0.1:8080/api/v1`, set that
-variable and run `pnpm dev` through the root wrapper so it is exported (Nuxt
-does not auto-load the root `.env`): `./scripts/dev.sh -C app pnpm dev`.
+Or `./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1`.
+Hosted web uses same-origin `/api/v1` behind nginx
+([deployment.md](deployment.md#railway-current-public-deploy)).
 
 ## Testing
 
@@ -150,9 +142,9 @@ It registers fresh uniquely-named users each run (rerun-safe) and exits non-zero
 on any failed assertion. See
 [docs/changelogs/2026-07-27-live-smoke-test.md](../changelogs/2026-07-27-live-smoke-test.md).
 
-Frontend (from `app/`):
+Frontend (from `client/`):
 
 ```bash
-pnpm test              # vitest --run
-npx nuxi typecheck     # type checking (dev server does not block on type errors)
+flutter analyze --no-fatal-infos
+flutter test
 ```

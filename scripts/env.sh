@@ -12,8 +12,8 @@
 #   ./scripts/env.sh edit [--list]           # every variable + its state; set/clear
 #   ./scripts/env.sh list                    # key NAMES only / 仅键名
 #   ./scripts/env.sh redact                  # KEY=<redacted> — safe to paste anywhere
-#   ./scripts/env.sh check [app|server] [--db]   # validate; exit 1 on failure
-#   ./scripts/env.sh propagate [component]   # generate app/.env from the root
+#   ./scripts/env.sh check [server|client] [--db]   # validate; exit 1 on failure
+#   ./scripts/env.sh propagate [component]   # no-op unless a component owns a .env.example
 #
 # A SECRET's value is never printed: list gives names, redact gives
 # KEY=<redacted>, check gives a status (secrets as 'set (N chars)', DSNs with
@@ -38,7 +38,7 @@ EXAMPLE_FILE="$repo/.env.example"
 # A suffix naming the shell-export-shadows-the-file situation, or nothing.
 shadow_note() {
   case " $shadowed " in
-    *" $1 "*) printf '%s' " — note: your shell exports $1, so THIS process sees a value, but docker compose and 'cd app && pnpm dev' read the file" ;;
+    *" $1 "*) printf '%s' " — note: your shell exports $1, so THIS process sees a value, but docker compose reads the file" ;;
   esac
 }
 
@@ -59,9 +59,10 @@ report_defaults() {
     "INSIDEOUT_REFRESH_TTL|720h|Go server refresh-token lifetime" \
     "INSIDEOUT_COOKIE_SECURE|on (Secure cookies)|Go server; exactly '0' for plain-http dev" \
     "INSIDEOUT_DEV_CORS|off|Go server; exactly '1' for permissive CORS" \
-    "ANTHROPIC_BASE_URL|Go server fallback (https://api.anthropic.com)|Go server AI endpoint" \
-    "AI_MODEL|claude-sonnet-4-20250514|Go server AI model (ignored by the offline coach)" \
-    "NUXT_API_INTERNAL_BASE|http://127.0.0.1:8080/api/v1|Nuxt SSR + proxy; propagated into app/.env"; do
+    "INSIDEOUT_CORS_ORIGINS|empty (no allow-list CORS)|Go server Flutter-web origins; token localhost = any localhost port" \
+    "INSIDEOUT_LLM_BASE_URL|https://api.anthropic.com/v1|Go server LLM endpoint (include /v1 yourself)" \
+    "INSIDEOUT_LLM_MODEL|claude-sonnet-4-20250514|Go server LLM model (ignored by the offline coach)" \
+    "INSIDEOUT_LLM_SCHEMA|messages|Go server LLM wire format: messages or responses"; do
     name="${spec%%|*}"; spec="${spec#*|}"; dflt="${spec%%|*}"; who="${spec#*|}"
     [ -n "${!name:-}" ] && continue
     info "$name" "default in effect: $dflt — $who"
@@ -70,10 +71,8 @@ report_defaults() {
 }
 
 # Generated component copies: is each one still derived from THIS root file?
-# A stale copy is the failure mode that has no symptom — `cd app && pnpm dev`
-# would keep using an old value while the root file already reads correctly.
-# Fail for the component being launched (so dev.sh stops), warn for the others
-# (so a stale app/.env can never block a `-C server` test run).
+# Fail for the component being launched (so dev.sh stops), warn for the others.
+# No component currently owns a .env.example (server and client are `-`).
 # 生成副本是否仍源自当前根文件；陈旧副本对目标组件报 FAIL，对其它组件仅警告。
 check_copies() {
   local focus="${1:-}" c dir out want have body_want body_have
@@ -89,7 +88,7 @@ check_copies() {
       continue
     fi
     if ! grep -qF "$GEN_MARK" "$out"; then
-      warn "$dir/.env" "hand-written, not generated — its keys win over the root under 'cd $dir && pnpm dev'. Move it aside and run ./scripts/env.sh propagate $c"
+      warn "$dir/.env" "hand-written, not generated — its keys win over the root if that component reads dotenv. Move it aside and run ./scripts/env.sh propagate $c"
       continue
     fi
     have="$(sed -n "s/^${SUM_MARK} //p" "$out" | head -1 || true)"
@@ -124,8 +123,8 @@ do_check() {
     case "$1" in
       "")          : ;;
       --db)        probe_db=1 ;;
-      app|server)  comp="$1" ;;
-      *) echo "usage: ./scripts/env.sh check [app|server] [--db]" >&2; exit 2 ;;
+      server|client)  comp="$1" ;;
+      *) echo "usage: ./scripts/env.sh check [server|client] [--db]" >&2; exit 2 ;;
     esac
     shift
   done
@@ -134,7 +133,7 @@ do_check() {
     exit 1
   fi
   # Record which required names your SHELL exports, before load_env clears
-  # them. The file is the authority — compose and `cd app && pnpm dev` read it,
+  # them. The file is the authority — compose reads it,
   # not your shell — but "empty — required" is baffling when `echo $DATABASE_URL`
   # shows a value, so name the situation instead of leaving it to be guessed.
   # 以文件为准，但若 shell 中导出了同名变量则明确说明，避免困惑。
@@ -183,11 +182,11 @@ do_check() {
     "only exactly '0' disables Secure cookies; anything else keeps the secure default"
   exact_flag INSIDEOUT_DEV_CORS 1 "'1' — permissive CORS on" \
     "only exactly '1' enables permissive CORS; anything else leaves it off"
-  # ANTHROPIC_AUTH_TOKEN — empty means offline template-reply coach / 留空即离线模式
-  if [ -z "${ANTHROPIC_AUTH_TOKEN:-}" ]; then
-    info ANTHROPIC_AUTH_TOKEN "empty — offline template-reply coach (Go server)"
+  # INSIDEOUT_LLM_API_KEY — empty means offline template-reply coach / 留空即离线模式
+  if [ -z "${INSIDEOUT_LLM_API_KEY:-}" ]; then
+    info INSIDEOUT_LLM_API_KEY "empty — offline template-reply coach (Go server)"
   else
-    ok ANTHROPIC_AUTH_TOKEN "$(mask_secret "$ANTHROPIC_AUTH_TOKEN") (Go server)"
+    ok INSIDEOUT_LLM_API_KEY "$(mask_secret "$INSIDEOUT_LLM_API_KEY") (Go server)"
   fi
   # GITHUB_TOKEN — optional; empty keeps GitHub sync at the unauthenticated rate limit / 可选
   if [ -n "${GITHUB_TOKEN:-}" ]; then ok GITHUB_TOKEN "$(mask_secret "$GITHUB_TOKEN") (Go server)"
@@ -255,8 +254,8 @@ Usage (repo root / 仓库根目录):
   edit [--list]            every variable + its state; enter sets, c clears
   list                     key names only / 仅键名
   redact                   KEY=<redacted> — safe to paste anywhere
-  check [app|server] [--db]  validate; --db also probes the database
-  propagate [component]    generate app/.env from the root .env
+  check [server|client] [--db]  validate; --db also probes the database
+  propagate [component]    regenerate component .env copies (none today)
 
 INSIDEOUT_ENV_FILE=<path> validates a different file (testing).
 EOF

@@ -15,7 +15,7 @@ Where the facts come from:
 
 Reading the skeleton is the point: a second hardcoded list of variable names
 drifts. `scripts/env.sh` used to carry one, and it already disagreed with the
-skeleton about two variables (GITHUB_TOKEN, NUXT_API_INTERNAL_BASE).
+skeleton about two variables (GITHUB_TOKEN, then-Nuxt internals).
 
 Value *validity* is deliberately NOT decided here — the 32-character JWT floor,
 Go duration syntax and DSN shape all live in `env.sh check`, so there is one
@@ -33,16 +33,17 @@ from pathlib import Path
 #: component_dir(). `server` is absent on purpose: the Go binary reads process
 #: env via os.Getenv and has no dotenv dependency, so a server/.env would be a
 #: file nothing loads.
-COMPONENT_DIRS = {"app": "app"}
+COMPONENT_DIRS: dict[str, str] = {}
 
 # A value is masked when its NAME says it is a credential. Name-based because
 # the decision must be made BEFORE the value reaches a widget — inspecting it
 # to decide would mean it had already been read onto the screen.
 SECRET_RX = re.compile(r"(KEY|SECRET|PASSWORD|PASSWD|TOKEN|CREDENTIAL)", re.I)
 #: Not caught by the rule above. DATABASE_URL embeds a password;
-#: ANTHROPIC_BASE_URL points at a provider (and gateway URLs routinely carry a
-#: key in the path), which repo policy treats as sensitive alongside secrets.
-SECRET_NAMES = {"DATABASE_URL", "ANTHROPIC_BASE_URL"}
+#: INSIDEOUT_LLM_BASE_URL points at a provider (and gateway URLs routinely
+#: carry a key in the path), which repo policy treats as sensitive alongside
+#: secrets.
+SECRET_NAMES = {"DATABASE_URL", "INSIDEOUT_LLM_BASE_URL"}
 
 #: Markers meaning "copied from the skeleton and never filled in". Matched
 #: lowercased. Kept in sync with env-lib.sh's is_placeholder — the two must

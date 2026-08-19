@@ -15,6 +15,28 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-18 — Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md)
+  — Nuxt tree removed; compose is postgres + server; env catalog has
+  no frontend dotenv contract.
+- [2026-08-18 — Railway `app` serves Flutter web, not Nuxt](2026-08-18-flutter-web-host.md)
+  — `client/` nginx + Flutter web on the public app domain; same-origin
+  `/api/` proxy to `server`; `app/` source kept.
+- [2026-08-18 — Railway server uses shared Supabase, dedicated Postgres removed](2026-08-18-railway-supabase.md)
+  — production `DATABASE_URL` is `insideout_app` on the session pooler
+  (5432); Railway plugin Postgres deleted after a live write check.
+- [2026-08-18 — LLM env names and messages/responses schema](2026-08-18-llm-env.md)
+  — `INSIDEOUT_LLM_BASE_URL` / `API_KEY` / `MODEL` / `SCHEMA` replace
+  `ANTHROPIC_*` and `AI_MODEL`; chat URL is `{base}/messages` or
+  `{base}/responses` with no inserted `/v1`.
+- [2026-08-17 — Flutter client started (web + iOS + Android)](2026-08-17-flutter-client.md)
+  — `client/` Flutter app against the existing Go API; login/register
+  return Bearer tokens; refresh/logout accept a JSON refresh token;
+  Railway `server` is now publicly reachable for native clients.
+- [2026-08-17 — First Railway deploy + build-time API proxy](2026-08-17-railway-deploy.md)
+  — public app at `https://app-production-591e.up.railway.app`; server
+  honors `PORT` when `INSIDEOUT_ADDR` is unset; Nuxt Dockerfile bakes
+  `NUXT_API_INTERNAL_BASE` so the same-origin API proxy does not target
+  localhost.
 - [2026-08-13 — Task board and handoff responsibility correction](2026-08-13-task-board-and-handoff.md)
   — makes `docs/plans/README.md` the authoritative concurrent task board and
   reduces `docs/HANDOFF.md` to one human-readable resume path with worktree

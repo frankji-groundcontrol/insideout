@@ -7,29 +7,31 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Create and engineering-review the first implementation plan derived from
-   `PRODUCT.md`.
+1. Railway `app` serves Flutter web. The leftover Nuxt tree is gone
+   ([changelog](changelogs/2026-08-18-delete-nuxt-app.md)). Remaining
+   Flutter item: Android release when an SDK exists. Plan:
+   [`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md).
 
-Scope that plan to the smallest version-first slice:
+```bash
+# Hosted web (same-origin /api/v1 via nginx)
+open https://app-production-591e.up.railway.app
 
-- preserve an Idea's title and body when work begins;
-- keep an Idea private to its author until explicitly shared;
-- produce an immediately editable first working version;
-- reuse the existing PRD revision model;
-- prove the flow with one real-PostgreSQL end-to-end check.
+# Local Flutter against the hosted API
+cd client && flutter run -d chrome --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
+```
 
-Do not implement the whole product baseline in one pass. Before editing, trace
-the current conversion and visibility paths in
-[`server/internal/store/ideas.go`](../server/internal/store/ideas.go) and the
-existing revision path in
-[`server/internal/store/prd_revisions.go`](../server/internal/store/prd_revisions.go).
+The PRODUCT.md version-first slice stays on the board as P2.
 
 ## Worktree to preserve
 
-None — the four finished workstreams (task board and handoff correction,
-environment workflow, shared auth modal + Design-QA record, product
-baseline) are checkpointed and the worktree is clean. Start new work from a
-dated plan registered on the [task board](plans/README.md).
+Uncommitted work includes the Flutter Railway host, the Nuxt `app/`
+deletion, env-catalog updates, and usage / architecture / changelog
+records. Do not revert unrelated edits.
+
+The public instance is documented in
+[usage/deployment.md](usage/deployment.md#railway-current-public-deploy)
+(`https://app-production-591e.up.railway.app`). The board's next product
+slice is unchanged.
 
 Their exact status, next action, blocker, and plan or record link are on the
 [task board](plans/README.md). Review and checkpoint them one task at a time;

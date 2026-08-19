@@ -50,7 +50,7 @@ if [ -z "${SMOKE_BASE:-}" ]; then
   echo "building + booting server on $BASE (run $RUN)"
   # Force the offline template coach/planner so the SSE + roadmap surfaces are
   # deterministic (no live LLM needed). Pass SMOKE_BASE to test a real-key server.
-  export INSIDEOUT_ADDR=":$PORT" INSIDEOUT_COOKIE_SECURE=0 ANTHROPIC_AUTH_TOKEN=
+  export INSIDEOUT_ADDR=":$PORT" INSIDEOUT_COOKIE_SECURE=0 INSIDEOUT_LLM_API_KEY=
   go build -o "$TMP/insideout" ./cmd/insideout
   "$TMP/insideout" >"$TMP/server.log" 2>&1 &
   SRV_PID=$!

@@ -13,8 +13,9 @@ test_env_*.py files assert on.
 Secrets are masked in BOTH directions: shown as ••••••, typed as ******. The
 catalog decides by variable NAME, before any value reaches the screen.
 
-Writes only the root .env. app/.env is generated from it by `env.sh propagate`,
-which this offers to re-run on exit when anything changed.
+Writes only the root .env. `env.sh propagate` regenerates any component
+copies (none today) and this offers to re-run it on exit when anything
+changed.
 """
 
 from __future__ import annotations
@@ -321,12 +322,8 @@ def main() -> int:
         return 2
     if ed.dirty:
         print("updated in .env: " + ", ".join(sorted(ed.dirty)))
-        # The generated component copies are now stale by checksum, and dev.sh
-        # refuses to launch on stale config — so offer the re-propagate rather
-        # than letting the next run fail. On EOF (Ctrl-D, or a piped stdin)
-        # default to yes: the write already happened, so declining silently
-        # would leave the copies stale and the next `dev.sh -C app` refusing,
-        # with a traceback as the only clue.
+        # Offer re-propagate so a future component copy cannot stay stale.
+        # On EOF (Ctrl-D, or a piped stdin) default to yes.
         try:
             ans = input("re-run `env.sh propagate` so the components see it? [Y/n]: ")
         except EOFError:
@@ -335,8 +332,8 @@ def main() -> int:
         if ans.strip().lower() in ("", "y", "yes"):
             subprocess.run([str(root / "scripts" / "env.sh"), "propagate"], cwd=root)
         else:
-            print("skipped — run `./scripts/env.sh propagate` before the next "
-                  "`dev.sh -C app`, which will otherwise refuse on a stale copy.")
+            print("skipped — run `./scripts/env.sh propagate` if a component "
+                  "copy is still generated from this file.")
     return 0
 
 

@@ -2,7 +2,7 @@
 
 ## docker-compose topology
 
-`docker-compose.yml` at the repo root defines three services:
+`docker-compose.yml` at the repo root defines two services:
 
 - **postgres** — `postgres:17`, the *dedicated-instance* database option.
   Bootstraps as the image's `postgres` superuser, then
@@ -16,17 +16,14 @@
   explicitly (Compose cannot derive `DATABASE_URL` from the postgres vars —
   nested `${...}` defaults are unsupported, see
   [BUG-004](../issues/2026-07-20-bug-004-compose-nested-interpolation.md)).
-- **app** — multi-stage build (`app/Dockerfile`): `node:22-alpine` + pnpm
-  builder → `node:22-alpine` runtime executing `node .output/server/index.mjs`.
-  The first `COPY` includes `pnpm-workspace.yaml`, which pnpm reads during
-  install — omitting it breaks fresh-container builds
-  ([BUG-006](../issues/2026-07-20-bug-006-pnpm-ignored-build-scripts.md)). Receives
-  `NUXT_API_INTERNAL_BASE=http://server:8080/api/v1` so the Nitro proxy
-  targets the server container.
+Railway production `app` is Flutter web:
+[`client/Dockerfile`](../../client/Dockerfile)
+(`ghcr.io/cirruslabs/flutter:3.44.0` → `nginx:1.27-alpine`) with
+[`client/nginx.conf`](../../client/nginx.conf) proxying `/api/` to the
+Go service. Local compose does not build a frontend.
 
 Ports (host side, all overridable): postgres `POSTGRES_PORT` (default 5442),
-server `SERVER_PORT` (default 8080), app `APP_PORT` (default 3000). Users
-reach only the app; it proxies API traffic to the server internally.
+server `SERVER_PORT` (default 8080).
 
 ## Database provisioning models
 
@@ -56,10 +53,14 @@ step rather than as a side effect of the first container start.
 
 `.env.example` at the repo root documents every variable bilingually with
 both provisioning setups. The authoritative parser is
-`server/internal/config/config.go`. AI credentials (`ANTHROPIC_BASE_URL`,
-`ANTHROPIC_AUTH_TOKEN`, `AI_MODEL`) are optional — without a token the coach
-uses the offline template reply. When pointing at an Anthropic-compatible
-gateway, verify the model id it actually serves (`GET /v1/models`) before
-setting `AI_MODEL`.
+`server/internal/config/config.go`. AI credentials (`INSIDEOUT_LLM_BASE_URL`,
+`INSIDEOUT_LLM_API_KEY`, `INSIDEOUT_LLM_MODEL`, `INSIDEOUT_LLM_SCHEMA`) are
+optional — without a key the coach uses the offline template reply. The base
+URL should already include `/v1`; the server appends `/messages` or
+`/responses`. Verify the model id the endpoint actually serves (`GET {base}/models`)
+before setting `INSIDEOUT_LLM_MODEL`.
 
 Operator walkthroughs live in [`docs/usage/deployment.md`](../usage/deployment.md).
+That guide also records the current Railway topology (public Flutter
+`app` + `server` pointed at the shared-instance `insideout_app` session
+pooler).

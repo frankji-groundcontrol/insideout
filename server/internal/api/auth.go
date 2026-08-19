@@ -69,12 +69,13 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.issueSession(w, r, user.ID); err != nil {
+	access, refresh, err := s.issueSession(w, r, user.ID)
+	if err != nil {
 		s.log.Error("issue session", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusCreated, userResponse(user))
+	httpx.WriteJSON(w, http.StatusCreated, sessionView{userView: userResponse(user), AccessToken: access, RefreshToken: refresh})
 }
 
 type loginRequest struct {
@@ -119,22 +120,23 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := s.issueSession(w, r, user.ID); err != nil {
+	access, refresh, err := s.issueSession(w, r, user.ID)
+	if err != nil {
 		s.log.Error("issue session", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, userResponse(user))
+	httpx.WriteJSON(w, http.StatusOK, sessionView{userView: userResponse(user), AccessToken: access, RefreshToken: refresh})
 }
 
 func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(refreshCookieName)
-	if err != nil || cookie.Value == "" {
+	raw, err := refreshTokenFromRequest(r)
+	if err != nil || raw == "" {
 		httpx.WriteError(w, http.StatusUnauthorized, "no refresh token", "", nil)
 		return
 	}
 
-	hash := auth.HashRefreshToken(cookie.Value)
+	hash := auth.HashRefreshToken(raw)
 	sess, err := s.store.GetActiveSessionByHash(r.Context(), hash)
 	if errors.Is(err, store.ErrNotFound) {
 		s.clearAuthCookies(w)
@@ -178,12 +180,12 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.setAuthCookies(w, accessToken, newToken, s.cfg.AccessTTL, s.cfg.RefreshTTL)
-	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "accessToken": accessToken, "refreshToken": newToken})
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie(refreshCookieName); err == nil && cookie.Value != "" {
-		hash := auth.HashRefreshToken(cookie.Value)
+	if raw, err := refreshTokenFromRequest(r); err == nil && raw != "" {
+		hash := auth.HashRefreshToken(raw)
 		if sess, err := s.store.GetActiveSessionByHash(r.Context(), hash); err == nil {
 			_ = s.store.RevokeSession(r.Context(), sess.ID)
 		}
@@ -192,20 +194,29 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
+// sessionView is the login/register body: the existing user fields stay
+// top-level so Nuxt can keep assigning the JSON to UserProfile, plus the
+// tokens Flutter needs when it cannot store httpOnly cookies.
+type sessionView struct {
+	userView
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
+
 // issueSession mints a fresh access+refresh token pair, persists the
 // refresh token's hash as a new session row, and sets both cookies.
-func (s *Server) issueSession(w http.ResponseWriter, r *http.Request, userID uuid.UUID) error {
+func (s *Server) issueSession(w http.ResponseWriter, r *http.Request, userID uuid.UUID) (string, string, error) {
 	refreshToken, refreshHash, err := auth.GenerateRefreshToken()
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	if _, err := s.store.CreateSession(r.Context(), userID, refreshHash, time.Now().Add(s.cfg.RefreshTTL)); err != nil {
-		return err
+		return "", "", err
 	}
 	accessToken, err := s.tokens.MintAccessToken(userID)
 	if err != nil {
-		return err
+		return "", "", err
 	}
 	s.setAuthCookies(w, accessToken, refreshToken, s.cfg.AccessTTL, s.cfg.RefreshTTL)
-	return nil
+	return accessToken, refreshToken, nil
 }

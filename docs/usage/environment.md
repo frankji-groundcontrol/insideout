@@ -21,13 +21,11 @@ Three bridges make `.env` live:
    anything launches; and either way lists the defaults in effect for unset
    optionals, tagged by consumer), then exports `.env`
    (`set -a; source .env; set +a`) and execs a command inside the directory you
-   name with `-C` (`-C server` or `-C app`). This is how a bare
-   `go run`/`go test`/`pnpm dev` sees your values.
-2. **`scripts/env.sh propagate`** — generates `app/.env` from the root file,
-   scoped to what `app/.env.example` declares and stamped with the root file's
-   checksum, so the Nuxt component also works when launched straight from its
-   own directory. `check app` reports the copy as stale when the root moves on,
-   and `dev.sh` refuses to launch `app` until it is regenerated.
+   name with `-C` (`-C server` or `-C client`). This is how a bare
+   `go run`/`go test` sees your values.
+2. **`scripts/env.sh propagate`** — would generate a component `.env` from
+   the root if that component owned a `.env.example`. Server and client
+   do not, so the verb is a documented no-op.
 3. **`docker-compose.yml`** — auto-reads the root `.env` beside it purely for
    `${VAR}` interpolation into container environment. Three required vars use
    `:?` guards, so `docker compose up` aborts with a message before starting
@@ -46,9 +44,8 @@ two agree. `./scripts/env.sh edit` shows every variable's live state; the
 hands-on walkthrough is [SETENV.md](../SETENV.md).
 
 **Naming convention:** ecosystem variables keep their conventional names
-(`DATABASE_URL`, `ANTHROPIC_*`, `GITHUB_TOKEN`, `POSTGRES_*`); app-owned
-variables are prefixed `INSIDEOUT_*`; the frontend's one variable follows the
-Nuxt `NUXT_*` convention.
+(`DATABASE_URL`, `GITHUB_TOKEN`, `POSTGRES_*`); app-owned variables are
+prefixed `INSIDEOUT_*`. Flutter web does not read this file.
 
 **Fail-fast validation:** `config.Load` returns an error and the server
 refuses to start if `DATABASE_URL` is empty, `INSIDEOUT_JWT_SECRET` is empty
@@ -58,7 +55,7 @@ else is optional and never blocks startup.
 ## Quickstart
 
 Interactive setup (prompts for the keys that need a choice, generates the JWT
-secret on request, regenerates `app/.env`, never prints values):
+secret on request, never prints values):
 
 ```bash
 ./scripts/env.sh init
@@ -97,6 +94,7 @@ themselves when it is unset.
 | `INSIDEOUT_ACCESS_TTL` | no | `15m` | Access-token lifetime (Go `time.Duration`). |
 | `INSIDEOUT_REFRESH_TTL` | no | `720h` | Refresh-token lifetime (Go `time.Duration`). |
 | `INSIDEOUT_DEV_CORS` | no | off | Permissive-CORS toggle for dev; on only when the value is exactly `1`. |
+| `INSIDEOUT_CORS_ORIGINS` | no | empty | Comma-separated Origin allow-list for browser clients that are not same-origin (Flutter web). The token `localhost` matches any `localhost` / `127.0.0.1` port. Native apps do not need CORS. |
 | `INSIDEOUT_COOKIE_SECURE` | no | on | Sets the `Secure` attribute on auth cookies; secure unless the value is exactly `0` (plain-http local dev). |
 | `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). |
 
@@ -107,16 +105,17 @@ offline coach, not an error.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
-| `ANTHROPIC_BASE_URL` | no | `https://api.anthropic.com` | Base URL of the Anthropic-Messages-API-compatible provider. |
-| `ANTHROPIC_AUTH_TOKEN` | no | — | Provider auth token. **Empty = offline template-reply coach** (see [Recipes](#recipes)). |
-| `AI_MODEL` | no | `claude-sonnet-4-20250514` | Model id passed to the streamer. |
+| `INSIDEOUT_LLM_BASE_URL` | no | `https://api.anthropic.com/v1` | Provider base URL. Include `/v1` yourself; the server only appends `/messages` or `/responses`. |
+| `INSIDEOUT_LLM_API_KEY` | no | — | Provider API key. **Empty = offline template-reply coach** (see [Recipes](#recipes)). |
+| `INSIDEOUT_LLM_MODEL` | no | `claude-sonnet-4-20250514` | Model id passed to the streamer. |
+| `INSIDEOUT_LLM_SCHEMA` | no | `messages` | Wire format: `messages` (Anthropic Messages at `{base}/messages`) or `responses` (OpenAI Responses at `{base}/responses`). |
 
 ### docker-compose only
 
 Read by [`docker-compose.yml`](../../docker-compose.yml) for interpolation;
-no application process (Go or Nuxt) ever reads these. `SERVER_PORT` /
-`APP_PORT` / `POSTGRES_PORT` are **host-side port mappings** — inside the
-containers the server listens on `:8080` and Nuxt on `:3000` regardless.
+no application process ever reads these. `SERVER_PORT` /
+`POSTGRES_PORT` are **host-side port mappings** — inside the
+containers the server listens on `:8080` regardless.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
@@ -124,44 +123,25 @@ containers the server listens on `:8080` and Nuxt on `:3000` regardless.
 | `POSTGRES_SUPERUSER_PASSWORD` | no | `insideout_dev_password` | Bootstrap superuser password for the postgres image. The app never connects with it. |
 | `POSTGRES_PORT` | no | `5442` | Host side of the postgres mapping (`5432` inside). |
 | `SERVER_PORT` | no | `8080` | Host side of the server mapping (`:8080` inside, hardcoded). |
-| `APP_PORT` | no | `3000` | Host side of the app mapping (`:3000` inside, hardcoded). |
 
-Compose also interpolates five vars that flow into the Go backend —
-`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, `ANTHROPIC_BASE_URL`,
-`ANTHROPIC_AUTH_TOKEN`, and `AI_MODEL`. The first two carry `:?` guards (see
-above); the two `ANTHROPIC_*` vars default to empty, while `AI_MODEL`
-defaults to `claude-sonnet-4-20250514` (the same fallback the Go config
-applies). `DATABASE_URL` deliberately has no
+Compose also interpolates vars that flow into the Go backend —
+`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, `INSIDEOUT_LLM_BASE_URL`,
+`INSIDEOUT_LLM_API_KEY`, `INSIDEOUT_LLM_MODEL`, and `INSIDEOUT_LLM_SCHEMA`.
+The first two carry `:?` guards (see above); the LLM key defaults to empty,
+while model/schema/base take the same fallbacks `config.Load` applies.
+`DATABASE_URL` deliberately has no
 derived default because Compose cannot nest `${...}` inside a `:-` default
 ([why](../issues/2026-07-20-bug-004-compose-nested-interpolation.md)).
 
 ### Frontend
 
-The entire Nuxt frontend reads exactly **one** environment variable. The
-browser sees none of it — `runtimeConfig.public` is empty.
+Flutter does not read the root `.env`. Hosted web bakes
+`--dart-define=API_BASE=/api/v1` in [`client/Dockerfile`](../../client/Dockerfile)
+and nginx proxies `/api/` to the Go server. Locally:
 
-| Variable | Required | Default | Meaning |
-|----------|----------|---------|---------|
-| `NUXT_API_INTERNAL_BASE` | no | `http://127.0.0.1:8080/api/v1` | Internal base URL of the Go API, including the `/api/v1` suffix. Server-only: it populates `runtimeConfig.apiInternalBase`, which the SSR process uses to call the backend directly and which the `/api/v1/**` Nitro proxy forwards the browser's same-origin requests to. |
-
-The default is correct for local dev, so **the frontend needs nothing in
-`.env`**. The browser always calls same-origin `/api/v1`; the proxy follows
-this variable. If the Go server lives elsewhere, set it to that origin plus
-`/api/v1` — one value moves both consumers. Under compose it is hardcoded to
-`http://server:8080/api/v1` on the `app` service.
-
-Set it in the **root** `.env`, then run `./scripts/env.sh propagate`. Nuxt does
-not auto-load the root file, so the generated `app/.env` is what makes
-`cd app && pnpm dev` agree with `./scripts/dev.sh -C app pnpm dev`.
-
-Do not hand-write `app/.env`. The two layers do not compose the way the file
-suggests: an exported value **wins** over it (Nuxt's c12 assigns a dotenv key
-only when `process.env` has none), so a hand-written line is live under one
-launch path and inert under the other depending on whether the root also
-declares the key — with no symptom either way. The generated copy carries the
-root file's checksum, `env.sh check app` fails when it drifts, and `dev.sh`
-refuses to launch on a stale copy. `app/.env.example` is the component's
-contract and bounds what `propagate` may copy into it.
+```bash
+cd client && flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+```
 
 ## Database setups
 
@@ -195,8 +175,8 @@ it. Session-mode / dedicated Postgres is unaffected.
 
 ## Recipes
 
-**Offline AI mode.** Leave `ANTHROPIC_AUTH_TOKEN` empty. The server logs
-`ANTHROPIC_AUTH_TOKEN not set — using offline template-reply coach` and runs
+**Offline AI mode.** Leave `INSIDEOUT_LLM_API_KEY` empty. The server logs
+`INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach` and runs
 the deterministic template streamer — the PRD coach works end-to-end with no
 network calls. Recommended default for local dev.
 
@@ -238,13 +218,14 @@ Fail-fast errors from `config.Load` (the server refuses to start):
 | `config: INSIDEOUT_JWT_SECRET is required` | Set a non-empty `INSIDEOUT_JWT_SECRET`. |
 | `config: INSIDEOUT_JWT_SECRET must be at least 32 characters` | Use a longer secret (≥32 chars). |
 | `config: invalid INSIDEOUT_ACCESS_TTL "xyz": time: invalid duration "xyz"` | Use a valid Go duration (e.g. `15m`, `720h`) or unset it to take the default. Same shape for `INSIDEOUT_REFRESH_TTL`. |
+| `config: INSIDEOUT_LLM_SCHEMA must be messages or responses` | Set `INSIDEOUT_LLM_SCHEMA` to `messages` or `responses`, or unset it to take `messages`. |
 
 **The browser drops auth cookies over http.** That is the `Secure` attribute
 doing its job. Set `INSIDEOUT_COOKIE_SECURE=0` for plain-http local dev.
 
-**"ANTHROPIC_AUTH_TOKEN not set — using offline template-reply coach"** in the
+**"INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach"** in the
 logs is informational, not an error — you are in offline AI mode. Set
-`ANTHROPIC_AUTH_TOKEN` (and `ANTHROPIC_BASE_URL`) to use a real provider.
+`INSIDEOUT_LLM_API_KEY` (and `INSIDEOUT_LLM_BASE_URL`) to use a real provider.
 
 **`docker compose up` aborts before starting.** A `:?` guard fired — set
 `DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, and `POSTGRES_APP_PASSWORD` in `.env`.

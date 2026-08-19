@@ -9,7 +9,10 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P2 | First version-first product slice from [`PRODUCT.md`](../../PRODUCT.md) | **Pending — ready to plan** | Create a dated implementation plan for the smallest useful slice and run its engineering review. | None; planning has not started. |
+| P1 | [Replace Anthropic env names with INSIDEOUT_LLM_*](2026-08-18-llm-env.md) | **Finished** | Done; Railway `server` has the new names and Supabase DSN. | Dedicated Railway Postgres removed 2026-08-18. |
+| P1 | [Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md) | **Finished** | Done; `app/` gone; env/compose/docs updated. | Historical changelogs still cite `app/` as of their dates. |
+| P1 | [Nuxt → Flutter client](2026-08-17-flutter-client.md) (web + iOS + Android, full current surface, Material 3) | **In flight** | Android release build when an SDK is available. | Hosted walk 2026-08-18. Nuxt `app/` deleted. |
+| P2 | First version-first product slice from [`PRODUCT.md`](../../PRODUCT.md) | **Pending** | Start after the Flutter client is the frontend, or park until that cutover. | Deferred by the Flutter rewrite. |
 
 **Status meanings:** In flight = active work; Pending = not started; Finished
 = recorded scope and verification complete in the local worktree; Completed =

@@ -15,11 +15,13 @@
 # worse than no file. Keep the arm rather than falling through to "unknown", so
 # `propagate server` explains itself instead of looking like a typo.
 # `-` 表示“已知组件但不消费 .env 文件”：Go 端只读进程环境变量。
-COMPONENTS="app server"
+COMPONENTS="server client"
 component_dir() {
   case "$1" in
-    app)    echo app ;;
-    server) echo - ;;
+    # Neither consumes a generated .env: Go reads os.Getenv; Flutter
+    # reads --dart-define=API_BASE. Keep the arms so `propagate server`
+    # and `dev.sh -C client` are not treated as typos.
+    server|client) echo - ;;
     *)      echo "" ;;
   esac
 }
@@ -58,7 +60,7 @@ body_sum() {
 #
 # The skeletons ARE the variable list. env.sh used to carry a hardcoded
 # KNOWN_NAMES, and it had already drifted — it knew GITHUB_TOKEN and
-# NUXT_API_INTERNAL_BASE, which no skeleton declared. One list, derived.
+# unused names, which no skeleton declared. One list, derived.
 # 骨架文件即变量清单；此前硬编码的清单已与骨架不一致，故改为派生。
 skeleton_files() {
   local c d
@@ -92,7 +94,7 @@ skeleton_names() {
 #     opening in exactly the direction it guards. So: clear every known name
 #     first, and emit an explicit `unset` for each one the file does not set,
 #     which clears the caller's ambient copy too. compose and
-#     `cd app && pnpm dev` read the file, not your shell; the file is the
+#     docker compose reads the file, not your shell; the file is the
 #     authority here.
 #  2. bash echoes the offending LINE when it cannot parse an assignment, and
 #     that line contains the value. Redirect the subshell's stderr and report

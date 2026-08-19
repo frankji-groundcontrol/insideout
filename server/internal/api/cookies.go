@@ -1,8 +1,14 @@
 package api
 
 import (
+	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
+	"strings"
 	"time"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 )
 
 const (
@@ -52,4 +58,32 @@ func bearerOrCookie(r *http.Request) string {
 		return c.Value
 	}
 	return ""
+}
+
+// refreshTokenFromRequest prefers the httpOnly refresh cookie (Nuxt) and
+// otherwise reads {"refreshToken":"..."} so Flutter can refresh without
+// cookies. Cookie wins when both are present.
+func refreshTokenFromRequest(r *http.Request) (string, error) {
+	if c, err := r.Cookie(refreshCookieName); err == nil && c.Value != "" {
+		return c.Value, nil
+	}
+	var body struct {
+		RefreshToken string `json:"refreshToken"`
+	}
+	if err := httpx.DecodeJSON(r, &body); err != nil {
+		if errors.Is(err, io.EOF) {
+			return "", errors.New("no refresh token")
+		}
+		// A missing/invalid body is the same to the caller: no token.
+		var syn *json.SyntaxError
+		if errors.As(err, &syn) || err == io.ErrUnexpectedEOF {
+			return "", errors.New("no refresh token")
+		}
+		return "", err
+	}
+	tok := strings.TrimSpace(body.RefreshToken)
+	if tok == "" {
+		return "", errors.New("no refresh token")
+	}
+	return tok, nil
 }

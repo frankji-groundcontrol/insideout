@@ -6,7 +6,7 @@ import (
 )
 
 // templateStreamer is used when no AI provider is configured
-// (ANTHROPIC_AUTH_TOKEN unset) — offline dev mode. It never calls a network and
+// (INSIDEOUT_LLM_API_KEY unset) — offline dev mode. It never calls a network and
 // never fails; the run still records status 'succeeded', matching the old
 // edge function's graceful-degradation behavior (see
 // docs/plans/2026-07-20-go-rewrite/02-backend-go.md §1).
@@ -23,7 +23,7 @@ func (templateStreamer) StreamChat(_ context.Context, _ string, msgs []Message, 
 			break
 		}
 	}
-	reply := fmt.Sprintf("收到你的消息：%s\n\n已启用模板回复（尚未配置 AI 凭据）。请在环境变量中配置 ANTHROPIC_BASE_URL 和 ANTHROPIC_AUTH_TOKEN。", lastUser)
+	reply := fmt.Sprintf("收到你的消息：%s\n\n已启用模板回复（尚未配置 AI 凭据）。请在环境变量中配置 INSIDEOUT_LLM_BASE_URL 和 INSIDEOUT_LLM_API_KEY。", lastUser)
 	if onDelta != nil {
 		onDelta(reply)
 	}
