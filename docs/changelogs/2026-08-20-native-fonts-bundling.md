@@ -40,6 +40,11 @@ through `FontLoader` before the first frame.
 
 ## Notes
 
+- Railway `app` (Flutter web host) was still serving the 2026-08-18
+  build — stale through the whole Ink & Seal slice. Redeployed from
+  `main` (f8c5e0f) with `railway up --service app`: new build verified
+  live by fingerprint (font asset present under `/assets/assets/fonts/`,
+  icon-only FontManifest), `/` 200, same-origin `/api` proxy 200.
 - Flutter's tooling bumped the iOS deployment target 13.0 → 15.0
   (`ios/Podfile`, `ios/Runner.xcodeproj`) during the first local build —
   its standard migration, kept.
