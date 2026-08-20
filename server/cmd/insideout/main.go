@@ -3,6 +3,11 @@
 //	insideout            run the HTTP server
 //	insideout migrate     apply pending SQL migrations and exit
 //	insideout seed        create demo data for local development
+//	insideout login       product CLI: exchange credentials for a token
+//	insideout whoami      product CLI: GET /me
+//	insideout workspaces  product CLI: GET /workspaces
+//	insideout projects    product CLI: GET /workspaces/{id}/projects
+//	insideout prd         product CLI: GET /prds/{id}
 package main
 
 import (
@@ -24,6 +29,12 @@ import (
 
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
+	// Product CLI commands need no server env or DB — dispatch them
+	// before any config/store setup (docs/plans/2026-08-21-cli-mcp-parity.md).
+	if handled, code := runClientCommand(os.Args[1:]); handled {
+		os.Exit(code)
+	}
 
 	cfg, err := config.Load()
 	if err != nil {

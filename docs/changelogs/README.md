@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — CLI read-surface parity](2026-08-21-cli-read-parity.md)
+  — shared `apiclient` + `insideout login|whoami|workspaces|projects|prd`
+  over the same API contract; MCP server next, then agent vocabulary.
 - [2026-08-20 — Native Noto fonts bundled (Ink & Seal)](2026-08-20-native-fonts-bundling.md)
   — variable TTFs as lazy assets + startup `FontLoader` on non-web; web
   unchanged via index.html CDN; visual device sign-off still open.
