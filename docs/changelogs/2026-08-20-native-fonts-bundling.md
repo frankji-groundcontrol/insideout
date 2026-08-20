@@ -38,6 +38,14 @@ through `FontLoader` before the first frame.
   stay alive; screenshots kept showing springboard). Wiring, bundles, and
   tests are green; the plan keeps an open visual-check item.
 
+- **Visual sign-off (2026-08-20, later the same day):** a clean attached
+  `flutter run` on the iPhone 16 Pro simulator (fresh boot, no zombie
+  `simctl install` processes) rendered the landing with the headline in
+  Song-style serif, zero tofu boxes, celadon ground, and vermilion seal
+  accent — the Ink & Seal language live on a native target. The earlier
+  CoreSimulator wedge was environment state, not the app; release mode
+  remains unsupported for simulator builds.
+
 ## Notes
 
 - Railway `app` (Flutter web host) was still serving the 2026-08-18

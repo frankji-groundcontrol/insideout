@@ -7,9 +7,10 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Restore Ink & Seal on Flutter: visual font sign-off on a real device,
-   then collaborative canvas. Native font bundling landed 2026-08-20
-   ([changelog](changelogs/2026-08-20-native-fonts-bundling.md)).
+1. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
+   minimap) is the only open slice item. Native fonts are bundled and
+   visually signed off (2026-08-20,
+   [changelog](changelogs/2026-08-20-native-fonts-bundling.md)).
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
 2. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).

@@ -38,8 +38,10 @@ token file `app/src/assets/tokens.css` (last live at `f897fb4`).
       variable TTFs as lazy assets + startup `FontLoader` on non-web; web
       stays on index.html CDN. Tests 43/43; web and iOS bundles verified
       ([changelog](../changelogs/2026-08-20-native-fonts-bundling.md))
-- [ ] Visual font sign-off on a real iOS/Android build (local CoreSimulator
-      wedged; wiring and bundles are verified, rendering is not yet)
+- [x] Visual font sign-off (2026-08-20, iPhone 16 Pro simulator): headline
+      renders in Song-style serif, zero tofu boxes, celadon ground and
+      vermilion seal accent — the full Ink & Seal language on a native
+      target
 - [ ] Collaborative canvas (sibling bands, minimap) — still Nuxt-era, not this slice
 
 ## Source of truth
