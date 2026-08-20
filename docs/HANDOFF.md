@@ -26,7 +26,7 @@ The two-role DB model is live end-to-end: shared instance, Railway
 files ([changelog](changelogs/2026-08-20-owner-app-roles-shared-instance.md)).
 Railway autodeploy is off — ship server changes with
 `railway up --service server`, not `railway redeploy` (it re-runs the
-last image). Optional cleanup: rotate the `insideout_app` password.
+last image).
 
 The PRODUCT.md version-first slice stays on the board as P2.
 

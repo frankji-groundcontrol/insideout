@@ -65,9 +65,13 @@ the 2026-08-19 changelog.
    current `main` with `railway up --service server`: deployment SUCCESS,
    boot reached `listening`, `/healthz` 200. Autodeploy is off — ship
    server changes with `railway up --service server`.
-3. Optional, still open: rotate the `insideout_app` password (it was
-   echoed once in a local agent transcript during diagnosis) and update
-   Railway `DATABASE_URL` plus both `.env` files in the same pass.
+3. **Done** (same day): rotated the `insideout_app` password (it was
+   echoed once in a local agent transcript during diagnosis) and updated
+   Railway `DATABASE_URL` plus both `.env` files in the same pass. The
+   variable change auto-deployed; deployment SUCCESS, `/healthz` 200.
+   Gotcha: the session pooler rejected the new password for a few
+   seconds after the ALTER (credential propagation) — retest before
+   declaring an auth failure, and let any triggered deploy finish.
 4. Hardening idea (not done): let `Migrate` pass as `insideout_app` when
    zero migrations are pending, so a missing owner URL degrades to a
    warning instead of a boot failure.

@@ -53,8 +53,8 @@ cluster-wide superuser rights. `insideout_app` is subject to RLS, including
   deploy current main (`railway up --service server`) — SUCCESS, boot
   listen + `/healthz` 200. Stale-image redeploys were the failure mode;
   see changelog.
-- [ ] Optional: rotate `insideout_app` password (single transcript
-  exposure) and update Railway + both `.env` files
+- [x] Rotate `insideout_app` password and update Railway + both `.env`
+  files (2026-08-20; old password rejected, auto-deploy SUCCESS)
 
 Details and deviations (PG17 admin-grant quirk, why not `REASSIGN
 OWNED`): [changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md).
