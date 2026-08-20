@@ -14,8 +14,8 @@ and the bug records it links to.
   migrations, JWT+RLS defense-in-depth, known Postgres gotchas.
 - [PRD Coach agent](prd-coach-agent.md) — the four-stage coaching agent,
   tool calling, SSE streaming, the direct Anthropic client.
-- [Frontend](frontend.md) — Flutter Material 3 client (`client/`) on
-  Railway; the Nuxt tree was deleted 2026-08-18.
+- [Frontend](frontend.md) — Flutter client (`client/`) on Railway, wearing
+  Ink & Seal; the Nuxt tree was deleted 2026-08-18.
 - [Deployment](deployment.md) — docker-compose topology, environment
   configuration, the two supported database-provisioning models; the
   hosted Railway instance is documented in

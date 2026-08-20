@@ -1,8 +1,9 @@
 # Frontend
 
-Railway production serves the **Flutter 3 Material 3** client under
-`client/` (see
+Railway production serves the **Flutter 3** client under `client/` (see
 [`docs/plans/2026-08-17-flutter-client.md`](../plans/2026-08-17-flutter-client.md)).
+The visual language is **国风留白 / Ink & Seal**, not a Material seed
+palette ([restore plan](../plans/2026-08-19-restore-ink-seal.md)).
 The Nuxt 4 tree was deleted 2026-08-18
 ([changelog](../changelogs/2026-08-18-delete-nuxt-app.md)).
 
@@ -32,12 +33,14 @@ falls back to `index.html`.
 client/lib/
   main.dart           hydrate session + appearance; path URL strategy
   app.dart            MaterialApp.router + signed-in AppScaffold
+  theme/              Ink & Seal tokens + ThemeData (light/dark)
   router.dart         current product paths
   session/            Session, Appearance, auth redirect
   api/                Dio client, models, request builders, errors
-  features/           landing, auth, dashboard, workspace, project,
+  features/           landing, auth (AuthDoor), dashboard, workspace, project,
                       roadmap, prd, profile
   l10n/               zh-CN + en-US
+client/assets/seals/  recovered chops (yin, luomo, chengwen, fenzhi, gaiyin)
 ```
 
 ### Coach chat

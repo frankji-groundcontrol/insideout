@@ -106,23 +106,25 @@ warning; nothing breaks.
 
 The one real decision. Pick exactly one of the two setups.
 
-**(a) Remote instance** (dev default) — any Postgres 14+ host. The role named
-in the URL must own that database:
+**(a) Remote instance** (dev default) — any Postgres 14+ host. `DATABASE_URL`
+is the runtime role `insideout_app`. Migrations use `DATABASE_OWNER_URL`
+(`insideout_owner`, NOSUPERUSER — never a superuser for DEFINER objects):
 
 ```
 DATABASE_URL=postgres://insideout_app:<password>@<db-host>:5432/insideout?sslmode=require
+DATABASE_OWNER_URL=postgres://insideout_owner:<password>@<db-host>:5432/insideout?sslmode=require
 ```
 
 **(b) Bundled compose postgres** (self-hosted default) — start it first with
 `docker compose up -d postgres`. On a fresh data volume
-[`docker/postgres-init/`](../docker/postgres-init) creates the non-superuser
-`insideout_app` role and makes it owner of the `insideout` database. For bare
-`go run` / `dev.sh` use on the host, point at the mapped host port; the password
-**must** equal `POSTGRES_APP_PASSWORD` (Step 5) — `check` enforces that pairing
-whenever it detects the bundled setup:
+[`docker/postgres-init/`](../docker/postgres-init) creates `insideout_owner`
+and `insideout_app`. Host port `${POSTGRES_PORT:-5442}`. App password must
+equal `POSTGRES_APP_PASSWORD`; owner password must equal
+`POSTGRES_OWNER_PASSWORD`:
 
 ```
-DATABASE_URL=postgres://insideout_app:<password>@localhost:5442/insideout?sslmode=disable
+DATABASE_URL=postgres://insideout_app:<app password>@localhost:5442/insideout?sslmode=disable
+DATABASE_OWNER_URL=postgres://insideout_owner:<owner password>@localhost:5442/insideout?sslmode=disable
 ```
 
 **Transaction poolers:** if the URL contains the substring `pgbouncer=true`

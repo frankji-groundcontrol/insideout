@@ -19,6 +19,24 @@ const enUS = <String, String>{
       'InsideOut walks the whole path with you: capture the spark, refine it into a PRD with an AI coach, branch it into a parallel roadmap, and track real commits until it is shipped.',
   'landing.ctaPrimary': 'Start shaping',
   'landing.ctaSecondary': 'Log in',
+  'landing.stepLabel': 'Step {n}',
+  'landing.diagramAlt': 'The path from idea to shipped: capture, PRD, roadmap, shipped.',
+  'landing.step1Title': 'Capture the spark',
+  'landing.step1Body':
+      'A frictionless inbox for every member. Jot the idea in a sentence and refine it whenever you are ready — nothing gets lost.',
+  'landing.step2Title': 'Refine it into a PRD',
+  'landing.step2Body':
+      'An AI coach interviews you, drafts the sections, and pushes back on vagueness — turning a fuzzy idea into a solid PRD. No blank page, ever.',
+  'landing.step3Title': 'Branch it into a roadmap',
+  'landing.step3Body':
+      'One click turns the PRD into a branched, parallel roadmap. AI breaks big goals into executable tasks your team builds side by side.',
+  'landing.step4Title': 'Track it to shipped',
+  'landing.step4Body':
+      'Log progress and sync real GitHub commits onto one timeline. Leads see every project at a glance — and the idea becomes a pressed seal.',
+  'landing.ctaCloseTitle': 'Ready to press your first seal?',
+  'landing.ctaCloseBody': "Bring your team's next idea. InsideOut walks it all the way to shipped.",
+  'landing.ctaCloseButton': 'Start shaping',
+  'idea.status.inbox': 'Inbox',
   'login.title': 'Log in',
   'login.welcome': 'Welcome back',
   'login.noAccount': "Don't have an account?",

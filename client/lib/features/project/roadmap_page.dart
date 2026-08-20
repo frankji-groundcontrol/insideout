@@ -5,6 +5,7 @@ import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/seal_chip.dart';
 
 class RoadmapPage extends StatefulWidget {
   const RoadmapPage({super.key, required this.projectId});
@@ -33,6 +34,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Widget _tree(List<RoadmapNode> all, String? parentId, int depth) {
+    final l10n = context.watch<Appearance>();
     return Column(
       children: _children(all, parentId)
           .map(
@@ -40,12 +42,19 @@ class _RoadmapPageState extends State<RoadmapPage> {
               children: [
                 ListTile(
                   contentPadding: EdgeInsets.only(left: 16.0 + depth * 20, right: 16),
+                  leading: SealMark(status: n.status),
                   title: Text(n.title),
-                  subtitle: Text('${n.status}${n.editorName != null ? ' · ${n.editorName}' : ''}'),
+                  subtitle: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    children: [
+                      SealChip(label: l10n.t('roadmap.status.${n.status}'), tone: SealChip.fromStatus(n.status)),
+                      if (n.editorName != null) Text(n.editorName!, style: Theme.of(context).textTheme.bodySmall),
+                    ],
+                  ),
                   trailing: PopupMenuButton<String>(
                     onSelected: (value) async {
                       final api = context.read<Session>().api;
-                      final l10n = context.read<Appearance>();
                       if (value == 'edit') {
                         final title = TextEditingController(text: n.title);
                         final desc = TextEditingController(text: n.description);
@@ -62,8 +71,8 @@ class _RoadmapPageState extends State<RoadmapPage> {
                                   TextField(controller: desc, decoration: InputDecoration(labelText: l10n.t('roadmap.descPlaceholder'))),
                                   DropdownButton<String>(
                                     value: status,
-                                    items: const ['locked', 'pending', 'in_progress', 'done']
-                                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                                    items: ['locked', 'pending', 'in_progress', 'done']
+                                        .map((s) => DropdownMenuItem(value: s, child: Text(l10n.t('roadmap.status.$s'))))
                                         .toList(),
                                     onChanged: (v) => setLocal(() => status = v ?? status),
                                   ),

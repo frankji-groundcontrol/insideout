@@ -30,9 +30,20 @@ func qualifyColumns(alias, cols string) string {
 
 type Store struct {
 	Pool *pgxpool.Pool
+	// migratePool is insideout_owner when DATABASE_OWNER_URL is set.
+	// Nil means Migrate uses Pool (which must already be that owner).
+	migratePool *pgxpool.Pool
 }
 
 func Open(ctx context.Context, databaseURL string) (*Store, error) {
+	p, err := openPool(ctx, databaseURL)
+	if err != nil {
+		return nil, err
+	}
+	return &Store{Pool: p}, nil
+}
+
+func openPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("store: parse database url: %w", err)
@@ -56,11 +67,31 @@ func Open(ctx context.Context, databaseURL string) (*Store, error) {
 		pool.Close()
 		return nil, fmt.Errorf("store: ping: %w", err)
 	}
-	return &Store{Pool: pool}, nil
+	return pool, nil
+}
+
+// AttachMigratePool opens a second pool as insideout_owner for DDL.
+func (s *Store) AttachMigratePool(ctx context.Context, ownerURL string) error {
+	p, err := openPool(ctx, ownerURL)
+	if err != nil {
+		return fmt.Errorf("store: migrate pool: %w", err)
+	}
+	s.migratePool = p
+	return nil
+}
+
+func (s *Store) migrator() *pgxpool.Pool {
+	if s.migratePool != nil {
+		return s.migratePool
+	}
+	return s.Pool
 }
 
 func (s *Store) Close() {
 	s.Pool.Close()
+	if s.migratePool != nil {
+		s.migratePool.Close()
+	}
 }
 
 // withUserContext runs fn inside a transaction with app.user_id set to

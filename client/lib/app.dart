@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 
 import 'session/appearance.dart';
 import 'session/session.dart';
+import 'theme/ink_seal.dart';
+import 'theme/ink_seal_theme.dart';
 
 class InsideOutApp extends StatelessWidget {
   const InsideOutApp({super.key, required this.router});
@@ -15,14 +17,8 @@ class InsideOutApp extends StatelessWidget {
     final appearance = context.watch<Appearance>();
     return MaterialApp.router(
       title: 'InsideOut',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3E6B4A)),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF3E6B4A), brightness: Brightness.dark),
-        useMaterial3: true,
-      ),
+      theme: inkSealTheme(InkSeal.light, brightness: Brightness.light),
+      darkTheme: inkSealTheme(InkSeal.dark, brightness: Brightness.dark),
       themeMode: appearance.themeMode,
       routerConfig: router,
     );

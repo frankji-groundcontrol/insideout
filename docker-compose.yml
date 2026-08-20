@@ -11,12 +11,10 @@ services:
       # Bootstrap superuser (image default POSTGRES_USER=postgres). Never
       # the app's runtime role — see docker/postgres-init/ below.
       POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-insideout_dev_password}
-      # Read by docker/postgres-init/001-create-app-role.sh to create the
-      # actual runtime role, insideout_app, as a non-superuser OWNER of
-      # the insideout database — matching the provisioning model in
-      # docs/plans/2026-07-20-go-rewrite/01-database.md §2. A superuser
-      # bootstrap-user shortcut would bypass the REVOKE CREATE ON SCHEMA
-      # public lockdown that migration #1 relies on.
+      # Read by docker/postgres-init/001-create-app-role.sh. Two NOSUPERUSER
+      # roles: insideout_owner (schema + SECURITY DEFINER) and insideout_app
+      # (runtime). The image superuser never owns DEFINER functions.
+      INSIDEOUT_OWNER_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?set POSTGRES_OWNER_PASSWORD in .env}
       INSIDEOUT_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?set POSTGRES_APP_PASSWORD in .env}
     ports:
       - "${POSTGRES_PORT:-5442}:5432"
@@ -46,6 +44,7 @@ services:
       # Compose 不支持在 :- 默认值里嵌套 ${...}，因此这里不为 DATABASE_URL 提供派生默认值——
       # 请在 .env 中显式设置。可指向上面自带的 postgres 服务，也可完全指向远程实例。见 .env.example。
       DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL in .env}
+      DATABASE_OWNER_URL: ${DATABASE_OWNER_URL:-}
       INSIDEOUT_JWT_SECRET: ${INSIDEOUT_JWT_SECRET:?set a real secret in .env}
       INSIDEOUT_LLM_BASE_URL: ${INSIDEOUT_LLM_BASE_URL:-https://api.anthropic.com/v1}
       INSIDEOUT_LLM_API_KEY: ${INSIDEOUT_LLM_API_KEY:-}

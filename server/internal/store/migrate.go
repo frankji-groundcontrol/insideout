@@ -23,17 +23,17 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 	// instance target (insideout_app owns the whole database) hits that
 	// path on its first-ever run.
 	var schemaExists bool
-	if err := s.Pool.QueryRow(ctx,
+	if err := s.migrateQueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'insideout')`,
 	).Scan(&schemaExists); err != nil {
 		return nil, fmt.Errorf("migrate: check schema: %w", err)
 	}
 	if !schemaExists {
-		if _, err := s.Pool.Exec(ctx, `CREATE SCHEMA insideout`); err != nil {
+		if err := s.migrateExec(ctx, `CREATE SCHEMA insideout AUTHORIZATION insideout_owner`); err != nil {
 			return nil, fmt.Errorf("migrate: create schema: %w", err)
 		}
 	}
-	if _, err := s.Pool.Exec(ctx, `
+	if err := s.migrateExec(ctx, `
 		CREATE TABLE IF NOT EXISTS insideout.schema_migrations (
 			filename text PRIMARY KEY,
 			applied_at timestamptz NOT NULL DEFAULT now()
@@ -57,7 +57,7 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 	sort.Strings(filenames)
 
 	applied := map[string]bool{}
-	rows, err := s.Pool.Query(ctx, "SELECT filename FROM insideout.schema_migrations")
+	rows, err := s.migratePoolOrMain().Query(ctx, "SELECT filename FROM insideout.schema_migrations")
 	if err != nil {
 		return nil, fmt.Errorf("migrate: list applied: %w", err)
 	}
@@ -84,7 +84,7 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 			return nil, fmt.Errorf("migrate: read %s: %w", name, err)
 		}
 
-		tx, err := s.Pool.Begin(ctx)
+		tx, err := s.beginMigrateTx(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("migrate: begin %s: %w", name, err)
 		}

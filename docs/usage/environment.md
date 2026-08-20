@@ -88,7 +88,8 @@ themselves when it is unset.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
-| `DATABASE_URL` | **yes** | — | PostgreSQL connection string for the pgx pool. May carry a `?pgbouncer=true` query param (see [Database setups](#database-setups)). |
+| `DATABASE_URL` | **yes** | — | PostgreSQL DSN for the **runtime** role `insideout_app` (DML, subject to RLS). May carry `?pgbouncer=true` (see [Database setups](#database-setups)). |
+| `DATABASE_OWNER_URL` | no | empty | DSN for `insideout_owner` (NOSUPERUSER) used only to apply migrations. Empty = migrate uses `DATABASE_URL`, which must already be that owner. |
 | `INSIDEOUT_JWT_SECRET` | **yes** | — | HMAC signing secret for access/refresh JWTs. **Min 32 characters** (fail-fast). |
 | `INSIDEOUT_ADDR` | no | `:8080` | HTTP listen address (host:port). |
 | `INSIDEOUT_ACCESS_TTL` | no | `15m` | Access-token lifetime (Go `time.Duration`). |
@@ -119,7 +120,8 @@ containers the server listens on `:8080` regardless.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
-| `POSTGRES_APP_PASSWORD` | **conditional** (`:?`) | — | Injected into the postgres container as `INSIDEOUT_APP_PASSWORD`; the one-shot init script uses it to `CREATE ROLE insideout_app` and make it owner of the `insideout` DB. Required only when you start the bundled `postgres` — which is why the skeleton leaves it commented, and why `env.sh check` requires it exactly when `DATABASE_URL` points there (and warns if the two passwords disagree). |
+| `POSTGRES_APP_PASSWORD` | **conditional** (`:?`) | — | Init password for `insideout_app`. Required when starting bundled `postgres`. Must match the password in `DATABASE_URL`. |
+| `POSTGRES_OWNER_PASSWORD` | **conditional** (`:?`) | — | Init password for `insideout_owner`. Required when starting bundled `postgres`. Must match `DATABASE_OWNER_URL`. |
 | `POSTGRES_SUPERUSER_PASSWORD` | no | `insideout_dev_password` | Bootstrap superuser password for the postgres image. The app never connects with it. |
 | `POSTGRES_PORT` | no | `5442` | Host side of the postgres mapping (`5432` inside). |
 | `SERVER_PORT` | no | `8080` | Host side of the server mapping (`:8080` inside, hardcoded). |

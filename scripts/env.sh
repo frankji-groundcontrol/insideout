@@ -204,6 +204,16 @@ do_check() {
         warn POSTGRES_APP_PASSWORD "does not match the password embedded in DATABASE_URL"
       else ok POSTGRES_APP_PASSWORD "$(mask_secret "$POSTGRES_APP_PASSWORD")"; fi
     fi
+    if [ -z "${POSTGRES_OWNER_PASSWORD:-}" ]; then
+      fail POSTGRES_OWNER_PASSWORD "empty — required by docker-compose for insideout_owner"
+    else
+      ok POSTGRES_OWNER_PASSWORD "$(mask_secret "$POSTGRES_OWNER_PASSWORD")"
+    fi
+  fi
+  if [ -n "${DATABASE_OWNER_URL:-}" ]; then
+    ok DATABASE_OWNER_URL "set (insideout_owner migrate DSN)"
+  else
+    info DATABASE_OWNER_URL "empty — migrate uses DATABASE_URL (must already be insideout_owner)"
   fi
   # --db: probe via pg_isready. Two transformations, both required:
   #   · strip the pgx-only pgbouncer param (libpq rejects it / libpq 不认该参数)

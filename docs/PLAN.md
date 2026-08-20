@@ -10,7 +10,7 @@
 
 | Layer | Technology |
 |---|---|
-| Database | PostgreSQL, single `insideout_app` role, `insideout` schema, SQL migrations in `server/db/migrations/` applied by the Go server's own embedded runner; JWT+RLS defense-in-depth |
+| Database | PostgreSQL, `insideout_owner` (schema + DEFINER, NOSUPERUSER) + `insideout_app` (runtime), `insideout` schema, SQL migrations in `server/db/migrations/` applied as owner; JWT+RLS defense-in-depth |
 | Backend | Go 1.25+, stdlib `net/http` (1.22+ method routing), `pgx/v5`, `golang-jwt/v5`, argon2id |
 | Agent | Direct Anthropic Messages API client (`server/internal/agent/anthropic.go`), SSE streaming, four-stage state machine (clarify/draft/critique/finalize) |
 | Frontend | Flutter 3 Material 3 (`client/`), go_router, Dio, zh-CN default / en-US |

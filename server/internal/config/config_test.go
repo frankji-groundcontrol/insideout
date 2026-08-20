@@ -29,6 +29,19 @@ func TestListenAddrPrefersExplicitAddr(t *testing.T) {
 	}
 }
 
+func TestLoadOptionalOwnerURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://insideout_app:p@localhost/db")
+	t.Setenv("DATABASE_OWNER_URL", "postgres://insideout_owner:p@localhost/db")
+	t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.DatabaseOwnerURL == "" {
+		t.Fatal("DatabaseOwnerURL empty")
+	}
+}
+
 func TestLoadReadsLLMEnvAndDefaultsSchema(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
 	t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))

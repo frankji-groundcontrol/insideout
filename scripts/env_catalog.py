@@ -43,7 +43,7 @@ SECRET_RX = re.compile(r"(KEY|SECRET|PASSWORD|PASSWD|TOKEN|CREDENTIAL)", re.I)
 #: INSIDEOUT_LLM_BASE_URL points at a provider (and gateway URLs routinely
 #: carry a key in the path), which repo policy treats as sensitive alongside
 #: secrets.
-SECRET_NAMES = {"DATABASE_URL", "INSIDEOUT_LLM_BASE_URL"}
+SECRET_NAMES = {"DATABASE_URL", "DATABASE_OWNER_URL", "INSIDEOUT_LLM_BASE_URL"}
 
 #: Markers meaning "copied from the skeleton and never filled in". Matched
 #: lowercased. Kept in sync with env-lib.sh's is_placeholder — the two must

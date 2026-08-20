@@ -130,7 +130,7 @@ func requireAdminMember(ctx context.Context, tx pgx.Tx, workspaceID, actorID uui
 	var role string
 	err := tx.QueryRow(ctx, `
 		SELECT role FROM insideout.workspace_memberships
-		WHERE workspace_id = $1 AND user_id = $2 FOR KEY SHARE`,
+		WHERE workspace_id = $1 AND user_id = $2`,
 		workspaceID, actorID,
 	).Scan(&role)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -149,9 +149,12 @@ func requireAdminMember(ctx context.Context, tx pgx.Tx, workspaceID, actorID uui
 // need "must currently be a member" re-checked inside their own write
 // transactions.
 func requireMember(ctx context.Context, tx pgx.Tx, workspaceID, userID uuid.UUID) (role string, err error) {
+	// No FOR KEY SHARE: with FORCE RLS on a table whose policy calls
+	// _is_member, row locks silently return zero rows (BUG-007). The
+	// check and the write still share this transaction.
 	err = tx.QueryRow(ctx, `
 		SELECT role FROM insideout.workspace_memberships
-		WHERE workspace_id = $1 AND user_id = $2 FOR KEY SHARE`,
+		WHERE workspace_id = $1 AND user_id = $2`,
 		workspaceID, userID,
 	).Scan(&role)
 	if errors.Is(err, pgx.ErrNoRows) {

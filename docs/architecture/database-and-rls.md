@@ -2,26 +2,32 @@
 
 ## Schema ownership models
 
-InsideOut supports two PostgreSQL provisioning models with the same
-migration set, unmodified:
+InsideOut uses **two NOSUPERUSER roles**. The go-rewrite D2 single-role
+shortcut (`insideout_app` owns everything and connects at runtime) is
+reversed — `SECURITY DEFINER` helpers must not run as a superuser, and they
+must not be owned by the runtime login either (that re-triggered FORCE RLS
+inside `_is_member`; see
+[BUG-007](../issues/2026-07-20-bug-007-rls-against-real-postgres.md)).
 
-1. **Dedicated instance** (the bundled `docker-compose` `postgres` service):
-   `insideout_app` owns the whole database, and therefore owns `public`
-   within it by Postgres default.
-2. **Shared instance** (a multi-tenant managed Postgres project, e.g. a
-   Supabase project also hosting unrelated tenants' schemas): `insideout_app`
-   is scoped to own only the `insideout` schema. It is never granted
-   anything on `public` beyond the harmless default `USAGE` — "never write to
-   `public`" is enforced by the migrations simply never targeting it, not by
-   an unreliable `REVOKE` (see the migration comment in
-   `server/db/migrations/20260720135749_schema_and_lockdown.sql` for why a
-   `REVOKE CREATE ON SCHEMA public FROM PUBLIC` step would be a no-op on
-   model 1 and a cross-tenant risk on model 2).
+| Role | Superuser | Login | Purpose |
+| --- | --- | --- | --- |
+| bootstrap (`postgres` image user) | yes | init only | `CREATE ROLE`; never owns `insideout` objects |
+| `insideout_owner` | **no** (`BYPASSRLS`) | migrate (`DATABASE_OWNER_URL`) | Owns the `insideout` schema, tables, and DEFINER functions |
+| `insideout_app` | no | runtime (`DATABASE_URL`) | DML only; subject to RLS |
 
-Either way, `insideout_app` is the **only** role the Go server ever connects
-as — there is no separate admin/runtime role split (see the decision record
-in [`docs/plans/2026-07-20-go-rewrite/README.md`](../plans/2026-07-20-go-rewrite/README.md),
-D2).
+Two PostgreSQL topologies, same roles and the same migration set:
+
+1. **Dedicated instance** (bundled `docker-compose` `postgres`): init
+   creates both roles. The database owner is `insideout_owner`.
+2. **Shared instance** (multi-tenant managed Postgres): provision both
+   roles with [`server/db/provision_roles.sql`](../../server/db/provision_roles.sql)
+   as the instance bootstrap superuser, then `REASSIGN OWNED` into
+   `insideout_owner`. Migrations never touch `public`.
+
+The Go server **connects as `insideout_app`**. DDL/migrate uses
+`DATABASE_OWNER_URL` (`insideout_owner`). If a superuser is used to apply
+migrations, the runner `SET LOCAL ROLE insideout_owner` first so DEFINER
+functions are never superuser-owned.
 
 ## Migrations
 
@@ -47,9 +53,10 @@ set_config('app.user_id', $1, true)` from the JWT-validated caller's ID, runs
 `fn`, and commits. RLS policies (`server/db/migrations/20260720150000_row_level_security.sql`
 onward) read that value via a small `insideout.current_user_id()` SQL
 function and enforce the same authorization checklist the Go app layer
-already checks — a database-level backstop against app-layer bugs, not a
-boundary against `insideout_app` itself (it is the only role that ever
-connects).
+already checks — a database-level backstop against app-layer bugs. `insideout_app` is
+not the table owner, so RLS applies to the runtime login. DEFINER
+helpers run as `insideout_owner` (NOSUPERUSER, `BYPASSRLS`) so membership
+lookups do not recurse under FORCE RLS.
 
 11 tables carry RLS: `users`, `workspaces`, `projects`, `project_updates`,
 `ideas`, `prds`, `prd_revisions`, `agent_conversations`, `agent_messages`,
@@ -80,17 +87,14 @@ policies needs to route around any of these again:
   CHECK` expression triggers "infinite recursion detected in policy" — a
   static, structural-cycle check, not a runtime one.
 - Wrapping the self-check in a `SECURITY DEFINER` function does **not**
-  bypass this if the function's owner is the same role as the table's owner
-  (true here, since `insideout_app` owns everything) — `FORCE ROW LEVEL
-  SECURITY` still applies inside the function, and the recursion becomes a
-  genuine runtime stack overflow once real rows exist instead of a
-  compile-time-visible cycle.
-- The actual fix for `workspace_memberships` specifically: `ALTER TABLE
-  insideout.workspace_memberships NO FORCE ROW LEVEL SECURITY`. Since
-  `insideout_app` is the sole connecting role, Postgres's normal
-  (non-forced) owner-bypass is safe, and Go's `requireMember`/
-  `requireAdminMember` (`server/internal/store/memberships.go`) already fully
-  enforce this table's rules transactionally.
+  bypass FORCE RLS if the function's owner is the same as the table owner
+  and that owner is also the connecting role. The 2026-08-19 split owns
+  DEFINER helpers as `insideout_owner` (`BYPASSRLS`, not superuser) while
+  `insideout_app` connects at runtime, so membership FORCE RLS is restored.
+- A historical workaround (`NO FORCE` on `workspace_memberships`, migration
+  `20260720153000`) applied only under the single-role model; do not re-copy
+  it. Go's `requireMember` / `requireAdminMember` remain in
+  `internal/store/memberships.go`.
 - `SELECT ... FOR UPDATE` / `FOR KEY SHARE` on a table whose RLS policy
   references another table silently returns **zero rows** — not an error —
   because Postgres's `EvalPlanQual` row-locking re-check does not correctly

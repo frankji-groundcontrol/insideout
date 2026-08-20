@@ -9,18 +9,21 @@ import (
 )
 
 type Config struct {
-	Addr              string
-	DatabaseURL       string
-	JWTSecret         string
-	AccessTTL         time.Duration
-	RefreshTTL        time.Duration
-	AIBaseURL         string
-	AIAuthToken       string
-	AIModel           string
+	Addr        string
+	DatabaseURL string
+	// DatabaseOwnerURL is insideout_owner (NOSUPERUSER) for DDL/migrate.
+	// Empty means Migrate uses DatabaseURL, which must already be that owner.
+	DatabaseOwnerURL string
+	JWTSecret        string
+	AccessTTL        time.Duration
+	RefreshTTL       time.Duration
+	AIBaseURL        string
+	AIAuthToken      string
+	AIModel          string
 	// AISchema is "messages" (Anthropic Messages wire format at
 	// {base}/messages) or "responses" (OpenAI Responses at {base}/responses).
 	// The operator includes any /v1 prefix on AIBaseURL.
-	AISchema string
+	AISchema          string
 	DevPermissiveCORS bool
 	// CORSOrigins is an exact Origin allow-list for Flutter web (and any
 	// other browser client that is not same-origin). The token "localhost"
@@ -37,13 +40,14 @@ type Config struct {
 
 func Load() (*Config, error) {
 	c := &Config{
-		Addr:        listenAddr(),
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-		JWTSecret:   os.Getenv("INSIDEOUT_JWT_SECRET"),
-		AIBaseURL:   getenv("INSIDEOUT_LLM_BASE_URL", "https://api.anthropic.com/v1"),
-		AIAuthToken: os.Getenv("INSIDEOUT_LLM_API_KEY"),
-		AIModel:     getenvFirst("claude-sonnet-4-20250514", "INSIDEOUT_LLM_MODEL", "INSIDE_LLM_MODEL"),
-		AISchema:    getenvFirst("messages", "INSIDEOUT_LLM_SCHEMA", "INSIDE_LLM_SCHEMA"),
+		Addr:             listenAddr(),
+		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		DatabaseOwnerURL: os.Getenv("DATABASE_OWNER_URL"),
+		JWTSecret:        os.Getenv("INSIDEOUT_JWT_SECRET"),
+		AIBaseURL:        getenv("INSIDEOUT_LLM_BASE_URL", "https://api.anthropic.com/v1"),
+		AIAuthToken:      os.Getenv("INSIDEOUT_LLM_API_KEY"),
+		AIModel:          getenvFirst("claude-sonnet-4-20250514", "INSIDEOUT_LLM_MODEL", "INSIDE_LLM_MODEL"),
+		AISchema:         getenvFirst("messages", "INSIDEOUT_LLM_SCHEMA", "INSIDE_LLM_SCHEMA"),
 	}
 
 	var err error

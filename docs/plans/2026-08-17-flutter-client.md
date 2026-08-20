@@ -6,8 +6,12 @@ Status: in flight — architecture confirmed; engineering review recorded.
 
 Replace the Nuxt 4 frontend with one Flutter app that builds **web, iOS,
 and Android**, covering the **current Nuxt surface** before Railway
-switches off `app/`. Keep the Go API and the `insideout` schema. Use
-**Material 3**, not Ink & Seal.
+switches off `app/`. Keep the Go API and the `insideout` schema.
+
+**Correction 2026-08-19:** the original lock "Use **Material 3**, not
+Ink & Seal" is reversed. Flutter is the client kit; the visual world is
+still Ink & Seal. See
+[`docs/plans/2026-08-19-restore-ink-seal.md`](2026-08-19-restore-ink-seal.md).
 
 ## Locked decisions
 
@@ -15,7 +19,7 @@ switches off `app/`. Keep the Go API and the `insideout` schema. Use
 | --- | --- |
 | Targets | Web + iOS + Android from day one, one codebase |
 | First ship gate | Full current Nuxt surface on all three, then switch |
-| Visual system | Material 3 everywhere |
+| Visual system | Ink & Seal (Material widgets implement it; they do not replace it). Reversed from Material-3-only 2026-08-19 |
 | Client layout | One Flutter app, hand-written Dart API client |
 | Backend | Existing Go service; no new backend product surface |
 | Nuxt | Stays until Flutter parity is verified; do not delete `app/` in this plan |
@@ -44,8 +48,9 @@ Flutter client/          Go server                 Postgres
 - Auth gate: restore session on launch; unauthenticated routes only
   for landing/login/register.
 - Coach: consume the existing SSE contract (no new streaming protocol).
-- Roadmap: Material 3 interactive view of the same API, not a pixel
-  port of the Ink & Seal canvas.
+- Roadmap: interactive view of the same API. Visual language is Ink &
+  Seal (chops, celadon, ink); not a generic Material canvas. Pixel-port
+  of the collaborative canvas is tracked on the restore plan.
 - Flutter web deploy later replaces the Railway `app` service with a
   static host plus the same private proxy to `server`. iOS/Android stay
   sideload/simulator until a later store task.

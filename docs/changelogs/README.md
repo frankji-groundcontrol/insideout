@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-19 — insideout_owner + insideout_app](2026-08-19-owner-app-roles.md)
+  — two NOSUPERUSER roles; SECURITY DEFINER owned by owner, not superuser.
+- [2026-08-19 — Restore Ink & Seal on Flutter](2026-08-19-restore-ink-seal.md)
+  — Material 3 visual lock reversed; Flutter ThemeData + AuthDoor chrome
+  use recovered celadon/ink/seal tokens.
 - [2026-08-18 — Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md)
   — Nuxt tree removed; compose is postgres + server; env catalog has
   no frontend dotenv contract.

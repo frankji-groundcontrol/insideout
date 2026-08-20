@@ -40,6 +40,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer st.Close()
+	if cfg.DatabaseOwnerURL != "" {
+		if err := st.AttachMigratePool(ctx, cfg.DatabaseOwnerURL); err != nil {
+			log.Error("open migrate store", "error", err)
+			os.Exit(1)
+		}
+	}
 
 	switch cmd := args(); cmd {
 	case "migrate":

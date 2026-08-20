@@ -7,31 +7,31 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Railway `app` serves Flutter web. The leftover Nuxt tree is gone
-   ([changelog](changelogs/2026-08-18-delete-nuxt-app.md)). Remaining
-   Flutter item: Android release when an SDK exists. Plan:
-   [`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md).
+1. Owner/app DB roles. Migrate with `DATABASE_OWNER_URL` (`insideout_owner`,
+   NOSUPERUSER). Runtime stays `DATABASE_URL` (`insideout_app`).
+   Plan: [`docs/plans/2026-08-19-owner-app-roles.md`](plans/2026-08-19-owner-app-roles.md).
+2. Restore Ink & Seal on Flutter (native fonts, collaborative canvas).
+   Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
+2. Flutter Android release when an SDK exists
+   ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash
-# Hosted web (same-origin /api/v1 via nginx)
-open https://app-production-591e.up.railway.app
-
-# Local Flutter against the hosted API
-cd client && flutter run -d chrome --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
+# Local Flutter against the hosted API (real data; CORS already allows localhost)
+cd client && flutter run -d chrome --web-port=5173 --web-hostname=localhost \
+  --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
 ```
+
+Local `.env` `DATABASE_URL` currently fails SASL against the shared
+instance, so do not boot the Go server from this machine until that
+password is refreshed. Use the hosted API.
 
 The PRODUCT.md version-first slice stays on the board as P2.
 
 ## Worktree to preserve
 
-Uncommitted work includes the Flutter Railway host, the Nuxt `app/`
-deletion, env-catalog updates, and usage / architecture / changelog
-records. Do not revert unrelated edits.
-
-The public instance is documented in
-[usage/deployment.md](usage/deployment.md#railway-current-public-deploy)
-(`https://app-production-591e.up.railway.app`). The board's next product
-slice is unchanged.
+Uncommitted work includes Ink & Seal Flutter tokens/auth chrome, the
+Flutter Railway host, the Nuxt `app/` deletion, and env/docs records.
+Do not revert unrelated edits.
 
 Their exact status, next action, blocker, and plan or record link are on the
 [task board](plans/README.md). Review and checkpoint them one task at a time;

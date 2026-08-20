@@ -21,6 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-08-19 — Flutter cutover dropped Ink & Seal](2026-08-19-restore-ink-seal.md)
+  — "ditched our visual on nuxt" / "an infra migration does not mean visual
+  change"; Material 3 lock reversed; tokens + AuthDoor chrome restoring on
+  Flutter.
 - [2026-07-27 — Auth door: login/register as a prompted floating modal](2026-07-27-auth-door.md)
   — two comments ("ugly… the seal logo is not applied" / "make it a prompted
   floating modal with motion?") resolved by one shared `AuthDoor` dialog shell;

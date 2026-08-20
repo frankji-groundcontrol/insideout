@@ -17,6 +17,7 @@ void main() {
   test('interpolates placeholders the same way Nuxt does', () {
     expect(lookup('en-US', 'workspace.inviteCode', {'code': 'AB12CD'}), 'Invite code: AB12CD');
     expect(lookup('zh-CN', 'coach.rateLimited', {'seconds': 9}), '请求过于频繁，9 秒后重试...');
+    expect(lookup('zh-CN', 'landing.stepLabel', {'n': 2}), '第 2 步');
   });
 
   test('stage suggestions come from the Nuxt coach.suggest lists', () {

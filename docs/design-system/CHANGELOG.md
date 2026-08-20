@@ -14,6 +14,29 @@ Every token/primitive entry **must** name the file it lands in (e.g. `app/src/as
 
 ---
 
+## [0.5.0] — 2026-08-19
+
+Token substrate moved onto the Flutter client after the Nuxt `app/` tree
+was deleted. Semantic **keys and values** are unchanged from `0.4.0` /
+`0.2.0` (celadon, sumi ink, vermilion seal, paper carve). The consumer is
+now Dart `ThemeData` rather than CSS custom properties. Record:
+[`docs/changelogs/2026-08-19-restore-ink-seal.md`](../changelogs/2026-08-19-restore-ink-seal.md),
+plan [`docs/plans/2026-08-19-restore-ink-seal.md`](../plans/2026-08-19-restore-ink-seal.md).
+
+### Changed — token consumer (keys/values unchanged)
+
+- [`client/lib/theme/ink_seal.dart`](../../client/lib/theme/ink_seal.dart) —
+  light + dark palettes matching last live `app/src/assets/tokens.css`
+  (`f897fb4`).
+- [`client/lib/theme/ink_seal_theme.dart`](../../client/lib/theme/ink_seal_theme.dart) —
+  ThemeData: celadon scaffold, ink primary button, vermilion focus/accent,
+  Song display / Gothic body, control/card/hero radii.
+- [`client/assets/seals/yin.webp`](../../client/assets/seals/yin.webp) —
+  recovered 印 seal from `app/public/seals/yin.webp`.
+
+The Nuxt `tokens.css` / `tailwind.config.js` paths in older entries are
+historical; they no longer exist on disk.
+
 ## [0.4.0] — 2026-07-23
 
 Reverted the `0.3.0` Prisma cinematic detour back to the committed **国风留白 / Ink & Seal** world, and rebuilt the public landing on that foundation. Token _keys_ are unchanged (the `0.2.0` values are restored), so this is a backward-compatible minor bump; the new landing is a new themeable surface. Record: [`docs/changelogs/2026-07-23-ink-seal-landing/`](../changelogs/2026-07-23-ink-seal-landing/index.md).
