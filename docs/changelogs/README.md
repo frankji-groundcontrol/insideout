@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-20 — Native Noto fonts bundled (Ink & Seal)](2026-08-20-native-fonts-bundling.md)
+  — variable TTFs as lazy assets + startup `FontLoader` on non-web; web
+  unchanged via index.html CDN; visual device sign-off still open.
 - [2026-08-20 — Owner/app roles rolled out to the shared Supabase instance](2026-08-20-owner-app-roles-shared-instance.md)
   — scoped ownership transfer + grants migration via admin session;
   FORCE RLS restored; Railway deployed with `DATABASE_OWNER_URL`

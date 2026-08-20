@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// 国风留白 / Ink & Seal semantic colors.
@@ -70,8 +71,15 @@ class InkSeal {
   static const radiusCard = 16.0;
   static const radiusHero = 24.0;
 
-  static const sans = 'Noto Sans SC';
-  static const serif = 'Noto Serif SC';
+  /// Web resolves these family names through index.html's Google Fonts
+  /// link; every other target (iOS, Android, desktop) loads the bundled
+  /// variable fonts registered in pubspec.yaml under the *Native names,
+  /// so the web bundle stays free of ~40 MB of font assets.
+  static String get sans => kIsWeb ? 'Noto Sans SC' : sansNative;
+  static String get serif => kIsWeb ? 'Noto Serif SC' : serifNative;
+
+  static const sansNative = 'NotoSansSC';
+  static const serifNative = 'NotoSerifSC';
 
   static const light = InkSeal(
     brand: Color(0xFFC8402F),

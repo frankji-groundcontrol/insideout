@@ -10,7 +10,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
 | P1 | [insideout_owner + insideout_app roles](2026-08-19-owner-app-roles.md) | **Completed** | None — plan closed. | Shared instance cut over, Railway deployed with owner URL, app password rotated 2026-08-20 ([changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md)). Autodeploy off — ship with `railway up --service server`. |
-| P1 | [Restore Ink & Seal on Flutter](2026-08-19-restore-ink-seal.md) | **In flight** | Native fonts (iOS/Android); collaborative canvas still later. | Prompt login + diagram click-in on step maps landed. |
+| P1 | [Restore Ink & Seal on Flutter](2026-08-19-restore-ink-seal.md) | **In flight** | Visual font sign-off on a real device; collaborative canvas still later. | Native font bundling landed 2026-08-20 ([changelog](../changelogs/2026-08-20-native-fonts-bundling.md)). |
 | P1 | [Replace Anthropic env names with INSIDEOUT_LLM_*](2026-08-18-llm-env.md) | **Finished** | Done; Railway `server` has the new names and Supabase DSN. | Dedicated Railway Postgres removed 2026-08-18. |
 | P1 | [Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md) | **Finished** | Done; `app/` gone; env/compose/docs updated. | Historical changelogs still cite `app/` as of their dates. |
 | P1 | [Nuxt → Flutter client](2026-08-17-flutter-client.md) (web + iOS + Android, full current surface) | **In flight** | Android release build when an SDK is available. Visual language moved to the restore plan. | Hosted walk 2026-08-18. Nuxt `app/` deleted. |
