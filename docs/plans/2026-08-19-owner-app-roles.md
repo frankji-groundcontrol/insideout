@@ -1,6 +1,7 @@
 # 2026-08-19 — insideout_owner + insideout_app (no superuser DEFINER)
 
-Status: **in flight**. Reverses go-rewrite D2 (single role `insideout_app`).
+Status: **complete** (2026-08-20). Reverses go-rewrite D2 (single role
+`insideout_app`). Only the optional app-password rotation remains open.
 
 ## Why
 
@@ -47,9 +48,11 @@ cluster-wide superuser rights. `insideout_app` is subject to RLS, including
 - [x] Verify as `insideout_app`: grants, RLS filtering, DEFINER helpers;
   hosted `/healthz` stays `{"status":"ok"}`
 - [x] Repair local `.env` `DATABASE_URL` (known-good app DSN)
-- [ ] Set `insideout_owner` login password (local paste file
-  `~/.zcode-tracks/insideout-owner-provision.sql`, never committed),
-  add `DATABASE_OWNER_URL` to Railway `server`, redeploy, confirm boot
+- [x] Set `insideout_owner` login password (admin MCP, user-authorized);
+  add `DATABASE_OWNER_URL` to Railway `server` and both `.env` files;
+  deploy current main (`railway up --service server`) — SUCCESS, boot
+  listen + `/healthz` 200. Stale-image redeploys were the failure mode;
+  see changelog.
 - [ ] Optional: rotate `insideout_app` password (single transcript
   exposure) and update Railway + both `.env` files
 

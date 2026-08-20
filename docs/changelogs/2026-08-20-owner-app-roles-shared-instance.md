@@ -51,19 +51,23 @@ The DB-gated `authz_test.go` battery was not re-run against the shared
 instance (it writes test data); its prior real-Postgres run is recorded in
 the 2026-08-19 changelog.
 
-## Operator follow-ups (remaining risk)
+## Follow-ups (resolved the same day)
 
-1. **Before the next Railway deploy**: `insideout_owner` needs a login
-   password and Railway `server` needs `DATABASE_OWNER_URL` —
-   `runServe` migrates on boot and exits when the connection is not the
-   owner or a superuser, so a deploy without the owner URL crash-loops.
-   A one-statement SQL file was generated locally (never committed) at
-   `~/.zcode-tracks/insideout-owner-provision.sql` to paste into the
-   Supabase SQL editor; afterwards set `DATABASE_OWNER_URL` on Railway
-   and redeploy.
-2. Optional: rotate the `insideout_app` password (it was echoed once in a
-   local agent transcript during diagnosis) and update Railway
-   `DATABASE_URL` plus both `.env` files in the same pass.
-3. Hardening idea (not done): let `Migrate` pass as `insideout_app` when
+1. **Done**: `insideout_owner` login password set through the admin MCP
+   session (user-authorized; the generated value now exists only in both
+   machines' `.env` and Railway's `DATABASE_OWNER_URL` — never committed).
+   Railway `server` received `DATABASE_OWNER_URL` (session pooler, 5432).
+2. **Deploy gotcha recorded**: `railway redeploy` re-runs the last
+   successful *image* — here the 2026-08-18 build, whose migrate still
+   executed on the main pool as `insideout_app`. With CREATE revoked from
+   the app role by the grants migration, both redeploys crash-looped
+   (`permission denied for schema insideout`). The fix was deploying
+   current `main` with `railway up --service server`: deployment SUCCESS,
+   boot reached `listening`, `/healthz` 200. Autodeploy is off — ship
+   server changes with `railway up --service server`.
+3. Optional, still open: rotate the `insideout_app` password (it was
+   echoed once in a local agent transcript during diagnosis) and update
+   Railway `DATABASE_URL` plus both `.env` files in the same pass.
+4. Hardening idea (not done): let `Migrate` pass as `insideout_app` when
    zero migrations are pending, so a missing owner URL degrades to a
    warning instead of a boot failure.

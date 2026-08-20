@@ -9,7 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [insideout_owner + insideout_app roles](2026-08-19-owner-app-roles.md) | **In flight** | Paste owner-password SQL (Supabase editor), then Railway `DATABASE_OWNER_URL` + redeploy. | Shared instance cut over 2026-08-20 ([changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md)); boot-migrate fails without owner URL on next deploy. |
+| P1 | [insideout_owner + insideout_app roles](2026-08-19-owner-app-roles.md) | **Completed** | Optional: rotate `insideout_app` password ([changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md)). | Shared instance cut over + Railway deployed with owner URL 2026-08-20. Autodeploy off — ship with `railway up --service server`. |
 | P1 | [Restore Ink & Seal on Flutter](2026-08-19-restore-ink-seal.md) | **In flight** | Native fonts (iOS/Android); collaborative canvas still later. | Prompt login + diagram click-in on step maps landed. |
 | P1 | [Replace Anthropic env names with INSIDEOUT_LLM_*](2026-08-18-llm-env.md) | **Finished** | Done; Railway `server` has the new names and Supabase DSN. | Dedicated Railway Postgres removed 2026-08-18. |
 | P1 | [Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md) | **Finished** | Done; `app/` gone; env/compose/docs updated. | Historical changelogs still cite `app/` as of their dates. |

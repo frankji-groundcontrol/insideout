@@ -16,9 +16,9 @@ code) with relative links.
 ## Records
 
 - [2026-08-20 — Owner/app roles rolled out to the shared Supabase instance](2026-08-20-owner-app-roles-shared-instance.md)
-  — scoped ownership transfer + grants migration applied via admin
-  session; FORCE RLS restored; local `.env` DATABASE_URL repaired;
-  Railway owner-URL wiring still pending.
+  — scoped ownership transfer + grants migration via admin session;
+  FORCE RLS restored; Railway deployed with `DATABASE_OWNER_URL`
+  (`railway up`, not stale-image `redeploy`); local `.env` repaired.
 - [2026-08-19 — insideout_owner + insideout_app](2026-08-19-owner-app-roles.md)
   — two NOSUPERUSER roles; SECURITY DEFINER owned by owner, not superuser.
 - [2026-08-19 — Restore Ink & Seal on Flutter](2026-08-19-restore-ink-seal.md)
