@@ -7,12 +7,16 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Owner/app DB roles. Migrate with `DATABASE_OWNER_URL` (`insideout_owner`,
-   NOSUPERUSER). Runtime stays `DATABASE_URL` (`insideout_app`).
-   Plan: [`docs/plans/2026-08-19-owner-app-roles.md`](plans/2026-08-19-owner-app-roles.md).
+1. Finish the owner/app rollout on Railway: paste the owner-password SQL
+   (local file `~/.zcode-tracks/insideout-owner-provision.sql`) into the
+   Supabase SQL editor, set `DATABASE_OWNER_URL` on Railway `server`,
+   redeploy. The shared instance itself is already cut over — do not
+   deploy before this, boot-migrate would crash as `insideout_app`.
+   Plan: [`docs/plans/2026-08-19-owner-app-roles.md`](plans/2026-08-19-owner-app-roles.md)
+   ([changelog](changelogs/2026-08-20-owner-app-roles-shared-instance.md)).
 2. Restore Ink & Seal on Flutter (native fonts, collaborative canvas).
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
-2. Flutter Android release when an SDK exists
+3. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash
@@ -21,17 +25,18 @@ cd client && flutter run -d chrome --web-port=5173 --web-hostname=localhost \
   --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
 ```
 
-Local `.env` `DATABASE_URL` currently fails SASL against the shared
-instance, so do not boot the Go server from this machine until that
-password is refreshed. Use the hosted API.
+Local `.env` `DATABASE_URL` works again (repaired 2026-08-20 with the
+known-good app DSN); the Go server can boot from this machine.
 
 The PRODUCT.md version-first slice stays on the board as P2.
 
 ## Worktree to preserve
 
-Uncommitted work includes Ink & Seal Flutter tokens/auth chrome, the
-Flutter Railway host, the Nuxt `app/` deletion, and env/docs records.
-Do not revert unrelated edits.
+Both machines and origin were synced at the last `[checkpoint]` commit; the
+worktree is clean. A local-only secret file exists outside the repo
+(`~/.zcode-tracks/insideout-owner-provision.sql`) — never commit or print
+it; delete it once the owner password is applied. Do not revert unrelated
+edits.
 
 Their exact status, next action, blocker, and plan or record link are on the
 [task board](plans/README.md). Review and checkpoint them one task at a time;

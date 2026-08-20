@@ -36,6 +36,26 @@ cluster-wide superuser rights. `insideout_app` is subject to RLS, including
 - [x] Real Postgres: authz tests as `insideout_app`; role-owner assertions
 - [x] Operator provision documented (`server/db/provision_roles.sql`)
 
+## Shared-instance rollout (2026-08-20)
+
+- [x] Inventory: 16 tables + 12 functions + schema owned by
+  `insideout_app`; only `pg_toast` objects outside the schema
+- [x] Provision `insideout_owner` (NOSUPERUSER, BYPASSRLS, no password)
+  and scoped ownership transfer as the instance admin
+- [x] Apply `20260819190000_owner_app_grants.sql` via `SET ROLE
+  insideout_owner`; record the filename in the migrations ledger
+- [x] Verify as `insideout_app`: grants, RLS filtering, DEFINER helpers;
+  hosted `/healthz` stays `{"status":"ok"}`
+- [x] Repair local `.env` `DATABASE_URL` (known-good app DSN)
+- [ ] Set `insideout_owner` login password (local paste file
+  `~/.zcode-tracks/insideout-owner-provision.sql`, never committed),
+  add `DATABASE_OWNER_URL` to Railway `server`, redeploy, confirm boot
+- [ ] Optional: rotate `insideout_app` password (single transcript
+  exposure) and update Railway + both `.env` files
+
+Details and deviations (PG17 admin-grant quirk, why not `REASSIGN
+OWNED`): [changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md).
+
 ## Sources
 
 - User request this session
