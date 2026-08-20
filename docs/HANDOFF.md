@@ -26,9 +26,11 @@ known-good app DSN); the Go server can boot from this machine.
 The two-role DB model is live end-to-end: shared instance, Railway
 (`DATABASE_URL` app + `DATABASE_OWNER_URL` owner), and both `.env`
 files ([changelog](changelogs/2026-08-20-owner-app-roles-shared-instance.md)).
-Railway autodeploy is off — ship server changes with
-`railway up --service server`, not `railway redeploy` (it re-runs the
-last image).
+Railway autodeploy is off for both services, and `railway redeploy`
+re-runs the last image instead of building — after changes land on
+`main`, ship them explicitly: any `server/` change with
+`railway up --service server` (Go API), any `client/` change with
+`railway up --service app` (Flutter web host).
 
 The PRODUCT.md version-first slice stays on the board as P2.
 
