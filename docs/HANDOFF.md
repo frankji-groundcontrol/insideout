@@ -7,15 +7,15 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Roadmap GitHub loop: everything is built and live — webhook, guide
-   scaffolding (API/CLI/MCP), installation tokens, and the
-   guide-matched evidence loop
+1. Roadmap GitHub loop: complete and live — webhook, guide scaffolding
+   (API/CLI/MCP), installation tokens, and the guide-matched evidence
+   loop, with the app installed and real deliveries flowing
    ([webhook](changelogs/2026-08-21-github-webhook.md),
    [guide+MCP](changelogs/2026-08-21-guide-and-mcp.md),
-   [evidence loop](changelogs/2026-08-21-evidence-loop.md)). Remaining:
-   install the GitHub App on the repo (user) and confirm one real
-   delivery; regenerate this repo's dogfood `insideout.yaml` from the
-   real project once one exists.
+   [evidence](changelogs/2026-08-21-evidence-loop.md),
+   [dogfood+cleanup](changelogs/2026-08-21-dogfood-and-cleanup.md)).
+   Dogfood credentials: `~/.zcode-tracks/insideout-dogfood-credentials.txt`
+   (local, never committed).
    Plan: [`docs/plans/2026-08-21-roadmap-parity-and-github.md`](plans/2026-08-21-roadmap-parity-and-github.md).
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as

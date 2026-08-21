@@ -63,6 +63,10 @@ Design (implementation next; requires a user-registered GitHub App):
 - [x] Install the GitHub App on the repo (done 2026-08-21: install ping
       answered 200 in the server log; the next pushes to main are real
       deliveries with an installation id, activating the token path)
+- [x] Dogfood made real 2026-08-21: durable `dogfood@insideout.yalotein.net`
+      project (`InsideOut 自举`) owns the repo binding; `insideout.yaml`
+      regenerated from it; five labeled scratch users purged
+      ([changelog](../changelogs/2026-08-21-dogfood-and-cleanup.md))
 
 ## Stage C — projection
 

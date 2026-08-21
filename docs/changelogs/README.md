@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — Dogfood project made real; scratch data purged](2026-08-21-dogfood-and-cleanup.md)
+  — durable dogfood account/project owns the repo binding;
+  `insideout.yaml` regenerated; five scratch users deleted.
 - [2026-08-21 — Evidence loop closed](2026-08-21-evidence-loop.md)
   — guide-matched deliveries append idempotent leaf evidence;
   installation tokens + guide fetching wired; verified live.
