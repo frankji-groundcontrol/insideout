@@ -35,6 +35,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runAgentCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "repo", "sync":
 		return runGithubCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+	case "guide":
+		return runGuideCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "login", "whoami", "workspaces", "projects", "prd":
 	default:
 		return false, 0

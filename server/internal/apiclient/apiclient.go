@@ -176,6 +176,31 @@ func (c *Client) SyncGithub(projectID string) (json.RawMessage, error) {
 	return out, nil
 }
 
+// Guide returns the scaffolded insideout.yaml matching guide
+// (GET /projects/{id}/guide, text/yaml) for the user to commit.
+func (c *Client) Guide(projectID string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, c.base+"/projects/"+projectID+"/guide", nil)
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: build request: %w", err)
+	}
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+	resp, err := c.hc.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: GET guide: %w", err)
+	}
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: read guide: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("apiclient: GET guide: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
+	}
+	return raw, nil
+}
+
 func (c *Client) get(path string) (json.RawMessage, error) {
 	var out json.RawMessage
 	if err := c.do(http.MethodGet, path, nil, &out); err != nil {

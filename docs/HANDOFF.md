@@ -7,16 +7,17 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Roadmap GitHub loop (Stage B of the roadmap plan): user-registered
-   GitHub App for per-user access, `POST /api/v1/hooks/github` webhook
-   with HMAC verification, and the repo-side `insideout.yaml` matching
-   guide that maps branches/labels/paths to roadmap nodes. Stage A
-   (agent build/expand, branch CRUD, repo bind + sync as CLI verbs) is
-   live and verified ([changelog](changelogs/2026-08-21-roadmap-cli-parity.md)).
+1. Roadmap GitHub loop: install the GitHub App on the repo (user), then
+   build the `insideout.yaml` guide loader + installation tokens so
+   deliveries attach leaf-node evidence. Webhook and guide scaffolding
+   are live ([webhook](changelogs/2026-08-21-github-webhook.md),
+   [guide+MCP](changelogs/2026-08-21-guide-and-mcp.md)); GitHub App
+   credentials are in `.env` (`INSIDEOUT_GH_*`).
    Plan: [`docs/plans/2026-08-21-roadmap-parity-and-github.md`](plans/2026-08-21-roadmap-parity-and-github.md).
-2. CLI / MCP parity: Stage 2 — MCP server whose tools are 1:1 with the
-   CLI verbs (list frozen in the plan). CLI read surface is live
-   ([changelog](changelogs/2026-08-21-cli-read-parity.md)).
+2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
+   (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
+   API routes first, then projected. `insideout-mcp` (14 tools) and the
+   CLI are live.
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
 3. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
    minimap) is the only open slice item. Native fonts are bundled and

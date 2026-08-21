@@ -41,19 +41,22 @@ secrets are written to disk by tooling.
       on an unknown id (its data path needs a real PRD — Stage 3)
 - [x] Plan/board/changelog updated; checkpoint pushed
 
-## Stage 2 — MCP server (next)
+## Stage 2 — MCP server (shipped 2026-08-21)
 
-- [ ] Go MCP server (`server/cmd/insideout-mcp` or stdio subcommand)
-      exposing tools 1:1 with Stage 1 verbs — identical names and
-      argument shapes
-- [ ] Tool list frozen in this plan before implementation:
-      `login`, `whoami`, `workspaces`, `projects`, `prd_get`
-- [ ] Live verification against the hosted API
+- [x] Go MCP server `server/cmd/insideout-mcp` (stdio, mcp-go) exposing
+      tools 1:1 with the CLI verbs; token via `INSIDEOUT_TOKEN`
+- [x] Frozen tool list (14): `whoami, workspaces, projects, prd,
+      roadmap_list, roadmap_add, roadmap_update, roadmap_move,
+      roadmap_delete, build, expand, guide, repo_set, sync`
+      (`login` stays CLI-only — the token is env state)
+- [x] Live verification against the hosted API (guide tool + full
+      register→build→guide chain;
+      [changelog](../changelogs/2026-08-21-guide-and-mcp.md))
 
 ## Stage 3 — write surface + agent vocabulary
 
-- [ ] Write verbs (idea create/convert, PRD revision, roadmap node)
-      added to CLI and MCP together
+- [ ] Write verbs (idea create/convert, PRD revision) added to CLI and
+      MCP together
 - [ ] Agent vocabulary routes (`context`, `focus`, `checkpoint/report`,
       `propose`, `version`) designed against PRODUCT.md, then projected
 

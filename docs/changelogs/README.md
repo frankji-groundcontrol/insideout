@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — Guidance system scaffolding + MCP server](2026-08-21-guide-and-mcp.md)
+  — `insideout.yaml` format v1 + generation from API/CLI/MCP; MCP
+  server with 14 tools 1:1 with the CLI; verified live.
 - [2026-08-21 — GitHub webhook live (Stage B core)](2026-08-21-github-webhook.md)
   — HMAC-verified `/api/v1/hooks/github`; DEFINER repo→project lookup;
   push/PR trigger per-project sync; nginx stale-upstream gotcha recorded.

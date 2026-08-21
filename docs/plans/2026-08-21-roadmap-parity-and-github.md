@@ -48,8 +48,13 @@ Design (implementation next; requires a user-registered GitHub App):
       live via the domain; ping/bad-sig/push verified, 62 backlog
       commits synced, [changelog](../changelogs/2026-08-21-github-webhook.md))
 - [ ] Install the GitHub App on the repo (user action) — real deliveries
-- [ ] Matching-guide loader (via installation token) — `insideout.yaml`
-      → leaf-node evidence, replacing timeline-only pulls
+- [x] Guide scaffolding for users on every surface (2026-08-21):
+      `GET /projects/{id}/guide`, `insideout guide [--out F]`, MCP `guide`
+      tool; format v1 node-keyed with leaf-only matchers
+      ([changelog](../changelogs/2026-08-21-guide-and-mcp.md))
+- [ ] Matching-guide loader (via installation token) — parse a committed
+      `insideout.yaml` and attach leaf-node evidence, replacing
+      timeline-only pulls
 - [ ] GitHub App OAuth flow + per-project token storage
 
 ## Stage C — projection
