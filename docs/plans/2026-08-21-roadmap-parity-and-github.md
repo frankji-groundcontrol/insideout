@@ -1,6 +1,6 @@
 # 2026-08-21 — Roadmap parity (CLI/agent) and GitHub-driven progress
 
-Status: **in flight**. The user called out the ignored gap: the roadmap
+Status: **complete** (2026-08-21). The user called out the ignored gap: the roadmap
 API is nearly complete — agent planning (`POST /prds/{pid}/build`,
 `POST /roadmap/{nid}/expand`), node CRUD + move, repo binding + pull
 sync — but only the web client can reach it, and GitHub progress is
