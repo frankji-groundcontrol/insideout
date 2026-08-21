@@ -1,0 +1,69 @@
+# InsideOut matching guide — maps GitHub activity in this repo onto
+# roadmap nodes of "Evidence loop".
+#
+# An event (push, pull request, deployment) attaches evidence to every
+# node it matches that is a LEAF. Matchers:
+#   branches: exact branch name or prefix ending in /*  (event's branch)
+#   labels:   exact pull-request label (e.g. roadmap/mvp)
+#   paths:    prefix of any file the event touched   (e.g. server/)
+# Unmatched events stay visible in InsideOut but attach to nothing.
+# Re-generate any time with `insideout guide <project-id>`.
+version: 1
+nodes:
+  # 5aa2cac2-6006-4af6-b9b4-d10447d3ecc7 is a branch node — matchers apply to leaves only:
+  # 5aa2cac2-6006-4af6-b9b4-d10447d3ecc7:
+  #   title: "交付 Evidence loop MVP"
+  259761ad-d440-4b97-bc42-84b201f99a31:
+    title: "拆解闭环流程"
+    branches: [main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    ["server/"]
+  598d1bb3-19ea-4077-89f2-4d25e01a0c0c:
+    title: "定义最小交互"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  9e5106f6-f85e-4bf0-ac33-fd8b18ab6ef8:
+    title: "实现主流程"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  c26a073d-75fe-45d3-8f91-77009ce7d905:
+    title: "制定验证方案"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  e6ea96c9-8500-4baa-9da6-5b85d5f62787:
+    title: "验证核心流程"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  ac79663c-bb45-4c7e-8018-9787a9fe75b6:
+    title: "修复关键问题"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  4604617c-918e-45ac-97ae-53df5bca6b18:
+    title: "完成发布检查"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  # d3f9d03f-de19-4563-b0fe-36fd5b71d25f is a branch node — matchers apply to leaves only:
+  # d3f9d03f-de19-4563-b0fe-36fd5b71d25f:
+  #   title: "范围与目标"
+  # 23cdd6a5-762c-4b31-b7eb-3ef10c488d6e is a branch node — matchers apply to leaves only:
+  # 23cdd6a5-762c-4b31-b7eb-3ef10c488d6e:
+  #   title: "核心闭环设计"
+  # 2ce7f6ef-8a21-437f-8ba7-1610b0f7db29 is a branch node — matchers apply to leaves only:
+  # 2ce7f6ef-8a21-437f-8ba7-1610b0f7db29:
+  #   title: "验证与发布"
+  8ea1ab4a-c917-4811-9d85-4d58cd2e3ddf:
+    title: "明确用户问题"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
+  e3e4485a-823f-4fff-aaf8-732b1523ed4b:
+    title: "锁定 MVP 边界"
+    branches: [] # e.g. [feature/x, main]
+    labels:   [] # e.g. [roadmap/mvp]
+    paths:    [] # e.g. ["server/"]
