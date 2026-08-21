@@ -281,3 +281,9 @@ func (c *Client) CommitPrd(prdID, name, audience, summary string, unresolved []s
 func (c *Client) PrdVersions(prdID string) (json.RawMessage, error) {
 	return c.get("/prds/" + prdID + "/commits")
 }
+
+// PrdReadiness returns the per-audience gap disclosure
+// (GET /prds/{id}/readiness) for "form a version now".
+func (c *Client) PrdReadiness(prdID string) (json.RawMessage, error) {
+	return c.get("/prds/" + prdID + "/readiness")
+}

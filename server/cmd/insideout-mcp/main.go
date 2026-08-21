@@ -145,6 +145,11 @@ func main() {
 			note, _ := req.GetArguments()["note"].(string)
 			return call(c.CommitPrd(reqStr(req, "prd_id"), reqStr(req, "name"), reqStr(req, "audience"), summary, unresolved, note))
 		})
+	addTextTool("readiness", "Per-audience gap disclosure for 'form a version now': what is missing for each audience, why, and the suggested unresolved items to carry into a Commit",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.PrdReadiness(reqStr(req, "prd_id")))
+		})
 	addTextTool("versions", "List a PRD's committed versions, newest first, with diffs",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

@@ -14,6 +14,15 @@ import (
 func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 	c := apiclient.New(api)
 	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	if cmd == "readiness" {
+		fs := flag.NewFlagSet("readiness", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout readiness <prd-id>")
+			return true, 2
+		}
+		return printJSON(c.PrdReadiness(fs.Args()[0]))
+	}
 	if cmd == "versions" {
 		fs := flag.NewFlagSet("versions", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)

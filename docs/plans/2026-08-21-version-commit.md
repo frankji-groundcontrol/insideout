@@ -28,12 +28,18 @@ an optional decision note on the commit itself).
       second diff `{changed: 1, background: changed}`; migration 20/20
       ([changelog](../changelogs/2026-08-21-version-commit.md))
 
-## Stage 2 (next, separate increment)
+## Stage 2 — form a version now (readiness shipped 2026-08-21)
 
-- "Form a version now": readiness as disclosed per-audience gaps
-  (missing critical-question answers, ungrounded personas, carried
-  assumptions) instead of any completeness score
-- Web rendering of the version list and commit affordance
+- [x] `GET /api/v1/prds/{id}/readiness` — per-audience gap disclosure
+      (`internal/readiness`): priorities (must clarify now / should
+      clarify this version / validate later), reader-facing reasons,
+      no completeness score, never blocks a Commit
+- [x] CLI `insideout readiness <prd-id>` + MCP tool `readiness` (17
+      tools)
+- [x] Live verified: decision audience disclosed 3 gaps with reasons;
+      a "form a version now" Commit carried all 3 as unresolved items
+- [ ] Web rendering: version list, commit affordance, and readiness
+      panel in the Flutter PRD view
 
 ## Sources
 

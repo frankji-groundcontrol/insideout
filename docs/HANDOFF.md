@@ -7,12 +7,10 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Version-first slice Stage 2: "form a version now" readiness
-   (per-audience disclosed gaps, no completeness score) and web
-   rendering of the version list + commit affordance. Stage 1 (the
-   human Commit: immutable versions with audience, unresolved items,
-   real diffs — API/CLI/MCP) is live
-   ([changelog](changelogs/2026-08-21-version-commit.md)).
+1. Version-first slice: last item — web rendering of the version list,
+   commit affordance, and readiness panel in the Flutter PRD view. The
+   human Commit and "form a version now" readiness are live via
+   API/CLI/MCP ([changelog](changelogs/2026-08-21-version-commit.md)).
    Plan: [`docs/plans/2026-08-21-version-commit.md`](plans/2026-08-21-version-commit.md).
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as

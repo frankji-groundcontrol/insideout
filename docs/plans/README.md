@@ -16,7 +16,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 | P1 | [Replace Anthropic env names with INSIDEOUT_LLM_*](2026-08-18-llm-env.md) | **Finished** | Done; Railway `server` has the new names and Supabase DSN. | Dedicated Railway Postgres removed 2026-08-18. |
 | P1 | [Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md) | **Finished** | Done; `app/` gone; env/compose/docs updated. | Historical changelogs still cite `app/` as of their dates. |
 | P1 | [Nuxt → Flutter client](2026-08-17-flutter-client.md) (web + iOS + Android, full current surface) | **In flight** | Android release build when an SDK is available. Visual language moved to the restore plan. | Hosted walk 2026-08-18. Nuxt `app/` deleted. |
-| P1 | [Version-first slice — the human Commit](2026-08-21-version-commit.md) | **In flight** | Stage 2: "form a version now" readiness gaps + web rendering. | Stage 1 live: immutable commits with audience, unresolved items, and real diffs via API/CLI/MCP ([changelog](../changelogs/2026-08-21-version-commit.md)). |
+| P1 | [Version-first slice — the human Commit](2026-08-21-version-commit.md) | **In flight** | Web rendering: versions, commit affordance, readiness panel in the Flutter PRD view. | Commits + readiness ("form a version now") live via API/CLI/MCP ([changelog](../changelogs/2026-08-21-version-commit.md)). |
 
 **Status meanings:** In flight = active work; Pending = not started; Finished
 = recorded scope and verification complete in the local worktree; Completed =

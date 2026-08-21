@@ -37,7 +37,12 @@ version, people remain stuck in the Idea stage."
 
 ## What is deliberately next (Stage 2 of the plan)
 
-- "Form a version now": readiness as per-audience disclosed gaps
-  (missing critical-question answers, ungrounded personas, carried
-  assumptions) instead of any completeness score.
-- Web rendering: version list + commit affordance in the Flutter client.
+- ~~"Form a version now" readiness~~ — **shipped the same day**:
+  `GET /prds/{id}/readiness` + `insideout readiness` + MCP `readiness`
+  (17 tools). Per-audience gaps with priorities (must clarify now /
+  should clarify this version / validate later) and reader-facing
+  reasons; no completeness score; never blocks a Commit. Live-verified:
+  the decision audience disclosed 3 explained gaps and a "form a
+  version now" Commit carried all three as unresolved items.
+- Web rendering: version list, commit affordance, and readiness panel
+  in the Flutter PRD view (the plan's last open item).
