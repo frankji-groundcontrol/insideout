@@ -60,8 +60,9 @@ Design (implementation next; requires a user-registered GitHub App):
       wired into guide fetching (live-proven so far only via the
       public-repo unauthenticated fallback; installing the app
       activates the token path)
-- [ ] Install the GitHub App on the repo (user action) and confirm one
-      real delivery in the app's delivery log
+- [x] Install the GitHub App on the repo (done 2026-08-21: install ping
+      answered 200 in the server log; the next pushes to main are real
+      deliveries with an installation id, activating the token path)
 
 ## Stage C — projection
 

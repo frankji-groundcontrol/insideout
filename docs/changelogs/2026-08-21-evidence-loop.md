@@ -43,11 +43,10 @@ on roadmap leaves.
 
 ## Caveats
 
-- The installation-token path is built and configured but not yet
-  live-proven: the app is not installed on any repo, so the live test
-  used the public-repo unauthenticated fallback. Installing the app
-  (user action) activates the private-repo path; first real delivery
-  should then be checked in the GitHub app's delivery log.
+- The installation-token path is built and configured; the live test
+  used the public-repo unauthenticated fallback. The app was installed
+  on the repo right after (install ping answered 200), so deliveries
+  now carry an installation id and the token path is active.
 - This repo's committed guide references the scratch project's node ids
   — regenerate from the real project (`insideout guide <pid>`) when one
   exists.
