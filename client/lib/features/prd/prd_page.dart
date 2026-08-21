@@ -159,6 +159,7 @@ class _PrdPageState extends State<PrdPage> {
                             spacing: 8,
                             children: [
                               TextButton(onPressed: () => context.go('/prd/${widget.id}/revisions'), child: Text(l10n.t('prd.revisionHistory'))),
+                              TextButton(onPressed: () => context.go('/prd/${widget.id}/versions'), child: Text(l10n.t('versions.entry'))),
                               TextButton(onPressed: () => context.go('/prd/${widget.id}/export'), child: Text(l10n.t('prd.exportMarkdown'))),
                               TextButton(onPressed: _snapshot, child: Text(l10n.t('prd.snapshotRevision'))),
                               DropdownButton<String>(

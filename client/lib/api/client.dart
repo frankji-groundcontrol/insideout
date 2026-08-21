@@ -253,6 +253,27 @@ class ApiClient {
     return _parse(res, (d) => Prd.fromJson(d as Map<String, dynamic>));
   }
 
+  Future<List<PrdCommit>> listPrdCommits(String id) async {
+    final res = await _dio.get('/prds/$id/commits');
+    return _parse(res, (d) => (d as List).map((e) => PrdCommit.fromJson(e as Map<String, dynamic>)).toList());
+  }
+
+  Future<PrdCommit> commitPrd(String id, {required String name, required String audience, String summary = '', List<String>? unresolved, String note = ''}) async {
+    final res = await _dio.post('/prds/$id/commit', data: {
+      'name': name,
+      'primaryAudience': audience,
+      'changeSummary': summary,
+      'unresolved': unresolved ?? const [],
+      'decisionNote': note,
+    });
+    return _parse(res, (d) => PrdCommit.fromJson(d as Map<String, dynamic>));
+  }
+
+  Future<PrdReadiness> prdReadiness(String id) async {
+    final res = await _dio.get('/prds/$id/readiness');
+    return _parse(res, (d) => PrdReadiness.fromJson(d as Map<String, dynamic>));
+  }
+
   Future<List<PrdRevision>> listRevisions(String id) async {
     final res = await _dio.get('/prds/$id/revisions');
     return _parse(res, (d) => (d as List).map((e) => PrdRevision.fromJson(e as Map<String, dynamic>)).toList());

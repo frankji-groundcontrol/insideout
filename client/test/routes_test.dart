@@ -18,6 +18,7 @@ void main() {
         '/projects/:id/roadmap',
         '/prd/:id',
         '/prd/:id/revisions',
+        '/prd/:id/versions',
         '/prd/:id/export',
       },
     );

@@ -7,6 +7,7 @@ import 'features/landing/landing_page.dart';
 import 'features/prd/export_page.dart';
 import 'features/prd/prd_page.dart';
 import 'features/prd/revisions_page.dart';
+import 'features/prd/versions_page.dart';
 import 'features/profile/profile_page.dart';
 import 'features/project/project_page.dart';
 import 'features/project/roadmap_page.dart';
@@ -30,6 +31,7 @@ final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/projects/:id/roadmap': (c, s) => RoadmapPage(projectId: s.pathParameters['id']!),
   '/prd/:id': (c, s) => PrdPage(id: s.pathParameters['id']!),
   '/prd/:id/revisions': (c, s) => RevisionsPage(prdId: s.pathParameters['id']!),
+  '/prd/:id/versions': (c, s) => VersionsPage(prdId: s.pathParameters['id']!),
   '/prd/:id/export': (c, s) => ExportPage(prdId: s.pathParameters['id']!),
 };
 

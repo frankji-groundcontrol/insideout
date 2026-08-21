@@ -44,5 +44,12 @@ version, people remain stuck in the Idea stage."
   reasons; no completeness score; never blocks a Commit. Live-verified:
   the decision audience disclosed 3 explained gaps and a "form a
   version now" Commit carried all three as unresolved items.
-- Web rendering: version list, commit affordance, and readiness panel
-  in the Flutter PRD view (the plan's last open item).
+- ~~Web rendering~~ — **shipped the same day**: `/prd/{id}/versions`
+  (audience chips, gap list, version list with diffs and carried items,
+  commit dialog with carry disclosure), PRD toolbar entry, en/zh.
+  Verified by a full interaction widget test and deployed. `Session.api`
+  became injectable (dropped `final`) so pages can be pumped with a
+  fake API client — the dialog's controllers also moved into a proper
+  stateful widget after a disposed-controller race surfaced in tests.
+  Visual pass: interaction-tested headlessly; a human glance at the
+  hosted page is the remaining sign-off.

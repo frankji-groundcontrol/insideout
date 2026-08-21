@@ -7,11 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Version-first slice: last item — web rendering of the version list,
-   commit affordance, and readiness panel in the Flutter PRD view. The
-   human Commit and "form a version now" readiness are live via
-   API/CLI/MCP ([changelog](changelogs/2026-08-21-version-commit.md)).
-   Plan: [`docs/plans/2026-08-21-version-commit.md`](plans/2026-08-21-version-commit.md).
+1. Version-first slice complete: the human Commit, "form a version
+   now" readiness, and the web versions page are all live and
+   interaction-tested ([changelog](changelogs/2026-08-21-version-commit.md)) —
+   a human visual glance at `/prd/{id}/versions` on the hosted app is
+   the only nicety left. Next product depth per PRODUCT.md: audience
+   view projections and the Coach's gap explanations in-conversation.
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (16 tools) and the

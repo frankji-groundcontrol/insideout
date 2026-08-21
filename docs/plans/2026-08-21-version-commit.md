@@ -1,6 +1,6 @@
 # 2026-08-21 — Version-first slice, Stage 1: human Commit
 
-Status: **in flight**. The first P2 product slice from
+Status: **complete** (2026-08-21). The first P2 product slice from
 [`PRODUCT.md`](../../PRODUCT.md): "Without a version, people remain
 stuck in the Idea stage." The system has working-version autosave
 (PATCH + numbered revisions) but no product version control — the human
@@ -38,8 +38,13 @@ an optional decision note on the commit itself).
       tools)
 - [x] Live verified: decision audience disclosed 3 gaps with reasons;
       a "form a version now" Commit carried all 3 as unresolved items
-- [ ] Web rendering: version list, commit affordance, and readiness
-      panel in the Flutter PRD view
+- [x] Web rendering (2026-08-21): `/prd/{id}/versions` page — audience
+      chips, readiness gaps with priorities and reasons, version list
+      with per-commit diffs, carried items, and a commit dialog that
+      shows the carry count; PRD toolbar gains the Versions entry;
+      en/zh strings. Verified by a full interaction widget test
+      (chips → gaps → dialog → commit → list+detail update, 44/44
+      suite) and deployed to the hosted app.
 
 ## Sources
 

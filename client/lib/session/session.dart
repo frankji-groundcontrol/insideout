@@ -28,7 +28,8 @@ class Session extends ChangeNotifier {
   }
 
   final TokenStore _store;
-  late final ApiClient api;
+  // Non-final for widget tests: a page under test can inject a fake.
+  late ApiClient api;
   late final Future<UserProfile> Function()? _fetchMe;
   late final Future<void> Function()? _refreshSession;
 

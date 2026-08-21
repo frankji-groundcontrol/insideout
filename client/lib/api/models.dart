@@ -320,3 +320,94 @@ class ChatMessage {
         content: j['content'] as String,
       );
 }
+
+class PrdCommit {
+  PrdCommit({
+    required this.id,
+    required this.revision,
+    required this.name,
+    required this.primaryAudience,
+    required this.createdAt,
+    this.changeSummary = '',
+    this.decisionNote = '',
+    this.unresolved = const [],
+    this.diffCounts = const {},
+    this.diffSections = const {},
+    this.committedByName,
+  });
+
+  final String id;
+  final int revision;
+  final String name;
+  final String primaryAudience;
+  final String createdAt;
+  final String changeSummary;
+  final String decisionNote;
+  final List<String> unresolved;
+  final Map<String, int> diffCounts;
+  final Map<String, String> diffSections;
+  final String? committedByName;
+
+  factory PrdCommit.fromJson(Map<String, dynamic> j) {
+    final diff = (j['diff'] as Map?) ?? const {};
+    final counts = (diff['counts'] as Map?) ?? const {};
+    final sections = (diff['sections'] as Map?) ?? const {};
+    return PrdCommit(
+      id: j['id'] as String,
+      revision: (j['revision'] as num?)?.toInt() ?? 0,
+      name: j['name'] as String,
+      primaryAudience: j['primaryAudience'] as String,
+      createdAt: j['createdAt'] as String,
+      changeSummary: j['changeSummary']?.toString() ?? '',
+      decisionNote: j['decisionNote']?.toString() ?? '',
+      unresolved: ((j['unresolved'] as List?) ?? const []).map((e) => e.toString()).toList(),
+      diffCounts: counts.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0)),
+      diffSections: sections.map((k, v) {
+        final change = (v as Map?)?['change']?.toString() ?? '';
+        return MapEntry(k.toString(), change);
+      }),
+      committedByName: j['committedByName'] as String?,
+    );
+  }
+}
+
+class ReadinessGap {
+  ReadinessGap({required this.section, required this.priority, required this.reason});
+
+  final String section;
+  final String priority;
+  final String reason;
+}
+
+class AudienceReadiness {
+  AudienceReadiness({required this.audience, required this.ready, required this.gaps, required this.carryIntoCommit});
+
+  final String audience;
+  final bool ready;
+  final List<ReadinessGap> gaps;
+  final List<String> carryIntoCommit;
+
+  factory AudienceReadiness.fromJson(String audience, Map<String, dynamic> j) => AudienceReadiness(
+        audience: audience,
+        ready: j['ready'] as bool? ?? false,
+        gaps: ((j['gaps'] as List?) ?? const [])
+            .map((e) => ReadinessGap(
+                  section: (e as Map)['section']?.toString() ?? '',
+                  priority: e['priority']?.toString() ?? '',
+                  reason: e['reason']?.toString() ?? '',
+                ))
+            .toList(),
+        carryIntoCommit: ((j['carryIntoCommit'] as List?) ?? const []).map((e) => e.toString()).toList(),
+      );
+}
+
+class PrdReadiness {
+  PrdReadiness({required this.audiences});
+
+  final Map<String, AudienceReadiness> audiences;
+
+  factory PrdReadiness.fromJson(Map<String, dynamic> j) => PrdReadiness(
+        audiences: ((j['audiences'] as Map?) ?? const {})
+            .map((k, v) => MapEntry(k.toString(), AudienceReadiness.fromJson(k.toString(), v as Map<String, dynamic>))),
+      );
+}
