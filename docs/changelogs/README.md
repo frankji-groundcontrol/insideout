@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — Evidence loop closed](2026-08-21-evidence-loop.md)
+  — guide-matched deliveries append idempotent leaf evidence;
+  installation tokens + guide fetching wired; verified live.
 - [2026-08-21 — Guidance system scaffolding + MCP server](2026-08-21-guide-and-mcp.md)
   — `insideout.yaml` format v1 + generation from API/CLI/MCP; MCP
   server with 14 tools 1:1 with the CLI; verified live.

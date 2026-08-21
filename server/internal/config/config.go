@@ -39,19 +39,29 @@ type Config struct {
 	// GithubWebhookSecret verifies GitHub App deliveries (HMAC-SHA256,
 	// X-Hub-Signature-256). Empty disables POST /api/v1/hooks/github.
 	GithubWebhookSecret string
+	// GithubAppID + GithubPrivateKey mint installation access tokens
+	// (server-to-server; no user OAuth). The key is the app's .pem,
+	// \n-escaped for env storage; GithubPrivateKeyFile (the _FILE
+	// variant) wins when set.
+	GithubAppID          string
+	GithubPrivateKey     string
+	GithubPrivateKeyFile string
 }
 
 func Load() (*Config, error) {
 	c := &Config{
-		Addr:                listenAddr(),
-		DatabaseURL:         os.Getenv("DATABASE_URL"),
-		DatabaseOwnerURL:    os.Getenv("DATABASE_OWNER_URL"),
-		JWTSecret:           os.Getenv("INSIDEOUT_JWT_SECRET"),
-		AIBaseURL:           getenv("INSIDEOUT_LLM_BASE_URL", "https://api.anthropic.com/v1"),
-		AIAuthToken:         os.Getenv("INSIDEOUT_LLM_API_KEY"),
-		AIModel:             getenvFirst("claude-sonnet-4-20250514", "INSIDEOUT_LLM_MODEL", "INSIDE_LLM_MODEL"),
-		AISchema:            getenvFirst("messages", "INSIDEOUT_LLM_SCHEMA", "INSIDE_LLM_SCHEMA"),
-		GithubWebhookSecret: os.Getenv("INSIDEOUT_GH_WEBHOOK_SECRET"),
+		Addr:                 listenAddr(),
+		DatabaseURL:          os.Getenv("DATABASE_URL"),
+		DatabaseOwnerURL:     os.Getenv("DATABASE_OWNER_URL"),
+		JWTSecret:            os.Getenv("INSIDEOUT_JWT_SECRET"),
+		AIBaseURL:            getenv("INSIDEOUT_LLM_BASE_URL", "https://api.anthropic.com/v1"),
+		AIAuthToken:          os.Getenv("INSIDEOUT_LLM_API_KEY"),
+		AIModel:              getenvFirst("claude-sonnet-4-20250514", "INSIDEOUT_LLM_MODEL", "INSIDE_LLM_MODEL"),
+		AISchema:             getenvFirst("messages", "INSIDEOUT_LLM_SCHEMA", "INSIDE_LLM_SCHEMA"),
+		GithubWebhookSecret:  os.Getenv("INSIDEOUT_GH_WEBHOOK_SECRET"),
+		GithubAppID:          os.Getenv("INSIDEOUT_GH_APP_ID"),
+		GithubPrivateKey:     os.Getenv("INSIDEOUT_GH_PRIVATE_KEY"),
+		GithubPrivateKeyFile: os.Getenv("INSIDEOUT_GH_PRIVATE_KEY_FILE"),
 	}
 
 	var err error

@@ -16,6 +16,7 @@ func (s *Server) registerRoadmapRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/roadmap/{nid}/move", s.requireAuth(s.handleMoveRoadmapNode))
 	mux.HandleFunc("DELETE /api/v1/roadmap/{nid}", s.requireAuth(s.handleDeleteRoadmapNode))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/guide", s.requireAuth(s.handleProjectGuide))
+	mux.HandleFunc("GET /api/v1/roadmap/{nid}/evidence", s.requireAuth(s.handleListEvidence))
 }
 
 type roadmapNodeView struct {

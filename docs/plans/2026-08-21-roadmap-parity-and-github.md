@@ -52,10 +52,16 @@ Design (implementation next; requires a user-registered GitHub App):
       `GET /projects/{id}/guide`, `insideout guide [--out F]`, MCP `guide`
       tool; format v1 node-keyed with leaf-only matchers
       ([changelog](../changelogs/2026-08-21-guide-and-mcp.md))
-- [ ] Matching-guide loader (via installation token) — parse a committed
-      `insideout.yaml` and attach leaf-node evidence, replacing
-      timeline-only pulls
-- [ ] GitHub App OAuth flow + per-project token storage
+- [x] Matching-guide loader (2026-08-21): parse a committed
+      `insideout.yaml`, match deliveries, append idempotent leaf
+      evidence; `GET /roadmap/{nid}/evidence` exposes it
+      ([changelog](../changelogs/2026-08-21-evidence-loop.md))
+- [x] Installation tokens: App JWT + cached installation access tokens
+      wired into guide fetching (live-proven so far only via the
+      public-repo unauthenticated fallback; installing the app
+      activates the token path)
+- [ ] Install the GitHub App on the repo (user action) and confirm one
+      real delivery in the app's delivery log
 
 ## Stage C — projection
 

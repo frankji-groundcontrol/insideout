@@ -7,12 +7,15 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Roadmap GitHub loop: install the GitHub App on the repo (user), then
-   build the `insideout.yaml` guide loader + installation tokens so
-   deliveries attach leaf-node evidence. Webhook and guide scaffolding
-   are live ([webhook](changelogs/2026-08-21-github-webhook.md),
-   [guide+MCP](changelogs/2026-08-21-guide-and-mcp.md)); GitHub App
-   credentials are in `.env` (`INSIDEOUT_GH_*`).
+1. Roadmap GitHub loop: everything is built and live — webhook, guide
+   scaffolding (API/CLI/MCP), installation tokens, and the
+   guide-matched evidence loop
+   ([webhook](changelogs/2026-08-21-github-webhook.md),
+   [guide+MCP](changelogs/2026-08-21-guide-and-mcp.md),
+   [evidence loop](changelogs/2026-08-21-evidence-loop.md)). Remaining:
+   install the GitHub App on the repo (user) and confirm one real
+   delivery; regenerate this repo's dogfood `insideout.yaml` from the
+   real project once one exists.
    Plan: [`docs/plans/2026-08-21-roadmap-parity-and-github.md`](plans/2026-08-21-roadmap-parity-and-github.md).
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as

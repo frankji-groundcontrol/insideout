@@ -6,6 +6,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
+	"github.com/frankji-groundcontrol/insideout/server/internal/github"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -23,10 +24,23 @@ type Server struct {
 	log     *slog.Logger
 	coach   Coach
 	planner RoadmapPlanner
+	// ghTokens mints GitHub App installation tokens (nil when the app
+	// credentials are absent or the key fails to load).
+	ghTokens *github.InstallationTokens
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
-	return &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner}
+	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner}
+	// GitHub App installation tokens for guide loading; nil disables the
+	// token path (public repos still load unauthenticated).
+	if cfg.GithubAppID != "" {
+		if key, err := github.LoadPrivateKey(cfg.GithubPrivateKey, cfg.GithubPrivateKeyFile); err != nil {
+			log.Warn("github app private key unusable — guide loads will be unauthenticated", "error", err)
+		} else {
+			s.ghTokens = github.NewInstallationTokens(cfg.GithubAppID, key)
+		}
+	}
+	return s
 }
 
 func (s *Server) Handler() http.Handler {
