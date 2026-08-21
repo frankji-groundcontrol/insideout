@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — Custom domain insideout.yalotein.net](2026-08-21-custom-domain.md)
+  — one domain for web, same-origin API, and the future GitHub webhook;
+  verified TLS + proxy + assets.
 - [2026-08-21 — Roadmap parity on the CLI](2026-08-21-roadmap-cli-parity.md)
   — agent `build`/`expand`, branch CRUD, repo bind + GitHub sync as CLI
   verbs, verified live end-to-end; webhook + user-granted GitHub access

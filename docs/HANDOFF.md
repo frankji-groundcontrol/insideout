@@ -29,7 +29,7 @@ Resume here. The authoritative multi-task board is
 ```bash
 # Local Flutter against the hosted API (real data; CORS already allows localhost)
 cd client && flutter run -d chrome --web-port=5173 --web-hostname=localhost \
-  --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
+  --dart-define=API_BASE=https://insideout.yalotein.net/api/v1
 ```
 
 Local `.env` `DATABASE_URL` works again (repaired 2026-08-20 with the

@@ -39,11 +39,11 @@ Design (implementation next; requires a user-registered GitHub App):
 - **User access**: GitHub App (user registers it, grants repo scope);
   server exchanges the installation token per project and stores it
   encrypted. Replaces the server-level `GITHUB_TOKEN` for user repos.
-- **Webhook**: `POST /api/v1/hooks/github` — HMAC-SHA256 signature
-  check against a per-installation secret, events `push`,
-  `pull_request` (opened/merged), `deployment_status`; handler loads
-  the matching guide from the repo at the event's ref, resolves node
-  ids, and appends evidence rows.
+- **Webhook**: `https://insideout.yalotein.net/api/v1/hooks/github` —
+  HMAC-SHA256 signature check against a per-installation secret, events
+  `push`, `pull_request` (opened/merged), `deployment_status`; handler
+  loads the matching guide from the repo at the event's ref, resolves
+  node ids, and appends evidence rows.
 - [ ] Webhook endpoint + signature verification + tests
 - [ ] Matching-guide loader (via installation token)
 - [ ] GitHub App OAuth flow + per-project token storage
