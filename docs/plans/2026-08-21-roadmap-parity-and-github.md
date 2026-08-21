@@ -44,10 +44,13 @@ Design (implementation next; requires a user-registered GitHub App):
   `push`, `pull_request` (opened/merged), `deployment_status`; handler
   loads the matching guide from the repo at the event's ref, resolves
   node ids, and appends evidence rows.
-- [ ] Webhook endpoint + signature verification + tests
-- [ ] Matching-guide loader (via installation token)
+- [x] Webhook endpoint + signature verification + tests (2026-08-21:
+      live via the domain; ping/bad-sig/push verified, 62 backlog
+      commits synced, [changelog](../changelogs/2026-08-21-github-webhook.md))
+- [ ] Install the GitHub App on the repo (user action) — real deliveries
+- [ ] Matching-guide loader (via installation token) — `insideout.yaml`
+      → leaf-node evidence, replacing timeline-only pulls
 - [ ] GitHub App OAuth flow + per-project token storage
-- [ ] Live verification against a real repo event
 
 ## Stage C — projection
 

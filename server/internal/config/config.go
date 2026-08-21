@@ -36,18 +36,22 @@ type Config struct {
 	// 控制认证 cookie 的 Secure 属性，默认 true；纯 HTTP 本地开发时设为
 	// INSIDEOUT_COOKIE_SECURE=0，否则浏览器不会存储该 cookie。
 	CookieSecure bool
+	// GithubWebhookSecret verifies GitHub App deliveries (HMAC-SHA256,
+	// X-Hub-Signature-256). Empty disables POST /api/v1/hooks/github.
+	GithubWebhookSecret string
 }
 
 func Load() (*Config, error) {
 	c := &Config{
-		Addr:             listenAddr(),
-		DatabaseURL:      os.Getenv("DATABASE_URL"),
-		DatabaseOwnerURL: os.Getenv("DATABASE_OWNER_URL"),
-		JWTSecret:        os.Getenv("INSIDEOUT_JWT_SECRET"),
-		AIBaseURL:        getenv("INSIDEOUT_LLM_BASE_URL", "https://api.anthropic.com/v1"),
-		AIAuthToken:      os.Getenv("INSIDEOUT_LLM_API_KEY"),
-		AIModel:          getenvFirst("claude-sonnet-4-20250514", "INSIDEOUT_LLM_MODEL", "INSIDE_LLM_MODEL"),
-		AISchema:         getenvFirst("messages", "INSIDEOUT_LLM_SCHEMA", "INSIDE_LLM_SCHEMA"),
+		Addr:                listenAddr(),
+		DatabaseURL:         os.Getenv("DATABASE_URL"),
+		DatabaseOwnerURL:    os.Getenv("DATABASE_OWNER_URL"),
+		JWTSecret:           os.Getenv("INSIDEOUT_JWT_SECRET"),
+		AIBaseURL:           getenv("INSIDEOUT_LLM_BASE_URL", "https://api.anthropic.com/v1"),
+		AIAuthToken:         os.Getenv("INSIDEOUT_LLM_API_KEY"),
+		AIModel:             getenvFirst("claude-sonnet-4-20250514", "INSIDEOUT_LLM_MODEL", "INSIDE_LLM_MODEL"),
+		AISchema:            getenvFirst("messages", "INSIDEOUT_LLM_SCHEMA", "INSIDE_LLM_SCHEMA"),
+		GithubWebhookSecret: os.Getenv("INSIDEOUT_GH_WEBHOOK_SECRET"),
 	}
 
 	var err error

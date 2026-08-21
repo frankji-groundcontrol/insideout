@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — GitHub webhook live (Stage B core)](2026-08-21-github-webhook.md)
+  — HMAC-verified `/api/v1/hooks/github`; DEFINER repo→project lookup;
+  push/PR trigger per-project sync; nginx stale-upstream gotcha recorded.
 - [2026-08-21 — Custom domain insideout.yalotein.net](2026-08-21-custom-domain.md)
   — one domain for web, same-origin API, and the future GitHub webhook;
   verified TLS + proxy + assets.

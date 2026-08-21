@@ -42,7 +42,11 @@ Railway autodeploy is off for both services, and `railway redeploy`
 re-runs the last image instead of building — after changes land on
 `main`, ship them explicitly: any `server/` change with
 `railway up --service server` (Go API), any `client/` change with
-`railway up --service app` (Flutter web host).
+`railway up --service app` (Flutter web host). **After a `server`
+deploy, restart `app`** (`railway redeploy --service app`): its nginx
+resolves the server's internal address only at startup, so `/api`
+via the domain 504s until then (verify with `/api/v1/me` → 401, not
+`/healthz`, which the SPA answers).
 
 The PRODUCT.md version-first slice stays on the board as P2.
 
