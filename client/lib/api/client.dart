@@ -283,8 +283,10 @@ class ApiClient {
     await _parse(await _exec(req.postPrdRevision(id, note: note)), (d) => d);
   }
 
-  Future<String> exportPrd(String id, String format) async {
-    final res = await _dio.get('/prds/$id/export', queryParameters: exportQueryParams(format));
+  Future<String> exportPrd(String id, String format, {String? audience}) async {
+    final params = exportQueryParams(format);
+    if (audience != null) params['audience'] = audience;
+    final res = await _dio.get('/prds/$id/export', queryParameters: params);
     if (res.statusCode != null && res.statusCode! >= 400) {
       throw toApiError(res.statusCode, res.data is Map<String, dynamic> ? res.data as Map<String, dynamic> : {});
     }

@@ -1,6 +1,7 @@
 package export
 
 import (
+	"github.com/frankji-groundcontrol/insideout/server/internal/audienceview"
 	"strings"
 	"testing"
 
@@ -36,5 +37,40 @@ func TestPrintHTML_EscapesContent(t *testing.T) {
 	}
 	if !strings.Contains(html, "&lt;script&gt;") {
 		t.Fatalf("PrintHTML should contain the escaped form:\n%s", html)
+	}
+}
+
+func TestMarkdownAudience_ProjectsOrderedSubset(t *testing.T) {
+	proj := audienceview.Projection{
+		Title:   "Decision view",
+		Purpose: "For a boss.",
+		Sections: []audienceview.SectionPick{
+			{Key: "goals", Why: "the return"},
+			{Key: "background", Why: "the why"},
+		},
+	}
+	out := MarkdownAudience("Widget", map[string]string{"goals": "G", "background": "B", "users": "U"}, proj)
+	if !strings.Contains(out, "Widget — Decision view") {
+		t.Errorf("title missing: %s", out)
+	}
+	if !strings.Contains(out, "Projected from the working version") {
+		t.Errorf("projection disclosure missing")
+	}
+	if strings.Contains(out, "Target Users") {
+		t.Errorf("non-projected section leaked: %s", out)
+	}
+	if strings.Index(out, "Goals") > strings.Index(out, "Background") {
+		t.Errorf("projection order not respected: %s", out)
+	}
+	if !strings.Contains(out, "Why you read this: the return") {
+		t.Errorf("why annotation missing")
+	}
+}
+
+func TestMarkdownAudience_MissingSectionCarriesOpenQuestion(t *testing.T) {
+	proj, _ := audienceview.Get("decision")
+	out := MarkdownAudience("X", map[string]string{}, proj)
+	if !strings.Contains(out, "carried as an open question") {
+		t.Errorf("blank section should carry an open question: %s", out)
 	}
 }

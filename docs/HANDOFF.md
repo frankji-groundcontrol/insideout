@@ -7,12 +7,14 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Version-first slice complete: the human Commit, "form a version
-   now" readiness, and the web versions page are all live and
-   interaction-tested ([changelog](changelogs/2026-08-21-version-commit.md)) —
-   a human visual glance at `/prd/{id}/versions` on the hosted app is
-   the only nicety left. Next product depth per PRODUCT.md: audience
-   view projections and the Coach's gap explanations in-conversation.
+1. Product depth next: the Coach weaving the readiness gap
+   explanations into conversation (principle 7), and the agent
+   vocabulary routes (`context`, `focus`, `checkpoint/report`,
+   `propose`, `version`). Landed so far: the human Commit +
+   "form a version now" readiness + web versions page
+   ([record](changelogs/2026-08-21-version-commit.md)), and audience
+   view projections across API/CLI/MCP/export
+   ([record](changelogs/2026-08-22-audience-views.md)).
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (16 tools) and the

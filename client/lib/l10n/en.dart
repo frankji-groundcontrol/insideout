@@ -164,6 +164,8 @@ const enUS = <String, String>{
   'prd.notFound': 'PRD not found',
   'prd.revisionNote': 'Optional note',
   'versions.entry': 'Versions',
+  'prd.exportAudience': 'Audience view (optional)',
+  'prd.exportFull': 'Full document',
   'versions.title': 'Product versions',
   'versions.commitTitle': 'Commit this version',
   'versions.commitNow': 'Commit version',

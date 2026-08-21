@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-22 — Audience view projections](2026-08-22-audience-views.md)
+  — Decision/Management/Delivery/Validation projections via API
+  `view`, audience markdown export, CLI/MCP verbs, web dropdown.
 - [2026-08-21 — Version-first slice Stage 1: the human Commit](2026-08-21-version-commit.md)
   — immutable PRD versions with audience, unresolved items, and real
   section diffs, via API/CLI/MCP; verified live with a two-commit diff.

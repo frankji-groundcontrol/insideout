@@ -9,6 +9,7 @@ import (
 	"html"
 	"strings"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/audienceview"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -80,4 +81,25 @@ func PrintHTML(title string, sections map[string]string) string {
 %s</body>
 </html>
 `, html.EscapeString(title), body.String())
+}
+
+// MarkdownAudience renders an audience projection (PRODUCT.md "One
+// PRD core, multiple audience views"): only that audience's sections,
+// in its reading order, each heading annotated with why the audience
+// reads it. A projection of the working version — never a separately
+// maintained document.
+func MarkdownAudience(title string, sections map[string]string, proj audienceview.Projection) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "# %s — %s\n\n", title, proj.Title)
+	fmt.Fprintf(&b, "> %s\n>\n> _Projected from the working version; the PRD core stays the single source._\n\n", proj.Purpose)
+	for _, pick := range proj.Sections {
+		content := strings.TrimSpace(sections[pick.Key])
+		fmt.Fprintf(&b, "## %s\n\n> Why you read this: %s\n\n", sectionLabels[pick.Key], pick.Why)
+		if content == "" {
+			b.WriteString("_(not yet written — carried as an open question)_\n\n")
+			continue
+		}
+		fmt.Fprintf(&b, "%s\n\n", content)
+	}
+	return strings.TrimRight(b.String(), "\n") + "\n"
 }

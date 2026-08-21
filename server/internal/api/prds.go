@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/audienceview"
 	"github.com/frankji-groundcontrol/insideout/server/internal/export"
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -15,6 +16,7 @@ func (s *Server) registerPrdRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/prds/{id}/commit", s.requireAuth(s.handleCommitPrd))
 	mux.HandleFunc("GET /api/v1/prds/{id}/commits", s.requireAuth(s.handleListPrdCommits))
 	mux.HandleFunc("GET /api/v1/prds/{id}/readiness", s.requireAuth(s.handlePrdReadiness))
+	mux.HandleFunc("GET /api/v1/prds/{id}/view", s.requireAuth(s.handlePrdView))
 	mux.HandleFunc("GET /api/v1/prds/{id}", s.requireAuth(s.handleGetPrd))
 	mux.HandleFunc("PATCH /api/v1/prds/{id}", s.requireAuth(s.handleUpdatePrd))
 	mux.HandleFunc("GET /api/v1/prds/{id}/revisions", s.requireAuth(s.handleListRevisions))
@@ -284,10 +286,26 @@ func (s *Server) handleExportPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	audience := r.URL.Query().Get("audience")
+	if audience != "" && !audienceview.Valid(audience) {
+		httpx.WriteError(w, http.StatusBadRequest, "audience must be one of decision, management, delivery, validation", "", nil)
+		return
+	}
+
 	if format == "markdown" {
 		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		if audience != "" {
+			proj, _ := audienceview.Get(audience)
+			w.Header().Set("Content-Disposition", "attachment; filename=\"prd-"+audience+"-view.md\"")
+			_, _ = w.Write([]byte(export.MarkdownAudience(prd.Title, prd.Sections, proj)))
+			return
+		}
 		w.Header().Set("Content-Disposition", "attachment; filename=\"prd.md\"")
 		_, _ = w.Write([]byte(export.Markdown(prd.Title, prd.Sections)))
+		return
+	}
+	if audience != "" {
+		httpx.WriteError(w, http.StatusBadRequest, "audience projections export as markdown (format=markdown) for now", "", nil)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

@@ -17,6 +17,7 @@ class ExportPage extends StatefulWidget {
 
 class _ExportPageState extends State<ExportPage> {
   String format = 'markdown';
+  String? audience;
   String? body;
   String? error;
 
@@ -26,7 +27,7 @@ class _ExportPageState extends State<ExportPage> {
       body = null;
     });
     try {
-      final text = await context.read<Session>().api.exportPrd(widget.prdId, format);
+      final text = await context.read<Session>().api.exportPrd(widget.prdId, format, audience: audience);
       setState(() => body = text);
     } catch (e) {
       setState(() => error = e.toString());
@@ -51,6 +52,17 @@ class _ExportPageState extends State<ExportPage> {
             ],
             selected: {format},
             onSelectionChanged: (s) => setState(() => format = s.first),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: audience,
+            decoration: InputDecoration(labelText: l10n.t('prd.exportAudience')),
+            items: [
+              DropdownMenuItem(value: null, child: Text(l10n.t('prd.exportFull'))),
+              for (final a in const ['decision', 'management', 'delivery', 'validation'])
+                DropdownMenuItem(value: a, child: Text(a)),
+            ],
+            onChanged: (v) => setState(() => audience = v),
           ),
           const SizedBox(height: 12),
           FilledButton(onPressed: _run, child: Text(l10n.t('common.save'))),

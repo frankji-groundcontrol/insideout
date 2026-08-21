@@ -150,6 +150,15 @@ func main() {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.PrdReadiness(reqStr(req, "prd_id")))
 		})
+	addTextTool("view", "Audience projection of a PRD (decision|management|delivery|validation): ordered sections with whys, readiness gaps, latest commit",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("audience", "decision|management|delivery|validation (default decision)")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			aud, _ := req.GetArguments()["audience"].(string)
+			if aud == "" {
+				aud = "decision"
+			}
+			return call(c.PrdView(reqStr(req, "prd_id"), aud))
+		})
 	addTextTool("versions", "List a PRD's committed versions, newest first, with diffs",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

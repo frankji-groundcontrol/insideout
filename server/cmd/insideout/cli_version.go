@@ -14,6 +14,30 @@ import (
 func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 	c := apiclient.New(api)
 	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	if cmd == "view" {
+		fs := flag.NewFlagSet("view", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		audience := fs.String("audience", "decision", "decision|management|delivery|validation")
+		out := fs.String("export", "", "write the audience markdown view to this file")
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout view [--audience A] [--export FILE] <prd-id>")
+			return true, 2
+		}
+		if *out != "" {
+			md, err := c.PrdExportAudience(fs.Args()[0], *audience)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return true, 1
+			}
+			if err := os.WriteFile(*out, md, 0o644); err != nil {
+				fmt.Fprintln(os.Stderr, "write:", err)
+				return true, 1
+			}
+			fmt.Fprintf(os.Stderr, "wrote %s"+"\n", *out)
+			return true, 0
+		}
+		return printJSON(c.PrdView(fs.Args()[0], *audience))
+	}
 	if cmd == "readiness" {
 		fs := flag.NewFlagSet("readiness", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)

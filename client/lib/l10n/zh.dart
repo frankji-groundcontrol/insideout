@@ -158,6 +158,8 @@ const zhCN = <String, String>{
   'prd.notFound': '找不到 PRD',
   'prd.revisionNote': '可选备注',
   'versions.entry': '版本',
+  'prd.exportAudience': '读者视图（可选）',
+  'prd.exportFull': '完整文档',
   'versions.title': '产品版本',
   'versions.commitTitle': '提交此版本',
   'versions.commitNow': '提交版本',

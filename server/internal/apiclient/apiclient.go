@@ -287,3 +287,35 @@ func (c *Client) PrdVersions(prdID string) (json.RawMessage, error) {
 func (c *Client) PrdReadiness(prdID string) (json.RawMessage, error) {
 	return c.get("/prds/" + prdID + "/readiness")
 }
+
+// PrdView returns an audience's projection of the PRD core
+// (GET /prds/{id}/view?audience=…).
+func (c *Client) PrdView(prdID, audience string) (json.RawMessage, error) {
+	return c.get("/prds/" + prdID + "/view?audience=" + audience)
+}
+
+// PrdExportAudience returns an audience-projected markdown export
+// (GET /prds/{id}/export?format=markdown&audience=…) as raw bytes.
+func (c *Client) PrdExportAudience(prdID, audience string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet,
+		c.base+"/prds/"+prdID+"/export?format=markdown&audience="+audience, nil)
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: build request: %w", err)
+	}
+	if c.token != "" {
+		req.Header.Set("Authorization", "Bearer "+c.token)
+	}
+	resp, err := c.hc.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: GET export: %w", err)
+	}
+	defer resp.Body.Close()
+	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: read export: %w", err)
+	}
+	if resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("apiclient: GET export: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
+	}
+	return raw, nil
+}
