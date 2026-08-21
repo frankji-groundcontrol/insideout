@@ -7,27 +7,24 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Roadmap GitHub loop: complete and live — webhook, guide scaffolding
-   (API/CLI/MCP), installation tokens, and the guide-matched evidence
-   loop, with the app installed and real deliveries flowing
-   ([webhook](changelogs/2026-08-21-github-webhook.md),
-   [guide+MCP](changelogs/2026-08-21-guide-and-mcp.md),
-   [evidence](changelogs/2026-08-21-evidence-loop.md),
-   [dogfood+cleanup](changelogs/2026-08-21-dogfood-and-cleanup.md)).
-   Dogfood credentials: `~/.zcode-tracks/insideout-dogfood-credentials.txt`
-   (local, never committed).
-   Plan: [`docs/plans/2026-08-21-roadmap-parity-and-github.md`](plans/2026-08-21-roadmap-parity-and-github.md).
+1. Version-first slice Stage 2: "form a version now" readiness
+   (per-audience disclosed gaps, no completeness score) and web
+   rendering of the version list + commit affordance. Stage 1 (the
+   human Commit: immutable versions with audience, unresolved items,
+   real diffs — API/CLI/MCP) is live
+   ([changelog](changelogs/2026-08-21-version-commit.md)).
+   Plan: [`docs/plans/2026-08-21-version-commit.md`](plans/2026-08-21-version-commit.md).
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
-   API routes first, then projected. `insideout-mcp` (14 tools) and the
+   API routes first, then projected. `insideout-mcp` (16 tools) and the
    CLI are live.
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
-3. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
+4. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
    minimap) is the only open slice item. Native fonts are bundled and
    visually signed off (2026-08-20,
    [changelog](changelogs/2026-08-20-native-fonts-bundling.md)).
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
-4. Flutter Android release when an SDK exists
+5. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash

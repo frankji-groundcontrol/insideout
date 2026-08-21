@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — Version-first slice Stage 1: the human Commit](2026-08-21-version-commit.md)
+  — immutable PRD versions with audience, unresolved items, and real
+  section diffs, via API/CLI/MCP; verified live with a two-commit diff.
 - [2026-08-21 — Dogfood project made real; scratch data purged](2026-08-21-dogfood-and-cleanup.md)
   — durable dogfood account/project owns the repo binding;
   `insideout.yaml` regenerated; five scratch users deleted.

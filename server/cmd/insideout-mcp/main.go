@@ -128,6 +128,28 @@ func main() {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.SyncGithub(reqStr(req, "project_id")))
 		})
+	addTextTool("commit", "Human Commit: freeze the working PRD as an immutable version (name, audience, summary, unresolved items, diff)",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strReq("name", "version name"),
+			strReq("audience", "decision|management|delivery|validation"),
+			strOpt("summary", "change summary"), strOpt("note", "decision log note")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			var unresolved []string
+			if arr, ok := req.GetArguments()["unresolved"].([]any); ok {
+				for _, v := range arr {
+					if sv, ok := v.(string); ok {
+						unresolved = append(unresolved, sv)
+					}
+				}
+			}
+			summary, _ := req.GetArguments()["summary"].(string)
+			note, _ := req.GetArguments()["note"].(string)
+			return call(c.CommitPrd(reqStr(req, "prd_id"), reqStr(req, "name"), reqStr(req, "audience"), summary, unresolved, note))
+		})
+	addTextTool("versions", "List a PRD's committed versions, newest first, with diffs",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.PrdVersions(reqStr(req, "prd_id")))
+		})
 
 	if err := server.ServeStdio(s); err != nil {
 		fmt.Fprintln(os.Stderr, "insideout-mcp:", err)

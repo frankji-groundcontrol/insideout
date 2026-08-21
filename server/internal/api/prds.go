@@ -12,6 +12,8 @@ import (
 )
 
 func (s *Server) registerPrdRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/v1/prds/{id}/commit", s.requireAuth(s.handleCommitPrd))
+	mux.HandleFunc("GET /api/v1/prds/{id}/commits", s.requireAuth(s.handleListPrdCommits))
 	mux.HandleFunc("GET /api/v1/prds/{id}", s.requireAuth(s.handleGetPrd))
 	mux.HandleFunc("PATCH /api/v1/prds/{id}", s.requireAuth(s.handleUpdatePrd))
 	mux.HandleFunc("GET /api/v1/prds/{id}/revisions", s.requireAuth(s.handleListRevisions))

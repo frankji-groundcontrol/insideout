@@ -258,3 +258,26 @@ func errSuffix(msg string) string {
 	}
 	return ": " + msg
 }
+
+// CommitPrd performs the human Commit: freeze the working PRD as an
+// immutable named version (POST /prds/{id}/commit).
+func (c *Client) CommitPrd(prdID, name, audience, summary string, unresolved []string, decisionNote string) (json.RawMessage, error) {
+	if unresolved == nil {
+		unresolved = []string{}
+	}
+	body := map[string]any{
+		"name": name, "primaryAudience": audience, "changeSummary": summary,
+		"unresolved": unresolved, "decisionNote": decisionNote,
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/prds/"+prdID+"/commit", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// PrdVersions lists a PRD's commits, newest first
+// (GET /prds/{id}/commits).
+func (c *Client) PrdVersions(prdID string) (json.RawMessage, error) {
+	return c.get("/prds/" + prdID + "/commits")
+}
