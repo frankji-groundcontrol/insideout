@@ -21,7 +21,7 @@ type RoadmapPlanNode struct {
 // matches ErrConflict so handlers map it to 409 and can surface the count.
 type ReplaceConflictError struct{ LiveCount int }
 
-func (e *ReplaceConflictError) Error() string { return "roadmap replace not confirmed" }
+func (e *ReplaceConflictError) Error() string        { return "roadmap replace not confirmed" }
 func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConflict }
 
 // ReplaceRoadmapTree atomically swaps a project's whole roadmap for the given

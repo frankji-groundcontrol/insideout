@@ -128,8 +128,8 @@ func TestFetchCommitsSince_CursorNeverFoundBounded(t *testing.T) {
 func TestNextLink(t *testing.T) {
 	cases := map[string]string{
 		`<https://api.github.com/x?page=2>; rel="next", <https://api.github.com/x?page=9>; rel="last"`: "https://api.github.com/x?page=2",
-		`<https://api.github.com/x?page=9>; rel="last"`: "",
-		``:                 "",
+		`<https://api.github.com/x?page=9>; rel="last"`:                                                "",
+		``:                "",
 		`<u>; rel="prev"`: "",
 	}
 	for header, want := range cases {
