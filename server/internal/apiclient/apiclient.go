@@ -70,6 +70,112 @@ func (c *Client) Projects(workspaceID string) (json.RawMessage, error) {
 // Prd returns GET /prds/{id}.
 func (c *Client) Prd(id string) (json.RawMessage, error) { return c.get("/prds/" + id) }
 
+// BuildFromPrd runs the agent planner: PRD → project with a branched
+// roadmap (POST /prds/{id}/build). expectedCount <= 0 omits the hint.
+func (c *Client) BuildFromPrd(prdID string, expectedCount int) (json.RawMessage, error) {
+	body := map[string]any{}
+	if expectedCount > 0 {
+		body["expectedCount"] = expectedCount
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/prds/"+prdID+"/build", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ExpandNode grows one roadmap node into AI-proposed children
+// (POST /roadmap/{id}/expand).
+func (c *Client) ExpandNode(nodeID string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/roadmap/"+nodeID+"/expand", map[string]any{}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RoadmapList returns GET /projects/{id}/roadmap.
+func (c *Client) RoadmapList(projectID string) (json.RawMessage, error) {
+	return c.get("/projects/" + projectID + "/roadmap")
+}
+
+// RoadmapAdd creates a node (POST /projects/{id}/roadmap); parentID may
+// be empty for a root, or "root" is not accepted — pass nil for root.
+func (c *Client) RoadmapAdd(projectID, title, description string, parentID *string) (json.RawMessage, error) {
+	body := map[string]any{"title": title, "description": description}
+	if parentID != nil {
+		body["parentId"] = *parentID
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/projects/"+projectID+"/roadmap", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RoadmapUpdate partially updates a node (PATCH /roadmap/{id}); nil
+// fields are left untouched server-side.
+func (c *Client) RoadmapUpdate(nodeID string, title, description, status *string) (json.RawMessage, error) {
+	body := map[string]any{}
+	if title != nil {
+		body["title"] = *title
+	}
+	if description != nil {
+		body["description"] = *description
+	}
+	if status != nil {
+		body["status"] = *status
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPatch, "/roadmap/"+nodeID, body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RoadmapMove re-parents and/or repositions a branch
+// (POST /roadmap/{id}/move). nil parentID makes it a root.
+func (c *Client) RoadmapMove(nodeID string, parentID *string, position *int) (json.RawMessage, error) {
+	body := map[string]any{}
+	if parentID != nil {
+		body["parentId"] = *parentID
+	}
+	if position != nil {
+		body["position"] = *position
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/roadmap/"+nodeID+"/move", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RoadmapDelete removes a node (DELETE /roadmap/{id}); any response
+// body is discarded.
+func (c *Client) RoadmapDelete(nodeID string) error {
+	var discard json.RawMessage
+	return c.do(http.MethodDelete, "/roadmap/"+nodeID, nil, &discard)
+}
+
+// SetRepo binds a GitHub repository to a project (PUT /projects/{id}/repo).
+func (c *Client) SetRepo(projectID, repoURL string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPut, "/projects/"+projectID+"/repo", map[string]string{"repoUrl": repoURL}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SyncGithub runs the pull-based GitHub evidence sync
+// (POST /projects/{id}/sync-github).
+func (c *Client) SyncGithub(projectID string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/projects/"+projectID+"/sync-github", map[string]any{}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *Client) get(path string) (json.RawMessage, error) {
 	var out json.RawMessage
 	if err := c.do(http.MethodGet, path, nil, &out); err != nil {

@@ -7,16 +7,23 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. CLI / MCP parity: Stage 2 — MCP server whose tools are 1:1 with the
+1. Roadmap GitHub loop (Stage B of the roadmap plan): user-registered
+   GitHub App for per-user access, `POST /api/v1/hooks/github` webhook
+   with HMAC verification, and the repo-side `insideout.yaml` matching
+   guide that maps branches/labels/paths to roadmap nodes. Stage A
+   (agent build/expand, branch CRUD, repo bind + sync as CLI verbs) is
+   live and verified ([changelog](changelogs/2026-08-21-roadmap-cli-parity.md)).
+   Plan: [`docs/plans/2026-08-21-roadmap-parity-and-github.md`](plans/2026-08-21-roadmap-parity-and-github.md).
+2. CLI / MCP parity: Stage 2 — MCP server whose tools are 1:1 with the
    CLI verbs (list frozen in the plan). CLI read surface is live
    ([changelog](changelogs/2026-08-21-cli-read-parity.md)).
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
-2. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
+3. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
    minimap) is the only open slice item. Native fonts are bundled and
    visually signed off (2026-08-20,
    [changelog](changelogs/2026-08-20-native-fonts-bundling.md)).
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
-3. Flutter Android release when an SDK exists
+4. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash

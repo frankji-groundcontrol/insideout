@@ -71,3 +71,18 @@ func TestUnauthorizedIsActionable(t *testing.T) {
 		t.Fatalf("want unauthorized hint, got %v", err)
 	}
 }
+
+// Regression: RoadmapDelete against an endpoint that answers with a JSON
+// body (not 204) must not fail decoding into a nil target.
+func TestDeleteDiscardsJSONBody(t *testing.T) {
+	c := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete || r.URL.Path != "/roadmap/n1" {
+			t.Errorf("got %s %s, want DELETE /roadmap/n1", r.Method, r.URL.Path)
+		}
+		w.Write([]byte(`{"deleted":true}`))
+	})
+	c.SetToken("tok-1")
+	if err := c.RoadmapDelete("n1"); err != nil {
+		t.Fatalf("RoadmapDelete: %v", err)
+	}
+}

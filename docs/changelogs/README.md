@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-21 — Roadmap parity on the CLI](2026-08-21-roadmap-cli-parity.md)
+  — agent `build`/`expand`, branch CRUD, repo bind + GitHub sync as CLI
+  verbs, verified live end-to-end; webhook + user-granted GitHub access
+  designed next.
 - [2026-08-21 — CLI read-surface parity](2026-08-21-cli-read-parity.md)
   — shared `apiclient` + `insideout login|whoami|workspaces|projects|prd`
   over the same API contract; MCP server next, then agent vocabulary.
