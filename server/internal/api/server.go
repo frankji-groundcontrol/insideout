@@ -55,6 +55,7 @@ func (s *Server) Handler() http.Handler {
 	s.registerRoadmapRoutes(mux)
 	s.registerGithubRoutes(mux)
 	s.registerRoadmapAIRoutes(mux)
+	s.registerAgentRoutes(mux)
 
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 

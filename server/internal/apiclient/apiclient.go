@@ -319,3 +319,40 @@ func (c *Client) PrdExportAudience(prdID, audience string) ([]byte, error) {
 	}
 	return raw, nil
 }
+
+// AgentContext returns the compact, focus-scoped agent context
+// (GET /agent/context).
+func (c *Client) AgentContext(projectID, mode, focus string) (json.RawMessage, error) {
+	q := "/agent/context?project_id=" + projectID
+	if mode != "" {
+		q += "&mode=" + mode
+	}
+	if focus != "" {
+		q += "&focus=" + focus
+	}
+	return c.get(q)
+}
+
+// AgentCheckpoint records agent work (POST /agent/checkpoint).
+func (c *Client) AgentCheckpoint(projectID, nodeID, summary string) (json.RawMessage, error) {
+	body := map[string]any{"projectId": projectID, "summary": summary}
+	if nodeID != "" {
+		body["nodeId"] = nodeID
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/agent/checkpoint", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AgentPropose records an agent proposal (POST /agent/propose).
+func (c *Client) AgentPropose(projectID, kind, summary, detail string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/agent/propose", map[string]any{
+		"projectId": projectID, "kind": kind, "summary": summary, "detail": detail,
+	}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}

@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-22 — Agent vocabulary v1](2026-08-22-agent-vocabulary.md)
+  — `context`/`focus`/`checkpoint`/`propose` live via API/CLI/MCP;
+  `version` stays human-only; typed timeline records verified live.
 - [2026-08-22 — Audience view projections](2026-08-22-audience-views.md)
   — Decision/Management/Delivery/Validation projections via API
   `view`, audience markdown export, CLI/MCP verbs, web dropdown.

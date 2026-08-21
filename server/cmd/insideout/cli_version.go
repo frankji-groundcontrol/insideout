@@ -14,6 +14,38 @@ import (
 func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 	c := apiclient.New(api)
 	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	if cmd == "agent-context" {
+		fs := flag.NewFlagSet("agent-context", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		mode := fs.String("mode", "implementation", "brainstorming|implementation|review")
+		focus := fs.String("focus", "", "focus node id")
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout agent-context [--mode M] [--focus node] <project-id>")
+			return true, 2
+		}
+		return printJSON(c.AgentContext(fs.Args()[0], *mode, *focus))
+	}
+	if cmd == "checkpoint" {
+		fs := flag.NewFlagSet("checkpoint", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		node := fs.String("node", "", "roadmap node id (optional)")
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 2 {
+			fmt.Fprintln(os.Stderr, "usage: insideout checkpoint [--node id] <project-id> <summary>")
+			return true, 2
+		}
+		return printJSON(c.AgentCheckpoint(fs.Args()[0], *node, fs.Args()[1]))
+	}
+	if cmd == "propose" {
+		fs := flag.NewFlagSet("propose", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		kind := fs.String("kind", "structure", "structure|scope|priority")
+		detail := fs.String("detail", "", "extra detail")
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 2 {
+			fmt.Fprintln(os.Stderr, "usage: insideout propose --kind K [--detail D] <project-id> <summary>")
+			return true, 2
+		}
+		return printJSON(c.AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail))
+	}
 	if cmd == "view" {
 		fs := flag.NewFlagSet("view", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)

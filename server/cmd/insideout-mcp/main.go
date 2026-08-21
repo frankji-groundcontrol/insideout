@@ -150,6 +150,26 @@ func main() {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.PrdReadiness(reqStr(req, "prd_id")))
 		})
+	addTextTool("agent_context", "Compact, focus-scoped agent context for a project (mode brainstorming|implementation|review)",
+		[]mcp.ToolOption{strReq("project_id", "project id"), strOpt("mode", "brainstorming|implementation|review"), strOpt("focus", "roadmap node id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			mode, _ := req.GetArguments()["mode"].(string)
+			focus, _ := req.GetArguments()["focus"].(string)
+			return call(c.AgentContext(reqStr(req, "project_id"), mode, focus))
+		})
+	addTextTool("checkpoint", "Record agent work done on a project (never applies changes)",
+		[]mcp.ToolOption{strReq("project_id", "project id"), strReq("summary", "what was done"), strOpt("node_id", "roadmap node id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			node, _ := req.GetArguments()["node_id"].(string)
+			return call(c.AgentCheckpoint(reqStr(req, "project_id"), node, reqStr(req, "summary")))
+		})
+	addTextTool("propose", "Propose a structure/scope/priority change; a human decides",
+		[]mcp.ToolOption{strReq("project_id", "project id"), strReq("kind", "structure|scope|priority"),
+			strReq("summary", "the proposal"), strOpt("detail", "extra detail")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			detail, _ := req.GetArguments()["detail"].(string)
+			return call(c.AgentPropose(reqStr(req, "project_id"), reqStr(req, "kind"), reqStr(req, "summary"), detail))
+		})
 	addTextTool("view", "Audience projection of a PRD (decision|management|delivery|validation): ordered sections with whys, readiness gaps, latest commit",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("audience", "decision|management|delivery|validation (default decision)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

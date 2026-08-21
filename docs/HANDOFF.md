@@ -7,14 +7,13 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Product depth next: the Coach weaving the readiness gap
-   explanations into conversation (principle 7), and the agent
-   vocabulary routes (`context`, `focus`, `checkpoint/report`,
-   `propose`, `version`). Landed so far: the human Commit +
-   "form a version now" readiness + web versions page
-   ([record](changelogs/2026-08-21-version-commit.md)), and audience
-   view projections across API/CLI/MCP/export
-   ([record](changelogs/2026-08-22-audience-views.md)).
+1. Product depth next: the Coach weaving readiness gap explanations
+   into conversation (principle 7), and the proposal acceptance
+   workflow. Landed this week: the human Commit + readiness + versions
+   page ([record](changelogs/2026-08-21-version-commit.md)), audience
+   view projections ([record](changelogs/2026-08-22-audience-views.md)),
+   and the agent vocabulary context/focus/checkpoint/propose
+   ([record](changelogs/2026-08-22-agent-vocabulary.md)).
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (16 tools) and the

@@ -18,3 +18,14 @@ func pathUUID(w http.ResponseWriter, r *http.Request, name string) (uuid.UUID, b
 	}
 	return id, true
 }
+
+// parseUUIDParam parses any string (query/body) as a UUID, answering
+// with the same 400 shape as pathUUID.
+func parseUUIDParam(w http.ResponseWriter, name, raw string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(raw)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid "+name, "", nil)
+		return uuid.UUID{}, false
+	}
+	return id, true
+}
