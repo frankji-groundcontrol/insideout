@@ -7,14 +7,14 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. All named threads closed 2026-08-22
-   ([follow-ons](changelogs/2026-08-22-product-follow-ons.md),
-   [depth thread](changelogs/2026-08-22-depth-thread.md)): revision
-   verbs (parity Stage 3 complete, 27 MCP tools), live canvas presence
-   (SSE), time-first roadmap (deadlines, pressure, Now/Next/Done).
-   What remains of PRODUCT.md is depth of polish: real-time canvas
-   cursors, proposal→structure application flows, audience-view web
-   rendering, and whatever the next interview surfaces.
+1. The recorded frontier is closed 2026-08-22
+   ([frontier](changelogs/2026-08-22-frontier.md), plus
+   [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
+   [depth](changelogs/2026-08-22-depth-thread.md)): audience-view web
+   rendering, proposal→structure application, and canvas cursors are
+   live on top of presence, the time-first roadmap, and the full
+   parity loop (27 MCP tools). What remains of PRODUCT.md is genuinely
+   new product judgment — the next interview's findings decide it.
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (16 tools) and the

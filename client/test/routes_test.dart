@@ -19,6 +19,7 @@ void main() {
         '/prd/:id',
         '/prd/:id/revisions',
         '/prd/:id/versions',
+        '/prd/:id/view',
         '/prd/:id/export',
       },
     );

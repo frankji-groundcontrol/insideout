@@ -189,10 +189,11 @@ func main() {
 			return call(c.IdeaConvert(reqStr(req, "idea_id")))
 		})
 	addTextTool("proposal_decide", "Human accept/reject of an agent proposal (owner or admin; the Decision Log entry)",
-		[]mcp.ToolOption{strReq("update_id", "proposal update id"), strReq("decision", "accepted|rejected"), strOpt("reason", "why")},
+		[]mcp.ToolOption{strReq("update_id", "proposal update id"), strReq("decision", "accepted|rejected"), strOpt("reason", "why"), mcp.WithBoolean("apply", mcp.Description("apply the proposal structured items on acceptance"))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			reason, _ := req.GetArguments()["reason"].(string)
-			return call(c.DecideProposal(reqStr(req, "update_id"), reqStr(req, "decision"), reason))
+			apply, _ := req.GetArguments()["apply"].(bool)
+			return call(c.DecideProposal(reqStr(req, "update_id"), reqStr(req, "decision"), reason, apply))
 		})
 	addTextTool("agent_context", "Compact, focus-scoped agent context for a project (mode brainstorming|implementation|review)",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strOpt("mode", "brainstorming|implementation|review"), strOpt("focus", "roadmap node id")},
@@ -212,7 +213,19 @@ func main() {
 			strReq("summary", "the proposal"), strOpt("detail", "extra detail")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			detail, _ := req.GetArguments()["detail"].(string)
-			return call(c.AgentPropose(reqStr(req, "project_id"), reqStr(req, "kind"), reqStr(req, "summary"), detail))
+			var items []string
+			if arr, ok := req.GetArguments()["items"].([]any); ok {
+				for _, v := range arr {
+					if m, ok := v.(map[string]any); ok {
+						title, _ := m["title"].(string)
+						hint, _ := m["parentHint"].(string)
+						if title != "" {
+							items = append(items, title+"@"+hint)
+						}
+					}
+				}
+			}
+			return call(c.AgentPropose(reqStr(req, "project_id"), reqStr(req, "kind"), reqStr(req, "summary"), detail, items))
 		})
 	addTextTool("view", "Audience projection of a PRD (decision|management|delivery|validation): ordered sections with whys, readiness gaps, latest commit",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("audience", "decision|management|delivery|validation (default decision)")},

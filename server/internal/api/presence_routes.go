@@ -19,6 +19,7 @@ import (
 func (s *Server) registerPresenceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}/presence", s.requireAuth(s.handlePresenceList))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/presence/stream", s.requireAuth(s.handlePresenceStream))
+	mux.HandleFunc("POST /api/v1/projects/{pid}/cursor", s.requireAuth(s.handleCursor))
 }
 
 func (s *Server) handlePresenceList(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +33,38 @@ func (s *Server) handlePresenceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, s.presence.List(pid.String()))
+}
+
+// handleCursor moves this session's canvas cursor (ephemeral broadcast
+// to presence stream subscribers).
+func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
+	userID, _ := UserID(r.Context())
+	pid, ok := pathUUID(w, r, "pid")
+	if !ok {
+		return
+	}
+	if _, err := s.store.GetProjectForMember(r.Context(), pid, userID); err != nil {
+		presenceProjectError(w, err)
+		return
+	}
+	var req struct {
+		X float64 `json:"x"`
+		Y float64 `json:"y"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	client := r.URL.Query().Get("client")
+	if client == "" {
+		client = userID.String()
+	}
+	name := userID.String()[:8]
+	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {
+		name = u.Username
+	}
+	s.presence.Cursor(pid.String(), client, name, req.X, req.Y)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
@@ -63,6 +96,8 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 
 	updates, cancel := s.presence.Subscribe(pid.String())
 	defer cancel()
+	cursorCh, cancelCursors := s.presence.SubscribeCursors(pid.String())
+	defer cancelCursors()
 	writeSnapshot := func(entries []presence.Entry) {
 		raw, _ := json.Marshal(entries)
 		fmt.Fprintf(w, "event: presence\ndata: %s\n\n", raw)
@@ -86,6 +121,14 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			writeSnapshot(entries)
+		case ev, okEv := <-cursorCh:
+			if !okEv {
+				return
+			}
+			if raw, err := json.Marshal(ev); err == nil {
+				fmt.Fprintf(w, "event: cursor\ndata: %s\n\n", raw)
+				flusher.Flush()
+			}
 		case <-heartbeat.C:
 			// The ping doubles as this session's heartbeat refresh.
 			s.presence.Touch(pid.String(), client, userID.String(), name)

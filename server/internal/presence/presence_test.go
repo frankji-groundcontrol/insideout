@@ -67,3 +67,27 @@ func TestListIsDeterministic(t *testing.T) {
 		t.Fatalf("order not deterministic: %v", got)
 	}
 }
+
+func TestCursorBroadcast(t *testing.T) {
+	r, _ := newTestRegistry()
+	ch, cancel := r.SubscribeCursors("p")
+	defer cancel()
+	r.Cursor("p", "s1", "A", 12.5, 40)
+	select {
+	case ev := <-ch:
+		if ev.SessionID != "s1" || ev.X != 12.5 || ev.Y != 40 {
+			t.Fatalf("bad cursor event: %+v", ev)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("cursor event not delivered")
+	}
+	// Unsubscribed projects receive nothing.
+	ch2, cancel2 := r.SubscribeCursors("other")
+	defer cancel2()
+	r.Cursor("p", "s1", "A", 1, 1)
+	select {
+	case <-ch2:
+		t.Fatal("cursor leaked across projects")
+	default:
+	}
+}

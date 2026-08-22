@@ -357,11 +357,20 @@ func (c *Client) AgentCheckpoint(projectID, nodeID, summary string) (json.RawMes
 }
 
 // AgentPropose records an agent proposal (POST /agent/propose).
-func (c *Client) AgentPropose(projectID, kind, summary, detail string) (json.RawMessage, error) {
+// items: optional structured "Title[@ParentTitle]" entries a human can
+// apply on acceptance.
+func (c *Client) AgentPropose(projectID, kind, summary, detail string, items []string) (json.RawMessage, error) {
+	body := map[string]any{"projectId": projectID, "kind": kind, "summary": summary, "detail": detail}
+	if len(items) > 0 {
+		arr := make([]map[string]string, 0, len(items))
+		for _, it := range items {
+			title, hint, _ := strings.Cut(it, "@")
+			arr = append(arr, map[string]string{"action": "add_node", "title": title, "parentHint": hint})
+		}
+		body["items"] = arr
+	}
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/agent/propose", map[string]any{
-		"projectId": projectID, "kind": kind, "summary": summary, "detail": detail,
-	}, &out); err != nil {
+	if err := c.do(http.MethodPost, "/agent/propose", body, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -388,14 +397,21 @@ func (c *Client) IdeaConvert(ideaID string) (json.RawMessage, error) {
 }
 
 // DecideProposal records the human accept/reject of an agent proposal
-// (POST /agent/proposals/{id}/decision).
-func (c *Client) DecideProposal(updateID, decision, reason string) (json.RawMessage, error) {
+// (POST /agent/proposals/{id}/decision); apply executes structured
+// items on acceptance.
+func (c *Client) DecideProposal(updateID, decision, reason string, apply bool) (json.RawMessage, error) {
 	var out json.RawMessage
 	if err := c.do(http.MethodPost, "/agent/proposals/"+updateID+"/decision",
-		map[string]string{"decision": decision, "reason": reason}, &out); err != nil {
+		map[string]any{"decision": decision, "reason": reason, "apply": apply}, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
+}
+
+// Cursor moves this session's canvas cursor (POST /projects/{id}/cursor).
+func (c *Client) Cursor(projectID string, x, y float64) error {
+	return c.do(http.MethodPost, "/projects/"+projectID+"/cursor",
+		map[string]float64{"x": x, "y": y}, nil)
 }
 
 // PrdRevisions lists a PRD's revision snapshots (GET /prds/{id}/revisions).

@@ -23,11 +23,26 @@ class _RoadmapPageState extends State<RoadmapPage> {
   bool _canvas = false;
   final _canvasController = ScrollController();
   List<PresenceEntry> _presence = [];
+  final Map<String, CursorDot> _cursors = {};
+  DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
   late final String _clientId = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+
+  void _sendCursor(double x, double y) {
+    final now = DateTime.now();
+    if (now.difference(_lastCursorSent).inMilliseconds < 200) return;
+    _lastCursorSent = now;
+    context.read<Session>().api.cursor(widget.projectId, x, y).catchError((_) {});
+  }
 
   void _watchPresence() {
     context.read<Session>().api.presenceStream(widget.projectId, _clientId, (entries) {
-      if (mounted) setState(() => _presence = entries);
+      if (!mounted) return;
+      final live = entries.map((e) => e.sessionId).toSet();
+      _cursors.removeWhere((id, _) => !live.contains(id));
+      setState(() => _presence = entries);
+    }, onCursor: (sessionId, name, x, y) {
+      if (!mounted || sessionId == _clientId) return;
+      setState(() => _cursors[sessionId] = CursorDot(sessionId: sessionId, name: name, x: x, y: y));
     }).catchError((_) {});
   }
 
@@ -326,6 +341,8 @@ class _RoadmapPageState extends State<RoadmapPage> {
                   nodes: snap.data!,
                   tileBuilder: (node, indent) => _nodeTile(snap.data!, node, indent),
                   controller: _canvasController,
+                  onCursor: _sendCursor,
+                  cursors: _cursors.values.toList(),
                 ),
               ),
             ],

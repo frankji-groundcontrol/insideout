@@ -59,11 +59,13 @@ func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 		applyAPIFlag(fs, &api)
 		kind := fs.String("kind", "structure", "structure|scope|priority")
 		detail := fs.String("detail", "", "extra detail")
+		var items multiFlag
+		fs.Var(&items, "item", "structured item Title[@ParentTitle], appliable on acceptance (repeatable)")
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 2 {
-			fmt.Fprintln(os.Stderr, "usage: insideout propose --kind K [--detail D] <project-id> <summary>")
+			fmt.Fprintln(os.Stderr, "usage: insideout propose --kind K [--detail D] [--item Title[@Parent]]... <project-id> <summary>")
 			return true, 2
 		}
-		return printJSON(c.AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail))
+		return printJSON(c.AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail, items))
 	}
 	if cmd == "view" {
 		fs := flag.NewFlagSet("view", flag.ContinueOnError)

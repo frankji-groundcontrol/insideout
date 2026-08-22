@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-22 — Frontier closed](2026-08-22-frontier.md)
+  — audience-view web page, proposal→structure application, canvas
+  cursors; all live-verified.
 - [2026-08-22 — Depth thread](2026-08-22-depth-thread.md)
   — PRD-revision verbs (parity closed), live canvas presence (SSE),
   time-first roadmap (deadlines, pressure, Now/Next/Done).

@@ -351,7 +351,8 @@ class ApiClient {
   /// Every snapshot replace-calls [onChange]; the stream ends when the
   /// caller cancels the dio request (dio has no per-request cancel
   /// here, so the page closes by letting it die with dispose).
-  Future<void> presenceStream(String projectId, String clientId, void onChange(List<PresenceEntry> entries)) async {
+  Future<void> presenceStream(String projectId, String clientId, void onChange(List<PresenceEntry> entries),
+      {void Function(String sessionId, String name, double x, double y)? onCursor}) async {
     final token = await _readAccess();
     final res = await _dio.get<ResponseBody>(
       '/projects/$projectId/presence/stream',
@@ -377,6 +378,14 @@ class ApiClient {
           onChange(((jsonDecode(frame.data) as List) ?? const [])
               .map((e) => PresenceEntry.fromJson(e as Map<String, dynamic>))
               .toList());
+        } else if (frame.event == 'cursor' && onCursor != null) {
+          final m = jsonDecode(frame.data) as Map<String, dynamic>;
+          onCursor(
+            m['sessionId']?.toString() ?? '',
+            m['name']?.toString() ?? '',
+            (m['x'] as num?)?.toDouble() ?? 0,
+            (m['y'] as num?)?.toDouble() ?? 0,
+          );
         }
       }
     }
@@ -397,6 +406,10 @@ class ApiClient {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
+  Future<void> cursor(String projectId, double x, double y) async {
+    await _dio.post('/projects/$projectId/cursor', data: {'x': x, 'y': y});
+  }
+
   Future<RoadmapProgress> roadmapProgress(String projectId) async {
     final res = await _dio.get('/projects/$projectId/roadmap/progress');
     return _parse(res, (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>));
@@ -414,5 +427,10 @@ class ApiClient {
   Future<List<RoadmapNode>> expandRoadmapNode(String nodeId) async {
     final res = await _exec(req.expandRoadmapNode(nodeId));
     return _parse(res, (d) => (d as List).map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>)).toList());
+  }
+
+  Future<Map<String, dynamic>> prdView(String id, String audience) async {
+    final res = await _dio.get('/prds/$id/view', queryParameters: {'audience': audience});
+    return _parse(res, (d) => d as Map<String, dynamic>);
   }
 }

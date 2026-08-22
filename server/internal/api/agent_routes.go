@@ -134,6 +134,13 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		Kind      string `json:"kind"`
 		Summary   string `json:"summary"`
 		Detail    string `json:"detail"`
+		// Items are structured actions a human may apply on acceptance
+		// (proposal→structure application). Optional, max 10.
+		Items []struct {
+			Action     string `json:"action"`
+			Title      string `json:"title"`
+			ParentHint string `json:"parentHint"`
+		} `json:"items"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
@@ -172,7 +179,35 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false})
+	items := make([]store.ProposalItem, 0, len(req.Items))
+	for _, it := range req.Items {
+		title := strings.TrimSpace(it.Title)
+		if title == "" || len(title) > 200 {
+			httpx.WriteError(w, http.StatusBadRequest, "item title is required (max 200 characters)", "", nil)
+			return
+		}
+		action := it.Action
+		if action == "" {
+			action = "add_node"
+		}
+		if action != "add_node" {
+			httpx.WriteError(w, http.StatusBadRequest, "item action must be add_node", "", nil)
+			return
+		}
+		items = append(items, store.ProposalItem{UpdateID: u.ID, Action: action, Title: title, ParentHint: strings.TrimSpace(it.ParentHint)})
+	}
+	if len(items) > 10 {
+		httpx.WriteError(w, http.StatusBadRequest, "at most 10 items per proposal", "", nil)
+		return
+	}
+	if len(items) > 0 {
+		if err := s.store.AddProposalItems(r.Context(), userID, u.ID, items); err != nil {
+			s.log.Error("proposal items", "error", err)
+			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+			return
+		}
+	}
+	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
 }
 
 // handleProposalDecision is the human accept/reject of an agent
@@ -186,6 +221,9 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 	var req struct {
 		Decision string `json:"decision"`
 		Reason   string `json:"reason"`
+		// Apply executes the proposal's structured items on acceptance
+		// (proposal→structure application). Rejected decisions ignore it.
+		Apply bool `json:"apply"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
@@ -209,5 +247,20 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, d)
+	applied := []string{}
+	if req.Apply && req.Decision == "accepted" {
+		// Items are applied as the deciding human, under their RLS
+		// context (the store resolves the project inside it).
+		nodeIDs, err := s.store.ApplyProposalItemsForUpdate(r.Context(), userID, uid)
+		if err != nil {
+			s.log.Error("apply proposal items", "error", err)
+		}
+		for _, id := range nodeIDs {
+			applied = append(applied, id.String())
+		}
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
+		"updateId": d.UpdateID, "decision": d.Decision, "reason": d.Reason,
+		"decidedBy": d.DecidedBy, "decidedAt": d.DecidedAt, "appliedNodes": applied,
+	})
 }

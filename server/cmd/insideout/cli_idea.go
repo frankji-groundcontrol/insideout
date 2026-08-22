@@ -37,15 +37,16 @@ func runIdeaCommand(args []string, api string) (bool, int) {
 		accept := fs.Bool("accept", false, "accept the proposal")
 		reject := fs.Bool("reject", false, "reject the proposal")
 		reason := fs.String("reason", "", "why")
+		apply := fs.Bool("apply", false, "apply the proposal structured items (with --accept)")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 || *accept == *reject {
-			fmt.Fprintln(os.Stderr, "usage: insideout idea proposal-decide --accept|--reject [--reason R] <update-id>")
+			fmt.Fprintln(os.Stderr, "usage: insideout idea proposal-decide --accept|--reject [--apply] [--reason R] <update-id>")
 			return true, 2
 		}
 		decision := "rejected"
 		if *accept {
 			decision = "accepted"
 		}
-		return printJSON(c.DecideProposal(fs.Args()[0], decision, *reason))
+		return printJSON(c.DecideProposal(fs.Args()[0], decision, *reason, *apply))
 	case "convert":
 		fs := flag.NewFlagSet("idea convert", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)

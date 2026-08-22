@@ -6,12 +6,23 @@ import '../../api/models.dart';
 /// sibling band — a vertical column of its subtree — laid out
 /// horizontally, so parallel efforts read side by side. The minimap is
 /// a compact status-tinted overview that jumps to a band.
+class CursorDot {
+  CursorDot({required this.sessionId, required this.name, required this.x, required this.y});
+
+  final String sessionId;
+  final String name;
+  final double x;
+  final double y;
+}
+
 class RoadmapCanvas extends StatelessWidget {
   const RoadmapCanvas({
     super.key,
     required this.nodes,
     required this.tileBuilder,
     required this.controller,
+    this.onCursor,
+    this.cursors = const [],
   });
 
   final List<RoadmapNode> nodes;
@@ -19,6 +30,11 @@ class RoadmapCanvas extends StatelessWidget {
   /// affordances as the list view).
   final Widget Function(RoadmapNode node, double indent) tileBuilder;
   final ScrollController controller;
+  /// onCursor receives pointer moves in canvas content space (nullable
+  /// for tests).
+  final void Function(double x, double y)? onCursor;
+  /// Other sessions' live cursors, rendered as labeled pointers.
+  final List<CursorDot> cursors;
 
   static const bandWidth = 300.0;
   static const bandSpacing = 16.0;
@@ -47,11 +63,7 @@ class RoadmapCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roots = _roots;
-    return SingleChildScrollView(
-      controller: controller,
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.all(16),
-      child: Row(
+    final content = Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < roots.length; i++) ...[
@@ -63,6 +75,35 @@ class RoadmapCanvas extends StatelessWidget {
             ),
           ],
         ],
+    );
+    return SingleChildScrollView(
+      controller: controller,
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.all(16),
+      child: MouseRegion(
+        onHover: onCursor == null
+            ? null
+            : (e) => onCursor!(e.localPosition.dx, e.localPosition.dy),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            content,
+            for (final c in cursors)
+              Positioned(
+                left: c.x,
+                top: c.y,
+                child: IgnorePointer(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.navigation, size: 14, color: Theme.of(context).colorScheme.secondary),
+                      Text(c.name, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10)),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

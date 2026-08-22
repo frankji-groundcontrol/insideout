@@ -16,12 +16,21 @@ type Entry struct {
 	LastSeen  time.Time `json:"-"`
 }
 
+// CursorEvent is one live pointer position (canvas content space).
+type CursorEvent struct {
+	SessionID string  `json:"sessionId"`
+	Name      string  `json:"name"`
+	X         float64 `json:"x"`
+	Y         float64 `json:"y"`
+}
+
 // Registry tracks per-project sessions and pushes change snapshots to
 // subscribers. All calls are goroutine-safe.
 type Registry struct {
 	mu       sync.Mutex
 	projects map[string]map[string]Entry
 	subs     map[string]map[chan []Entry]struct{}
+	cursors  map[string]map[chan CursorEvent]struct{}
 	ttl      time.Duration
 	now      func() time.Time
 }
@@ -33,6 +42,7 @@ func New(ttl time.Duration, now func() time.Time) *Registry {
 	return &Registry{
 		projects: map[string]map[string]Entry{},
 		subs:     map[string]map[chan []Entry]struct{}{},
+		cursors:  map[string]map[chan CursorEvent]struct{}{},
 		ttl:      ttl, now: now,
 	}
 }
@@ -88,6 +98,42 @@ func (r *Registry) Subscribe(projectID string) (<-chan []Entry, func()) {
 		delete(r.subs[projectID], ch)
 		if len(r.subs[projectID]) == 0 {
 			delete(r.subs, projectID)
+		}
+		r.mu.Unlock()
+		close(ch)
+	}
+	return ch, cancel
+}
+
+// Cursor broadcasts one session's pointer position to cursor
+// subscribers. Ephemeral by design: nothing is stored; slow consumers
+// simply miss intermediate moves.
+func (r *Registry) Cursor(projectID, sessionID, name string, x, y float64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	ev := CursorEvent{SessionID: sessionID, Name: name, X: x, Y: y}
+	for ch := range r.cursors[projectID] {
+		select {
+		case ch <- ev:
+		default:
+		}
+	}
+}
+
+// SubscribeCursors delivers live cursor events for the project.
+func (r *Registry) SubscribeCursors(projectID string) (<-chan CursorEvent, func()) {
+	ch := make(chan CursorEvent, 16)
+	r.mu.Lock()
+	if r.cursors[projectID] == nil {
+		r.cursors[projectID] = map[chan CursorEvent]struct{}{}
+	}
+	r.cursors[projectID][ch] = struct{}{}
+	r.mu.Unlock()
+	cancel := func() {
+		r.mu.Lock()
+		delete(r.cursors[projectID], ch)
+		if len(r.cursors[projectID]) == 0 {
+			delete(r.cursors, projectID)
 		}
 		r.mu.Unlock()
 		close(ch)
