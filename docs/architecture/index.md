@@ -16,6 +16,10 @@ and the bug records it links to.
   tool calling, SSE streaming, the direct Anthropic client.
 - [Frontend](frontend.md) — Flutter client (`client/`) on Railway, wearing
   Ink & Seal; the Nuxt tree was deleted 2026-08-18.
+- [Product subsystems](product-subsystems.md) — the 2026-08 product arc:
+  version control (Commit + readiness + audience views), the agent
+  vocabulary (with proposal application), the time-first roadmap,
+  real-time presence/cursors, and the GitHub evidence loop.
 - [Deployment](deployment.md) — docker-compose topology, environment
   configuration, the two supported database-provisioning models; the
   hosted Railway instance is documented in
