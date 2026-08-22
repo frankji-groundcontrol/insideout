@@ -20,6 +20,7 @@ type RoadmapNode struct {
 	Description string
 	Status      string
 	Position    int
+	Deadline    *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	// B3 attribution: who created the node and who last touched it. Nullable —
@@ -43,13 +44,17 @@ type RoadmapNodeFields struct {
 	Title       *string
 	Description *string
 	Status      *string
+	// Deadline sets a deadline when non-nil; ClearDeadline removes one.
+	// Absent both leave it untouched.
+	Deadline      *time.Time
+	ClearDeadline bool
 }
 
-const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, created_at, updated_at, created_by, updated_by`
+const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by`
 
 func scanRoadmapNode(row pgx.Row) (*RoadmapNode, error) {
 	var n RoadmapNode
-	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy)
+	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -169,7 +174,7 @@ func (s *Store) ListRoadmap(ctx context.Context, actorID, projectID uuid.UUID) (
 
 		for rows.Next() {
 			var n RoadmapNode
-			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.CreatorName, &n.EditorName); err != nil {
+			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.CreatorName, &n.EditorName); err != nil {
 				return err
 			}
 			out = append(out, n)
@@ -199,10 +204,11 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 			SET title = COALESCE($2, title),
 			    description = COALESCE($3, description),
 			    status = COALESCE($4, status),
+			    deadline = CASE WHEN $6 THEN NULL ELSE COALESCE($7, deadline) END,
 			    updated_by = $5
 			WHERE id = $1
 			RETURNING `+roadmapNodeColumns,
-			nodeID, f.Title, f.Description, f.Status, actorID,
+			nodeID, f.Title, f.Description, f.Status, actorID, f.ClearDeadline, f.Deadline,
 		)
 		var scanErr error
 		n, scanErr = scanRoadmapNode(row)

@@ -14,6 +14,25 @@ import (
 func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 	c := apiclient.New(api)
 	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	if cmd == "revisions" {
+		fs := flag.NewFlagSet("revisions", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout revisions <prd-id>")
+			return true, 2
+		}
+		return printJSON(c.PrdRevisions(fs.Args()[0]))
+	}
+	if cmd == "snapshot" {
+		fs := flag.NewFlagSet("snapshot", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		note := fs.String("note", "", "optional note")
+		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout snapshot [--note N] <prd-id>")
+			return true, 2
+		}
+		return printJSON(c.SnapshotPrd(fs.Args()[0], *note))
+	}
 	if cmd == "agent-context" {
 		fs := flag.NewFlagSet("agent-context", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)

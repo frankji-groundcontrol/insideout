@@ -78,7 +78,8 @@ func main() {
 		})
 	addTextTool("roadmap_update", "Partially update a node (title/description/status)",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("title", "new title"),
-			strOpt("description", "new description"), strOpt("status", "locked|pending|in_progress|done")},
+			strOpt("description", "new description"), strOpt("status", "locked|pending|in_progress|done"),
+			strOpt("deadline", "RFC3339 deadline, or empty string to clear")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			arg := func(k string) *string {
 				if v, ok := req.GetArguments()[k].(string); ok && v != "" {
@@ -86,7 +87,12 @@ func main() {
 				}
 				return nil
 			}
-			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status")))
+			deadline, hasDeadline := req.GetArguments()["deadline"].(string)
+			var dl *string
+			if hasDeadline {
+				dl = &deadline
+			}
+			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status"), dl))
 		})
 	addTextTool("roadmap_move", "Re-parent / reposition a node",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", "new parent id; empty = root")},
@@ -149,6 +155,27 @@ func main() {
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.PrdReadiness(reqStr(req, "prd_id")))
+		})
+	addTextTool("revisions", "List a PRD's revision snapshots",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.PrdRevisions(reqStr(req, "prd_id")))
+		})
+	addTextTool("snapshot", "Record a revision snapshot of the working PRD (working version, not a Commit)",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("note", "optional note")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			note, _ := req.GetArguments()["note"].(string)
+			return call(c.SnapshotPrd(reqStr(req, "prd_id"), note))
+		})
+	addTextTool("progress", "Time-first Progress view: Now (deadlined work only), at most three Next, Done count, plus in-progress items missing a deadline",
+		[]mcp.ToolOption{strReq("project_id", "project id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.RoadmapProgress(reqStr(req, "project_id")))
+		})
+	addTextTool("presence", "Who is currently viewing a project (canvas presence snapshot)",
+		[]mcp.ToolOption{strReq("project_id", "project id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.ProjectPresence(reqStr(req, "project_id")))
 		})
 	addTextTool("idea_create", "Capture a new idea in a workspace",
 		[]mcp.ToolOption{strReq("workspace_id", "workspace id"), strReq("title", "idea title"), strOpt("content", "idea body")},

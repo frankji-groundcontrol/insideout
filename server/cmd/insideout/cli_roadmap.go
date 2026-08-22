@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
@@ -25,6 +26,22 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
 
 	switch sub {
+	case "progress":
+		fs := flag.NewFlagSet("roadmap progress", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout roadmap progress <project-id>")
+			return true, 2
+		}
+		return printJSON(c.RoadmapProgress(fs.Args()[0]))
+	case "presence":
+		fs := flag.NewFlagSet("presence", flag.ContinueOnError)
+		applyAPIFlag(fs, &api)
+		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
+			fmt.Fprintln(os.Stderr, "usage: insideout presence <project-id>")
+			return true, 2
+		}
+		return printJSON(c.ProjectPresence(fs.Args()[0]))
 	case "list":
 		fs := flag.NewFlagSet("roadmap list", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)
@@ -54,12 +71,24 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 		title := fs.String("title", "", "new title")
 		description := fs.String("description", "", "new description")
 		status := fs.String("status", "", "locked|pending|in_progress|done")
+		deadline := fs.String("deadline", "", "RFC3339 deadline, or clear")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 ||
-			(*title == "" && *description == "" && *status == "") {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap update [--title T] [--description D] [--status S] <node-id>")
+			(*title == "" && *description == "" && *status == "" && *deadline == "") {
+			fmt.Fprintln(os.Stderr, "usage: insideout roadmap update [--title T] [--description D] [--status S] [--deadline RFC3339|clear] <node-id>")
 			return true, 2
 		}
-		return printJSON(c.RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status)))
+		var dl *string
+		if *deadline == "clear" {
+			empty := ""
+			dl = &empty
+		} else if *deadline != "" {
+			if _, err := time.Parse(time.RFC3339, *deadline); err != nil {
+				fmt.Fprintln(os.Stderr, "deadline must be RFC3339 or clear")
+				return true, 2
+			}
+			dl = deadline
+		}
+		return printJSON(c.RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status), dl))
 	case "move":
 		fs := flag.NewFlagSet("roadmap move", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)

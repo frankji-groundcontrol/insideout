@@ -7,12 +7,14 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. All five follow-ons closed 2026-08-22
-   ([record](changelogs/2026-08-22-product-follow-ons.md)): coach gap
-   weaving, proposal acceptance (with reversal), idea create/convert
-   verbs, canvas v1 (bands + minimap), Android verified SDK-blocked.
-   Remaining threads: PRD-revision CLI/MCP verbs, real-time canvas
-   presence, and PRODUCT.md depth beyond v1.
+1. All named threads closed 2026-08-22
+   ([follow-ons](changelogs/2026-08-22-product-follow-ons.md),
+   [depth thread](changelogs/2026-08-22-depth-thread.md)): revision
+   verbs (parity Stage 3 complete, 27 MCP tools), live canvas presence
+   (SSE), time-first roadmap (deadlines, pressure, Now/Next/Done).
+   What remains of PRODUCT.md is depth of polish: real-time canvas
+   cursors, proposal→structure application flows, audience-view web
+   rendering, and whatever the next interview surfaces.
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (16 tools) and the

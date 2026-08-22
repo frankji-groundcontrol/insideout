@@ -347,6 +347,41 @@ class ApiClient {
     }
   }
 
+  /// Subscribes to the project's live presence (canvas who-is-here).
+  /// Every snapshot replace-calls [onChange]; the stream ends when the
+  /// caller cancels the dio request (dio has no per-request cancel
+  /// here, so the page closes by letting it die with dispose).
+  Future<void> presenceStream(String projectId, String clientId, void onChange(List<PresenceEntry> entries)) async {
+    final token = await _readAccess();
+    final res = await _dio.get<ResponseBody>(
+      '/projects/$projectId/presence/stream',
+      queryParameters: {'client': clientId},
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Accept': 'text/event-stream',
+        },
+      ),
+    );
+    if (res.statusCode != null && res.statusCode! >= 400) {
+      throw ApiException('presence failed', status: res.statusCode);
+    }
+    var buffer = '';
+    await for (final chunk in res.data!.stream) {
+      buffer += utf8.decode(chunk);
+      final parsed = parseSseBuffer(buffer);
+      buffer = parsed.rest;
+      for (final frame in parsed.frames) {
+        if (frame.event == 'presence') {
+          onChange(((jsonDecode(frame.data) as List) ?? const [])
+              .map((e) => PresenceEntry.fromJson(e as Map<String, dynamic>))
+              .toList());
+        }
+      }
+    }
+  }
+
   Future<List<RoadmapNode>> listRoadmap(String projectId) async {
     final res = await _dio.get('/projects/$projectId/roadmap');
     return _parse(res, (d) => (d as List).map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>)).toList());
@@ -357,9 +392,14 @@ class ApiClient {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<RoadmapNode> updateRoadmapNode(String nodeId, {String? title, String? description, String? status}) async {
-    final res = await _exec(req.patchRoadmapNode(nodeId, title: title, description: description, status: status));
+  Future<RoadmapNode> updateRoadmapNode(String nodeId, {String? title, String? description, String? status, String? deadline}) async {
+    final res = await _exec(req.patchRoadmapNode(nodeId, title: title, description: description, status: status, deadline: deadline));
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
+  }
+
+  Future<RoadmapProgress> roadmapProgress(String projectId) async {
+    final res = await _dio.get('/projects/$projectId/roadmap/progress');
+    return _parse(res, (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>));
   }
 
   Future<RoadmapNode> moveRoadmapNode(String nodeId, {String? parentId, required int position}) async {

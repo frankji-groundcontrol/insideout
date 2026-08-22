@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'ink_seal.dart';
 
-enum SealTone { locked, pending, progress, done, neutral }
+enum SealTone { locked, pending, progress, done, neutral, danger }
 
 /// Vermilion / grey / sage chop used for roadmap lifecycle and landing peeks.
 class SealChip extends StatelessWidget {
@@ -30,6 +30,7 @@ class SealChip extends StatelessWidget {
       SealTone.locked => (palette.statusNeutralBg, palette.sealLocked),
       SealTone.pending => (palette.statusNeutralBg, palette.statusNeutralFg),
       SealTone.neutral => (palette.statusNeutralBg, palette.statusNeutralFg),
+      SealTone.danger => (palette.statusInfoBg, palette.fgDanger),
     };
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 10, vertical: compact ? 2 : 4),

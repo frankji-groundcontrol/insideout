@@ -3,10 +3,12 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/github"
+	"github.com/frankji-groundcontrol/insideout/server/internal/presence"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -27,10 +29,13 @@ type Server struct {
 	// ghTokens mints GitHub App installation tokens (nil when the app
 	// credentials are absent or the key fails to load).
 	ghTokens *github.InstallationTokens
+	// presence is the in-memory canvas presence registry.
+	presence *presence.Registry
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
-	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner}
+	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner,
+		presence: presence.New(30*time.Second, nil)}
 	// GitHub App installation tokens for guide loading; nil disables the
 	// token path (public repos still load unauthenticated).
 	if cfg.GithubAppID != "" {
@@ -56,6 +61,7 @@ func (s *Server) Handler() http.Handler {
 	s.registerGithubRoutes(mux)
 	s.registerRoadmapAIRoutes(mux)
 	s.registerAgentRoutes(mux)
+	s.registerPresenceRoutes(mux)
 
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 

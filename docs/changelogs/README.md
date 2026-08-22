@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-22 — Depth thread](2026-08-22-depth-thread.md)
+  — PRD-revision verbs (parity closed), live canvas presence (SSE),
+  time-first roadmap (deadlines, pressure, Now/Next/Done).
 - [2026-08-22 — Product follow-ons](2026-08-22-product-follow-ons.md)
   — coach gap weaving, proposal acceptance (with reversal), idea
   create/convert verbs, canvas v1 (bands + minimap); Android verified

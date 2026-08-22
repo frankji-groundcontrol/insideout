@@ -37,8 +37,10 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runGithubCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "guide":
 		return runGuideCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
-	case "commit", "versions", "readiness", "view", "agent-context", "checkpoint", "propose":
+	case "commit", "versions", "readiness", "view", "agent-context", "checkpoint", "propose", "revisions", "snapshot":
 		return runVersionCommands(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+	case "presence":
+		return runRoadmapCommand(append([]string{"presence"}, rest...), envOr("INSIDEOUT_API", defaultAPIBase))
 	case "idea":
 		return runIdeaCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "login", "whoami", "workspaces", "projects", "prd":

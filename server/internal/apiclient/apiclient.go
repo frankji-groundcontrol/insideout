@@ -94,6 +94,12 @@ func (c *Client) ExpandNode(nodeID string) (json.RawMessage, error) {
 	return out, nil
 }
 
+// RoadmapProgress returns the Progress view
+// (GET /projects/{id}/roadmap/progress).
+func (c *Client) RoadmapProgress(projectID string) (json.RawMessage, error) {
+	return c.get("/projects/" + projectID + "/roadmap/progress")
+}
+
 // RoadmapList returns GET /projects/{id}/roadmap.
 func (c *Client) RoadmapList(projectID string) (json.RawMessage, error) {
 	return c.get("/projects/" + projectID + "/roadmap")
@@ -114,8 +120,9 @@ func (c *Client) RoadmapAdd(projectID, title, description string, parentID *stri
 }
 
 // RoadmapUpdate partially updates a node (PATCH /roadmap/{id}); nil
-// fields are left untouched server-side.
-func (c *Client) RoadmapUpdate(nodeID string, title, description, status *string) (json.RawMessage, error) {
+// fields are left untouched server-side. deadline: non-nil sets
+// (RFC3339) or clears (empty string).
+func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadline *string) (json.RawMessage, error) {
 	body := map[string]any{}
 	if title != nil {
 		body["title"] = *title
@@ -125,6 +132,9 @@ func (c *Client) RoadmapUpdate(nodeID string, title, description, status *string
 	}
 	if status != nil {
 		body["status"] = *status
+	}
+	if deadline != nil {
+		body["deadline"] = *deadline
 	}
 	var out json.RawMessage
 	if err := c.do(http.MethodPatch, "/roadmap/"+nodeID, body, &out); err != nil {
@@ -386,4 +396,29 @@ func (c *Client) DecideProposal(updateID, decision, reason string) (json.RawMess
 		return nil, err
 	}
 	return out, nil
+}
+
+// PrdRevisions lists a PRD's revision snapshots (GET /prds/{id}/revisions).
+func (c *Client) PrdRevisions(prdID string) (json.RawMessage, error) {
+	return c.get("/prds/" + prdID + "/revisions")
+}
+
+// SnapshotPrd records a revision snapshot with an optional note
+// (POST /prds/{id}/revisions).
+func (c *Client) SnapshotPrd(prdID, note string) (json.RawMessage, error) {
+	body := map[string]any{}
+	if note != "" {
+		body["note"] = note
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/prds/"+prdID+"/revisions", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ProjectPresence returns who is currently viewing a project
+// (GET /projects/{id}/presence).
+func (c *Client) ProjectPresence(projectID string) (json.RawMessage, error) {
+	return c.get("/projects/" + projectID + "/presence")
 }
