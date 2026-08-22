@@ -18,6 +18,7 @@ func (s *Server) registerAgentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/agent/context", s.requireAuth(s.handleAgentContext))
 	mux.HandleFunc("POST /api/v1/agent/checkpoint", s.requireAuth(s.handleAgentCheckpoint))
 	mux.HandleFunc("POST /api/v1/agent/propose", s.requireAuth(s.handleAgentPropose))
+	mux.HandleFunc("POST /api/v1/agent/proposals/{uid}/decision", s.requireAuth(s.handleProposalDecision))
 }
 
 func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
@@ -172,4 +173,41 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false})
+}
+
+// handleProposalDecision is the human accept/reject of an agent
+// proposal (the proposal acceptance workflow). Owner or admin only.
+func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) {
+	userID, _ := UserID(r.Context())
+	uid, ok := pathUUID(w, r, "uid")
+	if !ok {
+		return
+	}
+	var req struct {
+		Decision string `json:"decision"`
+		Reason   string `json:"reason"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	if req.Decision != "accepted" && req.Decision != "rejected" {
+		httpx.WriteError(w, http.StatusBadRequest, "decision must be \"accepted\" or \"rejected\"", "", nil)
+		return
+	}
+	d, err := s.store.DecideProposal(r.Context(), userID, uid, req.Decision, strings.TrimSpace(req.Reason))
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "proposal not found", "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrForbidden) {
+		httpx.WriteError(w, http.StatusForbidden, "only agent_proposal records can be decided, by the project owner or a workspace admin", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("proposal decision", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, d)
 }

@@ -165,6 +165,8 @@ const enUS = <String, String>{
   'prd.revisionNote': 'Optional note',
   'versions.entry': 'Versions',
   'prd.exportAudience': 'Audience view (optional)',
+  'roadmap.viewList': 'List',
+  'roadmap.viewCanvas': 'Canvas',
   'prd.exportFull': 'Full document',
   'versions.title': 'Product versions',
   'versions.commitTitle': 'Commit this version',

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"strings"
 	"testing"
 )
@@ -33,5 +34,34 @@ func TestSystemPrompt_IncludesStageAndPrdContext(t *testing.T) {
 	}
 	if !strings.Contains(prompt, "users can't find X") {
 		t.Errorf("systemPrompt should include the fact ledger, got: %s", prompt)
+	}
+}
+
+func TestSystemPromptWeavesReadinessGaps(t *testing.T) {
+	prompt := systemPrompt(StageClarify, "Gaps", map[string]string{}, "", "")
+	for _, want := range []string{
+		"当前读者缺口",
+		"must_clarify_now",
+		"should_clarify_this_version",
+		"现在成版",
+		"优先级（必须现在澄清 / 本版应澄清 / 之后再验证）",
+	} {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("missing %q in prompt", want)
+		}
+	}
+}
+
+func TestSystemPromptCompletePrDHasNoBlockingGaps(t *testing.T) {
+	full := map[string]string{}
+	for _, k := range store.PrdSectionKeys {
+		full[k] = "written"
+	}
+	prompt := systemPrompt(StageDraft, "Full", full, "", "")
+	if !strings.Contains(prompt, "无阻塞性缺口") {
+		t.Errorf("complete PRD should show no blocking gaps; got:\n%.300s", prompt)
+	}
+	if strings.Contains(prompt, "must_clarify_now") {
+		t.Error("complete PRD must not carry must-clarify gaps")
 	}
 }

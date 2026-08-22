@@ -27,11 +27,12 @@ class InsideOutApp extends StatelessWidget {
 
 /// Builds the signed-in chrome: app bar + body.
 class AppScaffold extends StatelessWidget {
-  const AppScaffold({super.key, required this.title, required this.body, this.fab});
+  const AppScaffold({super.key, required this.title, required this.body, this.fab, this.actions});
 
   final String title;
   final Widget body;
   final Widget? fab;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +42,7 @@ class AppScaffold extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: [
+          ...?actions,
           IconButton(
             tooltip: appearance.t('lang.switchTo'),
             onPressed: appearance.toggleLocale,

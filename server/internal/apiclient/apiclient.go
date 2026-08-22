@@ -356,3 +356,34 @@ func (c *Client) AgentPropose(projectID, kind, summary, detail string) (json.Raw
 	}
 	return out, nil
 }
+
+// IdeaCreate captures a new idea (POST /workspaces/{id}/ideas).
+func (c *Client) IdeaCreate(workspaceID, title, content string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/workspaces/"+workspaceID+"/ideas",
+		map[string]string{"title": title, "content": content}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// IdeaConvert turns an idea into a PRD + coach conversation
+// (POST /ideas/{id}/convert).
+func (c *Client) IdeaConvert(ideaID string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/ideas/"+ideaID+"/convert", map[string]any{}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// DecideProposal records the human accept/reject of an agent proposal
+// (POST /agent/proposals/{id}/decision).
+func (c *Client) DecideProposal(updateID, decision, reason string) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/agent/proposals/"+updateID+"/decision",
+		map[string]string{"decision": decision, "reason": reason}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}

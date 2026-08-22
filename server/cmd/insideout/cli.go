@@ -39,6 +39,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runGuideCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "commit", "versions", "readiness", "view", "agent-context", "checkpoint", "propose":
 		return runVersionCommands(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+	case "idea":
+		return runIdeaCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "login", "whoami", "workspaces", "projects", "prd":
 	default:
 		return false, 0

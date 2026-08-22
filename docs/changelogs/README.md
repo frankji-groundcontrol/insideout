@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-22 — Product follow-ons](2026-08-22-product-follow-ons.md)
+  — coach gap weaving, proposal acceptance (with reversal), idea
+  create/convert verbs, canvas v1 (bands + minimap); Android verified
+  SDK-blocked.
 - [2026-08-22 — Agent vocabulary v1](2026-08-22-agent-vocabulary.md)
   — `context`/`focus`/`checkpoint`/`propose` live via API/CLI/MCP;
   `version` stays human-only; typed timeline records verified live.

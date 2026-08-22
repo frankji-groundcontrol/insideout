@@ -7,13 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Product depth next: the Coach weaving readiness gap explanations
-   into conversation (principle 7), and the proposal acceptance
-   workflow. Landed this week: the human Commit + readiness + versions
-   page ([record](changelogs/2026-08-21-version-commit.md)), audience
-   view projections ([record](changelogs/2026-08-22-audience-views.md)),
-   and the agent vocabulary context/focus/checkpoint/propose
-   ([record](changelogs/2026-08-22-agent-vocabulary.md)).
+1. All five follow-ons closed 2026-08-22
+   ([record](changelogs/2026-08-22-product-follow-ons.md)): coach gap
+   weaving, proposal acceptance (with reversal), idea create/convert
+   verbs, canvas v1 (bands + minimap), Android verified SDK-blocked.
+   Remaining threads: PRD-revision CLI/MCP verbs, real-time canvas
+   presence, and PRODUCT.md depth beyond v1.
 2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (16 tools) and the

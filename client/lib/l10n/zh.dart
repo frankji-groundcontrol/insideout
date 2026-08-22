@@ -159,6 +159,8 @@ const zhCN = <String, String>{
   'prd.revisionNote': '可选备注',
   'versions.entry': '版本',
   'prd.exportAudience': '读者视图（可选）',
+  'roadmap.viewList': '列表',
+  'roadmap.viewCanvas': '画布',
   'prd.exportFull': '完整文档',
   'versions.title': '产品版本',
   'versions.commitTitle': '提交此版本',

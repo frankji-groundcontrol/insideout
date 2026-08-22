@@ -42,7 +42,10 @@ token file `app/src/assets/tokens.css` (last live at `f897fb4`).
       renders in Song-style serif, zero tofu boxes, celadon ground and
       vermilion seal accent — the full Ink & Seal language on a native
       target
-- [ ] Collaborative canvas (sibling bands, minimap) — still Nuxt-era, not this slice
+- [x] Canvas v1 (2026-08-22): sibling bands + status minimap + list
+      toggle, interaction-tested and deployed
+      ([changelog](../changelogs/2026-08-22-product-follow-ons.md));
+      real-time multi-user presence remains a follow-on
 
 ## Source of truth
 

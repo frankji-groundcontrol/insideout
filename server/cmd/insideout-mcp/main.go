@@ -150,6 +150,23 @@ func main() {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.PrdReadiness(reqStr(req, "prd_id")))
 		})
+	addTextTool("idea_create", "Capture a new idea in a workspace",
+		[]mcp.ToolOption{strReq("workspace_id", "workspace id"), strReq("title", "idea title"), strOpt("content", "idea body")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			content, _ := req.GetArguments()["content"].(string)
+			return call(c.IdeaCreate(reqStr(req, "workspace_id"), reqStr(req, "title"), content))
+		})
+	addTextTool("idea_convert", "Turn an idea into a PRD and open the coach conversation",
+		[]mcp.ToolOption{strReq("idea_id", "idea id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.IdeaConvert(reqStr(req, "idea_id")))
+		})
+	addTextTool("proposal_decide", "Human accept/reject of an agent proposal (owner or admin; the Decision Log entry)",
+		[]mcp.ToolOption{strReq("update_id", "proposal update id"), strReq("decision", "accepted|rejected"), strOpt("reason", "why")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			reason, _ := req.GetArguments()["reason"].(string)
+			return call(c.DecideProposal(reqStr(req, "update_id"), reqStr(req, "decision"), reason))
+		})
 	addTextTool("agent_context", "Compact, focus-scoped agent context for a project (mode brainstorming|implementation|review)",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strOpt("mode", "brainstorming|implementation|review"), strOpt("focus", "roadmap node id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

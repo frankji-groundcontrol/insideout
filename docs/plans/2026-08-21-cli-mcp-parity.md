@@ -55,8 +55,9 @@ secrets are written to disk by tooling.
 
 ## Stage 3 — write surface + agent vocabulary
 
-- [ ] Write verbs (idea create/convert, PRD revision) added to CLI and
-      MCP together
+- [x] Idea write verbs on CLI/MCP (2026-08-22): `idea create`,
+      `idea convert` + `proposal_decide` (23 tools)
+- [ ] PRD-revision write verbs on CLI/MCP (remaining)
 - [ ] Agent vocabulary routes (`context`, `focus`, `checkpoint/report`,
       `propose`, `version`) designed against PRODUCT.md, then projected
 

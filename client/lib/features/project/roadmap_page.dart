@@ -6,6 +6,7 @@ import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/seal_chip.dart';
+import 'roadmap_canvas.dart';
 
 class RoadmapPage extends StatefulWidget {
   const RoadmapPage({super.key, required this.projectId});
@@ -18,11 +19,29 @@ class RoadmapPage extends StatefulWidget {
 
 class _RoadmapPageState extends State<RoadmapPage> {
   late Future<List<RoadmapNode>> _future;
+  bool _canvas = false;
+  final _canvasController = ScrollController();
+
+  @override
+  void dispose() {
+    _canvasController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
     _future = context.read<Session>().api.listRoadmap(widget.projectId);
+  }
+
+  void _scrollToBand(int i) {
+    if (!_canvasController.hasClients) return;
+    final target = i * (RoadmapCanvas.bandWidth + RoadmapCanvas.bandSpacing) - 24;
+    _canvasController.animateTo(
+      target.clamp(0.0, _canvasController.position.maxScrollExtent).toDouble(),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _reload() async {
@@ -34,14 +53,26 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Widget _tree(List<RoadmapNode> all, String? parentId, int depth) {
-    final l10n = context.watch<Appearance>();
     return Column(
       children: _children(all, parentId)
           .map(
             (n) => Column(
               children: [
-                ListTile(
-                  contentPadding: EdgeInsets.only(left: 16.0 + depth * 20, right: 16),
+                _nodeTile(all, n, 16.0 + depth * 20),
+                _tree(all, n.id, depth + 1),
+              ],
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  /// One node row with its seal mark, status chip, attribution, and the
+  /// edit/add/move/expand/delete menu — shared by list and canvas.
+  Widget _nodeTile(List<RoadmapNode> all, RoadmapNode n, double left) {
+    final l10n = context.watch<Appearance>();
+    return ListTile(
+                  contentPadding: EdgeInsets.only(left: left, right: 12),
                   leading: SealMark(status: n.status),
                   title: Text(n.title),
                   subtitle: Wrap(
@@ -135,20 +166,26 @@ class _RoadmapPageState extends State<RoadmapPage> {
                       ];
                     },
                   ),
-                ),
-                _tree(all, n.id, depth + 1),
-              ],
-            ),
-          )
-          .toList(),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     return AppScaffold(
       title: l10n.t('roadmap.title'),
+      actions: [
+        SegmentedButton<bool>(
+          segments: [
+            ButtonSegment(value: false, label: Text(l10n.t('roadmap.viewList')), icon: const Icon(Icons.list)),
+            ButtonSegment(value: true, label: Text(l10n.t('roadmap.viewCanvas')), icon: const Icon(Icons.view_column_outlined)),
+          ],
+          selected: {_canvas},
+          onSelectionChanged: (s) => setState(() => _canvas = s.first),
+        ),
+        const SizedBox(width: 12),
+      ],
       fab: FloatingActionButton(
         onPressed: () async {
           final title = TextEditingController();
@@ -176,7 +213,23 @@ class _RoadmapPageState extends State<RoadmapPage> {
         builder: (context, snap) {
           if (!snap.hasData) return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
           if (snap.data!.isEmpty) return Center(child: Text(l10n.t('roadmap.empty')));
-          return ListView(children: [_tree(snap.data!, null, 0)]);
+          if (!_canvas) return ListView(children: [_tree(snap.data!, null, 0)]);
+          return Column(
+            children: [
+              RoadmapMinimap(
+                nodes: snap.data!,
+                onTapBand: (i) => _scrollToBand(i),
+              ),
+              Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant),
+              Expanded(
+                child: RoadmapCanvas(
+                  nodes: snap.data!,
+                  tileBuilder: (node, indent) => _nodeTile(snap.data!, node, indent),
+                  controller: _canvasController,
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
