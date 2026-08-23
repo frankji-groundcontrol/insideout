@@ -48,5 +48,6 @@ proof, not the feature itself:
 - [x] Full client suite + analyze green
 - [x] Live two-tab chip/cursor capture (local build, real API) — plus a
       web SSE transport fix the capture exposed (dio XHR never streams)
-- [ ] Deploy bundled with the font fix (`railway up --service app`),
-      then verify hosted and purge scratch data
+- [x] Deploy bundled with the font fix (`railway up --service app`),
+      then verify hosted and purge scratch data — deployed 2026-08-24,
+      hosted cold capture clean; scratch workspace/user purged via DB.

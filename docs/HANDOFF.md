@@ -20,10 +20,13 @@ Resume here. The authoritative multi-task board is
    API routes first, then projected. `insideout-mcp` (16 tools) and the
    CLI are live.
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
-4. Restore Ink & Seal on Flutter: the collaborative canvas (sibling bands,
-   minimap) is the only open slice item. Native fonts are bundled and
-   visually signed off (2026-08-20,
-   [changelog](changelogs/2026-08-20-native-fonts-bundling.md)).
+4. Restore Ink & Seal on Flutter: slice closed 2026-08-23 — canvas v1
+   (bands + minimap), presence hardening (reconnect + a web SSE
+   transport that actually streams,
+   [changelog](changelogs/2026-08-23-canvas-presence-hardening.md)), and
+   the web first-frame font gate
+   ([changelog](changelogs/2026-08-23-web-font-flash.md)). Native fonts
+   bundled and signed off 2026-08-20.
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
 5. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
