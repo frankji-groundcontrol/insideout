@@ -40,7 +40,10 @@ chunk boundaries stays safe.
 
 Coach SSE on web uses the same dio stream path, so coach replies on
 web arrive when the stream ends rather than typing live. The new
-transport is the fix when that becomes worth doing.
+transport is the fix when that becomes worth doing — tracked as
+[BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md),
+with the general lesson in
+[learning](../learning/2026-08-23-dio-web-does-not-stream-sse.md).
 
 ## Operator notes
 

@@ -48,6 +48,9 @@ correct Chinese.
   all tofu boxes, post-fix first painted frame correct.
 - Non-web targets unaffected: the gate is a web-only conditional import
   and `loadNativeFonts()` still registers the bundled variable fonts.
+- The signal-race lessons (why `check()`/`styleSheets` failed and the
+  `load()` array worked) are distilled in
+  [learning](../learning/2026-08-23-browser-font-readiness-signals-race-stylesheet-parse.md).
 
 ## Operator notes
 

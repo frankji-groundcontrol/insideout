@@ -53,6 +53,10 @@ records continue the numbering (next: BUG-014).
   `href`, so an `owner/repo` link (the placeholder invites it) resolves
   relative to the app origin and 404s. Fix: normalize to
   `https://github.com/…` for display only.
+- [BUG-014 — dio's web adapter never streams SSE](2026-08-23-bug-014-dio-web-sse-never-streams.md)
+  — XHR + `arraybuffer` delivers a "stream" body only at connection
+  close, so web SSE over dio is silently dead; presence fixed with a
+  fetch + ReadableStream transport, Coach web typing still affected.
 
 ## Other open issues
 

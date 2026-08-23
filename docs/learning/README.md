@@ -13,3 +13,5 @@ and when to apply it again.
 | 2026-07-21 | [ResponseWriter wrapping drops http.Flusher](2026-07-21-response-writer-wrapping-drops-flusher.md) | [BUG-010](../issues/2026-07-21-bug-010-sse-flusher-swallowed-by-logging-middleware.md) |
 | 2026-07-26 | [Nuxt dev server: IPv4 clients get a bare 426 (IPv6/IPv4 bind split)](2026-07-26-nuxt-dev-ipv6-426.md) | [collab T10 verification](../changelogs/2026-07-26-roadmap-canvas-collab-attribution.md) |
 | 2026-07-26 | [Nuxt routing: a `pages/x/[id].vue` without `<NuxtPage />` silently swallows `pages/x/[id]/*` children](2026-07-26-nuxt-dynamic-route-parent-shadowing.md) | [collab T9 changelog](../changelogs/2026-07-26-roadmap-canvas-workstream-d.md) |
+| 2026-08-23 | [dio on Flutter web does not stream SSE — fetch + ReadableStream does](2026-08-23-dio-web-does-not-stream-sse.md) | [BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md) |
+| 2026-08-23 | [Browser font-readiness signals race the stylesheet parse](2026-08-23-browser-font-readiness-signals-race-stylesheet-parse.md) | [font-flash changelog](../changelogs/2026-08-23-web-font-flash.md) |
