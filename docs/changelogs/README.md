@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-23 — Web first-refresh font flash gated on CJK font readiness](2026-08-23-web-font-flash.md)
+  — CanvasKit first frame painted tofu boxes until Google Fonts CJK
+  subsets arrived; first frame now gated on font readiness.
 - [2026-08-22 — Frontier closed](2026-08-22-frontier.md)
   — audience-view web page, proposal→structure application, canvas
   cursors; all live-verified.

@@ -21,6 +21,9 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-08-23 — Web first-refresh font flash](2026-08-23-web-font-flash.md)
+  — "it shows garbage characters for a second before the Chinese finally
+  appears"; CanvasKit first frame gated on CJK font readiness.
 - [2026-08-19 — Flutter cutover dropped Ink & Seal](2026-08-19-restore-ink-seal.md)
   — "ditched our visual on nuxt" / "an infra migration does not mean visual
   change"; Material 3 lock reversed; tokens + AuthDoor chrome restoring on

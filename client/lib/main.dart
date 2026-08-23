@@ -6,6 +6,8 @@ import 'router.dart';
 import 'session/appearance.dart';
 import 'session/session.dart';
 import 'theme/native_fonts.dart';
+import 'theme/web_fonts_stub.dart'
+    if (dart.library.ui_web) 'theme/web_fonts_web.dart';
 import 'web_url_strategy_stub.dart'
     if (dart.library.ui_web) 'web_url_strategy_web.dart';
 
@@ -14,7 +16,12 @@ Future<void> main() async {
   configureUrlStrategy();
   final session = Session();
   final appearance = Appearance(store: SecureSettingsStore());
-  await Future.wait([session.hydrate(), appearance.hydrate(), loadNativeFonts()]);
+  await Future.wait([
+    session.hydrate(),
+    appearance.hydrate(),
+    loadNativeFonts(),
+    loadWebFonts(),
+  ]);
   runApp(
     MultiProvider(
       providers: [
