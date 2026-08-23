@@ -12,10 +12,11 @@ Root cause: the CanvasKit renderer paints the first frame before the
 Google Fonts CJK subsets (unicode-range woff2 slices, `display=swap`)
 arrive, so every hanzi renders as a tofu box for a second or two on a
 cold load. Fixed by gating the web first frame on font readiness:
-`loadWebFonts()` polls `document.fonts.load()`/`check()` for the six
-theme faces with a common-hanzi sample (pre-warming the slices the app
-uses) and a 6s deadline, awaited in `main()` before `runApp`. The flash
-becomes blank bootstrap time instead of garbage.
+`loadWebFonts()` polls `document.fonts.load()` per theme face (the
+resolved face array is the only parse-race-free signal) with a
+common-hanzi sample (pre-warming the slices the app uses) and a 10s
+deadline, awaited in `main()` before `runApp`. The flash becomes
+blank bootstrap time instead of garbage.
 
 Implementation: [changelog](../changelogs/2026-08-23-web-font-flash.md).
 

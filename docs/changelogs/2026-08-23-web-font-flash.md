@@ -22,10 +22,13 @@ resolves empty.
 ## Change
 
 - `client/lib/theme/web_fonts_web.dart` (new): polls
-  `document.fonts.load()` + `check()` for the six theme faces using a
-  common-hanzi sample (pre-warms the unicode-range slices the app's
-  screens use), 6 s deadline so a dead font CDN degrades to today's
-  behavior instead of a blank page.
+  `document.fonts.load()` for the six theme faces using a common-hanzi
+  sample (pre-warms the unicode-range slices the app's screens use) and
+  requires each call's resolved face array to be non-empty — `check()`
+  and `document.styleSheets` both race the stylesheet parse and were
+  measured releasing the gate onto tofu. 10 s deadline (cold subset
+  completion measured ~7 s on a throttled link) so a dead font CDN
+  degrades to today's behavior instead of a blank page.
 - `client/lib/theme/web_fonts_stub.dart` (new): no-op off-web.
 - `client/lib/main.dart`: awaits `loadWebFonts()` in the existing
   pre-`runApp` `Future.wait`, same conditional-import pattern as the
