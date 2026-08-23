@@ -1,12 +1,15 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 import 'errors.dart';
 import 'export_format.dart';
 import 'models.dart';
 import 'requests.dart' as req;
 import 'sse.dart';
+import 'sse_transport_stub.dart'
+    if (dart.library.ui_web) 'sse_transport_web.dart';
 import '../session/token_store.dart';
 
 typedef TokenReader = Future<String?> Function();
@@ -354,28 +357,35 @@ class ApiClient {
   Future<void> presenceStream(String projectId, String clientId, void onChange(List<PresenceEntry> entries),
       {void Function(String sessionId, String name, double x, double y)? onCursor}) async {
     final token = await _readAccess();
-    final res = await _dio.get<ResponseBody>(
-      '/projects/$projectId/presence/stream',
-      queryParameters: {'client': clientId},
-      options: Options(
-        responseType: ResponseType.stream,
-        headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
-          'Accept': 'text/event-stream',
-        },
-      ),
-    );
-    if (res.statusCode != null && res.statusCode! >= 400) {
-      throw ApiException('presence failed', status: res.statusCode);
+    final headers = {
+      if (token != null) 'Authorization': 'Bearer $token',
+      'Accept': 'text/event-stream',
+    };
+    Stream<List<int>> chunks;
+    if (kIsWeb) {
+      chunks = fetchSseStream(
+          '$baseUrl/projects/$projectId/presence/stream?client=${Uri.encodeQueryComponent(clientId)}',
+          headers);
+    } else {
+      final res = await _dio.get<ResponseBody>(
+        '/projects/$projectId/presence/stream',
+        queryParameters: {'client': clientId},
+        options: Options(responseType: ResponseType.stream, headers: headers),
+      );
+      if (res.statusCode != null && res.statusCode! >= 400) {
+        throw ApiException('presence failed', status: res.statusCode);
+      }
+      chunks = res.data!.stream;
     }
     var buffer = '';
-    await for (final chunk in res.data!.stream) {
-      buffer += utf8.decode(chunk);
+    await for (final text in chunks.transform(utf8.decoder)) {
+      buffer += text;
       final parsed = parseSseBuffer(buffer);
       buffer = parsed.rest;
       for (final frame in parsed.frames) {
         if (frame.event == 'presence') {
-          onChange(((jsonDecode(frame.data) as List) ?? const [])
+          final list = jsonDecode(frame.data);
+          onChange((list is List ? list : const [])
               .map((e) => PresenceEntry.fromJson(e as Map<String, dynamic>))
               .toList());
         } else if (frame.event == 'cursor' && onCursor != null) {

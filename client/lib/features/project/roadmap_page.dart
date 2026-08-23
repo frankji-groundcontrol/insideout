@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/client.dart';
+import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
@@ -25,7 +29,14 @@ class _RoadmapPageState extends State<RoadmapPage> {
   List<PresenceEntry> _presence = [];
   final Map<String, CursorDot> _cursors = {};
   DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
+  Timer? _retryTimer;
   late final String _clientId = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+
+  Future<void> _backoff(Duration d) {
+    final done = Completer<void>();
+    _retryTimer = Timer(d, done.complete);
+    return done.future;
+  }
 
   void _sendCursor(double x, double y) {
     final now = DateTime.now();
@@ -35,19 +46,39 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   void _watchPresence() {
-    context.read<Session>().api.presenceStream(widget.projectId, _clientId, (entries) {
-      if (!mounted) return;
-      final live = entries.map((e) => e.sessionId).toSet();
-      _cursors.removeWhere((id, _) => !live.contains(id));
-      setState(() => _presence = entries);
-    }, onCursor: (sessionId, name, x, y) {
-      if (!mounted || sessionId == _clientId) return;
-      setState(() => _cursors[sessionId] = CursorDot(sessionId: sessionId, name: name, x: x, y: y));
-    }).catchError((_) {});
+    final api = context.read<Session>().api;
+    _presenceLoop(api);
+  }
+
+  // The stream dies with the server (deploys) or any network blip; a
+  // silent one-shot subscribe would kill presence until the next route.
+  // Re-open with capped backoff; the reconnect Touch resyncs snapshots.
+  Future<void> _presenceLoop(ApiClient api) async {
+    var backoff = const Duration(milliseconds: 500);
+    while (mounted) {
+      var fatal = false;
+      try {
+        await api.presenceStream(widget.projectId, _clientId, (entries) {
+          if (!mounted) return;
+          final live = entries.map((e) => e.sessionId).toSet();
+          _cursors.removeWhere((id, _) => !live.contains(id));
+          setState(() => _presence = entries);
+        }, onCursor: (sessionId, name, x, y) {
+          if (!mounted || sessionId == _clientId) return;
+          setState(() => _cursors[sessionId] = CursorDot(sessionId: sessionId, name: name, x: x, y: y));
+        });
+      } on ApiException catch (e) {
+        fatal = e.status == 401 || e.status == 403 || e.status == 404;
+      } catch (_) {}
+      if (fatal || !mounted) return;
+      await _backoff(backoff);
+      backoff = backoff * 2 > const Duration(seconds: 5) ? const Duration(seconds: 5) : backoff * 2;
+    }
   }
 
   @override
   void dispose() {
+    _retryTimer?.cancel();
     _canvasController.dispose();
     super.dispose();
   }
