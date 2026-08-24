@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-24 — Auth parity: CLI + MCP get every login/register way](2026-08-24-auth-parity-cli-mcp.md)
+  — apiclient auth verbs; CLI register/`login --code`/`login --magic`/
+  forgot/reset; MCP `auth_*` tools with an in-process session (token never
+  echoed); every flow verified live; MCP server moved to
+  `internal/mcpserver` with stdio-level tests.
 - [2026-08-24 — Email auth: magic-link login + password reset + code login](2026-08-24-email-auth.md)
   — one-time SHA-256-hashed email tokens (`insideout.auth_tokens`), Resend
   mail with dev-log fallback, reset revokes all sessions; Flutter pages and

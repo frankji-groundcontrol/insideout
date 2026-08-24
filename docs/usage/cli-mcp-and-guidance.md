@@ -19,10 +19,23 @@ insideout whoami
 `login` prompts for the password on stderr; the token is the only
 stdout. Without `INSIDEOUT_TOKEN`, read verbs answer 401 with a hint.
 
+Every way the web can sign in works here too (prompts on stderr, token
+on stdout):
+
+```bash
+insideout register you@example.com "Display Name"   # password prompt
+insideout login you@example.com                     # password prompt (default)
+insideout login --code you@example.com              # emailed 6-digit code prompt
+insideout login --magic you@example.com             # paste the emailed link (or token)
+insideout forgot-password you@example.com           # emails a reset link
+insideout reset-password                            # paste link/token + new password
+```
+
 ## Verbs (parity with web and MCP)
 
 | Area | Verbs |
 | --- | --- |
+| Auth | `register <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `idea create --title [--content] <ws>`, `idea convert <id>` |
@@ -37,7 +50,7 @@ Flags precede positional ids (Go convention). Statuses are
 ## MCP server
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
-verbs as tools (27 today), token via `INSIDEOUT_TOKEN`:
+verbs as tools (36 today), token via `INSIDEOUT_TOKEN`:
 
 ```json
 { "mcpServers": { "insideout": {
@@ -46,8 +59,17 @@ verbs as tools (27 today), token via `INSIDEOUT_TOKEN`:
              "INSIDEOUT_TOKEN": "…" } } } }
 ```
 
-There is deliberately no login tool — the token is environment state,
-not conversation state.
+Auth can also happen at runtime: the `auth_*` tools
+(`auth_register`, `auth_login`, `auth_login_code_request` +
+`auth_login_code_verify`, `auth_magic_link_request` +
+`auth_magic_link_consume`, `auth_forgot_password`,
+`auth_reset_password`, `auth_logout`) sign the server **process** in —
+the token is kept in memory and never echoed into the conversation, and
+every later tool call rides that session. The code flow is the
+agent-friendly one: the human gets the email and supplies the digits, so
+no password ever appears in a transcript. (Until 2026-08-24 there was
+deliberately no login tool; the all-surfaces-agree product call reversed
+that — a login tool's token is process state, not conversation state.)
 
 ## The guidance system (`insideout.yaml`)
 

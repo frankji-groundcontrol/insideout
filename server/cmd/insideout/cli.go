@@ -7,13 +7,11 @@ package main
 // raw JSON, indented, so the CLI can never drift from the truth.
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
@@ -43,7 +41,9 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runRoadmapCommand(append([]string{"presence"}, rest...), envOr("INSIDEOUT_API", defaultAPIBase))
 	case "idea":
 		return runIdeaCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
-	case "login", "whoami", "workspaces", "projects", "prd":
+	case "login", "register", "forgot-password", "reset-password":
+		return runAuthCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+	case "whoami", "workspaces", "projects", "prd":
 	default:
 		return false, 0
 	}
@@ -54,23 +54,9 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return true, 2
 	}
 	c := apiclient.New(*api)
-	if cmd != "login" {
-		c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
-	}
+	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
 
 	switch cmd {
-	case "login":
-		email, password, err := credentials(fs.Args())
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "login:", err)
-			return true, 2
-		}
-		if err := c.Login(email, password); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return true, 1
-		}
-		fmt.Println(c.Token())
-		return true, 0
 	case "whoami":
 		return printJSON(c.Whoami())
 	case "workspaces":
@@ -95,12 +81,7 @@ func credentials(args []string) (string, string, error) {
 	if len(args) != 1 {
 		return "", "", fmt.Errorf("usage: insideout login <email>  (password is read from stdin)")
 	}
-	fmt.Fprint(os.Stderr, "password: ")
-	line, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil && line == "" {
-		return "", "", fmt.Errorf("read password: %w", err)
-	}
-	pw := strings.TrimSpace(line)
+	pw := prompt("password: ")
 	if pw == "" {
 		return "", "", fmt.Errorf("empty password")
 	}
