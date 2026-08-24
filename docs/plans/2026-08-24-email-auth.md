@@ -1,8 +1,11 @@
 # 2026-08-24 — Email auth: magic link + password reset + code login
 
-Status: **Finished** — original slice and the code-login addendum (second
-checklist) are all implemented and verified in the worktree; the remaining
-step is operator-owned (set the Resend key in Railway and deploy).
+Status: **Completed** — original slice and the code-login addendum
+implemented, verified, committed to `main`, and deployed to Railway on
+2026-08-24 (`INSIDEOUT_PUBLIC_URL` set; new routes verified via the
+domain). The only open item is operator-owned: the Resend key
+(`INSIDEOUT_MAIL_API_KEY` + verified `INSIDEOUT_MAIL_FROM`, then redeploy
+`server`) — until then mail runs in log-only dev mode.
 
 ## Why this exists
 

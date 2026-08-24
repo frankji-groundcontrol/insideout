@@ -19,7 +19,8 @@ code) with relative links.
   — one-time SHA-256-hashed email tokens (`insideout.auth_tokens`), Resend
   mail with dev-log fallback, reset revokes all sessions; Flutter pages and
   login-form magic/code modes; typed 6-digit code login with a 5-miss
-  attempt budget; all five flows exercised live.
+  attempt budget; all five flows exercised live; deployed to Railway (mail
+  key still operator-owned).
 - [2026-08-23 — Canvas presence hardening](2026-08-23-canvas-presence-hardening.md)
   — presence reconnect with capped backoff; web SSE moved off dio's
   non-streaming XHR adapter to fetch + ReadableStream; two-tab live proof.

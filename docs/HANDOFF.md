@@ -60,11 +60,13 @@ The PRODUCT.md version-first slice stays on the board as P2.
 Both machines and origin were synced at the last `[checkpoint]` commit; the
 worktree is clean. Do not revert unrelated edits.
 
-Exception (2026-08-24): the email-auth slice (magic link + password reset
-+ code login — server, client, migrations, docs) is complete and verified
-but **not yet committed or deployed**; see the
-[email-auth board row](plans/README.md) and
-[changelog](changelogs/2026-08-24-email-auth.md) before touching auth files.
+Exception (2026-08-24): closed — the email-auth slice (magic link +
+password reset + code login) is committed and deployed to Railway
+(server + app; new auth routes verified via the domain). Mail delivery
+still awaits the operator's Resend key (`INSIDEOUT_MAIL_API_KEY` +
+verified `INSIDEOUT_MAIL_FROM` in Railway, then redeploy `server`);
+until then the sender runs in log-only dev mode. Record:
+[changelog](changelogs/2026-08-24-email-auth.md).
 
 Their exact status, next action, blocker, and plan or record link are on the
 [task board](plans/README.md). Review and checkpoint them one task at a time;

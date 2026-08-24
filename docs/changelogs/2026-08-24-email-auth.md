@@ -123,10 +123,16 @@ awkward).
 
 ## Not done here
 
-- Production mail: needs the operator's Resend key in the Railway `server`
-  environment (`INSIDEOUT_MAIL_API_KEY`, a verified `INSIDEOUT_MAIL_FROM`,
-  `INSIDEOUT_PUBLIC_URL=https://insideout.yalotein.net`), then
-  `railway up --service server` + `railway redeploy --service app`.
+- Production mail key: everything else shipped 2026-08-24 — committed to
+  `main`, `railway up --service server` + `--service app` (app started
+  after the new server, so nginx re-resolved it), `INSIDEOUT_PUBLIC_URL`
+  set to the domain, and the new routes verified live
+  (`/api/v1/auth/login-code` → 200 `{"ok":true}`, malformed verify → 400,
+  `/api/v1/auth/magic-link` → 200, `/api/v1/me` → 401). Remaining operator
+  step: `INSIDEOUT_MAIL_API_KEY` + a Resend-verified `INSIDEOUT_MAIL_FROM`
+  in the Railway `server` environment, then redeploy `server` — until then
+  the sender runs in log-only dev mode (links/codes appear in server logs
+  only).
 - Failed-attempt lockout / rate limiting on the new endpoints (parity with
   the existing password login, which has none) — opened as
   [a dated issue](../issues/2026-08-24-auth-endpoints-no-rate-limiting.md)
