@@ -9,7 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Boot loading page (reimbursement pattern)](2026-08-25-boot-loading-page.md) | **In flight** | boot gate → tests → deploy. | Kills the blank cold-load screen; preserves the web font gate. |
+| P1 | [Boot loading page (reimbursement pattern)](2026-08-25-boot-loading-page.md) | **Completed** | None — deployed and verified ([changelog](../changelogs/2026-08-25-boot-loading-page.md)). | Kills the blank cold-load screen; preserves the web font gate. |
 | P1 | [Auth parity: CLI + MCP get every login/register way](2026-08-24-auth-parity-cli-mcp.md) | **Completed** | None — deployed and verified live ([changelog](../changelogs/2026-08-24-auth-parity-cli-mcp.md)). | All four surfaces now agree on the five auth ways; MCP login tools keep the token as process state, never conversation output. |
 | P1 | [Email auth: magic link + password reset + code login](2026-08-24-email-auth.md) | **Completed** | Operator: set `INSIDEOUT_MAIL_API_KEY` + verified `INSIDEOUT_MAIL_FROM` in Railway and redeploy `server` — until then mail runs in log-only dev mode. | Deployed 2026-08-24 (server + app, `INSIDEOUT_PUBLIC_URL` set, routes verified via the domain); all five flows exercised live ([changelog](../changelogs/2026-08-24-email-auth.md)). |
 | P1 | [insideout_owner + insideout_app roles](2026-08-19-owner-app-roles.md) | **Completed** | None — plan closed. | Shared instance cut over, Railway deployed with owner URL, app password rotated 2026-08-20 ([changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md)). Autodeploy off — ship with `railway up --service server`. |
