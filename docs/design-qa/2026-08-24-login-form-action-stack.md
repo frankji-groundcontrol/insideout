@@ -28,3 +28,15 @@ Fix:
 implementation in
 [auth_form.dart](../../client/lib/features/auth/auth_form.dart) and both
 l10n catalogs.
+
+## Follow-up (same day)
+
+> I think a prompt modal would be better, transparency is not apparent
+
+The `AuthDoor` overlay used a translucent radial-gradient scrim
+(8%–88% alpha scaffold color) over the landing, so the busy page bled
+through unevenly and the panel floated without separation. Decision:
+treat it as a real prompt modal — solid dim barrier (`Colors.black54`,
+tap-to-dismiss) and an elevated solid-surface dialog panel. Same
+[changelog](../changelogs/2026-08-24-login-form-layout.md); implementation
+in [auth_door.dart](../../client/lib/features/auth/auth_door.dart).

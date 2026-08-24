@@ -6,8 +6,10 @@ import '../../theme/ink_seal.dart';
 
 enum AuthPrompt { login, register }
 
-/// Prompt overlay: 印 stamp + paper panel over a translucent celadon scrim.
-/// Lands on top of the current page instead of replacing it.
+/// Prompt modal: 印 stamp + paper dialog over a solid dim barrier. Lands
+/// on top of the current page like an OS prompt — the barrier dims the
+/// page instead of bleeding through it, and the panel is an elevated
+/// solid surface.
 class AuthDoor extends StatelessWidget {
   const AuthDoor({
     super.key,
@@ -36,18 +38,7 @@ class AuthDoor extends StatelessWidget {
               Positioned.fill(
                 child: GestureDetector(
                   onTap: onClose,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        center: const Alignment(0, -0.35),
-                        radius: 1.15,
-                        colors: [
-                          scheme.secondary.withValues(alpha: 0.08),
-                          theme.scaffoldBackgroundColor.withValues(alpha: 0.88),
-                        ],
-                      ),
-                    ),
-                  ),
+                  child: const ColoredBox(color: Colors.black54),
                 ),
               ),
               SafeArea(
@@ -89,6 +80,8 @@ class AuthDoor extends StatelessWidget {
                             scaleFrom: 0.98,
                             child: Material(
                               color: scheme.surface,
+                              elevation: 6,
+                              shadowColor: Colors.black.withValues(alpha: 0.55),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(InkSeal.radiusHero),
                                 side: BorderSide(color: scheme.outline),
