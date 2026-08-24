@@ -200,24 +200,65 @@ class _AuthFormState extends State<AuthForm> {
             child: Text(l10n.t('login.magicBack')),
           ),
         ] else if (!_register) ...[
+          const SizedBox(height: 24),
+          _otherWaysDivider(l10n.t('login.otherWays')),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => setState(() => _mode = _LoginMode.magic),
+                  child: Text(l10n.t('login.magicLinkShort')),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => setState(() => _mode = _LoginMode.code),
+                  child: Text(l10n.t('login.codeLinkShort')),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
-          TextButton(
-            onPressed: () => setState(() => _mode = _LoginMode.magic),
-            child: Text(l10n.t('login.magicLink')),
-          ),
-          TextButton(
-            onPressed: () => setState(() => _mode = _LoginMode.code),
-            child: Text(l10n.t('login.codeLink')),
-          ),
-          TextButton(
-            onPressed: () => context.go('/forgot-password'),
-            child: Text(l10n.t('login.forgot')),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () => context.go('/forgot-password'),
+                child: Text(l10n.t('login.forgot')),
+              ),
+              TextButton(
+                onPressed: widget.onSwitch,
+                child: Text(l10n.t('login.noAccount')),
+              ),
+            ],
           ),
         ],
-        TextButton(
-          onPressed: widget.onSwitch,
-          child: Text(l10n.t(_register ? 'register.haveAccount' : 'login.noAccount')),
+        if (_register)
+          TextButton(
+            onPressed: widget.onSwitch,
+            child: Text(l10n.t('register.haveAccount')),
+          ),
+      ],
+    );
+  }
+
+  // A hairline "— More ways to sign in —" divider separating the primary
+  // password path from the alternate sign-in buttons.
+  Widget _otherWaysDivider(String label) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        const Expanded(child: Divider()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+          ),
         ),
+        const Expanded(child: Divider()),
       ],
     );
   }

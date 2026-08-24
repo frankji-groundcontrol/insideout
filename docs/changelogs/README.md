@@ -15,6 +15,9 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-24 — Login form action hierarchy](2026-08-24-login-form-layout.md)
+  — design-QA ("so ugly"): stacked red links re-grouped into secondary
+  sign-in buttons under a labeled divider + a forgot/register footer row.
 - [2026-08-24 — Auth parity: CLI + MCP get every login/register way](2026-08-24-auth-parity-cli-mcp.md)
   — apiclient auth verbs; CLI register/`login --code`/`login --magic`/
   forgot/reset; MCP `auth_*` tools with an in-process session (token never

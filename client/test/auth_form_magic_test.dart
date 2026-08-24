@@ -26,24 +26,27 @@ void main() {
       ),
     );
 
-    // Password mode: email + password fields, both alternate entries visible.
+    // Password mode: email + password fields, secondary alternates + footer.
     expect(find.text('Password'), findsOneWidget);
-    expect(find.text('Email me a sign-in link'), findsOneWidget);
+    expect(find.text('More ways to sign in'), findsOneWidget);
+    expect(find.text('Email link'), findsOneWidget);
+    expect(find.text('Email code'), findsOneWidget);
     expect(find.text('Forgot password?'), findsOneWidget);
 
-    await tester.tap(find.text('Email me a sign-in link'));
+    await tester.tap(find.text('Email link'));
     await tester.pump();
 
     // Magic mode: password field gone, send button in its place.
     expect(find.text('Password'), findsNothing);
     expect(find.text('Send sign-in link'), findsOneWidget);
+    expect(find.text('More ways to sign in'), findsNothing);
     expect(find.text('Forgot password?'), findsNothing);
     expect(find.text('Use password instead'), findsOneWidget);
 
     await tester.tap(find.text('Use password instead'));
     await tester.pump();
     expect(find.text('Password'), findsOneWidget);
-    expect(find.text('Email me a sign-in link'), findsOneWidget);
+    expect(find.text('Email link'), findsOneWidget);
   });
 
   testWidgets('login form switches to code mode and back', (tester) async {
@@ -66,20 +69,21 @@ void main() {
     );
 
     // Password mode: the code entry sits next to the magic-link one.
-    expect(find.text('Email me a sign-in code'), findsOneWidget);
+    expect(find.text('Email code'), findsOneWidget);
 
-    await tester.tap(find.text('Email me a sign-in code'));
+    await tester.tap(find.text('Email code'));
     await tester.pump();
 
     // Code mode: password field gone, send-code button in its place.
     expect(find.text('Password'), findsNothing);
     expect(find.text('Send code'), findsOneWidget);
+    expect(find.text('More ways to sign in'), findsNothing);
     expect(find.text('Forgot password?'), findsNothing);
     expect(find.text('Use password instead'), findsOneWidget);
 
     await tester.tap(find.text('Use password instead'));
     await tester.pump();
     expect(find.text('Password'), findsOneWidget);
-    expect(find.text('Email me a sign-in code'), findsOneWidget);
+    expect(find.text('Email code'), findsOneWidget);
   });
 }

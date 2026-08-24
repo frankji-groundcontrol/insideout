@@ -21,6 +21,9 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-08-24 — Login form action stack](2026-08-24-login-form-action-stack.md)
+  — "so ugly"; four identical stacked red links under 登录 re-grouped into
+  secondary sign-in buttons + a footer row.
 - [2026-08-23 — Web first-refresh font flash](2026-08-23-web-font-flash.md)
   — "it shows garbage characters for a second before the Chinese finally
   appears"; CanvasKit first frame gated on CJK font readiness.
