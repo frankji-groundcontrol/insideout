@@ -16,3 +16,5 @@ and when to apply it again.
 | 2026-08-23 | [dio on Flutter web does not stream SSE — fetch + ReadableStream does](2026-08-23-dio-web-does-not-stream-sse.md) | [BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md) |
 | 2026-08-23 | [Browser font-readiness signals race the stylesheet parse](2026-08-23-browser-font-readiness-signals-race-stylesheet-parse.md) | [font-flash changelog](../changelogs/2026-08-23-web-font-flash.md) |
 | 2026-08-24 | [Gated integration tests must derive unique keys per run — rows persist](2026-08-24-gated-integration-tests-rerun-collisions.md) | [email-auth changelog](../changelogs/2026-08-24-email-auth.md) |
+| 2026-08-24 | [Interactive CLI prompts must share one buffered stdin reader](2026-08-24-cli-prompts-share-one-stdin-reader.md) | [auth-parity changelog](../changelogs/2026-08-24-auth-parity-cli-mcp.md) |
+| 2026-08-24 | [This machine's sandbox can block exec of freshly built binaries](2026-08-24-sandbox-blocks-new-binary-exec.md) | [auth-parity changelog](../changelogs/2026-08-24-auth-parity-cli-mcp.md) |
