@@ -73,4 +73,4 @@ the changelog.
 - [x] Live exercise against a local server: CLI register/login --code/
       login --magic/forgot/reset; MCP JSON-RPC code login + whoami
 - [x] Usage doc + changelog + board/plan closure
-- [ ] Commit, push, deploy server (binaries ship in the image)
+- [x] Commit, push, deploy server (binaries ship in the image)
