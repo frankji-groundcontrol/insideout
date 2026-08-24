@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-25 — Boot loading page](2026-08-25-boot-loading-page.md)
+  — app renders immediately with a 印 + spinner boot gate while session/
+  fonts hydrate (reimbursement pattern); kills the blank cold-load
+  screen while preserving the web font gate.
 - [2026-08-24 — Login form action hierarchy](2026-08-24-login-form-layout.md)
   — design-QA ("so ugly"): stacked red links re-grouped into secondary
   sign-in buttons under a labeled divider + a forgot/register footer row.

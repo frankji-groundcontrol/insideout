@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import 'session/appearance.dart';
+import 'session/boot.dart';
 import 'session/session.dart';
 import 'theme/ink_seal.dart';
 import 'theme/ink_seal_theme.dart';
@@ -15,6 +16,19 @@ class InsideOutApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appearance = context.watch<Appearance>();
+    final boot = context.watch<BootController>();
+    // Until boot settles, only the loading page mounts — no product
+    // surface builds before the web fonts are ready, preserving the
+    // first-frame tofu fix.
+    if (!boot.done) {
+      return MaterialApp(
+        title: 'InsideOut',
+        theme: inkSealTheme(InkSeal.light, brightness: Brightness.light),
+        darkTheme: inkSealTheme(InkSeal.dark, brightness: Brightness.dark),
+        themeMode: appearance.themeMode,
+        home: const BootLoadingPage(),
+      );
+    }
     return MaterialApp.router(
       title: 'InsideOut',
       theme: inkSealTheme(InkSeal.light, brightness: Brightness.light),
