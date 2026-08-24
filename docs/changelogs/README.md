@@ -15,6 +15,8 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-25 — Mail delivery enabled on production](2026-08-25-mail-delivery-live.md)
+  — Resend key + custom MAIL_FROM set in Railway, server redeployed; sender out of dev mode, delivery pending the user's real-inbox test.
 - [2026-08-25 — Boot loading page](2026-08-25-boot-loading-page.md)
   — app renders immediately with a 印 + spinner boot gate while session/
   fonts hydrate (reimbursement pattern); kills the blank cold-load

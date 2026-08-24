@@ -63,9 +63,10 @@ worktree is clean. Do not revert unrelated edits.
 Exception (2026-08-24): closed — the email-auth slice (magic link +
 password reset + code login) is committed and deployed to Railway
 (server + app; new auth routes verified via the domain). Mail delivery
-still awaits the operator's Resend key (`INSIDEOUT_MAIL_API_KEY` +
-verified `INSIDEOUT_MAIL_FROM` in Railway, then redeploy `server`);
-until then the sender runs in log-only dev mode. Record:
+went live 2026-08-25 (Resend key + custom MAIL_FROM in Railway;
+[changelog](changelogs/2026-08-25-mail-delivery-live.md)) — the
+remaining check is a real-inbox confirmation, and other recipients only
+receive once the sender domain is verified in Resend. Record:
 [changelog](changelogs/2026-08-24-email-auth.md).
 
 Their exact status, next action, blocker, and plan or record link are on the
