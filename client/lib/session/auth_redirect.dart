@@ -1,4 +1,11 @@
-const publicAuthLocations = {'/', '/login', '/register'};
+const publicAuthLocations = {
+  '/',
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+  '/magic-link',
+};
 
 /// Shipped auth gate used by [buildRouter]. Returns a new location or null.
 String? authRedirect({

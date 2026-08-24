@@ -60,6 +60,11 @@ records continue the numbering (next: BUG-014).
 
 ## Other open issues
 
+- [2026-08-24 — Auth endpoints have no rate limiting or failed-attempt lockout](2026-08-24-auth-endpoints-no-rate-limiting.md)
+  — login, magic-link, and forgot-password are enumeration-safe but
+  unthrottled: unlimited password guesses and unlimited link emails
+  (Resend spend / inbox bombing). Target design and constraints inside;
+  deferred from the email-auth slice.
 - [2026-07-29 — env.sh over the ~350-line modular-file budget](2026-07-29-envsh-line-budget.md)
   — **resolved 2026-07-30**: split at the next structural touch, as planned,
   into `env.sh` / `env-lib.sh` / `env-write.sh` (227 / 110 / 278 lines). The

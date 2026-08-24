@@ -13,6 +13,9 @@ void main() {
     expect(authRedirect(ready: true, signedIn: false, location: '/'), isNull);
     expect(authRedirect(ready: true, signedIn: false, location: '/login'), isNull);
     expect(authRedirect(ready: true, signedIn: false, location: '/register'), isNull);
+    expect(authRedirect(ready: true, signedIn: false, location: '/forgot-password'), isNull);
+    expect(authRedirect(ready: true, signedIn: false, location: '/reset-password'), isNull);
+    expect(authRedirect(ready: true, signedIn: false, location: '/magic-link'), isNull);
     expect(authRedirect(ready: true, signedIn: false, location: '/dashboard'), '/login');
     expect(authRedirect(ready: true, signedIn: false, location: '/workspace/1'), '/login');
     expect(authRedirect(ready: true, signedIn: false, location: '/prd/1'), '/login');

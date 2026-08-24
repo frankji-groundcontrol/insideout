@@ -18,7 +18,15 @@ func (s *Server) registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/login", s.handleLogin)
 	mux.HandleFunc("POST /api/v1/auth/refresh", s.handleRefresh)
 	mux.HandleFunc("POST /api/v1/auth/logout", s.handleLogout)
+	mux.HandleFunc("POST /api/v1/auth/magic-link", s.handleMagicLinkRequest)
+	mux.HandleFunc("POST /api/v1/auth/magic-link/consume", s.handleMagicLinkConsume)
+	mux.HandleFunc("POST /api/v1/auth/forgot-password", s.handleForgotPassword)
+	mux.HandleFunc("POST /api/v1/auth/reset-password", s.handleResetPassword)
+	mux.HandleFunc("POST /api/v1/auth/login-code", s.handleLoginCodeRequest)
+	mux.HandleFunc("POST /api/v1/auth/login-code/verify", s.handleLoginCodeVerify)
 }
+
+var loginCodePattern = regexp.MustCompile(`^\d{6}$`)
 
 var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 

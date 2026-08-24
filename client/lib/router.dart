@@ -1,7 +1,10 @@
 import 'package:go_router/go_router.dart';
 
+import 'features/auth/forgot_password_page.dart';
 import 'features/auth/login_page.dart';
+import 'features/auth/magic_link_page.dart';
 import 'features/auth/register_page.dart';
+import 'features/auth/reset_password_page.dart';
 import 'features/dashboard/dashboard_page.dart';
 import 'features/landing/landing_page.dart';
 import 'features/prd/export_page.dart';
@@ -23,6 +26,9 @@ final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/': (c, s) => const LandingPage(),
   '/login': (c, s) => const LoginPage(),
   '/register': (c, s) => const RegisterPage(),
+  '/forgot-password': (c, s) => const ForgotPasswordPage(),
+  '/reset-password': (c, s) => ResetPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
+  '/magic-link': (c, s) => MagicLinkPage(token: s.uri.queryParameters['token'] ?? ''),
   '/dashboard': (c, s) => const DashboardPage(),
   '/profile': (c, s) => const ProfilePage(),
   '/workspace/:id': (c, s) => WorkspacePage(id: s.pathParameters['id']!),

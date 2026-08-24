@@ -97,6 +97,9 @@ themselves when it is unset.
 | `INSIDEOUT_DEV_CORS` | no | off | Permissive-CORS toggle for dev; on only when the value is exactly `1`. |
 | `INSIDEOUT_CORS_ORIGINS` | no | empty | Comma-separated Origin allow-list for browser clients that are not same-origin (Flutter web). The token `localhost` matches any `localhost` / `127.0.0.1` port. Native apps do not need CORS. |
 | `INSIDEOUT_COOKIE_SECURE` | no | on | Sets the `Secure` attribute on auth cookies; secure unless the value is exactly `0` (plain-http local dev). |
+| `INSIDEOUT_MAIL_API_KEY` | no | — | Resend API key for transactional email (magic-link login, password reset). **Empty = mail dev mode**: messages (links included) are logged, not sent — the same posture as the offline PRD Coach. |
+| `INSIDEOUT_MAIL_FROM` | no | `InsideOut <onboarding@resend.dev>` | From address for auth email; must be a Resend-verified sender. The default is Resend's sandbox address, which only delivers to the Resend account's own email. |
+| `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed magic/reset link. Set to the hosted domain in production. |
 | `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). |
 
 ### AI provider

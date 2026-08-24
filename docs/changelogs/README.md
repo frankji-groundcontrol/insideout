@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-24 — Email auth: magic-link login + password reset + code login](2026-08-24-email-auth.md)
+  — one-time SHA-256-hashed email tokens (`insideout.auth_tokens`), Resend
+  mail with dev-log fallback, reset revokes all sessions; Flutter pages and
+  login-form magic/code modes; typed 6-digit code login with a 5-miss
+  attempt budget; all five flows exercised live.
 - [2026-08-23 — Canvas presence hardening](2026-08-23-canvas-presence-hardening.md)
   — presence reconnect with capped backoff; web SSE moved off dio's
   non-streaming XHR adapter to fetch + ReadableStream; two-tab live proof.

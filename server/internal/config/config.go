@@ -46,6 +46,17 @@ type Config struct {
 	GithubAppID          string
 	GithubPrivateKey     string
 	GithubPrivateKeyFile string
+	// MailAPIKey is the Resend API key for transactional email (magic
+	// links, password reset). Empty → the mail sender runs in dev mode
+	// and logs messages instead of delivering them.
+	MailAPIKey string
+	// MailFrom is the Resend-verified From address, e.g.
+	// "InsideOut <noreply@example.com>".
+	MailFrom string
+	// PublicURL is the browser origin of the Flutter app, used to build
+	// the links inside emailed magic/reset links. Defaults to the local
+	// Flutter dev origin.
+	PublicURL string
 }
 
 func Load() (*Config, error) {
@@ -62,6 +73,9 @@ func Load() (*Config, error) {
 		GithubAppID:          os.Getenv("INSIDEOUT_GH_APP_ID"),
 		GithubPrivateKey:     os.Getenv("INSIDEOUT_GH_PRIVATE_KEY"),
 		GithubPrivateKeyFile: os.Getenv("INSIDEOUT_GH_PRIVATE_KEY_FILE"),
+		MailAPIKey:           os.Getenv("INSIDEOUT_MAIL_API_KEY"),
+		MailFrom:             getenv("INSIDEOUT_MAIL_FROM", "InsideOut <onboarding@resend.dev>"),
+		PublicURL:            strings.TrimRight(getenv("INSIDEOUT_PUBLIC_URL", "http://localhost:5173"), "/"),
 	}
 
 	var err error

@@ -93,6 +93,18 @@ class Session extends ChangeNotifier {
     await applyAuthProfile(await api.login(email, password));
   }
 
+  /// Signs in from an emailed magic-link token — same session state as a
+  /// password login once the server accepts the token.
+  Future<void> consumeMagicLink(String token) async {
+    await applyAuthProfile(await api.consumeMagicLink(token));
+  }
+
+  /// Signs in with an emailed 6-digit code — same session state as a
+  /// password login once the server accepts the code.
+  Future<void> loginWithCode(String email, String code) async {
+    await applyAuthProfile(await api.verifyLoginCode(email, code));
+  }
+
   Future<void> logout() async {
     try {
       await api.logout();

@@ -35,6 +35,20 @@ rotating opaque refresh token (SHA-256 hash stored at rest, rotated on every
 same-origin (see [deployment](deployment.md)), so cookies work for both the
 browser and Nuxt SSR without CORS.
 
+Beyond email+password, emailed one-time-credential flows share the same
+session issuance: magic-link login (`POST /auth/magic-link` then
+`/auth/magic-link/consume`), password reset (`POST /auth/forgot-password`
+then `/auth/reset-password`, which also revokes all the user's sessions),
+and typed code login (`POST /auth/login-code` then
+`/auth/login-code/verify`). Their tokens live in
+`insideout.auth_tokens` (SHA-256 hash at rest, single-use, expiring —
+magic links 15 min, resets 60 min, sign-in codes 10 min with a 5-miss
+attempt budget; issuing a new one supersedes the previous unused token of
+that kind). Delivery is `internal/mail` (Resend HTTP API; an empty
+`INSIDEOUT_MAIL_API_KEY` selects dev mode, which logs messages instead of
+sending them), and request endpoints answer a uniform 200 so account
+existence is not enumerable.
+
 ## Store layer
 
 `internal/store` wraps a single `*pgxpool.Pool` in a `Store` struct — no code

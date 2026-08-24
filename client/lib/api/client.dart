@@ -81,6 +81,56 @@ class ApiClient {
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
+  /// Requests a magic-link email for [email]. Always resolves when the
+  /// server accepts the request — the server answers 200 regardless of
+  /// whether the account exists.
+  Future<void> requestMagicLink(String email) async {
+    final res = await _dio.post('/auth/magic-link', data: {'email': email});
+    await _parse(res, (d) => d);
+  }
+
+  /// Exchanges an emailed magic-link token for a full session (same shape
+  /// as login). Throws with status 401 when the link is invalid, expired,
+  /// or already used.
+  Future<UserProfile> consumeMagicLink(String token) async {
+    final res = await _dio.post('/auth/magic-link/consume', data: {'token': token});
+    return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
+  }
+
+  /// Requests a 6-digit sign-in code email for [email]. Always resolves
+  /// when the server accepts the request (uniform 200 contract).
+  Future<void> requestLoginCode(String email) async {
+    final res = await _dio.post('/auth/login-code', data: {'email': email});
+    await _parse(res, (d) => d);
+  }
+
+  /// Exchanges an emailed sign-in code for a full session (same shape as
+  /// login). Throws with status 401 when the code is wrong, expired, or
+  /// exhausted by failed attempts.
+  Future<UserProfile> verifyLoginCode(String email, String code) async {
+    final res = await _dio.post('/auth/login-code/verify', data: {
+      'email': email,
+      'code': code,
+    });
+    return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
+  }
+
+  /// Requests a password-reset email for [email] (uniform 200 contract).
+  Future<void> forgotPassword(String email) async {
+    final res = await _dio.post('/auth/forgot-password', data: {'email': email});
+    await _parse(res, (d) => d);
+  }
+  /// Sets a new password with an emailed reset token. On success every
+  /// existing session of that account has been revoked server-side, so the
+  /// next step is always a fresh login.
+  Future<void> resetPassword(String token, String password) async {
+    final res = await _dio.post('/auth/reset-password', data: {
+      'token': token,
+      'password': password,
+    });
+    await _parse(res, (d) => d);
+  }
+
   Future<void> logout() async {
     final refresh = await _readRefresh();
     await _dio.post('/auth/logout', data: {'refreshToken': refresh ?? ''});

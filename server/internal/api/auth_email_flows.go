@@ -1,0 +1,330 @@
+package api
+
+import (
+	"errors"
+	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
+	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
+	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
+)
+
+const (
+	magicLinkTTL     = 15 * time.Minute
+	passwordResetTTL = time.Hour
+	loginCodeTTL     = 10 * time.Minute
+)
+
+type emailOnlyRequest struct {
+	Email string `json:"email"`
+}
+
+// handleMagicLinkRequest emails a one-time sign-in link. The response is a
+// uniform 200 whether or not the account exists — the endpoint must not
+// leak account enumeration, and a mail-provider failure is logged, not
+// surfaced, for the same reason.
+func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) {
+	email, ok := s.decodeEmail(w, r)
+	if !ok {
+		return
+	}
+
+	user, err := s.store.GetUserByEmail(r.Context(), email)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		return
+	}
+	if err != nil {
+		s.log.Error("magic link: get user by email", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	if err := s.sendEmailLink(r, user.ID, user.Email, store.AuthTokenMagicLink, magicLinkTTL, "/magic-link",
+		"Your InsideOut sign-in link",
+		"Sign in to InsideOut with this link (valid for 15 minutes):",
+		"Sign in to InsideOut",
+	); err != nil {
+		s.log.Error("magic link: send", "error", err)
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleMagicLinkConsume exchanges an emailed token for a full session —
+// the same body and cookies as login.
+func (s *Server) handleMagicLinkConsume(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token string `json:"token"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil || strings.TrimSpace(req.Token) == "" {
+		httpx.WriteError(w, http.StatusBadRequest, "token is required", "", nil)
+		return
+	}
+
+	userID, err := s.store.ConsumeAuthToken(r.Context(), store.AuthTokenMagicLink, auth.HashOneTimeToken(strings.TrimSpace(req.Token)))
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired link", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("magic link: consume", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	user, err := s.store.GetUserByID(r.Context(), userID)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired link", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("magic link: get user", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	access, refresh, err := s.issueSession(w, r, user.ID)
+	if err != nil {
+		s.log.Error("magic link: issue session", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, sessionView{userView: userResponse(user), AccessToken: access, RefreshToken: refresh})
+}
+
+// handleForgotPassword emails a one-time password-reset link. Same
+// uniform-200 contract as the magic-link request.
+func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
+	email, ok := s.decodeEmail(w, r)
+	if !ok {
+		return
+	}
+
+	user, err := s.store.GetUserByEmail(r.Context(), email)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		return
+	}
+	if err != nil {
+		s.log.Error("forgot password: get user by email", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	if err := s.sendEmailLink(r, user.ID, user.Email, store.AuthTokenPasswordReset, passwordResetTTL, "/reset-password",
+		"Reset your InsideOut password",
+		"Set a new InsideOut password with this link (valid for 60 minutes):",
+		"Reset your InsideOut password",
+	); err != nil {
+		s.log.Error("forgot password: send", "error", err)
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleResetPassword consumes a reset token, rewrites the password hash,
+// and revokes every live session so stolen cookies die with the old
+// password.
+func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	req.Token = strings.TrimSpace(req.Token)
+	if req.Token == "" {
+		httpx.WriteError(w, http.StatusBadRequest, "token is required", "", nil)
+		return
+	}
+	if len(req.Password) < 8 {
+		httpx.WriteError(w, http.StatusBadRequest, "password must be at least 8 characters", "", nil)
+		return
+	}
+
+	userID, err := s.store.ConsumeAuthToken(r.Context(), store.AuthTokenPasswordReset, auth.HashOneTimeToken(req.Token))
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired reset link", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("reset password: consume", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	hash, err := auth.HashPassword(req.Password)
+	if err != nil {
+		s.log.Error("reset password: hash", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	if err := s.store.UpdatePasswordHash(r.Context(), userID, hash); err != nil {
+		s.log.Error("reset password: update hash", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	if err := s.store.RevokeUserSessions(r.Context(), userID); err != nil {
+		// The password is already changed; a failed revoke is a security
+		// follow-up, not a reason to fail the request (the token is spent
+		// either way, so a retry could only 401).
+		s.log.Error("reset password: revoke sessions", "error", err, "user_id", userID)
+	}
+
+	s.clearAuthCookies(w)
+	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleLoginCodeRequest emails a 6-digit sign-in code. Same uniform-200
+// no-enumeration contract as the magic-link request.
+func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) {
+	email, ok := s.decodeEmail(w, r)
+	if !ok {
+		return
+	}
+
+	user, err := s.store.GetUserByEmail(r.Context(), email)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		return
+	}
+	if err != nil {
+		s.log.Error("login code: get user by email", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	if err := s.sendEmailCode(r, user.ID, user.Email); err != nil {
+		s.log.Error("login code: send", "error", err)
+	}
+	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleLoginCodeVerify exchanges an emailed code for a full session.
+// Wrong, exhausted, expired, and unknown-account all answer the same 401 —
+// the code itself is the only secret being probed.
+func (s *Server) handleLoginCodeVerify(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+		Code  string `json:"code"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	code := strings.TrimSpace(req.Code)
+	if !emailPattern.MatchString(email) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid email", "", nil)
+		return
+	}
+	if !loginCodePattern.MatchString(code) {
+		httpx.WriteError(w, http.StatusBadRequest, "code must be 6 digits", "", nil)
+		return
+	}
+
+	user, err := s.store.GetUserByEmail(r.Context(), email)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired code", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("login code: get user by email", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	if err := s.store.VerifyLoginCode(r.Context(), user.ID, auth.HashOneTimeToken(code)); errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired code", "", nil)
+		return
+	} else if err != nil {
+		s.log.Error("login code: verify", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+
+	access, refresh, err := s.issueSession(w, r, user.ID)
+	if err != nil {
+		s.log.Error("login code: issue session", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, sessionView{userView: userResponse(user), AccessToken: access, RefreshToken: refresh})
+}
+
+func (s *Server) decodeEmail(w http.ResponseWriter, r *http.Request) (string, bool) {
+	var req emailOnlyRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return "", false
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if !emailPattern.MatchString(email) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid email", "", nil)
+		return "", false
+	}
+	return email, true
+}
+
+// sendEmailLink mints a one-time token of the given kind, stores its hash
+// (superseding any prior unused token of that kind for the user), and
+// emails a link to the Flutter app's route for it.
+func (s *Server) sendEmailLink(r *http.Request, userID uuid.UUID, to, kind string, ttl time.Duration, path, subject, textIntro, heading string) error {
+	token, hash, err := auth.GenerateOneTimeToken()
+	if err != nil {
+		return fmt.Errorf("generate token: %w", err)
+	}
+	if err := s.store.CreateAuthToken(r.Context(), userID, kind, hash, time.Now().Add(ttl)); err != nil {
+		return fmt.Errorf("store token: %w", err)
+	}
+	link := s.cfg.PublicURL + path + "?token=" + token
+	text := fmt.Sprintf("%s\n\n%s\n\nIf you didn't request this, you can ignore this email.", textIntro, link)
+	html := simpleEmailHTML(heading, textIntro, link, int(ttl.Minutes()))
+	return s.mail.Send(r.Context(), to, subject, text, html)
+}
+
+// sendEmailCode mints a 6-digit sign-in code, stores its hash (superseding
+// the user's prior live code), and emails the digits — the typeable
+// counterpart of sendEmailLink for clients that can't follow a link.
+func (s *Server) sendEmailCode(r *http.Request, userID uuid.UUID, to string) error {
+	code, hash, err := auth.GenerateLoginCode()
+	if err != nil {
+		return fmt.Errorf("generate code: %w", err)
+	}
+	if err := s.store.CreateAuthToken(r.Context(), userID, store.AuthTokenLoginCode, hash, time.Now().Add(loginCodeTTL)); err != nil {
+		return fmt.Errorf("store code: %w", err)
+	}
+	text := fmt.Sprintf("Your InsideOut sign-in code is %s. It works once and expires in %d minutes. If you didn't request it, you can ignore this email.",
+		code, int(loginCodeTTL.Minutes()))
+	html := codeEmailHTML(code, int(loginCodeTTL.Minutes()))
+	return s.mail.Send(r.Context(), to, "Your InsideOut sign-in code", text, html)
+}
+
+// codeEmailHTML renders the code email — the digits get display prominence
+// a link doesn't need.
+func codeEmailHTML(code string, ttlMinutes int) string {
+	return fmt.Sprintf(`<!doctype html>
+<html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1a1a1a;">
+<h2 style="margin-bottom:4px;">Your sign-in code</h2>
+<p>Enter this code to sign in to InsideOut:</p>
+<p style="font-size:32px;font-weight:700;letter-spacing:8px;margin:16px 0;">%s</p>
+<p style="color:#666666;font-size:13px;">This code works once and expires in %d minutes. If you didn't request it, you can ignore this email.</p>
+</body></html>`, code, ttlMinutes)
+}
+
+// simpleEmailHTML renders the minimal inline template both auth emails
+// share — no template files, same inline-string approach as docmind.
+func simpleEmailHTML(heading, intro, link string, ttlMinutes int) string {
+	return fmt.Sprintf(`<!doctype html>
+<html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1a1a1a;">
+<h2 style="margin-bottom:4px;">%s</h2>
+<p>%s</p>
+<p><a href="%s" style="display:inline-block;padding:12px 24px;background:#1f6f54;color:#ffffff;text-decoration:none;border-radius:8px;">Continue</a></p>
+<p style="color:#666666;font-size:13px;">This link works once and expires in %d minutes. If you didn't request it, you can ignore this email.</p>
+</body></html>`, heading, intro, link, ttlMinutes)
+}

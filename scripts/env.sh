@@ -62,7 +62,10 @@ report_defaults() {
     "INSIDEOUT_CORS_ORIGINS|empty (no allow-list CORS)|Go server Flutter-web origins; token localhost = any localhost port" \
     "INSIDEOUT_LLM_BASE_URL|https://api.anthropic.com/v1|Go server LLM endpoint (include /v1 yourself)" \
     "INSIDEOUT_LLM_MODEL|claude-sonnet-4-20250514|Go server LLM model (ignored by the offline coach)" \
-    "INSIDEOUT_LLM_SCHEMA|messages|Go server LLM wire format: messages or responses"; do
+    "INSIDEOUT_LLM_SCHEMA|messages|Go server LLM wire format: messages or responses" \
+    "INSIDEOUT_MAIL_API_KEY|empty (mail dev mode — messages logged, not sent)|Go server; Resend key for magic-link + password-reset email" \
+    "INSIDEOUT_MAIL_FROM|InsideOut <onboarding@resend.dev>|Go server; Resend-verified sender for auth email" \
+    "INSIDEOUT_PUBLIC_URL|http://localhost:5173|Go server; browser origin of the Flutter app, base of emailed links"; do
     name="${spec%%|*}"; spec="${spec#*|}"; dflt="${spec%%|*}"; who="${spec#*|}"
     [ -n "${!name:-}" ] && continue
     info "$name" "default in effect: $dflt — $who"

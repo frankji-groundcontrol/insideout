@@ -8,6 +8,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/github"
+	"github.com/frankji-groundcontrol/insideout/server/internal/mail"
 	"github.com/frankji-groundcontrol/insideout/server/internal/presence"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
@@ -31,11 +32,15 @@ type Server struct {
 	ghTokens *github.InstallationTokens
 	// presence is the in-memory canvas presence registry.
 	presence *presence.Registry
+	// mail sends transactional email (magic links, password reset);
+	// without an API key it logs messages instead of delivering them.
+	mail *mail.Sender
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
 	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner,
-		presence: presence.New(30*time.Second, nil)}
+		presence: presence.New(30*time.Second, nil),
+		mail:     mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log)}
 	// GitHub App installation tokens for guide loading; nil disables the
 	// token path (public repos still load unauthenticated).
 	if cfg.GithubAppID != "" {
