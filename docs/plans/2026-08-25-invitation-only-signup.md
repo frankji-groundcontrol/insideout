@@ -64,5 +64,6 @@ touching existing rows; the purge decision stays with the user.
 - [x] go build/vet/test green; flutter analyze/test green
 - [x] Live exercise (local): closed/invitation/open matrix, invite→
       register, wrong code, revoke
-- [ ] Deploy: server + app; promote frank.ji in prod; verify prod gate
+- [x] Deploy: server + app; promote frank.ji in prod; verify prod gate
+      (config invitation_only, no-code register 403 via the domain)
 - [x] Changelog + backend.md + usage doc + HANDOFF/board closure
