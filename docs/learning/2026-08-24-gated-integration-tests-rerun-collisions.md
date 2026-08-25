@@ -34,6 +34,16 @@ database) that inserts rows keyed by anything other than a fresh uuid.
 Trust signal: a suite that passed once and fails on rerun with duplicate
 keys while the focused `-run` still passes.
 
+## Follow-up lesson (2026-08-25): settings are shared global state
+
+A gated test for the signup-mode settings round trip ran against the
+shared database and left `signup_mode = "open"` in **production** until
+manually restored — rows persisting was the known convention, but
+settings are worse: they change deployment behavior, not just data.
+Gated tests that touch `insideout.settings` (or any global config) must
+capture the prior value and restore it in `t.Cleanup` (see
+`invitations_test.go`), or assert read-only against the default.
+
 ## Evidence
 
 `auth_tokens_test.go` passed alone (fresh table), then six of seven tests
