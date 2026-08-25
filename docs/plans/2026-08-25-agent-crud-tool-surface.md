@@ -63,4 +63,5 @@ before building the rest.
 - [x] SKILL.md agent skill
 - [x] go suites green; live matrix end-to-end
 - [x] Changelog + indexes; usage doc; board/HANDOFF closure
-- [ ] Commit, push, deploy server, verify
+- [x] Commit, push, deploy server, verify (54b034a; server SUCCESS +
+      app restart; prod me 401, config invitation_only)
