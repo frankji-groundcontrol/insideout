@@ -9,6 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
+| P1 | [Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md) | **Completed** | None — 46-tool surface + SKILL.md live ([changelog](../changelogs/2026-08-25-agent-crud-tool-surface.md)). | Idea inbox lifecycle, PRD section edits, evidence read, bootstrapping — 1:1 API ↔ CLI ↔ MCP. |
 | P1 | [Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md) | **Completed** | Operator call: whether to purge the 582 legacy users (destructive). | Deployed 2026-08-25; frank.ji@… sole admin, signup invitation-only ([changelog](../changelogs/2026-08-25-invitation-only-signup.md)). |
 | P1 | [Boot loading page (reimbursement pattern)](2026-08-25-boot-loading-page.md) | **Completed** | None — deployed and verified ([changelog](../changelogs/2026-08-25-boot-loading-page.md)). | Kills the blank cold-load screen; preserves the web font gate. |
 | P1 | [Auth parity: CLI + MCP get every login/register way](2026-08-24-auth-parity-cli-mcp.md) | **Completed** | None — deployed and verified live ([changelog](../changelogs/2026-08-24-auth-parity-cli-mcp.md)). | All four surfaces now agree on the five auth ways; MCP login tools keep the token as process state, never conversation output. |

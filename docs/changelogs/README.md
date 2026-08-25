@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-25 — Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md)
+  — +7 tools → 46 (idea inbox lifecycle, PRD section edits, evidence
+  read, bootstrapping), 1:1 API ↔ CLI ↔ MCP; repo-root SKILL.md for
+  external coding agents; soft-drop semantics documented everywhere.
 - [2026-08-25 — Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md)
   — qwenimage pattern: system_role, email-bound single-use invitations,
   settings-driven signup_mode fail-closed; register gate + admin API/UI +

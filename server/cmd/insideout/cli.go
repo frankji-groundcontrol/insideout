@@ -26,7 +26,19 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return false, 0
 	}
 	cmd, rest := args[0], args[1:]
+
+	// CRUD-completion sub-verbs piggyback on the existing read verbs
+	// (idea/prd/workspaces/projects) and add ideas/evidence.
+	apiBase := envOr("INSIDEOUT_API", defaultAPIBase)
+	if len(rest) > 0 {
+		switch cmd + " " + rest[0] {
+		case "idea update", "idea delete", "prd update", "workspaces create", "projects create":
+			return runCrudCommand(cmd+" "+rest[0], rest[1:], apiBase)
+		}
+	}
 	switch cmd {
+	case "ideas", "evidence":
+		return runCrudCommand(cmd, rest, apiBase)
 	case "roadmap":
 		return runRoadmapCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "build", "expand":

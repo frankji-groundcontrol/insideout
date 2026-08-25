@@ -6,6 +6,8 @@ package mcpserver
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -232,6 +234,65 @@ func addProductTools(s *server.MCPServer, api string) {
 		nil,
 		func(c *apiclient.Client, _ mcp.CallToolRequest) (string, error) {
 			return call(c.ListInvitations())
+		})
+	addTextTool("idea_list", "List a workspace's idea inbox with full content",
+		[]mcp.ToolOption{strReq("workspace_id", "workspace id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.Ideas(reqStr(req, "workspace_id")))
+		})
+	addTextTool("idea_update", "Rewrite an idea's title and content (title required)",
+		[]mcp.ToolOption{strReq("idea_id", "idea id"), strReq("title", "new title"), strOpt("content", "idea body")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			content, _ := req.GetArguments()["content"].(string)
+			return call(c.UpdateIdea(reqStr(req, "idea_id"), reqStr(req, "title"), content))
+		})
+	addTextTool("idea_delete", "Drop an idea (soft: it stays in idea_list with status \"dropped\"; filter client-side)",
+		[]mcp.ToolOption{strReq("idea_id", "idea id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			if err := c.DeleteIdea(reqStr(req, "idea_id")); err != nil {
+				return "", err
+			}
+			return "deleted", nil
+		})
+	addTextTool("prd_update", "Edit PRD sections/title directly (section keys: background, users, goals, nonGoals, stories, requirements, constraints, risks); optional status transition applies after edits",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("title", "new title"),
+			strOpt("status", "status transition after edits"), strOpt("sections_json", "JSON object of section key → text")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			var title *string
+			if v, ok := req.GetArguments()["title"].(string); ok && v != "" {
+				title = &v
+			}
+			sections := map[string]string{}
+			if raw, ok := req.GetArguments()["sections_json"].(string); ok && raw != "" {
+				if err := json.Unmarshal([]byte(raw), &sections); err != nil {
+					return "", fmt.Errorf("sections_json must be a JSON object: %w", err)
+				}
+			}
+			out, err := c.UpdatePrd(reqStr(req, "prd_id"), title, sections)
+			if err != nil {
+				return "", err
+			}
+			if status, ok := req.GetArguments()["status"].(string); ok && status != "" {
+				return call(c.SetPrdStatus(reqStr(req, "prd_id"), status))
+			}
+			return string(out), nil
+		})
+	addTextTool("roadmap_evidence", "Read the GitHub evidence attached to a roadmap node (the read half of bind → sync → checkpoint)",
+		[]mcp.ToolOption{strReq("node_id", "roadmap node id")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.NodeEvidence(reqStr(req, "node_id")))
+		})
+	addTextTool("workspace_create", "Create a workspace (creator becomes owner)",
+		[]mcp.ToolOption{strReq("title", "workspace title"), strOpt("description", "what this workspace is for")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			desc, _ := req.GetArguments()["description"].(string)
+			return call(c.CreateWorkspace(reqStr(req, "title"), desc))
+		})
+	addTextTool("project_create", "Create a project inside a workspace",
+		[]mcp.ToolOption{strReq("workspace_id", "workspace id"), strReq("title", "project title"), strOpt("description", "project description")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			desc, _ := req.GetArguments()["description"].(string)
+			return call(c.CreateProject(reqStr(req, "workspace_id"), reqStr(req, "title"), desc))
 		})
 	addTextTool("versions", "List a PRD's committed versions, newest first, with diffs",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},

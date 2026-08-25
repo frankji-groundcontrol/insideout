@@ -36,9 +36,10 @@ insideout reset-password                            # paste link/token + new pas
 | Area | Verbs |
 | --- | --- |
 | Auth | `register [--invite code] <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
+| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `projects create --title [--desc] <ws-id>` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
-| Ideas | `idea create --title [--content] <ws>`, `idea convert <id>` |
+| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>`, `idea delete <id>` (soft drop), `idea convert <id>` |
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
 | Admin | `invite [--ttl hours] <email>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
@@ -51,7 +52,7 @@ Flags precede positional ids (Go convention). Statuses are
 ## MCP server
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
-verbs as tools (38 today), token via `INSIDEOUT_TOKEN`:
+verbs as tools (46 today), token via `INSIDEOUT_TOKEN`:
 
 ```json
 { "mcpServers": { "insideout": {
