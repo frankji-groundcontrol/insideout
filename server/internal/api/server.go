@@ -57,6 +57,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	s.registerAuthRoutes(mux)
 	s.registerMeRoutes(mux)
+	s.registerAdminRoutes(mux)
 	s.registerWorkspaceRoutes(mux)
 	s.registerProjectRoutes(mux)
 	s.registerIdeaRoutes(mux)

@@ -19,13 +19,13 @@ func TestRegisterStoresToken(t *testing.T) {
 		gotBody = string(buf[:n])
 		w.Write([]byte(`{"email":"a@b.c","username":"Alice","accessToken":"tok-r","refreshToken":"rtok"}`))
 	})
-	if err := c.Register("a@b.c", "longenough", "Alice"); err != nil {
+	if err := c.Register("a@b.c", "longenough", "Alice", "inv"); err != nil {
 		t.Fatalf("Register: %v", err)
 	}
 	if gotPath != "/auth/register" {
 		t.Errorf("path = %q, want /auth/register", gotPath)
 	}
-	if want := `{"email":"a@b.c","password":"longenough","username":"Alice"}`; gotBody != want {
+	if want := `{"email":"a@b.c","inviteCode":"inv","password":"longenough","username":"Alice"}`; gotBody != want {
 		t.Errorf("body = %q, want %q", gotBody, want)
 	}
 	if c.Token() != "tok-r" {

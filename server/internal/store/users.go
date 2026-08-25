@@ -19,16 +19,17 @@ type User struct {
 	Bio             string
 	Keywords        []string
 	Role            string
+	SystemRole      string
 	EmailVerifiedAt *time.Time
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
 }
 
-const userColumns = `id, email, password_hash, username, avatar_url, bio, keywords, role, email_verified_at, created_at, updated_at`
+const userColumns = `id, email, password_hash, username, avatar_url, bio, keywords, role, system_role, email_verified_at, created_at, updated_at`
 
 func scanUser(row pgx.Row) (*User, error) {
 	var u User
-	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Username, &u.AvatarURL, &u.Bio, &u.Keywords, &u.Role, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt)
+	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Username, &u.AvatarURL, &u.Bio, &u.Keywords, &u.Role, &u.SystemRole, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}

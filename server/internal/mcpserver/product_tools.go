@@ -219,6 +219,20 @@ func addProductTools(s *server.MCPServer, api string) {
 			}
 			return call(c.PrdView(reqStr(req, "prd_id"), aud))
 		})
+	addTextTool("invite_create", "Admin: mint an email-bound invitation code (response contains the one-time code and signup URL)",
+		[]mcp.ToolOption{strReq("email", "invitee email"), strOpt("ttl_hours", "lifetime in hours (default 168)")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			ttl := 0
+			if v, ok := req.GetArguments()["ttl_hours"].(float64); ok {
+				ttl = int(v)
+			}
+			return call(c.CreateInvitation(reqStr(req, "email"), ttl))
+		})
+	addTextTool("invite_list", "Admin: list invitations (email, expiry, used/revoked state — no codes)",
+		nil,
+		func(c *apiclient.Client, _ mcp.CallToolRequest) (string, error) {
+			return call(c.ListInvitations())
+		})
 	addTextTool("versions", "List a PRD's committed versions, newest first, with diffs",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

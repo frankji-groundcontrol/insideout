@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import 'admin_section.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -75,6 +76,7 @@ class _ProfilePageState extends State<ProfilePage> {
           if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!)),
           const SizedBox(height: 20),
           FilledButton(onPressed: busy ? null : _save, child: Text(l10n.t('profile.save'))),
+          if (user?.isAdmin ?? false) const AdminSection(),
         ],
       ),
     );

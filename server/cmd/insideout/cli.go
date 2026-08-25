@@ -43,6 +43,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runIdeaCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "login", "register", "forgot-password", "reset-password":
 		return runAuthCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+	case "invite", "invites", "signup-mode":
+		return runAdminCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "whoami", "workspaces", "projects", "prd":
 	default:
 		return false, 0

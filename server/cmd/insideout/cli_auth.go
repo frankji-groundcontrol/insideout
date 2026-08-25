@@ -20,6 +20,7 @@ func runAuthCommand(cmd string, args []string, api string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	useCode := fs.Bool("code", false, "email a 6-digit code and read it from stdin")
 	useMagic := fs.Bool("magic", false, "email a sign-in link and read the pasted link/token from stdin")
+	invite := fs.String("invite", "", "invitation code (required when signup is invitation-only)")
 	if err := fs.Parse(args); err != nil {
 		return true, 2
 	}
@@ -30,7 +31,7 @@ func runAuthCommand(cmd string, args []string, api string) (bool, int) {
 	case "login":
 		return loginCommand(c, positional, *useCode, *useMagic)
 	case "register":
-		return registerCommand(c, positional)
+		return registerCommand(c, positional, *invite)
 	case "forgot-password":
 		email := argAt(positional, 0)
 		if email == "" {
@@ -109,10 +110,10 @@ func loginCommand(c *apiclient.Client, positional []string, useCode, useMagic bo
 	return true, 0
 }
 
-func registerCommand(c *apiclient.Client, positional []string) (bool, int) {
+func registerCommand(c *apiclient.Client, positional []string, inviteCode string) (bool, int) {
 	email := argAt(positional, 0)
 	if email == "" {
-		fmt.Fprintln(os.Stderr, "usage: insideout register <email> [display-name]  (password is read from stdin)")
+		fmt.Fprintln(os.Stderr, "usage: insideout register [--invite code] <email> [display-name]  (password is read from stdin)")
 		return true, 2
 	}
 	username := argAt(positional, 1)
@@ -124,7 +125,7 @@ func registerCommand(c *apiclient.Client, positional []string) (bool, int) {
 		fmt.Fprintln(os.Stderr, "register: empty password")
 		return true, 2
 	}
-	if err := c.Register(email, password, username); err != nil {
+	if err := c.Register(email, password, username, inviteCode); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return true, 1
 	}

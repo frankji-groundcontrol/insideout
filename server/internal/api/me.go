@@ -16,22 +16,24 @@ func (s *Server) registerMeRoutes(mux *http.ServeMux) {
 // userView is the client-facing shape of a user — never includes
 // PasswordHash or the DB-internal Role flag beyond what's needed.
 type userView struct {
-	ID        string   `json:"id"`
-	Email     string   `json:"email"`
-	Username  string   `json:"username"`
-	AvatarURL *string  `json:"avatarUrl"`
-	Bio       string   `json:"bio"`
-	Keywords  []string `json:"keywords"`
+	ID         string   `json:"id"`
+	Email      string   `json:"email"`
+	Username   string   `json:"username"`
+	AvatarURL  *string  `json:"avatarUrl"`
+	Bio        string   `json:"bio"`
+	Keywords   []string `json:"keywords"`
+	SystemRole string   `json:"systemRole,omitempty"`
 }
 
 func userResponse(u *store.User) userView {
 	return userView{
-		ID:        u.ID.String(),
-		Email:     u.Email,
-		Username:  u.Username,
-		AvatarURL: u.AvatarURL,
-		Bio:       u.Bio,
-		Keywords:  u.Keywords,
+		ID:         u.ID.String(),
+		Email:      u.Email,
+		Username:   u.Username,
+		AvatarURL:  u.AvatarURL,
+		Bio:        u.Bio,
+		Keywords:   u.Keywords,
+		SystemRole: u.SystemRole,
 	}
 }
 

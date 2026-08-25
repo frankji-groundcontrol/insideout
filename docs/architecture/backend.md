@@ -40,7 +40,14 @@ session issuance: magic-link login (`POST /auth/magic-link` then
 `/auth/magic-link/consume`), password reset (`POST /auth/forgot-password`
 then `/auth/reset-password`, which also revokes all the user's sessions),
 and typed code login (`POST /auth/login-code` then
-`/auth/login-code/verify`). Their tokens live in
+`/auth/login-code/verify`). Signup policy is settings-driven
+(`insideout.settings.signup_mode` ∈ invitation_only/open/closed, seeded
+fail-closed): invitation-only registration claims an admin-minted,
+email-bound, single-use invitation code (`insideout.invitations`,
+SHA-256 hash at rest) before provisioning; `users.system_role` gates the
+admin routes (invitations + the mode switch, `requireAdmin`), and the
+only path to admin is the `insideout promote-admin <email>` operator
+subcommand on the owner pool. Their tokens live in
 `insideout.auth_tokens` (SHA-256 hash at rest, single-use, expiring —
 magic links 15 min, resets 60 min, sign-in codes 10 min with a 5-miss
 attempt budget; issuing a new one supersedes the previous unused token of

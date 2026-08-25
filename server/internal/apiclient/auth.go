@@ -15,12 +15,14 @@ import (
 // token stays unused by CLI/MCP sessions, which simply log in again when
 // the access token expires (same contract as Login).
 
-// Register creates an account and stores its session token.
-func (c *Client) Register(email, password, username string) error {
+// Register creates an account and stores its session token. inviteCode
+// is required when the deployment is invitation-only (GET /auth/config).
+func (c *Client) Register(email, password, username, inviteCode string) error {
 	return c.authSession("/auth/register", map[string]string{
-		"email":    email,
-		"password": password,
-		"username": username,
+		"email":      email,
+		"password":   password,
+		"username":   username,
+		"inviteCode": inviteCode,
 	})
 }
 
@@ -123,4 +125,46 @@ type authBody struct {
 	AccessToken string `json:"accessToken"`
 	Email       string `json:"email"`
 	Error       string `json:"error"`
+}
+
+// AuthConfig returns the public signup mode (GET /auth/config) — the
+// register form needs to know whether an invitation code is required.
+func (c *Client) AuthConfig() (mode string, err error) {
+	var out struct {
+		SignupMode string `json:"signupMode"`
+	}
+	if err = c.do(http.MethodGet, "/auth/config", nil, &out); err != nil {
+		return "", err
+	}
+	return out.SignupMode, nil
+}
+
+// Admin: invitation management and the signup-mode switch. These ride
+// the bearer token of an admin session.
+
+// CreateInvitation mints an email-bound invitation code; the response
+// (JSON: invitation + code + signupUrl) is the only place the code ever
+// appears.
+func (c *Client) CreateInvitation(email string, ttlHours int) (json.RawMessage, error) {
+	body := map[string]any{"email": email}
+	if ttlHours > 0 {
+		body["ttlHours"] = ttlHours
+	}
+	return c.postRaw("/admin/invitations", body)
+}
+
+// ListInvitations returns the invitation ledger (no codes).
+func (c *Client) ListInvitations() (json.RawMessage, error) {
+	return c.getRaw("/admin/invitations")
+}
+
+// RevokeInvitation kills a still-usable invitation.
+func (c *Client) RevokeInvitation(id string) error {
+	_, err := c.postRaw("/admin/invitations/"+id+"/revoke", map[string]any{})
+	return err
+}
+
+// SetSignupMode switches registration policy: invitation_only, open, closed.
+func (c *Client) SetSignupMode(mode string) (json.RawMessage, error) {
+	return c.postRaw("/admin/settings", map[string]string{"signupMode": mode})
 }

@@ -25,11 +25,25 @@ class _AuthFormState extends State<AuthForm> {
   final username = TextEditingController();
   final password = TextEditingController();
   final code = TextEditingController();
+  final invite = TextEditingController();
   String? error;
   bool busy = false;
   bool linkSent = false;
   bool codeSent = false;
+  bool inviteRequired = false;
   _LoginMode _mode = _LoginMode.password;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.prompt == AuthPrompt.register) {
+      // Public config decides whether the invitation field shows; a fetch
+      // failure falls back to hidden so the server's own 403 explains.
+      context.read<Session>().api.authConfig().then((mode) {
+        if (mounted) setState(() => inviteRequired = mode == 'invitation_only' || mode == 'closed');
+      }).catchError((_) {});
+    }
+  }
 
   @override
   void dispose() {
@@ -37,6 +51,7 @@ class _AuthFormState extends State<AuthForm> {
     username.dispose();
     password.dispose();
     code.dispose();
+    invite.dispose();
     super.dispose();
   }
 
@@ -70,7 +85,8 @@ class _AuthFormState extends State<AuthForm> {
         await session.loginWithCode(email.text.trim(), code.text.trim());
         if (mounted) context.go('/dashboard');
       } else if (_register) {
-        await session.register(email.text.trim(), password.text, username.text.trim());
+        await session.register(email.text.trim(), password.text, username.text.trim(),
+            inviteCode: invite.text.trim());
         if (mounted) context.go('/dashboard');
       } else {
         await session.login(email.text.trim(), password.text);
@@ -168,6 +184,13 @@ class _AuthFormState extends State<AuthForm> {
         if (_register) ...[
           const SizedBox(height: 12),
           TextField(controller: username, decoration: InputDecoration(labelText: l10n.t('register.username'))),
+          if (inviteRequired) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: invite,
+              decoration: InputDecoration(labelText: l10n.t('register.invite')),
+            ),
+          ],
         ],
         if (!_magic && !_code) ...[
           const SizedBox(height: 12),

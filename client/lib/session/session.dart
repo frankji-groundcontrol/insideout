@@ -85,8 +85,8 @@ class Session extends ChangeNotifier {
     await saveTokens(pair.access, pair.refresh);
   }
 
-  Future<void> register(String email, String password, String username) async {
-    await applyAuthProfile(await api.register(email, password, username));
+  Future<void> register(String email, String password, String username, {String inviteCode = ''}) async {
+    await applyAuthProfile(await api.register(email, password, username, inviteCode: inviteCode));
   }
 
   Future<void> login(String email, String password) async {

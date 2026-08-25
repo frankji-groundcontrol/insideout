@@ -438,3 +438,21 @@ func (c *Client) SnapshotPrd(prdID, note string) (json.RawMessage, error) {
 func (c *Client) ProjectPresence(projectID string) (json.RawMessage, error) {
 	return c.get("/projects/" + projectID + "/presence")
 }
+
+// postRaw / getRaw are the raw-JSON request helpers for projections that
+// print the API's answer verbatim (admin verbs).
+func (c *Client) postRaw(path string, body any) (json.RawMessage, error) {
+	return c.requestJSON(http.MethodPost, path, body)
+}
+
+func (c *Client) getRaw(path string) (json.RawMessage, error) {
+	return c.requestJSON(http.MethodGet, path, nil)
+}
+
+func (c *Client) requestJSON(method, path string, body any) (json.RawMessage, error) {
+	var out json.RawMessage
+	if err := c.do(method, path, body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}

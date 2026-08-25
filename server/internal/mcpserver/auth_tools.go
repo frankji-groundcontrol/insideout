@@ -23,6 +23,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	strReq := func(name, desc string) mcp.ToolOption {
 		return mcp.WithString(name, mcp.Required(), mcp.Description(desc))
 	}
+	strOpt := func(name, desc string) mcp.ToolOption {
+		return mcp.WithString(name, mcp.Description(desc))
+	}
 
 	// signedIn confirms the freshly stored session via /me and reports the
 	// user — proof the login worked without echoing the token.
@@ -51,9 +54,10 @@ func addAuthTools(s *server.MCPServer, api string) {
 	}
 
 	addTool("auth_register", "Create an account and sign this MCP server process in (password appears in the conversation — prefer auth_login_code_request for humans-in-the-loop)",
-		[]mcp.ToolOption{strReq("email", "account email"), strReq("password", "password (min 8 chars)"), strReq("username", "display name")},
+		[]mcp.ToolOption{strReq("email", "account email"), strReq("password", "password (min 8 chars)"), strReq("username", "display name"), strOpt("invite_code", "invitation code, required when signup is invitation-only")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			if err := c.Register(reqStr(req, "email"), reqStr(req, "password"), reqStr(req, "username")); err != nil {
+			invite, _ := req.GetArguments()["invite_code"].(string)
+			if err := c.Register(reqStr(req, "email"), reqStr(req, "password"), reqStr(req, "username"), invite); err != nil {
 				return "", err
 			}
 			setSessionToken(c.Token())

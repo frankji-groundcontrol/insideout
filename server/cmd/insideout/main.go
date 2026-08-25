@@ -63,12 +63,30 @@ func main() {
 		runMigrate(ctx, log, st)
 	case "seed":
 		runSeed(ctx, log, st)
+	case "promote-admin":
+		if len(os.Args) < 3 {
+			log.Error("usage: insideout promote-admin <email>")
+			os.Exit(1)
+		}
+		runPromoteAdmin(ctx, log, st, os.Args[2])
 	case "":
 		runServe(ctx, log, st, cfg)
 	default:
 		log.Error("unknown subcommand", "command", cmd)
 		os.Exit(1)
 	}
+}
+
+// runPromoteAdmin sets system_role='admin' for one account — the only
+// path to admin (there is deliberately no self-promotion API). Cross-user
+// updates on users are RLS-blocked for the app role, so this needs the
+// owner pool (DATABASE_OWNER_URL).
+func runPromoteAdmin(ctx context.Context, log *slog.Logger, st *store.Store, email string) {
+	if err := st.SetSystemRole(ctx, email, "admin"); err != nil {
+		log.Error("promote-admin", "error", err)
+		os.Exit(1)
+	}
+	log.Info("promote-admin: done", "email", email)
 }
 
 func args() string {

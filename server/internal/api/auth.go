@@ -24,16 +24,25 @@ func (s *Server) registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/reset-password", s.handleResetPassword)
 	mux.HandleFunc("POST /api/v1/auth/login-code", s.handleLoginCodeRequest)
 	mux.HandleFunc("POST /api/v1/auth/login-code/verify", s.handleLoginCodeVerify)
+	mux.HandleFunc("GET /api/v1/auth/config", s.handleAuthConfig)
 }
 
 var loginCodePattern = regexp.MustCompile(`^\d{6}$`)
 
+// handleAuthConfig is public: the register form needs to know whether an
+// invitation code field should be shown. The signup mode is deployment
+// policy, not a secret.
+func (s *Server) handleAuthConfig(w http.ResponseWriter, r *http.Request) {
+	httpx.WriteJSON(w, http.StatusOK, map[string]string{"signupMode": s.store.SignupMode(r.Context())})
+}
+
 var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
 
 type registerRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Username string `json:"username"`
+	Email      string `json:"email"`
+	Password   string `json:"password"`
+	Username   string `json:"username"`
+	InviteCode string `json:"inviteCode"`
 }
 
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +54,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	req.Email = strings.TrimSpace(strings.ToLower(req.Email))
 	req.Username = strings.TrimSpace(req.Username)
+	req.InviteCode = strings.TrimSpace(req.InviteCode)
 
 	if !emailPattern.MatchString(req.Email) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid email", "", nil)
@@ -57,6 +67,31 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if req.Username == "" || len(req.Username) > 60 {
 		httpx.WriteError(w, http.StatusBadRequest, "username is required (max 60 characters)", "", nil)
 		return
+	}
+
+	// Signup policy (qwenimage pattern): invitation-only requires an
+	// admin-minted, email-bound code — claimed BEFORE the account is
+	// created, so a wrong code provisions nobody. An email conflict can
+	// burn a valid invite (the account exists either way); the admin
+	// mints another. Closed refuses outright.
+	mode := s.store.SignupMode(r.Context())
+	if mode == store.SignupClosed {
+		httpx.WriteError(w, http.StatusForbidden, "registration is closed", "", nil)
+		return
+	}
+	if mode == store.SignupInvitationOnly {
+		if req.InviteCode == "" {
+			httpx.WriteError(w, http.StatusForbidden, "an invitation is required to register", "", nil)
+			return
+		}
+		if err := s.store.ConsumeInvitation(r.Context(), req.Email, auth.HashOneTimeToken(req.InviteCode), uuid.Nil); err == store.ErrNotFound {
+			httpx.WriteError(w, http.StatusForbidden, "invalid or expired invitation", "", nil)
+			return
+		} else if err != nil {
+			s.log.Error("register: consume invitation", "error", err)
+			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+			return
+		}
 	}
 
 	hash, err := auth.HashPassword(req.Password)
@@ -75,6 +110,11 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("create user", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
+	}
+	if mode == store.SignupInvitationOnly {
+		// Attribute the spent invite now that the user exists. Best-effort:
+		// the claim itself already happened above.
+		_ = s.store.AttributeInvitation(r.Context(), req.Email, auth.HashOneTimeToken(req.InviteCode), user.ID)
 	}
 
 	access, refresh, err := s.issueSession(w, r, user.ID)

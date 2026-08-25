@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-08-25 — Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md)
+  — qwenimage pattern: system_role, email-bound single-use invitations,
+  settings-driven signup_mode fail-closed; register gate + admin API/UI +
+  CLI/MCP verbs; promote-admin subcommand; 582 legacy users left for the
+  user's call.
 - [2026-08-25 — Mail delivery enabled on production](2026-08-25-mail-delivery-live.md)
   — Resend key + custom MAIL_FROM set in Railway, server redeployed; sender out of dev mode, delivery pending the user's real-inbox test.
 - [2026-08-25 — Boot loading page](2026-08-25-boot-loading-page.md)

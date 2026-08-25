@@ -8,6 +8,7 @@ class UserProfile {
     this.avatarUrl,
     this.accessToken,
     this.refreshToken,
+    this.systemRole,
   });
 
   final String id;
@@ -18,6 +19,9 @@ class UserProfile {
   final String? avatarUrl;
   final String? accessToken;
   final String? refreshToken;
+  final String? systemRole;
+
+  bool get isAdmin => systemRole == 'admin';
 
   factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
         id: j['id'] as String,
@@ -28,6 +32,7 @@ class UserProfile {
         avatarUrl: j['avatarUrl'] as String?,
         accessToken: j['accessToken'] as String?,
         refreshToken: j['refreshToken'] as String?,
+        systemRole: j['systemRole'] as String?,
       );
 }
 

@@ -35,12 +35,13 @@ insideout reset-password                            # paste link/token + new pas
 
 | Area | Verbs |
 | --- | --- |
-| Auth | `register <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
+| Auth | `register [--invite code] <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `idea create --title [--content] <ws>`, `idea convert <id>` |
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
+| Admin | `invite [--ttl hours] <email>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
 | Guidance | `guide [--out insideout.yaml] <proj>`, `repo set <proj> <repo-url>`, `sync <proj>`, `snapshot [--note] <prd>` |
 
 Flags precede positional ids (Go convention). Statuses are
@@ -50,7 +51,7 @@ Flags precede positional ids (Go convention). Statuses are
 ## MCP server
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
-verbs as tools (36 today), token via `INSIDEOUT_TOKEN`:
+verbs as tools (38 today), token via `INSIDEOUT_TOKEN`:
 
 ```json
 { "mcpServers": { "insideout": {
@@ -58,6 +59,12 @@ verbs as tools (36 today), token via `INSIDEOUT_TOKEN`:
     "env": { "INSIDEOUT_API": "https://insideout.yalotein.net/api/v1",
              "INSIDEOUT_TOKEN": "…" } } } }
 ```
+
+Signup policy: registration is invitation-only by default
+(`GET /auth/config`); admins mint per-email invitations (`invite`,
+`invite_create`) and switch the mode (`signup-mode`, the web admin panel
+on the profile page). The first admin is created out-of-band with
+`insideout promote-admin <email>` (server subcommand, owner DSN).
 
 Auth can also happen at runtime: the `auth_*` tools
 (`auth_register`, `auth_login`, `auth_login_code_request` +

@@ -64,11 +64,12 @@ class ApiClient {
     return _dio.request<dynamic>(call.path, data: call.body, options: Options(method: call.method));
   }
 
-  Future<UserProfile> register(String email, String password, String username) async {
+  Future<UserProfile> register(String email, String password, String username, {String inviteCode = ''}) async {
     final res = await _dio.post('/auth/register', data: {
       'email': email,
       'password': password,
       'username': username,
+      if (inviteCode.isNotEmpty) 'inviteCode': inviteCode,
     });
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
@@ -128,6 +129,41 @@ class ApiClient {
       'token': token,
       'password': password,
     });
+    await _parse(res, (d) => d);
+  }
+
+  /// Public signup policy — the register form needs to know whether an
+  /// invitation code field should be shown. Failing open to
+  /// invitation-only would be wrong; the caller decides the fallback.
+  Future<String> authConfig() async {
+    final res = await _dio.get('/auth/config');
+    final data = await _parse(res, (d) => d as Map<String, dynamic>);
+    return data['signupMode'] as String? ?? 'invitation_only';
+  }
+
+  /// Admin: mint an email-bound invitation. Returns the one-time code and
+  /// signup URL (the only place the code ever appears).
+  Future<Map<String, dynamic>> createInvitation(String email) async {
+    final res = await _dio.post('/admin/invitations', data: {'email': email});
+    return _parse(res, (d) => d as Map<String, dynamic>);
+  }
+
+  /// Admin: invitation ledger without codes.
+  Future<List<Map<String, dynamic>>> listInvitations() async {
+    final res = await _dio.get('/admin/invitations');
+    final data = await _parse(res, (d) => d);
+    return ((data as List?) ?? const []).cast<Map<String, dynamic>>();
+  }
+
+  /// Admin: revoke a still-usable invitation.
+  Future<void> revokeInvitation(String id) async {
+    final res = await _dio.post('/admin/invitations/$id/revoke', data: {});
+    await _parse(res, (d) => d);
+  }
+
+  /// Admin: switch registration policy (invitation_only | open | closed).
+  Future<void> setSignupMode(String mode) async {
+    final res = await _dio.put('/admin/settings', data: {'signupMode': mode});
     await _parse(res, (d) => d);
   }
 
