@@ -70,8 +70,9 @@ Design (implementation next; requires a user-registered GitHub App):
 
 ## Stage C — projection
 
-- [ ] All Stage A/B verbs become MCP tools 1:1 (with the parity plan's
-      frozen list extended)
+- [x] All Stage A/B verbs become MCP tools 1:1 (shipped across the
+      2026-08-21/22/25 slices — the frozen list grew 14 → 27 → 46 → 50;
+      checkbox backfilled 2026-09-03)
 
 ## Sources
 

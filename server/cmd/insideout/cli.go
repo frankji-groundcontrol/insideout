@@ -37,7 +37,7 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		}
 	}
 	switch cmd {
-	case "ideas", "evidence":
+	case "ideas", "evidence", "join":
 		return runCrudCommand(cmd, rest, apiBase)
 	case "roadmap":
 		return runRoadmapCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))

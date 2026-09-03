@@ -63,6 +63,12 @@ func (c *Client) CreateWorkspace(title, description string) (json.RawMessage, er
 	return c.postRaw("/workspaces", map[string]string{"title": title, "description": description})
 }
 
+// JoinWorkspace adds the current user to a workspace by its join code
+// (POST /workspaces/join); the answer is the workspace summary.
+func (c *Client) JoinWorkspace(code string) (json.RawMessage, error) {
+	return c.postRaw("/workspaces/join", map[string]string{"code": code})
+}
+
 // CreateProject bootstraps a project inside a workspace.
 func (c *Client) CreateProject(workspaceID, title, description string) (json.RawMessage, error) {
 	return c.postRaw("/workspaces/"+workspaceID+"/projects", map[string]string{

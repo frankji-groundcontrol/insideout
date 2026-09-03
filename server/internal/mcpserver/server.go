@@ -31,6 +31,7 @@ func Build(api string) *server.MCPServer {
 
 	addAuthTools(s, api)
 	addProductTools(s, api)
+	addAdminTools(s, api)
 	return s
 }
 

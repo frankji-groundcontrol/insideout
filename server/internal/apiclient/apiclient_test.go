@@ -72,6 +72,58 @@ func TestUnauthorizedIsActionable(t *testing.T) {
 	}
 }
 
+// PrdExport is the plain export verb behind MCP prd_export: format and
+// audience are query parameters, the body comes back as raw bytes.
+func TestPrdExportBuildsQuery(t *testing.T) {
+	var gotPath, gotFormat, gotAudience string
+	c := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		gotFormat = r.URL.Query().Get("format")
+		gotAudience = r.URL.Query().Get("audience")
+		w.Write([]byte("# PRD"))
+	})
+	c.SetToken("tok")
+
+	raw, err := c.PrdExport("p1", "", "")
+	if err != nil || string(raw) != "# PRD" {
+		t.Fatalf("PrdExport = %q, err %v", raw, err)
+	}
+	if gotPath != "/prds/p1/export" || gotFormat != "markdown" || gotAudience != "" {
+		t.Errorf("default: %s format=%q audience=%q, want /prds/p1/export format=markdown", gotPath, gotFormat, gotAudience)
+	}
+
+	if _, err := c.PrdExport("p1", "markdown", "delivery"); err != nil {
+		t.Fatalf("PrdExport audience: %v", err)
+	}
+	if gotFormat != "markdown" || gotAudience != "delivery" {
+		t.Errorf("audience: format=%q audience=%q, want markdown/delivery", gotFormat, gotAudience)
+	}
+
+	if _, err := c.PrdExport("p1", "print", ""); err != nil {
+		t.Fatalf("PrdExport print: %v", err)
+	}
+	if gotFormat != "print" {
+		t.Errorf("print: format=%q, want print", gotFormat)
+	}
+}
+
+// PrdExportAudience must keep its exact URL (CLI view --export depends on
+// it) now that it shares the general export path.
+func TestPrdExportAudienceKeepsURL(t *testing.T) {
+	var gotPath, gotQuery string
+	c := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotQuery = r.URL.Path, r.URL.RawQuery
+		w.Write([]byte("# view"))
+	})
+	c.SetToken("tok")
+	if _, err := c.PrdExportAudience("p1", "decision"); err != nil {
+		t.Fatalf("PrdExportAudience: %v", err)
+	}
+	if gotPath != "/prds/p1/export" || gotQuery != "format=markdown&audience=decision" {
+		t.Errorf("got %s?%s, want /prds/p1/export?format=markdown&audience=decision", gotPath, gotQuery)
+	}
+}
+
 // Regression: RoadmapDelete against an endpoint that answers with a JSON
 // body (not 204) must not fail decoding into a nil target.
 func TestDeleteDiscardsJSONBody(t *testing.T) {

@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-09-03 — Surface parity gaps](2026-09-03-surface-parity-gaps.md)
+  — six audit-found API ↔ CLI ↔ MCP gaps closed (invite revoke,
+  signup_mode, prd_export, workspace join, move position, build
+  expected_count; 46 → 50 tools) plus BUG-015 (SetSignupMode POST→PUT)
+  caught by the live matrix.
 - [2026-08-25 — Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md)
   — +7 tools → 46 (idea inbox lifecycle, PRD section edits, evidence
   read, bootstrapping), 1:1 API ↔ CLI ↔ MCP; repo-root SKILL.md for

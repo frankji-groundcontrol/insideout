@@ -14,11 +14,12 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-// runRoadmapCommand handles `insideout roadmap <list|add|update|move|delete> …`.
+// runRoadmapCommand handles `insideout roadmap
+// <list|add|update|move|delete|progress|presence> …`.
 // Returns (handled, exitCode).
 func runRoadmapCommand(args []string, api string) (bool, int) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|add|update|move|delete> …")
+		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|add|update|move|delete|progress|presence> …")
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]

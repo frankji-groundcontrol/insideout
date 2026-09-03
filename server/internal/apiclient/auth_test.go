@@ -1,6 +1,7 @@
 package apiclient
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 	"testing"
@@ -122,6 +123,48 @@ func TestAuthRequestVerbsPostRightBodies(t *testing.T) {
 				t.Errorf("request verb must not set a token, got %q", c.Token())
 			}
 		})
+	}
+}
+
+// Admin verbs ride the bearer token; revoke pins the exact route.
+func TestRevokeInvitationHitsRevokeRoute(t *testing.T) {
+	var gotMethod, gotPath, gotAuth string
+	c := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		gotMethod, gotPath = r.Method, r.URL.Path
+		gotAuth = r.Header.Get("Authorization")
+		w.Write([]byte(`{"ok":true}`))
+	})
+	c.SetToken("tok-admin")
+	if err := c.RevokeInvitation("inv-1"); err != nil {
+		t.Fatalf("RevokeInvitation: %v", err)
+	}
+	if gotMethod != http.MethodPost || gotPath != "/admin/invitations/inv-1/revoke" {
+		t.Errorf("got %s %s, want POST /admin/invitations/inv-1/revoke", gotMethod, gotPath)
+	}
+	if gotAuth != "Bearer tok-admin" {
+		t.Errorf("Authorization = %q, want Bearer tok-admin", gotAuth)
+	}
+}
+
+// The settings route is PUT, not POST — a POST gets a 405 from the real
+// API (caught by the 2026-09-03 live matrix).
+func TestSetSignupModeUsesPut(t *testing.T) {
+	var gotMethod, gotPath string
+	var gotBody map[string]string
+	c := newTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		gotMethod, gotPath = r.Method, r.URL.Path
+		json.NewDecoder(r.Body).Decode(&gotBody)
+		w.Write([]byte(`{"signupMode":"open"}`))
+	})
+	c.SetToken("tok-admin")
+	if _, err := c.SetSignupMode("open"); err != nil {
+		t.Fatalf("SetSignupMode: %v", err)
+	}
+	if gotMethod != http.MethodPut || gotPath != "/admin/settings" {
+		t.Errorf("got %s %s, want PUT /admin/settings", gotMethod, gotPath)
+	}
+	if gotBody["signupMode"] != "open" {
+		t.Errorf("body = %v, want signupMode=open", gotBody)
 	}
 }
 

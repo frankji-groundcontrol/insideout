@@ -80,13 +80,19 @@ func addProductTools(s *server.MCPServer, api string) {
 			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status"), dl))
 		})
 	addTextTool("roadmap_move", "Re-parent / reposition a node",
-		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", "new parent id; empty = root")},
+		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", "new parent id; empty = root"),
+			mcp.WithNumber("position", mcp.Description("position among siblings (0-based)"))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			var parent *string
 			if v, ok := req.GetArguments()["parent_id"].(string); ok && v != "" {
 				parent = &v
 			}
-			return call(c.RoadmapMove(reqStr(req, "node_id"), parent, nil))
+			var pos *int
+			if v, ok := req.GetArguments()["position"].(float64); ok {
+				p := int(v)
+				pos = &p
+			}
+			return call(c.RoadmapMove(reqStr(req, "node_id"), parent, pos))
 		})
 	addTextTool("roadmap_delete", "Delete a node", []mcp.ToolOption{strReq("node_id", "node id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
@@ -96,9 +102,14 @@ func addProductTools(s *server.MCPServer, api string) {
 			return "deleted", nil
 		})
 	addTextTool("build", "Agent: PRD → project with a branched roadmap",
-		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
+		[]mcp.ToolOption{strReq("prd_id", "PRD id"),
+			mcp.WithNumber("expected_count", mcp.Description("expected root-node count; required to confirm a replace_conflict 409 retry"))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.BuildFromPrd(reqStr(req, "prd_id"), 0))
+			count := 0
+			if v, ok := req.GetArguments()["expected_count"].(float64); ok {
+				count = int(v)
+			}
+			return call(c.BuildFromPrd(reqStr(req, "prd_id"), count))
 		})
 	addTextTool("expand", "Agent: grow one node into subtasks", []mcp.ToolOption{strReq("node_id", "node id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
@@ -287,6 +298,20 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			desc, _ := req.GetArguments()["description"].(string)
 			return call(c.CreateWorkspace(reqStr(req, "title"), desc))
+		})
+	addTextTool("workspace_join", "Join a workspace by its join code",
+		[]mcp.ToolOption{strReq("code", "workspace join code")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.JoinWorkspace(reqStr(req, "code")))
+		})
+	addTextTool("prd_export", "Export a PRD as text (MCP has no filesystem — the content is the result): markdown by default, or print HTML; an optional audience projects the sections first",
+		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("format", "markdown|print (default markdown)"),
+			strOpt("audience", "decision|management|delivery|validation (markdown only)")},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			format, _ := req.GetArguments()["format"].(string)
+			aud, _ := req.GetArguments()["audience"].(string)
+			raw, err := c.PrdExport(reqStr(req, "prd_id"), format, aud)
+			return string(raw), err
 		})
 	addTextTool("project_create", "Create a project inside a workspace",
 		[]mcp.ToolOption{strReq("workspace_id", "workspace id"), strReq("title", "project title"), strOpt("description", "project description")},

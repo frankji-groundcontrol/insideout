@@ -9,6 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
+| P1 | [Surface parity gaps (API ↔ CLI ↔ MCP)](2026-09-03-surface-parity-gaps.md) | **Completed** | None — 6 gaps + BUG-015 fixed, 46 → 50 tools ([changelog](../changelogs/2026-09-03-surface-parity-gaps.md)). | All fixes live-verified on a scratch local server; client-side only, nothing to deploy beyond the CLI/MCP binaries users rebuild. |
 | P1 | [Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md) | **Completed** | None — 46-tool surface + SKILL.md live ([changelog](../changelogs/2026-08-25-agent-crud-tool-surface.md)). | Idea inbox lifecycle, PRD section edits, evidence read, bootstrapping — 1:1 API ↔ CLI ↔ MCP. |
 | P1 | [Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md) | **Completed** | Operator call: whether to purge the 582 legacy users (destructive). | Deployed 2026-08-25; frank.ji@… sole admin, signup invitation-only ([changelog](../changelogs/2026-08-25-invitation-only-signup.md)). |
 | P1 | [Boot loading page (reimbursement pattern)](2026-08-25-boot-loading-page.md) | **Completed** | None — deployed and verified ([changelog](../changelogs/2026-08-25-boot-loading-page.md)). | Kills the blank cold-load screen; preserves the web font gate. |

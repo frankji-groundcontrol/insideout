@@ -23,6 +23,18 @@ func runAdminCommand(cmd string, args []string, api string) (bool, int) {
 
 	switch cmd {
 	case "invite":
+		if len(fs.Args()) >= 1 && fs.Args()[0] == "revoke" {
+			if len(fs.Args()) != 2 {
+				fmt.Fprintln(os.Stderr, "usage: insideout invite revoke <invitation-id>")
+				return true, 2
+			}
+			if err := c.RevokeInvitation(fs.Args()[1]); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return true, 1
+			}
+			fmt.Println("revoked")
+			return true, 0
+		}
 		if len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout invite [--ttl hours] <email>")
 			return true, 2

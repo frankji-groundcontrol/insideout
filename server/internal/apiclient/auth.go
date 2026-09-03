@@ -166,5 +166,5 @@ func (c *Client) RevokeInvitation(id string) error {
 
 // SetSignupMode switches registration policy: invitation_only, open, closed.
 func (c *Client) SetSignupMode(mode string) (json.RawMessage, error) {
-	return c.postRaw("/admin/settings", map[string]string{"signupMode": mode})
+	return c.requestJSON(http.MethodPut, "/admin/settings", map[string]string{"signupMode": mode})
 }

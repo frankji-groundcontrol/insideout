@@ -43,6 +43,8 @@ func TestCrudVerbsHitRightRoutes(t *testing.T) {
 			"POST", "/workspaces", `{"description":"D","title":"W"}`},
 		{"project_create", func() error { _, err := c.CreateProject("ws1", "P", "D"); return err },
 			"POST", "/workspaces/ws1/projects", `{"description":"D","title":"P"}`},
+		{"workspace_join", func() error { _, err := c.JoinWorkspace("ABC123"); return err },
+			"POST", "/workspaces/join", `{"code":"ABC123"}`},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

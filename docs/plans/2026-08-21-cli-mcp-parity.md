@@ -1,6 +1,8 @@
 # 2026-08-21 — CLI / MCP parity with Web (one truth, many views)
 
-Status: **in flight**. Implements PRODUCT.md principle 3 — Web, GitHub,
+Status: **complete** (Stage 1 2026-08-20, Stage 2 2026-08-21, Stage 3
+closed across the 2026-08-22/25 slices; checkboxes backfilled
+2026-09-03). Implements PRODUCT.md principle 3 — Web, GitHub,
 CLI, MCP, and Agents project the same facts and never drift — starting
 from the current reality: the Flutter web client owns the whole product
 surface, the CLI has only operator commands (`migrate`, `seed`), and no
@@ -57,9 +59,13 @@ secrets are written to disk by tooling.
 
 - [x] Idea write verbs on CLI/MCP (2026-08-22): `idea create`,
       `idea convert` + `proposal_decide` (23 tools)
-- [ ] PRD-revision write verbs on CLI/MCP (remaining)
-- [ ] Agent vocabulary routes (`context`, `focus`, `checkpoint/report`,
+- [x] PRD-revision write verbs on CLI/MCP (shipped 2026-08-25 in the
+      agent CRUD surface: `prd update` / `prd_update`; checkbox
+      backfilled 2026-09-03)
+- [x] Agent vocabulary routes (`context`, `focus`, `checkpoint/report`,
       `propose`, `version`) designed against PRODUCT.md, then projected
+      (shipped 2026-08-22 agent vocabulary slice; `version`/Commit stays
+      human-only by design; checkbox backfilled 2026-09-03)
 
 ## Sources
 

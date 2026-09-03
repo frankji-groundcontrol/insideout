@@ -106,6 +106,11 @@ func runCrudCommand(cmd string, args []string, api string) (bool, int) {
 			return true, 2
 		}
 		return printJSON(c.CreateWorkspace(*title, *desc))
+	case "join":
+		if !need(1, "insideout join <workspace-code>") {
+			return true, 2
+		}
+		return printJSON(c.JoinWorkspace(positional[0]))
 	case "projects create":
 		if !need(1, "insideout projects create --title T [--desc D] <workspace-id>") || *title == "" {
 			return true, 2

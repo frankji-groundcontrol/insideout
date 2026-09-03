@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -304,11 +305,30 @@ func (c *Client) PrdView(prdID, audience string) (json.RawMessage, error) {
 	return c.get("/prds/" + prdID + "/view?audience=" + audience)
 }
 
+// PrdExport downloads a PRD export (GET /prds/{id}/export) as raw bytes.
+// format is "markdown" (default) or "print" (HTML); audience is optional
+// and only valid with markdown.
+func (c *Client) PrdExport(prdID, format, audience string) ([]byte, error) {
+	if format == "" {
+		format = "markdown"
+	}
+	q := url.Values{"format": {format}}
+	if audience != "" {
+		q.Set("audience", audience)
+	}
+	return c.getBytes("/prds/" + prdID + "/export?" + q.Encode())
+}
+
 // PrdExportAudience returns an audience-projected markdown export
 // (GET /prds/{id}/export?format=markdown&audience=…) as raw bytes.
 func (c *Client) PrdExportAudience(prdID, audience string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet,
-		c.base+"/prds/"+prdID+"/export?format=markdown&audience="+audience, nil)
+	return c.getBytes("/prds/" + prdID + "/export?format=markdown&audience=" + audience)
+}
+
+// getBytes GETs a path whose answer is not JSON (export markdown/HTML)
+// and returns the body verbatim.
+func (c *Client) getBytes(path string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, c.base+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("apiclient: build request: %w", err)
 	}
@@ -317,15 +337,15 @@ func (c *Client) PrdExportAudience(prdID, audience string) ([]byte, error) {
 	}
 	resp, err := c.hc.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("apiclient: GET export: %w", err)
+		return nil, fmt.Errorf("apiclient: GET %s: %w", path, err)
 	}
 	defer resp.Body.Close()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	if err != nil {
-		return nil, fmt.Errorf("apiclient: read export: %w", err)
+		return nil, fmt.Errorf("apiclient: read %s: %w", path, err)
 	}
 	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("apiclient: GET export: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
+		return nil, fmt.Errorf("apiclient: GET %s: %s: %s", path, resp.Status, strings.TrimSpace(string(raw)))
 	}
 	return raw, nil
 }

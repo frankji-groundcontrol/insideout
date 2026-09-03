@@ -36,13 +36,13 @@ insideout reset-password                            # paste link/token + new pas
 | Area | Verbs |
 | --- | --- |
 | Auth | `register [--invite code] <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
-| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `projects create --title [--desc] <ws-id>` |
+| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `join <code>`, `projects create --title [--desc] <ws-id>` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>`, `idea delete <id>` (soft drop), `idea convert <id>` |
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
-| Admin | `invite [--ttl hours] <email>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
+| Admin | `invite [--ttl hours] <email>`, `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
 | Guidance | `guide [--out insideout.yaml] <proj>`, `repo set <proj> <repo-url>`, `sync <proj>`, `snapshot [--note] <prd>` |
 
 Flags precede positional ids (Go convention). Statuses are
@@ -52,7 +52,7 @@ Flags precede positional ids (Go convention). Statuses are
 ## MCP server
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
-verbs as tools (46 today), token via `INSIDEOUT_TOKEN`:
+verbs as tools (50 today), token via `INSIDEOUT_TOKEN`:
 
 ```json
 { "mcpServers": { "insideout": {
@@ -62,8 +62,9 @@ verbs as tools (46 today), token via `INSIDEOUT_TOKEN`:
 ```
 
 Signup policy: registration is invitation-only by default
-(`GET /auth/config`); admins mint per-email invitations (`invite`,
-`invite_create`) and switch the mode (`signup-mode`, the web admin panel
+(`GET /auth/config`); admins mint per-email invitations (`invite` /
+`invite_create`, revoke with `invite revoke` / `invite_revoke`) and
+switch the mode (`signup-mode` / `signup_mode`, the web admin panel
 on the profile page). The first admin is created out-of-band with
 `insideout promote-admin <email>` (server subcommand, owner DSN).
 

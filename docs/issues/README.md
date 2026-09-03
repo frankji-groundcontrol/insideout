@@ -7,7 +7,7 @@ evidence get a dated folder. English only.
 
 Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
-records continue the numbering (next: BUG-014).
+records continue the numbering (next: BUG-016).
 
 ## Bug records
 
@@ -57,9 +57,17 @@ records continue the numbering (next: BUG-014).
   — XHR + `arraybuffer` delivers a "stream" body only at connection
   close, so web SSE over dio is silently dead; presence fixed with a
   fetch + ReadableStream transport, Coach web typing still affected.
+- [BUG-015 — SetSignupMode sent POST to a PUT-only route](2026-09-03-bug-015-signup-mode-wrong-method.md)
+  — CLI `signup-mode <mode>` 405'd against the real API since the
+  invitation slice; httptest pinned the client's consistency, not its
+  correctness. Fixed (PUT) same day; lesson: projected verbs need one
+  live call before closing.
 
 ## Other open issues
 
+- [2026-09-03 — apiclient.go over the ~350-line modular-file budget](2026-09-03-apiclient-line-budget.md)
+  — transport + roadmap/GitHub + PRD/agent verbs mixed at ~478 lines;
+  target three-way split with a bounded, test-pinned fix prompt.
 - [2026-08-24 — Auth endpoints have no rate limiting or failed-attempt lockout](2026-08-24-auth-endpoints-no-rate-limiting.md)
   — login, magic-link, and forgot-password are enumeration-safe but
   unthrottled: unlimited password guesses and unlimited link emails

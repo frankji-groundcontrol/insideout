@@ -1,6 +1,6 @@
 ---
 name: insideout
-description: Use when driving InsideOut — the ideas → PRDs → roadmaps product with GitHub-tracked evidence — through its CLI (`insideout`), MCP server (`insideout-mcp`, 46 tools), or /api/v1; covers auth, the idea inbox, PRD authoring, roadmap CRUD, versions/Commits, repo binding and evidence, and the agent vocabulary (checkpoint / propose / humans decide).
+description: Use when driving InsideOut — the ideas → PRDs → roadmaps product with GitHub-tracked evidence — through its CLI (`insideout`), MCP server (`insideout-mcp`, 50 tools), or /api/v1; covers auth, the idea inbox, PRD authoring, roadmap CRUD, versions/Commits, repo binding and evidence, and the agent vocabulary (checkpoint / propose / humans decide).
 ---
 
 # InsideOut
@@ -23,8 +23,11 @@ insideout whoami
 ```
 
 Signup is invitation-only by default: an admin mints a per-email code
-(`invite_create` / `insideout invite <email>`) and registration consumes
-it (`register --invite`, `auth_register` with `invite_code`).
+(`invite_create` / `insideout invite <email>`, revoke with
+`invite_revoke` / `insideout invite revoke <id>`) and registration
+consumes it (`register --invite`, `auth_register` with `invite_code`).
+Join an existing workspace with `workspace_join` / `insideout join
+<code>`.
 
 ## The working loop (in order)
 
@@ -36,7 +39,8 @@ it (`register --invite`, `auth_register` with `invite_code`).
 3. **Author the PRD directly**: `prd <id>` to read, `prd update <id>
    --section goals=…` to edit. Section keys: background, users, goals,
    nonGoals, stories, requirements, constraints, risks. `snapshot`
-   records a working revision.
+   records a working revision; `prd_export` renders markdown (optionally
+   per audience).
 4. **Grow the roadmap**: `roadmap_add/update/move/delete`,
    `roadmap update --deadline` for time pressure, `progress <project>`
    for the time-first view. `expand` grows a node via the planner.
@@ -62,8 +66,8 @@ it (`register --invite`, `auth_register` with `invite_code`).
 
 ## Surface parity
 
-Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (46 tools:
-auth ×9, admin ×2, ideas/PRD/roadmap/evidence/workspace/project CRUD,
+Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (50 tools:
+auth ×9, admin ×4, ideas/PRD/roadmap/evidence/workspace/project CRUD,
 versions, agent vocabulary, GitHub tracking, planner). Prefer the
 narrowest tool; reads return raw JSON — trust it over your assumptions.
 
