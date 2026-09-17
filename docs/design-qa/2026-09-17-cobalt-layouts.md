@@ -19,3 +19,11 @@ Cobalt shade scale + light/dark stay. OpenDesign built
 `insideout-cobalt.html` from that map (light + dark, dock chrome,
 English-only copy). Live-walked: capture an idea, request review,
 human Commit, add a Now item, toggle theme. Flutter waits.
+
+## Follow-up (same day)
+
+> First of all, I do not like one card, small texts, a lot of blank style, fix them. Enlarge the texts, make it clear, let user have focus
+
+The floating single card and 15px type are rejected. Prototype
+revised: full-bleed surfaces, 20px reading type, large titles, one
+focal block per screen, no empty field as decoration.
