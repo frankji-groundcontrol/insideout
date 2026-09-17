@@ -1,8 +1,9 @@
 # 2026-09-17 — Vibrant frontend direction (OpenDesign)
 
 Recorded the user's "Make it vibrant for younger audiences" note, then
-the follow-up "No need to stick to ink and seal." OpenDesign may invent
-a new look. No Flutter theme change shipped.
+"No need to stick to ink and seal," then a vote for Club Editorial
+with six variants. OpenDesign may invent a new look. No Flutter theme
+change shipped.
 
 ## What changed
 
@@ -13,6 +14,9 @@ a new look. No Flutter theme change shipped.
 - OpenDesign project `InsideOut frontend — Ink & Seal` (AMR,
   `deepseek-v4.1-flash`, skill `frontend-design`) holds `DESIGN.md` and
   the vibrant-direction brief.
+- VOLT HTML rejected. Six image worlds generated; user voted 3 (Club
+  Editorial). Six Club Editorial moodboards (3A–3F) are ready for a
+  pick.
 
 ## Operator
 

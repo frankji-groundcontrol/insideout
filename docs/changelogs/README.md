@@ -16,8 +16,8 @@ code) with relative links.
 ## Records
 
 - [2026-09-17 — Vibrant frontend direction](2026-09-17-vibrant-frontend-direction.md)
-  — design-QA + OpenDesign exploration for a younger, higher-energy
-  Ink & Seal; no Flutter theme change shipped.
+  — design-QA + OpenDesign exploration; Club Editorial vote + six
+  variants; no Flutter theme change shipped.
 - [2026-09-03 — Surface parity gaps](2026-09-03-surface-parity-gaps.md)
   — six audit-found API ↔ CLI ↔ MCP gaps closed (invite revoke,
   signup_mode, prd_export, workspace join, move position, build

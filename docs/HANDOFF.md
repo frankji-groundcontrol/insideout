@@ -7,11 +7,11 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight: a younger, more vibrant
-   reading of Ink & Seal
+1. OpenDesign exploration is in flight: Club Editorial (vote 3) with
+   six variants 3A–3F waiting on a pick
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
-   Flutter is unchanged until a direction is accepted.
+   Flutter is unchanged until a variant is accepted.
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and

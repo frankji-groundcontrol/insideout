@@ -31,3 +31,12 @@ Plan: [2026-09-17-vibrant-ink-seal.md](../plans/2026-09-17-vibrant-ink-seal.md).
 The VOLT HTML pass is rejected as too muted. Next: five or more
 image-backed visual worlds via OpenDesign Cloud image models; user
 picks before another HTML prototype.
+
+## Follow-up (same day)
+
+> I vote 3, give me more variants of 3
+
+Direction 3 (Club Editorial) is selected. Six Seedream variants
+(3A Cover, 3B Spread, 3C Mono+orange, 3D Night, 3E Swiss, 3F Lookbook)
+are ready. User picks a lane before an HTML prototype. Copy on the
+images is moodboard-only.

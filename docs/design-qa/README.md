@@ -22,8 +22,8 @@ English only.
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
 - [2026-09-17 — Vibrant for younger audiences](2026-09-17-vibrant-younger-audiences.md)
-  — "Make it vibrant for younger audiences"; OpenDesign exploration of a
-  higher-energy Ink & Seal; Flutter restyle waits on acceptance.
+  — "Make it vibrant for younger audiences"; vote 3 Club Editorial;
+  six variants waiting on a pick; Flutter restyle waits on acceptance.
 - [2026-08-24 — Login form action stack](2026-08-24-login-form-action-stack.md)
   — "so ugly"; four identical stacked red links under 登录 re-grouped into
   secondary sign-in buttons + a footer row.
