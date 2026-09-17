@@ -17,13 +17,15 @@ one orange slab. Evidence is not outcome.
 
 | Token | Hex | Role |
 | --- | --- | --- |
-| paper | `#F4F1EA` | Ground |
-| ink | `#111111` | Type |
-| ink-soft | `#7A776F` | Meta |
-| orange | `#F15A22` | Slab / Commit |
-| cobalt | `#2F5BFF` | One pill |
-| hairline | `#E5E1D8` | Borders |
-| card | `#FFFFFF` | Story tiles |
+| paper | `#F5F3E9` | Ground |
+| ink | `#141414` | Type |
+| ink-soft | `#8B8677` | Meta |
+| orange | `#E5653C` | Slab (a field, not a chip) |
+| cobalt | `#2738C0` | One pill |
+| hairline | `#E7E4DB` | Borders |
+| card | `#FBFAF6` | Story tiles |
+
+Sampled from `REFERENCE-3Q.jpg` into OpenDesign `brand-spec-3q.md`.
 
 Display: condensed grotesk, huge, tight. Body: Inter / Noto Sans SC.
 No left rail. No Ink & Seal chops.

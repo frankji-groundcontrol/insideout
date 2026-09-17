@@ -42,8 +42,8 @@ users. Product loop stays the same.
 - [x] Youth Club Editorial product screens (3M–3R)
 - [x] User: keep generating images first (no HTML yet)
 - [x] User voted 3Q — pin as OpenDesign reference
-- [x] Recap design language drafted (`DESIGN_3Q.md`)
-- [ ] 3Q-locked product screens generated
+- [x] Recap design language drafted (`DESIGN_3Q.md`, `brand-spec-3q.md`)
+- [x] 3Q-locked product screens generated
 - [ ] User accepts language or asks for another pass
 - [ ] Flutter restyle only after acceptance
 
