@@ -49,7 +49,7 @@ users. Product loop stays the same.
 - [x] User: one theme color, shades only; light + dark; not too colorful
 - [x] Cobalt shade-scale screens in light and dark
 - [x] User: color better, design awful — more layout ideas
-- [ ] Six cobalt layout languages (light + dark)
+- [x] Six cobalt layout languages (light + dark)
 - [ ] User picks a layout or asks for another pass
 - [ ] Flutter restyle only after acceptance
 
