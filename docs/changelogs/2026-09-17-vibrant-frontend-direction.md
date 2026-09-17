@@ -18,8 +18,9 @@ change shipped.
   Live was too colorful. Cobalt shade scale was accepted. A–F layouts
   are the OpenDesign references. The working prototype is
   `insideout-cobalt.html` (Home / Ideas / PRD+Coach / Commit /
-  Roadmap / Evidence, light + dark, bottom dock). Density pass:
-  full-bleed surfaces, 20px reading type, no floating card.
+  Roadmap / Evidence, light + dark, bottom dock). A–F card grammar
+  kept; type enlarged to 17.5px body and unused padding tightened
+  after the user asked to restore the previous design.
   No Flutter restyle.
 
 ## Operator

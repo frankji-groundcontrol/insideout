@@ -7,10 +7,9 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign Cobalt prototype is in review after a density pass
-   (`insideout-cobalt.html` in project `5b906e39-d7e4-481e-a94f-4242e9fafac1`).
-   User rejected the floating card / small type / blank field.
-   Next: accept or request more changes. Flutter is unchanged
+1. OpenDesign Cobalt prototype is the A–F card system again
+   (`insideout-cobalt.html`), with larger type and tighter spacing
+   only. The no-card density rewrite was reverted. Flutter is unchanged
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-cobalt-layouts.md)).
 2. The recorded frontier is closed 2026-08-22

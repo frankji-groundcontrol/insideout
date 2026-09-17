@@ -22,7 +22,7 @@ English only.
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
 - [2026-09-17 — Cobalt layouts accepted as references](2026-09-17-cobalt-layouts.md)
-  — A–F locked; density pass after “one card / small texts / blank”.
+  — A–F cards restored; type and spacing only after density rewrite.
 - [2026-09-17 — One hue, light and dark](2026-09-17-cobalt-shade.md)
   — not too colorful; cobalt shades; light + dark.
 - [2026-09-17 — Live language (Ink & Seal retired)](2026-09-17-live-language.md)

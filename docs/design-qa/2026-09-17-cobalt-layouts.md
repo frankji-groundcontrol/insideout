@@ -27,3 +27,11 @@ human Commit, add a Now item, toggle theme. Flutter waits.
 The floating single card and 15px type are rejected. Prototype
 revised: full-bleed surfaces, 20px reading type, large titles, one
 focal block per screen, no empty field as decoration.
+
+## Follow-up (same day)
+
+> I still prefer the previous design, just adjust layout and font size
+
+The density rewrite (no cards, type-rows, full-bleed) is reverted.
+Restore the A–F card / poster / stack / band grammar. Only enlarge
+type (body 17.5) and tighten unused padding.

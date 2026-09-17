@@ -52,8 +52,9 @@ users. Product loop stays the same.
 - [x] Six cobalt layout languages (light + dark)
 - [x] User: take A–F as references and proceed in OpenDesign
 - [x] OpenDesign HTML prototype from A–F + cobalt (`insideout-cobalt.html`)
-- [x] Density pass: no floating card, larger type, less blank
-- [ ] User review of the denser Cobalt prototype
+- [x] Density rewrite (no cards) — user preferred the previous design
+- [x] Restore A–F cards; enlarge type and tighten spacing only
+- [ ] User review of the restored card prototype
 - [ ] Flutter restyle only after acceptance
 
 ## Club Editorial variants
