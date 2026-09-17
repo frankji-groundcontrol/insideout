@@ -21,6 +21,8 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-09-17 — One hue, light and dark](2026-09-17-cobalt-shade.md)
+  — not too colorful; cobalt shades; light + dark.
 - [2026-09-17 — Live language (Ink & Seal retired)](2026-09-17-live-language.md)
   — Recap cream/stamp rejected; night + cobalt + magenta next.
 - [2026-09-17 — Recap (3Q) design language](2026-09-17-3q-recap-language.md)

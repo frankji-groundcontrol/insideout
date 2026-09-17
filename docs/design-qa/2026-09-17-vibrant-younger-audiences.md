@@ -83,3 +83,11 @@ Still images first.
 The Recap system (cream paper, cinnabar slab, wax Commit stamp) reads
 as Ink & Seal. That theme stays retired. Next image pass must not use
 cream, vermilion/orange-as-seal, chops, or stamps.
+
+## Follow-up (same day)
+
+> No need to be too colorful, and design both light and dark mode, you can use one main theme color with different shades
+
+Live (cobalt + magenta + lime) is too many hues. One theme color,
+shade scale only, plus neutrals. Design light and dark as a pair.
+Ink & Seal stays retired.

@@ -14,10 +14,9 @@ change shipped.
 - OpenDesign project `InsideOut frontend — Ink & Seal` (AMR,
   `deepseek-v4.1-flash`, skill `frontend-design`) holds `DESIGN.md` and
   the vibrant-direction brief.
-- VOLT HTML rejected. User voted 3, then 3Q. Recap (cream / cinnabar /
-  wax stamp) was then rejected: color and layout felt like Ink & Seal.
-  Next pass must not use cream, vermilion, chops, or stamps. Images
-  first. No Flutter restyle.
+- VOLT HTML rejected. User voted 3, then 3Q. Recap read as Ink & Seal.
+  Live (magenta + lime + cobalt) was too colorful. Next: one theme
+  color with shades, light and dark. Images first. No Flutter restyle.
 
 ## Operator
 

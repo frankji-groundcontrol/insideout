@@ -7,9 +7,8 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight. Recap (cream / cinnabar /
-   stamp) was rejected as Ink & Seal. Next: Live language images —
-   no cream, no vermilion, no stamp
+1. OpenDesign exploration is in flight. Live was too colorful. Next:
+   one cobalt shade scale, light and dark, product screens
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
    Flutter is unchanged.
