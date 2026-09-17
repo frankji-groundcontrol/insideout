@@ -1,7 +1,8 @@
 # 2026-09-17 — Vibrant frontend direction (OpenDesign)
 
-Recorded the user's "Make it vibrant for younger audiences" note and
-opened a local OpenDesign exploration. No Flutter theme change shipped.
+Recorded the user's "Make it vibrant for younger audiences" note, then
+the follow-up "No need to stick to ink and seal." OpenDesign may invent
+a new look. No Flutter theme change shipped.
 
 ## What changed
 

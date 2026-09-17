@@ -9,25 +9,24 @@ The user asked to design the frontend in OpenDesign (AMR,
 
 > Make it vibrant for younger audiences
 
-The live Flutter client is the quiet 国风留白 / Ink & Seal world
-(celadon ground, rare vermilion seal, ink as the verb). This task
-explores a younger, higher-energy reading of that same identity — not a
-new brand, and not a neon SaaS default.
+The live Flutter client is the quiet 国风留白 / Ink & Seal world.
+The user then lifted that lock: "No need to stick to ink and seal."
+This task explores a new, vibrant visual language for younger workshop
+users. Product loop stays the same.
 
 ## Design
 
-- Keep the sealed-scroll metaphor, bilingual type pairing (Song display
-  / gothic body), and the ink-not-vermilion rule.
-- Raise saturation, contrast, motion, and type scale so the product
-  feels like a creative workshop tool, not a scholarly archive.
+- Invent a distinctive, high-energy look. Do not reuse celadon / sumi /
+  vermilion-seal as the system.
+- Bilingual zh-CN + en-US still first-class.
 - First artifacts live in the OpenDesign project
-  `InsideOut frontend — Ink & Seal`. Flutter restyle is a later call.
+  `InsideOut frontend — Ink & Seal` (name is historical). Flutter
+  restyle is a later call.
 
 ## Out of scope
 
 - Shipping a Flutter theme change in this slice.
-- Replacing the token contract in `DESIGN.md` until a direction is
-  accepted.
+- Shipping a replacement for `DESIGN.md` until a direction is accepted.
 
 ## Checklist
 

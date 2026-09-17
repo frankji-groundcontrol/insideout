@@ -10,13 +10,16 @@ proposed, the user said:
 
 ## Decision
 
-Keep 国风留白 / Ink & Seal (scroll, chops, Song headings, ink as the
-primary verb). Raise energy for a younger workshop audience: brighter
-celadon, more seal-wash, larger type, motion (stamp / ink), denser
-social presence. Do not invent a new palette or go neon-SaaS.
+First pass: raise energy inside Ink & Seal. Superseded the same day —
+see follow-up. Exploration-only; Flutter waits on acceptance.
 
-Resolution so far is exploration-only: the brief and first artifacts
-live in the local OpenDesign project, not in the Flutter client.
-Flutter restyle waits on acceptance.
+## Follow-up (same day)
+
+> No need to stick to ink and seal
+
+Drop the brand lock. The exploration may invent a new visual language
+aimed at younger workshop users. Product loop stays the same (idea →
+version → Commit → timed roadmap → evidence). Ink & Seal tokens are
+reference only, not a constraint.
 
 Plan: [2026-09-17-vibrant-ink-seal.md](../plans/2026-09-17-vibrant-ink-seal.md).
