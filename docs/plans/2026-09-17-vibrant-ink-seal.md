@@ -39,7 +39,7 @@ users. Product loop stays the same.
 - [x] User rejected 3A–3F as unrelated to app functionality
 - [x] Club Editorial applied to real product screens (3G–3L)
 - [x] User rejected 3G–3L as too old-fashioned
-- [ ] Youth Club Editorial product screens (3M–3R)
+- [x] Youth Club Editorial product screens (3M–3R)
 - [ ] User picks a variant or requests another pass
 - [ ] Flutter restyle only after acceptance
 

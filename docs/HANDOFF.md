@@ -7,9 +7,8 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight: Club Editorial (vote 3). 3A–3F
-   were print props; 3G–3L were too old-fashioned. Next pass must be
-   youth product UI
+1. OpenDesign exploration is in flight: Club Editorial (vote 3). 3G–3L
+   were too old-fashioned; 3M–3R youth product screens wait on a pick
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
    Flutter is unchanged until a variant is accepted.

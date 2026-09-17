@@ -57,6 +57,5 @@ product UI, weaker magazine energy.
 
 3G–3L read as a 2018 SaaS dashboard (navy rail, sparse cream, tiny
 orange). Keep the product loop. Drop the journal / Linear chrome.
-Next pass should feel like a 2026 youth issue of Club Editorial:
-huge type, more orange, no left rail, still Ideas / PRD / Commit /
-Roadmap / Evidence.
+3M–3R are a 2026 youth issue of Club Editorial: huge type, more
+orange, no left rail, still Ideas / PRD / Commit / Roadmap / Evidence.

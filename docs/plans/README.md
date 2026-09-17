@@ -9,7 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **In flight** | Generate a younger Club Editorial product-UI pass (huge type, more orange, no left rail). | 3G–3L rejected as too old-fashioned. Flutter waits on acceptance ([changelog](../changelogs/2026-09-17-vibrant-frontend-direction.md)). |
+| P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **In flight** | User picks a youth Club Editorial lane (3M–3R) or asks for another pass. | 3G–3L rejected as too old-fashioned; 3M–3R ready. Flutter waits on acceptance ([changelog](../changelogs/2026-09-17-vibrant-frontend-direction.md)). |
 | P1 | [Surface parity gaps (API ↔ CLI ↔ MCP)](2026-09-03-surface-parity-gaps.md) | **Completed** | None — 6 gaps + BUG-015 fixed, 46 → 50 tools ([changelog](../changelogs/2026-09-03-surface-parity-gaps.md)). | All fixes live-verified on a scratch local server; client-side only, nothing to deploy beyond the CLI/MCP binaries users rebuild. |
 | P1 | [Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md) | **Completed** | None — 46-tool surface + SKILL.md live ([changelog](../changelogs/2026-08-25-agent-crud-tool-surface.md)). | Idea inbox lifecycle, PRD section edits, evidence read, bootstrapping — 1:1 API ↔ CLI ↔ MCP. |
 | P1 | [Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md) | **Completed** | Operator call: whether to purge the 582 legacy users (destructive). | Deployed 2026-08-25; frank.ji@… sole admin, signup invitation-only ([changelog](../changelogs/2026-08-25-invitation-only-signup.md)). |
