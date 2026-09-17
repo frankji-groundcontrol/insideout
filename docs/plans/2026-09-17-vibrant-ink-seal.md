@@ -38,7 +38,9 @@ users. Product loop stays the same.
 - [x] Six Club Editorial variants generated (3A–3F, Seedream 5.0 Pro)
 - [x] User rejected 3A–3F as unrelated to app functionality
 - [x] Club Editorial applied to real product screens (3G–3L)
-- [ ] User picks a product-screen variant or requests another pass
+- [x] User rejected 3G–3L as too old-fashioned
+- [ ] Youth Club Editorial product screens (3M–3R)
+- [ ] User picks a variant or requests another pass
 - [ ] Flutter restyle only after acceptance
 
 ## Club Editorial variants

@@ -50,3 +50,13 @@ Keep Club Editorial (cream / cobalt / blood orange, magazine type) but
 apply it to real InsideOut surfaces: Ideas inbox, PRD + Coach, human
 Commit, timed Roadmap, Git evidence, Dashboard. 3G–3L are that pass:
 product UI, weaker magazine energy.
+
+## Follow-up (same day)
+
+> Still too old fashioned
+
+3G–3L read as a 2018 SaaS dashboard (navy rail, sparse cream, tiny
+orange). Keep the product loop. Drop the journal / Linear chrome.
+Next pass should feel like a 2026 youth issue of Club Editorial:
+huge type, more orange, no left rail, still Ideas / PRD / Commit /
+Roadmap / Evidence.
