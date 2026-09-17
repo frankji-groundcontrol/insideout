@@ -7,12 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight: user voted **3Q**. Reference
-   pinned; Recap language drafted. Keep generating images first — no
-   HTML
+1. OpenDesign exploration is in flight. Recap (cream / cinnabar /
+   stamp) was rejected as Ink & Seal. Next: Live language images —
+   no cream, no vermilion, no stamp
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
-   [language](design-qa/2026-09-17-3q-recap-language.md)).
-   Flutter is unchanged until the language is accepted.
+   [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
+   Flutter is unchanged.
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and

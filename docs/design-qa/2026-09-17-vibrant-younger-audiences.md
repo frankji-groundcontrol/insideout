@@ -75,3 +75,11 @@ Do not start an HTML prototype. Keep exploring in images.
 3Q is the lock. Pinned in OpenDesign as `REFERENCE-3Q.jpg`. Language:
 [2026-09-17-3q-recap-language.md](2026-09-17-3q-recap-language.md).
 Still images first.
+
+## Follow-up (same day)
+
+> The color and layout is weird, I told you to ditch ink and seal theme
+
+The Recap system (cream paper, cinnabar slab, wax Commit stamp) reads
+as Ink & Seal. That theme stays retired. Next image pass must not use
+cream, vermilion/orange-as-seal, chops, or stamps.

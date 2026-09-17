@@ -21,6 +21,8 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-09-17 — Live language (Ink & Seal retired)](2026-09-17-live-language.md)
+  — Recap cream/stamp rejected; night + cobalt + magenta next.
 - [2026-09-17 — Recap (3Q) design language](2026-09-17-3q-recap-language.md)
   — user voted 3Q; OpenDesign reference + tokens; images first.
 - [2026-09-17 — Vibrant for younger audiences](2026-09-17-vibrant-younger-audiences.md)

@@ -44,6 +44,8 @@ users. Product loop stays the same.
 - [x] User voted 3Q — pin as OpenDesign reference
 - [x] Recap design language drafted (`DESIGN_3Q.md`, `brand-spec-3q.md`)
 - [x] 3Q-locked product screens generated
+- [x] User rejected Recap color/layout as Ink & Seal
+- [ ] Live language (no cream, no vermilion, no stamp) in images
 - [ ] User accepts language or asks for another pass
 - [ ] Flutter restyle only after acceptance
 

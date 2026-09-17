@@ -14,10 +14,10 @@ change shipped.
 - OpenDesign project `InsideOut frontend — Ink & Seal` (AMR,
   `deepseek-v4.1-flash`, skill `frontend-design`) holds `DESIGN.md` and
   the vibrant-direction brief.
-- VOLT HTML rejected. User voted 3 (Club Editorial), then **3Q**.
-  3Q is pinned in OpenDesign as `REFERENCE-3Q.jpg`. Recap language:
-  [2026-09-17-3q-recap-language.md](../design-qa/2026-09-17-3q-recap-language.md).
-  Images first. No Flutter restyle.
+- VOLT HTML rejected. User voted 3, then 3Q. Recap (cream / cinnabar /
+  wax stamp) was then rejected: color and layout felt like Ink & Seal.
+  Next pass must not use cream, vermilion, chops, or stamps. Images
+  first. No Flutter restyle.
 
 ## Operator
 

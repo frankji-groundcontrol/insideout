@@ -9,7 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **In flight** | User accepts Recap (3Q) language or asks for another image pass. No HTML. | 3Q pinned + language + locked screens ready ([QA](../design-qa/2026-09-17-3q-recap-language.md)). Flutter waits. |
+| P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **In flight** | Generate Live language screens: no cream, no vermilion, no stamp. | Recap rejected as Ink & Seal leak. Images first. Flutter waits. |
 | P1 | [Surface parity gaps (API ↔ CLI ↔ MCP)](2026-09-03-surface-parity-gaps.md) | **Completed** | None — 6 gaps + BUG-015 fixed, 46 → 50 tools ([changelog](../changelogs/2026-09-03-surface-parity-gaps.md)). | All fixes live-verified on a scratch local server; client-side only, nothing to deploy beyond the CLI/MCP binaries users rebuild. |
 | P1 | [Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md) | **Completed** | None — 46-tool surface + SKILL.md live ([changelog](../changelogs/2026-08-25-agent-crud-tool-surface.md)). | Idea inbox lifecycle, PRD section edits, evidence read, bootstrapping — 1:1 API ↔ CLI ↔ MCP. |
 | P1 | [Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md) | **Completed** | Operator call: whether to purge the 582 legacy users (destructive). | Deployed 2026-08-25; frank.ji@… sole admin, signup invitation-only ([changelog](../changelogs/2026-08-25-invitation-only-signup.md)). |
