@@ -7,7 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. The recorded frontier is closed 2026-08-22
+1. OpenDesign exploration is in flight: a younger, more vibrant
+   reading of Ink & Seal
+   ([plan](plans/2026-09-17-vibrant-ink-seal.md),
+   [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
+   Flutter is unchanged until a direction is accepted.
+2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
    [depth](changelogs/2026-08-22-depth-thread.md)): audience-view web
