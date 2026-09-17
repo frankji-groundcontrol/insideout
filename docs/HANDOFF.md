@@ -7,11 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight. A–F layouts are the
-   references; next is the Cobalt HTML prototype
+1. OpenDesign Cobalt prototype is ready for review
+   (`insideout-cobalt.html` in project `5b906e39-d7e4-481e-a94f-4242e9fafac1`).
+   Home=F, Ideas=A, PRD=D, Commit=C, Roadmap=B, chrome=E.
+   Next: user accept or request changes. Flutter is unchanged
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
-   [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
-   Flutter is unchanged.
+   [QA](design-qa/2026-09-17-cobalt-layouts.md)).
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and

@@ -16,8 +16,9 @@ change shipped.
   the vibrant-direction brief.
 - VOLT HTML rejected. User voted 3, then 3Q. Recap read as Ink & Seal.
   Live was too colorful. Cobalt shade scale was accepted. A–F layouts
-  are the OpenDesign references; HTML prototype is next. No Flutter
-  restyle.
+  are the OpenDesign references. The working prototype is
+  `insideout-cobalt.html` (Home / Ideas / PRD+Coach / Commit /
+  Roadmap / Evidence, light + dark, bottom dock). No Flutter restyle.
 
 ## Operator
 

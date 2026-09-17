@@ -22,7 +22,7 @@ English only.
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
 - [2026-09-17 — Cobalt layouts accepted as references](2026-09-17-cobalt-layouts.md)
-  — A–F locked; OpenDesign prototype next.
+  — A–F locked; Cobalt HTML prototype ready for review.
 - [2026-09-17 — One hue, light and dark](2026-09-17-cobalt-shade.md)
   — not too colorful; cobalt shades; light + dark.
 - [2026-09-17 — Live language (Ink & Seal retired)](2026-09-17-live-language.md)

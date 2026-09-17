@@ -1,6 +1,6 @@
 # 2026-09-17 — Vibrant Ink & Seal for younger audiences
 
-Status: **In flight** — OpenDesign exploration; Flutter not restyled yet.
+Status: **In flight** — Cobalt HTML prototype ready for review; Flutter not restyled yet.
 
 ## Why
 
@@ -51,7 +51,8 @@ users. Product loop stays the same.
 - [x] User: color better, design awful — more layout ideas
 - [x] Six cobalt layout languages (light + dark)
 - [x] User: take A–F as references and proceed in OpenDesign
-- [ ] OpenDesign HTML prototype from A–F + cobalt
+- [x] OpenDesign HTML prototype from A–F + cobalt (`insideout-cobalt.html`)
+- [ ] User review of the Cobalt prototype
 - [ ] Flutter restyle only after acceptance
 
 ## Club Editorial variants

@@ -15,5 +15,7 @@ After six layout ideas, the user said:
 | E | `REFERENCE-E-dock.jpg` | Chrome |
 | F | `REFERENCE-F-index.jpg` | Home |
 
-Cobalt shade scale + light/dark stay. OpenDesign builds the prototype.
-Flutter waits.
+Cobalt shade scale + light/dark stay. OpenDesign built
+`insideout-cobalt.html` from that map (light + dark, dock chrome,
+English-only copy). Live-walked: capture an idea, request review,
+human Commit, add a Now item, toggle theme. Flutter waits.
