@@ -40,3 +40,13 @@ Direction 3 (Club Editorial) is selected. Six Seedream variants
 (3A Cover, 3B Spread, 3C Mono+orange, 3D Night, 3E Swiss, 3F Lookbook)
 are ready. User picks a lane before an HTML prototype. Copy on the
 images is moodboard-only.
+
+## Follow-up (same day)
+
+> While these are not related to our app functionality
+
+3A–3F drifted into fashion-print props (covers, lookbooks, Polaroids).
+Keep Club Editorial (cream / cobalt / blood orange, magazine type) but
+apply it to real InsideOut surfaces: Ideas inbox, PRD + Coach, human
+Commit, timed Roadmap, Git evidence, Dashboard. Next images must be
+product UI, not magazine stills.

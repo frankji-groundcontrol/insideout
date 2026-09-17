@@ -7,8 +7,9 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight: Club Editorial (vote 3) with
-   six variants 3A–3F waiting on a pick
+1. OpenDesign exploration is in flight: Club Editorial (vote 3). 3A–3F
+   print props were rejected as unrelated to app functionality; next
+   pass must show real product screens
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
    Flutter is unchanged until a variant is accepted.

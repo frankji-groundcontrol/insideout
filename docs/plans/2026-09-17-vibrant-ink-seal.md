@@ -36,19 +36,16 @@ users. Product loop stays the same.
 - [x] Five+ image-backed visual worlds for the user to pick
 - [x] User voted 3 — Club Editorial
 - [x] Six Club Editorial variants generated (3A–3F, Seedream 5.0 Pro)
-- [ ] User picks a variant or requests another pass
+- [x] User rejected 3A–3F as unrelated to app functionality
+- [ ] Club Editorial applied to real product screens (3G–3L)
+- [ ] User picks a product-screen variant or requests another pass
 - [ ] Flutter restyle only after acceptance
 
-## Club Editorial variants (awaiting pick)
+## Club Editorial variants
 
-Moodboards only — Seedream garbles bilingual UI copy. Do not treat
-on-image strings as product copy.
+3A–3F were fashion-print moodboards (cover, spread, lookbook). Rejected:
+they do not show the product loop. Next pass (3G–3L) must be app UI in
+the same cream / cobalt / blood-orange language.
 
-| ID | Lane | What it is |
-| --- | --- | --- |
-| 3A | Cover | Cream issue cover, giant orange COMMIT, flash portrait |
-| 3B | Spread | Open-magazine contents: 版本实验室 + PRD / Roadmap / Commit |
-| 3C | Mono + orange | Fashion-house desk, black/cream, one orange rule |
-| 3D | Night | Black coated stock, cream type, cobalt + orange foil |
-| 3E | Swiss | Modular cream / cobalt / orange journal grid |
-| 3F | Lookbook | Polaroids, china-marker map, tactile desk mess |
+Moodboards only — Seedream garbles UI copy. Do not treat on-image
+strings as product copy.

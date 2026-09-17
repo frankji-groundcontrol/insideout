@@ -15,8 +15,9 @@ change shipped.
   `deepseek-v4.1-flash`, skill `frontend-design`) holds `DESIGN.md` and
   the vibrant-direction brief.
 - VOLT HTML rejected. Six image worlds generated; user voted 3 (Club
-  Editorial). Six Club Editorial moodboards (3A–3F) are ready for a
-  pick.
+  Editorial). 3A–3F print moodboards were rejected as unrelated to app
+  functionality; the next pass applies the same look to Ideas / PRD /
+  Commit / Roadmap / Evidence.
 
 ## Operator
 
