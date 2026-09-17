@@ -64,6 +64,14 @@ orange, no left rail, still Ideas / PRD / Commit / Roadmap / Evidence.
 
 > Still generate images first
 
-Do not start an HTML prototype. Keep exploring in images. Next pass
-is a matched six-screen set in one language (3N night chrome + 3P
-column IA) so the product loop can be judged as one app.
+Do not start an HTML prototype. Keep exploring in images.
+
+## Follow-up (same day)
+
+> 3Q
+
+> Share it with open design as reference, build design language
+
+3Q is the lock. Pinned in OpenDesign as `REFERENCE-3Q.jpg`. Language:
+[2026-09-17-3q-recap-language.md](2026-09-17-3q-recap-language.md).
+Still images first.

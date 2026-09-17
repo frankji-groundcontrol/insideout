@@ -14,10 +14,10 @@ change shipped.
 - OpenDesign project `InsideOut frontend — Ink & Seal` (AMR,
   `deepseek-v4.1-flash`, skill `frontend-design`) holds `DESIGN.md` and
   the vibrant-direction brief.
-- VOLT HTML rejected. Six image worlds generated; user voted 3 (Club
-  Editorial). 3A–3F print moodboards were unrelated to the app. 3G–3L
-  showed the loop but were rejected as too old-fashioned. 3M–3R are
-  the youth product-UI pass. User: keep generating images first.
+- VOLT HTML rejected. User voted 3 (Club Editorial), then **3Q**.
+  3Q is pinned in OpenDesign as `REFERENCE-3Q.jpg`. Recap language:
+  [2026-09-17-3q-recap-language.md](../design-qa/2026-09-17-3q-recap-language.md).
+  Images first. No Flutter restyle.
 
 ## Operator
 

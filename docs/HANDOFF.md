@@ -7,12 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight: Club Editorial (vote 3). Keep
-   generating images first — no HTML. Next is a matched six-screen
-   night-system set
+1. OpenDesign exploration is in flight: user voted **3Q**. Reference
+   pinned; Recap language drafted. Keep generating images first — no
+   HTML
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
-   [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
-   Flutter is unchanged until a variant is accepted.
+   [language](design-qa/2026-09-17-3q-recap-language.md)).
+   Flutter is unchanged until the language is accepted.
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and

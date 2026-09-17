@@ -21,9 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-09-17 — Recap (3Q) design language](2026-09-17-3q-recap-language.md)
+  — user voted 3Q; OpenDesign reference + tokens; images first.
 - [2026-09-17 — Vibrant for younger audiences](2026-09-17-vibrant-younger-audiences.md)
-  — "Make it vibrant for younger audiences"; vote 3 Club Editorial;
-  six variants waiting on a pick; Flutter restyle waits on acceptance.
+  — vibrant / no Ink & Seal / vote 3 / 3Q lock; Flutter waits.
 - [2026-08-24 — Login form action stack](2026-08-24-login-form-action-stack.md)
   — "so ugly"; four identical stacked red links under 登录 re-grouped into
   secondary sign-in buttons + a footer row.
