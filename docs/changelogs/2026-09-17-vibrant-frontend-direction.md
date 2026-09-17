@@ -16,8 +16,8 @@ change shipped.
   the vibrant-direction brief.
 - VOLT HTML rejected. Six image worlds generated; user voted 3 (Club
   Editorial). 3A–3F print moodboards were rejected as unrelated to app
-  functionality; the next pass applies the same look to Ideas / PRD /
-  Commit / Roadmap / Evidence.
+  functionality. 3G–3L apply the same look to Ideas / PRD / Commit /
+  Roadmap / Evidence / Dashboard.
 
 ## Operator
 

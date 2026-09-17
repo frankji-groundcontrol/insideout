@@ -48,5 +48,5 @@ images is moodboard-only.
 3A–3F drifted into fashion-print props (covers, lookbooks, Polaroids).
 Keep Club Editorial (cream / cobalt / blood orange, magazine type) but
 apply it to real InsideOut surfaces: Ideas inbox, PRD + Coach, human
-Commit, timed Roadmap, Git evidence, Dashboard. Next images must be
-product UI, not magazine stills.
+Commit, timed Roadmap, Git evidence, Dashboard. 3G–3L are that pass:
+product UI, weaker magazine energy.
