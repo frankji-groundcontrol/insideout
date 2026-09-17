@@ -35,3 +35,11 @@ focal block per screen, no empty field as decoration.
 The density rewrite (no cards, type-rows, full-bleed) is reverted.
 Restore the A–F card / poster / stack / band grammar. Only enlarge
 type (body 17.5) and tighten unused padding.
+
+## Follow-up (same day)
+
+> send to open design as reference, make design language and page prototypes
+
+The accepted card screens are pinned as `LOCK-home-light.jpg` …
+`LOCK-roadmap.jpg`. Language lives in `DESIGN_LANGUAGE.md` and
+`cobalt-language.html`. Page prototypes stay in `insideout-cobalt.html`.

@@ -16,7 +16,7 @@ code) with relative links.
 ## Records
 
 - [2026-09-17 — Vibrant frontend direction](2026-09-17-vibrant-frontend-direction.md)
-  — OpenDesign exploration; A–F cards kept; type/spacing only;
+  — Cobalt lock pinned in OpenDesign; language + page prototypes;
   no Flutter theme change shipped.
 - [2026-09-03 — Surface parity gaps](2026-09-03-surface-parity-gaps.md)
   — six audit-found API ↔ CLI ↔ MCP gaps closed (invite revoke,

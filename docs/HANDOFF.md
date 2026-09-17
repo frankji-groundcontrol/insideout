@@ -7,9 +7,10 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign Cobalt prototype is the A–F card system again
-   (`insideout-cobalt.html`), with larger type and tighter spacing
-   only. The no-card density rewrite was reverted. Flutter is unchanged
+1. OpenDesign Cobalt is locked: `LOCK-*.jpg` references,
+   `DESIGN_LANGUAGE.md`, `cobalt-language.html`, and page prototypes
+   in `insideout-cobalt.html`. Next: user accept or request changes.
+   Flutter is unchanged
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-cobalt-layouts.md)).
 2. The recorded frontier is closed 2026-08-22

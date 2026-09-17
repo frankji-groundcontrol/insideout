@@ -54,7 +54,9 @@ users. Product loop stays the same.
 - [x] OpenDesign HTML prototype from A–F + cobalt (`insideout-cobalt.html`)
 - [x] Density rewrite (no cards) — user preferred the previous design
 - [x] Restore A–F cards; enlarge type and tighten spacing only
-- [ ] User review of the restored card prototype
+- [x] Pin accepted screens as OpenDesign LOCK references
+- [x] Cobalt design language + page prototypes
+- [ ] User review of the locked language and prototypes
 - [ ] Flutter restyle only after acceptance
 
 ## Club Editorial variants

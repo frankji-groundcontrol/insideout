@@ -19,8 +19,9 @@ change shipped.
   are the OpenDesign references. The working prototype is
   `insideout-cobalt.html` (Home / Ideas / PRD+Coach / Commit /
   Roadmap / Evidence, light + dark, bottom dock). A–F card grammar
-  kept; type enlarged to 17.5px body and unused padding tightened
-  after the user asked to restore the previous design.
+  kept; type enlarged to 17.5px. Accepted screens pinned as
+  OpenDesign `LOCK-*` references with `DESIGN_LANGUAGE.md` and
+  page prototypes in `insideout-cobalt.html`.
   No Flutter restyle.
 
 ## Operator
