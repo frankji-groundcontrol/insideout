@@ -49,17 +49,17 @@ users. Product loop stays the same.
 they do not show the product loop.
 
 3G–3L are app UI in cream / cobalt / blood orange. They show the
-product loop, but they flattened toward generic SaaS chrome — the
-magazine energy of vote 3 is weaker here.
+product loop, but they flattened toward generic SaaS chrome and were
+rejected as too old-fashioned.
 
-Moodboards only — Seedream garbles UI copy. Do not treat on-image
-strings as product copy.
+3M–3R keep the same surfaces with bigger type, more orange, and no
+navy rail. Moodboards only — Seedream garbles UI copy.
 
 | ID | Surface | What it shows |
 | --- | --- | --- |
-| 3G | Ideas | Inbox capture + idea list, Convert to PRD |
-| 3H | PRD + Coach | Working version sections + Coach challenge |
-| 3I | Commit | Human Commit dialog, version + decision note |
-| 3J | Roadmap | Now / Next / Later bands, deadlines, pressure |
-| 3K | Evidence | Git commits on a roadmap node |
-| 3L | Dashboard | Projects with version, deadline, evidence |
+| 3M | Ideas | Giant type, poster-cards, orange Capture bar |
+| 3N | Commit | Night issue, huge COMMIT, orange foil stamp |
+| 3O | PRD + Coach | Section cards + Coach as story quotes |
+| 3P | Roadmap | Now / Next / Later as loud color columns |
+| 3Q | Evidence | Story-strip commits, “evidence is not outcome” |
+| 3R | Dashboard | Project cards as issue-covers |

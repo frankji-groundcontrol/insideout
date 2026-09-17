@@ -16,8 +16,8 @@ change shipped.
   the vibrant-direction brief.
 - VOLT HTML rejected. Six image worlds generated; user voted 3 (Club
   Editorial). 3A–3F print moodboards were unrelated to the app. 3G–3L
-  showed the loop but were rejected as too old-fashioned. Next pass:
-  youth Club Editorial on the same surfaces.
+  showed the loop but were rejected as too old-fashioned. 3M–3R are
+  the youth product-UI pass.
 
 ## Operator
 
