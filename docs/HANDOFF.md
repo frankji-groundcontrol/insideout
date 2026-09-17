@@ -7,8 +7,8 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight. Cobalt color is kept; the
-   Linear-admin layout was rejected. Next: more layout ideas
+1. OpenDesign exploration is in flight. A–F layouts are the
+   references; next is the Cobalt HTML prototype
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
    Flutter is unchanged.

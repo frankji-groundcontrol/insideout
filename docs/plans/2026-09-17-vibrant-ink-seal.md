@@ -50,7 +50,8 @@ users. Product loop stays the same.
 - [x] Cobalt shade-scale screens in light and dark
 - [x] User: color better, design awful — more layout ideas
 - [x] Six cobalt layout languages (light + dark)
-- [ ] User picks a layout or asks for another pass
+- [x] User: take A–F as references and proceed in OpenDesign
+- [ ] OpenDesign HTML prototype from A–F + cobalt
 - [ ] Flutter restyle only after acceptance
 
 ## Club Editorial variants

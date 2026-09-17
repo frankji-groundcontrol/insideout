@@ -99,3 +99,11 @@ Ink & Seal stays retired.
 Cobalt shade scale is kept. The Linear-admin layout is rejected.
 Next: six layout languages, still one hue, still light + dark,
 still the product loop.
+
+## Follow-up (same day)
+
+> Looks better, take them as references and proceed to open-design
+
+A–F are accepted as references. OpenDesign builds the Cobalt
+prototype from those frames (Index / Type Wall / Split / Stack /
+Bands / Dock). Flutter still waits.
