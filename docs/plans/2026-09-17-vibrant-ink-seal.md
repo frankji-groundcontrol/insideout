@@ -47,7 +47,7 @@ users. Product loop stays the same.
 - [x] User rejected Recap color/layout as Ink & Seal
 - [x] Live language (no cream, no vermilion, no stamp) in images
 - [x] User: one theme color, shades only; light + dark; not too colorful
-- [ ] Cobalt shade-scale screens in light and dark
+- [x] Cobalt shade-scale screens in light and dark
 - [ ] User accepts language or asks for another pass
 - [ ] Flutter restyle only after acceptance
 
