@@ -32,6 +32,7 @@ users. Product loop stays the same.
 
 - [x] OpenDesign project created (AMR + `deepseek-v4.1-flash`)
 - [x] Direction brief updated for vibrant / younger audiences
-- [ ] First screens generated and previewed
+- [x] First screens generated and previewed (VOLT rejected as not vibrant enough)
+- [ ] Five+ image-backed visual worlds for the user to pick
 - [ ] User picks a direction or requests another pass
 - [ ] Flutter restyle only after acceptance

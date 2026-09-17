@@ -23,3 +23,11 @@ version → Commit → timed roadmap → evidence). Ink & Seal tokens are
 reference only, not a constraint.
 
 Plan: [2026-09-17-vibrant-ink-seal.md](../plans/2026-09-17-vibrant-ink-seal.md).
+
+## Follow-up (same day)
+
+> Not vibrant or stylish enough, you may generate images with open design. Give me at least 5 ideas to choose from
+
+The VOLT HTML pass is rejected as too muted. Next: five or more
+image-backed visual worlds via OpenDesign Cloud image models; user
+picks before another HTML prototype.
