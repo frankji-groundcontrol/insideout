@@ -7,8 +7,9 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight: Club Editorial (vote 3). 3G–3L
-   were too old-fashioned; 3M–3R youth product screens wait on a pick
+1. OpenDesign exploration is in flight: Club Editorial (vote 3). Keep
+   generating images first — no HTML. Next is a matched six-screen
+   night-system set
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
    Flutter is unchanged until a variant is accepted.

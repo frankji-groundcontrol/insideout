@@ -40,6 +40,8 @@ users. Product loop stays the same.
 - [x] Club Editorial applied to real product screens (3G–3L)
 - [x] User rejected 3G–3L as too old-fashioned
 - [x] Youth Club Editorial product screens (3M–3R)
+- [x] User: keep generating images first (no HTML yet)
+- [ ] Matched night-system screens (3S–3X)
 - [ ] User picks a variant or requests another pass
 - [ ] Flutter restyle only after acceptance
 

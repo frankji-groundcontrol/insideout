@@ -17,7 +17,7 @@ change shipped.
 - VOLT HTML rejected. Six image worlds generated; user voted 3 (Club
   Editorial). 3A–3F print moodboards were unrelated to the app. 3G–3L
   showed the loop but were rejected as too old-fashioned. 3M–3R are
-  the youth product-UI pass.
+  the youth product-UI pass. User: keep generating images first.
 
 ## Operator
 

@@ -59,3 +59,11 @@ product UI, weaker magazine energy.
 orange). Keep the product loop. Drop the journal / Linear chrome.
 3M–3R are a 2026 youth issue of Club Editorial: huge type, more
 orange, no left rail, still Ideas / PRD / Commit / Roadmap / Evidence.
+
+## Follow-up (same day)
+
+> Still generate images first
+
+Do not start an HTML prototype. Keep exploring in images. Next pass
+is a matched six-screen set in one language (3N night chrome + 3P
+column IA) so the product loop can be judged as one app.
