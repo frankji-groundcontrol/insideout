@@ -7,8 +7,8 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign exploration is in flight. Live was too colorful. Next:
-   one cobalt shade scale, light and dark, product screens
+1. OpenDesign exploration is in flight. Cobalt color is kept; the
+   Linear-admin layout was rejected. Next: more layout ideas
    ([plan](plans/2026-09-17-vibrant-ink-seal.md),
    [QA](design-qa/2026-09-17-vibrant-younger-audiences.md)).
    Flutter is unchanged.

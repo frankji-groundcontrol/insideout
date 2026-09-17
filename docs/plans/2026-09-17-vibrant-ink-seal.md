@@ -48,7 +48,9 @@ users. Product loop stays the same.
 - [x] Live language (no cream, no vermilion, no stamp) in images
 - [x] User: one theme color, shades only; light + dark; not too colorful
 - [x] Cobalt shade-scale screens in light and dark
-- [ ] User accepts language or asks for another pass
+- [x] User: color better, design awful — more layout ideas
+- [ ] Six cobalt layout languages (light + dark)
+- [ ] User picks a layout or asks for another pass
 - [ ] Flutter restyle only after acceptance
 
 ## Club Editorial variants

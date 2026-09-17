@@ -91,3 +91,11 @@ cream, vermilion/orange-as-seal, chops, or stamps.
 Live (cobalt + magenta + lime) is too many hues. One theme color,
 shade scale only, plus neutrals. Design light and dark as a pair.
 Ink & Seal stays retired.
+
+## Follow-up (same day)
+
+> Color looks better. but the design looks awful. Give me more design ideas
+
+Cobalt shade scale is kept. The Linear-admin layout is rejected.
+Next: six layout languages, still one hue, still light + dark,
+still the product loop.
