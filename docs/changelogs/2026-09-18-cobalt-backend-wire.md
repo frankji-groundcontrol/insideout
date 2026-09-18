@@ -10,7 +10,9 @@ loop on real rows. No theme change.
   with POST (`coachSseOpen` / `readCoachSse`) so deltas arrive while
   the stream is open. Closes the Coach half of
   [BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md).
-  Native still uses dio.
+  Native still uses dio. `decodeSseBytes` copies `Uint8List` chunks to
+  `List<int>` before `utf8.decoder` — the live web walk threw
+  `Utf8Decoder is not a subtype of StreamTransformer<Uint8List, String>`.
 - `LoopFocus` seeds from real loads: Ideas and workspace remember a
   project ID when the workspace has one; Evidence remembers the route
   id in `initState` (not during `build`). Dock hops keep those IDs.

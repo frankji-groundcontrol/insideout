@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/errors.dart';
@@ -30,6 +31,17 @@ void main() {
       CoachHandlers(onDelta: buf.write),
     );
     expect(buf.toString(), 'Hello');
+  });
+
+  test('readCoachSse accepts Uint8List chunks from the web fetch transport', () async {
+    final buf = StringBuffer();
+    await readCoachSse(
+      Stream<Uint8List>.fromIterable([
+        Uint8List.fromList(utf8.encode('event: delta\ndata: {"text":"Hi"}\n\n')),
+      ]),
+      CoachHandlers(onDelta: buf.write),
+    );
+    expect(buf.toString(), 'Hi');
   });
 
   test('parseSseBuffer splits delta frames and keeps a partial tail', () {

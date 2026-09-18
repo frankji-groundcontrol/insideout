@@ -84,10 +84,16 @@ CoachSseOpen coachSseOpen({
   );
 }
 
+/// Web fetch yields [Uint8List]; [utf8.decoder] is a transformer on
+/// `List<int>`, so passing the raw stream throws at runtime.
+Stream<String> decodeSseBytes(Stream<List<int>> chunks) {
+  return chunks.map<List<int>>((chunk) => List<int>.from(chunk)).transform(utf8.decoder);
+}
+
 /// Reads Coach SSE chunks, including multibyte splits, and applies frames.
 Future<void> readCoachSse(Stream<List<int>> chunks, CoachHandlers handlers) async {
   var buffer = '';
-  await for (final text in chunks.transform(utf8.decoder)) {
+  await for (final text in decodeSseBytes(chunks)) {
     buffer += text;
     final parsed = parseSseBuffer(buffer);
     buffer = parsed.rest;

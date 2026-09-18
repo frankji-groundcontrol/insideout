@@ -461,7 +461,7 @@ class ApiClient {
       chunks = res.data!.stream;
     }
     var buffer = '';
-    await for (final text in chunks.transform(utf8.decoder)) {
+    await for (final text in decodeSseBytes(chunks)) {
       buffer += text;
       final parsed = parseSseBuffer(buffer);
       buffer = parsed.rest;
