@@ -29,6 +29,17 @@ class _IdeasPageState extends State<IdeasPage> {
     super.initState();
     context.read<LoopFocus>().rememberWorkspace(widget.workspaceId);
     _future = context.read<Session>().api.listIdeas(widget.workspaceId);
+    _seedProject();
+  }
+
+  Future<void> _seedProject() async {
+    final focus = context.read<LoopFocus>();
+    if (focus.projectId != null) return;
+    try {
+      final projects = await context.read<Session>().api.listProjects(widget.workspaceId);
+      if (!mounted || focus.projectId != null || projects.isEmpty) return;
+      focus.rememberProject(projects.first.id, workspaceId: widget.workspaceId);
+    } catch (_) {}
   }
 
   @override

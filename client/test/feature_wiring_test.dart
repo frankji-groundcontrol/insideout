@@ -21,6 +21,7 @@ void main() {
     expect(workspace.contains('deleteWorkspace'), isTrue);
     expect(ideas.contains('updateIdea'), isTrue);
     expect(ideas.contains('dropIdea'), isTrue);
+    expect(ideas.contains('listProjects'), isTrue);
     expect(project.contains('updateProject'), isTrue);
     expect(project.contains('deleteProject'), isTrue);
     expect(project.contains('editUpdate'), isTrue);
@@ -40,6 +41,9 @@ void main() {
     expect(prd.contains('suggestions('), isTrue);
     expect(prd.contains('isCoachBackoff'), isTrue);
     expect(client.contains('applyCoachFrame'), isTrue);
+    expect(client.contains('coachSseOpen'), isTrue);
+    expect(client.contains('readCoachSse'), isTrue);
+    expect(client.contains('kIsWeb'), isTrue);
     expect(client.contains('req.postPrdBuild'), isTrue);
     expect(client.contains('req.getIdea'), isTrue);
     expect(client.contains('req.getConversation'), isTrue);

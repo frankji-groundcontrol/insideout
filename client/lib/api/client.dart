@@ -410,30 +410,27 @@ class ApiClient {
 
   Future<void> sendCoach(String conversationId, String content, CoachHandlers handlers) async {
     final token = await _readAccess();
-    final res = await _dio.post<ResponseBody>(
-      '/conversations/$conversationId/messages',
-      data: {'content': content},
-      options: Options(
-        responseType: ResponseType.stream,
-        headers: {
-          if (token != null) 'Authorization': 'Bearer $token',
-          'Accept': 'text/event-stream',
-        },
-      ),
+    final open = coachSseOpen(
+      baseUrl: baseUrl,
+      conversationId: conversationId,
+      content: content,
+      accessToken: token,
     );
-    if (res.statusCode != null && res.statusCode! >= 400) {
-      throw ApiException('coach failed', status: res.statusCode);
-    }
-    final stream = res.data!.stream;
-    var buffer = '';
-    await for (final chunk in stream) {
-      buffer += utf8.decode(chunk);
-      final parsed = parseSseBuffer(buffer);
-      buffer = parsed.rest;
-      for (final frame in parsed.frames) {
-        applyCoachFrame(frame, handlers);
+    Stream<List<int>> chunks;
+    if (kIsWeb) {
+      chunks = fetchSseStream(open.url, open.headers, method: open.method, body: open.body);
+    } else {
+      final res = await _dio.post<ResponseBody>(
+        '/conversations/$conversationId/messages',
+        data: {'content': content},
+        options: Options(responseType: ResponseType.stream, headers: open.headers),
+      );
+      if (res.statusCode != null && res.statusCode! >= 400) {
+        throw ApiException('coach failed', status: res.statusCode);
       }
+      chunks = res.data!.stream;
     }
+    await readCoachSse(chunks, handlers);
   }
 
   /// Subscribes to the project's live presence (canvas who-is-here).

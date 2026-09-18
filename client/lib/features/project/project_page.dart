@@ -26,7 +26,16 @@ class _ProjectPageState extends State<ProjectPage> {
   @override
   void initState() {
     super.initState();
-    _future = context.read<Session>().api.getProject(widget.id);
+    context.read<LoopFocus>().rememberProject(widget.id);
+    _future = _load();
+  }
+
+  Future<Map<String, dynamic>> _load() async {
+    final data = await context.read<Session>().api.getProject(widget.id);
+    final ws = data['workspaceId'] as String?;
+    context.read<LoopFocus>().rememberProject(widget.id, workspaceId: ws);
+    repo.text = (data['repoUrl'] as String?) ?? '';
+    return data;
   }
 
   @override
@@ -36,7 +45,7 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = context.read<Session>().api.getProject(widget.id));
+    setState(() => _future = _load());
   }
 
   @override
@@ -50,11 +59,6 @@ class _ProjectPageState extends State<ProjectPage> {
         final updates = ((snap.data?['updates'] as List?) ?? const [])
             .map((e) => ProjectUpdate.fromJson(e as Map<String, dynamic>))
             .toList();
-        if (snap.hasData) {
-          repo.text = (snap.data!['repoUrl'] as String?) ?? '';
-          final ws = snap.data!['workspaceId'] as String?;
-          context.read<LoopFocus>().rememberProject(widget.id, workspaceId: ws);
-        }
         return AppScaffold(
           body: !snap.hasData
               ? Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator())

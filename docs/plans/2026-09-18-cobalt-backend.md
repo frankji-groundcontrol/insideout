@@ -1,7 +1,7 @@
 # 2026-09-18 — Cobalt Flutter against the live API
 
-Status: **Pending** — restyle pixels landed; no real session has driven
-the Cobalt surfaces.
+Status: **In flight** — local seed API is up; wiring for Coach SSE and
+dock IDs is in. Signed-in Flutter web walk still required.
 
 ## Why
 
@@ -30,7 +30,7 @@ breaks. Do not restyle. Do not add routes or schema.
 ## Checklist
 
 - [x] Goal prompt written
-- [ ] Real session (hosted `API_BASE` or local `dev.sh` server)
+- [x] Real session (local seed API; hosted signup is invitation-only)
 - [ ] Home lists server workspaces
 - [ ] Ideas capture persists
 - [ ] PRD + Coach live SSE

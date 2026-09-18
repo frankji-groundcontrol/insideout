@@ -15,6 +15,8 @@ code) with relative links.
 
 ## Records
 
+- [2026-09-18 — Cobalt Flutter wired to a real API](2026-09-18-cobalt-backend-wire.md)
+  — Coach web POST SSE via fetch; dock IDs from real loads.
 - [2026-09-18 — Goal prompt: Cobalt Flutter against the live API](2026-09-18-cobalt-backend-goal.md)
   — restyle walk was fake-API; prompt to connect and exercise for real.
 - [2026-09-18 — Cobalt Flutter restyle](2026-09-18-cobalt-flutter-restyle.md)

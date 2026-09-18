@@ -27,4 +27,5 @@ Verify streaming on the **web** transport specifically: a healthy
 Presence chips rendered on native-style dio streaming assumptions:
 never on web, always via curl. After swapping the web path to fetch +
 ReadableStream, two browser tabs showed each other's chips and live
-cursors against the same server.
+cursors against the same server. Coach POST on web joined that
+transport on 2026-09-18 (`method` + `body` on `fetchSseStream`).

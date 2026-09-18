@@ -1,8 +1,37 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/sse.dart';
 
 void main() {
+  test('coachSseOpen is POST JSON against /conversations/{id}/messages', () {
+    final open = coachSseOpen(
+      baseUrl: 'https://example.test/api/v1',
+      conversationId: 'c1',
+      content: 'hello',
+      accessToken: 'tok',
+    );
+    expect(open.method, 'POST');
+    expect(open.url, 'https://example.test/api/v1/conversations/c1/messages');
+    expect(open.headers['Authorization'], 'Bearer tok');
+    expect(open.headers['Accept'], 'text/event-stream');
+    expect(open.headers['Content-Type'], 'application/json');
+    expect(open.body, '{"content":"hello"}');
+  });
+
+  test('readCoachSse applies delta frames from a live chunk stream', () async {
+    final buf = StringBuffer();
+    await readCoachSse(
+      Stream.fromIterable([
+        utf8.encode('event: delta\ndata: {"text":"Hel"}\n\n'),
+        utf8.encode('event: delta\ndata: {"text":"lo"}\n\n'),
+      ]),
+      CoachHandlers(onDelta: buf.write),
+    );
+    expect(buf.toString(), 'Hello');
+  });
+
   test('parseSseBuffer splits delta frames and keeps a partial tail', () {
     final first = parseSseBuffer('event: delta\ndata: {"text":"Hel"}\n\nevent: delta\ndata: {"text":"lo');
     expect(first.frames, hasLength(1));

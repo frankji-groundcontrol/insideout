@@ -49,4 +49,6 @@ client/lib/
 The PRD page consumes the SSE contract in
 [the agent doc](prd-coach-agent.md): deltas, stage changes, throttle
 countdown (`APP_THROTTLE` / `CIRCUIT_OPEN`). History is
-`GET /api/v1/conversations/{id}/messages`.
+`GET /api/v1/conversations/{id}/messages`. On Flutter web, Coach POST
+and presence GET both use `fetch` + `ReadableStream` (dio's XHR adapter
+does not emit SSE frames until the socket closes; [BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md)).

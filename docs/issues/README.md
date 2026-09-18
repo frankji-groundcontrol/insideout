@@ -55,8 +55,9 @@ records continue the numbering (next: BUG-016).
   `https://github.com/…` for display only.
 - [BUG-014 — dio's web adapter never streams SSE](2026-08-23-bug-014-dio-web-sse-never-streams.md)
   — XHR + `arraybuffer` delivers a "stream" body only at connection
-  close, so web SSE over dio is silently dead; presence fixed with a
-  fetch + ReadableStream transport, Coach web typing still affected.
+  close, so web SSE over dio is silently dead; presence fixed 2026-08-23
+  with fetch + ReadableStream; Coach web POST joined that transport
+  2026-09-18.
 - [BUG-015 — SetSignupMode sent POST to a PUT-only route](2026-09-03-bug-015-signup-mode-wrong-method.md)
   — CLI `signup-mode <mode>` 405'd against the real API since the
   invitation slice; httptest pinned the client's consistency, not its
@@ -65,6 +66,9 @@ records continue the numbering (next: BUG-016).
 
 ## Other open issues
 
+- [2026-09-18 — Flutter ApiClient over the ~350-line budget](2026-09-18-flutter-apiclient-line-budget.md)
+  — `client/lib/api/client.dart` ~529 lines; target core / product /
+  stream split. Deferred from the Cobalt live-API wiring slice.
 - [2026-09-03 — apiclient.go over the ~350-line modular-file budget](2026-09-03-apiclient-line-budget.md)
   — transport + roadmap/GitHub + PRD/agent verbs mixed at ~478 lines;
   target three-way split with a bounded, test-pinned fix prompt.
