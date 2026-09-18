@@ -1,7 +1,7 @@
 # 2026-09-18 — Cobalt Flutter against the live API
 
-Status: **In flight** — local seed API is up; wiring for Coach SSE and
-dock IDs is in. Signed-in Flutter web walk still required.
+Status: **Finished** — signed-in Flutter web walk on a local seed
+`/api/v1` completed the loop; Coach web POST SSE and dock IDs are wired.
 
 ## Why
 
@@ -31,14 +31,14 @@ breaks. Do not restyle. Do not add routes or schema.
 
 - [x] Goal prompt written
 - [x] Real session (local seed API; hosted signup is invitation-only)
-- [ ] Home lists server workspaces
-- [ ] Ideas capture persists
-- [ ] PRD + Coach live SSE
-- [ ] Human Commit appears in the stack
-- [ ] Roadmap Now item appears in a band
-- [ ] Evidence loads; dock hops real IDs
-- [ ] `flutter analyze --no-fatal-infos && flutter test`
-- [ ] Changelog + board + HANDOFF
+- [x] Home lists server workspaces
+- [x] Ideas capture persists
+- [x] PRD + Coach live SSE (fetch POST; offline template is one fast delta)
+- [x] Human Commit appears in the stack
+- [x] Roadmap item appears in a band (Next: new nodes are `pending`)
+- [x] Evidence loads; dock hops real IDs
+- [x] `flutter analyze --no-fatal-infos && flutter test` (57 tests)
+- [x] Changelog + board + HANDOFF
 
 ## Review
 

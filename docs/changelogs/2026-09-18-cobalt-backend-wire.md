@@ -28,11 +28,11 @@ someone runs `railway up --service app` after merge.
 
 - Local Go API (offline coach) + seed database: login, workspaces,
   idea persist, convert, commit, roadmap node, project updates, Coach
-  `message_start` / `delta` / `message_end`.
-- `flutter analyze --no-fatal-infos` and `flutter test` (this commit
-  adds Coach POST contract tests; full suite after push).
-- Signed-in Flutter web walk against that real `API_BASE` follows in
-  the same plan (not a fake `ApiClient`).
+  `message_start` / `delta` / `message_end` (`curl -N` at 9 / 11 / 15 ms).
+- `flutter analyze --no-fatal-infos` (infos only) and `flutter test`
+  (57 passed).
+- Signed-in Flutter web walk on `API_BASE=http://127.0.0.1:8080/api/v1`:
+  [design-qa](../design-qa/2026-09-18-cobalt-backend-walk.md).
 
 ## Operator
 

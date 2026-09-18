@@ -7,15 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Next: finish the signed-in Flutter web walk against a **real** API
-   on [`plans/2026-09-18-cobalt-backend.md`](plans/2026-09-18-cobalt-backend.md).
-   Coach web POST SSE and dock IDs are wired
-   ([changelog](changelogs/2026-09-18-cobalt-backend-wire.md)).
-   Local seed server: `go run ./cmd/insideout` with a dedicated local
-   DSN (do not seed the shared remote instance). Flutter:
-   `--dart-define=API_BASE=http://127.0.0.1:8080/api/v1`.
-   Hosted signup is invitation-only. After PR #3 merges:
-   `railway up --service app`.
+1. Next: merge [PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3)
+   (Cobalt restyle + live-API wiring), then `railway up --service app`.
+   Walk record:
+   [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
+   Hosted signup is invitation-only. Do not seed a shared remote
+   database with the local demo identity.
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
