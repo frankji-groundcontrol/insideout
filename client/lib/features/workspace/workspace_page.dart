@@ -33,6 +33,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     final api = context.read<Session>().api;
     final ws = await api.getWorkspace(widget.id);
     final projects = await api.listProjects(widget.id);
+    if (!mounted) return (ws: ws, projects: projects);
     final focus = context.read<LoopFocus>();
     if (focus.projectId == null && projects.isNotEmpty) {
       focus.rememberProject(projects.first.id, workspaceId: widget.id);

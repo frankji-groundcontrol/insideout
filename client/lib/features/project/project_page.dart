@@ -31,7 +31,9 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Future<Map<String, dynamic>> _load() async {
-    final data = await context.read<Session>().api.getProject(widget.id);
+    final api = context.read<Session>().api;
+    final data = await api.getProject(widget.id);
+    if (!mounted) return data;
     final ws = data['workspaceId'] as String?;
     context.read<LoopFocus>().rememberProject(widget.id, workspaceId: ws);
     repo.text = (data['repoUrl'] as String?) ?? '';

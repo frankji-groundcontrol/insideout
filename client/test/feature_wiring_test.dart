@@ -11,7 +11,7 @@ void main() {
     final project = read('lib/features/project/project_page.dart');
     final roadmap = read('lib/features/project/roadmap_page.dart') + read('lib/features/project/roadmap_node_card.dart');
     final prd = read('lib/features/prd/prd_page.dart') + read('lib/features/prd/coach_panel.dart');
-    final client = read('lib/api/client.dart');
+    final client = read('lib/api/client.dart') + read('lib/api/sse.dart');
 
     expect(settings.contains('updateWorkspace'), isTrue);
     expect(settings.contains('deleteWorkspace'), isTrue);
