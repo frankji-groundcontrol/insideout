@@ -7,14 +7,15 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Cobalt Flutter restyle is **finished** on
-   `cursor/vibrant-ink-seal-198b` ([PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3)).
-   Analyze + 54 tests passed; browser walk recorded
-   ([QA](design-qa/2026-09-18-cobalt-flutter-walk.md),
-   [plan](plans/2026-09-18-cobalt-flutter.md),
-   [changelog](changelogs/2026-09-18-cobalt-flutter-restyle.md)).
-   After merge: `railway up --service app`. Coach SSE was not reachable
-   here (no `.env` / invitation-only hosted signup).
+1. Next: make the Cobalt Flutter client work against the **real** API.
+   Goal prompt:
+   [`plans/2026-09-18-cobalt-backend-goal.md`](plans/2026-09-18-cobalt-backend-goal.md).
+   Plan: [`plans/2026-09-18-cobalt-backend.md`](plans/2026-09-18-cobalt-backend.md).
+   The restyle is **finished** on `cursor/vibrant-ink-seal-198b`
+   ([PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3));
+   its walk used a fake client
+   ([QA](design-qa/2026-09-18-cobalt-flutter-walk.md)).
+   After that PR merges: `railway up --service app`.
    Lock screens: [`design-system/cobalt/`](design-system/cobalt/README.md).
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
