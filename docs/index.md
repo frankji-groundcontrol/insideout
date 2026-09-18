@@ -45,5 +45,6 @@ keeps its original bilingual text as a historical record).
 - [learning/](learning/README.md) — reusable lessons from real failures.
 - [practices/](practices/README.md) — repeatable guardrails and methods.
 - [history/](history/README.md) — retired JuanLeMe-era records.
-- [design-system/CHANGELOG.md](design-system/CHANGELOG.md) — the Ink & Seal
-  token-layer version record.
+- [design-system/CHANGELOG.md](design-system/CHANGELOG.md) — token-layer
+  version record (live Flutter is still Ink & Seal; Cobalt lock is
+  [accepted](design-system/cobalt/README.md)).

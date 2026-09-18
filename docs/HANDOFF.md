@@ -7,7 +7,14 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. The recorded frontier is closed 2026-08-22
+1. Cobalt is accepted for Flutter. Paste
+   [`plans/2026-09-18-cobalt-flutter-goal.md`](plans/2026-09-18-cobalt-flutter-goal.md)
+   into the implementing agent. Lock screens:
+   [`design-system/cobalt/`](design-system/cobalt/README.md). Live
+   client is still Ink & Seal
+   ([plan](plans/2026-09-18-cobalt-flutter.md),
+   [QA](design-qa/2026-09-17-cobalt-layouts.md)).
+2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
    [depth](changelogs/2026-08-22-depth-thread.md)): audience-view web

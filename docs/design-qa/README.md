@@ -21,6 +21,16 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-09-17 — Cobalt layouts accepted as references](2026-09-17-cobalt-layouts.md)
+  — Card lock pinned; 2026-09-18: accepted for Flutter + goal prompt.
+- [2026-09-17 — One hue, light and dark](2026-09-17-cobalt-shade.md)
+  — not too colorful; cobalt shades; light + dark.
+- [2026-09-17 — Live language (Ink & Seal retired)](2026-09-17-live-language.md)
+  — Recap cream/stamp rejected; night + cobalt + magenta next.
+- [2026-09-17 — Recap (3Q) design language](2026-09-17-3q-recap-language.md)
+  — user voted 3Q; OpenDesign reference + tokens; images first.
+- [2026-09-17 — Vibrant for younger audiences](2026-09-17-vibrant-younger-audiences.md)
+  — vibrant / no Ink & Seal / vote 3 / 3Q lock; Flutter waits.
 - [2026-08-24 — Login form action stack](2026-08-24-login-form-action-stack.md)
   — "so ugly"; four identical stacked red links under 登录 re-grouped into
   secondary sign-in buttons + a footer row.
