@@ -1,51 +1,47 @@
 ---
 name: InsideOut
-description: 国风留白 / Ink & Seal — track the work, refine the ideas, ship better PRDs.
+description: Cobalt card lock — track the work, refine the ideas, ship better PRDs.
 colors:
-  seal: "#C8402F"
-  seal-strong: "#A83426"
-  seal-locked: "#8C8A80"
-  seal-wash: "#F2DDD7"
-  celadon-ground: "#E4EAE4"
-  celadon-raised: "#EEF1EB"
-  celadon-sunken: "#D8E0D8"
-  ink-night: "#161A17"
-  sumi-ink: "#211E1A"
-  rice-paper: "#E6E9E1"
-  carve: "#F2F4EE"
-  sage: "#3E6B4A"
-  amber: "#8A6A20"
+  cobalt-50: "#EEF2FF"
+  cobalt-200: "#C7D2FE"
+  cobalt-500: "#3B5BFF"
+  cobalt-700: "#1D4ED8"
+  cobalt-950: "#1E2A5A"
+  light-ground: "#F7F8FA"
+  light-ink: "#0B0D12"
+  dark-ground: "#0B0D12"
+  dark-type: "#F7F8FA"
 typography:
   display:
-    fontFamily: '"Noto Serif SC", "Songti SC", "Alibaba PuHuiTi", Georgia, serif'
+    fontFamily: '"Archivo", "Noto Sans SC", system-ui, sans-serif'
     fontWeight: 700
-    lineHeight: 1.1
+    lineHeight: 1.0
   body:
-    fontFamily: '"Alibaba PuHuiTi", "Noto Sans SC", system-ui, sans-serif'
+    fontFamily: '"Archivo", "Noto Sans SC", system-ui, sans-serif'
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.45
+  coach:
+    fontFamily: '"Source Serif 4", "Noto Serif SC", Georgia, serif'
+    fontWeight: 600
+    lineHeight: 1.35
 rounded:
-  control: "0.625rem"
-  card: "1rem"
-  pill: "9999px"
-  hero: "1.5rem"
+  control: "9999px"
+  card: "1.25rem"
+  hero: "1.75rem"
 spacing:
   unit: "4px"
 components:
   button-primary:
-    backgroundColor: "{colors.sumi-ink}"
-    textColor: "{colors.rice-paper}"
+    backgroundColor: "{colors.cobalt-500}"
+    textColor: "#FFFFFF"
     rounded: "{rounded.control}"
-    padding: "12px 24px"
-  button-primary-hover:
-    backgroundColor: "{colors.seal}"
-    textColor: "{colors.carve}"
-  chip-seal:
-    backgroundColor: "{colors.seal}"
-    textColor: "{colors.carve}"
+    padding: "14px 24px"
+  chip-shade:
+    backgroundColor: "{colors.cobalt-50}"
+    textColor: "{colors.cobalt-700}"
     rounded: "{rounded.control}"
   card:
-    backgroundColor: "{colors.celadon-raised}"
+    backgroundColor: "#FFFFFF"
     rounded: "{rounded.card}"
 ---
 
@@ -53,179 +49,94 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Sealed Scroll" (卷与印).**
+**Creative North Star: Cobalt cards on a field.**
 
-Every project is a scroll. Work lays down ink; completion presses a vermilion
-seal. InsideOut's whole visual world grows from that one image — the 国风留白
-(Chinese-art negative-space) tradition, where the empty ground is not blank but
-*reserved*, and a single cinnabar chop carries all the authority on the page.
+One hue. Neutrals carry the page. Light and dark are required. The product
+loop — Idea → version → human Commit → timed Roadmap → Git evidence — is
+read as rounded cards on a ground, large type, and a bottom dock. Not a
+full-bleed slab, not a single floating card on a blank page, not type-rows,
+not a left rail.
 
-The system is deliberately quiet. A soft celadon (青) ground does the work a
-white page does in Western UI, sumi-ink carries the text, and one vermilion 印泥
-accent — used sparingly — marks identity, status, and the rare moment that
-matters. Restraint is the brand: the seal means something *because* it is rare.
-This is not the warm-cream-and-serif SaaS default, nor the near-black-neon AI
-default; it is an ink painting that happens to be software.
-
-The product's own mechanics already speak this language: roadmap nodes render
-their lifecycle as seals (a grey locked chop, a vermilion in-progress chop), and
-the brand mark is a scroll (卷). The design system simply codifies what the
-product already believes — that progress is ink laid down and a shipped idea is
-a seal pressed.
+Lock screens live in
+[`docs/design-system/cobalt/`](docs/design-system/cobalt/README.md).
+The Flutter tokens are `Cobalt` in
+[`client/lib/theme/cobalt.dart`](client/lib/theme/cobalt.dart).
 
 **Key Characteristics:**
 
-- One vermilion accent on a celadon field; the seal is rare on purpose.
-- Generous negative space (留白) — density is earned, never default.
-- Sumi-ink text; the primary action is **ink**, not the accent color.
-- A Song/Mincho display serif (Noto Serif SC) for headings, over an Alibaba
-  PuHuiTi sans for body and UI (referenced, not bundled — see README).
-- Light (celadon) and dark (ink-night) themes; the seal lifts slightly on dark
-  so chops keep their glow.
-- Bilingual by construction: EN and 中文 are first-class in every component.
+- One accent: cobalt-500. Shades do hover, Now, focus, and chips.
+- Light ground `#F7F8FA` / ink `#0B0D12`. Dark ground `#0B0D12` / type `#F7F8FA`.
+- Body **17.5**. Titles **26+**. Display **48–58**. Meta **12**.
+- Ideas wall display `clamp(64px, 10vw, 320px)` on wide web.
+- UI sans: Archivo (Latin) + Noto Sans SC (CJK). zh-CN is the default locale.
+- Coach-only serif: Source Serif 4 + Noto Serif SC.
+- Primary action is **cobalt**, not ink.
+- Status is a shade pill, not a chop.
 
 ## Colors
 
-The palette is one warm accent held against a cool, quiet ground — cinnabar on
-celadon.
+| Token | Hex | Use |
+| --- | --- | --- |
+| cobalt-50 | `#EEF2FF` | Light wash / raised wash |
+| cobalt-200 | `#C7D2FE` | Hairline, chip, poster edge |
+| cobalt-500 | `#3B5BFF` | Primary action, focus, Now |
+| cobalt-700 | `#1D4ED8` | Pressed / dark primary |
+| cobalt-950 | `#1E2A5A` | Dark-mode field / deep band |
 
-### Primary
-- **Cinnabar Seal 印泥** (#C8402F): the single signature accent. Identity
-  wordmark, status chops, links, focus ring, and the moments of commitment
-  (a shipped milestone, an approved PRD). Never the primary button fill.
-- **Pressed Seal** (#A83426): hover/active state of the seal.
-- **Seal Wash** (#F2DDD7): a pale vermilion tint for subtle selected/active
-  backgrounds where a full chop would shout.
-
-### Neutral
-- **Celadon Ground 青** (#E4EAE4): the page background (light). The reserved
-  "silk" the ink sits on.
-- **Raised Celadon** (#EEF1EB) and **Sunken Celadon** (#D8E0D8): tonal steps for
-  cards, panels, and input wells — depth comes from tone, not shadow.
-- **Sumi Ink 墨** (#211E1A): primary text **and** the primary-action surface
-  (the ink button).
-- **Rice Paper** (#E6E9E1): text on ink or seal fills; on dark it becomes the
-  primary text color.
-- **Ink Night** (#161A17): the dark page ground; the seal lifts to #D84A31 here.
-
-### Status
-- **Sage** (#3E6B4A): done / approved — a cool green that stays inside the
-  celadon family.
-- **Amber** (#8A6A20): in-progress / needs attention — aged-paper amber.
-- **Locked Chop** (#8C8A80): neutral grey — the locked / not-yet state.
-
-### Named Rules
-
-**The One Seal Rule.** Vermilion appears on at most a few elements per screen —
-a wordmark, a status chop, a link. Its rarity is its authority; a screen full of
-seals has none.
-
-**The Ink-Not-Vermilion Rule.** The primary action is **sumi ink** (`bg-btn`),
-never the seal. Vermilion is the accent and the signature; ink is the verb.
+No magenta, lime, orange, cream, or extra brand hues.
 
 ## Typography
 
-**Display Font:** Noto Serif SC (Song/Mincho serif, from Google Fonts), falling
-back to Songti SC then PuHuiTi.
-**Body Font:** Alibaba PuHuiTi — **referenced by name, not bundled** (it is
-proprietary "free to use", not redistributable; see README attribution). It
-leads the stack so anyone with it installed renders it; everyone else falls back
-to Noto Sans SC then system-ui / the platform CJK face.
-
-**Character:** A Song serif does the talking at headline scale — it carries the
-brush-adjacent, carved 国风 voice — while a clean modern CJK sans keeps body and
-UI legible and neutral. The pairing is "carved heading, brushed-aside body."
+**UI:** Archivo + Noto Sans SC. **Coach:** Source Serif 4 + Noto Serif SC.
+Web loads faces from `client/web/index.html` and gates the first frame in
+`client/lib/theme/web_fonts_web.dart`. Native keeps lazy Noto assets.
 
 ### Hierarchy
-- **Display** (700, clamp up to ~3.75rem, 1.1): hero and page titles — always
-  the serif.
-- **Headline** (600, ~1.5rem, 1.25): section titles — serif.
-- **Title** (600, ~1.125rem): card and panel headings — sans, semibold.
-- **Body** (400, ~0.875–1rem, 1.5): running text — sans; keep measure to ~65–75ch.
-- **Label / Chop** (500–600, ~0.75rem, tracked): seals, status chips, eyebrows.
 
-### Named Rules
-
-**The Serif-Only-For-Headings Rule.** The Song serif is reserved for display and
-headline. Body, UI, and form text never use it — legibility is the sans's job.
+- **Display** (700, 48–58, Ideas wall up to 320): page names and the Home numeral.
+- **Title** (700, 26+): card and section headings.
+- **Body** (400, 17.5): reading text.
+- **Meta** (600, 12): chips, eyebrows, dock labels.
 
 ## Layout
 
-A single centered measure with generous margins; 留白 (negative space) is the
-default state, not the absence of content. Content is grouped into tonal panels
-rather than boxed cards where possible. Vertical rhythm gives more space above a
-heading than below it, so sections read as exhale–inhale. On mobile the single
-column holds; panels stack and the seal accents stay small.
-
-## Elevation & Depth
-
-Depth is conveyed by **tonal layering**, not shadow. Raised panels step lighter
-(#EEF1EB), sunken wells step darker (#D8E0D8) against the celadon ground; hairline
-ink strokes (#C2CABF) separate where tone alone is ambiguous.
-
-### Shadow Vocabulary
-- **Card** (`0 1px 2px rgb(0 0 0 / 0.05)`): a whisper, only on floating cards.
-- **Modal** (`0 20px 25px -5px …`): reserved for true overlays (dialogs, popovers).
-
-### Named Rules
-
-**The Flat-By-Default Rule.** Surfaces are flat at rest and separate by tone.
-Shadow appears only as a response to elevation or overlay — never as decoration.
-
-## Shapes
-
-Corners are softly rounded, never sharp and never pill-except-for-tags. Controls
-use a gentle 10px radius (`rounded-control`), cards a 1rem sweep (`rounded-card`),
-and the rare hero shell a 1.5rem curve. The recurring silhouette is the **seal
-chop**: a small rounded square or circle of vermilion bearing carved (paper)
-glyphs.
+Rounded cards on a field. Home is an index card plus a giant numeral with
+workspace cards beside it. Ideas is a type wall and poster cards. PRD + Coach
+is a split desk. Commit is a centered fanned stack. Roadmap is Now / Next /
+Later shade bands that still hold item cards. Signed-in chrome is a bottom
+dock. Locale and theme stay in the top-right cluster.
 
 ## Components
 
 ### Buttons
-- **Shape:** gently rounded (10px, `rounded-control`).
-- **Primary:** sumi-ink fill with rice-paper text (`bg-btn text-btn-fg`),
-  padding ~12px 24px. On dark the button inverts to a paper fill.
-- **Hover / Focus:** hover warms toward the seal; focus shows a vermilion ring.
-- **Secondary / Ghost:** celadon tonal fill or an ink hairline outline; text in
-  sumi ink. Never a vermilion fill for the default action.
 
-### Chips / Status Seals
-- **Style:** a small rounded seal bearing carved text; tone follows lifecycle —
-  grey locked, vermilion in-progress, sage done, amber attention.
-- **State:** the seal is the status — no separate colored dot needed.
+Primary is a cobalt pill. Hover/press uses cobalt-700. Focus is a cobalt ring.
 
-### Cards / Containers
-- **Corner Style:** 1rem (`rounded-card`).
-- **Background:** raised celadon (#EEF1EB) on the celadon ground.
-- **Border:** optional thin ink hairline; tone usually suffices.
-- **Internal Padding:** generous — let the 留白 breathe.
+### Chips
 
-### Inputs / Fields
-- **Style:** sunken celadon well, ink hairline stroke, control radius.
-- **Focus:** vermilion focus ring (`--color-stroke-focus`).
-- **Error:** vermilion-danger text associated via `aria-describedby`.
+Cobalt-shade pills for lifecycle. Not chops.
+
+### Cards
+
+20px radius, hairline cobalt-200, raised white (light) or lifted dark (dark).
 
 ### Navigation
-- Top bar on a raised celadon strip with a hairline bottom stroke. The wordmark
-  is the only vermilion element; links are muted ink warming to full ink on
-  hover; the primary entry is the ink button.
+
+Bottom dock for signed-in product surfaces. No Linear-style left rail at any
+breakpoint.
 
 ## Do's and Don'ts
 
-### Do:
-- **Do** keep vermilion rare — one seal per view is a feature, not a bug.
-- **Do** use the ink button for the primary action and reserve the seal for
-  accent, status, and identity.
-- **Do** let tone, not shadow, separate surfaces.
-- **Do** set headings in the Song serif and body in the sans.
-- **Do** hold the 留白 — when a layout feels full, remove before you resize.
+### Do
 
-### Don't:
-- **Don't** fill the primary button with vermilion — that inverts the One Seal
-  Rule and spends the accent.
-- **Don't** introduce a second accent hue; the system is one seal on celadon.
-- **Don't** add drop shadows to resting cards or text.
-- **Don't** use the display serif for body copy or UI labels.
-- **Don't** let the layout get dense to look "productive" — empty ground is the
-  brand.
+- Do keep one hue and let neutrals carry the page.
+- Do put the primary action on cobalt-500.
+- Do use the serif only in the Coach column.
+- Do keep zh-CN and en-US as separate strings.
+
+### Don't
+
+- Don't bring back chops, wax stamps, or ink-as-primary buttons.
+- Don't use full-bleed slabs, 20px type-rows, or one small card on a blank field.
+- Don't add a left rail.
+- Don't mash Chinese and English in one string.

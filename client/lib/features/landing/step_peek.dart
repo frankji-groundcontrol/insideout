@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
-import '../../theme/ink_seal.dart';
-import '../../theme/seal_chip.dart';
+import '../../theme/cobalt.dart';
+import '../../theme/cobalt_chip.dart';
 
 enum PeekKind { idea, prd, roadmap, shipped }
 
@@ -16,11 +16,11 @@ class StepPeek extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final palette = theme.brightness == Brightness.dark ? InkSeal.dark : InkSeal.light;
+    final palette = Cobalt.of(context);
     return Material(
       color: theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(InkSeal.radiusCard),
+        borderRadius: BorderRadius.circular(Cobalt.radiusCard),
         side: BorderSide(color: theme.colorScheme.outline),
       ),
       child: Padding(
@@ -71,7 +71,7 @@ class _Bar extends StatelessWidget {
 class _IdeaPeek extends StatelessWidget {
   const _IdeaPeek({required this.palette});
 
-  final InkSeal palette;
+  final Cobalt palette;
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +81,7 @@ class _IdeaPeek extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: palette.seal, shape: BoxShape.circle)),
+            Container(width: 8, height: 8, decoration: BoxDecoration(color: palette.brand, shape: BoxShape.circle)),
             const SizedBox(width: 8),
             Expanded(child: _Bar(widthFactor: 0.55, color: palette.fgPrimary.withValues(alpha: 0.75))),
           ],
@@ -91,7 +91,7 @@ class _IdeaPeek extends StatelessWidget {
         const SizedBox(height: 8),
         _Bar(widthFactor: 0.58, color: palette.surfaceSunken),
         const SizedBox(height: 12),
-        SealChip(label: l10n.t('idea.status.inbox'), tone: SealTone.neutral),
+        ShadeChip(label: l10n.t('idea.status.inbox'), tone: ShadeTone.neutral),
       ],
     );
   }
@@ -100,7 +100,7 @@ class _IdeaPeek extends StatelessWidget {
 class _PrdPeek extends StatelessWidget {
   const _PrdPeek({required this.palette});
 
-  final InkSeal palette;
+  final Cobalt palette;
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +145,7 @@ class _PrdPeek extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(color: palette.strokeSubtle),
-            borderRadius: BorderRadius.circular(InkSeal.radiusControl),
+            borderRadius: BorderRadius.circular(Cobalt.radiusControl),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,7 +156,7 @@ class _PrdPeek extends StatelessWidget {
               const SizedBox(height: 6),
               _Bar(widthFactor: 0.83, color: palette.surfaceSunken, height: 6),
               const SizedBox(height: 6),
-              _Bar(widthFactor: 0.5, color: palette.seal.withValues(alpha: 0.7), height: 6),
+              _Bar(widthFactor: 0.5, color: palette.brand.withValues(alpha: 0.7), height: 6),
             ],
           ),
         ),
@@ -168,16 +168,16 @@ class _PrdPeek extends StatelessWidget {
 class _RoadmapPeek extends StatelessWidget {
   const _RoadmapPeek({required this.palette});
 
-  final InkSeal palette;
+  final Cobalt palette;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     return Column(
       children: [
-        _RoadRow(dot: palette.statusSuccessFg, bar: 0.7, chip: SealChip(label: l10n.t('roadmap.status.done'), tone: SealTone.done)),
-        _RoadRow(dot: palette.seal, bar: 0.55, indent: true, chip: SealChip(label: l10n.t('roadmap.status.in_progress'), tone: SealTone.progress)),
-        _RoadRow(dot: palette.statusNeutralFg, bar: 0.45, indent: true, chip: SealChip(label: l10n.t('roadmap.status.locked'), tone: SealTone.locked)),
+        _RoadRow(dot: palette.statusSuccessFg, bar: 0.7, chip: ShadeChip(label: l10n.t('roadmap.status.done'), tone: ShadeTone.done)),
+        _RoadRow(dot: palette.brand, bar: 0.55, indent: true, chip: ShadeChip(label: l10n.t('roadmap.status.in_progress'), tone: ShadeTone.progress)),
+        _RoadRow(dot: palette.statusNeutralFg, bar: 0.45, indent: true, chip: ShadeChip(label: l10n.t('roadmap.status.locked'), tone: ShadeTone.locked)),
       ],
     );
   }
@@ -193,7 +193,7 @@ class _RoadRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).brightness == Brightness.dark ? InkSeal.dark : InkSeal.light;
+    final palette = Cobalt.of(context);
     return Padding(
       padding: EdgeInsets.only(left: indent ? 16 : 0, bottom: 10),
       child: Row(
@@ -212,7 +212,7 @@ class _RoadRow extends StatelessWidget {
 class _ShippedPeek extends StatelessWidget {
   const _ShippedPeek({required this.palette});
 
-  final InkSeal palette;
+  final Cobalt palette;
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +229,7 @@ class _ShippedPeek extends StatelessWidget {
                 Container(
                   width: 14,
                   height: 14,
-                  decoration: BoxDecoration(color: palette.seal, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(color: palette.brand, borderRadius: BorderRadius.circular(4)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

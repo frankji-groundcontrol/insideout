@@ -9,7 +9,8 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Cobalt Flutter restyle](2026-09-18-cobalt-flutter.md) | **In flight** | Implement the accepted Cobalt lock from the [goal prompt](2026-09-18-cobalt-flutter-goal.md). | Live Flutter is still Ink & Seal. |
+| P1 | [Cobalt Flutter against the live API](2026-09-18-cobalt-backend.md) | **Finished** | Merge [PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3), then `railway up --service app`. | Signed-in walk on a local seed API; hosted signup still invitation-only. |
+| P1 | [Cobalt Flutter restyle](2026-09-18-cobalt-flutter.md) | **Finished** | Merge [PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3), then `railway up --service app`. | Analyze + 54 tests green; walk recorded. Coach SSE not reachable in this environment. |
 | P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **Completed** | None — language accepted 2026-09-18; Flutter owned by the Cobalt restyle plan. | Lock screens in [`docs/design-system/cobalt/`](../design-system/cobalt/README.md). |
 | P1 | [Surface parity gaps (API ↔ CLI ↔ MCP)](2026-09-03-surface-parity-gaps.md) | **Completed** | None — 6 gaps + BUG-015 fixed, 46 → 50 tools ([changelog](../changelogs/2026-09-03-surface-parity-gaps.md)). | All fixes live-verified on a scratch local server; client-side only, nothing to deploy beyond the CLI/MCP binaries users rebuild. |
 | P1 | [Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md) | **Completed** | None — 46-tool surface + SKILL.md live ([changelog](../changelogs/2026-08-25-agent-crud-tool-surface.md)). | Idea inbox lifecycle, PRD section edits, evidence read, bootstrapping — 1:1 API ↔ CLI ↔ MCP. |

@@ -27,8 +27,9 @@ flutter run -d chrome --dart-define=API_BASE=https://server-production-9c338.up.
 Register or sign in. Tokens are stored with `flutter_secure_storage`.
 The server still sets httpOnly cookies (unused by this client).
 
-The UI defaults to **zh-CN**. Use the translate and
-theme icons in the app bar to switch to en-US or dark mode.
+The UI defaults to **zh-CN**. Use the translate and theme icons in the
+top-right cluster to switch to en-US or dark mode. Signed-in chrome is
+the bottom dock (Capture / Ideas / Version / Commit / Roadmap / Evidence).
 
 ## Checks
 

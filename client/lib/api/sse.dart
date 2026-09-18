@@ -51,6 +51,58 @@ class CoachHandlers {
   final void Function(Map<String, dynamic> fact)? onFactRecorded;
 }
 
+/// One Coach POST that must stream on web via fetch (BUG-014), not dio/XHR.
+class CoachSseOpen {
+  const CoachSseOpen({
+    required this.method,
+    required this.url,
+    required this.headers,
+    required this.body,
+  });
+
+  final String method;
+  final String url;
+  final Map<String, String> headers;
+  final String body;
+}
+
+CoachSseOpen coachSseOpen({
+  required String baseUrl,
+  required String conversationId,
+  required String content,
+  String? accessToken,
+}) {
+  return CoachSseOpen(
+    method: 'POST',
+    url: '$baseUrl/conversations/$conversationId/messages',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+      if (accessToken != null && accessToken.isNotEmpty) 'Authorization': 'Bearer $accessToken',
+    },
+    body: jsonEncode({'content': content}),
+  );
+}
+
+/// Web fetch yields [Uint8List]; [utf8.decoder] is a transformer on
+/// `List<int>`, so passing the raw stream throws at runtime.
+Stream<String> decodeSseBytes(Stream<List<int>> chunks) {
+  return chunks.map<List<int>>((chunk) => List<int>.from(chunk)).transform(utf8.decoder);
+}
+
+/// Reads Coach SSE chunks, including multibyte splits, and applies frames.
+Future<void> readCoachSse(Stream<List<int>> chunks, CoachHandlers handlers) async {
+  var buffer = '';
+  await for (final text in decodeSseBytes(chunks)) {
+    buffer += text;
+    final parsed = parseSseBuffer(buffer);
+    buffer = parsed.rest;
+    for (final frame in parsed.frames) {
+      applyCoachFrame(frame, handlers);
+    }
+  }
+}
+
 /// Applies one Coach SSE frame from [sendCoach].
 void applyCoachFrame(SseFrame frame, CoachHandlers handlers) {
   final parsed = jsonDecode(frame.data);

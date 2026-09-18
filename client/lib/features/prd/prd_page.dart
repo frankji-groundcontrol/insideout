@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
+import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import 'coach_panel.dart';
+import 'prd_desk.dart';
 
 class PrdPage extends StatefulWidget {
   const PrdPage({super.key, required this.id});
@@ -30,6 +32,7 @@ class _PrdPageState extends State<PrdPage> {
   @override
   void initState() {
     super.initState();
+    context.read<LoopFocus>().rememberPrd(widget.id);
     _load();
   }
 
@@ -53,6 +56,10 @@ class _PrdPageState extends State<PrdPage> {
       for (final key in prdSectionKeys) {
         sectionCtrls[key]?.dispose();
         sectionCtrls[key] = TextEditingController(text: loaded.sections[key] ?? '');
+      }
+      context.read<LoopFocus>().rememberWorkspace(loaded.workspaceId);
+      if (loaded.projectId != null) {
+        context.read<LoopFocus>().rememberProject(loaded.projectId!, workspaceId: loaded.workspaceId);
       }
       setState(() {
         prd = loaded;
@@ -134,90 +141,73 @@ class _PrdPageState extends State<PrdPage> {
     }
   }
 
+  Future<void> _requestReview() async {
+    final updated = await context.read<Session>().api.updatePrdStatus(widget.id, 'reviewing');
+    setState(() => prd = updated);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = context.watch<Appearance>();
-    return AppScaffold(
-      title: prd?.title ?? l10n.t('prd.title'),
-      body: loading
-          ? const Center(child: CircularProgressIndicator())
-          : error != null && prd == null
-              ? Center(child: Text(error!))
-              : Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          TextField(
-                            controller: titleCtrl,
-                            decoration: InputDecoration(labelText: l10n.t('prd.title')),
-                            onSubmitted: (_) => _save(titleOnly: true),
-                          ),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              TextButton(onPressed: () => context.go('/prd/${widget.id}/revisions'), child: Text(l10n.t('prd.revisionHistory'))),
-                              TextButton(onPressed: () => context.go('/prd/${widget.id}/versions'), child: Text(l10n.t('versions.entry'))),
-                              TextButton(onPressed: () => context.go('/prd/${widget.id}/view'), child: Text(l10n.t('view.entry'))),
-                              TextButton(onPressed: () => context.go('/prd/${widget.id}/export'), child: Text(l10n.t('prd.exportMarkdown'))),
-                              TextButton(onPressed: _snapshot, child: Text(l10n.t('prd.snapshotRevision'))),
-                              DropdownButton<String>(
-                                value: prd?.status,
-                                hint: Text(l10n.t('project.statusLabel')),
-                                items: const ['draft', 'reviewing', 'approved', 'rejected']
-                                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                                    .toList(),
-                                onChanged: (status) async {
-                                  if (status == null) return;
-                                  final updated = await context.read<Session>().api.updatePrdStatus(widget.id, status);
-                                  setState(() => prd = updated);
-                                },
-                              ),
-                              OutlinedButton(onPressed: _build, child: Text(l10n.t('prd.buildMVP'))),
-                              FilledButton(onPressed: _save, child: Text(l10n.t('common.save'))),
-                            ],
-                          ),
-                          ...prdSectionKeys.map(
-                            (key) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: TextField(
-                                controller: sectionCtrls[key],
-                                maxLines: 4,
-                                decoration: InputDecoration(labelText: l10n.t('prd.sections.$key'), border: const OutlineInputBorder()),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const VerticalDivider(width: 1),
-                    Expanded(
-                      flex: 2,
-                      child: CoachPanel(
-                        prdId: widget.id,
-                        conversation: conversation,
-                        messages: messages,
-                        onPrdUpdated: () async {
-                          final fresh = await context.read<Session>().api.getPrd(widget.id);
-                          if (!mounted) return;
-                          for (final key in prdSectionKeys) {
-                            sectionCtrls[key]?.text = fresh.sections[key] ?? '';
-                          }
-                          setState(() => prd = fresh);
-                        },
-                        onStageChanged: (stage) {
-                          final convNow = conversation;
-                          if (convNow == null) return;
-                          setState(() {
-                            conversation = Conversation(id: convNow.id, prdId: convNow.prdId, stage: stage, status: convNow.status);
-                          });
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+    context.watch<Appearance>();
+    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final desk = loading
+        ? const Center(child: CircularProgressIndicator())
+        : error != null && prd == null
+            ? Center(child: Text(error!))
+            : (wide
+                ? Row(
+                    children: [
+                      Expanded(flex: 3, child: _prdColumn()),
+                      Expanded(flex: 2, child: _coach()),
+                    ],
+                  )
+                : ListView(
+                    children: [
+                      SizedBox(height: 640, child: _prdColumn()),
+                      SizedBox(height: 520, child: _coach()),
+                    ],
+                  ));
+    return AppScaffold(body: desk);
+  }
+
+  Widget _coach() {
+    return CoachPanel(
+      prdId: widget.id,
+      conversation: conversation,
+      messages: messages,
+      onPrdUpdated: () async {
+        final fresh = await context.read<Session>().api.getPrd(widget.id);
+        if (!mounted) return;
+        for (final key in prdSectionKeys) {
+          sectionCtrls[key]?.text = fresh.sections[key] ?? '';
+        }
+        setState(() => prd = fresh);
+      },
+      onStageChanged: (stage) {
+        final convNow = conversation;
+        if (convNow == null) return;
+        setState(() {
+          conversation = Conversation(id: convNow.id, prdId: convNow.prdId, stage: stage, status: convNow.status);
+        });
+      },
+    );
+  }
+
+  Widget _prdColumn() {
+    return PrdDeskColumn(
+      prdId: widget.id,
+      prd: prd,
+      titleCtrl: titleCtrl,
+      sectionCtrls: sectionCtrls,
+      onSave: _save,
+      onSaveTitle: () => _save(titleOnly: true),
+      onRequestReview: _requestReview,
+      onSnapshot: _snapshot,
+      onBuild: _build,
+      onStatus: (status) async {
+        final updated = await context.read<Session>().api.updatePrdStatus(widget.id, status);
+        if (mounted) setState(() => prd = updated);
+      },
     );
   }
 }

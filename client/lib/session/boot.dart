@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/cobalt.dart';
+
 /// Whole-app boot gate — the reimbursement pattern: the app renders
 /// immediately, but nothing product-ish mounts until session, appearance,
 /// and fonts settle; until then [BootLoadingPage] runs. Completing on
@@ -17,25 +19,26 @@ class BootController extends ChangeNotifier {
   }
 }
 
-/// The boot loading page: 印 stamp over an ink ring spinner. Deliberately
-/// text-free — appearance (locale) may not be hydrated yet, and on web the
-/// CJK fonts the gate exists for are not loaded yet.
+/// Text-free boot mark: a cobalt disc + spinner. Appearance (locale) may
+/// not be hydrated yet, and on web the CJK fonts the gate exists for are
+/// not loaded yet.
 class BootLoadingPage extends StatelessWidget {
   const BootLoadingPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final palette = Cobalt.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: palette.surfaceBase,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(
-              'assets/seals/yin.webp',
-              width: 72,
-              height: 72,
-              filterQuality: FilterQuality.medium,
+            Container(
+              key: const Key('boot-mark'),
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(color: Cobalt.hue500, shape: BoxShape.circle),
             ),
             const SizedBox(height: 28),
             const SizedBox(

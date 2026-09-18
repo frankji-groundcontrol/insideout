@@ -46,5 +46,5 @@ keeps its original bilingual text as a historical record).
 - [practices/](practices/README.md) — repeatable guardrails and methods.
 - [history/](history/README.md) — retired JuanLeMe-era records.
 - [design-system/CHANGELOG.md](design-system/CHANGELOG.md) — token-layer
-  version record (live Flutter is still Ink & Seal; Cobalt lock is
-  [accepted](design-system/cobalt/README.md)).
+  version record (live Flutter is Cobalt **1.0.0**; lock screens in
+  [cobalt/](design-system/cobalt/README.md)).

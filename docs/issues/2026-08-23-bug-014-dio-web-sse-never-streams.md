@@ -31,10 +31,10 @@ Native targets keep the dio path, which streams correctly there.
 
 ## Still affected (follow-on)
 
-The Coach SSE path (`sendCoach`) uses the same dio stream path, so on
-web a coach reply arrives whole when the stream ends instead of typing
-live. The transport above is the fix when live typing on web becomes
-worth doing; native clients are unaffected.
+Closed 2026-09-18: `sendCoach` on web uses the same `fetch` +
+`ReadableStream` transport with POST + JSON body
+(`coachSseOpen` / `readCoachSse`). Native keeps the dio stream path.
+See [2026-09-18-cobalt-backend-wire](../changelogs/2026-09-18-cobalt-backend-wire.md).
 
 ## Detection hint
 

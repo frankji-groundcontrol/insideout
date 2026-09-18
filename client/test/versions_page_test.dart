@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
+import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/prd/versions_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
@@ -86,6 +87,7 @@ void main() {
         providers: [
           ChangeNotifierProvider.value(value: session),
           ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
         child: const MaterialApp(home: VersionsPage(prdId: 'p1')),
       ),
@@ -93,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Readiness disclosure: chips, gaps with reasons, not-ready wording.
-    expect(find.text('decision'), findsWidgets);
+    expect(find.text('Decision'), findsWidgets);
     expect(find.textContaining('Gaps for this audience'), findsOneWidget);
     expect(find.textContaining('why-this argument'), findsWidgets);
 
@@ -101,11 +103,11 @@ void main() {
     expect(find.textContaining('No committed versions yet'), findsOneWidget);
 
     // Commit: open the dialog, name it, confirm.
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byKey(const Key('commit-now')));
     await tester.pumpAndSettle();
     expect(find.textContaining('open item(s) will be carried'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'First web version');
-    await tester.tap(find.byType(FilledButton));
+    await tester.tap(find.byKey(const Key('commit-confirm')));
     await tester.pumpAndSettle();
 
     expect(fake.committedNames, ['First web version']);

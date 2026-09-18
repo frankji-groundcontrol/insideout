@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'app.dart';
+import 'chrome/loop_focus.dart';
 import 'router.dart';
 import 'session/appearance.dart';
 import 'session/boot.dart';
@@ -37,6 +38,7 @@ Future<void> main() async {
         ChangeNotifierProvider.value(value: session),
         ChangeNotifierProvider.value(value: appearance),
         ChangeNotifierProvider.value(value: boot),
+        ChangeNotifierProvider(create: (_) => LoopFocus()),
       ],
       child: InsideOutApp(router: buildRouter(session)),
     ),

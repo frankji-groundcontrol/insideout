@@ -15,7 +15,7 @@ and the bug records it links to.
 - [PRD Coach agent](prd-coach-agent.md) — the four-stage coaching agent,
   tool calling, SSE streaming, the direct Anthropic client.
 - [Frontend](frontend.md) — Flutter client (`client/`) on Railway, wearing
-  Ink & Seal; the Nuxt tree was deleted 2026-08-18.
+  Cobalt; the Nuxt tree was deleted 2026-08-18.
 - [Product subsystems](product-subsystems.md) — the 2026-08 product arc:
   version control (Commit + readiness + audience views), the agent
   vocabulary (with proposal application), the time-first roadmap,

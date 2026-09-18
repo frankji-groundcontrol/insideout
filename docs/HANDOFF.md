@@ -7,13 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Cobalt is accepted for Flutter. Paste
-   [`plans/2026-09-18-cobalt-flutter-goal.md`](plans/2026-09-18-cobalt-flutter-goal.md)
-   into the implementing agent. Lock screens:
-   [`design-system/cobalt/`](design-system/cobalt/README.md). Live
-   client is still Ink & Seal
-   ([plan](plans/2026-09-18-cobalt-flutter.md),
-   [QA](design-qa/2026-09-17-cobalt-layouts.md)).
+1. Next: merge [PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3)
+   (Cobalt restyle + live-API wiring), then `railway up --service app`.
+   Walk record:
+   [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
+   Hosted signup is invitation-only. Do not seed a shared remote
+   database with the local demo identity.
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and

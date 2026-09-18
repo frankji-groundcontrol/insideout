@@ -55,10 +55,11 @@ class _SettingsPageState extends State<SettingsPage> {
         final l10n = context.watch<Appearance>();
         return AppScaffold(
           title: l10n.t('workspace.settingsTitle'),
+          paintTitle: true,
           body: !snap.hasData
               ? Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator())
               : ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
                   children: [
                     TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('workspace.createNamePlaceholder'))),
                     const SizedBox(height: 8),

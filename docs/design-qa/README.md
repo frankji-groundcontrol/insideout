@@ -21,6 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-09-18 — Cobalt Flutter against a real API](2026-09-18-cobalt-backend-walk.md)
+  — signed-in path-URL walk on a local `/api/v1`; dock IDs and Coach send.
+- [2026-09-18 — Cobalt Flutter browser walk](2026-09-18-cobalt-flutter-walk.md)
+  — light/dark × zh-CN/en-US on the six lock surfaces; no seals left.
 - [2026-09-17 — Cobalt layouts accepted as references](2026-09-17-cobalt-layouts.md)
   — Card lock pinned; 2026-09-18: accepted for Flutter + goal prompt.
 - [2026-09-17 — One hue, light and dark](2026-09-17-cobalt-shade.md)

@@ -8,6 +8,8 @@ import '../../api/models.dart';
 import '../../api/sse.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/cobalt.dart';
+import '../../theme/cobalt_theme.dart';
 
 class CoachPanel extends StatefulWidget {
   const CoachPanel({
@@ -78,7 +80,9 @@ class _CoachPanelState extends State<CoachPanel> {
               onStageChanged: widget.onStageChanged,
               onFactRecorded: (fact) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Fact: $fact')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(context.read<Appearance>().t('coach.factRecorded', {'fact': fact}))),
+                );
               },
             ),
           );
@@ -95,8 +99,11 @@ class _CoachPanelState extends State<CoachPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    final palette = Cobalt.of(context);
     final stage = widget.conversation?.stage ?? 'clarify';
     final suggestions = l10n.suggestions(stage);
+    final ink = palette.brightnessIsDark ? palette.fgPrimary : Cobalt.darkType;
+    final field = palette.brightnessIsDark ? palette.surfaceSunken : Cobalt.hue950;
     if (!open) {
       return Align(
         alignment: Alignment.centerRight,
@@ -107,77 +114,131 @@ class _CoachPanelState extends State<CoachPanel> {
         ),
       );
     }
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  '${l10n.t('coach.title')} · ${l10n.t('coach.stage.$stage')}',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              IconButton(
-                tooltip: l10n.t('coach.closeCoach'),
-                onPressed: () => setState(() => open = false),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-        ),
-        if (widget.conversation == null)
+    return ColoredBox(
+      color: field,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(l10n.t('coach.noConversation')),
-          )
-        else ...[
-          if (suggestions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Wrap(
-                spacing: 8,
-                children: [
-                  Text(l10n.t('coach.suggestTitle'), style: Theme.of(context).textTheme.labelMedium),
-                  for (final prompt in suggestions)
-                    ActionChip(label: Text(prompt), onPressed: sending || retry > 0 ? null : () => _send(prompt)),
-                ],
-              ),
-            ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(8),
-              children: [
-                ...widget.messages.map((m) => ListTile(dense: true, title: Text(m.role), subtitle: Text(m.content))),
-                if (stream.isNotEmpty) ListTile(dense: true, title: const Text('assistant'), subtitle: Text(stream)),
-              ],
-            ),
-          ),
-        ],
-        if (error != null) Padding(padding: const EdgeInsets.all(8), child: Text(error!)),
-        if (retry > 0)
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text(l10n.t(error != null && error!.contains('unavailable') ? 'coach.serviceUnavailable' : 'coach.rateLimited', {'seconds': retry})),
-          ),
-        if (widget.conversation != null)
-          Padding(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.fromLTRB(28, 64, 16, 8),
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: draft,
-                    enabled: !sending && retry == 0,
-                    decoration: InputDecoration(hintText: sending ? l10n.t('coach.thinking') : l10n.t('coach.placeholder')),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.t('coach.title').toUpperCase(),
+                        style: cobaltSerif(palette, size: 32, color: ink, weight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.t('coach.pullQuotes'),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: ink.withValues(alpha: 0.7)),
+                      ),
+                      Container(width: 36, height: 3, margin: const EdgeInsets.only(top: 10), color: Cobalt.hue500),
+                    ],
                   ),
                 ),
-                IconButton(onPressed: sending || retry > 0 ? null : _send, icon: const Icon(Icons.send)),
+                IconButton(
+                  tooltip: l10n.t('coach.closeCoach'),
+                  onPressed: () => setState(() => open = false),
+                  color: ink,
+                  icon: const Icon(Icons.close),
+                ),
               ],
             ),
           ),
-      ],
+          if (widget.conversation == null)
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(l10n.t('coach.noConversation'), style: cobaltSerif(palette, size: 20, color: ink)),
+            )
+          else ...[
+            if (suggestions.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Wrap(
+                  spacing: 8,
+                  children: [
+                    for (final prompt in suggestions)
+                      ActionChip(label: Text(prompt), onPressed: sending || retry > 0 ? null : () => _send(prompt)),
+                  ],
+                ),
+              ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(28, 16, 28, 16),
+                children: [
+                  ...widget.messages.map((m) => _Quote(text: m.content, role: m.role, ink: ink)),
+                  if (stream.isNotEmpty) _Quote(text: stream, role: 'assistant', ink: ink),
+                ],
+              ),
+            ),
+          ],
+          if (error != null) Padding(padding: const EdgeInsets.all(12), child: Text(error!, style: TextStyle(color: ink))),
+          if (retry > 0)
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Text(
+                l10n.t(error != null && error!.contains('unavailable') ? 'coach.serviceUnavailable' : 'coach.rateLimited', {'seconds': retry}),
+                style: TextStyle(color: ink),
+              ),
+            ),
+          if (widget.conversation != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: draft,
+                      style: cobaltSerif(palette, size: 17.5, color: ink, weight: FontWeight.w400),
+                      enabled: !sending && retry == 0,
+                      decoration: InputDecoration(
+                        hintText: sending ? l10n.t('coach.thinking') : l10n.t('coach.placeholder'),
+                        hintStyle: TextStyle(color: ink.withValues(alpha: 0.5)),
+                        fillColor: field,
+                      ),
+                    ),
+                  ),
+                  IconButton(onPressed: sending || retry > 0 ? null : _send, color: ink, icon: const Icon(Icons.send)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+extension on Cobalt {
+  bool get brightnessIsDark => surfaceBase == Cobalt.darkGround;
+}
+
+class _Quote extends StatelessWidget {
+  const _Quote({required this.text, required this.role, required this.ink});
+
+  final String text;
+  final String role;
+  final Color ink;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Cobalt.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '“$text”',
+            style: cobaltSerif(palette, size: 26, color: ink, weight: FontWeight.w600, height: 1.35),
+          ),
+          const SizedBox(height: 8),
+          Text(role, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: ink.withValues(alpha: 0.6))),
+        ],
+      ),
     );
   }
 }

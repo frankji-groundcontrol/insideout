@@ -2,8 +2,9 @@
 
 Railway production serves the **Flutter 3** client under `client/` (see
 [`docs/plans/2026-08-17-flutter-client.md`](../plans/2026-08-17-flutter-client.md)).
-The visual language is **国风留白 / Ink & Seal**, not a Material seed
-palette ([restore plan](../plans/2026-08-19-restore-ink-seal.md)).
+The visual language is **Cobalt** — one hue, rounded cards on a field,
+bottom dock ([lock](../design-system/cobalt/README.md),
+[restyle](../plans/2026-09-18-cobalt-flutter.md)).
 The Nuxt 4 tree was deleted 2026-08-18
 ([changelog](../changelogs/2026-08-18-delete-nuxt-app.md)).
 
@@ -32,15 +33,15 @@ falls back to `index.html`.
 ```
 client/lib/
   main.dart           hydrate session + appearance; path URL strategy
-  app.dart            MaterialApp.router + signed-in AppScaffold
-  theme/              Ink & Seal tokens + ThemeData (light/dark)
+  app.dart            MaterialApp.router + signed-in AppScaffold + dock
+  theme/              Cobalt tokens + ThemeData (light/dark)
+  chrome/             bottom dock + last-loop focus
   router.dart         current product paths
   session/            Session, Appearance, auth redirect
   api/                Dio client, models, request builders, errors
   features/           landing, auth (AuthDoor), dashboard, workspace, project,
                       roadmap, prd, profile
   l10n/               zh-CN + en-US
-client/assets/seals/  recovered chops (yin, luomo, chengwen, fenzhi, gaiyin)
 ```
 
 ### Coach chat
@@ -48,4 +49,6 @@ client/assets/seals/  recovered chops (yin, luomo, chengwen, fenzhi, gaiyin)
 The PRD page consumes the SSE contract in
 [the agent doc](prd-coach-agent.md): deltas, stage changes, throttle
 countdown (`APP_THROTTLE` / `CIRCUIT_OPEN`). History is
-`GET /api/v1/conversations/{id}/messages`.
+`GET /api/v1/conversations/{id}/messages`. On Flutter web, Coach POST
+and presence GET both use `fetch` + `ReadableStream` (dio's XHR adapter
+does not emit SSE frames until the socket closes; [BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md)).

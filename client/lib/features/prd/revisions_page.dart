@@ -31,6 +31,7 @@ class _RevisionsPageState extends State<RevisionsPage> {
     final l10n = context.watch<Appearance>();
     return AppScaffold(
       title: l10n.t('prd.revisionsTitle'),
+      paintTitle: true,
       fab: FloatingActionButton(
         onPressed: () async {
           final note = TextEditingController();

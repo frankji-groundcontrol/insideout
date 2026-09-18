@@ -1,0 +1,190 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../api/models.dart';
+import '../../session/appearance.dart';
+import '../../session/session.dart';
+import '../../theme/cobalt_chip.dart';
+import '../../theme/field_card.dart';
+
+class RoadmapNodeCard extends StatelessWidget {
+  const RoadmapNodeCard({
+    super.key,
+    required this.projectId,
+    required this.node,
+    required this.onReload,
+    this.compact = false,
+  });
+
+  final String projectId;
+  final RoadmapNode node;
+  final Future<void> Function() onReload;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    final progress = switch (node.status) {
+      'done' => 1.0,
+      'in_progress' => 0.55,
+      _ => 0.0,
+    };
+    return FieldCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ShadeChip(label: l10n.t('roadmap.status.${node.status}'), tone: ShadeChip.fromStatus(node.status)),
+              const Spacer(),
+              _NodeMenu(projectId: projectId, node: node, onReload: onReload),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(node.title, style: theme.textTheme.titleMedium),
+          if (node.editorName != null) Text(node.editorName!, style: theme.textTheme.bodySmall),
+          if (node.deadline != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: ShadeChip(
+                label:
+                    '${node.deadline!.substring(0, 10)}${node.pressure != null && node.pressure != 'normal' ? ' · ${l10n.t('roadmap.pressure.${node.pressure}')}' : ''}',
+                tone: node.pressure == 'overdue' || node.pressure == 'high_risk' ? ShadeTone.danger : ShadeTone.neutral,
+              ),
+            ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(value: progress, minHeight: 4),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NodeMenu extends StatelessWidget {
+  const _NodeMenu({required this.projectId, required this.node, required this.onReload});
+
+  final String projectId;
+  final RoadmapNode node;
+  final Future<void> Function() onReload;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.watch<Appearance>();
+    return PopupMenuButton<String>(
+      onSelected: (value) => _act(context, value),
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'edit', child: Text(l10n.t('roadmap.edit'))),
+        PopupMenuItem(value: 'child', child: Text(l10n.t('roadmap.addChild'))),
+        PopupMenuItem(value: 'up', child: Text(l10n.t('roadmap.moveUp'))),
+        PopupMenuItem(value: 'down', child: Text(l10n.t('roadmap.moveDown'))),
+        PopupMenuItem(value: 'expand', child: Text(l10n.t('roadmap.expandAI'))),
+        PopupMenuItem(value: 'delete', child: Text(l10n.t('roadmap.delete'))),
+      ],
+    );
+  }
+
+  Future<void> _act(BuildContext context, String value) async {
+    final api = context.read<Session>().api;
+    final l10n = context.read<Appearance>();
+    if (value == 'edit') {
+      await _edit(context, l10n);
+    } else if (value == 'child') {
+      final title = TextEditingController();
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.t('roadmap.addChild')),
+          content: TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('roadmap.childPlaceholder'))),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('roadmap.add'))),
+          ],
+        ),
+      );
+      if (ok == true && title.text.trim().isNotEmpty && context.mounted) {
+        await api.createRoadmapNode(projectId, title.text.trim(), parentId: node.id);
+        await onReload();
+      }
+      title.dispose();
+    } else if (value == 'up') {
+      await api.moveRoadmapNode(node.id, parentId: node.parentId, position: node.position == 0 ? 0 : node.position - 1);
+      await onReload();
+    } else if (value == 'down') {
+      await api.moveRoadmapNode(node.id, parentId: node.parentId, position: node.position + 1);
+      await onReload();
+    } else if (value == 'expand') {
+      await api.expandRoadmapNode(node.id);
+      await onReload();
+    } else if (value == 'delete') {
+      await api.deleteRoadmapNode(node.id);
+      await onReload();
+    }
+  }
+
+  Future<void> _edit(BuildContext context, Appearance l10n) async {
+    final api = context.read<Session>().api;
+    final title = TextEditingController(text: node.title);
+    final desc = TextEditingController(text: node.description);
+    var status = node.status;
+    String? deadline = node.deadline;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: Text(l10n.t('roadmap.edit')),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('roadmap.rootPlaceholder'))),
+              TextField(controller: desc, decoration: InputDecoration(labelText: l10n.t('roadmap.descPlaceholder'))),
+              DropdownButton<String>(
+                value: status,
+                items: ['locked', 'pending', 'in_progress', 'done']
+                    .map((s) => DropdownMenuItem(value: s, child: Text(l10n.t('roadmap.status.$s'))))
+                    .toList(),
+                onChanged: (v) => setLocal(() => status = v ?? status),
+              ),
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      final picked = await showDatePicker(
+                        context: ctx,
+                        initialDate: DateTime.now().add(const Duration(days: 7)),
+                        firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                        lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+                      );
+                      if (picked != null) setLocal(() => deadline = picked.toUtc().toIso8601String());
+                    },
+                    child: Text(deadline == null ? l10n.t('roadmap.setDeadline') : deadline!.substring(0, 10)),
+                  ),
+                  if (deadline != null)
+                    IconButton(
+                      tooltip: l10n.t('roadmap.clearDeadline'),
+                      onPressed: () => setLocal(() => deadline = ''),
+                      icon: const Icon(Icons.event_busy, size: 18),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('roadmap.save'))),
+          ],
+        ),
+      ),
+    );
+    if (ok == true && context.mounted) {
+      await api.updateRoadmapNode(node.id, title: title.text.trim(), description: desc.text, status: status, deadline: deadline == '' ? '' : deadline);
+      await onReload();
+    }
+    title.dispose();
+    desc.dispose();
+  }
+}

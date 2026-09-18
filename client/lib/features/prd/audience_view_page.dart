@@ -45,6 +45,7 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
     final theme = Theme.of(context);
     return AppScaffold(
       title: l10n.t('view.title'),
+      paintTitle: true,
       actions: [
         Wrap(
           spacing: 6,

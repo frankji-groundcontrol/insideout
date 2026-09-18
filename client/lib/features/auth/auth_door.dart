@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../theme/cobalt.dart';
 import '../../theme/ink_motion.dart';
-import '../../theme/ink_seal.dart';
 
 enum AuthPrompt { login, register }
 
-/// Prompt modal: 印 stamp + paper dialog over a solid dim barrier. Lands
-/// on top of the current page like an OS prompt — the barrier dims the
-/// page instead of bleeding through it, and the panel is an elevated
-/// solid surface.
+/// Prompt modal: cobalt mark + raised card over a solid dim barrier.
 class AuthDoor extends StatelessWidget {
   const AuthDoor({
     super.key,
@@ -25,7 +22,7 @@ class AuthDoor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scheme = theme.colorScheme;
+    final palette = Cobalt.of(context);
     return Material(
       color: Colors.transparent,
       child: CallbackShortcuts(
@@ -50,12 +47,11 @@ class AuthDoor extends StatelessWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          InkStamp(
-                            child: Image.asset(
-                              'assets/seals/yin.webp',
-                              width: 80,
-                              height: 80,
-                              filterQuality: FilterQuality.medium,
+                          InkReveal(
+                            child: Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(color: Cobalt.hue500, shape: BoxShape.circle),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -79,12 +75,12 @@ class AuthDoor extends StatelessWidget {
                             dy: 24,
                             scaleFrom: 0.98,
                             child: Material(
-                              color: scheme.surface,
+                              color: palette.surfaceRaised,
                               elevation: 6,
-                              shadowColor: Colors.black.withValues(alpha: 0.55),
+                              shadowColor: Colors.black.withValues(alpha: 0.35),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(InkSeal.radiusHero),
-                                side: BorderSide(color: scheme.outline),
+                                borderRadius: BorderRadius.circular(Cobalt.radiusHero),
+                                side: BorderSide(color: palette.strokeSubtle),
                               ),
                               child: Stack(
                                 children: [

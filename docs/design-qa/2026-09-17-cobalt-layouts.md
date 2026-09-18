@@ -54,3 +54,5 @@ In-repo lock screens:
 [`docs/design-system/cobalt/`](../design-system/cobalt/README.md).
 Implementation plan:
 [`docs/plans/2026-09-18-cobalt-flutter.md`](../plans/2026-09-18-cobalt-flutter.md).
+Flutter restyle landed the same day:
+[`docs/changelogs/2026-09-18-cobalt-flutter-restyle.md`](../changelogs/2026-09-18-cobalt-flutter-restyle.md).
