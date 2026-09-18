@@ -95,7 +95,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Readiness disclosure: chips, gaps with reasons, not-ready wording.
-    expect(find.text('decision'), findsWidgets);
+    expect(find.text('Decision'), findsWidgets);
     expect(find.textContaining('Gaps for this audience'), findsOneWidget);
     expect(find.textContaining('why-this argument'), findsWidgets);
 

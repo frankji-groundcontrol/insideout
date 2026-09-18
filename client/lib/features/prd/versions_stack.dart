@@ -44,7 +44,7 @@ class VersionsStack extends StatelessWidget {
               spacing: 8,
               children: [
                 for (final a in const ['validation', 'decision', 'management', 'delivery'])
-                  ChoiceChip(label: Text(a), selected: a == audience, onSelected: (_) => onAudience(a)),
+                  ChoiceChip(label: Text(l10n.t('versions.audience.$a')), selected: a == audience, onSelected: (_) => onAudience(a)),
               ],
             ),
           ),

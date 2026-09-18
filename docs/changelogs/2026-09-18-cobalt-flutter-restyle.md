@@ -25,8 +25,13 @@ Plan: [`docs/plans/2026-09-18-cobalt-flutter.md`](../plans/2026-09-18-cobalt-flu
 (cd client && flutter analyze --no-fatal-infos && flutter test)
 ```
 
-Browser walk: light/dark × zh-CN/en-US × Home, Ideas, PRD+Coach, Commit,
-Roadmap, Evidence, theme toggle, dock.
+Analyze: infos only. Tests: 54 passed.
+
+Browser walk (same live widgets, local preview — no `.env` in this
+environment): light/dark × zh-CN/en-US × Home, Ideas, PRD+Coach,
+Commit, Roadmap, Evidence, theme toggle, dock. Record:
+[`docs/design-qa/2026-09-18-cobalt-flutter-walk.md`](../design-qa/2026-09-18-cobalt-flutter-walk.md).
+Coach SSE not exercised (API login not available).
 
 ## Operator
 

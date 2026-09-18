@@ -164,7 +164,7 @@ class _DeskActions extends StatelessWidget {
             PopupMenuItem(value: 'snapshot', child: Text(l10n.t('prd.snapshotRevision'))),
             const PopupMenuDivider(),
             for (final s in const ['draft', 'reviewing', 'approved', 'rejected'])
-              PopupMenuItem(value: s, child: Text(s == status ? '● $s' : s)),
+              PopupMenuItem(value: s, child: Text('${s == status ? '● ' : ''}${l10n.t('prd.status.$s')}')),
           ],
         ),
       ],

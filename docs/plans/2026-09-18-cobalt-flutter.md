@@ -1,6 +1,6 @@
 # 2026-09-18 — Cobalt Flutter restyle
 
-Status: **In flight** — lock accepted; theme and lock surfaces landed; verify analyze/test + browser walk.
+Status: **Finished** — lock implemented; analyze + tests green; browser walk recorded.
 
 ## Why
 
@@ -38,8 +38,9 @@ Implement the accepted lock. Do not invent a new language.
 - [x] Home / Ideas / PRD+Coach / Commit / Roadmap / Evidence match locks
 - [x] Landing + AuthDoor retokened (no chops)
 - [x] `DESIGN.md` + frontend architecture + design-system changelog
-- [ ] `flutter analyze --no-fatal-infos && flutter test`
-- [ ] Browser walk: light/dark × zh-CN/en-US × product loop
+- [x] `flutter analyze --no-fatal-infos && flutter test` (infos only; 54 tests)
+- [x] Browser walk: light/dark × zh-CN/en-US × product loop
+  ([QA](../design-qa/2026-09-18-cobalt-flutter-walk.md))
 - [x] Changelog + board + HANDOFF
 
 ## Review

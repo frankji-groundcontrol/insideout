@@ -59,7 +59,7 @@ class _VersionsCommitDialogState extends State<VersionsCommitDialog> {
               DropdownButtonFormField<String>(
                 initialValue: _audience,
                 decoration: InputDecoration(labelText: l10n.t('versions.audienceLabel')),
-                items: versionAudiences.map((a) => DropdownMenuItem(value: a, child: Text(a))).toList(),
+                items: versionAudiences.map((a) => DropdownMenuItem(value: a, child: Text(l10n.t('versions.audience.$a')))).toList(),
                 onChanged: (v) => setState(() => _audience = v ?? _audience),
               ),
               const SizedBox(height: 12),
