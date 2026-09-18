@@ -156,12 +156,13 @@ class _FrontCard extends StatelessWidget {
             children: [
               Icon(Icons.verified, color: Theme.of(context).colorScheme.primary),
               const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  commit == null ? l10n.t('versions.empty') : '${commit!.revision}  ${commit!.name}',
-                  style: theme.textTheme.headlineSmall,
-                ),
-              ),
+              if (commit == null)
+                Expanded(child: Text(l10n.t('versions.empty'), style: theme.textTheme.headlineSmall))
+              else ...[
+                Text('${commit!.revision}', style: theme.textTheme.headlineLarge),
+                const SizedBox(width: 10),
+                Expanded(child: Text(commit!.name, style: theme.textTheme.headlineSmall)),
+              ],
             ],
           ),
           const SizedBox(height: 16),
