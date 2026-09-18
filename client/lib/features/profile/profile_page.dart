@@ -63,8 +63,9 @@ class _ProfilePageState extends State<ProfilePage> {
     final l10n = context.watch<Appearance>();
     return AppScaffold(
       title: l10n.t('profile.title'),
+      paintTitle: true,
       body: ListView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 140),
         children: [
           Text(user?.email ?? '', style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 16),

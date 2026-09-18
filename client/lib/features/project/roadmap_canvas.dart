@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../api/models.dart';
 
-/// Collaborative canvas v1 (Ink & Seal): each root branch renders as a
+/// Collaborative canvas v1: each root branch renders as a
 /// sibling band — a vertical column of its subtree — laid out
 /// horizontally, so parallel efforts read side by side. The minimap is
 /// a compact status-tinted overview that jumps to a band.

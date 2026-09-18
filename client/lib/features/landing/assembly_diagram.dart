@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/cobalt.dart';
 import '../../theme/ink_motion.dart';
-import '../../theme/ink_seal.dart';
 
-/// Spark → PRD → tree → seal. Same 400×130 grammar as the Nuxt SVG.
-/// Hero mode plays the click-in (pop, then seal stamp) unless reduced-motion.
+/// Spark → PRD → tree → commit mark. Same 400×130 grammar as the Nuxt SVG.
+/// Hero mode plays the click-in (pop, then commit mark) unless reduced-motion.
 class AssemblyDiagram extends StatefulWidget {
   const AssemblyDiagram({
     super.key,
@@ -76,7 +76,7 @@ class _AssemblyDiagramState extends State<AssemblyDiagram> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).brightness == Brightness.dark ? InkSeal.dark : InkSeal.light;
+    final palette = Cobalt.of(context);
     return Semantics(
       label: widget.semanticsLabel,
       child: AspectRatio(
@@ -89,7 +89,7 @@ class _AssemblyDiagramState extends State<AssemblyDiagram> with SingleTickerProv
                 mode: widget.mode,
                 currentStep: widget.currentStep,
                 ink: palette.fgPrimary,
-                seal: palette.seal,
+                brand: palette.brand,
                 muted: palette.strokeSubtle,
                 ms: _c.value * _span.inMilliseconds,
                 animate: true,
@@ -109,7 +109,7 @@ class _AssemblyPainter extends CustomPainter {
     required this.mode,
     required this.currentStep,
     required this.ink,
-    required this.seal,
+    required this.brand,
     required this.muted,
     required this.ms,
     required this.animate,
@@ -118,7 +118,7 @@ class _AssemblyPainter extends CustomPainter {
   final AssemblyDiagramMode mode;
   final int currentStep;
   final Color ink;
-  final Color seal;
+  final Color brand;
   final Color muted;
   final double ms;
   final bool animate;
@@ -156,7 +156,7 @@ class _AssemblyPainter extends CustomPainter {
         case 2:
           _tree(canvas, paint);
         default:
-          _seal(canvas, paint);
+          _commitMark(canvas, paint);
       }
       canvas.restore();
     }
@@ -164,7 +164,7 @@ class _AssemblyPainter extends CustomPainter {
   }
 
   Color _nodeColor(int i) {
-    if (mode == AssemblyDiagramMode.hero) return i == 3 ? seal : ink;
+    if (mode == AssemblyDiagramMode.hero) return i == 3 ? brand : ink;
     if (i == currentStep - 1) return ink;
     if (i < currentStep - 1) return ink;
     return muted;
@@ -306,7 +306,7 @@ class _AssemblyPainter extends CustomPainter {
     }
   }
 
-  void _seal(Canvas canvas, Paint stroke) {
+  void _commitMark(Canvas canvas, Paint stroke) {
     stroke.strokeWidth = 3.5;
     canvas.drawRRect(RRect.fromLTRBR(-19, -19, 19, 19, const Radius.circular(7)), stroke);
     canvas.drawPath(
@@ -323,7 +323,7 @@ class _AssemblyPainter extends CustomPainter {
       old.mode != mode ||
       old.currentStep != currentStep ||
       old.ink != ink ||
-      old.seal != seal ||
+      old.brand != brand ||
       old.ms != ms ||
       old.animate != animate;
 }

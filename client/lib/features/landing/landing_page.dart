@@ -12,34 +12,10 @@ import 'assembly_step.dart';
 import 'step_peek.dart';
 
 const _steps = [
-  AssemblyStepData(
-    n: 1,
-    sealAsset: 'assets/seals/luomo.webp',
-    titleKey: 'landing.step1Title',
-    bodyKey: 'landing.step1Body',
-    kind: PeekKind.idea,
-  ),
-  AssemblyStepData(
-    n: 2,
-    sealAsset: 'assets/seals/chengwen.webp',
-    titleKey: 'landing.step2Title',
-    bodyKey: 'landing.step2Body',
-    kind: PeekKind.prd,
-  ),
-  AssemblyStepData(
-    n: 3,
-    sealAsset: 'assets/seals/fenzhi.webp',
-    titleKey: 'landing.step3Title',
-    bodyKey: 'landing.step3Body',
-    kind: PeekKind.roadmap,
-  ),
-  AssemblyStepData(
-    n: 4,
-    sealAsset: 'assets/seals/gaiyin.webp',
-    titleKey: 'landing.step4Title',
-    bodyKey: 'landing.step4Body',
-    kind: PeekKind.shipped,
-  ),
+  AssemblyStepData(n: 1, titleKey: 'landing.step1Title', bodyKey: 'landing.step1Body', kind: PeekKind.idea),
+  AssemblyStepData(n: 2, titleKey: 'landing.step2Title', bodyKey: 'landing.step2Body', kind: PeekKind.prd),
+  AssemblyStepData(n: 3, titleKey: 'landing.step3Title', bodyKey: 'landing.step3Body', kind: PeekKind.roadmap),
+  AssemblyStepData(n: 4, titleKey: 'landing.step4Title', bodyKey: 'landing.step4Body', kind: PeekKind.shipped),
 ];
 
 class LandingPage extends StatefulWidget {
@@ -74,7 +50,11 @@ class _LandingPageState extends State<LandingPage> {
           appBar: AppBar(
             title: Row(
               children: [
-                Image.asset('assets/seals/yin.webp', width: 28, height: 28),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: const BoxDecoration(color: Color(0xFF3B5BFF), shape: BoxShape.circle),
+                ),
                 const SizedBox(width: 10),
                 Text(l10n.t('nav.brand')),
               ],
@@ -164,7 +144,11 @@ class _LandingPageState extends State<LandingPage> {
                         duration: const Duration(milliseconds: 700),
                         child: Column(
                           children: [
-                            InkStamp(child: Image.asset('assets/seals/yin.webp', width: 56, height: 56)),
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: const BoxDecoration(color: Color(0xFF3B5BFF), shape: BoxShape.circle),
+                            ),
                             const SizedBox(height: 20),
                             Text(l10n.t('landing.ctaCloseTitle'), style: theme.textTheme.headlineMedium, textAlign: TextAlign.center),
                             const SizedBox(height: 12),

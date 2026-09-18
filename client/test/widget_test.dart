@@ -23,7 +23,7 @@ void main() {
     expect(find.text('Start shaping'), findsNWidgets(2));
     expect(find.text('Log in'), findsOneWidget);
     expect(find.text('Capture the spark'), findsOneWidget);
-    expect(find.text('Ready to press your first seal?'), findsOneWidget);
+    expect(find.text('Ready to walk the loop?'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(OutlinedButton, 'Log in'));
     await tester.pump();

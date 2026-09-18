@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/app.dart';
+import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/router.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/boot.dart';
@@ -8,13 +9,14 @@ import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('boot loading page shows stamp + spinner, no product text', (
+  testWidgets('boot loading page shows mark + spinner, no product text', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: BootLoadingPage()));
     await tester.pump();
     expect(find.byKey(const Key('boot-spinner')), findsOneWidget);
-    expect(find.byType(Image), findsOneWidget);
+    expect(find.byKey(const Key('boot-mark')), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
     expect(find.byType(Text), findsNothing);
   });
 
@@ -33,6 +35,7 @@ void main() {
                 Appearance(store: MemorySettingsStore(), locale: 'en-US'),
           ),
           ChangeNotifierProvider.value(value: boot),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
         child: InsideOutApp(router: buildRouter(session)),
       ),

@@ -1,6 +1,6 @@
 # 2026-09-18 — Cobalt Flutter restyle
 
-Status: **In flight** — lock accepted; Flutter still Ink & Seal.
+Status: **In flight** — lock accepted; theme and lock surfaces landed; verify analyze/test + browser walk.
 
 ## Why
 
@@ -32,15 +32,15 @@ Implement the accepted lock. Do not invent a new language.
 - [x] User accepted Cobalt for Flutter
 - [x] Goal prompt written
 - [x] Lock screens copied into the repo
-- [ ] Failing Cobalt token tests
-- [ ] Theme rename: InkSeal → Cobalt; seals off live chrome
-- [ ] Bottom dock in `AppScaffold`
-- [ ] Home / Ideas / PRD+Coach / Commit / Roadmap / Evidence match locks
-- [ ] Landing + AuthDoor retokened (no chops)
-- [ ] `DESIGN.md` + frontend architecture + design-system changelog
+- [x] Failing Cobalt token tests
+- [x] Theme rename: InkSeal → Cobalt; seals off live chrome
+- [x] Bottom dock in `AppScaffold`
+- [x] Home / Ideas / PRD+Coach / Commit / Roadmap / Evidence match locks
+- [x] Landing + AuthDoor retokened (no chops)
+- [x] `DESIGN.md` + frontend architecture + design-system changelog
 - [ ] `flutter analyze --no-fatal-infos && flutter test`
 - [ ] Browser walk: light/dark × zh-CN/en-US × product loop
-- [ ] Changelog + board + HANDOFF
+- [x] Changelog + board + HANDOFF
 
 ## Review
 

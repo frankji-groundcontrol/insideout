@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/models.dart';
+import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
@@ -65,6 +66,7 @@ void main() {
         providers: [
           ChangeNotifierProvider.value(value: session),
           ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
         child: const MaterialApp(home: RoadmapPage(projectId: 'p1')),
       ),

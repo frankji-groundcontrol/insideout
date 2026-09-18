@@ -15,8 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-09-18 — Cobalt Flutter restyle](2026-09-18-cobalt-flutter-restyle.md)
+  — live client swapped to the accepted Cobalt card lock.
 - [2026-09-18 — Cobalt accepted for Flutter](2026-09-18-cobalt-flutter-lock.md)
-  — lock + goal prompt in-repo; live Flutter still Ink & Seal.
+  — lock + goal prompt in-repo; restyle shipped the same day.
 - [2026-09-17 — Vibrant frontend direction](2026-09-17-vibrant-frontend-direction.md)
   — Cobalt lock pinned in OpenDesign; language + page prototypes;
   no Flutter theme change shipped.

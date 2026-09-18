@@ -9,14 +9,12 @@ import 'step_peek.dart';
 class AssemblyStepData {
   const AssemblyStepData({
     required this.n,
-    required this.sealAsset,
     required this.titleKey,
     required this.bodyKey,
     required this.kind,
   });
 
   final int n;
-  final String sealAsset;
   final String titleKey;
   final String bodyKey;
   final PeekKind kind;
@@ -38,7 +36,13 @@ class AssemblyStep extends StatelessWidget {
       children: [
         Row(
           children: [
-            Image.asset(data.sealAsset, width: 40, height: 40, filterQuality: FilterQuality.medium),
+            Container(
+              width: 36,
+              height: 36,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(color: Color(0xFF3B5BFF), shape: BoxShape.circle),
+              child: Text('${data.n}', style: theme.textTheme.titleSmall?.copyWith(color: Colors.white)),
+            ),
             const SizedBox(width: 12),
             Text(l10n.t('landing.stepLabel', {'n': data.n}), style: theme.textTheme.bodySmall),
           ],

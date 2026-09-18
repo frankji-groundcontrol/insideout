@@ -2,7 +2,7 @@
 
 > Tracks the **design system** — token foundation, primitives, icon/identity maps, and these docs — not app features. (The original source plan and companion README predate this repo's current docs layout and were never carried over — see git history if needed.) The live token wiring is described in [`docs/architecture/frontend.md`](../architecture/frontend.md); this file records _what changed and when_.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grouped under a version (`## [x.y.z] — YYYY-MM-DD`). Until the token layer ships in code, the system is **pre-`0.1.0`** — the spec is authored, the code substrate is not.
+Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grouped under a version (`## [x.y.z] — YYYY-MM-DD`). Live Flutter tokens are **`1.0.0` Cobalt** — semantic keys renamed from Ink & Seal.
 
 **When to bump (the token contract is the version):**
 
@@ -10,9 +10,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grou
 - **Minor** (`0.x.0`) — add a semantic token, primitive, icon-map entry, or new themeable surface; backward-compatible.
 - **Major** (`x.0.0`) — rename/remove a semantic token key or break the `:root`/`.dark` triplet contract (forces a find-replace across consumers).
 
-Every token/primitive entry **must** name the file it lands in (e.g. `app/src/assets/tokens.css`, `app/tailwind.config.js`, `app/src/lib/icons.ts`) so the diff is traceable.
+Every token/primitive entry **must** name the file it lands in (e.g. `client/lib/theme/cobalt.dart`) so the diff is traceable.
 
 ---
+
+## [1.0.0] — 2026-09-18
+
+Major: semantic type renamed **InkSeal → Cobalt**. Seal / celadon / vermilion
+keys are removed, not aliased. Primary action is cobalt-500. Record:
+[`docs/changelogs/2026-09-18-cobalt-flutter-restyle.md`](../changelogs/2026-09-18-cobalt-flutter-restyle.md).
+
+### Changed — token type and values
+
+- [`client/lib/theme/cobalt.dart`](../../client/lib/theme/cobalt.dart) —
+  light + dark palettes from the accepted lock (cobalt-50/200/500/700/950,
+  `#F7F8FA` / `#0B0D12` neutrals).
+- [`client/lib/theme/cobalt_theme.dart`](../../client/lib/theme/cobalt_theme.dart) —
+  ThemeData: cobalt primary, body 17.5, titles 26+, display 48–58, meta 12,
+  Archivo + Noto Sans SC; coach serif is Source Serif 4 + Noto Serif SC.
+- [`client/lib/theme/cobalt_chip.dart`](../../client/lib/theme/cobalt_chip.dart) —
+  shade pills replace chops.
+- [`DESIGN.md`](../../DESIGN.md) rewritten to the Cobalt card lock.
+
+### Removed
+
+- `client/lib/theme/ink_seal.dart`, `ink_seal_theme.dart`, `seal_chip.dart`
+  and live uses of `assets/seals/*.webp`.
 
 ## [0.5.0] — 2026-08-19
 

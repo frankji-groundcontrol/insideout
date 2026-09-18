@@ -13,10 +13,18 @@ import 'package:web/web.dart';
 // they are ready. Poll it until every face the theme uses reports
 // loaded, turning the flash into blank bootstrap time.
 const _faces = [
+  '400 16px "Archivo"',
+  '500 16px "Archivo"',
+  '600 16px "Archivo"',
+  '700 16px "Archivo"',
   '400 16px "Noto Sans SC"',
   '500 16px "Noto Sans SC"',
   '600 16px "Noto Sans SC"',
   '700 16px "Noto Sans SC"',
+  '400 16px "Source Serif 4"',
+  '600 16px "Source Serif 4"',
+  '700 16px "Source Serif 4"',
+  '400 16px "Noto Serif SC"',
   '600 16px "Noto Serif SC"',
   '700 16px "Noto Serif SC"',
 ];
