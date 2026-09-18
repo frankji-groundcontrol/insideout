@@ -9,7 +9,8 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
-| P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **In flight** | User reviews locked Cobalt language + page prototypes. | LOCK screens pinned. Flutter waits. |
+| P1 | [Cobalt Flutter restyle](2026-09-18-cobalt-flutter.md) | **In flight** | Implement the accepted Cobalt lock from the [goal prompt](2026-09-18-cobalt-flutter-goal.md). | Live Flutter is still Ink & Seal. |
+| P1 | [Vibrant Ink & Seal for younger audiences](2026-09-17-vibrant-ink-seal.md) | **Completed** | None — language accepted 2026-09-18; Flutter owned by the Cobalt restyle plan. | Lock screens in [`docs/design-system/cobalt/`](../design-system/cobalt/README.md). |
 | P1 | [Surface parity gaps (API ↔ CLI ↔ MCP)](2026-09-03-surface-parity-gaps.md) | **Completed** | None — 6 gaps + BUG-015 fixed, 46 → 50 tools ([changelog](../changelogs/2026-09-03-surface-parity-gaps.md)). | All fixes live-verified on a scratch local server; client-side only, nothing to deploy beyond the CLI/MCP binaries users rebuild. |
 | P1 | [Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md) | **Completed** | None — 46-tool surface + SKILL.md live ([changelog](../changelogs/2026-08-25-agent-crud-tool-surface.md)). | Idea inbox lifecycle, PRD section edits, evidence read, bootstrapping — 1:1 API ↔ CLI ↔ MCP. |
 | P1 | [Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md) | **Completed** | Operator call: whether to purge the 582 legacy users (destructive). | Deployed 2026-08-25; frank.ji@… sole admin, signup invitation-only ([changelog](../changelogs/2026-08-25-invitation-only-signup.md)). |

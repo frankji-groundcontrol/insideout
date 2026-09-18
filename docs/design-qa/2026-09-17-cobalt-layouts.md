@@ -43,3 +43,14 @@ type (body 17.5) and tighten unused padding.
 The accepted card screens are pinned as `LOCK-home-light.jpg` …
 `LOCK-roadmap.jpg`. Language lives in `DESIGN_LANGUAGE.md` and
 `cobalt-language.html`. Page prototypes stay in `insideout-cobalt.html`.
+
+## Follow-up (2026-09-18)
+
+> yes, use this one for flutter, give me the goal prompt
+
+Cobalt card lock is the Flutter direction. Goal prompt:
+[`docs/plans/2026-09-18-cobalt-flutter-goal.md`](../plans/2026-09-18-cobalt-flutter-goal.md).
+In-repo lock screens:
+[`docs/design-system/cobalt/`](../design-system/cobalt/README.md).
+Implementation plan:
+[`docs/plans/2026-09-18-cobalt-flutter.md`](../plans/2026-09-18-cobalt-flutter.md).

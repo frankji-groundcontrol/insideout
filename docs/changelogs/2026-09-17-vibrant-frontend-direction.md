@@ -22,7 +22,8 @@ change shipped.
   kept; type enlarged to 17.5px. Accepted screens pinned as
   OpenDesign `LOCK-*` references with `DESIGN_LANGUAGE.md` and
   page prototypes in `insideout-cobalt.html`.
-  No Flutter restyle.
+  Accepted for Flutter on 2026-09-18
+  ([follow-on](2026-09-18-cobalt-flutter-lock.md)); no theme shipped yet.
 
 ## Operator
 

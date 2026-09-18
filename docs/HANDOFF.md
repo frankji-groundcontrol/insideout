@@ -7,11 +7,12 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. OpenDesign Cobalt is locked: `LOCK-*.jpg` references,
-   `DESIGN_LANGUAGE.md`, `cobalt-language.html`, and page prototypes
-   in `insideout-cobalt.html`. Next: user accept or request changes.
-   Flutter is unchanged
-   ([plan](plans/2026-09-17-vibrant-ink-seal.md),
+1. Cobalt is accepted for Flutter. Paste
+   [`plans/2026-09-18-cobalt-flutter-goal.md`](plans/2026-09-18-cobalt-flutter-goal.md)
+   into the implementing agent. Lock screens:
+   [`design-system/cobalt/`](design-system/cobalt/README.md). Live
+   client is still Ink & Seal
+   ([plan](plans/2026-09-18-cobalt-flutter.md),
    [QA](design-qa/2026-09-17-cobalt-layouts.md)).
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
