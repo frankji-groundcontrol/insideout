@@ -20,33 +20,42 @@ type Sender struct {
 	apiKey string
 	from   string
 	log    *slog.Logger
-	client *http.Client
+	// devBody opts in to logging the message body in dev mode; off by
+	// default so magic-link tokens never land in logs.
+	devBody bool
+	client  *http.Client
 	// endpoint defaults to the Resend API; tests point it at httptest.
 	endpoint string
 }
 
-func NewSender(apiKey, from string, log *slog.Logger) *Sender {
+func NewSender(apiKey, from string, log *slog.Logger, devBody bool) *Sender {
 	return &Sender{
-		apiKey:    apiKey,
-		from:      from,
-		log:       log,
-		client:    &http.Client{Timeout: 10 * time.Second},
-		endpoint:  resendEndpoint,
+		apiKey:   apiKey,
+		from:     from,
+		log:      log,
+		devBody:  devBody,
+		client:   &http.Client{Timeout: 10 * time.Second},
+		endpoint: resendEndpoint,
 	}
 }
 
 // Enabled reports whether real delivery is configured. False means dev
-// mode: Send logs the message (including any links) and returns nil.
+// mode: Send logs the message — recipient and subject always, the body
+// only when NewSender got devBody — and returns nil.
 func (s *Sender) Enabled() bool {
 	return s.apiKey != ""
 }
 
 // Send delivers (or, in dev mode, logs) a message. The text body should
-// carry the load-bearing content — links included — so it doubles as the
-// readable dev-mode log line.
+// carry the load-bearing content — links included; in dev mode it reaches
+// the log line only when the sender was built with the devBody opt-in.
 func (s *Sender) Send(ctx context.Context, to, subject, text, html string) error {
 	if !s.Enabled() {
-		s.log.Info("mail dev mode — not sent", "to", to, "subject", subject, "text", text)
+		if s.devBody {
+			s.log.Info("mail dev mode — not sent", "to", to, "subject", subject, "text", text)
+		} else {
+			s.log.Info("mail dev mode — not sent", "to", to, "subject", subject)
+		}
 		return nil
 	}
 

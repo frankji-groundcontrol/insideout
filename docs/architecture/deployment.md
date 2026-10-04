@@ -2,9 +2,9 @@
 
 ## docker-compose topology
 
-`docker-compose.yml` at the repo root defines two services:
+`docker-compose.yml` at the repo root defines three services:
 
-- **postgres** — `postgres:17`, the *dedicated-instance* database option.
+- **postgres** — `postgres:18`, the *dedicated-instance* database option.
   Bootstraps as the image's `postgres` superuser, then
   `docker/postgres-init/001-create-app-role.sh` (run once by the image's
   initdb hook) creates the non-superuser `insideout_app` role and makes it
@@ -12,18 +12,23 @@
   superuser.
 - **server** — multi-stage build (`server/Dockerfile`):
   `golang:1.25-alpine` builder → `gcr.io/distroless/static-debian12` runtime
-  (~18 MB image). Requires `DATABASE_URL` and `INSIDEOUT_JWT_SECRET`
-  explicitly (Compose cannot derive `DATABASE_URL` from the postgres vars —
-  nested `${...}` defaults are unsupported, see
+  (~18 MB image), runs as `nonroot` with a `HEALTHCHECK` driven by the
+  binary's own `health` subcommand (distroless ships no shell). Requires
+  `DATABASE_URL` and `INSIDEOUT_JWT_SECRET` explicitly (Compose cannot
+  derive `DATABASE_URL` from the postgres vars — nested `${...}` defaults
+  are unsupported, see
   [BUG-004](../issues/2026-07-20-bug-004-compose-nested-interpolation.md)).
-Railway production `app` is Flutter web:
-[`client/Dockerfile`](../../client/Dockerfile)
-(`ghcr.io/cirruslabs/flutter:3.44.0` → `nginx:1.27-alpine`) with
-[`client/nginx.conf`](../../client/nginx.conf) proxying `/api/` to the
-Go service. Local compose does not build a frontend.
+- **client** — Flutter web build (`client/Dockerfile`:
+  `ghcr.io/cirruslabs/flutter:3.44.0` → `nginxinc/nginx-unprivileged:1.27-alpine`)
+  with [`client/nginx.conf`](../../client/nginx.conf) rendered from a
+  template at container start, proxying `/api/` to `$NGINX_API_UPSTREAM`
+  (`http://server:8080` in compose). The same Dockerfile is Railway's
+  production `app` service (upstream default baked as
+  `http://server.railway.internal:8080`).
 
 Ports (host side, all overridable): postgres `POSTGRES_PORT` (default 5442),
-server `SERVER_PORT` (default 8080).
+server `SERVER_PORT` (default 8080), client `CLIENT_PORT` (default 5173,
+matching the default `INSIDEOUT_PUBLIC_URL`).
 
 ## Database provisioning models
 

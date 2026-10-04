@@ -3,6 +3,7 @@
 //	insideout            run the HTTP server
 //	insideout migrate     apply pending SQL migrations and exit
 //	insideout seed        create demo data for local development
+//	insideout health      container HEALTHCHECK: probe /healthz over loopback
 //	insideout login       product CLI: exchange credentials for a token
 //	insideout whoami      product CLI: GET /me
 //	insideout workspaces  product CLI: GET /workspaces

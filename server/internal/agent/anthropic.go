@@ -108,10 +108,12 @@ type anthropicErrorBody struct {
 
 // StreamChat retries transient failures once — 429 (honoring Retry-After,
 // capped) and 5xx/connect refusal (fixed short backoff) — with jitter, per
-// the taxonomy in docs/plans/2026-07-21-prd-agent-harness/plan.md §5.2.
-// Every other classified error (context length, config, refusal,
-// context.Canceled) is never retried here. tool_choice forces the model
-// to call exactly that tool when set (used by the critic — see critic.go).
+// the taxonomy in docs/plans/2026-07-21-prd-agent-harness/plan.md §5.2,
+// but only while no delta has been emitted (a retry would replay text the
+// client has already seen). Every other classified error (context length,
+// config, refusal, context.Canceled) is never retried here. tool_choice
+// forces the model to call exactly that tool when set (used by the critic
+// — see critic.go).
 func (a *AnthropicStreamer) StreamChat(ctx context.Context, system string, msgs []Message, tools []Tool, onDelta func(string)) (Turn, error) {
 	return a.streamChat(ctx, system, msgs, tools, "", onDelta)
 }

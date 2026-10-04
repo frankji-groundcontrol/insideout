@@ -13,6 +13,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// registerAuthRoutes mounts the auth endpoints. POSTs on the login /
+// register / refresh / magic-link / login-code family are rate-limited by
+// withAuthThrottle (auth_throttle.go): failure lockouts per email+IP on the
+// credential checks, send caps per email+IP on the mail-sending endpoints,
+// and a per-IP backstop on all of them. Logout and the public config
+// endpoint stay unlimited.
 func (s *Server) registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/register", s.handleRegister)
 	mux.HandleFunc("POST /api/v1/auth/login", s.handleLogin)

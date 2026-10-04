@@ -24,16 +24,33 @@ import (
 const idleStreamTimeout = 90 * time.Second
 
 // streamChat retries transient failures once — 429 (honoring Retry-After,
-// capped) and 5xx/connect refusal (fixed short backoff) — with jitter.
-// Every other classified error (context length, config, refusal,
-// context.Canceled) is never retried here.
+// capped) and 5xx/connect refusal (fixed short backoff) — with jitter,
+// but only while no delta has been emitted: retrying a turn that already
+// streamed would replay text the client has seen. Every other classified
+// error (context length, config, refusal, context.Canceled) is never
+// retried here.
 func (a *AnthropicStreamer) streamChat(ctx context.Context, system string, msgs []Message, tools []Tool, forceTool string, onDelta func(string)) (Turn, error) {
-	return retryStreamChat(ctx, func(ctx context.Context) (Turn, error) {
-		return a.doStreamChat(ctx, system, msgs, tools, forceTool, onDelta)
+	streamed := 0
+	countDelta := func(d string) {
+		if onDelta == nil {
+			return
+		}
+		streamed++
+		onDelta(d)
+	}
+	return retryStreamChat(ctx, func() bool { return streamed == 0 }, func(ctx context.Context) (Turn, error) {
+		return a.doStreamChat(ctx, system, msgs, tools, forceTool, countDelta)
 	})
 }
 
-func retryStreamChat(ctx context.Context, do func(context.Context) (Turn, error)) (Turn, error) {
+// retryStreamChat runs do, and retries it once when do fails with a
+// retryable classification: 429 (honoring Retry-After, capped) or
+// 5xx/connect refusal (fixed short backoff), both with jitter. Between
+// attempts it consults canRetry — callers gate it on "no bytes emitted
+// yet", since a retry after output went out would replay it. Every other
+// classified error (context length, config, refusal, context.Canceled)
+// is never retried here.
+func retryStreamChat(ctx context.Context, canRetry func() bool, do func(context.Context) (Turn, error)) (Turn, error) {
 	var lastErr error
 	for attempt := 0; attempt < 2; attempt++ {
 		turn, err := do(ctx)
@@ -53,6 +70,9 @@ func retryStreamChat(ctx context.Context, do func(context.Context) (Turn, error)
 		}
 		if attempt == 1 {
 			break
+		}
+		if !canRetry() {
+			return Turn{}, lastErr
 		}
 		wait += time.Duration(rand.Int64N(int64(500 * time.Millisecond)))
 		select {

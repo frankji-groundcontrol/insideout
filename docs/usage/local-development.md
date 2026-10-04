@@ -65,7 +65,7 @@ This is the recommended default for local dev (see the recipes in
 Two provisioning models, same migrations:
 
 **(a) Bundled docker-compose Postgres** — `docker compose up -d postgres`
-brings up `postgres:17` on host port `${POSTGRES_PORT:-5442}`. On first boot,
+brings up `postgres:18` on host port `${POSTGRES_PORT:-5442}`. On first boot,
 `docker/postgres-init/001-create-app-role.sh` creates a non-superuser
 `insideout_app` role and makes it OWNER of the `insideout` database. Point
 `DATABASE_URL` at it:

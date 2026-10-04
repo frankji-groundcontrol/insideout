@@ -53,6 +53,10 @@ type Config struct {
 	// MailFrom is the Resend-verified From address, e.g.
 	// "InsideOut <noreply@example.com>".
 	MailFrom string
+	// MailDevBody opts in to logging the message body when the sender runs
+	// in dev mode (no MailAPIKey). Off by default so magic-link tokens in
+	// the body never land in logs.
+	MailDevBody bool
 	// PublicURL is the browser origin of the Flutter app, used to build
 	// the links inside emailed magic/reset links. Defaults to the local
 	// Flutter dev origin.
@@ -75,6 +79,7 @@ func Load() (*Config, error) {
 		GithubPrivateKeyFile: os.Getenv("INSIDEOUT_GH_PRIVATE_KEY_FILE"),
 		MailAPIKey:           os.Getenv("INSIDEOUT_MAIL_API_KEY"),
 		MailFrom:             getenv("INSIDEOUT_MAIL_FROM", "InsideOut <onboarding@resend.dev>"),
+		MailDevBody:          os.Getenv("INSIDEOUT_MAIL_DEV_BODY") == "1",
 		PublicURL:            strings.TrimRight(getenv("INSIDEOUT_PUBLIC_URL", "http://localhost:5173"), "/"),
 	}
 
@@ -97,6 +102,9 @@ func Load() (*Config, error) {
 	}
 	if len(c.JWTSecret) < 32 {
 		return nil, fmt.Errorf("config: INSIDEOUT_JWT_SECRET must be at least 32 characters")
+	}
+	if c.MailAPIKey != "" && os.Getenv("INSIDEOUT_PUBLIC_URL") == "" {
+		return nil, fmt.Errorf("config: INSIDEOUT_PUBLIC_URL is required when INSIDEOUT_MAIL_API_KEY is set — emailed magic-link and reset links would otherwise point at the localhost default %q", c.PublicURL)
 	}
 	switch c.AISchema {
 	case "messages", "responses":

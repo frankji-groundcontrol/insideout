@@ -4,6 +4,14 @@
 [email-auth slice](../changelogs/2026-08-24-email-auth.md) to keep it
 additive and pattern-matched to the existing password login.
 
+**Resolved 2026-10-04** by remediation wave 2 — see
+[the changelog](../changelogs/2026-10-04-remediation-wave-2.md): in-memory
+per-IP + per-account throttle (`auth_throttle.go`: 8 failures → 15-min
+credential lockout, 3 sends / 10 min / email+IP cap, per-IP volume caps,
+uniform 429 + `Retry-After`) plus a 60 s per-email + per-IP resend cooldown
+on the send endpoints (`auth_cooldown.go`). Locked responses are identical
+for known and unknown emails, so no enumeration oracle.
+
 ## Problem
 
 None of the auth request endpoints throttle by IP or email:

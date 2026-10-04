@@ -35,12 +35,17 @@ type Server struct {
 	// mail sends transactional email (magic links, password reset);
 	// without an API key it logs messages instead of delivering them.
 	mail *mail.Sender
+	// authThrottle limits brute-force and email-bomb volume on the auth
+	// endpoints (per email+IP and per IP); see auth_throttle.go.
+	authThrottle *authThrottle
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
 	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner,
-		presence: presence.New(30*time.Second, nil),
-		mail:     mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log)}
+		presence:     presence.New(30*time.Second, nil),
+		mail:         mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log, cfg.MailDevBody),
+		authThrottle: newAuthThrottle(defaultThrottleConfig(), time.Now),
+	}
 	// GitHub App installation tokens for guide loading; nil disables the
 	// token path (public repos still load unauthenticated).
 	if cfg.GithubAppID != "" {
@@ -73,6 +78,9 @@ func (s *Server) Handler() http.Handler {
 
 	var h http.Handler = mux
 	h = s.withMaxBody(h)
+	// Auth-endpoint rate limiting sits inside recover/logging so throttled
+	// requests are still logged and a throttle bug can't 500 the server.
+	h = s.withAuthThrottle(h)
 	h = s.withRecover(h)
 	h = s.withLogging(h)
 	h = s.withRequestID(h)

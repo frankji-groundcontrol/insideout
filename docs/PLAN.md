@@ -14,7 +14,7 @@
 | Backend | Go 1.25+, stdlib `net/http` (1.22+ method routing), `pgx/v5`, `golang-jwt/v5`, argon2id |
 | Agent | Direct Anthropic Messages API client (`server/internal/agent/anthropic.go`), SSE streaming, four-stage state machine (clarify/draft/critique/finalize) |
 | Frontend | Flutter 3 Material 3 (`client/`), go_router, Dio, zh-CN default / en-US |
-| Deployment | docker-compose (postgres:17 + server), Railway Flutter web + Go, or point `DATABASE_URL` at any PostgreSQL 14+ instance |
+| Deployment | docker-compose (postgres:18 + server + client), Railway Flutter web + Go, or point `DATABASE_URL` at any PostgreSQL 14+ instance |
 
 ## Repository layout
 

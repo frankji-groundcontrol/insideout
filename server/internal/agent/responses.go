@@ -47,14 +47,30 @@ func NewResponsesStreamer(baseURL, authToken, model string) (*ResponsesStreamer,
 func (s *ResponsesStreamer) Model() string { return s.model }
 
 func (s *ResponsesStreamer) StreamChat(ctx context.Context, system string, msgs []Message, tools []Tool, onDelta func(string)) (Turn, error) {
-	return retryStreamChat(ctx, func(ctx context.Context) (Turn, error) {
-		return s.doStream(ctx, system, msgs, tools, "", onDelta)
+	streamed := 0
+	countDelta := func(d string) {
+		if onDelta == nil {
+			return
+		}
+		streamed++
+		onDelta(d)
+	}
+	return retryStreamChat(ctx, func() bool { return streamed == 0 }, func(ctx context.Context) (Turn, error) {
+		return s.doStream(ctx, system, msgs, tools, "", countDelta)
 	})
 }
 
 func (s *ResponsesStreamer) StreamChatForcingTool(ctx context.Context, system string, msgs []Message, tool Tool, onDelta func(string)) (Turn, error) {
-	return retryStreamChat(ctx, func(ctx context.Context) (Turn, error) {
-		return s.doStream(ctx, system, msgs, []Tool{tool}, tool.Name, onDelta)
+	streamed := 0
+	countDelta := func(d string) {
+		if onDelta == nil {
+			return
+		}
+		streamed++
+		onDelta(d)
+	}
+	return retryStreamChat(ctx, func() bool { return streamed == 0 }, func(ctx context.Context) (Turn, error) {
+		return s.doStream(ctx, system, msgs, []Tool{tool}, tool.Name, countDelta)
 	})
 }
 

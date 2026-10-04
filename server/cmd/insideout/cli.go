@@ -37,6 +37,9 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		}
 	}
 	switch cmd {
+	case "health":
+		// Container probe: no API client, no flags — see cli_health.go.
+		return true, runHealthCommand()
 	case "ideas", "evidence", "join":
 		return runCrudCommand(cmd, rest, apiBase)
 	case "roadmap":

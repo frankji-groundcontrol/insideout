@@ -24,12 +24,18 @@ type emailOnlyRequest struct {
 }
 
 // handleMagicLinkRequest emails a one-time sign-in link. The response is a
-// uniform 200 whether or not the account exists — the endpoint must not
-// leak account enumeration, and a mail-provider failure is logged, not
-// surfaced, for the same reason.
+// uniform 200 whether or not the account exists or the resend cooldown
+// blocked the send — the endpoint must not leak account enumeration, and
+// a mail-provider failure is logged, not surfaced, for the same reason.
 func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) {
 	email, ok := s.decodeEmail(w, r)
 	if !ok {
+		return
+	}
+	if !authSendCooldown.allow(email, cooldownClientIP(r)) {
+		// Cooldown hit: same uniform 200 as every other outcome, so the
+		// gate never leaks whether the account exists or a mail went out.
+		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}
 
@@ -97,10 +103,14 @@ func (s *Server) handleMagicLinkConsume(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleForgotPassword emails a one-time password-reset link. Same
-// uniform-200 contract as the magic-link request.
+// uniform-200 contract as the magic-link request, including on cooldown.
 func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	email, ok := s.decodeEmail(w, r)
 	if !ok {
+		return
+	}
+	if !authSendCooldown.allow(email, cooldownClientIP(r)) {
+		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}
 
@@ -181,10 +191,14 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLoginCodeRequest emails a 6-digit sign-in code. Same uniform-200
-// no-enumeration contract as the magic-link request.
+// no-enumeration contract as the magic-link request, including on cooldown.
 func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) {
 	email, ok := s.decodeEmail(w, r)
 	if !ok {
+		return
+	}
+	if !authSendCooldown.allow(email, cooldownClientIP(r)) {
+		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}
 

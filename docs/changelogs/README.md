@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-04 — Remediation Wave 2](2026-10-04-remediation-wave-2.md)
+  — auth throttle + resend cooldown (closes 2026-08-24), mail-log hygiene,
+  streaming retry guard, env-tunable AI limits, SSE write errors,
+  unprivileged containers with healthchecks, client joins compose,
+  postgres 18.
 - [2026-10-04 — Remediation Waves 0–1](2026-10-04-remediation-wave-0-1.md)
   — invite-link, CORS, and 401-refresh client unblocks (TDD); compose/env/
   records honesty pass; redaction sweep; CLI/MCP default API now localhost.

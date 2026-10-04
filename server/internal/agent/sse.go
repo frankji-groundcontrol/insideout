@@ -31,28 +31,37 @@ func newSSEWriter(w http.ResponseWriter) (*sseWriter, bool) {
 	return sw, true
 }
 
-func (s *sseWriter) event(name string, data any) {
+// event writes one framed SSE event and returns the write error, so
+// callers can abort the turn when the client is gone mid-stream.
+func (s *sseWriter) event(name string, data any) error {
 	b, err := json.Marshal(data)
 	if err != nil {
 		b = []byte(`{}`)
 	}
-	fmt.Fprintf(s.w, "event: %s\ndata: %s\n\n", name, b)
+	if _, err := fmt.Fprintf(s.w, "event: %s\ndata: %s\n\n", name, b); err != nil {
+		return err
+	}
 	s.flusher.Flush()
+	return nil
 }
 
-func (s *sseWriter) messageStart(id string) { s.event("message_start", map[string]string{"id": id}) }
-func (s *sseWriter) delta(text string)      { s.event("delta", map[string]string{"text": text}) }
-func (s *sseWriter) prdUpdated(section string) {
-	s.event("prd_updated", map[string]string{"section": section})
+func (s *sseWriter) messageStart(id string) error {
+	return s.event("message_start", map[string]string{"id": id})
 }
-func (s *sseWriter) factRecorded(f Fact) {
-	s.event("fact_recorded", map[string]string{"id": f.ID, "kind": f.Kind, "text": f.Text, "status": f.Status})
+func (s *sseWriter) delta(text string) error {
+	return s.event("delta", map[string]string{"text": text})
 }
-func (s *sseWriter) criticFindings(findings []CriticFinding) {
+func (s *sseWriter) prdUpdated(section string) error {
+	return s.event("prd_updated", map[string]string{"section": section})
+}
+func (s *sseWriter) factRecorded(f Fact) error {
+	return s.event("fact_recorded", map[string]string{"id": f.ID, "kind": f.Kind, "text": f.Text, "status": f.Status})
+}
+func (s *sseWriter) criticFindings(findings []CriticFinding) error {
 	if len(findings) == 0 {
-		return
+		return nil
 	}
-	s.event("critic_findings", map[string]any{"findings": findings})
+	return s.event("critic_findings", map[string]any{"findings": findings})
 }
 func (s *sseWriter) stageChanged(stage string) {
 	s.event("stage_changed", map[string]string{"stage": stage})

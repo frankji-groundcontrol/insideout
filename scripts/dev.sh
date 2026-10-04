@@ -62,6 +62,11 @@ set +a
 # (any loopback port) for the server unless the user set one explicitly.
 if [ "$dir" = "server" ]; then
   export INSIDEOUT_CORS_ORIGINS="${INSIDEOUT_CORS_ORIGINS:-localhost}"
+  # Mail dev mode logs the message body only with this opt-in; default it on
+  # locally so magic links stay copyable from the logs. Deployed hosts leave
+  # it unset and get recipient+subject only.
+  # 本地默认开启邮件正文日志，便于从日志复制 magic link；部署环境默认关闭。
+  export INSIDEOUT_MAIL_DEV_BODY="${INSIDEOUT_MAIL_DEV_BODY:-1}"
 fi
 
 cd "$repo/$dir"

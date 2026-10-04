@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,11 +41,30 @@ const tightenedHistoryLimit = 6
 // and replayed into future context — as a finished response (F13).
 const truncatedMarker = "\n\n[response truncated — hit the token limit; ask me to continue]"
 
-// AI_MAX_CONCURRENT / AI_QUEUE_WAIT defaults — see plan §9 open question 2.
+// Defaults for the AI concurrency limits, overridable via
+// INSIDEOUT_AI_MAX_CONCURRENT and INSIDEOUT_AI_QUEUE_WAIT (see
+// aiConcurrencyLimits) — see plan §9 open question 2.
 const (
 	defaultMaxConcurrent = 4
 	defaultQueueWait     = 15 * time.Second
 )
+
+// aiConcurrencyLimits resolves the permit-pool size and queue timeout from
+// INSIDEOUT_AI_MAX_CONCURRENT and INSIDEOUT_AI_QUEUE_WAIT, falling back to
+// the defaults above when a variable is unset or doesn't parse.
+func aiConcurrencyLimits() (int, time.Duration) {
+	maxConcurrent := defaultMaxConcurrent
+	if v, err := strconv.Atoi(os.Getenv("INSIDEOUT_AI_MAX_CONCURRENT")); err == nil && v > 0 {
+		maxConcurrent = v
+	}
+	queueWait := defaultQueueWait
+	if v := os.Getenv("INSIDEOUT_AI_QUEUE_WAIT"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil && d > 0 {
+			queueWait = d
+		}
+	}
+	return maxConcurrent, queueWait
+}
 
 // persistTimeout bounds the detached terminal writes (cleanup/persist) that
 // must survive a client disconnect but must not outlive the process. Without a
@@ -62,14 +83,16 @@ func detachedContext(ctx context.Context) (context.Context, context.CancelFunc) 
 }
 
 type Coach struct {
-	store    *store.Store
-	streamer ChatStreamer
-	log      *slog.Logger
-	dispatch *dispatcher
+	store     *store.Store
+	streamer  ChatStreamer
+	log       *slog.Logger
+	dispatch  *dispatcher
+	queueWait time.Duration // permit queue timeout, surfaced as the 503 retry hint
 }
 
 func New(st *store.Store, streamer ChatStreamer, log *slog.Logger) *Coach {
-	return &Coach{store: st, streamer: streamer, log: log, dispatch: newDispatcher(defaultMaxConcurrent, defaultQueueWait)}
+	maxConcurrent, queueWait := aiConcurrencyLimits()
+	return &Coach{store: st, streamer: streamer, log: log, dispatch: newDispatcher(maxConcurrent, queueWait), queueWait: queueWait}
 }
 
 // HandleMessage implements the api.Coach interface. Rate-limit and
@@ -125,7 +148,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	release, waited, ok := c.dispatch.acquirePermit()
 	if !ok {
 		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service is busy, try again shortly", "CIRCUIT_OPEN", map[string]interface{}{
-			"retry_after_seconds": int(defaultQueueWait.Seconds()),
+			"retry_after_seconds": int(c.queueWait.Seconds()),
 		})
 		return
 	}
@@ -169,7 +192,13 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	sse.messageStart(assistantMsg.ID.String())
+	if err := sse.messageStart(assistantMsg.ID.String()); err != nil {
+		// Client already gone before the first byte — same handling as a
+		// mid-stream disconnect: fail the turn, no circuit result.
+		c.log.Error("sse: message_start write failed", "error", err)
+		c.failTurn(ctx, userID, run.ID, fmt.Errorf("client write failed: %w", context.Canceled), sse)
+		return
+	}
 
 	// Terminal-state guarantee: unless the turn explicitly succeeds below,
 	// this defer marks it failed (panic included) and persists whatever
@@ -206,23 +235,43 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	history = append(history, Message{Role: RoleUser, Content: content})
 
 	sectionUpdated := false
+	// streamCtx lets a failed SSE write abort the in-flight provider
+	// stream: once the client is gone there is nothing left to stream to.
+	streamCtx, cancelStream := context.WithCancel(ctx)
+	defer cancelStream()
+	var sseErr error // first SSE write failure, surfaced after runLoop
+
 	executor := &toolExecutor{
 		store: c.store, actorID: userID, prdID: conv.PrdID, conversationID: conversationID, currentStage: conv.Stage,
 		userMessages: userTexts(history),
 		onSectionWrite: func(section string) {
 			sectionUpdated = true
-			sse.prdUpdated(section)
+			if err := sse.prdUpdated(section); err != nil && sseErr == nil {
+				sseErr = err
+				cancelStream()
+			}
 		},
-		onStageChange:  sse.stageChanged,
-		onFactRecorded: sse.factRecorded,
+		onStageChange: sse.stageChanged,
+		onFactRecorded: func(f Fact) {
+			if err := sse.factRecorded(f); err != nil && sseErr == nil {
+				sseErr = err
+				cancelStream()
+			}
+		},
 	}
 
 	onDelta := func(s string) {
+		if sseErr != nil {
+			return
+		}
 		streamed.WriteString(s)
-		sse.delta(s)
+		if err := sse.delta(s); err != nil {
+			sseErr = err
+			cancelStream()
+		}
 	}
 
-	finalText, loopErr := c.runLoop(ctx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, history, executor, onDelta)
+	finalText, loopErr := c.runLoop(streamCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, history, executor, onDelta)
 	// One auto-tighten attempt on a context-length failure: rebuild with a much
 	// smaller window, same stage/prd (the ledger, once H2 lands, rides along
 	// inside systemPrompt). Only retry when NOTHING has reached the client yet
@@ -239,8 +288,16 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		tightHistory, herr := c.loadHistory(ctx, userID, conversationID, tightenedHistoryLimit)
 		if herr == nil {
 			tightHistory = append(tightHistory, Message{Role: RoleUser, Content: content})
-			finalText, loopErr = c.runLoop(ctx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, tightHistory, executor, onDelta)
+			finalText, loopErr = c.runLoop(streamCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, tightHistory, executor, onDelta)
 		}
+	}
+	if sseErr != nil {
+		// An SSE write failed mid-turn — the client is gone. Same handling
+		// as a disconnect (failTurn's context.Canceled case): no error
+		// event, no circuit result; the defer persists what streamed.
+		c.log.Error("sse: client write failed, aborting turn", "error", sseErr)
+		c.failTurn(ctx, userID, run.ID, fmt.Errorf("client write failed: %w", context.Canceled), sse)
+		return
 	}
 	if loopErr != nil {
 		c.failTurn(ctx, userID, run.ID, loopErr, sse)

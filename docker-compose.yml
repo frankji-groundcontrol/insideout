@@ -3,7 +3,7 @@ services:
   # remote instance instead (e.g. during development) — see .env.example.
   # 自托管默认项。当 DATABASE_URL 指向外部远程实例时（如开发期间）不使用此服务——见 .env.example。
   postgres:
-    image: postgres:17
+    image: postgres:18
     container_name: insideout_postgres
     restart: unless-stopped
     environment:
@@ -26,7 +26,11 @@ services:
       # documented default, so the bundled DB must not listen on all interfaces.
       - "127.0.0.1:${POSTGRES_PORT:-5442}:5432"
     volumes:
-      - insideout_pgdata:/var/lib/postgresql/data
+      # postgres:18 stores data in a versioned subdir (PGDATA defaults to
+      # /var/lib/postgresql/18/docker) — mount the parent directory. Not
+      # in-place compatible with a postgres:17 volume: wipe it
+      # (docker compose down -v) or pg_upgrade.
+      - insideout_pgdata:/var/lib/postgresql
       - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d insideout"]
@@ -57,8 +61,79 @@ services:
       INSIDEOUT_LLM_API_KEY: ${INSIDEOUT_LLM_API_KEY:-}
       INSIDEOUT_LLM_MODEL: ${INSIDEOUT_LLM_MODEL:-claude-sonnet-4-20250514}
       INSIDEOUT_LLM_SCHEMA: ${INSIDEOUT_LLM_SCHEMA:-messages}
+      # AI turn concurrency ceiling / how long a queued turn waits before
+      # rejection (empty = server defaults 4 / 15s).
+      INSIDEOUT_AI_MAX_CONCURRENT: ${INSIDEOUT_AI_MAX_CONCURRENT:-}
+      INSIDEOUT_AI_QUEUE_WAIT: ${INSIDEOUT_AI_QUEUE_WAIT:-}
+      # Transactional email (Resend). An empty INSIDEOUT_MAIL_API_KEY is a
+      # deliberate dev posture: the sender logs recipient+subject instead of
+      # delivering (full bodies only with INSIDEOUT_MAIL_DEV_BODY=1 — never
+      # on a deployed host). MAIL_FROM / PUBLIC_URL fall back to the
+      # server-side defaults (Resend sandbox sender / http://localhost:5173)
+      # when unset; set PUBLIC_URL to the browser origin that serves the
+      # Flutter app — required by config validation once a mail key is set.
+      INSIDEOUT_MAIL_API_KEY: ${INSIDEOUT_MAIL_API_KEY:-}
+      INSIDEOUT_MAIL_FROM: ${INSIDEOUT_MAIL_FROM:-InsideOut <onboarding@resend.dev>}
+      INSIDEOUT_PUBLIC_URL: ${INSIDEOUT_PUBLIC_URL:-}
+      INSIDEOUT_MAIL_DEV_BODY: ${INSIDEOUT_MAIL_DEV_BODY:-}
+      # Browser-facing knobs: exact Origin allow-list for cross-origin
+      # Flutter web (empty = off); permissive dev CORS (only the exact
+      # value 1 turns it on — never in production); Secure auth cookies
+      # (only the exact value 0 disables them, for plain-http testing);
+      # access/refresh token lifetimes (Go durations).
+      INSIDEOUT_CORS_ORIGINS: ${INSIDEOUT_CORS_ORIGINS:-}
+      INSIDEOUT_DEV_CORS: ${INSIDEOUT_DEV_CORS:-}
+      INSIDEOUT_COOKIE_SECURE: ${INSIDEOUT_COOKIE_SECURE:-}
+      INSIDEOUT_ACCESS_TTL: ${INSIDEOUT_ACCESS_TTL:-15m}
+      INSIDEOUT_REFRESH_TTL: ${INSIDEOUT_REFRESH_TTL:-720h}
+      # GitHub integration. The webhook secret verifies HMAC of POST
+      # /api/v1/hooks/github; APP_ID + PRIVATE_KEY mint installation access
+      # tokens (PRIVATE_KEY is the .pem with \n-escaped newlines;
+      # PRIVATE_KEY_FILE wins when set). All empty = webhook disabled
+      # (503), guide loads unauthenticated (public repos only). GITHUB_TOKEN
+      # raises the commit-sync rate limit; empty keeps the unauthenticated
+      # one.
+      INSIDEOUT_GH_WEBHOOK_SECRET: ${INSIDEOUT_GH_WEBHOOK_SECRET:-}
+      INSIDEOUT_GH_APP_ID: ${INSIDEOUT_GH_APP_ID:-}
+      INSIDEOUT_GH_PRIVATE_KEY: ${INSIDEOUT_GH_PRIVATE_KEY:-}
+      INSIDEOUT_GH_PRIVATE_KEY_FILE: ${INSIDEOUT_GH_PRIVATE_KEY_FILE:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     ports:
       - "${SERVER_PORT:-8080}:8080"
+    healthcheck:
+      # distroless ships no shell or curl: the binary self-probes via its
+      # `health` subcommand (port derived from INSIDEOUT_ADDR above).
+      # start_period covers first-boot migrations, which precede listen.
+      test: ["CMD", "/insideout", "health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  client:
+    build:
+      context: ./client
+    container_name: insideout_client
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      # /api/ upstream for nginx (default.conf.template is envsubst'd at
+      # container start): the compose `server` service, instead of the
+      # Dockerfile-baked Railway private hostname.
+      NGINX_API_UPSTREAM: http://server:8080
+    ports:
+      # nginx-unprivileged listens on 8080 in-container. The 5173 default
+      # keeps the server's default INSIDEOUT_PUBLIC_URL
+      # (http://localhost:5173) truthful for emailed links on this host.
+      - "${CLIENT_PORT:-5173}:8080"
+    healthcheck:
+      # busybox wget against nginx's /healthz stub (client/nginx.conf).
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   insideout_pgdata:

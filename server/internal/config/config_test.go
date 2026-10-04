@@ -95,3 +95,53 @@ func TestLoadRejectsUnknownLLMSchema(t *testing.T) {
 		t.Fatal("expected invalid schema to fail")
 	}
 }
+
+func TestLoadRejectsMailKeyWithoutPublicURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+	t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+	t.Setenv("INSIDEOUT_MAIL_API_KEY", "re-test-key")
+	t.Setenv("INSIDEOUT_PUBLIC_URL", "")
+	if _, err := Load(); err == nil {
+		t.Fatal("expected mail key without INSIDEOUT_PUBLIC_URL to fail")
+	}
+}
+
+func TestLoadAcceptsMailKeyWithPublicURL(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+	t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+	t.Setenv("INSIDEOUT_MAIL_API_KEY", "re-test-key")
+	t.Setenv("INSIDEOUT_PUBLIC_URL", "https://app.example.com")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.PublicURL != "https://app.example.com" {
+		t.Fatalf("PublicURL = %q", cfg.PublicURL)
+	}
+}
+
+func TestLoadMailDevBodyDefaultsFalse(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+	t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+	t.Setenv("INSIDEOUT_MAIL_DEV_BODY", "")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.MailDevBody {
+		t.Fatal("MailDevBody should default to false")
+	}
+}
+
+func TestLoadMailDevBodyParsesOne(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+	t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+	t.Setenv("INSIDEOUT_MAIL_DEV_BODY", "1")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !cfg.MailDevBody {
+		t.Fatal(`MailDevBody should be true with INSIDEOUT_MAIL_DEV_BODY=1`)
+	}
+}

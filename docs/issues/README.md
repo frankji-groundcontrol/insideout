@@ -78,10 +78,10 @@ records continue the numbering (next: BUG-016).
   — transport + roadmap/GitHub + PRD/agent verbs mixed at ~478 lines;
   target three-way split with a bounded, test-pinned fix prompt.
 - [2026-08-24 — Auth endpoints have no rate limiting or failed-attempt lockout](2026-08-24-auth-endpoints-no-rate-limiting.md)
-  — login, magic-link, and forgot-password are enumeration-safe but
-  unthrottled: unlimited password guesses and unlimited link emails
-  (Resend spend / inbox bombing). Target design and constraints inside;
-  deferred from the email-auth slice.
+  — **resolved 2026-10-04** in remediation wave 2: per-IP + per-account
+  throttle (`auth_throttle.go`; 8 failures → 15-min lockout, uniform 429 +
+  `Retry-After`) plus a 60 s per-email + per-IP resend cooldown
+  (`auth_cooldown.go`). Was: unlimited password guesses and link emails.
 - [2026-07-29 — env.sh over the ~350-line modular-file budget](2026-07-29-envsh-line-budget.md)
   — **resolved 2026-07-30**: split at the next structural touch, as planned,
   into `env.sh` / `env-lib.sh` / `env-write.sh` (227 / 110 / 278 lines). The
@@ -113,9 +113,10 @@ records continue the numbering (next: BUG-016).
   — the items NOT fixed in the 2026-07-26 optimization pass. Six were resolved
   in the [2026-07-27 hardening pass](../changelogs/2026-07-27-security-hardening-pass.md)
   (invite-code keyspace, ConvertIdea race, PRD CAS race, EnsureProject race,
-  GitHub sync N+1, provider error leaks); still open: auth rate-limiting +
-  argon2 timing, `loadHistory` over-fetch, the `ai_runs` reaper index, the
-  `ListWorkspacesForUser` correlated count, and the join-endpoint rate limit.
+  GitHub sync N+1, provider error leaks); auth rate-limiting resolved
+  2026-10-04 (remediation wave 2); still open: argon2 timing, `loadHistory`
+  over-fetch, the `ai_runs` reaper index, the `ListWorkspacesForUser`
+  correlated count, and the join-endpoint rate limit.
 - [2026-07-21 — Tracked coding-tool scratch directories](2026-07-21-tracked-tool-scratch-dirs.md)
   — **resolved 2026-07-27**: `.sisyphus/`, `.trae/`, `review/` (JuanLeMe-era
   tool scratch) untracked, gitignored, and purged from history. See the

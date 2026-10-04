@@ -5,24 +5,27 @@ For developer setup, see [local-development.md](local-development.md).
 
 ## Topology
 
-`docker-compose.yml` defines two services. Flutter is not in compose
-(local `flutter run`, or Railway `app`):
+`docker-compose.yml` defines three services — `postgres`, `server`, and
+`client` (Flutter web + nginx). Local `flutter run` and the hosted Railway
+`app` remain alternatives to the compose `client`:
 
 ```
-browser ── flutter run / hosted nginx ──> server (Go API, :8080)
-                                            │  DATABASE_URL
-                                            ▼
-                                          postgres (optional)
+browser ──> client (Flutter web + nginx, :8080) ── /api/ ──> server (Go API, :8080)
+                                                               │  DATABASE_URL
+                                                               ▼
+                                                             postgres (optional)
 ```
 
 | Service | Image / build | Container port | Host port |
 |---------|---------------|----------------|-----------|
-| `postgres` | `postgres:17` | 5432 | `127.0.0.1:${POSTGRES_PORT:-5442}` (localhost only) |
-| `server` | built from `server/` (golang:1.25 → distroless/static) | 8080 | `${SERVER_PORT:-8080}` |
+| `postgres` | `postgres:18` | 5432 | `127.0.0.1:${POSTGRES_PORT:-5442}` (localhost only) |
+| `server` | built from `server/` (golang:1.25 → distroless/static, runs as nonroot) | 8080 | `${SERVER_PORT:-8080}` |
+| `client` | built from `client/` (Flutter build → nginx-unprivileged) | 8080 | `${CLIENT_PORT:-5173}` |
 
 The bundled `postgres` service is the self-hosted default. When
 `DATABASE_URL` points at an external instance instead, simply don't start it
-(`docker compose up -d server`).
+(`docker compose up -d server client`). Both app containers run
+unprivileged and self-report health (`/insideout health`; nginx `/healthz`).
 
 ## Environment (compose reads `.env`)
 
@@ -45,6 +48,7 @@ Optional, with defaults:
 | `POSTGRES_SUPERUSER_PASSWORD` | `insideout_dev_password` | postgres bootstrap superuser — **change it** |
 | `POSTGRES_PORT` | `5442` | host port for postgres |
 | `SERVER_PORT` | `8080` | host port for the Go API |
+| `CLIENT_PORT` | `5173` | host port for the client (Flutter web + nginx); matches the default `INSIDEOUT_PUBLIC_URL` |
 | `INSIDEOUT_LLM_BASE_URL` / `INSIDEOUT_LLM_API_KEY` | empty key | AI provider; empty key = offline template-reply coach. Include `/v1` on the base URL. |
 | `INSIDEOUT_LLM_MODEL` | `claude-sonnet-4-20250514` | model id |
 | `INSIDEOUT_LLM_SCHEMA` | `messages` | `messages` or `responses` |
@@ -136,9 +140,11 @@ On `app`:
 
 - `PORT=8080` so nginx matches the Railway domain target port
 - The Flutter image bakes `API_BASE=/api/v1`. nginx
-  [`client/nginx.conf`](../../client/nginx.conf) proxies `/api/` to
-  `http://server.railway.internal:8080/api/` (literal hostname, buffering
-  off).
+  [`client/nginx.conf`](../../client/nginx.conf) is rendered from a
+  template at container start and proxies `/api/` to
+  `$NGINX_API_UPSTREAM` (Dockerfile-baked default
+  `http://server.railway.internal:8080`, buffering off; compose overrides
+  it to `http://server:8080`).
 
 LLM vars are set on `server`. Empty `INSIDEOUT_LLM_API_KEY` still selects
 the offline template coach.

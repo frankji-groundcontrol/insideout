@@ -97,7 +97,8 @@ themselves when it is unset.
 | `INSIDEOUT_DEV_CORS` | no | off | Permissive-CORS toggle for dev; on only when the value is exactly `1`. |
 | `INSIDEOUT_CORS_ORIGINS` | no | empty | Comma-separated Origin allow-list for browser clients that are not same-origin (Flutter web). The token `localhost` matches any `localhost` / `127.0.0.1` port. Native apps do not need CORS. |
 | `INSIDEOUT_COOKIE_SECURE` | no | on | Sets the `Secure` attribute on auth cookies; secure unless the value is exactly `0` (plain-http local dev). |
-| `INSIDEOUT_MAIL_API_KEY` | no | — | Resend API key for transactional email (magic-link login, password reset). **Empty = mail dev mode**: messages (links included) are logged, not sent — the same posture as the offline PRD Coach. |
+| `INSIDEOUT_MAIL_API_KEY` | no | — | Resend API key for transactional email (magic-link login, password reset). **Empty = mail dev mode**: recipient and subject are logged, not sent — message bodies (magic links) appear only with `INSIDEOUT_MAIL_DEV_BODY=1`. Setting a key requires `INSIDEOUT_PUBLIC_URL` (fail-fast otherwise, so emailed links never point at the localhost default). |
+| `INSIDEOUT_MAIL_DEV_BODY` | no | off | Dev mode only: exactly `1` includes full message bodies in the not-sent mail log (`scripts/dev.sh` sets it locally). Never set on a deployed host. |
 | `INSIDEOUT_MAIL_FROM` | no | `InsideOut <onboarding@resend.dev>` | From address for auth email; must be a Resend-verified sender. The default is Resend's sandbox address, which only delivers to the Resend account's own email. |
 | `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed magic/reset link. Set to the hosted domain in production. |
 | `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). |
@@ -113,13 +114,16 @@ offline coach, not an error.
 | `INSIDEOUT_LLM_API_KEY` | no | — | Provider API key. **Empty = offline template-reply coach** (see [Recipes](#recipes)). |
 | `INSIDEOUT_LLM_MODEL` | no | `claude-sonnet-4-20250514` | Model id passed to the streamer. |
 | `INSIDEOUT_LLM_SCHEMA` | no | `messages` | Wire format: `messages` (Anthropic Messages at `{base}/messages`) or `responses` (OpenAI Responses at `{base}/responses`). |
+| `INSIDEOUT_AI_MAX_CONCURRENT` | no | `4` | Concurrency ceiling for AI turns; excess turns queue briefly, then are rejected (503 with a retry hint). |
+| `INSIDEOUT_AI_QUEUE_WAIT` | no | `15s` | How long a queued AI turn waits for a slot before rejection (Go `time.Duration`). |
 
 ### docker-compose only
 
 Read by [`docker-compose.yml`](../../docker-compose.yml) for interpolation;
-no application process ever reads these. `SERVER_PORT` /
+no application process ever reads these. `SERVER_PORT` / `CLIENT_PORT` /
 `POSTGRES_PORT` are **host-side port mappings** — inside the
-containers the server listens on `:8080` regardless.
+containers the server and client listen on `:8080` and postgres on `5432`
+regardless.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
@@ -128,10 +132,15 @@ containers the server listens on `:8080` regardless.
 | `POSTGRES_SUPERUSER_PASSWORD` | no | `insideout_dev_password` | Bootstrap superuser password for the postgres image. The app never connects with it. |
 | `POSTGRES_PORT` | no | `5442` | Host side of the postgres mapping (`5432` inside). |
 | `SERVER_PORT` | no | `8080` | Host side of the server mapping (`:8080` inside, hardcoded). |
+| `CLIENT_PORT` | no | `5173` | Host side of the client mapping (nginx on `:8080` inside); default matches `INSIDEOUT_PUBLIC_URL`. |
 
-Compose also interpolates vars that flow into the Go backend —
-`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, `INSIDEOUT_LLM_BASE_URL`,
-`INSIDEOUT_LLM_API_KEY`, `INSIDEOUT_LLM_MODEL`, and `INSIDEOUT_LLM_SCHEMA`.
+Compose also interpolates the operator-facing vars that flow into the Go
+backend — `DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, the `INSIDEOUT_LLM_*`
+provider set, `INSIDEOUT_AI_MAX_CONCURRENT` / `INSIDEOUT_AI_QUEUE_WAIT`,
+the `INSIDEOUT_MAIL_*` set with `INSIDEOUT_PUBLIC_URL`, the browser knobs
+(`INSIDEOUT_CORS_ORIGINS`, `INSIDEOUT_DEV_CORS`, `INSIDEOUT_COOKIE_SECURE`,
+`INSIDEOUT_ACCESS_TTL`, `INSIDEOUT_REFRESH_TTL`), and the GitHub
+integration (`INSIDEOUT_GH_*`, `GITHUB_TOKEN`).
 The first two carry `:?` guards (see above); the LLM key defaults to empty,
 while model/schema/base take the same fallbacks `config.Load` applies.
 `DATABASE_URL` deliberately has no
@@ -161,7 +170,7 @@ DATABASE_URL=postgres://insideout_app:change_me@your-remote-host:5432/insideout?
 ```
 
 **(b) Bundled compose postgres** (self-hosted default) —
-`docker compose up -d postgres` brings up `postgres:17`. On a fresh data
+`docker compose up -d postgres` brings up `postgres:18`. On a fresh data
 volume, [`docker/postgres-init/`](../../docker/postgres-init) creates the
 non-superuser `insideout_app` role (password wired from
 `POSTGRES_APP_PASSWORD`) and makes it owner of the `insideout` database.
