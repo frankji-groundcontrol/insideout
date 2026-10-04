@@ -284,16 +284,21 @@ func throttleEmail(w http.ResponseWriter, r *http.Request) string {
 }
 
 // clientIP returns the caller's IP for the auth throttle and resend
-// cooldown. The deployment puts a single nginx edge in front of the server,
-// which appends the real peer to X-Forwarded-For; the rightmost entry is
-// the address nginx saw, so client-prepended garbage is discarded by taking
-// the tail. Without the header (direct local runs, tests) RemoteAddr is
-// used.
+// cooldown. The deployment chain is browser → Railway edge → nginx →
+// server: the Railway edge APPENDS the real client IP to X-Forwarded-For
+// (client-supplied spoofed values stay to its left), and nginx passes that
+// chain through untouched (client/nginx.conf, REL-13) — so the rightmost
+// non-empty entry is the edge-appended client IP and client-prepended
+// garbage is discarded by taking the tail. Local compose runs have no edge
+// in front of nginx, so a locally-spoofed XFF is trusted there — dev only.
+// Without the header (direct local runs, tests) RemoteAddr is used.
 func clientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		parts := strings.Split(xff, ",")
-		if ip := strings.TrimSpace(parts[len(parts)-1]); ip != "" {
-			return ip
+		for i := len(parts) - 1; i >= 0; i-- {
+			if ip := strings.TrimSpace(parts[i]); ip != "" {
+				return ip
+			}
 		}
 	}
 	host, _, err := net.SplitHostPort(r.RemoteAddr)

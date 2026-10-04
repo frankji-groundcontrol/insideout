@@ -86,6 +86,15 @@ tokens (`INSIDEOUT_CORS_ORIGINS=localhost` matches loopback). Do not
 publish the server port to the public internet if the nginx proxy is
 the public front door.
 
+Client-IP trust chain (REL-13): on Railway the request passes
+browser → Railway edge → nginx → server. The edge appends the real
+client IP to `X-Forwarded-For` (client-supplied spoofed values stay to
+its left), and nginx passes that chain through untouched instead of
+appending its own hop — so the server's rightmost XFF entry is the
+edge-appended client IP and the per-IP auth throttle stays per-client.
+Local compose has no edge in front of nginx, so a locally-spoofed XFF
+is trusted there; that is dev-only and acceptable.
+
 Two cookie-related knobs on the server:
 
 - `INSIDEOUT_COOKIE_SECURE` defaults to on (Secure cookies). Only set it to
