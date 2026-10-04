@@ -12,8 +12,16 @@ Resume here. The authoritative multi-task board is
    [plan](plans/2026-10-04-remediation-wave-3-4.md),
    [changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); CI now
    runs on every push/PR (`.github/workflows/ci.yml`, store suite must
-   run, not skip). Still open, both human-only: rotate the Resend mail
-   key if local session transcripts can leave this machine (one was
+   run, not skip). Deploy record: both services shipped `26db979` on
+   2026-10-04 (server `railway up` SUCCESS, `app` restarted, domain
+   verified 200 landing / 401 API). A second multirole review of that
+   tree is also closed
+   ([report](review/2026-10-04-multirole-2/README.md), 108 findings,
+   7 confirmed High, 0 Critical); the next code work is its
+   [waves 1–2](review/2026-10-04-multirole-2/40-remediation-plan.md)
+   (critic empty-messages fix, web failure-path cluster, XFF
+   trusted-proxy depth). Still open, both human-only: rotate the Resend
+   mail key if local session transcripts can leave this machine (one was
    printed into a local transcript 2026-10-04; nothing committed or
    sent), and the signed-in hosted page load (PM-02 release gate) —
    hosted signup is invitation-only, so it needs a member login on the

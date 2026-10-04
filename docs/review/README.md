@@ -25,3 +25,11 @@ remediation plan.
   broken doors — quick start dead-ends, no auth rate limiting, RLS tests
   never run, records stale. ~1 week of ordered remediation in
   [40-remediation-plan.md](2026-10-04-multirole/40-remediation-plan.md).
+- [2026-10-04 — Multirole review 2 (whole tree)](2026-10-04-multirole-2/README.md)
+  — main @ 26db979, after the five remediation waves; 10 reviewers +
+  3 skeptics + critic; 108 findings (7 High confirmed, 8 downgraded,
+  0 refuted; one PM sub-claim refuted by execution evidence). Verdict:
+  no Criticals; one production-invisible critic bug, a web failure-path
+  cluster, and an honest features-left ledger. ~5–7 focused days in
+  [40-remediation-plan.md](2026-10-04-multirole-2/40-remediation-plan.md).
+

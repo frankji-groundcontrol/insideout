@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-04 — Multirole review 2](2026-10-04-multirole-review-2.md)
+  — second whole-tree review on `main` @ `26db979` (fix/harden/improve/
+  features-left mandate); 10 reviewers + 3 skeptics + critic; 108 findings,
+  7 High confirmed, 8 downgraded, 0 refuted; four-wave plan. Docs only.
 - [2026-10-04 — Remediation Waves 3–4](2026-10-04-remediation-wave-3-4.md)
   — board quiet-flag + latest-update cards, ideas private-by-default
   (RLS migration), export file download, roadmap Progress default view;
