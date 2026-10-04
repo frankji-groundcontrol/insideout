@@ -55,11 +55,12 @@ func newConversationFixture(t *testing.T) (*store.Store, *store.User, uuid.UUID)
 }
 
 // stubCoach mimics the real coach's SSE writer (agent/sse.go): frames via
-// fmt.Fprintf + explicit Flush. It writes frame 1, signals, then blocks
-// until the test releases frame 2 — so the test can prove the frame was
-// flushed through the whole middleware stack, not buffered until return.
+// fmt.Fprintf + explicit Flush. It writes frame 1, then blocks until the
+// test releases frame 2 — so the test can prove the frame was flushed
+// through the whole middleware stack, not buffered until return. release
+// must always be closed by the test (t.Cleanup), or the parked handler
+// wedges httptest.Server.Close.
 type stubCoach struct {
-	frame1Flushed chan struct{}
 	releaseFrame2 chan struct{}
 }
 
@@ -73,7 +74,6 @@ func (c stubCoach) HandleMessage(w http.ResponseWriter, r *http.Request, convers
 		flusher.Flush()
 	}
 	frame("message_start", `{"id":"m1"}`)
-	close(c.frame1Flushed)
 	<-c.releaseFrame2
 	frame("delta", `{"text":"hello"}`)
 	frame("message_end", `{}`)
@@ -102,7 +102,13 @@ func TestSendConversationMessage_StreamsIncrementalFrames(t *testing.T) {
 	if err != nil {
 		t.Fatalf("mint token: %v", err)
 	}
-	coach := stubCoach{frame1Flushed: make(chan struct{}), releaseFrame2: make(chan struct{})}
+	coach := stubCoach{releaseFrame2: make(chan struct{})}
+	released := false
+	t.Cleanup(func() {
+		if !released {
+			close(coach.releaseFrame2)
+		}
+	})
 	srv := NewServer(st, tokens, &config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)), coach, nil)
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
@@ -130,6 +136,9 @@ func TestSendConversationMessage_StreamsIncrementalFrames(t *testing.T) {
 	br := bufio.NewReader(resp.Body)
 	// Frame 1 must arrive while the coach is still blocked before frame 2 —
 	// if any middleware buffered the reply, this read would hang instead.
+	// (The stub cannot proceed past frame 1 until this test closes
+	// releaseFrame2 below, so reaching this point at all proves the frame
+	// was flushed through the stack, not buffered until handler return.)
 	frame1 := make(chan string, 1)
 	go func() {
 		f, err := readFrame(br)
@@ -146,13 +155,9 @@ func TestSendConversationMessage_StreamsIncrementalFrames(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("frame 1 never arrived — the response is buffered, not streamed")
 	}
-	select {
-	case <-coach.frame1Flushed:
-	default:
-		t.Fatal("frame 1 read before the coach flushed it")
-	}
 
 	close(coach.releaseFrame2)
+	released = true
 	for _, want := range []string{"event: delta", "event: message_end"} {
 		f, err := readFrame(br)
 		if err != nil {

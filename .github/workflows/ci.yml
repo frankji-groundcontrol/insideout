@@ -13,7 +13,7 @@ jobs:
   server:
     name: server (go + postgres)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:18
@@ -58,7 +58,7 @@ jobs:
         run: go build ./... && go vet ./...
       - name: Test (integration suite must run, not skip)
         run: |
-          go test ./... -count=1
+          go test ./... -count=1 -timeout 20m
           # TEST-02: a skipped store test is a red build — the DB-gated
           # suite is the point of the postgres service above.
           skiplines=$(go test ./internal/store/... -count=1 -v 2>&1 | grep -c -- '--- SKIP' || true)

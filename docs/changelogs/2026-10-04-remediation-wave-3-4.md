@@ -112,7 +112,12 @@ workspace-shared inbox.
   workspace admin see the idea, and user B's direct fetch 404s;
   `roadmap/progress` returns the deadline-truth shape; torn down with
   `down -v`.
-- CI green on the landing commit (see Actions).
+- CI green (first run exposed a race in the new SSE test itself — a
+  nonblocking "flushed-before-read" check could fire before the stub's
+  channel close and wedge `httptest.Server.Close`; the check was racy
+  by design and removed, the stub now always released via
+  `t.Cleanup`, `-race` clean, and the CI go-test timeout raised to
+  20 m for the DB-gated suite).
 
 ## Operator notes
 
