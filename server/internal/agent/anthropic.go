@@ -119,6 +119,12 @@ func (a *AnthropicStreamer) StreamChat(ctx context.Context, system string, msgs 
 }
 
 func (a *AnthropicStreamer) StreamChatForcingTool(ctx context.Context, system string, msgs []Message, tool Tool, onDelta func(string)) (Turn, error) {
+	// AIDEV-09: the Messages API 400s on an empty "messages" array; a nil
+	// payload marshals to exactly that (no omitempty). Fail here with a
+	// named cause instead of burning a provider round trip.
+	if len(msgs) == 0 {
+		return Turn{}, fmt.Errorf("agent: forced-tool call to %q needs at least one message", tool.Name)
+	}
 	return a.streamChat(ctx, system, msgs, []Tool{tool}, tool.Name, onDelta)
 }
 

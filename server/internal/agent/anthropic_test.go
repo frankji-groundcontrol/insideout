@@ -342,3 +342,14 @@ func TestStreamChat_ClientDisconnect(t *testing.T) {
 		t.Fatalf("err = %v, a genuine disconnect must not be reported as an upstream stall", err)
 	}
 }
+
+// AIDEV-09 wire guard: an empty messages payload must fail locally with a
+// named cause — it would otherwise marshal to "messages": [] and cost a
+// provider round trip that always 400s.
+func TestAnthropic_ForcingToolRejectsEmptyMessages(t *testing.T) {
+	a := newTestStreamer("http://unused.test", time.Second)
+	_, err := a.StreamChatForcingTool(context.Background(), "sys", nil, Tool{Name: "report_findings"}, nil)
+	if err == nil || !strings.Contains(err.Error(), "at least one message") {
+		t.Fatalf("want named empty-messages error, got %v", err)
+	}
+}

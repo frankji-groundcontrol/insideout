@@ -228,7 +228,11 @@ func runCritic(ctx context.Context, streamer ChatStreamer, prdTitle string, sect
 		if lastErr != nil {
 			sys += fmt.Sprintf("\n\n上一次调用失败：%s。请重新输出，严格符合 report_findings 的参数格式。", lastErr.Error())
 		}
-		turn, err := streamer.StreamChatForcingTool(ctx, sys, nil, tool, nil)
+		// AIDEV-09: the Messages API rejects an empty "messages" array with
+		// a 400 on every call — the PRD itself rides in the system prompt,
+		// so this turn only needs to direct the forced tool call.
+		user := "请按系统提示中的标准独立评审这份 PRD，并通过 report_findings 工具报告全部发现。"
+		turn, err := streamer.StreamChatForcingTool(ctx, sys, []Message{{Role: RoleUser, Content: user}}, tool, nil)
 		usage = turn.Usage
 		if err != nil {
 			lastErr = err

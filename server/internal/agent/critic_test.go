@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 )
@@ -111,6 +112,48 @@ func TestCriticState_RoundTrip(t *testing.T) {
 	got := loadCriticState(extra)
 	if got.RoundCount != 1 || got.Skipped != "contention" {
 		t.Fatalf("round-tripped state = %+v, want %+v", got, cs)
+	}
+}
+
+// forcingStub records what runCritic hands the streamer and answers with one
+// valid report_findings call.
+type forcingStub struct {
+	sawMsgs []Message
+}
+
+func (f *forcingStub) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
+	return Turn{}, nil
+}
+
+func (f *forcingStub) StreamChatForcingTool(_ context.Context, _ string, msgs []Message, tool Tool, _ func(string)) (Turn, error) {
+	f.sawMsgs = msgs
+	args, _ := json.Marshal(map[string]any{"findings": []any{
+		map[string]any{"section": "goals", "severity": "minor", "kind": "omission", "issue": "goal is not measurable"},
+	}})
+	return Turn{ToolCall: &ToolCallRequest{Name: tool.Name, Arguments: string(args)}}, nil
+}
+
+func (f *forcingStub) Model() string { return "stub" }
+
+// AIDEV-09 (review 2): the Anthropic Messages API rejects an empty
+// "messages" array with a 400 on every call. The critic used to pass nil,
+// which marshals to exactly that — every production critic call failed and
+// degraded to a silent skip while fake-streamer tests stayed green. The
+// critic must carry a real user message, like the roadmap planner does.
+func TestRunCritic_SendsNonEmptyUserMessage(t *testing.T) {
+	stub := &forcingStub{}
+	findings, _, ok := runCritic(context.Background(), stub, "Workshop ideas", sectionsFixture(), ledgerMeta{}, nil)
+	if !ok {
+		t.Fatal("runCritic should succeed against a cooperative stub")
+	}
+	if len(findings) != 1 {
+		t.Fatalf("stub returned one finding, got %+v", findings)
+	}
+	if len(stub.sawMsgs) == 0 {
+		t.Fatal("critic sent no messages — the real Messages API 400s on \"messages\": [] (AIDEV-09)")
+	}
+	if stub.sawMsgs[0].Role != RoleUser || stub.sawMsgs[0].Content == "" {
+		t.Fatalf("critic payload should be one non-empty user message, got %+v", stub.sawMsgs)
 	}
 }
 
