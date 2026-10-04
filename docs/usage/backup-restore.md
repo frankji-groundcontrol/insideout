@@ -1,0 +1,50 @@
+# Backup and restore
+
+The product's value is stored member work — PRDs, revisions, facts,
+roadmaps, evidence. This is the recovery story (CC-03, review 2).
+
+## Where the data lives
+
+The hosted deployment's database is a managed Postgres (Supabase) reached
+through the app-role DSN in `DATABASE_URL`; the product only ever writes
+the `insideout` schema. Two layers of protection:
+
+1. **Managed backups (operator toggle).** Supabase takes automated daily
+   backups on paid plans and exposes point-in-time restore. The operator
+   should confirm this is enabled for the project — it is not something
+   this repository can see or set.
+2. **Portable dumps (this repo).** `scripts/backup-db.sh` produces a
+   plain-SQL dump of the `insideout` schema that restores on any Postgres
+   with the two roles present.
+
+## Taking a dump
+
+```sh
+DATABASE_URL=<app-role DSN> ./scripts/backup-db.sh            # → backups/insideout-<stamp>.sql
+DATABASE_URL=<app-role DSN> ./scripts/backup-db.sh /secure/dir # elsewhere
+```
+
+The script never prints the DSN. Dump files contain user data: keep them
+on the operator's disk, never in the repository (`backups/` is ignored).
+
+## Restoring
+
+Prerequisites: a target Postgres with the `insideout_owner` and
+`insideout_app` roles (see `docker/postgres-init/`), and the dump file.
+
+```sh
+psql "$TARGET_OWNER_DSN" -v ON_ERROR_STOP=1 -f backups/insideout-<stamp>.sql
+```
+
+The dump carries `--clean --if-exists`, so it replaces an existing
+`insideout` schema in the target. After restoring, run
+`go run ./cmd/insideout migrate` (a no-op when the dump is current) and
+point `DATABASE_URL` at the target.
+
+## Verification walkthrough (scratch stack)
+
+The runbook was walked end-to-end on a disposable compose stack
+(2026-10-04): dump from one scratch database, restore into a second
+scratch database, `migrate` as a no-op, and the store suite green against
+the restored target. Record the date of the next walk here when the
+runbook changes.

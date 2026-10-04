@@ -47,7 +47,7 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 	switch event {
 	case "ping":
 		httpx.WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "event": event})
-	case "push", "pull_request":
+	case "push", "pull_request", "deployment":
 		name, err := github.WebhookRepository(body)
 		if err != nil {
 			httpx.WriteError(w, http.StatusBadRequest, "unparseable repository", "", nil)
@@ -111,6 +111,11 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 			Merged   bool   `json:"merged"`
 			MergedAt string `json:"merged_at"`
 		} `json:"pull_request"`
+		Deployment struct {
+			Ref         string `json:"ref"`
+			Environment string `json:"environment"`
+			SHA         string `json:"sha"`
+		} `json:"deployment"`
 	}
 	if err := json.Unmarshal(body, &ev); err != nil {
 		return 0
@@ -149,6 +154,28 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 			source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, c.SHA)
 		} else {
 			detail = "push to " + branch
+		}
+	} else if event == "deployment" {
+		// CC-01 (review 2): PRODUCT.md and the generated guide both promise
+		// "a deployment may show release" — map it into the same evidence
+		// pipeline with the release kind. GitHub fires `deployment` at
+		// creation; success/failure refinement belongs to a later
+		// deployment_status slice.
+		branch = strings.TrimPrefix(ev.Deployment.Ref, "refs/heads/")
+		kind = "release"
+		env := ev.Deployment.Environment
+		if env == "" {
+			env = "unknown environment"
+		}
+		if ev.Deployment.SHA != "" {
+			sha := ev.Deployment.SHA
+			if len(sha) > 7 {
+				sha = sha[:7]
+			}
+			detail = fmt.Sprintf("deploy %s @ %s", env, sha)
+			source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, ev.Deployment.SHA)
+		} else {
+			detail = fmt.Sprintf("deploy %s", env)
 		}
 	} else { // pull_request
 		branch = ev.PullRequest.Head.Ref
