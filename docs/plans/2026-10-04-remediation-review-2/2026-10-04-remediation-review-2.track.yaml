@@ -7,8 +7,7 @@ main:
     decisions closed; suite green (go 0-skip, flutter, env), deployed and domain-verified
   owner: zcode-main
   status: active
-  next_evidence: 'Wave 2 remainder: USER-11 l10n error mapper (new errors_l10n.dart
-    + 12 call sites) then FEAT-03 proposal web loop; flutter test full-suite green
-    after each'
+  next_evidence: 'FEAT-03: project_page agent_proposal Accept/Reject wired to the
+    existing decision endpoint + widget test; flutter test green'
 side_tracks: []
-updated_at: '2026-10-04T12:20:51Z'
+updated_at: '2026-10-04T12:45:54Z'

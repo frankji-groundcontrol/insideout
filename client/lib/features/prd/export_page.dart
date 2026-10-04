@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/export_format.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
@@ -69,7 +70,7 @@ class _ExportPageState extends State<ExportPage> {
           ),
           const SizedBox(height: 12),
           FilledButton(onPressed: _run, child: Text(l10n.t('common.save'))),
-          if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!)),
+          if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(localizedError(error!, l10n.t))),
           if (body != null) ...[
             Padding(
               padding: const EdgeInsets.only(top: 16),

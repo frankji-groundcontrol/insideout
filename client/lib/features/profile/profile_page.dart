@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
@@ -74,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
           TextField(controller: bio, decoration: InputDecoration(labelText: l10n.t('profile.bio'), hintText: l10n.t('profile.bioPlaceholder')), maxLines: 3),
           const SizedBox(height: 12),
           TextField(controller: keywords, decoration: InputDecoration(labelText: l10n.t('profile.keywords'), hintText: l10n.t('profile.keywordsPlaceholder'))),
-          if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!)),
+          if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(localizedError(error!, l10n.t))),
           const SizedBox(height: 20),
           FilledButton(onPressed: busy ? null : _save, child: Text(l10n.t('profile.save'))),
           if (user?.isAdmin ?? false) const AdminSection(),

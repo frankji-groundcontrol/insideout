@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
@@ -121,7 +122,7 @@ class _IdeasPageState extends State<IdeasPage> {
         future: _future,
         builder: (context, snap) {
           if (!snap.hasData) {
-            return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
+            return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
           }
           return _IdeasWall(
             ideas: snap.data!,

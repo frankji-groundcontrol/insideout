@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../api/sse.dart';
@@ -176,7 +177,7 @@ class _CoachPanelState extends State<CoachPanel> {
               ),
             ),
           ],
-          if (error != null) Padding(padding: const EdgeInsets.all(12), child: Text(error!, style: TextStyle(color: ink))),
+          if (error != null) Padding(padding: const EdgeInsets.all(12), child: Text(localizedError(error!, l10n.t), style: TextStyle(color: ink))),
           if (retry > 0)
             Padding(
               padding: const EdgeInsets.all(12),

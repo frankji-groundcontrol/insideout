@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 
@@ -163,7 +164,7 @@ class _AdminSectionState extends State<AdminSection> {
               ],
             ),
             if (error != null)
-              Padding(padding: const EdgeInsets.only(top: 8), child: Text(error!, style: const TextStyle(color: Color(0xFFB3261E)))),
+              Padding(padding: const EdgeInsets.only(top: 8), child: Text(localizedError(error!, lang.t), style: const TextStyle(color: Color(0xFFB3261E)))),
             const SizedBox(height: 12),
             if (invitations.isNotEmpty) ...[
               Text(lang.t('admin.inviteList'), style: Theme.of(context).textTheme.bodySmall),

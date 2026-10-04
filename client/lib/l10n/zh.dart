@@ -319,6 +319,15 @@ const zhCN = <String, String>{
   'time.minutesAgo': '{n} 分钟前',
   'time.hoursAgo': '{n} 小时前',
   'time.daysAgo': '{n} 天前',
+  'error.badRequest': '请求被拒绝，请检查输入后重试',
+  'error.unauthorized': '登录已过期，请重新登录',
+  'error.forbidden': '没有权限执行此操作',
+  'error.notFound': '内容不存在或已被删除',
+  'error.conflict': '内容已被修改，请刷新后重试',
+  'error.throttled': '操作过于频繁，请稍后再试',
+  'error.server': '服务器开小差了，请稍后重试',
+  'error.network': '网络异常，请检查连接',
+  'error.generic': '出错了，请重试',
 };
 
 const zhCoachSuggest = <String, List<String>>{

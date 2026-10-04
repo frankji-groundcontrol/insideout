@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
@@ -57,7 +58,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: l10n.t('workspace.settingsTitle'),
           paintTitle: true,
           body: !snap.hasData
-              ? Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator())
+              ? Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator())
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
                   children: [

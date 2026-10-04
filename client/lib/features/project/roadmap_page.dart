@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/client.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
@@ -185,7 +186,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     future: _progressFuture,
                     builder: (context, snap) {
                       if (!snap.hasData) {
-                        return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
+                        return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
                       }
                       return RoadmapProgressView(progress: snap.data!, emptyLabel: l10n.t('roadmap.empty'));
                     },
@@ -194,7 +195,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     future: _future,
                     builder: (context, snap) {
                       if (!snap.hasData) {
-                        return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
+                        return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
                       }
                       if (snap.data!.isEmpty) return Center(child: Text(l10n.t('roadmap.empty')));
                       if (_view == _RoadmapView.bands) {

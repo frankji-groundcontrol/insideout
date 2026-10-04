@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
@@ -63,7 +64,7 @@ class _ProjectPageState extends State<ProjectPage> {
             .toList();
         return AppScaffold(
           body: !snap.hasData
-              ? Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator())
+              ? Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator())
               : ListView(
                   padding: const EdgeInsets.fromLTRB(28, 64, 28, 140),
                   children: [

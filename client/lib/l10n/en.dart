@@ -329,6 +329,15 @@ const enUS = <String, String>{
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',
   'time.daysAgo': '{n}d ago',
+  'error.badRequest': 'That request was rejected — check the input and try again',
+  'error.unauthorized': 'Session expired — sign in again',
+  'error.forbidden': 'You do not have permission to do that',
+  'error.notFound': 'Not found — it may have been deleted',
+  'error.conflict': 'Changed elsewhere — refresh and try again',
+  'error.throttled': 'Too many attempts — take a breath and retry shortly',
+  'error.server': 'Server hiccup — try again',
+  'error.network': 'Network problem — check the connection',
+  'error.generic': 'Something went wrong — try again',
 };
 
 const enCoachSuggest = <String, List<String>>{

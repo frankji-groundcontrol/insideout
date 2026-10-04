@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
@@ -148,12 +149,12 @@ class _PrdPageState extends State<PrdPage> {
 
   @override
   Widget build(BuildContext context) {
-    context.watch<Appearance>();
+    final l10n = context.watch<Appearance>();
     final wide = MediaQuery.sizeOf(context).width >= 900;
     final desk = loading
         ? const Center(child: CircularProgressIndicator())
         : error != null && prd == null
-            ? Center(child: Text(error!))
+            ? Center(child: Text(localizedError(error!, l10n.t)))
             : (wide
                 ? Row(
                     children: [
