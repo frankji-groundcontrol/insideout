@@ -45,7 +45,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = _load());
+    setState(() {
+      _future = _load();
+    });
   }
 
   @override

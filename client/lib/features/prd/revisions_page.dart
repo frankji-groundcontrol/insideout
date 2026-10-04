@@ -49,7 +49,9 @@ class _RevisionsPageState extends State<RevisionsPage> {
           );
           if (ok == true && mounted) {
             await context.read<Session>().api.createRevision(widget.prdId, note: note.text.trim().isEmpty ? null : note.text.trim());
-            setState(() => _future = context.read<Session>().api.listRevisions(widget.prdId));
+            setState(() {
+            _future = context.read<Session>().api.listRevisions(widget.prdId);
+          });
           }
           note.dispose();
         },

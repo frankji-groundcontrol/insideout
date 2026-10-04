@@ -2,3 +2,4 @@
 {"at":"2026-10-04T10:34:09Z","action":"main","changes":{"next_evidence":"Wave 2 AIDEV-09: wire-level test proving forced-tool requests never marshal empty messages, then the critic payload fix (go test ./internal/agent...)"}}
 {"at":"2026-10-04T12:20:51Z","action":"main","changes":{"next_evidence":"Wave 2 remainder: USER-11 l10n error mapper (new errors_l10n.dart + 12 call sites) then FEAT-03 proposal web loop; flutter test full-suite green after each"}}
 {"at":"2026-10-04T12:45:54Z","action":"main","changes":{"next_evidence":"FEAT-03: project_page agent_proposal Accept/Reject wired to the existing decision endpoint + widget test; flutter test green"}}
+{"at":"2026-10-04T12:56:45Z","action":"main","changes":{"next_evidence":"Wave 3: XFF two-hop unit test failing first, then nginx pass-through fix; then CQ-01 scaffold, CC-03 backup story, CC-01 deployment events"}}

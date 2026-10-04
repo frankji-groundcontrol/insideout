@@ -339,6 +339,21 @@ class ApiClient {
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
+  /// FEAT-03 (review 2): proposals stay proposals until a human decides.
+  /// Accept defaults to apply=true so the structured items become roadmap
+  /// nodes as the deciding human — the same default the CLI/MCP carries.
+  Future<Map<String, dynamic>> decideProposal(String updateId, {required bool accept, String reason = '', bool apply = true}) async {
+    final res = await _dio.post(
+      '/agent/proposals/$updateId/decision',
+      data: {
+        'decision': accept ? 'accepted' : 'rejected',
+        'reason': reason,
+        'apply': apply,
+      },
+    );
+    return _parse(res, (d) => d as Map<String, dynamic>);
+  }
+
   Future<List<Idea>> listIdeas(String workspaceId) async {
     final res = await _dio.get('/workspaces/$workspaceId/ideas');
     return _parse(res, (d) => (d as List).map((e) => Idea.fromJson(e as Map<String, dynamic>)).toList());

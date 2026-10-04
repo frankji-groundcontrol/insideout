@@ -338,6 +338,8 @@ const enUS = <String, String>{
   'error.server': 'Server hiccup — try again',
   'error.network': 'Network problem — check the connection',
   'error.generic': 'Something went wrong — try again',
+  'proposal.accept': 'Accept',
+  'proposal.reject': 'Reject',
 };
 
 const enCoachSuggest = <String, List<String>>{

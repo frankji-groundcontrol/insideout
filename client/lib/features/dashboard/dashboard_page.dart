@@ -27,7 +27,9 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = context.read<Session>().api.listWorkspaces());
+    setState(() {
+      _future = context.read<Session>().api.listWorkspaces();
+    });
   }
 
   Future<void> _create() async {

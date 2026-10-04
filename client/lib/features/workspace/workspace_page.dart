@@ -60,14 +60,18 @@ class _WorkspacePageState extends State<WorkspacePage> {
     );
     if (ok == true && title.text.trim().isNotEmpty && mounted) {
       await context.read<Session>().api.createProject(widget.id, title.text.trim(), '');
-      setState(() => _future = _load());
+      setState(() {
+        _future = _load();
+      });
     }
     title.dispose();
   }
 
   Future<void> _refresh() async {
     final future = _load();
-    setState(() => _future = future);
+    setState(() {
+        _future = future;
+      });
     await future;
   }
 
@@ -205,7 +209,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
     );
     if (ok == true && mounted) {
       await context.read<Session>().api.updateWorkspace(widget.id, title: title.text.trim(), description: desc.text);
-      setState(() => _future = _load());
+      setState(() {
+        _future = _load();
+      });
     }
     title.dispose();
     desc.dispose();

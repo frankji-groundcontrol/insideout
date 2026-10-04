@@ -328,6 +328,8 @@ const zhCN = <String, String>{
   'error.server': '服务器开小差了，请稍后重试',
   'error.network': '网络异常，请检查连接',
   'error.generic': '出错了，请重试',
+  'proposal.accept': '接受',
+  'proposal.reject': '驳回',
 };
 
 const zhCoachSuggest = <String, List<String>>{

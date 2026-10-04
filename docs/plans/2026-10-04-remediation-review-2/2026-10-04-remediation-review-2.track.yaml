@@ -7,7 +7,7 @@ main:
     decisions closed; suite green (go 0-skip, flutter, env), deployed and domain-verified
   owner: zcode-main
   status: active
-  next_evidence: 'FEAT-03: project_page agent_proposal Accept/Reject wired to the
-    existing decision endpoint + widget test; flutter test green'
+  next_evidence: 'Wave 3: XFF two-hop unit test failing first, then nginx pass-through
+    fix; then CQ-01 scaffold, CC-03 backup story, CC-01 deployment events'
 side_tracks: []
-updated_at: '2026-10-04T12:45:54Z'
+updated_at: '2026-10-04T12:56:45Z'

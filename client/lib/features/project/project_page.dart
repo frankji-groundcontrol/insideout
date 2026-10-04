@@ -48,7 +48,24 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = _load());
+    setState(() {
+      _future = _load();
+    });
+  }
+
+  // FEAT-03: the proposal decision loop — the server resolves authority
+  // (project owner or workspace admin); the web just surfaces the outcome.
+  Future<void> _decide(String updateId, {required bool accept}) async {
+    final l10n = context.read<Appearance>();
+    try {
+      await context.read<Session>().api.decideProposal(updateId, accept: accept);
+    } on Object catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizedError(e, l10n.t))));
+      }
+      return;
+    }
+    if (mounted) await _reload();
   }
 
   @override
@@ -134,7 +151,17 @@ class _ProjectPageState extends State<ProjectPage> {
                             Text(u.createdAt, style: theme.textTheme.bodySmall),
                             Align(
                               alignment: Alignment.centerRight,
-                              child: PopupMenuButton<String>(
+                              // FEAT-03: an agent proposal is decided, not
+                              // edited — Accept/Reject own the record.
+                              child: u.kind == 'agent_proposal'
+                                  ? Wrap(
+                                      spacing: 8,
+                                      children: [
+                                        FilledButton(onPressed: () => _decide(u.id, accept: true), child: Text(l10n.t('proposal.accept'))),
+                                        OutlinedButton(onPressed: () => _decide(u.id, accept: false), child: Text(l10n.t('proposal.reject'))),
+                                      ],
+                                    )
+                                  : PopupMenuButton<String>(
                                 onSelected: (value) async {
                                   final api = context.read<Session>().api;
                                   if (value == 'edit') {
