@@ -66,6 +66,11 @@ records continue the numbering (next: BUG-016).
 
 ## Other open issues
 
+- [2026-10-04 — Multirole review findings register](../review/2026-10-04-multirole/01-findings-register.md)
+  — 75 verified findings (12 High confirmed) with fixes and a five-wave
+  remediation plan; the review of record for prioritization. Duplicates
+  already tracked here stay tracked in place (e.g. auth rate limiting,
+  2026-08-24 below).
 - [2026-09-18 — Flutter ApiClient over the ~350-line budget](2026-09-18-flutter-apiclient-line-budget.md)
   — `client/lib/api/client.dart` ~529 lines; target core / product /
   stream split. Deferred from the Cobalt live-API wiring slice.
