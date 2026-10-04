@@ -200,6 +200,10 @@ class _IdeasWall extends StatelessWidget {
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        Center(
+          child: Text(l10n.t('idea.privateHint'), style: theme.textTheme.bodySmall?.copyWith(color: palette.fgMuted), textAlign: TextAlign.center),
+        ),
         const SizedBox(height: 28),
         if (ideas.isEmpty)
           Center(child: Text(emptyLabel, style: theme.textTheme.bodyLarge))

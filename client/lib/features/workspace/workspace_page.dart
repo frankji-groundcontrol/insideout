@@ -6,9 +6,11 @@ import 'package:provider/provider.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
+import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/field_card.dart';
+import 'ideas_page.dart';
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key, required this.id});
@@ -62,6 +64,12 @@ class _WorkspacePageState extends State<WorkspacePage> {
     title.dispose();
   }
 
+  Future<void> _refresh() async {
+    final future = _load();
+    setState(() => _future = future);
+    await future;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -76,9 +84,11 @@ class _WorkspacePageState extends State<WorkspacePage> {
           fab: FloatingActionButton(onPressed: _createProject, child: const Icon(Icons.add)),
           body: !snap.hasData
               ? Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator())
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 140),
-                  children: [
+              : RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 140),
+                    children: [
                     FieldCard(
                       child: Row(
                         children: [
@@ -125,14 +135,46 @@ class _WorkspacePageState extends State<WorkspacePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(p.title, style: theme.textTheme.titleLarge),
+                              Row(
+                                children: [
+                                  Expanded(child: Text(p.title, style: theme.textTheme.titleLarge)),
+                                  if (p.flagged) ShadePill(label: l10n.t('project.quiet')),
+                                ],
+                              ),
                               Text(l10n.t('project.status.${p.status}'), style: theme.textTheme.bodySmall),
+                              if (p.latestUpdateKind != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        l10n.t('project.updateKind.${p.latestUpdateKind}'),
+                                        style: theme.textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          p.latestUpdateContent ?? '',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                      ),
+                                      if (p.latestUpdateAt != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(left: 8),
+                                          child: Text(timeAgo(p.latestUpdateAt!, l10n.t), style: theme.textTheme.bodySmall),
+                                        ),
+                                    ],
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 12),
                       ],
                   ],
+                ),
                 ),
         );
       },

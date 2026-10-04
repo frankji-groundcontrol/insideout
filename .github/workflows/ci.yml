@@ -1,0 +1,103 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  server:
+    name: server (go + postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://insideout_app:ci-app-password@localhost:5432/postgres
+      DATABASE_OWNER_URL: postgres://insideout_owner:ci-owner-password@localhost:5432/postgres
+      INSIDEOUT_JWT_SECRET: ci-only-secret-not-used-anywhere-else-32
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      # Mirror docker/postgres-init/001-create-app-role.sh: the app role is
+      # RLS-subject, the owner role owns the insideout schema. Throwaway
+      # passwords — this database lives only for this job run.
+      - name: Create the two database roles
+        run: |
+          psql postgres://postgres:postgres@localhost:5432/postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE insideout_owner LOGIN NOSUPERUSER BYPASSRLS PASSWORD 'ci-owner-password';
+          CREATE ROLE insideout_app LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD 'ci-app-password';
+          ALTER DATABASE postgres OWNER TO insideout_owner;
+          GRANT CONNECT ON DATABASE postgres TO insideout_app;
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          REVOKE ALL ON SCHEMA public FROM insideout_app;
+          SQL
+      - name: Apply migrations
+        run: go run ./cmd/insideout migrate
+      - name: Build and vet
+        run: go build ./... && go vet ./...
+      - name: Test (integration suite must run, not skip)
+        run: |
+          go test ./... -count=1
+          # TEST-02: a skipped store test is a red build — the DB-gated
+          # suite is the point of the postgres service above.
+          skiplines=$(go test ./internal/store/... -count=1 -v 2>&1 | grep -c -- '--- SKIP' || true)
+          if [ "$skiplines" -ne 0 ]; then
+            echo "::error::$skiplines store test(s) skipped — DATABASE_URL is not reaching the suite"
+            exit 1
+          fi
+
+  client:
+    name: client (flutter)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.47.0
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Infos are the accepted baseline (see docs/plans board); warnings
+      # and errors stay fatal.
+      - run: flutter analyze --no-fatal-infos
+      - run: flutter test
+      # The web target is the production surface, and VM tests can't see
+      # web-only conditional imports (they broke exactly this way once).
+      - run: flutter build web --release --dart-define=API_BASE=/api/v1
+
+  env-suites:
+    name: env catalog suites (python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: scripts
+    steps:
+      - uses: actions/checkout@v4
+      - name: unittest both env batteries
+        run: python3 -m unittest test_env_catalog test_env_writes

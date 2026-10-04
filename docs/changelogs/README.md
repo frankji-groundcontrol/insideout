@@ -15,6 +15,12 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-04 — Remediation Waves 3–4](2026-10-04-remediation-wave-3-4.md)
+  — board quiet-flag + latest-update cards, ideas private-by-default
+  (RLS migration), export file download, roadmap Progress default view;
+  CI with postgres-backed store suite (skip = red), coach SSE
+  HTTP-level test, lint-tier demotion, three modularity issues. Closes
+  the five-wave plan.
 - [2026-10-04 — Remediation Wave 2](2026-10-04-remediation-wave-2.md)
   — auth throttle + resend cooldown (closes 2026-08-24), mail-log hygiene,
   streaming retry guard, env-tunable AI limits, SSE write errors,

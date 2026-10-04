@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -30,16 +31,37 @@ type projectView struct {
 	Status              string  `json:"status"`
 	RepoURL             string  `json:"repoUrl"`
 	CreatedAt           string  `json:"createdAt"`
+	Flagged             bool    `json:"flagged"`
 	LatestUpdateKind    *string `json:"latestUpdateKind,omitempty"`
 	LatestUpdateContent *string `json:"latestUpdateContent,omitempty"`
 	LatestUpdateAt      *string `json:"latestUpdateAt,omitempty"`
+}
+
+// quietAfter is the board's quiet-project threshold (FEAT-01): an active
+// or planning project not heard from for more than 14 days — via its
+// latest update, or its creation when it never got one — is flagged.
+const quietAfter = 14 * 24 * time.Hour
+
+func projectQuietFlagged(p store.ProjectWithLatest, now time.Time) bool {
+	switch p.Status {
+	case "active", "planning":
+	default:
+		return false
+	}
+	last := p.CreatedAt
+	if p.LatestUpdateAt != nil {
+		last = *p.LatestUpdateAt
+	}
+	return now.Sub(last) > quietAfter
 }
 
 func projectResponse(p store.ProjectWithLatest) projectView {
 	v := projectView{
 		ID: p.ID.String(), WorkspaceID: p.WorkspaceID.String(), Title: p.Title, Description: p.Description,
 		Status: p.Status, RepoURL: p.RepoURL, CreatedAt: p.CreatedAt.Format(timeLayout),
-		LatestUpdateKind: p.LatestUpdateKind, LatestUpdateContent: p.LatestUpdateContent,
+		Flagged:             projectQuietFlagged(p, time.Now()),
+		LatestUpdateKind:    p.LatestUpdateKind,
+		LatestUpdateContent: p.LatestUpdateContent,
 	}
 	if p.OwnerID != nil {
 		id := p.OwnerID.String()

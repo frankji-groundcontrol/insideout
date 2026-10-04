@@ -7,12 +7,18 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. **Release gate (pending).** The Cobalt restyle (PR #3) merged to `main`
-   2026-09-18, but the last recorded deploy predates it. Ship with
-   `railway up --service app`, then verify a signed-in page load against the
-   hosted app; the gate is tracked on the board's 2026-10-04 remediation row.
-   Hosted signup is invitation-only — do not seed a shared remote database
-   with the local demo identity. Walk record:
+1. **Remediation closed — operator actions remain.** The five-wave
+   multirole-review plan finished 2026-10-04 (Waves 3–4:
+   [plan](plans/2026-10-04-remediation-wave-3-4.md),
+   [changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); CI now
+   runs on every push/PR (`.github/workflows/ci.yml`, store suite must
+   run, not skip). Still open, both human-only: rotate the Resend mail
+   key if local session transcripts can leave this machine (one was
+   printed into a local transcript 2026-10-04; nothing committed or
+   sent), and the signed-in hosted page load (PM-02 release gate) —
+   hosted signup is invitation-only, so it needs a member login on the
+   deployed domain; do not seed the remote database with the local demo
+   identity. Walk record:
    [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus

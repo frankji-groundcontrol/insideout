@@ -24,6 +24,16 @@ class _FakeApi extends ApiClient {
         RoadmapNode(id: 'r2', projectId: 'p1', parentId: null, title: 'Band B', description: '', status: 'pending', position: 1),
         RoadmapNode(id: 'c1', projectId: 'p1', parentId: 'r1', title: 'A leaf', description: '', status: 'in_progress', position: 0),
       ];
+
+  @override
+  Future<RoadmapProgress> roadmapProgress(String projectId) async => RoadmapProgress.fromJson({
+        'now': [
+          {'id': 'c1', 'title': 'A leaf', 'status': 'in_progress', 'deadline': '2026-10-10T00:00:00Z', 'pressure': 'near'},
+        ],
+        'needsDeadline': [],
+        'next': [],
+        'doneCount': 0,
+      });
 }
 
 void main() {
@@ -46,9 +56,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Bands view first: both roots present, no canvas yet.
-    expect(find.text('Band A'), findsWidgets);
+    // Progress view is the default (server-truth buckets): the deadlined
+    // in-progress leaf shows there, no canvas yet.
+    expect(find.text('A leaf'), findsOneWidget);
     expect(find.byType(RoadmapMinimap), findsNothing);
+
+    // Toggle to bands.
+    await tester.tap(find.text('Bands'));
+    await tester.pumpAndSettle();
+    expect(find.text('Band A'), findsWidgets);
 
     // Toggle to canvas.
     await tester.tap(find.text('Canvas'));

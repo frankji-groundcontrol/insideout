@@ -99,8 +99,10 @@ class Project {
     required this.status,
     required this.repoUrl,
     required this.createdAt,
+    required this.flagged,
     this.latestUpdateKind,
     this.latestUpdateContent,
+    this.latestUpdateAt,
   });
 
   final String id;
@@ -110,8 +112,10 @@ class Project {
   final String status;
   final String repoUrl;
   final String createdAt;
+  final bool flagged;
   final String? latestUpdateKind;
   final String? latestUpdateContent;
+  final String? latestUpdateAt;
 
   factory Project.fromJson(Map<String, dynamic> j) => Project(
         id: j['id'] as String,
@@ -121,8 +125,10 @@ class Project {
         status: j['status'] as String,
         repoUrl: (j['repoUrl'] as String?) ?? '',
         createdAt: j['createdAt'] as String,
+        flagged: (j['flagged'] as bool?) ?? false,
         latestUpdateKind: j['latestUpdateKind'] as String?,
         latestUpdateContent: j['latestUpdateContent'] as String?,
+        latestUpdateAt: j['latestUpdateAt'] as String?,
       );
 }
 

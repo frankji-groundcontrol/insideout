@@ -40,9 +40,13 @@ func TestBrainstormingModeEmphasizesArgument(t *testing.T) {
 		t.Errorf("argument shape wrong: %v", arg)
 	}
 	open := out["openQuestions"].([]string)
-	if len(open) == 0 || open[0] != "risks" && open[0] != "users" && open[0] != "nonGoals" && open[0] != "constraints" && open[0] != "requirements" && open[0] != "stories" {
-		// risks is blank; any blank key is a valid open question entry
-		t.Logf("open questions: %v", open)
+	// risks is blank, so the assembled open questions must carry at least
+	// one blank-section entry — an empty list is the failure mode this
+	// test exists to catch (TEST-05: it used to log and pass).
+	if len(open) == 0 {
+		t.Errorf("open questions = %v, want a blank-section entry (risks is blank)", open)
+	} else if open[0] != "risks" && open[0] != "users" && open[0] != "nonGoals" && open[0] != "constraints" && open[0] != "requirements" && open[0] != "stories" {
+		t.Errorf("open questions = %v, want a blank-section key first", open)
 	}
 	if _, has := out["leaves"]; has {
 		t.Error("brainstorming should not carry leaves")

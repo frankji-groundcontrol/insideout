@@ -71,6 +71,15 @@ records continue the numbering (next: BUG-016).
   remediation plan; the review of record for prioritization. Duplicates
   already tracked here stay tracked in place (e.g. auth rate limiting,
   2026-08-24 below).
+- [2026-10-04 — coach.go over the ~350-line budget](2026-10-04-coach-go-line-budget.md)
+  — 467 lines mixing turn lifecycle and loop mechanics; target split into
+  `coach.go` + `coach_loop.go`. Filed with the CQ-01 wave-4 pass.
+- [2026-10-04 — anthropic.go over the ~350-line budget](2026-10-04-anthropic-go-line-budget.md)
+  — 408 lines mixing wire types/request path and stream parsing; target
+  split into `anthropic.go` + `anthropic_parse.go`. Filed with CQ-01.
+- [2026-10-04 — models.dart over the ~350-line budget](2026-10-04-models-dart-line-budget.md)
+  — 478 lines of every API model; target four domain files behind the
+  `models.dart` barrel. Filed with CQ-01.
 - [2026-09-18 — Flutter ApiClient over the ~350-line budget](2026-09-18-flutter-apiclient-line-budget.md)
   — `client/lib/api/client.dart` ~529 lines; target core / product /
   stream split. Deferred from the Cobalt live-API wiring slice.

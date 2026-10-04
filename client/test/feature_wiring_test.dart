@@ -2,8 +2,14 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+// CQ-02: this file is a LINT-TIER BACKSTOP only — substring assertions
+// over source files, cheap to extend when wiring a new verb, but they
+// prove presence, not behavior. Behavioral coverage lives in the widget
+// and request tests (`versions_page_test`, `workspace_page_test`,
+// `roadmap_page_test`, `requests_test`); extend those, not this, when a
+// feature matters.
 void main() {
-  test('existing screens invoke every new mutation and extra SSE handlers', () {
+  test('lint backstop: screens reference the mutation and SSE verbs they should', () {
     String read(String path) => File(path).readAsStringSync();
     final settings = read('lib/features/workspace/settings_page.dart');
     final workspace = read('lib/features/workspace/workspace_page.dart');

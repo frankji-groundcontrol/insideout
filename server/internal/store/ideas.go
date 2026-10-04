@@ -55,15 +55,18 @@ func (s *Store) CreateIdea(ctx context.Context, actorID, workspaceID uuid.UUID, 
 	return idea, nil
 }
 
-// ListIdeas requires the caller to have already verified membership.
+// ListIdeas returns only the actor's own ideas — the inbox is private by
+// default (USER-05; admins can still fetch a specific idea by ID, which
+// matches their drop authority). Requires the caller to have already
+// verified membership.
 func (s *Store) ListIdeas(ctx context.Context, actorID, workspaceID uuid.UUID) ([]Idea, error) {
 	var out []Idea
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT `+ideaColumns+`
 			FROM insideout.ideas
-			WHERE workspace_id = $1
-			ORDER BY created_at DESC`, workspaceID,
+			WHERE workspace_id = $1 AND author_id = $2
+			ORDER BY created_at DESC`, workspaceID, actorID,
 		)
 		if err != nil {
 			return err
@@ -85,14 +88,20 @@ func (s *Store) ListIdeas(ctx context.Context, actorID, workspaceID uuid.UUID) (
 	return out, nil
 }
 
+// GetIdeaForMember returns the idea only to its author or the workspace's
+// admin (USER-05 private-by-default; the admin keeps read access to match
+// their drop authority). Fellow members get ErrNotFound — existence is
+// not disclosed.
 func (s *Store) GetIdeaForMember(ctx context.Context, ideaID, viewerID uuid.UUID) (*Idea, error) {
 	var idea *Idea
 	err := s.withUserContext(ctx, viewerID, func(tx pgx.Tx) error {
 		row := tx.QueryRow(ctx, `
 			SELECT `+qualifyColumns("i", ideaColumns)+`
 			FROM insideout.ideas i
-			JOIN insideout.workspace_memberships m ON m.workspace_id = i.workspace_id AND m.user_id = $2
-			WHERE i.id = $1`,
+			WHERE i.id = $1
+			  AND (i.author_id = $2
+			       OR EXISTS (SELECT 1 FROM insideout.workspace_memberships m
+			                  WHERE m.workspace_id = i.workspace_id AND m.user_id = $2 AND m.role = 'admin'))`,
 			ideaID, viewerID,
 		)
 		var scanErr error

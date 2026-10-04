@@ -14,6 +14,7 @@ import '../../theme/cobalt.dart';
 import 'roadmap_bands.dart';
 import 'roadmap_canvas.dart';
 import 'roadmap_node_card.dart';
+import 'roadmap_progress_view.dart';
 
 class RoadmapPage extends StatefulWidget {
   const RoadmapPage({super.key, required this.projectId});
@@ -24,9 +25,12 @@ class RoadmapPage extends StatefulWidget {
   State<RoadmapPage> createState() => _RoadmapPageState();
 }
 
+enum _RoadmapView { progress, bands, canvas }
+
 class _RoadmapPageState extends State<RoadmapPage> {
   late Future<List<RoadmapNode>> _future;
-  bool _canvas = false;
+  late Future<RoadmapProgress> _progressFuture;
+  _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
   List<PresenceEntry> _presence = [];
   final Map<String, CursorDot> _cursors = {};
@@ -82,6 +86,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
     super.initState();
     context.read<LoopFocus>().rememberProject(widget.projectId);
     _future = context.read<Session>().api.listRoadmap(widget.projectId);
+    _progressFuture = context.read<Session>().api.roadmapProgress(widget.projectId);
     _presenceLoop(context.read<Session>().api);
   }
 
@@ -96,7 +101,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = context.read<Session>().api.listRoadmap(widget.projectId));
+    final nodes = context.read<Session>().api.listRoadmap(widget.projectId);
+    final progress = context.read<Session>().api.roadmapProgress(widget.projectId);
+    setState(() {
+      _future = nodes;
+      _progressFuture = progress;
+    });
+    await Future.wait([nodes, progress]);
   }
 
   Future<void> _addRoot() async {
@@ -126,13 +137,14 @@ class _RoadmapPageState extends State<RoadmapPage> {
     final theme = Theme.of(context);
     return AppScaffold(
       actions: [
-        SegmentedButton<bool>(
+        SegmentedButton<_RoadmapView>(
           segments: [
-            ButtonSegment(value: false, label: Text(l10n.t('roadmap.viewBands'))),
-            ButtonSegment(value: true, label: Text(l10n.t('roadmap.viewCanvas'))),
+            ButtonSegment(value: _RoadmapView.progress, label: Text(l10n.t('roadmap.viewProgress'))),
+            ButtonSegment(value: _RoadmapView.bands, label: Text(l10n.t('roadmap.viewBands'))),
+            ButtonSegment(value: _RoadmapView.canvas, label: Text(l10n.t('roadmap.viewCanvas'))),
           ],
-          selected: {_canvas},
-          onSelectionChanged: (s) => setState(() => _canvas = s.first),
+          selected: {_view},
+          onSelectionChanged: (s) => setState(() => _view = s.first),
         ),
       ],
       body: Column(
@@ -168,33 +180,43 @@ class _RoadmapPageState extends State<RoadmapPage> {
               ),
             ),
           Expanded(
-            child: FutureBuilder(
-              future: _future,
-              builder: (context, snap) {
-                if (!snap.hasData) {
-                  return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
-                }
-                if (snap.data!.isEmpty) return Center(child: Text(l10n.t('roadmap.empty')));
-                if (!_canvas) {
-                  return RoadmapBands(projectId: widget.projectId, nodes: snap.data!, onReload: _reload);
-                }
-                return Column(
-                  children: [
-                    RoadmapMinimap(nodes: snap.data!, onTapBand: _scrollToBand),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: RoadmapCanvas(
-                        nodes: snap.data!,
-                        tileBuilder: (node, _) => RoadmapNodeCard(projectId: widget.projectId, node: node, onReload: _reload),
-                        controller: _canvasController,
-                        onCursor: _sendCursor,
-                        cursors: _cursors.values.toList(),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
+            child: _view == _RoadmapView.progress
+                ? FutureBuilder(
+                    future: _progressFuture,
+                    builder: (context, snap) {
+                      if (!snap.hasData) {
+                        return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
+                      }
+                      return RoadmapProgressView(progress: snap.data!, emptyLabel: l10n.t('roadmap.empty'));
+                    },
+                  )
+                : FutureBuilder(
+                    future: _future,
+                    builder: (context, snap) {
+                      if (!snap.hasData) {
+                        return Center(child: snap.hasError ? Text('${snap.error}') : const CircularProgressIndicator());
+                      }
+                      if (snap.data!.isEmpty) return Center(child: Text(l10n.t('roadmap.empty')));
+                      if (_view == _RoadmapView.bands) {
+                        return RoadmapBands(projectId: widget.projectId, nodes: snap.data!, onReload: _reload);
+                      }
+                      return Column(
+                        children: [
+                          RoadmapMinimap(nodes: snap.data!, onTapBand: _scrollToBand),
+                          const Divider(height: 1),
+                          Expanded(
+                            child: RoadmapCanvas(
+                              nodes: snap.data!,
+                              tileBuilder: (node, _) => RoadmapNodeCard(projectId: widget.projectId, node: node, onReload: _reload),
+                              controller: _canvasController,
+                              onCursor: _sendCursor,
+                              cursors: _cursors.values.toList(),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
           ),
         ],
       ),
