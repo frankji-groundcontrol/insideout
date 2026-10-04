@@ -16,8 +16,10 @@ projects, capturing ideas, and refining them into PRDs with an agent coach.
    task from its checklist, and keep the board's status, priority, next action,
    and blocker current.
 3. Read [docs/HANDOFF.md](docs/HANDOFF.md) only for the concise resume path and
-   worktree warnings; use [docs/TODO.md](docs/TODO.md) for known limitations.
-   Do not duplicate plan history or detailed task status in the handoff.
+   worktree warnings; known limitations and structural debt live in
+   [docs/issues/README.md](docs/issues/README.md), active work on the task
+   board above. Do not duplicate plan history or detailed task status in the
+   handoff.
 
 ## Key commands
 

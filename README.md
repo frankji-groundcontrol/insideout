@@ -16,6 +16,9 @@ InsideOut helps your team keep track of projects other people are building, capt
 
 ## 核心功能 / Core Features
 
+> 本节描述**当前可运行版本**的功能；确认中的目标产品体验见 [`PRODUCT.md`](PRODUCT.md)——其中已取代「僵化四阶段教练」与「管理员审批所有 PRD」的旧假设。
+> This section describes the **current runnable build**; the confirmed target product experience lives in [`PRODUCT.md`](PRODUCT.md), which supersedes the rigid four-stage coach and the admin-approves-all-PRDs model.
+
 ### 📋 项目看板 / Project Board
 工作区内所有项目共享一个看板，实时显示进度、阻塞和备注。滞后太久没更新的项目会被特别标出——不用追着问也知道发生了什么。
 Every project in your workspace shows up on one shared board with live progress, blockers, and notes. Projects that have gone quiet too long get flagged — so you know what's happening without having to ask.
@@ -44,6 +47,9 @@ Export any PRD to Markdown for download, or use your browser's print function to
 4. 去想法收集箱记下一个念头 / Jot an idea down in the inbox
 5. 点「转化为 PRD」，开始和教练对话 / Hit "Convert to PRD" and start talking to the coach
 
+> 注册默认是「仅限邀请」：新数据库播种 `signup_mode = invitation_only`，没有邀请码注册会返回 403。本地首次启动请先用 `insideout promote-admin <your-email>` 提升管理员、再生成邀请码（仅限本地开发可改用 `insideout signup-mode open`）。详见 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md)。
+> Registration is **invitation-only by default**: a fresh database seeds `signup_mode = invitation_only` and registering without an invite code returns 403. For a local first run, bootstrap with `insideout promote-admin <your-email>` and mint invites (or `insideout signup-mode open` for local dev only). See [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
+
 ## 本地开发 / Local Development
 
 全部命令在仓库根目录执行 / all commands from the repo root:
@@ -61,7 +67,7 @@ Export any PRD to Markdown for download, or use your browser's print function to
 cd client && flutter run -d chrome
 ```
 
-托管站点 / hosted: `https://app-production-591e.up.railway.app`
+托管站点 / hosted: `https://<your-app>.up.railway.app`（你的 Railway 部署地址 / your own Railway deployment's URL）
 
 `dev.sh` 是必需的：应用本身不读取 `.env`（Go 只读进程环境变量），必须先由 `dev.sh` 导出。它每次启动前都会执行 `env.sh check`，缺项时明确报错。
 `dev.sh` is not optional: nothing in the app reads `.env` itself (Go reads the process environment), so it must be exported first — a bare `cd server && go run` sees none of your values. `dev.sh` also runs `env.sh check` before every launch and names what is missing.
@@ -69,8 +75,8 @@ cd client && flutter run -d chrome
 只有两个变量是必填的：`DATABASE_URL`（任意 PostgreSQL 14+ 实例）和 `INSIDEOUT_JWT_SECRET`（至少 32 字符）。未设置 `INSIDEOUT_LLM_API_KEY` 时教练使用离线模板回复，适合本地开发。
 Only two variables are required: `DATABASE_URL` (any PostgreSQL 14+ instance) and `INSIDEOUT_JWT_SECRET` (min 32 chars) — they are the only two left uncommented in `.env.example`. Without `INSIDEOUT_LLM_API_KEY` the coach falls back to an offline template reply, handy for local dev. Step-by-step: [docs/SETENV.md](docs/SETENV.md); every variable: [docs/usage/environment.md](docs/usage/environment.md).
 
-或者直接用 docker-compose 一键启动完整技术栈：
-Or bring up the whole stack with docker-compose:
+或者直接用 docker-compose 一键启动后端技术栈（postgres + server）；Flutter 前端需另行启动（`cd client && flutter run -d chrome`）：
+Or bring up the backend stack (postgres + server) with docker-compose — the Flutter frontend runs separately (`cd client && flutter run -d chrome`):
 
 ```bash
 docker compose up -d
@@ -85,16 +91,29 @@ docker compose up -d
 
 ## 第三方资源 / Third-party assets
 
-**字体 / Fonts.** The hosted Flutter UI uses Material 3 type. This
-repository ships no font files.
+**字体 / Fonts.**
+
+- 原生构建（iOS / Android / 桌面端）附带两份 SIL OFL 许可的可变字体：**Noto Sans SC** 与
+  **Noto Serif SC**（`client/assets/fonts/`，经 `client/pubspec.yaml` 打包，由
+  `client/lib/theme/native_fonts.dart` 加载）。许可全文随附于
+  [`client/assets/fonts/OFL.txt`](client/assets/fonts/OFL.txt)。
+- Web 端不打包字体文件，经 Google Fonts 加载所需字族（Archivo、Noto Sans SC、
+  Source Serif 4、Noto Serif SC；见 `client/lib/theme/web_fonts_web.dart`）。
+- Native builds (iOS / Android / desktop) ship two SIL OFL-licensed variable
+  fonts, **Noto Sans SC** and **Noto Serif SC** (`client/assets/fonts/`,
+  bundled via `client/pubspec.yaml`, loaded by
+  `client/lib/theme/native_fonts.dart`). The full license text ships alongside
+  as [`client/assets/fonts/OFL.txt`](client/assets/fonts/OFL.txt).
+- The web build loads its faces from Google Fonts instead of bundling font
+  files (Archivo, Noto Sans SC, Source Serif 4, Noto Serif SC; see
+  `client/lib/theme/web_fonts_web.dart`).
+
+**阿里巴巴普惠体 / Alibaba PuHuiTi — 历史署名，仅作记录 / historical attribution only:**
 
 - 版权 / Copyright: © 2020-2021 阿里巴巴（中国）有限公司，版权所有 / Alibaba (China) Co., Ltd. All rights reserved.
 - 商标 / Trademark: 阿里巴巴是阿里巴巴集团控股有限公司的商标 / Alibaba is a trademark of Alibaba Group Holding Limited.
 - 制作 / Manufacturer: Alibaba Design；汉仪字库 / Hanyi Fonts. 版本 2.00，字符集 GB18030-2000。
 - 官方发布 / Official source: <https://alibabafont.taobao.com/>（阿里巴巴字体官方门户 / the Alibaba Fonts portal).
 
-**许可说明 / License note.** 阿里巴巴普惠体由阿里巴巴官方免费发布，允许个人与商业**使用**；但它**不是**开源许可证（非 OSI/OFL），字体文件标注「版权所有（All rights reserved）」，嵌入权限为 Preview & Print（fsType=4）。因此「免费使用」不等于「可再分发字体文件」——把字体二进制提交进本仓库属于再分发，超出了授权范围。**本仓库不包含、不分发任何字体文件**：我们只在字体栈中按名称**引用**它。已安装该字体的访问者会看到它，其他访问者回退到 Noto Sans SC（经 Google Fonts）及系统 CJK 字体。展示衬线体 Noto Serif SC 同样通过 Google Fonts 引用。如需在你的环境还原完全一致的观感，请自行从上方官方渠道获取并安装（这属于你自己的「使用」）。
-
-**Body typeface.** Flutter Material 3 uses the platform / fallback faces.
-**This repository contains and distributes no font files.** The Alibaba
-PuHuiTi notes above are historical (the deleted Nuxt Ink & Seal UI).
+**许可说明 / License note.** 阿里巴巴普惠体由阿里巴巴官方免费发布，允许个人与商业**使用**；但它**不是**开源许可证（非 OSI/OFL），字体文件标注「版权所有（All rights reserved）」，嵌入权限为 Preview & Print（fsType=4）。因此「免费使用」不等于「可再分发字体文件」——把字体二进制提交进本仓库属于再分发，超出了授权范围。**本仓库不包含、不分发普惠体**：它曾是已删除的 Nuxt Ink & Seal UI 字体栈中「按名称引用」的成员，当前的 Cobalt 客户端并不引用它；上方署名仅为历史记录保留。如需在你的环境还原旧观感，请自行从上方官方渠道获取并安装（这属于你自己的「使用」）。
+Alibaba PuHuiTi is released free for personal and commercial **use**, but it is **not** an open-source license (neither OSI nor OFL): the files are marked "All rights reserved" with Preview & Print embedding permission (fsType=4). Free to use does not mean free to redistribute — committing the binaries to this repo would be redistribution beyond the grant. **This repository does not contain or distribute PuHuiTi**: it was referenced by name in the deleted Nuxt Ink & Seal UI's font stack, and the current Cobalt client does not reference it. The attribution above is kept as the historical record.

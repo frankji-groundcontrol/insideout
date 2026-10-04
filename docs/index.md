@@ -13,7 +13,8 @@ keeps its original bilingual text as a historical record).
   definition to PRODUCT.md and the current architecture.
 - [PLAN.md](PLAN.md) — high-level development overview: architecture table,
   repo layout, information architecture, conventions.
-- [TODO.md](TODO.md) — shipped-system tracker and known limitations.
+- [TODO.md](TODO.md) — slim shipped-system baseline (known limitations and
+  debt live in [issues/](issues/README.md)).
 - [plans/README.md](plans/README.md) — authoritative concurrent task board:
   priorities, status, next actions, and blockers.
 - [HANDOFF.md](HANDOFF.md) — concise next-agent resume path and worktree
@@ -44,6 +45,9 @@ keeps its original bilingual text as a historical record).
   page appearance and the frontend, with resolutions and files touched.
 - [learning/](learning/README.md) — reusable lessons from real failures.
 - [practices/](practices/README.md) — repeatable guardrails and methods.
+- [review/](review/README.md) — dated whole-tree review reports: indexed
+  findings with skeptic verdicts, reproduction evidence, and remediation
+  plans.
 - [history/](history/README.md) — retired JuanLeMe-era records.
 - [design-system/CHANGELOG.md](design-system/CHANGELOG.md) — token-layer
   version record (live Flutter is Cobalt **1.0.0**; lock screens in

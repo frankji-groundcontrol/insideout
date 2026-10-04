@@ -112,6 +112,18 @@ void main() {
     expect(await store.readRefresh(), isNull);
   });
 
+  test('clear signs the user out so the app routes to the auth door', () async {
+    final session = Session(store: MemoryTokenStore());
+    await session.applyAuthProfile(UserProfile.fromJson(Map<String, dynamic>.from(loginFixture)));
+    var notified = 0;
+    session.addListener(() => notified++);
+
+    await session.clear();
+
+    expect(session.isSignedIn, isFalse);
+    expect(notified, greaterThan(0));
+  });
+
   test('tokensFromAuthBody and tokensFromRefreshBody read fixture fields', () {
     final auth = tokensFromAuthBody(Map<String, dynamic>.from(loginFixture));
     expect(auth!.access, 'access-from-login');

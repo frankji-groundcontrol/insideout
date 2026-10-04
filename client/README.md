@@ -21,7 +21,7 @@ flutter run -d android
 Against the hosted API:
 
 ```bash
-flutter run -d chrome --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
+flutter run -d chrome --dart-define=API_BASE=https://<your-app>.up.railway.app/api/v1   # your deployment's host
 ```
 
 Register or sign in. Tokens are stored with `flutter_secure_storage`.

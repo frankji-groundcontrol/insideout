@@ -25,7 +25,7 @@ import 'session/session.dart';
 final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/': (c, s) => const LandingPage(),
   '/login': (c, s) => const LoginPage(),
-  '/register': (c, s) => const RegisterPage(),
+  '/register': (c, s) => RegisterPage(invite: s.uri.queryParameters['invite'] ?? ''),
   '/forgot-password': (c, s) => const ForgotPasswordPage(),
   '/reset-password': (c, s) => ResetPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
   '/magic-link': (c, s) => MagicLinkPage(token: s.uri.queryParameters['token'] ?? ''),

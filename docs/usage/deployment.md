@@ -17,7 +17,7 @@ browser ── flutter run / hosted nginx ──> server (Go API, :8080)
 
 | Service | Image / build | Container port | Host port |
 |---------|---------------|----------------|-----------|
-| `postgres` | `postgres:17` | 5432 | `${POSTGRES_PORT:-5442}` |
+| `postgres` | `postgres:17` | 5432 | `127.0.0.1:${POSTGRES_PORT:-5442}` (localhost only) |
 | `server` | built from `server/` (golang:1.25 → distroless/static) | 8080 | `${SERVER_PORT:-8080}` |
 
 The bundled `postgres` service is the self-hosted default. When
@@ -35,12 +35,13 @@ Required — compose fails fast (`:?`) without them:
 |----------|---------|-------|
 | `DATABASE_URL` | server | No derived default (compose can't nest `${...}` in `:-`). For the bundled DB: `postgres://insideout_app:<POSTGRES_APP_PASSWORD>@postgres:5432/insideout?sslmode=disable` |
 | `INSIDEOUT_JWT_SECRET` | server | Min 32 chars; server refuses to start otherwise |
-| `POSTGRES_APP_PASSWORD` | postgres init | Password for the `insideout_app` runtime role (only required if you start the bundled `postgres`) |
 
 Optional, with defaults:
 
 | Variable | Default | Used by |
 |----------|---------|---------|
+| `POSTGRES_APP_PASSWORD` | `insideout_app_dev_password` (dev-only) | postgres init — password for the `insideout_app` runtime role; override in `.env` for any real deployment, and it must match the password in `DATABASE_URL` when the bundled DB is used |
+| `POSTGRES_OWNER_PASSWORD` | `insideout_owner_dev_password` (dev-only) | postgres init — password for `insideout_owner`; must match `DATABASE_OWNER_URL` when set |
 | `POSTGRES_SUPERUSER_PASSWORD` | `insideout_dev_password` | postgres bootstrap superuser — **change it** |
 | `POSTGRES_PORT` | `5442` | host port for postgres |
 | `SERVER_PORT` | `8080` | host port for the Go API |
@@ -92,9 +93,9 @@ Two cookie-related knobs on the server:
 
 The first hosted instance lives on Railway in project `insideout`
 (workspace **Frank Ji's Projects**), region `asia-southeast1-eqsg3a`.
-Public URL (app only):
+Public URL (app only — use your own deployment's URL):
 
-`https://app-production-591e.up.railway.app`
+`https://<your-app>.up.railway.app`
 
 ```
 browser ── HTTPS ──> app (Flutter web + nginx, :8080 public)

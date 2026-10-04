@@ -7,23 +7,24 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. Next: merge [PR #3](https://github.com/frankji-groundcontrol/insideout/pull/3)
-   (Cobalt restyle + live-API wiring), then `railway up --service app`.
-   Walk record:
+1. **Release gate (pending).** The Cobalt restyle (PR #3) merged to `main`
+   2026-09-18, but the last recorded deploy predates it. Ship with
+   `railway up --service app`, then verify a signed-in page load against the
+   hosted app; the gate is tracked on the board's 2026-10-04 remediation row.
+   Hosted signup is invitation-only — do not seed a shared remote database
+   with the local demo identity. Walk record:
    [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
-   Hosted signup is invitation-only. Do not seed a shared remote
-   database with the local demo identity.
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
    [depth](changelogs/2026-08-22-depth-thread.md)): audience-view web
    rendering, proposal→structure application, and canvas cursors are
    live on top of presence, the time-first roadmap, and the full
-   parity loop (27 MCP tools). What remains of PRODUCT.md is genuinely
+   parity loop (50 MCP tools). What remains of PRODUCT.md is genuinely
    new product judgment — the next interview's findings decide it.
-2. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
+3. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
-   API routes first, then projected. `insideout-mcp` (16 tools) and the
+   API routes first, then projected. `insideout-mcp` (50 tools) and the
    CLI are live.
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
 4. Restore Ink & Seal on Flutter: slice closed 2026-08-23 — canvas v1
@@ -38,9 +39,10 @@ Resume here. The authoritative multi-task board is
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash
-# Local Flutter against the hosted API (real data; CORS already allows localhost)
+# Local Flutter against the hosted API (real data; CORS already allows localhost;
+# use your own deployment's domain)
 cd client && flutter run -d chrome --web-port=5173 --web-hostname=localhost \
-  --dart-define=API_BASE=https://insideout.yalotein.net/api/v1
+  --dart-define=API_BASE=https://<your-domain>/api/v1
 ```
 
 Local `.env` `DATABASE_URL` works again (repaired 2026-08-20 with the

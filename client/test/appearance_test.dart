@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/session/appearance.dart';
 
 void main() {
-  test('starts on Nuxt default locale and light theme', () {
+  test('starts on the default locale and light theme', () {
     final appearance = Appearance(store: MemorySettingsStore());
     expect(appearance.locale, 'zh-CN');
     expect(appearance.dark, isFalse);

@@ -57,5 +57,12 @@ set -a
 . "$repo/.env"
 set +a
 
+# Flutter web dev serves from a random localhost port, so browser API calls
+# are cross-origin. Default the CORS allow-list to the `localhost` token
+# (any loopback port) for the server unless the user set one explicitly.
+if [ "$dir" = "server" ]; then
+  export INSIDEOUT_CORS_ORIGINS="${INSIDEOUT_CORS_ORIGINS:-localhost}"
+fi
+
 cd "$repo/$dir"
 exec "$@"

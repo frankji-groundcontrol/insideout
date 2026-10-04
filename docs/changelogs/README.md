@@ -15,6 +15,12 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-04 — Remediation Waves 0–1](2026-10-04-remediation-wave-0-1.md)
+  — invite-link, CORS, and 401-refresh client unblocks (TDD); compose/env/
+  records honesty pass; redaction sweep; CLI/MCP default API now localhost.
+- [2026-10-04 — Multirole review (whole tree)](2026-10-04-multirole-review.md)
+  — 16-agent audit of main@877ad03; 75 findings (12 High confirmed), register
+  + five-wave remediation plan in `docs/review/2026-10-04-multirole/`.
 - [2026-09-18 — Cobalt Flutter wired to a real API](2026-09-18-cobalt-backend-wire.md)
   — Coach web POST SSE via fetch; dock IDs from real loads.
 - [2026-09-18 — Goal prompt: Cobalt Flutter against the live API](2026-09-18-cobalt-backend-goal.md)

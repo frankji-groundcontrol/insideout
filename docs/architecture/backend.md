@@ -31,9 +31,11 @@ server/
 
 Authentication is httpOnly-cookie based: a short-lived JWT access token plus a
 rotating opaque refresh token (SHA-256 hash stored at rest, rotated on every
-`/auth/refresh` call). The Nuxt frontend proxies `/api/v1/**` to this server
-same-origin (see [deployment](deployment.md)), so cookies work for both the
-browser and Nuxt SSR without CORS.
+`/auth/refresh` call). The hosted Flutter web client is served by an nginx
+that proxies `/api/v1/**` to this server same-origin (see
+[deployment](deployment.md)), so browser cookies work without CORS; local
+Flutter web dev is cross-origin and uses the `INSIDEOUT_CORS_ORIGINS`
+allow-list (`dev.sh` defaults it to the `localhost` token).
 
 Beyond email+password, emailed one-time-credential flows share the same
 session issuance: magic-link login (`POST /auth/magic-link` then

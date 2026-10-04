@@ -11,9 +11,13 @@ import 'auth_door.dart';
 enum _LoginMode { password, magic, code }
 
 class AuthForm extends StatefulWidget {
-  const AuthForm({super.key, required this.prompt, this.onSwitch});
+  const AuthForm({super.key, required this.prompt, this.inviteCode = '', this.onSwitch});
 
   final AuthPrompt prompt;
+
+  /// Invitation code pre-fill from a `/register?invite=` deep link.
+  final String inviteCode;
+
   final VoidCallback? onSwitch;
 
   @override
@@ -37,6 +41,9 @@ class _AuthFormState extends State<AuthForm> {
   void initState() {
     super.initState();
     if (widget.prompt == AuthPrompt.register) {
+      if (widget.inviteCode.isNotEmpty) {
+        invite.text = widget.inviteCode;
+      }
       // Public config decides whether the invitation field shows; a fetch
       // failure falls back to hidden so the server's own 403 explains.
       context.read<Session>().api.authConfig().then((mode) {

@@ -92,6 +92,13 @@ Then, from the repo root (the wrapper exports `.env` first):
 Migrations also run automatically on server startup, so `migrate` is mainly
 for CI or checking a fresh database.
 
+**Registration is invitation-only on a fresh database** (migrations seed
+`signup_mode = invitation_only`; `register` returns 403 without an invite
+code). Bootstrap the first admin with `insideout promote-admin <email>`
+(server subcommand, owner DSN) and mint per-email invites — or, for local
+dev only, `insideout signup-mode open`. See
+[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md).
+
 **Transaction poolers:** if `DATABASE_URL` contains `pgbouncer=true`
 (PgBouncer/Supavisor transaction mode), the server automatically switches pgx
 to the simple query protocol (`server/internal/store/pool.go`) because
@@ -115,6 +122,9 @@ flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
 
 Or `./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1`.
+For browser dev against the local server, `scripts/dev.sh` exports
+`INSIDEOUT_CORS_ORIGINS=localhost` when unset, so Flutter web on any
+localhost port passes CORS without extra config.
 Hosted web uses same-origin `/api/v1` behind nginx
 ([deployment.md](deployment.md#railway-current-public-deploy)).
 

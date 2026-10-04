@@ -11,7 +11,7 @@ The CLI ships inside the server binary:
 
 ```bash
 cd server && go build -o /usr/local/bin/insideout ./cmd/insideout
-export INSIDEOUT_API=https://insideout.yalotein.net/api/v1   # or your local server
+export INSIDEOUT_API=https://<your-domain>/api/v1   # your deployment's domain, or your local server
 export INSIDEOUT_TOKEN="$(insideout login you@example.com)"   # prints only the token
 insideout whoami
 ```
@@ -57,7 +57,7 @@ verbs as tools (50 today), token via `INSIDEOUT_TOKEN`:
 ```json
 { "mcpServers": { "insideout": {
     "command": "/usr/local/bin/insideout-mcp",
-    "env": { "INSIDEOUT_API": "https://insideout.yalotein.net/api/v1",
+    "env": { "INSIDEOUT_API": "https://<your-domain>/api/v1",
              "INSIDEOUT_TOKEN": "…" } } } }
 ```
 
@@ -105,7 +105,8 @@ Connecting a repository so pushes and PRs feed your roadmap:
    webhook is already configured).
 
 From the next push, GitHub delivers to
-`https://insideout.yalotein.net/api/v1/hooks/github`; the delivery is
+`https://<your-domain>/api/v1/hooks/github` (your deployment's domain); the
+delivery is
 HMAC-verified, the guide is fetched (installation token for private
 repos), and matched **leaf** nodes gain evidence rows — commits show
 activity, opened PRs review, merged PRs implementation, deployments

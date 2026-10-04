@@ -16,7 +16,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-const defaultAPIBase = "https://server-production-9c338.up.railway.app/api/v1"
+const defaultAPIBase = "http://127.0.0.1:8080/api/v1"
 
 // runClientCommand handles login/whoami/workspaces/projects/prd and
 // reports whether the argument was a client command (already executed;

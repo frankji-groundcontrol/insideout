@@ -17,7 +17,7 @@ CLI/MCP surface. This skill is the contract for the second mode.
 ```bash
 cd server && go build -o /usr/local/bin/insideout ./cmd/insideout
 go build -o /usr/local/bin/insideout-mcp ./cmd/insideout-mcp
-export INSIDEOUT_API=https://insideout.yalotein.net/api/v1
+export INSIDEOUT_API=https://<your-domain>/api/v1   # your deployment's domain
 export INSIDEOUT_TOKEN="$(insideout login you@example.com)"   # or --code / --magic
 insideout whoami
 ```

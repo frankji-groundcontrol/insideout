@@ -27,7 +27,7 @@ Three bridges make `.env` live:
    the root if that component owned a `.env.example`. Server and client
    do not, so the verb is a documented no-op.
 3. **`docker-compose.yml`** — auto-reads the root `.env` beside it purely for
-   `${VAR}` interpolation into container environment. Three required vars use
+   `${VAR}` interpolation into container environment. Two required vars use
    `:?` guards, so `docker compose up` aborts with a message before starting
    if they are empty.
 
@@ -123,8 +123,8 @@ containers the server listens on `:8080` regardless.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
-| `POSTGRES_APP_PASSWORD` | **conditional** (`:?`) | — | Init password for `insideout_app`. Required when starting bundled `postgres`. Must match the password in `DATABASE_URL`. |
-| `POSTGRES_OWNER_PASSWORD` | **conditional** (`:?`) | — | Init password for `insideout_owner`. Required when starting bundled `postgres`. Must match `DATABASE_OWNER_URL`. |
+| `POSTGRES_APP_PASSWORD` | no | `insideout_app_dev_password` (dev-only) | Init password for `insideout_app`. Dev-only default so the file also parses for remote-DSN setups; override in `.env` for any real deployment. Must match the password in `DATABASE_URL` when the bundled `postgres` is started. |
+| `POSTGRES_OWNER_PASSWORD` | no | `insideout_owner_dev_password` (dev-only) | Init password for `insideout_owner`. Same dev-only default posture; must match `DATABASE_OWNER_URL` when that URL is set. |
 | `POSTGRES_SUPERUSER_PASSWORD` | no | `insideout_dev_password` | Bootstrap superuser password for the postgres image. The app never connects with it. |
 | `POSTGRES_PORT` | no | `5442` | Host side of the postgres mapping (`5432` inside). |
 | `SERVER_PORT` | no | `8080` | Host side of the server mapping (`:8080` inside, hardcoded). |
@@ -192,14 +192,14 @@ local http.
 **Permissive dev CORS.** Set `INSIDEOUT_DEV_CORS=1`. Off unless the value is
 exactly `1`; never enable it in production.
 
-**Changing ports.** Under compose, set `SERVER_PORT` / `APP_PORT` /
-`POSTGRES_PORT` to remap the host side; container ports are fixed. Under a
-bare `go run`, set `INSIDEOUT_ADDR` instead.
+**Changing ports.** Under compose, set `SERVER_PORT` / `POSTGRES_PORT` to
+remap the host side; container ports are fixed (postgres binds to
+`127.0.0.1` on the host). Under a bare `go run`, set `INSIDEOUT_ADDR` instead.
 
 **Production.** Get env from the platform, never a file. With this repo's
 compose stack, values arrive via root `.env` `${VAR}` interpolation, and the
-three `:?`-guarded vars (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`,
-`POSTGRES_APP_PASSWORD`) abort startup if empty.
+two `:?`-guarded vars (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`) abort startup
+if empty.
 
 ## Security
 
@@ -233,4 +233,6 @@ logs is informational, not an error — you are in offline AI mode. Set
 `INSIDEOUT_LLM_API_KEY` (and `INSIDEOUT_LLM_BASE_URL`) to use a real provider.
 
 **`docker compose up` aborts before starting.** A `:?` guard fired — set
-`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, and `POSTGRES_APP_PASSWORD` in `.env`.
+`DATABASE_URL` and `INSIDEOUT_JWT_SECRET` in `.env`. (`POSTGRES_APP_PASSWORD`
+/ `POSTGRES_OWNER_PASSWORD` no longer guard startup; they fall back to
+dev-only defaults — see the compose table above.)

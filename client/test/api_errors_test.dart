@@ -18,7 +18,7 @@ void main() {
     expect(err.retryAfterSeconds, 12);
   });
 
-  test('coach backoff matches Nuxt APP_THROTTLE and CIRCUIT_OPEN', () {
+  test('coach backoff matches the APP_THROTTLE and CIRCUIT_OPEN contract', () {
     final throttle = toApiError(429, {'error': 'slow', 'code': 'APP_THROTTLE', 'retry_after_seconds': 12});
     expect(isCoachBackoff(throttle), isTrue);
     expect(coachRetrySeconds(throttle), 12);

@@ -121,6 +121,8 @@ class Session extends ChangeNotifier {
   }
 
   Future<void> clear() async {
+    user = null;
     await _store.delete();
+    notifyListeners();
   }
 }

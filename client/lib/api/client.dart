@@ -40,8 +40,47 @@ class ApiClient {
         }
         handler.next(options);
       },
+      // validateStatus (<500) delivers 401s here as ordinary responses, so
+      // the expired-token recovery lives in onResponse rather than onError:
+      // refresh once, retry the request, and let a terminal 401 fall through
+      // to _parse, which surfaces it as the same ApiException as before.
+      onResponse: (response, handler) async {
+        final options = response.requestOptions;
+        // /auth/* endpoints establish sessions; a 401 there is terminal
+        // (bad credentials, dead link) and must surface untouched.
+        if (response.statusCode != 401 ||
+            options.path.startsWith('/auth/') ||
+            options.extra[_retriedKey] == true) {
+          handler.next(response);
+          return;
+        }
+        options.extra[_retriedKey] = true;
+        try {
+          await _refreshSingleFlight();
+        } catch (_) {
+          await _clearTokens();
+          handler.next(response);
+          return;
+        }
+        // The onRequest interceptor re-attaches the rotated bearer token.
+        try {
+          handler.resolve(await _dio.fetch<dynamic>(options));
+        } on DioException catch (e) {
+          handler.reject(e);
+        }
+      },
     ));
   }
+
+  static const _retriedKey = 'io_retried';
+
+  Future<void>? _refreshing;
+
+  /// Exactly one in-flight refresh no matter how many requests 401 at the
+  /// same moment. A failed refresh clears the session so the app routes to
+  /// the auth door instead of retrying with a dead token.
+  Future<void> _refreshSingleFlight() =>
+      _refreshing ??= refresh().whenComplete(() => _refreshing = null);
 
   final String baseUrl;
   final TokenReader _readAccess;

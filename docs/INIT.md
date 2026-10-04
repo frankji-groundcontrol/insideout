@@ -20,10 +20,13 @@ may still appear in the README, technical tracker, and historical plans when
 they describe today's implementation or what existed at the time; they are not
 target-product authority.
 
-## Current technical foundation
+## What this file used to define
 
-InsideOut currently runs as a Go API over PostgreSQL with row-level security,
-a Nuxt 4 SSR application, a direct Anthropic PRD Coach integration, and an Ink
-& Seal bilingual interface. This is implementation context, not a constraint
-on the target product model. See the architecture documents for authoritative
-details.
+This file carried the product definition from the former product-definition
+era — the Nuxt 4 SSR application with its Ink & Seal bilingual interface and
+a directly integrated PRD Coach. The Nuxt tree was deleted 2026-08-18 and
+production is now the Flutter Cobalt web client over the Go API and
+PostgreSQL with row-level security. Treat this section as historical context
+only: the target experience lives in [`PRODUCT.md`](../PRODUCT.md), and the
+running system (Go API, PostgreSQL/RLS, Flutter Cobalt web) is authoritative
+in [`docs/architecture/`](architecture/index.md).

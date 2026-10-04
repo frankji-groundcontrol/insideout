@@ -14,10 +14,17 @@ services:
       # Read by docker/postgres-init/001-create-app-role.sh. Two NOSUPERUSER
       # roles: insideout_owner (schema + SECURITY DEFINER) and insideout_app
       # (runtime). The image superuser never owns DEFINER functions.
-      INSIDEOUT_OWNER_PASSWORD: ${POSTGRES_OWNER_PASSWORD:?set POSTGRES_OWNER_PASSWORD in .env}
-      INSIDEOUT_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:?set POSTGRES_APP_PASSWORD in .env}
+      # Dev-only defaults (override both in .env for any real deployment) so
+      # this file also parses when DATABASE_URL points at a remote instance
+      # and the bundled postgres is never started. When the bundled DB is
+      # used, each value must match the password in DATABASE_URL /
+      # DATABASE_OWNER_URL.
+      INSIDEOUT_OWNER_PASSWORD: ${POSTGRES_OWNER_PASSWORD:-insideout_owner_dev_password}
+      INSIDEOUT_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-insideout_app_dev_password}
     ports:
-      - "${POSTGRES_PORT:-5442}:5432"
+      # Bound to localhost only: the bootstrap superuser password above is a
+      # documented default, so the bundled DB must not listen on all interfaces.
+      - "127.0.0.1:${POSTGRES_PORT:-5442}:5432"
     volumes:
       - insideout_pgdata:/var/lib/postgresql/data
       - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro

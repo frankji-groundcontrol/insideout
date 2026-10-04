@@ -19,9 +19,12 @@ const _steps = [
 ];
 
 class LandingPage extends StatefulWidget {
-  const LandingPage({super.key, this.initialPrompt});
+  const LandingPage({super.key, this.initialPrompt, this.invite = ''});
 
   final AuthPrompt? initialPrompt;
+
+  /// Invitation code handed to the register prompt (deep link carry-over).
+  final String invite;
 
   @override
   State<LandingPage> createState() => _LandingPageState();
@@ -180,6 +183,7 @@ class _LandingPageState extends State<LandingPage> {
             onClose: _close,
             child: AuthForm(
               prompt: _prompt!,
+              inviteCode: widget.invite,
               onSwitch: () => _open(_prompt == AuthPrompt.login ? AuthPrompt.register : AuthPrompt.login),
             ),
           ),

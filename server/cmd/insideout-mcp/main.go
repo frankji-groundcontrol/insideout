@@ -17,7 +17,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/mcpserver"
 )
 
-const defaultAPIBase = "https://server-production-9c338.up.railway.app/api/v1"
+const defaultAPIBase = "http://127.0.0.1:8080/api/v1"
 
 func main() {
 	api := flag.String("api", envOr("INSIDEOUT_API", defaultAPIBase), "API base URL")

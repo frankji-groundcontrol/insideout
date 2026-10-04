@@ -57,6 +57,13 @@ Verify nothing sensitive is trackable:
 git check-ignore .env
 ```
 
+**Registration is invitation-only on a fresh database.** Migrations seed
+`signup_mode = invitation_only`, so `register` returns 403 without an invite
+code. Bootstrap the first admin out-of-band with `insideout promote-admin
+<email>` (server subcommand, owner DSN), then mint per-email invites — or, for
+local dev only, open signup with `insideout signup-mode open`. Full detail:
+[usage/cli-mcp-and-guidance.md](usage/cli-mcp-and-guidance.md).
+
 ## The skeleton is the schema
 
 `.env.example` does three jobs, so there is no second list to drift out of sync:
@@ -170,13 +177,20 @@ on the base URL yourself. `INSIDEOUT_LLM_MODEL` defaults to
 
 Skip for bare `go run` / `dev.sh` use.
 
-- `POSTGRES_APP_PASSWORD` — required by compose's `:?` guard *for setup (b)
-  only*, which is why the skeleton leaves it commented: a flat "required" would
-  cry wolf for everyone on a remote DSN. A conditional requirement belongs in
-  the checker, and `check` enforces it exactly when the bundled setup is in use.
+- `POSTGRES_APP_PASSWORD` / `POSTGRES_OWNER_PASSWORD` — for setup (b) only,
+  and no longer strictly required: compose carries dev-only defaults
+  (`insideout_app_dev_password` / `insideout_owner_dev_password`) so
+  `docker compose config` also parses for remote-DSN setups that never start
+  the bundled service. Whatever you set must match the password embedded in
+  `DATABASE_URL` / `DATABASE_OWNER_URL`. The skeleton leaves both commented
+  because a flat "required" would cry wolf for everyone on a remote DSN — a
+  conditional requirement belongs in the checker, and `check` enforces it
+  exactly when the bundled setup is in use. Override both in `.env` for any
+  real deployment.
 - `POSTGRES_SUPERUSER_PASSWORD` — bootstrap only; the app never connects with it.
-- `SERVER_PORT` / `APP_PORT` / `POSTGRES_PORT` — host-side mappings. Inside the
-  containers the ports are fixed at `8080` / `3000` / `5432`.
+- `SERVER_PORT` / `POSTGRES_PORT` — host-side mappings. Inside the containers
+  the ports are fixed at `8080` / `5432`. Postgres binds to `127.0.0.1` on the
+  host.
 
 ## Seeing and setting everything
 
