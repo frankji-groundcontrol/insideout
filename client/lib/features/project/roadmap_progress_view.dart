@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 
@@ -101,10 +102,10 @@ class _ProgressBand extends StatelessWidget {
                                 const SizedBox(height: 6),
                                 Row(
                                   children: [
-                                    if (item.deadline != null && item.deadline!.length >= 10)
+                                    if (item.deadline != null)
                                       Padding(
                                         padding: const EdgeInsets.only(right: 8),
-                                        child: Text(item.deadline!.substring(0, 10), style: theme.textTheme.bodySmall),
+                                        child: Text(isoDate(item.deadline!), style: theme.textTheme.bodySmall),
                                       ),
                                     if (item.pressure != null && item.pressure!.isNotEmpty)
                                       Text(

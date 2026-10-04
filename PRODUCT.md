@@ -423,7 +423,10 @@ public-commit timeline is an independent source of progress truth.
 
 The current Go, PostgreSQL/RLS, Flutter, PRD Coach, Roadmap Canvas, and public
 GitHub-sync implementation remains the running foundation. It does **not** yet
-implement this whole target experience. Delivery should evolve that foundation
+implement this whole target experience. In particular, the running v1 authority
+model is still workspace-scoped — the author submits and resubmits, and a
+Workspace admin approves or rejects — while the per-Project roles described
+above are the target, not the current behavior. Delivery should evolve that foundation
 in small vertical slices and reuse its existing PRD revisions, Roadmap tree,
 project updates, and GitHub integration before adding new mechanisms.
 

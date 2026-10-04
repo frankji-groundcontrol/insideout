@@ -58,12 +58,14 @@ jobs:
         run: go build ./... && go vet ./...
       - name: Test (integration suite must run, not skip)
         run: |
-          go test ./... -count=1 -timeout 20m
-          # TEST-02: a skipped store test is a red build — the DB-gated
-          # suite is the point of the postgres service above.
-          skiplines=$(go test ./internal/store/... -count=1 -v 2>&1 | grep -c -- '--- SKIP' || true)
+          set -o pipefail
+          go test ./... -count=1 -v -timeout 20m 2>&1 | tee /tmp/gotest.log
+          # TEST-02/TEST-09: a skipped test anywhere — store, api, agent — is
+          # a red build. Every current skip is a DATABASE_URL gate, and the
+          # postgres service above is the point of this job.
+          skiplines=$(grep -c -- '--- SKIP' /tmp/gotest.log || true)
           if [ "$skiplines" -ne 0 ]; then
-            echo "::error::$skiplines store test(s) skipped — DATABASE_URL is not reaching the suite"
+            echo "::error::$skiplines test(s) skipped — DATABASE_URL is not reaching the suite"
             exit 1
           fi
 
@@ -78,7 +80,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.47.0
+          # Keep in lockstep with client/Dockerfile — CI must certify the
+          # toolchain that builds the shipped web image (ARCH-01).
+          flutter-version: 3.44.0
           channel: stable
           cache: true
       - run: flutter pub get

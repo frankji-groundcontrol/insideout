@@ -16,12 +16,16 @@ bool downloadTextFile(String filename, String text, {String mime = 'text/plain'}
 
 bool openTextInNewTab(String text, {String mime = 'text/plain'}) {
   final url = _objectUrl(text, mime);
-  web.window.open(url, '_blank');
+  final tab = web.window.open(url, '_blank');
   // The new tab loads the object URL asynchronously; revoking immediately
   // would cancel that load, so give it a beat.
-  web.window.setTimeout((() => web.URL.revokeObjectURL(url)).toJS, 60_000.toJS);
-  return true;
+  web.window.setTimeout((() => web.URL.revokeObjectURL(url)).toJS, _revokeDelayMs.toJS);
+  // package:web's open() returns null when the browser blocked the popup —
+  // callers keep an inline fallback for exactly that case.
+  return tab != null;
 }
+
+const int _revokeDelayMs = 60_000;
 
 String _objectUrl(String text, String mime) {
   final blob = web.Blob(

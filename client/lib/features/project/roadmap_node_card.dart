@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/cobalt_chip.dart';
@@ -50,7 +51,7 @@ class RoadmapNodeCard extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: ShadeChip(
                 label:
-                    '${node.deadline!.substring(0, 10)}${node.pressure != null && node.pressure != 'normal' ? ' · ${l10n.t('roadmap.pressure.${node.pressure}')}' : ''}',
+                    '${isoDate(node.deadline!)}${node.pressure != null && node.pressure != 'normal' ? ' · ${l10n.t('roadmap.pressure.${node.pressure}')}' : ''}',
                 tone: node.pressure == 'overdue' || node.pressure == 'high_risk' ? ShadeTone.danger : ShadeTone.neutral,
               ),
             ),
@@ -161,7 +162,7 @@ class _NodeMenu extends StatelessWidget {
                       );
                       if (picked != null) setLocal(() => deadline = picked.toUtc().toIso8601String());
                     },
-                    child: Text(deadline == null ? l10n.t('roadmap.setDeadline') : deadline!.substring(0, 10)),
+                    child: Text(deadline == null ? l10n.t('roadmap.setDeadline') : isoDate(deadline!)),
                   ),
                   if (deadline != null)
                     IconButton(

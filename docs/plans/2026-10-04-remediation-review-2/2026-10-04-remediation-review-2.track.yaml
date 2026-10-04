@@ -1,0 +1,13 @@
+version: 1
+task: Fix all actionable findings from multirole review 2 (waves 1-3)
+coordinator: zcode-main
+history_file: 2026-10-04-remediation-review-2.track.history.jsonl
+main:
+  outcome: All 7 confirmed Highs fixed with tests, wave-1 one-liners landed, hardening
+    decisions closed; suite green (go 0-skip, flutter, env), deployed and domain-verified
+  owner: zcode-main
+  status: active
+  next_evidence: 'Wave 2 AIDEV-09: wire-level test proving forced-tool requests never
+    marshal empty messages, then the critic payload fix (go test ./internal/agent...)'
+side_tracks: []
+updated_at: '2026-10-04T10:34:09Z'
