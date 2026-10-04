@@ -49,7 +49,11 @@ class _IdeasPageState extends State<IdeasPage> {
   }
 
   Future<void> _reload() async {
-    setState(() => _future = context.read<Session>().api.listIdeas(widget.workspaceId));
+    // Block body on purpose: `() => _future = …` returns the Future, which
+    // the framework flags ("setState() callback argument returned a Future").
+    setState(() {
+      _future = context.read<Session>().api.listIdeas(widget.workspaceId);
+    });
   }
 
   Future<void> _captureNow() async {
@@ -58,6 +62,26 @@ class _IdeasPageState extends State<IdeasPage> {
     await context.read<Session>().api.createIdea(widget.workspaceId, title, '');
     _capture.clear();
     await _reload();
+  }
+
+  // USER-09: drop is a terminal action on a one-tap menu item — confirm
+  // with the translated prompt before the card disappears for good.
+  Future<void> _drop(Idea idea) async {
+    final l10n = context.read<Appearance>();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.t('idea.dropConfirm')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('idea.drop'))),
+        ],
+      ),
+    );
+    if (ok == true && mounted) {
+      await context.read<Session>().api.dropIdea(idea.id);
+      await _reload();
+    }
   }
 
   Future<void> _edit(Idea idea) async {
@@ -104,10 +128,7 @@ class _IdeasPageState extends State<IdeasPage> {
             capture: _capture,
             onCapture: _captureNow,
             onEdit: _edit,
-            onDrop: (idea) async {
-              await context.read<Session>().api.dropIdea(idea.id);
-              await _reload();
-            },
+            onDrop: _drop,
             onConvert: (idea) async {
               final ids = await context.read<Session>().api.convertIdea(idea.id);
               final prdId = ids['prdId'];

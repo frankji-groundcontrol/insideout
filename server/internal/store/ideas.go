@@ -57,15 +57,17 @@ func (s *Store) CreateIdea(ctx context.Context, actorID, workspaceID uuid.UUID, 
 
 // ListIdeas returns only the actor's own ideas — the inbox is private by
 // default (USER-05; admins can still fetch a specific idea by ID, which
-// matches their drop authority). Requires the caller to have already
-// verified membership.
+// matches their drop authority). Dropped ideas are a soft terminal state:
+// the row stays for audit, but the wall is a working surface and stops
+// listing them (USER-09). Requires the caller to have already verified
+// membership.
 func (s *Store) ListIdeas(ctx context.Context, actorID, workspaceID uuid.UUID) ([]Idea, error) {
 	var out []Idea
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 			SELECT `+ideaColumns+`
 			FROM insideout.ideas
-			WHERE workspace_id = $1 AND author_id = $2
+			WHERE workspace_id = $1 AND author_id = $2 AND status <> 'dropped'
 			ORDER BY created_at DESC`, workspaceID, actorID,
 		)
 		if err != nil {

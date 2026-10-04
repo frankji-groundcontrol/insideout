@@ -7,7 +7,8 @@ main:
     decisions closed; suite green (go 0-skip, flutter, env), deployed and domain-verified
   owner: zcode-main
   status: active
-  next_evidence: 'Wave 2 AIDEV-09: wire-level test proving forced-tool requests never
-    marshal empty messages, then the critic payload fix (go test ./internal/agent...)'
+  next_evidence: 'Wave 2 remainder: USER-11 l10n error mapper (new errors_l10n.dart
+    + 12 call sites) then FEAT-03 proposal web loop; flutter test full-suite green
+    after each'
 side_tracks: []
-updated_at: '2026-10-04T10:34:09Z'
+updated_at: '2026-10-04T12:20:51Z'

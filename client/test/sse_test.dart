@@ -99,4 +99,103 @@ void main() {
       ),
     );
   });
+
+  group('coachSseWithRefresh (USER-10)', () {
+    Future<(List<String>, Object?)> drain(Stream<List<int>> s) async {
+      final out = <String>[];
+      try {
+        await for (final c in s) {
+          out.add(utf8.decode(c));
+        }
+        return (out, null);
+      } on Object catch (e) {
+        return (out, e);
+      }
+    }
+
+    test('401 refreshes once and the retry carries the rotated token', () async {
+      final log = <String>[];
+      var n = 0;
+      Future<SseAttempt> open() async {
+        final i = n++;
+        log.add('open-$i');
+        if (i == 0) return const SseAttempt(status: 401, chunks: Stream.empty());
+        return SseAttempt(status: 200, chunks: Stream.value(utf8.encode('data: frame-ok\n\n')));
+      }
+      var refreshed = 0;
+      var cleared = false;
+      final (out, err) = await drain(coachSseWithRefresh(
+        open,
+        () async => refreshed++,
+        () async => cleared = true,
+      ));
+      expect(err, isNull);
+      expect(out.join(), contains('frame-ok'));
+      expect(log, ['open-0', 'open-1']);
+      expect(refreshed, 1);
+      expect(cleared, isFalse);
+    });
+
+    test('failed refresh clears tokens and surfaces stream failed', () async {
+      var cleared = false;
+      var n = 0;
+      Future<SseAttempt> open() async {
+        n++;
+        return const SseAttempt(status: 401, chunks: Stream.empty());
+      }
+      final (_, err) = await drain(coachSseWithRefresh(
+        open,
+        () async => throw Exception('refresh rejected'),
+        () async => cleared = true,
+      ));
+      expect(cleared, isTrue, reason: 'a dead refresh must land the user on the auth door');
+      expect(err, isA<ApiException>().having((e) => e.status, 'status', 401));
+      expect(n, 1, reason: 'no retry after a failed refresh');
+    });
+
+    test('retry still 401 clears tokens — no infinite loop', () async {
+      var refreshed = 0;
+      var cleared = false;
+      var n = 0;
+      Future<SseAttempt> open() async {
+        n++;
+        return const SseAttempt(status: 401, chunks: Stream.empty());
+      }
+      final (_, err) = await drain(coachSseWithRefresh(
+        open,
+        () async => refreshed++,
+        () async => cleared = true,
+      ));
+      expect(refreshed, 1, reason: 'exactly one refresh and one retry');
+      expect(n, 2);
+      expect(cleared, isTrue);
+      expect(err, isA<ApiException>());
+    });
+
+    test('non-401 failure passes through without refresh', () async {
+      var refreshed = 0;
+      Future<SseAttempt> open() async => const SseAttempt(status: 503, chunks: Stream.empty());
+      final (_, err) = await drain(coachSseWithRefresh(
+        open,
+        () async => refreshed++,
+        () async {},
+      ));
+      expect(refreshed, 0);
+      expect(err, isA<ApiException>().having((e) => e.status, 'status', 503));
+    });
+
+    test('200 streams straight through, nothing touched', () async {
+      var refreshed = 0;
+      Future<SseAttempt> open() async =>
+          SseAttempt(status: 200, chunks: Stream.value(utf8.encode('data: direct\n\n')));
+      final (out, err) = await drain(coachSseWithRefresh(
+        open,
+        () async => refreshed++,
+        () async {},
+      ));
+      expect(err, isNull);
+      expect(out.join(), contains('direct'));
+      expect(refreshed, 0);
+    });
+  });
 }

@@ -457,7 +457,22 @@ class ApiClient {
     );
     Stream<List<int>> chunks;
     if (kIsWeb) {
-      chunks = fetchSseStream(open.url, open.headers, method: open.method, body: open.body);
+      // USER-10: this raw fetch bypasses the dio interceptor that owns the
+      // 401 refresh; the opener re-reads the access token, so the
+      // post-refresh retry carries the rotated bearer automatically.
+      chunks = coachSseWithRefresh(
+        () async {
+          final o = coachSseOpen(
+            baseUrl: baseUrl,
+            conversationId: conversationId,
+            content: content,
+            accessToken: await _readAccess(),
+          );
+          return fetchSseAttempt(o.url, o.headers, method: o.method, body: o.body);
+        },
+        _refreshSingleFlight,
+        _clearTokens,
+      );
     } else {
       final res = await _dio.post<ResponseBody>(
         '/conversations/$conversationId/messages',

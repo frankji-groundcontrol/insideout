@@ -118,3 +118,45 @@ void applyCoachFrame(SseFrame frame, CoachHandlers handlers) {
     throw toApiError(null, Map<String, dynamic>.from(parsed));
   }
 }
+
+/// One eagerly-opened SSE response: the HTTP status is known before any
+/// frame is read, which is what lets the coach's raw-fetch path see a 401
+/// before consuming the stream (USER-10).
+class SseAttempt {
+  const SseAttempt({required this.status, required this.chunks});
+
+  final int status;
+  final Stream<List<int>> chunks;
+}
+
+/// USER-10: on web the coach stream is a raw fetch that bypasses dio's 401
+/// refresh interceptor. Same policy as the interceptor, applied eagerly:
+/// on 401 run the single-flight refresh once and re-open (the opener
+/// re-reads the access token, so the retry carries the rotated bearer); a
+/// failed refresh or a still-401 retry clears the session so the router
+/// lands on the auth door instead of looping "stream failed" until a
+/// manual page reload.
+Stream<List<int>> coachSseWithRefresh(
+  Future<SseAttempt> Function() open,
+  Future<void> Function() refresh,
+  Future<void> Function() clearTokens,
+) async* {
+  var attempt = await open();
+  if (attempt.status == 401) {
+    try {
+      await refresh();
+    } catch (_) {
+      await clearTokens();
+      throw ApiException('stream failed', status: attempt.status);
+    }
+    attempt = await open();
+    if (attempt.status == 401) {
+      await clearTokens();
+      throw ApiException('stream failed', status: attempt.status);
+    }
+  }
+  if (attempt.status >= 400) {
+    throw ApiException('stream failed', status: attempt.status);
+  }
+  yield* attempt.chunks;
+}

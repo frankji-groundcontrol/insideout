@@ -33,13 +33,15 @@ Acceptance: `go test ./... -count=1` (0 skips), `flutter test`,
 
 ## Wave 2 — confirmed Highs (failing test first where behavior risk warrants)
 
-- [ ] AIDEV-09 critic one-message payload + wire-level test asserting
+- [x] AIDEV-09 critic one-message payload + wire-level test asserting
       forced-tool requests never marshal empty `messages`; live critic
-      exercise per streaming practice.
-- [ ] USER-09 drop visibility: DB-gated test first (`ListIdeas` excludes
+      exercise per streaming practice — **live provider exercise is
+      operator-gated** (local env has no `INSIDEOUT_LLM_API_KEY`; the key
+      lives only in Railway), same tier as the signed-in page load.
+- [x] USER-09 drop visibility: DB-gated test first (`ListIdeas` excludes
       `status='dropped'` for the author), confirm dialog on `idea.dropConfirm`,
       localize the dropped state.
-- [ ] USER-10 web SSE 401: single-flight refresh, retry once with rotated
+- [x] USER-10 web SSE 401: single-flight refresh, retry once with rotated
       token, else `clearTokens` → auth door.
 - [ ] USER-11 l10n error mapper (`ApiException` → key, generic fallback),
       routed through all ~12 error branches; zh + en strings.
