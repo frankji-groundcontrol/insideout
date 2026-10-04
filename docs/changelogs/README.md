@@ -15,6 +15,12 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-04 — Remediation of multirole review 2](2026-10-04-remediation-review-2.md)
+  — all 7 confirmed Highs fixed (critic empty-messages, drop visibility,
+  web SSE 401 refresh, l10n error mapper, proposal web loop, XFF
+  per-client keys), wave-1 one-liners, backup story + deployment
+  evidence, band scaffold; CI green, both services deployed and
+  domain-verified.
 - [2026-10-04 — Multirole review 2](2026-10-04-multirole-review-2.md)
   — second whole-tree review on `main` @ `26db979` (fix/harden/improve/
   features-left mandate); 10 reviewers + 3 skeptics + critic; 108 findings,

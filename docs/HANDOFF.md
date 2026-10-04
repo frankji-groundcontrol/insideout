@@ -7,26 +7,30 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. **Remediation closed — operator actions remain.** The five-wave
-   multirole-review plan finished 2026-10-04 (Waves 3–4:
-   [plan](plans/2026-10-04-remediation-wave-3-4.md),
-   [changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); CI now
-   runs on every push/PR (`.github/workflows/ci.yml`, store suite must
-   run, not skip). Deploy record: both services shipped `26db979` on
-   2026-10-04 (server `railway up` SUCCESS, `app` restarted, domain
-   verified 200 landing / 401 API). A second multirole review of that
-   tree is also closed
+1. **Both remediation rounds closed — operator actions remain.** The
+   review-1 five-wave plan closed 2026-10-04
+   ([changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); review 2
    ([report](review/2026-10-04-multirole-2/README.md), 108 findings,
-   7 confirmed High, 0 Critical); the next code work is its
-   [waves 1–2](review/2026-10-04-multirole-2/40-remediation-plan.md)
-   (critic empty-messages fix, web failure-path cluster, XFF
-   trusted-proxy depth). Still open, both human-only: rotate the Resend
-   mail key if local session transcripts can leave this machine (one was
-   printed into a local transcript 2026-10-04; nothing committed or
-   sent), and the signed-in hosted page load (PM-02 release gate) —
-   hosted signup is invitation-only, so it needs a member login on the
+   7 confirmed High) had its waves 1–3 fixed and shipped the same day
+   ([plan](plans/2026-10-04-remediation-review-2/2026-10-04-remediation-review-2.md),
+   [changelog](changelogs/2026-10-04-remediation-review-2.md)): critic
+   empty-messages fix, drop visibility, web SSE 401 refresh, l10n error
+   mapper, proposal Accept/Reject loop, per-client XFF throttle keys
+   (nginx passes the edge's XFF through), backup runbook, deployment
+   evidence, band scaffold. Deploy record: both services shipped CI-green
+   `073def0` on 2026-10-04 21:23 +08; domain verified (landing 200,
+   API 401, bad-login probes 401). What remains, all human-only: rotate
+   the Resend mail key if local session transcripts can leave this
+   machine (one was printed into a local transcript 2026-10-04; nothing
+   committed or sent); the signed-in hosted page load (PM-02 release
+   gate — hosted signup is invitation-only, needs a member login on the
    deployed domain; do not seed the remote database with the local demo
-   identity. Walk record:
+   identity); confirm Supabase automated backups are on (the managed half
+   of the backup story); the live critic exercise rides the next
+   critique-stage conversation (local env has no LLM key). Wave 4
+   feature slices (Decision Log UI, Branch slice 1, per-project
+   authority) are the next product work, each behind its own plan. Walk
+   record:
    [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
 2. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus

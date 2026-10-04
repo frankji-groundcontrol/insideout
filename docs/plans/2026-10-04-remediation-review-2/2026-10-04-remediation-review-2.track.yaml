@@ -6,8 +6,9 @@ main:
   outcome: All 7 confirmed Highs fixed with tests, wave-1 one-liners landed, hardening
     decisions closed; suite green (go 0-skip, flutter, env), deployed and domain-verified
   owner: zcode-main
-  status: active
-  next_evidence: 'Wave 3: XFF two-hop unit test failing first, then nginx pass-through
-    fix; then CQ-01 scaffold, CC-03 backup story, CC-01 deployment events'
+  status: complete
+  next_evidence: 'Complete: CI green on 073def0 (run 37205150447), both services deployed
+    SUCCESS 2026-10-04 21:23 +08, domain verified (200/401/401x3); changelog + board
+    + HANDOFF closed'
 side_tracks: []
-updated_at: '2026-10-04T12:56:45Z'
+updated_at: '2026-10-04T13:28:14Z'

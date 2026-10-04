@@ -1,9 +1,11 @@
 # 2026-10-04 — Remediation of multirole review 2 (waves 1–3)
 
-**Status:** In flight 2026-10-04. **Source:**
+**Status:** Finished 2026-10-04. **Source:**
 [`docs/review/2026-10-04-multirole-2/40-remediation-plan.md`](../../review/2026-10-04-multirole-2/40-remediation-plan.md)
 (register IDs below refer to it). Durable state:
 [`2026-10-04-remediation-review-2.track.yaml`](2026-10-04-remediation-review-2.track.yaml).
+Closure record:
+[`docs/changelogs/2026-10-04-remediation-review-2.md`](../../changelogs/2026-10-04-remediation-review-2.md).
 
 **Goal (observable):** every actionable finding from review 2 is fixed — the 7
 confirmed Highs, the wave-1 one-liners, and the wave-3 hardening decisions —
@@ -43,9 +45,11 @@ Acceptance: `go test ./... -count=1` (0 skips), `flutter test`,
       localize the dropped state.
 - [x] USER-10 web SSE 401: single-flight refresh, retry once with rotated
       token, else `clearTokens` → auth door.
-- [ ] USER-11 l10n error mapper (`ApiException` → key, generic fallback),
-      routed through all ~12 error branches; zh + en strings.
-- [ ] FEAT-03 web proposal loop: `kind == 'agent_proposal'` gets
+- [x] USER-11 l10n error mapper (`ApiException` → key, generic fallback),
+      routed through all ~12 error branches; zh + en strings. (Auth forms
+      deliberately excluded: a login 401 means "wrong credentials", not
+      "session expired" — their copy is its own slice.)
+- [x] FEAT-03 web proposal loop: `kind == 'agent_proposal'` gets
       Accept/Reject via the existing decision endpoint; edit/delete hidden.
 
 Acceptance: same suites + widget tests for the client rows; live SSE exercise
@@ -53,23 +57,34 @@ against a local server.
 
 ## Wave 3 — hardening decisions
 
-- [ ] REL-13/SEC-10 XFF: verify the real chain (Railway edge + nginx append),
-      fix the double-append (nginx passes the edge's XFF through / hop depth
-      explicit), two-hop unit test, document the topology.
-- [ ] CQ-01 shared band scaffold for `_BandRow` + `_ProgressBand`.
-- [ ] CC-03 backup story: confirm whether Railway Postgres backups are on;
-      otherwise nightly `pg_dump` script + restore doc walked once on a
-      scratch database.
-- [ ] CC-01 deployment events: map `deployment` webhooks into evidence with a
-      release kind, or remove the promise from guide template + PRODUCT.md.
+- [x] REL-13/SEC-10 XFF: Railway's edge appends the real client IP to XFF
+      (documented; client-supplied spoofs stay left); nginx now passes the
+      chain through instead of appending its hop; rightmost non-empty entry
+      wins (trailing-empty robustness + Railway-chain unit tests); topology
+      documented in docs/usage/deployment.md. Live per-client proof needs
+      two source IPs — the deployed check is the domain login path staying
+      green.
+- [x] CQ-01 shared band scaffold for `_BandRow` + `_ProgressBand`
+      (`roadmap_band_scaffold.dart`).
+- [x] CC-03 backup story: `scripts/backup-db.sh` (owner-DSN dump — the app
+      role is an RLS subject and pg_dump fails against it by design) +
+      docs/usage/backup-restore.md; walked end-to-end on two scratch
+      postgres:18 containers (dump → restore → migrate no-op → 23 tables).
+      The managed half (Supabase automated backups) is an operator toggle,
+      named in the doc.
+- [x] CC-01 deployment events: `deployment` webhooks map into the evidence
+      pipeline with the release kind (environment + sha). deployment_status
+      (success/failure refinement) is a later slice, noted in code.
 
 Acceptance: two-hop throttle test green; scaffold refactor keeps widget tests
 green; restore doc walked; webhook decision recorded.
 
 ## Ship loop
 
-- [ ] Explicit-staging commits, push to main, CI green.
-- [ ] `railway up --service server` + restart `app`; domain checks
-      (landing 200, API 401 unauthenticated, live coach SSE through nginx).
-- [ ] Records: dated changelog, board rows closed, HANDOFF updated, review
-      register statuses noted where rows are now fixed.
+- [x] Explicit-staging commits, push to main, CI green (run 37205150447:
+      server + client + env jobs all success on `073def0`).
+- [x] `railway up --service server` + `app` (both SUCCESS 2026-10-04
+      21:23 +08); domain checks: landing 200, SPA healthz 200,
+      `/api/v1/me` 401 unauthenticated, three bad-login probes all 401
+      through the new XFF pass-through chain.
+- [x] Records: dated changelog, board rows closed, HANDOFF updated.
