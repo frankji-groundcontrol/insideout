@@ -5,6 +5,7 @@ import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
+import 'roadmap_band_scaffold.dart';
 
 /// FEAT-05 — PRODUCT.md's default Progress view, rendered from
 /// GET /roadmap/progress (server truth): Now holds only deadlined
@@ -66,66 +67,47 @@ class _ProgressBand extends StatelessWidget {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     final palette = Cobalt.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(Cobalt.radiusHero),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return RoadmapBandScaffold(
+      label: label,
+      color: color,
+      labelColor: labelColor,
+      itemCards: [
+        for (final item in items)
           SizedBox(
-            width: 72,
-            child: Text(label.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: labelColor, letterSpacing: 0.6)),
-          ),
-          Expanded(
-            child: items.isEmpty
-                ? Text('—', style: theme.textTheme.bodySmall?.copyWith(color: labelColor))
-                : Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
+            width: 240,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                borderRadius: BorderRadius.circular(Cobalt.radiusCard),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(item.title, style: theme.textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 6),
+                  Row(
                     children: [
-                      for (final item in items)
-                        SizedBox(
-                          width: 240,
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: palette.surfaceRaised,
-                              borderRadius: BorderRadius.circular(Cobalt.radiusCard),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(item.title, style: theme.textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    if (item.deadline != null)
-                                      Padding(
-                                        padding: const EdgeInsets.only(right: 8),
-                                        child: Text(isoDate(item.deadline!), style: theme.textTheme.bodySmall),
-                                      ),
-                                    if (item.pressure != null && item.pressure!.isNotEmpty)
-                                      Text(
-                                        l10n.t('roadmap.pressure.${item.pressure}'),
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: item.pressure == 'overdue' || item.pressure == 'high_risk' ? palette.fgDanger : palette.brand,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                      if (item.deadline != null)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Text(isoDate(item.deadline!), style: theme.textTheme.bodySmall),
+                        ),
+                      if (item.pressure != null && item.pressure!.isNotEmpty)
+                        Text(
+                          l10n.t('roadmap.pressure.${item.pressure}'),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: item.pressure == 'overdue' || item.pressure == 'high_risk' ? palette.fgDanger : palette.brand,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                     ],
                   ),
+                ],
+              ),
+            ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }

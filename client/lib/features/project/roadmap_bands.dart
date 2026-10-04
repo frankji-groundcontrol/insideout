@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../api/models.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
+import 'roadmap_band_scaffold.dart';
 import 'roadmap_node_card.dart';
 
 /// Lock B — Now / Next / Later shade bands that still hold item cards.
@@ -89,37 +90,17 @@ class _BandRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(Cobalt.radiusHero),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return RoadmapBandScaffold(
+      label: label,
+      color: color,
+      labelColor: labelColor,
+      itemCards: [
+        for (final n in nodes)
           SizedBox(
-            width: 72,
-            child: Text(label.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: labelColor, letterSpacing: 0.6)),
+            width: 240,
+            child: RoadmapNodeCard(projectId: projectId, node: n, onReload: onReload, compact: true),
           ),
-          Expanded(
-            child: nodes.isEmpty
-                ? Text('—', style: theme.textTheme.bodySmall?.copyWith(color: labelColor))
-                : Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      for (final n in nodes)
-                        SizedBox(
-                          width: 240,
-                          child: RoadmapNodeCard(projectId: projectId, node: n, onReload: onReload, compact: true),
-                        ),
-                    ],
-                  ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
