@@ -182,9 +182,11 @@ class TestMultiHostScoping(unittest.TestCase):
         # while proving the *other* host's tree is never even a candidate.
 
     def test_cli_refuses_without_scoping(self):
+        # envfile before --root: Python 3.9's argparse rejects an
+        # optional interleaved between two positionals.
         r = subprocess.run(
-            [sys.executable, self.keys_py, "fill", "--root", str(self.root),
-             str(self.root / "env")],
+            [sys.executable, self.keys_py, "fill",
+             str(self.root / "env"), "--root", str(self.root)],
             capture_output=True, text=True,
         )
         self.assertNotEqual(r.returncode, 0)
@@ -193,8 +195,8 @@ class TestMultiHostScoping(unittest.TestCase):
     def test_scoped_fill_touches_only_its_host(self):
         env = dict(os.environ, INSIDEOUT_KEYS_HOST="hosta")
         r = subprocess.run(
-            [sys.executable, self.keys_py, "fill", "--root", str(self.root),
-             str(self.root / "env")],
+            [sys.executable, self.keys_py, "fill",
+             str(self.root / "env"), "--root", str(self.root)],
             capture_output=True, text=True, env=env,
         )
         self.assertEqual(r.returncode, 0, r.stderr)
