@@ -11,10 +11,12 @@ never one folder per key.
 | Path | Host |
 | --- | --- |
 | [franks-macbook-pro.local/](franks-macbook-pro.local/README.md) | The macOS development workstation |
+| [buddys-macbook-pro-2.local/](buddys-macbook-pro-2.local/README.md) | The secondary macOS development workstation (being filled key-by-key) |
 
 Do not put passwords, tokens, or raw key files anywhere tracked. Values
 live only under each module's `.secrets/` (a dotfolder — `ls -a` to see
 it), which `.gitignore` excludes. Manage them with
-`python3 scripts/keys.py audit|fill` (never prints values); see
+`python3 scripts/keys.py audit|fill` (never prints values); with more
+than one host, scope the run with `INSIDEOUT_KEYS_HOST=<host>`. See
 [docs/SETENV.md](../docs/SETENV.md) for how the live `.env` consumer
 relates.

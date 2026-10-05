@@ -1,0 +1,12 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: auth
+setting: session-keys
+recorded: '2026-10-05'
+# Metadata only — values live in .secrets/<name>.key, never in this file.
+secrets:
+  jwt-secret:
+    var: INSIDEOUT_JWT_SECRET
+    kind: value
+    note: HMAC signing secret for access/refresh JWTs; minimum 32
+      characters, one per environment (openssl-minted on this host).

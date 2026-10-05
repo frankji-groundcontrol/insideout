@@ -1,0 +1,45 @@
+# 2026-10-05 — Buddy host key store (key-by-key)
+
+**Goal:** bring this machine (`buddys-macbook-pro-2.local`) into the
+per-host key scheme as a first-class host, one key at a time, following
+the six-part convention (where / propagated / set / tested / used /
+install guide) the agents_home family doc established. The user drives
+the order; each key lands with its manifest + `.secrets/` value and this
+checklist tracks progress.
+
+**Scope:** hosts tree, its READMEs, and records only. No application
+code; `keys.py` already supports multi-host via `INSIDEOUT_KEYS_HOST`.
+Nothing deploys.
+
+## Checklist
+
+- [x] Host scaffold: `hosts/buddys-macbook-pro-2.local/` (host.yml,
+      README.md, keys/README.md) + row in `hosts/README.md`.
+- [x] `keys/auth/jwt.yaml` manifest; value filled from the local `.env`
+      via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
+      scripts/keys.py fill` (empty-only, 0600, never printed). User
+      minted the secret with openssl.
+- [ ] database/supabase: both DSNs (env already set — fill when user
+      calls it).
+- [ ] llm: provider key (env already set).
+- [ ] mail: Resend key (missing locally — copy from MBP's agents_home
+      store when user calls it).
+- [ ] github: app id + PEM + client secret + webhook secret (missing
+      locally — copy from MBP's agents_home store).
+- [ ] database/local-stack: two compose passwords (mint when the
+      disposable stack is next used).
+- [ ] github/tokens: optional PAT (stays empty by default).
+- [ ] Close out: keys/README.md state table final, changelog, HANDOFF,
+      commit + push + MBP fast-forward.
+
+## Decisions
+
+- Folder name `buddys-macbook-pro-2.local` matches agents_home's host
+  for the same machine; `ssh_alias: MBP2` likewise.
+- Manifests land key-by-key with the user (not front-loaded), so the
+  tracked tree always reflects verified state; the store's six parts
+  are satisfied per key by: manifest+`.key` (1), `dev.sh`/`env.sh`
+  bridge (2), `keys.py fill` + `env.sh edit` (3), `env.sh check` +
+  boot/migrate probes (4), `server/internal/config` (5), SETENV.md (6).
+- `hosts/README.md` gains the multi-host note: audit/fill need
+  `INSIDEOUT_KEYS_HOST` once two hosts exist.

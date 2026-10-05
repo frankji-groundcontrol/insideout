@@ -1,0 +1,6 @@
+# Metadata only. No passwords, tokens, or addresses.
+name: buddys-macbook-pro-2.local
+ssh_alias: MBP2
+description: Secondary macOS development workstation; local dev against the shared deployment database.
+os: darwin-arm64
+checkout: /Users/frankji/Projects/insideout
