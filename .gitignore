@@ -170,3 +170,6 @@ go.work
 go.work.sum
 .gstack/
 backups/
+
+# Host credential values: tracked YAML metadata only, never the .key files.
+.secrets/

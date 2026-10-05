@@ -1,0 +1,6 @@
+# Metadata only. No passwords, tokens, or addresses.
+name: franks-macbook-pro.local
+ssh_alias: local
+description: The macOS workstation that develops and deploys this repository.
+os: darwin-arm64
+checkout: /Users/frankji/Projects/insideout

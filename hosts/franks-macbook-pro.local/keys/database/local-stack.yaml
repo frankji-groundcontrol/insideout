@@ -1,0 +1,15 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: database
+setting: local-stack
+recorded: '2026-10-05'
+# Passwords the docker-compose interpolation needs for the disposable
+# local PostgreSQL stack (see docs/usage/local-development.md). Split from
+# supabase.yaml because they belong to a different installation.
+secrets:
+  postgres-app-password: { var: POSTGRES_APP_PASSWORD, kind: value }
+  postgres-owner-password:
+    var: POSTGRES_OWNER_PASSWORD
+    kind: value
+    operator_fills: true
+    note: mint when the disposable local stack is next used

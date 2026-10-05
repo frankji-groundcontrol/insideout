@@ -104,4 +104,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: unittest both env batteries
-        run: python3 -m unittest test_env_catalog test_env_writes
+        run: python3 -m unittest test_env_catalog test_env_writes test_keys

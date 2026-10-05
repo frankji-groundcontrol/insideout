@@ -1,0 +1,13 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: github
+setting: tokens
+recorded: '2026-10-05'
+# Operator-minted personal access token for review tooling; not needed to
+# run the app.
+secrets:
+  github-token:
+    var: GITHUB_TOKEN
+    kind: value
+    optional: true
+    operator_fills: true

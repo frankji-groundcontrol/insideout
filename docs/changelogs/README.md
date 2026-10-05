@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-05 — Host key store (hosts/) with audit/fill tooling](2026-10-05-hosts-keys.md)
+  — module-grouped `keys/` tree (auth, database, github, llm, mail;
+  8 YAML manifests, 12 keys, 10 filled), redacting `keys.py audit|fill`
+  bridge, CI script suite. No service code changed.
 - [2026-10-04 — Remediation of multirole review 2](2026-10-04-remediation-review-2.md)
   — all 7 confirmed Highs fixed (critic empty-messages, drop visibility,
   web SSE 401 refresh, l10n error mapper, proposal web loop, XFF

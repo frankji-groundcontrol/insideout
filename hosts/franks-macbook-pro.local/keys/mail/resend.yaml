@@ -1,0 +1,10 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: mail
+setting: resend
+recorded: '2026-10-05'
+secrets:
+  mail-api-key:
+    var: INSIDEOUT_MAIL_API_KEY
+    kind: value
+    note: Resend; rotate if transcripts ever leave this machine

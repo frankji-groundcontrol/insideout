@@ -1,0 +1,10 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: llm
+setting: provider
+recorded: '2026-10-05'
+secrets:
+  llm-api-key:
+    var: INSIDEOUT_LLM_API_KEY
+    kind: value
+    note: exists only in Railway variables plus this store

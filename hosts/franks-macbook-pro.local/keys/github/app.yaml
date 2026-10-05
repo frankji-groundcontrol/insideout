@@ -1,0 +1,17 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: github
+setting: app
+recorded: '2026-10-05'
+# The GitHub App installation: identity + authenticating material.
+secrets:
+  gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value }
+  gh-app-private-key:
+    var: INSIDEOUT_GH_PRIVATE_KEY
+    kind: value
+    note: multi-line PEM; the server also accepts
+      INSIDEOUT_GH_PRIVATE_KEY_FILE pointing at the .key itself
+  gh-client-secret:
+    var: INSIDEOUT_GH_CLIENT_SECRET
+    kind: value
+    note: no server reader yet (tracked for the invite-link flow)

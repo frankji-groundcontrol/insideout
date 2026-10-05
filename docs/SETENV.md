@@ -9,6 +9,14 @@ consumer of every variable see [usage/environment.md](usage/environment.md);
 for the day-to-day dev workflow see
 [usage/local-development.md](usage/local-development.md).
 
+`.env` stays the only file processes read. Its credential values have a
+second, out-of-git home since 2026-10-05: the host key store under
+[`hosts/`](../hosts/README.md) — one `keys/` folder per host with
+functional-module subfolders, tracked YAML manifests per module, and
+git-ignored `.secrets/*.key` values, managed with
+`python3 scripts/keys.py audit|fill` (never prints values). Rebuilding a
+fresh `.env` still goes through `env.sh init`; paste from the `.key` files.
+
 ## Layout
 
 ```

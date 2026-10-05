@@ -9,6 +9,7 @@ checkpoint. Each linked plan owns its detailed checklist and decisions;
 
 | Priority | Task | Status | Next action | Blocker / note |
 | --- | --- | --- | --- | --- |
+| P1 | [Host-keys scheme inside insideout](2026-10-05-hosts-keys/2026-10-05-hosts-keys.md) | **In flight** 2026-10-05 | Commit + push, CI green. | Grouped keys/ tree + tooling done (5 modules, 8 manifests, 12 keys, 10 filled); agents_home cleanup runs separately there. |
 | P1 | [Remediation of review 2, waves 1–3](2026-10-04-remediation-review-2/2026-10-04-remediation-review-2.md) | **Finished** 2026-10-04 | All waves landed; CI green on `073def0`; both services deployed 21:23 +08 and domain-verified ([changelog](../changelogs/2026-10-04-remediation-review-2.md)). | Wave 4 feature slices parked by design. Operator remainders: live critic exercise (no local LLM key), Supabase backups toggle, key rotation + signed-in page load. |
 | P1 | [Multirole review 2 (whole tree)](2026-10-04-multirole-review-2.md) | **Finished** 2026-10-04 | None — remediation picked up on the row above. | 108 findings, 7 High confirmed, 0 Critical; report in [`docs/review/2026-10-04-multirole-2/`](../review/2026-10-04-multirole-2/README.md). |
 | P1 | [Remediation Waves 3–4 (board promises + verification spine)](2026-10-04-remediation-wave-3-4.md) | **Finished** 2026-10-04 | All rows landed; changelog `2026-10-04-remediation-wave-3-4.md`; CI live (`.github/workflows/ci.yml`). | Five-wave plan closed. Human-only remainders: rotate the mail key (transcript exposure) + the signed-in hosted page load (PM-02 gate). |

@@ -1,0 +1,14 @@
+version: 1
+task: Host-keys scheme inside insideout (module-grouped hosts/ tree, 12 kinds, audit/fill tooling)
+coordinator: zcode-main
+history_file: 2026-10-05-hosts-keys.track.history.jsonl
+main:
+  outcome: hosts/franks-macbook-pro.local/keys/ carries five module folders
+    (auth, database, github, llm, mail) with eight YAML manifests for all 12
+    credential kinds, git-ignored .secrets/ values; keys.py audit/fill never
+    prints values; test_keys green in CI env-suites; docs + changelog closed
+  owner: zcode-main
+  status: active
+  next_evidence: pushed, then CI env-suites green on the commit
+side_tracks: []
+updated_at: '2026-10-05T06:25:18Z'
