@@ -56,7 +56,11 @@ deployed. Plan:
   cross-host isolation / git-blind check), the per-key probe, records,
   and the failure signals (skip-when-placeholder, the multi-host
   refusal that prevents value mixing, git-visible `.secrets`). Indexed
-  in `docs/practices/README.md`.
+  in `docs/practices/README.md`. Updated later the same day
+  (`5fe22eb`) to reflect the final doc scheme: per-key doc path
+  `usage/keys/<module>/<key-name>.md`, doc-creation step in Records,
+  and a shape failure signal (doc missing/lumped/misnamed) linking the
+  learning record.
 
 ## What changed (slice 4 — Postgres DSNs + supabase→postgres rename)
 
