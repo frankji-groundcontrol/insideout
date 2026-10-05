@@ -86,6 +86,21 @@ deployed. Plan:
   `migrate: nothing to do, already up to date` — real connection,
   real authentication, currency confirmed.
 
+## What changed (slice 5 — usage docs split per key)
+
+- **`docs/usage/keys.md` → `docs/usage/keys/`** — slice 2's single
+  family doc was the exception in agents_home's convention, not the
+  rule; the user called it out (couldn't find a standalone file for a
+  key). Now one standalone six-part `.md` per manifest/category —
+  `jwt`, `postgres`, `local-stack`, `gh-app`, `gh-webhooks`,
+  `github-token`, `llm-provider`, `mail-resend` — mirroring the store's
+  manifests 1:1, plus a folder README holding the index, the shared
+  set/fill/audit flow (not repeated per file), and the per-host state
+  table.
+- Live pointers repointed (usage README row, SETENV cross-link, the
+  practice doc's four references); slice 2's changelog text stays as
+  the historical record of what existed then.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the

@@ -24,6 +24,13 @@ Nothing deploys.
       — the full per-key setup sequence (trigger / six-part frame /
       steps / verification / failure signals), indexed in the practices
       README.
+- [x] Usage docs split per key (user call, superseding slice 2's
+      single family doc): `docs/usage/keys.md` → `docs/usage/keys/`
+      with a README index (shared flow + per-host state table) and one
+      standalone six-part file per manifest/category (jwt, postgres,
+      local-stack, gh-app, gh-webhooks, github-token, llm-provider,
+      mail-resend). Live pointers updated (usage README, SETENV,
+      practice doc); slice-2 changelog text left as history.
 - [x] `keys/auth/jwt.yaml` manifest; value filled from the local `.env`
       via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
       scripts/keys.py fill` (empty-only, 0600, never printed). User

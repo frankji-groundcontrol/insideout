@@ -11,7 +11,7 @@ on `buddys-macbook-pro-2.local`
 ## The six-part frame
 
 Every key setup satisfies the same six parts (reference:
-[usage/keys.md](../usage/keys.md)): **where** (manifest + `.key`),
+[usage/keys/](../usage/keys/README.md)): **where** (manifest + `.key`),
 **propagated** (`.env` stays the only consumer), **set** (`env.sh` +
 scoped `fill`), **tested** (audit + the key's probe), **used** (boot
 role), **install guide** (SETENV.md). The sequence below is parts 1–4
@@ -21,8 +21,8 @@ operationalized; 5–6 are documented, not re-derived per key.
 
 1. **Preconditions.** The host folder exists (`host.yml`, READMEs —
    scaffold per the scheme if not). The value source is known from the
-   [usage/keys.md](../usage/keys.md) table. Never print a value at any
-   step.
+   kind's doc under [usage/keys/](../usage/keys/README.md). Never
+   print a value at any step.
 2. **Manifest first.** Create
    `hosts/<host>/keys/<module>/<setting>.yaml` — metadata only
    (`<name>: {var, kind, note}`); values never appear in tracked files.
@@ -48,14 +48,15 @@ operationalized; 5–6 are documented, not re-derived per key.
      `.secrets` path appearing there means `.gitignore` is broken;
      stop before committing.
 6. **Test the key itself.** `./scripts/env.sh check` (whole `.env`,
-   masked), then the kind's probe from usage/keys.md part 4 (migrate
+   masked), then the kind's probe from its doc under
+   [usage/keys/](../usage/keys/README.md) part 4 (migrate
    for the owner DSN; no offline-coach notice for the LLM key; a
    magic-link request for mail; signed deliveries answered 200 for the
    webhook secret).
 7. **Records.** Update the host `keys/README.md` state table and the
-   per-host column in `docs/usage/keys.md`; tick the plan checklist;
-   extend the changelog. Commit **tracked metadata only**, push, and
-   fast-forward the other hosts' clones.
+   per-host state table in `docs/usage/keys/README.md`; tick the plan
+   checklist; extend the changelog. Commit **tracked metadata only**,
+   push, and fast-forward the other hosts' clones.
 
 ## Failure signals
 
@@ -70,4 +71,4 @@ operationalized; 5–6 are documented, not re-derived per key.
   rule first.
 - Everything filled but the probe fails — the value is set but stale
   or wrong (e.g. compose password ≠ the DSN's embedded password);
-  rotate per usage/keys.md part 3.
+  rotate per the kind's doc part 3 under [usage/keys/](../usage/keys/README.md).
