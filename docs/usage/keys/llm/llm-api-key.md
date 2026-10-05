@@ -23,10 +23,13 @@ The key comes from your model provider's console — but it is one of
 `INSIDEOUT_LLM_SCHEMA` (`messages` | `responses`, i.e. Anthropic- vs
 OpenAI-wire). A relay/proxy base URL is fine; put any `/v1` suffix on
 it yourself. Set all four in the same `.env` (they are catalog config,
-not store credentials — only the key is). **Empty key is a valid
-choice**: it selects the offline template-reply coach, the default
-local dev experience. Rotation is a plain paste-over in `.env` +
-provider store.
+not store credentials — only the key is). Consequence: the store backs
+up **only the key**; the catalog records only the **defaults**, so your
+companion overrides live solely in `.env` — recover them from the
+deployment's variable store if the file is ever lost. **Empty key is a
+valid choice**: it selects the offline template-reply coach, the
+default local dev experience. Rotation is a plain paste-over in
+`.env` + provider store.
 
 ## 4. How to test it
 

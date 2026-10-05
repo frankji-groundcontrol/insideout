@@ -252,6 +252,12 @@ keys; MBP runs them against its sanctioned empty placeholders).
   retry, not a bad key; observed as a transient drop this session).
   Six-part coverage for the llm module was otherwise complete; the
   companions are catalog config, deliberately not store keys.
+  Follow-up line the same day (`how do four values come from one key
+  file?`): part 3 now spells out the split — one **credential** per
+  `.key` file, config-with-defaults in the tracked catalog — and its
+  consequence: companion overrides (relay URL, model, schema) are
+  backed up nowhere but `.env`; recovery path is the deployment's
+  variable store.
 
 ## Operators / users
 
