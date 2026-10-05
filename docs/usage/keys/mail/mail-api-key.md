@@ -11,10 +11,11 @@ one-time codes, password reset) via Resend.
 ## 2. How it is propagated
 
 `.env` → `dev.sh` export → the mailer at send time; deployed value in
-the provider's variable store. Two non-secret companions are part of
-the contract: `INSIDEOUT_PUBLIC_URL` (**required** the moment a key is
-set, fail-fast, so emailed links never point at the localhost default)
-and `INSIDEOUT_MAIL_FROM` (a Resend-verified sender; the sandbox
+the provider's variable store. Two companions are part of the contract
+and are first-class key kinds of their own:
+[public-url](public-url.md) (**required** the moment a key is set,
+fail-fast, so emailed links never point at the localhost default) and
+[mail-from](mail-from.md) (a Resend-verified sender; the sandbox
 default only delivers to the account's own address).
 
 ## 3. How to set it

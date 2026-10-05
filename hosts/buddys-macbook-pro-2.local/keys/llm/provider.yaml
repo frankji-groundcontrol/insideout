@@ -11,3 +11,17 @@ secrets:
     var: INSIDEOUT_LLM_API_KEY
     kind: value
     note: present in this machine's .env (offline coach when empty)
+  llm-base-url:
+    var: INSIDEOUT_LLM_BASE_URL
+    kind: value
+    note: config companion (catalog default exists); the four quartet
+      values must agree — backed up here like agents_home model ids
+  llm-model:
+    var: INSIDEOUT_LLM_MODEL
+    kind: value
+    note: config companion (catalog default exists)
+  llm-schema:
+    var: INSIDEOUT_LLM_SCHEMA
+    kind: value
+    note: config companion; messages (Anthropic wire) or responses
+      (OpenAI wire)

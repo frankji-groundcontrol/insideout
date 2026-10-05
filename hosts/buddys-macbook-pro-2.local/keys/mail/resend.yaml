@@ -13,3 +13,13 @@ secrets:
     kind: value
     note: copied 2026-10-05 from the primary host's store; rotate if
       transcripts ever leave either machine.
+  mail-from:
+    var: INSIDEOUT_MAIL_FROM
+    kind: value
+    note: config companion; Resend-verified sender (catalog default is
+      the sandbox sender)
+  public-url:
+    var: INSIDEOUT_PUBLIC_URL
+    kind: value
+    note: config companion; required the moment the mail key is set
+      (fail-fast) so emailed links never point at the localhost default

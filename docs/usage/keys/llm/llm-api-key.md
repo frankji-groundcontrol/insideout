@@ -10,26 +10,23 @@
 ## 2. How it is propagated
 
 `.env` → `dev.sh` export → the coach at conversation time; the
-deployed value rides the provider's variable store. Companion config
-(not credentials, so `.env.example` material): `INSIDEOUT_LLM_BASE_URL`
-(any `/v1` suffix is yours to add), `INSIDEOUT_LLM_MODEL`,
-`INSIDEOUT_LLM_SCHEMA` (`messages` | `responses`).
+deployed value rides the provider's variable store. Its three config
+companions are first-class key kinds of their own —
+[llm-base-url](llm-base-url.md), [llm-model](llm-model.md),
+[llm-schema](llm-schema.md) — each store-backed like this key.
 
 ## 3. How to set it
 
 The key comes from your model provider's console — but it is one of
-**four values that must agree**: `INSIDEOUT_LLM_API_KEY` +
-`INSIDEOUT_LLM_BASE_URL` + `INSIDEOUT_LLM_MODEL` +
-`INSIDEOUT_LLM_SCHEMA` (`messages` | `responses`, i.e. Anthropic- vs
-OpenAI-wire). A relay/proxy base URL is fine; put any `/v1` suffix on
-it yourself. Set all four in the same `.env` (they are catalog config,
-not store credentials — only the key is). Consequence: the store backs
-up **only the key**; the catalog records only the **defaults**, so your
-companion overrides live solely in `.env` — recover them from the
-deployment's variable store if the file is ever lost. **Empty key is a
-valid choice**: it selects the offline template-reply coach, the
-default local dev experience. Rotation is a plain paste-over in
-`.env` + provider store.
+**four values that must agree**: this key plus its companions
+[llm-base-url](llm-base-url.md) (relay/proxy URLs fine; any `/v1`
+suffix is yours to add), [llm-model](llm-model.md), and
+[llm-schema](llm-schema.md) (`messages` = Anthropic wire,
+`responses` = OpenAI wire). Set all four in the same `.env`; since
+2026-10-06 all four are store-backed, so a `.env` loss recovers from
+the store. **Empty key is a valid choice**: it selects the offline
+template-reply coach, the default local dev experience. Rotation is a
+plain paste-over in `.env` + provider store.
 
 ## 4. How to test it
 

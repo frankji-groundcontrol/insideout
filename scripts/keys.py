@@ -27,7 +27,9 @@ import re
 import stat
 import sys
 
-PLACEHOLDER = re.compile(r"changeme|<.*>|your[-_ ]|placeholder|xxx|^$", re.I)
+# Bracket tokens are skeletons only without an @ (cf. <password>);
+# display-name senders (Name <addr@host>) are real values.
+PLACEHOLDER = re.compile(r"changeme|<[^@<>]*>|your[-_ ]|placeholder|xxx|^$", re.I)
 
 
 def repo_root() -> str:

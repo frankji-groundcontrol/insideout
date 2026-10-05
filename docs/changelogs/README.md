@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-06 — Config-companion key kinds: every value gets the triple](2026-10-06-config-companion-keys.md)
+  — llm trio + mail pair + the PEM pointer become store-backed key
+  kinds with docs and tests (18 kinds); keys.py placeholder detector
+  fixed for display-name senders; audits 0-unmapped on both hosts.
 - [2026-10-05 — Buddy host key store (key-by-key, jwt first)](2026-10-05-buddy-host-keys.md)
   — second host in `hosts/`, manifests land per verified key;
   `INSIDEOUT_KEYS_HOST` scopes audit/fill; jwt-secret filled from the

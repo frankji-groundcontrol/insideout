@@ -16,3 +16,8 @@ secrets:
     var: INSIDEOUT_GH_CLIENT_SECRET
     kind: value
     note: no server reader yet (tracked for the invite-link flow)
+  gh-private-key-file:
+    var: INSIDEOUT_GH_PRIVATE_KEY_FILE
+    kind: path
+    note: pointer to the canonical PEM .key above — the _FILE consumer
+      reads it raw, which is why the store keeps the multi-line form

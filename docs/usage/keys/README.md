@@ -1,13 +1,17 @@
 # Key reference (per key, six parts)
 
-Every credential kind gets a standalone doc with the same six parts:
-**where** the `.key` file is, **how it is propagated**, **how to set
-it**, **how to test it**, **how it is used**, and **where the
-installation guide** covers it (the convention agents_home's
-`docs/usage/keys/` established). The filename is the **key name** —
-exactly like the `.key` file it documents — inside the module folder
-of its manifest under
-[`hosts/<host>/keys/`](../../../hosts/README.md).
+Every credential kind — and every **config companion** that genuinely
+exists as a specific choice rather than a catalog default — gets a
+standalone doc with the same six parts: **where** the `.key` file is,
+**how it is propagated**, **how to set it**, **how to test it**, **how
+it is used**, and **where the installation guide** covers it (the
+convention agents_home's `docs/usage/keys/` established, model ids and
+endpoints included). The filename is the **key name** — exactly like
+the `.key` file it documents — inside the module folder of its
+manifest under [`hosts/<host>/keys/`](../../../hosts/README.md).
+Pure-default knobs (listen address, TTLs, CORS, ports) have no files
+here — their stated location is the contract rows in
+[environment.md](../environment.md).
 
 | Module | File | Env var | Manifest |
 | --- | --- | --- | --- |
@@ -19,10 +23,16 @@ of its manifest under
 | [github/](github/) | [gh-app-id.md](github/gh-app-id.md) | `INSIDEOUT_GH_APP_ID` | `github/app.yaml` |
 | [github/](github/) | [gh-app-private-key.md](github/gh-app-private-key.md) | `INSIDEOUT_GH_PRIVATE_KEY` | `github/app.yaml` |
 | [github/](github/) | [gh-client-secret.md](github/gh-client-secret.md) | `INSIDEOUT_GH_CLIENT_SECRET` | `github/app.yaml` |
+| [github/](github/) | [gh-private-key-file.md](github/gh-private-key-file.md) | `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) | `github/app.yaml` |
 | [github/](github/) | [gh-webhook-secret.md](github/gh-webhook-secret.md) | `INSIDEOUT_GH_WEBHOOK_SECRET` | `github/webhooks.yaml` |
 | [github/](github/) | [github-token.md](github/github-token.md) | `GITHUB_TOKEN` (optional) | `github/tokens.yaml` |
 | [llm/](llm/) | [llm-api-key.md](llm/llm-api-key.md) | `INSIDEOUT_LLM_API_KEY` | `llm/provider.yaml` |
+| [llm/](llm/) | [llm-base-url.md](llm/llm-base-url.md) | `INSIDEOUT_LLM_BASE_URL` | `llm/provider.yaml` |
+| [llm/](llm/) | [llm-model.md](llm/llm-model.md) | `INSIDEOUT_LLM_MODEL` | `llm/provider.yaml` |
+| [llm/](llm/) | [llm-schema.md](llm/llm-schema.md) | `INSIDEOUT_LLM_SCHEMA` | `llm/provider.yaml` |
 | [mail/](mail/) | [mail-api-key.md](mail/mail-api-key.md) | `INSIDEOUT_MAIL_API_KEY` | `mail/resend.yaml` |
+| [mail/](mail/) | [mail-from.md](mail/mail-from.md) | `INSIDEOUT_MAIL_FROM` | `mail/resend.yaml` |
+| [mail/](mail/) | [public-url.md](mail/public-url.md) | `INSIDEOUT_PUBLIC_URL` | `mail/resend.yaml` |
 
 [SETENV.md](../../SETENV.md) — the `.env` operating manual — links
 into these files from its per-key steps; the detail lives here, not
@@ -70,15 +80,18 @@ Two layers, both required before a key counts as set up:
    A boot that only *warns* about an unusable key is a failure, not a
    pass — grep for the warning's absence.
 
-## Per-host state (2026-10-05)
+## Per-host state (2026-10-06)
 
 | Key | franks-macbook-pro | buddys-macbook-pro-2 |
 | --- | --- | --- |
 | jwt-secret | filled | filled |
 | database-app-dsn / database-owner-dsn | filled | filled |
 | llm-api-key | filled | filled |
+| llm-base-url / llm-model / llm-schema | pending (offline coach locally; live values ride the deployment) | filled 2026-10-06 |
 | mail-api-key | filled | filled |
+| mail-from / public-url | filled 2026-10-06 | filled 2026-10-06 |
 | gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | filled (PEM normalized to real multi-line for the `_FILE` consumer) |
+| gh-private-key-file | pending (uses the env-embedded lane) | filled 2026-10-06 |
 | postgres-app-password | filled | filled |
 | postgres-owner-password / github-token | empty by design | empty by design |
 

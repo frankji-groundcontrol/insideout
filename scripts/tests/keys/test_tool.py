@@ -140,6 +140,13 @@ class TestKeys(unittest.TestCase):
         self.assertIn("MY_STALE_TOKEN", out.getvalue())
         self.assertNotIn("PLAIN_CONFIG", out.getvalue())
 
+    def test_env_state_displayNameSender_is_not_a_placeholder(self):
+        # A Resend-style From value carries display-name brackets
+        # (Name <addr@host>); only bracket tokens WITHOUT an @ are
+        # skeleton placeholders (<password>, <your-domain>).
+        self.assertEqual(keys.env_state("InsideOut <noreply@example.com>"), "set")
+        self.assertEqual(keys.env_state("postgres://u:<password>@h/db"), "placeholder")
+
     def test_cli_audit_end_to_end(self):
         self.build_default()
         r = subprocess.run(
