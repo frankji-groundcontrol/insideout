@@ -49,8 +49,13 @@ views (PRODUCT.md principle 3).
   overdue) and the Progress assembly — **Now admits deadlined work
   only**; in-progress items without a deadline surface as
   `needsDeadline`; Next caps at three by earliest deadline.
-  `GET /projects/{id}/roadmap/progress`; node views carry `deadline` +
-  computed `pressure`; PATCH accepts `deadline` (RFC3339 or `""`).
+	`GET /projects/{id}/roadmap/progress`; node views carry `deadline` +
+	computed `pressure`; PATCH accepts `deadline` (RFC3339 or `""`).
+	`GET /projects/{id}/roadmap/progress/stream` (SSE) writes that same
+	payload as `event: progress` on connect and again whenever a roadmap
+	node changes. `internal/progresshub` is the in-memory fan-out (one
+	server instance, same bound as presence); the store notifies it after
+	a committed node write and the handler re-reads the tree.
 
 ## Real-time collaboration
 

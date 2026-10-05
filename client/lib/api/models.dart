@@ -132,6 +132,20 @@ class Project {
       );
 }
 
+class ProposalItem {
+  ProposalItem({required this.action, required this.title, this.parentHint = ''});
+
+  final String action;
+  final String title;
+  final String parentHint;
+
+  factory ProposalItem.fromJson(Map<String, dynamic> j) => ProposalItem(
+        action: (j['action'] as String?) ?? 'add_node',
+        title: j['title'] as String,
+        parentHint: (j['parentHint'] as String?) ?? '',
+      );
+}
+
 class ProjectUpdate {
   ProjectUpdate({
     required this.id,
@@ -139,6 +153,7 @@ class ProjectUpdate {
     required this.content,
     required this.createdAt,
     required this.authorId,
+    this.items = const [],
   });
 
   final String id;
@@ -146,6 +161,7 @@ class ProjectUpdate {
   final String content;
   final String createdAt;
   final String authorId;
+  final List<ProposalItem> items;
 
   factory ProjectUpdate.fromJson(Map<String, dynamic> j) => ProjectUpdate(
         id: j['id'] as String,
@@ -153,6 +169,9 @@ class ProjectUpdate {
         content: j['content'] as String,
         createdAt: j['createdAt'] as String,
         authorId: j['authorId'] as String,
+        items: ((j['items'] as List?) ?? const [])
+            .map((e) => ProposalItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
       );
 }
 

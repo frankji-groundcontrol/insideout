@@ -1,0 +1,15 @@
+version: 1
+task: Planning-flow remediation (40 slices from the multirole review of it)
+coordinator: zcode-main
+history_file: 2026-10-05-planning-flow-remediation.track.history.jsonl
+main:
+  outcome: 36 of 40 slices landed (fix/harden/improve/add waves) with both
+    suites green; the 4 schema slices (acceptance, owner, context fields,
+    owner on card) close in a gap phase with one migration tested on the
+    disposable stack first
+  owner: zcode-main
+  status: active
+  next_evidence: waves 1-2 committed and CI green; gap phase = migration +
+    4 slices + disposable-stack tests + deploy
+side_tracks: []
+updated_at: '2026-10-05T09:30:00Z'

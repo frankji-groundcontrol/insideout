@@ -101,20 +101,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			}
 			return "deleted", nil
 		})
-	addTextTool("build", "Agent: PRD → project with a branched roadmap",
-		[]mcp.ToolOption{strReq("prd_id", "PRD id"),
-			mcp.WithNumber("expected_count", mcp.Description("expected root-node count; required to confirm a replace_conflict 409 retry"))},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			count := 0
-			if v, ok := req.GetArguments()["expected_count"].(float64); ok {
-				count = int(v)
-			}
-			return call(c.BuildFromPrd(reqStr(req, "prd_id"), count))
-		})
-	addTextTool("expand", "Agent: grow one node into subtasks", []mcp.ToolOption{strReq("node_id", "node id")},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.ExpandNode(reqStr(req, "node_id")))
-		})
+	addDraftTools(addTextTool, strReq)
 	addTextTool("guide", "Scaffold the repo-side insideout.yaml matching guide for a project's roadmap; commit it at the repo root",
 		[]mcp.ToolOption{strReq("project_id", "project id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

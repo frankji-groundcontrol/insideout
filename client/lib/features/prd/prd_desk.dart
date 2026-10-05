@@ -61,7 +61,10 @@ class PrdDeskColumn extends StatelessWidget {
                 onSubmitted: (_) => onSaveTitle(),
               ),
             ),
-            FilledButton(onPressed: onRequestReview, child: Text(l10n.t('prd.requestReview'))),
+            FilledButton(
+              onPressed: prd?.status == 'draft' ? onRequestReview : null,
+              child: Text(prd?.status == 'draft' ? l10n.t('prd.next.requestReview') : l10n.t('prd.requestReview')),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -111,6 +114,13 @@ class PrdDeskColumn extends StatelessWidget {
   }
 }
 
+/// Mirrors server/internal/store/prds.go prdTransitions: the only legal moves.
+const _prdNextStatuses = <String, Set<String>>{
+  'draft': {'reviewing'},
+  'reviewing': {'approved', 'rejected'},
+  'rejected': {'draft'},
+};
+
 class _DeskActions extends StatelessWidget {
   const _DeskActions({
     required this.prdId,
@@ -137,7 +147,8 @@ class _DeskActions extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         FilledButton(onPressed: onSave, child: Text(l10n.t('common.save'))),
-        OutlinedButton(onPressed: onBuild, child: Text(l10n.t('prd.buildMVP'))),
+        OutlinedButton(onPressed: status == 'approved' ? onBuild : null, child: Text(l10n.t('prd.buildMVP'))),
+        OutlinedButton(onPressed: () => context.go('/prd/$prdId/view'), child: Text(l10n.t('view.entry'))),
         PopupMenuButton<String>(
           tooltip: l10n.t('prd.moreActions'),
           onSelected: (value) {
@@ -164,7 +175,11 @@ class _DeskActions extends StatelessWidget {
             PopupMenuItem(value: 'snapshot', child: Text(l10n.t('prd.snapshotRevision'))),
             const PopupMenuDivider(),
             for (final s in const ['draft', 'reviewing', 'approved', 'rejected'])
-              PopupMenuItem(value: s, child: Text('${s == status ? '● ' : ''}${l10n.t('prd.status.$s')}')),
+              PopupMenuItem(
+                value: s,
+                enabled: _prdNextStatuses[status]?.contains(s) ?? false,
+                child: Text('${s == status ? '● ' : ''}${l10n.t('prd.status.$s')}'),
+              ),
           ],
         ),
       ],

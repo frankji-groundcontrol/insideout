@@ -31,6 +31,7 @@ enum _RoadmapView { progress, bands, canvas }
 class _RoadmapPageState extends State<RoadmapPage> {
   late Future<List<RoadmapNode>> _future;
   late Future<RoadmapProgress> _progressFuture;
+  RoadmapProgress? _liveProgress;
   _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
   List<PresenceEntry> _presence = [];
@@ -50,6 +51,24 @@ class _RoadmapPageState extends State<RoadmapPage> {
     if (now.difference(_lastCursorSent).inMilliseconds < 200) return;
     _lastCursorSent = now;
     context.read<Session>().api.cursor(widget.projectId, x, y).catchError((_) {});
+  }
+
+  Future<void> _progressLoop(ApiClient api) async {
+    var backoff = const Duration(milliseconds: 500);
+    while (mounted) {
+      var fatal = false;
+      try {
+        await api.progressStream(widget.projectId, (progress) {
+          if (!mounted) return;
+          setState(() => _liveProgress = progress);
+        });
+      } on ApiException catch (e) {
+        fatal = e.status == 401 || e.status == 403 || e.status == 404;
+      } catch (_) {}
+      if (fatal || !mounted) return;
+      await _backoff(backoff);
+      backoff = backoff * 2 > const Duration(seconds: 5) ? const Duration(seconds: 5) : backoff * 2;
+    }
   }
 
   Future<void> _presenceLoop(ApiClient api) async {
@@ -88,6 +107,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
     context.read<LoopFocus>().rememberProject(widget.projectId);
     _future = context.read<Session>().api.listRoadmap(widget.projectId);
     _progressFuture = context.read<Session>().api.roadmapProgress(widget.projectId);
+    _progressLoop(context.read<Session>().api);
     _presenceLoop(context.read<Session>().api);
   }
 
@@ -107,6 +127,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
     setState(() {
       _future = nodes;
       _progressFuture = progress;
+      _liveProgress = null;
     });
     await Future.wait([nodes, progress]);
   }
@@ -185,10 +206,11 @@ class _RoadmapPageState extends State<RoadmapPage> {
                 ? FutureBuilder(
                     future: _progressFuture,
                     builder: (context, snap) {
-                      if (!snap.hasData) {
+                      final progress = _liveProgress ?? snap.data;
+                      if (progress == null) {
                         return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
                       }
-                      return RoadmapProgressView(progress: snap.data!, emptyLabel: l10n.t('roadmap.empty'));
+                      return RoadmapProgressView(progress: progress, emptyLabel: l10n.t('roadmap.empty'));
                     },
                   )
                 : FutureBuilder(
@@ -199,7 +221,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                       }
                       if (snap.data!.isEmpty) return Center(child: Text(l10n.t('roadmap.empty')));
                       if (_view == _RoadmapView.bands) {
-                        return RoadmapBands(projectId: widget.projectId, nodes: snap.data!, onReload: _reload);
+                        return RoadmapBands(projectId: widget.projectId, nodes: snap.data!, onReload: _reload, progress: _liveProgress);
                       }
                       return Column(
                         children: [

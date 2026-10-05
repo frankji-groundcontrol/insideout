@@ -65,16 +65,22 @@ var validateLater = []string{"stories", "constraints", "risks", "nonGoals"}
 func Assess(sections map[string]string) map[string]AudienceReadiness {
 	out := map[string]AudienceReadiness{}
 	blank := blankSections(sections)
-	nothingWritten := len(blank) == len(allSections())
+	nblank := 0
+	for _, b := range blank {
+		if b {
+			nblank++
+		}
+	}
+	nothingWritten := nblank == len(allSections())
 	for audience, rules := range audienceRules {
 		ar := AudienceReadiness{Ready: true}
 		for _, r := range rules {
 			if !blank[r.Section] {
 				continue
 			}
-			priority := ShouldNow
-			if nothingWritten && r.Section == "background" {
-				priority = MustNow
+			priority := MustNow
+			if nothingWritten && r.Section != "background" {
+				priority = ShouldNow
 			}
 			ar.Gaps = append(ar.Gaps, Gap{Section: r.Section, Priority: priority, Reason: r.Reason})
 			ar.Ready = false

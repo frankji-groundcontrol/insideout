@@ -44,7 +44,7 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runCrudCommand(cmd, rest, apiBase)
 	case "roadmap":
 		return runRoadmapCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
-	case "build", "expand":
+	case "build", "expand", "build-confirm", "expand-confirm":
 		return runAgentCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
 	case "repo", "sync":
 		return runGithubCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))

@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:insideout/api/errors.dart';
-import 'package:insideout/api/sse.dart';
+	import 'package:insideout/api/errors.dart';
+	import 'package:insideout/api/models.dart';
+	import 'package:insideout/api/sse.dart';
 
 void main() {
   test('coachSseOpen is POST JSON against /conversations/{id}/messages', () {
@@ -44,7 +45,20 @@ void main() {
     expect(buf.toString(), 'Hi');
   });
 
-  test('parseSseBuffer splits delta frames and keeps a partial tail', () {
+	test('readProgressSse applies a progress frame as the assembled payload', () async {
+		RoadmapProgress? got;
+		await readProgressSse(
+			Stream.fromIterable([
+				utf8.encode('event: progress\ndata: {"now":[{"id":"n1","title":"Ship it","status":"in_progress"}],"doneCount":0}\n\n'),
+			]),
+			(progress) => got = progress,
+		);
+		expect(got, isNotNull);
+		expect(got!.now.single.title, 'Ship it');
+		expect(got!.now.single.status, 'in_progress');
+	});
+
+	test('parseSseBuffer splits delta frames and keeps a partial tail', () {
     final first = parseSseBuffer('event: delta\ndata: {"text":"Hel"}\n\nevent: delta\ndata: {"text":"lo');
     expect(first.frames, hasLength(1));
     expect(first.frames.single.event, 'delta');

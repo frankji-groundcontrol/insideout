@@ -4,16 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
 // RoadmapPlanner turns a PRD (or a single roadmap node) into a branched
 // roadmap tree — the "build the MVP" bridge from idea to reality. Two
-// implementations: Anthropic (real LLM via a forced tool call, the same
-// schema-validated trick the critic uses) and a deterministic template used
-// when no provider is configured — and as a fallback whenever the model's
-// output can't be parsed, so the feature never hard-fails on LLM flakiness.
+	// implementations: Anthropic (real LLM via a forced tool call, the same
+	// schema-validated trick the critic uses) and a deterministic template used
+	// only when no provider is configured. A configured planner returns the
+	// model's error instead of substituting that template — the template
+	// discards the PRD sections and would look like a real plan.
 type RoadmapPlanner interface {
 	PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
 	ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
@@ -181,21 +184,20 @@ func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, prdTitle string, 
 规则：一个根节点（交付 MVP 的总目标）；根节点下 3-5 个可以并行推进的工作流（例如：核心功能、打磨与验证、发布）；每个工作流下 2-4 个具体任务。每个节点 title 简洁（12 字以内），description 一句话。不要编造 PRD 里没有的重大方向。只通过 submit_roadmap 工具返回。`
 	user := "PRD 标题：" + prdTitle + "\n\n各章节内容：\n" + formatSectionsForPrompt(sections)
 
-	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
-	if err != nil || turn.ToolCall == nil {
-		return p.fallback.PlanMVP(ctx, prdTitle, sections)
-	}
-	var payload struct {
-		Nodes []flatNode `json:"nodes"`
-	}
-	if json.Unmarshal([]byte(turn.ToolCall.Arguments), &payload) != nil {
-		return p.fallback.PlanMVP(ctx, prdTitle, sections)
-	}
-	root, err := assembleTree(payload.Nodes, prdTitle)
-	if err != nil {
-		return p.fallback.PlanMVP(ctx, prdTitle, sections)
-	}
-	return root, nil
+		turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
+		if err != nil {
+			return nil, err
+		}
+		if turn.ToolCall == nil {
+			return nil, fmt.Errorf("agent: roadmap planner returned no tool call")
+		}
+		var payload struct {
+			Nodes []flatNode `json:"nodes"`
+		}
+		if err := json.Unmarshal([]byte(turn.ToolCall.Arguments), &payload); err != nil {
+			return nil, fmt.Errorf("agent: unparseable roadmap: %w", err)
+		}
+		return assembleTree(payload.Nodes, prdTitle)
 }
 
 func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error) {
@@ -246,25 +248,32 @@ type templateRoadmapPlanner struct{}
 
 func NewTemplateRoadmapPlanner() RoadmapPlanner { return &templateRoadmapPlanner{} }
 
-func (templateRoadmapPlanner) PlanMVP(_ context.Context, prdTitle string, _ map[string]string) (*store.RoadmapPlanNode, error) {
-	return &store.RoadmapPlanNode{
-		Title:       prdTitle,
-		Description: "交付第一个可用版本",
-		Children: []store.RoadmapPlanNode{
-			{Title: "核心功能", Children: []store.RoadmapPlanNode{
-				{Title: "搭建最小可用版本", Description: "只做最核心的一条用户路径"},
-				{Title: "打通关键流程", Description: "从开始到得到结果的完整闭环"},
-			}},
-			{Title: "打磨与验证", Children: []store.RoadmapPlanNode{
-				{Title: "找目标用户试用", Description: "3-5 个真实目标用户"},
-				{Title: "收集反馈并迭代", Description: "记录问题，快速修正"},
-			}},
-			{Title: "发布", Children: []store.RoadmapPlanNode{
-				{Title: "准备落地页", Description: "一句话说清价值"},
-				{Title: "发布并收集首批用户", Description: "小范围放出，观察数据"},
-			}},
-		},
-	}, nil
+func (templateRoadmapPlanner) PlanMVP(_ context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
+	root := &store.RoadmapPlanNode{Title: prdTitle, Description: "交付第一个可用版本"}
+	seen := make(map[string]bool, len(sections))
+	add := func(title, body string) {
+		title = strings.TrimSpace(title)
+		body = strings.TrimSpace(body)
+		if title == "" || body == "" || seen[title] {
+			return
+		}
+		seen[title] = true
+		root.Children = append(root.Children, store.RoadmapPlanNode{Title: title, Description: body})
+	}
+	for _, key := range store.PrdSectionKeys {
+		add(key, sections[key])
+	}
+	extra := make([]string, 0, len(sections))
+	for key := range sections {
+		if !seen[key] {
+			extra = append(extra, key)
+		}
+	}
+	sort.Strings(extra)
+	for _, key := range extra {
+		add(key, sections[key])
+	}
+	return root, nil
 }
 
 func (templateRoadmapPlanner) ExpandNode(_ context.Context, _, _, _ string) ([]store.RoadmapPlanNode, error) {

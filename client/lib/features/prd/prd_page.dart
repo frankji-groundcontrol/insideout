@@ -138,7 +138,7 @@ class _PrdPageState extends State<PrdPage> {
   void _goProject(Map<String, dynamic> result) {
     final projectId = result['projectId']?.toString();
     if (projectId != null && projectId.isNotEmpty) {
-      context.go('/projects/$projectId');
+      context.go('/projects/$projectId/roadmap');
     }
   }
 

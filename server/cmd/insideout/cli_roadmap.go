@@ -6,6 +6,7 @@ package main
 // GitHub binding live here; reads print the API's raw JSON.
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -126,25 +127,46 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 	return true, 2
 }
 
-// runAgentCommand handles `insideout build <prd-id>` and
-// `insideout expand <node-id>` — the agent-planning verbs.
+// runAgentCommand handles the draft verbs (`build`, `expand`) and the
+// confirm verbs that write them (`build-confirm`, `expand-confirm`).
 func runAgentCommand(cmd string, args []string, api string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	applyAPIFlag(fs, &api)
 	count := 0
-	if cmd == "build" {
-		fs.IntVar(&count, "expected-count", 0, "optional hint for the number of root nodes")
+	draft := ""
+	switch cmd {
+	case "build-confirm":
+		fs.IntVar(&count, "expected-count", 0, "live node count; required when replacing an existing roadmap")
+		fs.StringVar(&draft, "tree", "", "drafted tree JSON from build")
+	case "expand-confirm":
+		fs.StringVar(&draft, "children", "", "drafted children JSON from expand")
+	}
+	usage := map[string]string{
+		"build":          " <prd-id>",
+		"expand":         " <node-id>",
+		"build-confirm":  " <prd-id> -tree '<json>'",
+		"expand-confirm": " <node-id> -children '<json>'",
 	}
 	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
-		fmt.Fprintf(os.Stderr, "usage: insideout %s <id>%s\n", cmd, map[string]string{"build": "  (prd id)", "expand": "  (roadmap node id)"}[cmd])
+		fmt.Fprintf(os.Stderr, "usage: insideout %s%s\n", cmd, usage[cmd])
+		return true, 2
+	}
+	if (cmd == "build-confirm" || cmd == "expand-confirm") && !json.Valid([]byte(draft)) {
+		fmt.Fprintln(os.Stderr, "confirm needs the drafted JSON from the matching draft command")
 		return true, 2
 	}
 	c := apiclient.New(api)
 	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
-	if cmd == "build" {
-		return printJSON(c.BuildFromPrd(fs.Args()[0], count))
+	switch cmd {
+	case "build":
+		return printJSON(c.BuildFromPrd(fs.Args()[0]))
+	case "build-confirm":
+		return printJSON(c.ConfirmBuildFromPrd(fs.Args()[0], json.RawMessage(draft), count))
+	case "expand-confirm":
+		return printJSON(c.ConfirmExpandNode(fs.Args()[0], json.RawMessage(draft)))
+	default:
+		return printJSON(c.ExpandNode(fs.Args()[0]))
 	}
-	return printJSON(c.ExpandNode(fs.Args()[0]))
 }
 
 // runGithubCommand handles `insideout repo set <project-id> <repo-url>`

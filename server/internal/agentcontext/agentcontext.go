@@ -4,6 +4,12 @@
 // shared by API, CLI, and MCP.
 package agentcontext
 
+import (
+	"time"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/roadmaptime"
+)
+
 // Inputs are the facts an assembly needs, already reduced to plain
 // values so this package stays free of store types.
 type Inputs struct {
@@ -17,6 +23,8 @@ type Inputs struct {
 	Nodes        []NodeIn
 	// EvidenceCounts maps node id → evidence row count.
 	EvidenceCounts map[string]int
+	// Now is the clock pressure is classified against. Zero means time.Now.
+	Now time.Time
 }
 
 // CommitIn is the latest human Commit, for version context.
@@ -32,6 +40,11 @@ type NodeIn struct {
 	ParentID string // empty = root
 	Title    string
 	Status   string
+	// Deadline is the node's commitment. Nil means none.
+	// Acceptance is not here: insideout.roadmap_nodes has no acceptance
+	// column (see 20260722120000_roadmap_nodes.sql). Adding it needs a
+	// migration this slice does not write.
+	Deadline *time.Time
 }
 
 // Assemble returns the mode-shaped context map. Modes select fields:
@@ -80,6 +93,7 @@ func nodeContext(n *NodeIn, in Inputs) map[string]any {
 		"id": n.ID, "title": n.Title, "status": n.Status,
 		"evidence": in.EvidenceCounts[n.ID],
 	}
+	putDeadline(ctx, n, in)
 	var siblings []string
 	for _, other := range in.Nodes {
 		if other.ParentID == n.ParentID && other.ID != n.ID {
@@ -94,12 +108,27 @@ func nodeContext(n *NodeIn, in Inputs) map[string]any {
 
 func leavesContext(leaves []NodeIn, in Inputs) []map[string]any {
 	var out []map[string]any
-	for _, n := range leaves {
-		out = append(out, map[string]any{
+	for i := range leaves {
+		n := &leaves[i]
+		row := map[string]any{
 			"id": n.ID, "title": n.Title, "status": n.Status, "evidence": in.EvidenceCounts[n.ID],
-		})
+		}
+		putDeadline(row, n, in)
+		out = append(out, row)
 	}
 	return out
+}
+
+func putDeadline(ctx map[string]any, n *NodeIn, in Inputs) {
+	if n.Deadline == nil {
+		return
+	}
+	now := in.Now
+	if now.IsZero() {
+		now = time.Now()
+	}
+	ctx["deadline"] = n.Deadline.UTC().Format(time.RFC3339)
+	ctx["pressure"] = roadmaptime.Pressure(*n.Deadline, now)
 }
 
 func leafNodes(nodes []NodeIn) []NodeIn {

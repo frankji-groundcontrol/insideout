@@ -230,14 +230,13 @@ func (e *toolExecutor) advanceStage(ctx context.Context, argsJSON string) (strin
 	if err := e.checkStageGate(ctx, args.Next); err != nil {
 		return "", err
 	}
-	if err := e.store.UpdateConversationStage(ctx, e.actorID, e.conversationID, args.Next); err != nil {
+	if err := e.proposeStage(ctx, args.Next); err != nil {
 		return "", err
 	}
-	e.currentStage = args.Next
 	if e.onStageChange != nil {
 		e.onStageChange(args.Next)
 	}
-	return fmt.Sprintf("stage advanced to %q", args.Next), nil
+	return fmt.Sprintf("stage %q is waiting for confirmation", args.Next), nil
 }
 
 // checkStageGate is the mechanical, server-side gate (plan §4.2) — it

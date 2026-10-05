@@ -23,6 +23,7 @@ class _FakeApi extends ApiClient {
           );
 
   final _presenceParked = Completer<void>();
+  void Function(RoadmapProgress progress)? onProgress;
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];
@@ -46,6 +47,12 @@ class _FakeApi extends ApiClient {
   Future<void> presenceStream(String projectId, String clientId, void Function(List<PresenceEntry> entries) onChange,
       {void Function(String sessionId, String name, double x, double y)? onCursor}) {
     // Park the presence loop without timers so the test disposes cleanly.
+    return _presenceParked.future;
+  }
+
+  @override
+  Future<void> progressStream(String projectId, void Function(RoadmapProgress progress) onProgress) {
+    this.onProgress = onProgress;
     return _presenceParked.future;
   }
 }
@@ -90,5 +97,41 @@ void main() {
     expect(find.text('Progress'), findsOneWidget);
     expect(find.text('Bands'), findsOneWidget);
     expect(find.text('Canvas'), findsOneWidget);
+  });
+
+  testWidgets('a progress event replaces the snapshot the view is showing', (tester) async {
+    final session = Session();
+    session.ready = true;
+    final fake = _FakeApi();
+    session.api = fake;
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: RoadmapPage(projectId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(fake.onProgress, isNotNull);
+    expect(find.text('Payment retry'), findsOneWidget);
+    expect(find.text('Streamed leaf'), findsNothing);
+
+    fake.onProgress!(RoadmapProgress.fromJson({
+      'now': [
+        {'id': 'n9', 'title': 'Streamed leaf', 'status': 'in_progress', 'deadline': '2026-10-08T00:00:00Z', 'pressure': 'near'},
+      ],
+      'doneCount': 1,
+    }));
+    await tester.pump();
+
+    expect(find.text('Streamed leaf'), findsOneWidget);
+    expect(find.text('Payment retry'), findsNothing);
+    expect(find.text('1 done'), findsOneWidget);
   });
 }

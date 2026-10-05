@@ -138,6 +138,7 @@ func (s *Store) CreateRoadmapNode(ctx context.Context, actorID, projectID uuid.U
 	if err != nil {
 		return nil, err
 	}
+	s.noteRoadmapChange(n.ProjectID)
 	return n, nil
 }
 
@@ -217,6 +218,7 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 	if err != nil {
 		return nil, err
 	}
+	s.noteRoadmapChange(n.ProjectID)
 	return n, nil
 }
 
@@ -285,13 +287,15 @@ func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, 
 	if err != nil {
 		return nil, err
 	}
+	s.noteRoadmapChange(n.ProjectID)
 	return n, nil
 }
 
 // DeleteRoadmapNode removes a node; its subtree cascades via the parent_id
 // FK's ON DELETE CASCADE. Any workspace member.
 func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) error {
-	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+	var projectID uuid.UUID
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		wsID, err := nodeWorkspace(ctx, tx, nodeID)
 		if err != nil {
 			return err
@@ -299,7 +303,15 @@ func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
 			return err
 		}
+		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
+			return err
+		}
 		_, err = tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)
 		return err
 	})
+	if err != nil {
+		return err
+	}
+	s.noteRoadmapChange(projectID)
+	return nil
 }

@@ -65,3 +65,73 @@ func TestSystemPromptCompletePrDHasNoBlockingGaps(t *testing.T) {
 		t.Error("complete PRD must not carry must-clarify gaps")
 	}
 }
+
+func TestSystemPromptCritiqueAsksForRankedList(t *testing.T) {
+	prompt := systemPrompt(StageCritique, "Ranked", map[string]string{}, "", "")
+	for _, want := range []string{"按严重程度从高到低", "[blocking]", "编号列表"} {
+		if !strings.Contains(prompt, want) {
+			t.Errorf("critique prompt should ask for a ranked list, missing %q", want)
+		}
+	}
+	if strings.Contains(prompt, "一次只讲一条") {
+		t.Error("critique prompt still asks the coach to narrate one finding at a time")
+	}
+}
+
+// A three-item reply, most severe first, becomes the findings the panel
+// renders — order preserved, severity on each item.
+func TestParseRankedCritique_ThreeItems(t *testing.T) {
+	reply := strings.Join([]string{
+		"1. [blocking] goals — 目标不可衡量。建议：补一个可量化的指标。",
+		"2. [major] users — 目标用户写成了「所有人」。建议：具体到一类人。",
+		"3. [minor] risks — 没写失败时怎么办。",
+	}, "\n")
+
+	got := parseRankedCritique(reply)
+	if len(got) != 3 {
+		t.Fatalf("got %d findings, want 3: %+v", len(got), got)
+	}
+	want := []struct{ severity, section, issue string }{
+		{"blocking", "goals", "目标不可衡量。"},
+		{"major", "users", "目标用户写成了「所有人」。"},
+		{"minor", "risks", "没写失败时怎么办。"},
+	}
+	for i, w := range want {
+		if got[i].Severity != w.severity || got[i].Section != w.section || got[i].Issue != w.issue {
+			t.Errorf("item %d = %+v, want severity %q section %q issue %q", i, got[i], w.severity, w.section, w.issue)
+		}
+		if got[i].Status != FindingOpen || got[i].ID == "" {
+			t.Errorf("item %d should be an open finding with an id, got %+v", i, got[i])
+		}
+	}
+	if got[0].Suggestion != "补一个可量化的指标。" || got[1].Suggestion != "具体到一类人。" {
+		t.Errorf("suggestions not parsed: %+v", got)
+	}
+	if got[2].Suggestion != "" {
+		t.Errorf("item without a suggestion should leave it empty, got %q", got[2].Suggestion)
+	}
+}
+
+// The live critique turn hands its reply here. A three-item reply becomes
+// the findings the panel renders; the same reply in any other stage does not.
+func TestRankedCritiqueFindings_ThreeItemReply(t *testing.T) {
+	reply := strings.Join([]string{
+		"1. [blocking] goals — 目标不可衡量。建议：补一个可量化的指标。",
+		"2. [major] users — 目标用户写成了「所有人」。建议：具体到一类人。",
+		"3. [minor] risks — 没写失败时怎么办。",
+	}, "\n")
+
+	got := rankedCritiqueFindings(StageCritique, reply)
+	if len(got) != 3 {
+		t.Fatalf("critique reply became %d findings, want 3", len(got))
+	}
+	if got[0].Issue != "目标不可衡量。" || got[2].Section != "risks" {
+		t.Fatalf("findings = %+v", got)
+	}
+	if rankedCritiqueFindings(StageDraft, reply) != nil {
+		t.Fatal("a draft-stage reply must not become findings")
+	}
+	if rankedCritiqueFindings(StageCritique, "先看第一条。") != nil {
+		t.Fatal("a reply that isn't the ranked list must not replace the findings")
+	}
+}

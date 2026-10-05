@@ -18,7 +18,8 @@ import (
 // instead of running, recording a critic-skipped marker so the finalize
 // gate isn't hostage to load (plan §5.1). The critic inherits this
 // turn's already-held concurrency permit; it never acquires its own.
-func (c *Coach) maybeRunCritic(ctx context.Context, actorID, prdID, conversationID, runID uuid.UUID, stage string, sectionUpdated, waited bool, sse *sseWriter) {
+func (c *Coach) maybeRunCritic(ctx context.Context, actorID, prdID, conversationID, runID uuid.UUID, stage, reply string, sectionUpdated, waited bool, sse *sseWriter) {
+	c.captureRankedCritique(ctx, actorID, conversationID, stage, reply, sse)
 	if stage != StageCritique {
 		return
 	}
@@ -89,6 +90,44 @@ func (c *Coach) maybeRunCritic(ctx context.Context, actorID, prdID, conversation
 		return
 	}
 	sse.criticFindings(findings)
+}
+
+// rankedCritiqueFindings is what a critique-stage reply becomes for the
+// panel, or nil when the reply isn't the ranked list. A later turn that
+// talks through one finding therefore doesn't wipe the list.
+func rankedCritiqueFindings(stage, reply string) []CriticFinding {
+	if stage != StageCritique {
+		return nil
+	}
+	findings := parseRankedCritique(reply)
+	if len(findings) == 0 {
+		return nil
+	}
+	return findings
+}
+
+// captureRankedCritique turns a critique-stage reply into the findings the
+// panel renders: it persists them and emits the critic_findings event.
+func (c *Coach) captureRankedCritique(ctx context.Context, actorID, conversationID uuid.UUID, stage, reply string, sse *sseWriter) {
+	findings := rankedCritiqueFindings(stage, reply)
+	if findings == nil {
+		return
+	}
+	conv, err := c.store.GetConversationForOwner(ctx, conversationID, actorID)
+	if err != nil {
+		return
+	}
+	lm, extra := loadLedger(conv.Meta)
+	saveCriticFindings(extra, findings)
+	metaJSON, err := saveLedger(lm, extra)
+	if err != nil {
+		return
+	}
+	if err := c.store.UpdateConversationMeta(ctx, actorID, conversationID, metaJSON); err != nil {
+		c.log.Error("persist ranked critique", "error", err)
+		return
+	}
+	_ = sse.criticFindings(findings)
 }
 
 // CriticFinding is one item from a critic pass, persisted in

@@ -1,6 +1,9 @@
 package agentcontext
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func nodes() []NodeIn {
 	return []NodeIn{
@@ -26,6 +29,36 @@ func TestImplementationModeFocusScoped(t *testing.T) {
 	leaves := out["leaves"].([]map[string]any)
 	if len(leaves) != 2 {
 		t.Errorf("leaf count wrong: %v", leaves)
+	}
+}
+
+func TestImplementationContextCarriesDeadlineAndPressure(t *testing.T) {
+	now := time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)
+	deadline := now.Add(24 * time.Hour)
+	out := Assemble(Inputs{
+		Mode: "implementation", FocusNodeID: "a", Now: now,
+		Nodes: []NodeIn{
+			{ID: "root", Title: "交付 MVP", Status: "pending"},
+			{ID: "a", ParentID: "root", Title: "实现 A", Status: "in_progress", Deadline: &deadline},
+			{ID: "b", ParentID: "root", Title: "实现 B", Status: "pending"},
+		},
+	})
+	focus := out["focus"].(map[string]any)
+	if focus["deadline"] != deadline.Format(time.RFC3339) || focus["pressure"] != "high_risk" {
+		t.Errorf("focus deadline/pressure = %v %v, want %s high_risk", focus["deadline"], focus["pressure"], deadline.Format(time.RFC3339))
+	}
+	leaves := out["leaves"].([]map[string]any)
+	var leaf map[string]any
+	for _, l := range leaves {
+		if l["id"] == "a" {
+			leaf = l
+		}
+	}
+	if leaf == nil || leaf["deadline"] != deadline.Format(time.RFC3339) || leaf["pressure"] != "high_risk" {
+		t.Errorf("leaf deadline/pressure missing: %v", leaves)
+	}
+	if _, has := focus["acceptance"]; has {
+		t.Errorf("acceptance must stay absent until the column exists: %v", focus)
 	}
 }
 

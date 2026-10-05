@@ -319,7 +319,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	succeeded = true
 
 	// Critic streams further SSE to the client — drop it if they're gone.
-	c.maybeRunCritic(ctx, userID, conv.PrdID, conversationID, run.ID, executor.currentStage, sectionUpdated, waited, sse)
+	c.maybeRunCritic(ctx, userID, conv.PrdID, conversationID, run.ID, executor.currentStage, finalText, sectionUpdated, waited, sse)
 
 	if executor.currentStage == StageFinalize && strings.Contains(finalText, "NO OPEN QUESTIONS") {
 		if err := c.store.CompleteConversation(persistCtx, userID, conversationID); err != nil {

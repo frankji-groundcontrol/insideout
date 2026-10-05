@@ -132,7 +132,10 @@ class _Band extends StatelessWidget {
         itemBuilder: (context, i) {
           final node = nodes[i];
           final depth = _depth(node);
-          return tileBuilder(node, 8.0 + depth * 18);
+          return Padding(
+            padding: EdgeInsets.only(left: depth * 18),
+            child: tileBuilder(node, 0),
+          );
         },
       ),
     );

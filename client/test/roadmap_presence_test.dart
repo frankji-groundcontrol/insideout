@@ -36,8 +36,13 @@ class _FakeApi extends ApiClient {
         }),
       ];
 
-  @override
-  Future<void> presenceStream(
+	@override
+	Future<void> progressStream(String projectId, void Function(RoadmapProgress progress) onProgress) {
+		return _hold.future;
+	}
+
+	@override
+	Future<void> presenceStream(
     String projectId,
     String clientId,
     void Function(List<PresenceEntry> entries) onChange, {

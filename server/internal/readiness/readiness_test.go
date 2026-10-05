@@ -48,12 +48,43 @@ func TestBlankCountsAsMissing(t *testing.T) {
 	}
 	sawUsers := false
 	for _, g := range v.Gaps {
-		if g.Section == "users" && g.Priority == ShouldNow {
+		if g.Section == "users" && g.Priority == MustNow {
 			sawUsers = true
 		}
 	}
 	if !sawUsers {
-		t.Errorf("blank users should be a should-clarify gap: %v", v.Gaps)
+		t.Errorf("blank users should be a must-clarify gap: %v", v.Gaps)
+	}
+}
+
+func TestEmptySectionIsMustClarifyNow(t *testing.T) {
+	sections := map[string]string{}
+	for _, s := range allSections() {
+		sections[s] = "written content"
+	}
+	sections["requirements"] = ""
+	out := Assess(sections)
+	d := out["delivery"]
+	found := false
+	for _, g := range d.Gaps {
+		if g.Section == "requirements" && g.Priority == MustNow {
+			found = true
+		}
+		if g.Section == "requirements" && g.Priority != MustNow {
+			t.Errorf("empty requirements must be must_clarify_now, got %s", g.Priority)
+		}
+	}
+	if !found {
+		t.Errorf("one empty section should be must_clarify_now: %v", d.Gaps)
+	}
+	carried := false
+	for _, item := range d.CarryIntoCommit {
+		if len(item) >= len("requirements:") && item[:len("requirements:")] == "requirements:" {
+			carried = true
+		}
+	}
+	if !carried {
+		t.Errorf("empty requirements must be carried into the commit: %v", d.CarryIntoCommit)
 	}
 }
 

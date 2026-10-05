@@ -19,6 +19,7 @@ func (s *Server) registerRoadmapRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/roadmap/{nid}", s.requireAuth(s.handleDeleteRoadmapNode))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/guide", s.requireAuth(s.handleProjectGuide))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap/progress", s.requireAuth(s.handleRoadmapProgress))
+	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap/progress/stream", s.requireAuth(s.handleRoadmapProgressStream))
 	mux.HandleFunc("GET /api/v1/roadmap/{nid}/evidence", s.requireAuth(s.handleListEvidence))
 }
 

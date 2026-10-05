@@ -99,6 +99,27 @@ func (s *Store) UpdateConversationStage(ctx context.Context, actorID, conversati
 	})
 }
 
+// ConfirmConversationStage writes a stage the coach already proposed. The
+// proposal lives in meta, not in stage, so declining leaves the row as it
+// was. A missing or different proposal is ErrNotFound.
+func (s *Store) ConfirmConversationStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
+	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		tag, err := tx.Exec(ctx, `
+			UPDATE insideout.agent_conversations
+			SET stage = $3, meta = meta - 'pendingStage'
+			WHERE id = $1 AND user_id = $2 AND meta->>'pendingStage' = $3`,
+			conversationID, actorID, stage,
+		)
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return ErrNotFound
+		}
+		return nil
+	})
+}
+
 func (s *Store) UpdateConversationMeta(ctx context.Context, actorID, conversationID uuid.UUID, meta json.RawMessage) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `UPDATE insideout.agent_conversations SET meta = $2::jsonb WHERE id = $1`, conversationID, jsonParam(meta))

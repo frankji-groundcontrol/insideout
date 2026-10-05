@@ -33,6 +33,22 @@ type Store struct {
 	// migratePool is insideout_owner when DATABASE_OWNER_URL is set.
 	// Nil means Migrate uses Pool (which must already be that owner).
 	migratePool *pgxpool.Pool
+	// onRoadmapChange, when set, fires after a roadmap node write commits.
+	// The API uses it to push a progress snapshot to SSE subscribers.
+	// Nil in tests and anywhere the live view is not wired.
+	onRoadmapChange func(projectID uuid.UUID)
+}
+
+// OnRoadmapChange registers the hook fired after a committed roadmap
+// node write. The API calls it once at startup.
+func (s *Store) OnRoadmapChange(fn func(projectID uuid.UUID)) {
+	s.onRoadmapChange = fn
+}
+
+func (s *Store) noteRoadmapChange(projectID uuid.UUID) {
+	if s.onRoadmapChange != nil {
+		s.onRoadmapChange(projectID)
+	}
 }
 
 func Open(ctx context.Context, databaseURL string) (*Store, error) {

@@ -40,6 +40,7 @@ class _CoachPanelState extends State<CoachPanel> {
   bool open = true;
   int retry = 0;
   Timer? retryTimer;
+  List<Map<String, dynamic>> findings = const [];
 
   @override
   void dispose() {
@@ -84,6 +85,10 @@ class _CoachPanelState extends State<CoachPanel> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(context.read<Appearance>().t('coach.factRecorded', {'fact': fact}))),
                 );
+              },
+              onCriticFindings: (next) {
+                if (!mounted) return;
+                setState(() => findings = next);
               },
             ),
           );
@@ -137,6 +142,13 @@ class _CoachPanelState extends State<CoachPanel> {
                         l10n.t('coach.pullQuotes'),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: ink.withValues(alpha: 0.7)),
                       ),
+                      if (widget.conversation != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.t('coach.stage.$stage'),
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(color: ink),
+                        ),
+                      ],
                       Container(width: 36, height: 3, margin: const EdgeInsets.only(top: 10), color: Cobalt.hue500),
                     ],
                   ),
@@ -173,6 +185,8 @@ class _CoachPanelState extends State<CoachPanel> {
                 children: [
                   ...widget.messages.map((m) => _Quote(text: m.content, role: m.role, ink: ink)),
                   if (stream.isNotEmpty) _Quote(text: stream, role: 'assistant', ink: ink),
+                  for (final finding in findings)
+                    if (finding['issue'] is String) _Quote(text: finding['issue'] as String, role: 'critic', ink: ink),
                 ],
               ),
             ),

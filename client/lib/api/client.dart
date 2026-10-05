@@ -577,6 +577,30 @@ class ApiClient {
     return _parse(res, (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>));
   }
 
+  /// Subscribes to live progress snapshots. Every `progress` frame
+  /// replace-calls [onProgress]; the stream ends when the page disposes.
+  Future<void> progressStream(String projectId, void Function(RoadmapProgress progress) onProgress) async {
+    final token = await _readAccess();
+    final headers = {
+      if (token != null) 'Authorization': 'Bearer $token',
+      'Accept': 'text/event-stream',
+    };
+    Stream<List<int>> chunks;
+    if (kIsWeb) {
+      chunks = fetchSseStream('$baseUrl/projects/$projectId/roadmap/progress/stream', headers);
+    } else {
+      final res = await _dio.get<ResponseBody>(
+        '/projects/$projectId/roadmap/progress/stream',
+        options: Options(responseType: ResponseType.stream, headers: headers),
+      );
+      if (res.statusCode != null && res.statusCode! >= 400) {
+        throw ApiException('progress stream failed', status: res.statusCode);
+      }
+      chunks = res.data!.stream;
+    }
+    await readProgressSse(chunks, onProgress);
+  }
+
   Future<RoadmapNode> moveRoadmapNode(String nodeId, {String? parentId, required int position}) async {
     final res = await _exec(req.moveRoadmapNode(nodeId, parentId: parentId, position: position));
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));

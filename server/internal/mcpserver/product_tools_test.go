@@ -91,12 +91,12 @@ func TestRoadmapMovePassesPosition(t *testing.T) {
 	}
 }
 
-// build must carry expected_count so an agent can confirm a
-// replace_conflict 409 retry.
+// build_confirm must carry expected_count so an agent can confirm a
+// replace_conflict 409 retry. build itself writes nothing.
 func TestBuildPassesExpectedCount(t *testing.T) {
 	var gotBody string
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/prds/p1/build" {
+		if r.URL.Path != "/prds/p1/build/confirm" {
 			t.Errorf("unexpected path %q", r.URL.Path)
 		}
 		raw, _ := io.ReadAll(r.Body)
@@ -106,10 +106,10 @@ func TestBuildPassesExpectedCount(t *testing.T) {
 	t.Cleanup(api.Close)
 
 	res := drive(t, api.URL, []string{
-		toolCall(1, "build", `{"prd_id":"p1","expected_count":5}`),
+		toolCall(1, "build_confirm", `{"prd_id":"p1","tree":"{\"title\":\"Ship\"}","expected_count":5}`),
 	})
 	if res[1].Result.IsError {
-		t.Fatalf("build failed: %+v", res[1])
+		t.Fatalf("build_confirm failed: %+v", res[1])
 	}
 	var body map[string]any
 	if err := json.Unmarshal([]byte(gotBody), &body); err != nil {

@@ -13,6 +13,7 @@ func (s *Server) registerConversationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/conversations/{id}", s.requireAuth(s.handleGetConversation))
 	mux.HandleFunc("GET /api/v1/conversations/{id}/messages", s.requireAuth(s.handleListConversationMessages))
 	mux.HandleFunc("POST /api/v1/conversations/{id}/messages", s.requireAuth(s.handleSendConversationMessage))
+	mux.HandleFunc("POST /api/v1/conversations/{id}/stage", s.requireAuth(s.handleConfirmConversationStage))
 }
 
 type conversationView struct {
@@ -145,4 +146,45 @@ func (s *Server) handleSendConversationMessage(w http.ResponseWriter, r *http.Re
 		return
 	}
 	s.coach.HandleMessage(w, r, cid.String(), userID.String(), conv.WorkspaceID.String(), req.Content)
+}
+
+type confirmStageRequest struct {
+	Stage string `json:"stage"`
+}
+
+// handleConfirmConversationStage writes a stage the coach proposed and
+// the person accepted. Declining never calls this, so the row stays.
+func (s *Server) handleConfirmConversationStage(w http.ResponseWriter, r *http.Request) {
+	userID, _ := UserID(r.Context())
+	cid, ok := pathUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	var req confirmStageRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	req.Stage = strings.TrimSpace(req.Stage)
+	if req.Stage == "" {
+		httpx.WriteError(w, http.StatusBadRequest, "stage is required", "", nil)
+		return
+	}
+	err := s.store.ConfirmConversationStage(r.Context(), userID, cid, req.Stage)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusConflict, "that stage is not waiting for confirmation", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("confirm conversation stage", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	conv, err := s.store.GetConversationForOwner(r.Context(), cid, userID)
+	if err != nil {
+		s.log.Error("get conversation after confirm", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	httpx.WriteJSON(w, http.StatusOK, conversationResponse(*conv))
 }

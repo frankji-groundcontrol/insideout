@@ -75,6 +75,8 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
           final sections = proj['sections'] as Map<String, dynamic>;
           final readiness = data['readiness'] as Map<String, dynamic>;
           final gaps = (readiness['gaps'] as List? ?? const []);
+          final blocking = [for (final g in gaps) if (g is Map && g['priority']?.toString() == 'must_clarify_now') g];
+          final later = [for (final g in gaps) if (g is! Map || g['priority']?.toString() != 'must_clarify_now') g];
           final latest = data['latestCommit'] as Map<String, dynamic>?;
 
           return ListView(
@@ -103,8 +105,14 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
               if (gaps.isNotEmpty) ...[
                 const Divider(height: 24),
                 Text(l10n.t('view.gapsTitle'), style: theme.textTheme.titleMedium),
-                for (final g in gaps)
+                for (final g in blocking)
                   Text('  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}', style: theme.textTheme.bodySmall),
+                if (later.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(l10n.t('roadmap.bandLater'), style: theme.textTheme.titleSmall),
+                  for (final g in later)
+                    Text('  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}', style: theme.textTheme.bodySmall),
+                ],
               ],
               const SizedBox(height: 24),
               TextButton(onPressed: () => context.go('/prd/${widget.prdId}/versions'), child: Text(l10n.t('versions.entry'))),

@@ -1,6 +1,7 @@
-import 'dart:convert';
+	import 'dart:convert';
 
-import 'errors.dart';
+	import 'errors.dart';
+	import 'models.dart';
 
 class SseFrame {
   const SseFrame(this.event, this.data);
@@ -43,12 +44,14 @@ class CoachHandlers {
     this.onPrdUpdated,
     this.onStageChanged,
     this.onFactRecorded,
+    this.onCriticFindings,
   });
 
   final void Function(String text)? onDelta;
   final void Function(String section)? onPrdUpdated;
   final void Function(String stage)? onStageChanged;
   final void Function(Map<String, dynamic> fact)? onFactRecorded;
+  final void Function(List<Map<String, dynamic>> findings)? onCriticFindings;
 }
 
 /// One Coach POST that must stream on web via fetch (BUG-014), not dio/XHR.
@@ -90,7 +93,26 @@ Stream<String> decodeSseBytes(Stream<List<int>> chunks) {
   return chunks.map<List<int>>((chunk) => List<int>.from(chunk)).transform(utf8.decoder);
 }
 
-/// Reads Coach SSE chunks, including multibyte splits, and applies frames.
+	/// Reads progress SSE chunks and replace-calls [onProgress] with each
+	/// assembled snapshot. Heartbeat comments carry no data and are skipped
+	/// by [parseSseBuffer].
+	Future<void> readProgressSse(Stream<List<int>> chunks, void Function(RoadmapProgress progress) onProgress) async {
+		var buffer = '';
+		await for (final text in decodeSseBytes(chunks)) {
+			buffer += text;
+			final parsed = parseSseBuffer(buffer);
+			buffer = parsed.rest;
+			for (final frame in parsed.frames) {
+				if (frame.event != 'progress') continue;
+				final decoded = jsonDecode(frame.data);
+				if (decoded is Map) {
+					onProgress(RoadmapProgress.fromJson(Map<String, dynamic>.from(decoded)));
+				}
+			}
+		}
+	}
+
+	/// Reads Coach SSE chunks, including multibyte splits, and applies frames.
 Future<void> readCoachSse(Stream<List<int>> chunks, CoachHandlers handlers) async {
   var buffer = '';
   await for (final text in decodeSseBytes(chunks)) {
@@ -114,6 +136,12 @@ void applyCoachFrame(SseFrame frame, CoachHandlers handlers) {
     handlers.onStageChanged?.call(parsed['stage'] as String);
   } else if (frame.event == 'fact_recorded' && parsed is Map) {
     handlers.onFactRecorded?.call(Map<String, dynamic>.from(parsed));
+  } else if (frame.event == 'critic_findings' && parsed is Map && parsed['findings'] is List) {
+    final findings = <Map<String, dynamic>>[
+      for (final item in parsed['findings'] as List)
+        if (item is Map) Map<String, dynamic>.from(item),
+    ];
+    handlers.onCriticFindings?.call(findings);
   } else if (frame.event == 'error' && parsed is Map) {
     throw toApiError(null, Map<String, dynamic>.from(parsed));
   }

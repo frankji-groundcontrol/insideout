@@ -1,0 +1,150 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:insideout/api/client.dart';
+import 'package:insideout/api/models.dart';
+import 'package:insideout/chrome/loop_focus.dart';
+import 'package:insideout/features/prd/audience_view_page.dart';
+import 'package:insideout/session/appearance.dart';
+import 'package:insideout/session/session.dart';
+import 'package:provider/provider.dart';
+
+class _FakeApi extends ApiClient {
+  _FakeApi(this.payload, {this.prd})
+      : super(
+          baseUrl: 'http://127.0.0.1:9/api/v1',
+          readAccess: () async => null,
+          readRefresh: () async => null,
+          writeTokens: (a, r) async {},
+          clearTokens: () async {},
+        );
+
+  final Map<String, dynamic> payload;
+  final Prd? prd;
+
+  @override
+  Future<Map<String, dynamic>> prdView(String id, String audience) async => payload;
+
+  @override
+  Future<Prd> getPrd(String id) async =>
+      prd ??
+      Prd(
+        id: id,
+        workspaceId: 'ws1',
+        title: '',
+        sections: const {},
+        status: 'draft',
+        currentRevision: 1,
+        updatedAt: '2026-08-22T00:00:00Z',
+      );
+}
+
+void main() {
+  testWidgets('audience view loads one audience end to end', (tester) async {
+    final session = Session();
+    session.ready = true;
+    session.api = _FakeApi(
+      {
+        'prdId': 'p1',
+        'title': 'Audience end to end',
+        'projection': {
+          'audience': 'decision',
+          'title': 'Decision view',
+          'purpose': 'why, why now, investment and return',
+          'sections': {
+            'background': 'the why-this argument',
+            'goals': 'the investment being decided on',
+          },
+        },
+        'readiness': {
+          'ready': false,
+          'gaps': [
+            {'section': 'risks', 'priority': 'should_clarify_this_version', 'reason': 'the decisions the answer requires now'},
+          ],
+          'carryIntoCommit': [],
+        },
+        'latestCommit': {'revision': 3, 'name': 'First decision cut'},
+      },
+      prd: Prd(
+        id: 'p1',
+        workspaceId: 'ws1',
+        title: 'Audience end to end',
+        sections: const {'background': 'The problem is real.', 'goals': ''},
+        status: 'draft',
+        currentRevision: 3,
+        updatedAt: '2026-08-22T00:00:00Z',
+      ),
+    );
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: AudienceViewPage(prdId: 'p1', initialAudience: 'decision')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Audience end to end'), findsOneWidget);
+    expect(find.text('why, why now, investment and return'), findsOneWidget);
+    expect(find.text('Background & Problem Statement'), findsOneWidget);
+    expect(find.textContaining('the why-this argument'), findsOneWidget);
+    expect(find.text('The problem is real.'), findsOneWidget);
+    expect(find.text('Goals & Success Metrics'), findsOneWidget);
+    expect(find.textContaining('(not yet written'), findsOneWidget);
+    expect(find.textContaining('Latest Commit: v3'), findsOneWidget);
+    expect(find.textContaining('the decisions the answer requires now'), findsOneWidget);
+  });
+
+  testWidgets('audience view shows blocking gaps first and labels the rest as later', (tester) async {
+    final session = Session();
+    session.ready = true;
+    session.api = _FakeApi({
+      'prdId': 'p1',
+      'title': 'Gap order',
+      'projection': {
+        'audience': 'decision',
+        'purpose': 'why now',
+        'sections': const <String, String>{},
+      },
+      'readiness': {
+        'gaps': [
+          {'section': 'goals', 'priority': 'should_clarify_this_version', 'reason': 'the investment being decided on'},
+          {'section': 'stories', 'priority': 'validate_later', 'reason': 'useful eventually'},
+          {'section': 'background', 'priority': 'must_clarify_now', 'reason': 'the why-this argument'},
+        ],
+      },
+    });
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: AudienceViewPage(prdId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    final blocking = tester.getTopLeft(find.textContaining('the why-this argument'));
+    final laterHeading = tester.getTopLeft(find.text('Later'));
+    final should = tester.getTopLeft(find.textContaining('the investment being decided on'));
+    final validate = tester.getTopLeft(find.textContaining('useful eventually'));
+    expect(blocking.dy, lessThan(laterHeading.dy));
+    expect(laterHeading.dy, lessThan(should.dy));
+    expect(should.dy, lessThan(validate.dy));
+    expect(find.textContaining('must_clarify_now'), findsNothing);
+    expect(find.textContaining('should_clarify_this_version'), findsNothing);
+    expect(find.textContaining('validate_later'), findsNothing);
+  });
+}

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
@@ -34,6 +36,13 @@ class _FakeApi extends ApiClient {
         'next': [],
         'doneCount': 0,
       });
+
+  final _parked = Completer<void>();
+
+  @override
+  Future<void> progressStream(String projectId, void Function(RoadmapProgress progress) onProgress) {
+    return _parked.future;
+  }
 }
 
 void main() {

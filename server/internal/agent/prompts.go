@@ -2,10 +2,12 @@ package agent
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/readiness"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
 
 // Stage names and legal forward transitions, per
@@ -53,9 +55,12 @@ requirements 章节要写清楚要解决的问题，而不是预设的技术方�
 每次工具调用只写一个章节，内容为简洁的 Markdown。写完全部 8 个章节后，调用 advance_stage 工具，参数 next="critique"。
 在此之前，用简短的文字告诉用户你正在写哪个章节。`
 	case StageCritique:
-		body = `你是 InsideOut 的 PRD 教练，正在「批判」阶段。下方"独立评审员发现的问题"是另一个模型在没看过起草过程、只看 PRD 本身的情况下给出的意见——一次只讲一条，说明问题、给一个具体建议，也允许用户选择"保持不变"。
-根据用户的回复，要么用 update_prd_section 按建议修改（新增依据先 record_fact），要么保持不变；无论哪种，处理完这一条后都要调用 resolve_finding（已修改的用 status="resolved"，保持不变的用 status="overridden"）。不要把多条问题一次性甩给用户。
-所有问题处理完后，如果没有被标记为 blocking 的未解决问题，调用 advance_stage 工具，参数 next="finalize"。`
+		body = `你是 InsideOut 的 PRD 教练，正在「批判」阶段。下方"独立评审员发现的问题"是另一个模型在没看过起草过程、只看 PRD 本身的情况下给出的意见。
+	进入本阶段的第一轮回复必须是一份按严重程度从高到低排列的编号列表，一条一行，格式固定为：
+	1. [blocking] <章节键> — <问题>。建议：<具体建议>
+	方括号里只能是 blocking、major、minor 之一；章节键用 background、users、goals、nonGoals、stories、requirements、constraints、risks。没有具体建议时省略「建议：」及其后的内容。不要在列表前后加别的话。
+	用户随后逐条处理 blocking 和 major：要么用 update_prd_section 按建议修改（新增依据先 record_fact），要么选择"保持不变"；无论哪种，处理完这一条后都要调用 resolve_finding（已修改的用 status="resolved"，保持不变的用 status="overridden"）。minor 可以成批处理。
+	所有 blocking 问题处理完后，调用 advance_stage 工具，参数 next="finalize"。`
 	case StageFinalize:
 		body = `你是 InsideOut 的 PRD 教练，正在「定稿」阶段。给出一份固定格式的完整度报告：逐节标注空/单薄/扎实，统计 [ASSUMPTION] 数量，把所有未解决的问题逐条列出。报告最后必须以一行结束：如果没有未解决的问题，写"NO OPEN QUESTIONS"；否则把问题逐条列出。这是本次对话的最后阶段，不需要再调用 advance_stage。`
 	default:
@@ -122,6 +127,40 @@ func formatGapsForPrompt(sections map[string]string) string {
 		}
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+// rankedCritiqueLine matches one item of the critique-stage overview:
+// "1. [major] goals — 问题。建议：建议" — the suggestion is optional.
+var rankedCritiqueLine = regexp.MustCompile(
+	`^\s*\d+\.\s*\[(blocking|major|minor)\]\s*([A-Za-z]+)\s*[—–-]\s*(.+?)\s*$`,
+)
+
+// parseRankedCritique turns the coach's severity-ranked overview into the
+// findings the panel renders. Items stay in the order written (most severe
+// first); a line that doesn't match the ranked format is skipped.
+func parseRankedCritique(reply string) []CriticFinding {
+	var out []CriticFinding
+	for _, line := range strings.Split(reply, "\n") {
+		m := rankedCritiqueLine.FindStringSubmatch(strings.TrimSpace(line))
+		if m == nil {
+			continue
+		}
+		issue, suggestion := m[3], ""
+		if i := strings.Index(issue, "建议："); i >= 0 {
+			suggestion = strings.TrimSpace(issue[i+len("建议："):])
+			issue = strings.TrimSpace(issue[:i])
+		}
+		out = append(out, CriticFinding{
+			ID:         "c" + uuid.NewString()[:8],
+			Section:    m[2],
+			Severity:   m[1],
+			Kind:       "omission",
+			Issue:      issue,
+			Suggestion: suggestion,
+			Status:     FindingOpen,
+		})
+	}
+	return out
 }
 
 func formatSectionsForPrompt(sections map[string]string) string {

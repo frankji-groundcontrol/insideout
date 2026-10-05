@@ -71,25 +71,47 @@ func (c *Client) Projects(workspaceID string) (json.RawMessage, error) {
 // Prd returns GET /prds/{id}.
 func (c *Client) Prd(id string) (json.RawMessage, error) { return c.get("/prds/" + id) }
 
-// BuildFromPrd runs the agent planner: PRD → project with a branched
-// roadmap (POST /prds/{id}/build). expectedCount <= 0 omits the hint.
-func (c *Client) BuildFromPrd(prdID string, expectedCount int) (json.RawMessage, error) {
-	body := map[string]any{}
-	if expectedCount > 0 {
-		body["expectedCount"] = expectedCount
-	}
+// BuildFromPrd drafts a branched roadmap and writes nothing
+// (POST /prds/{id}/build). ConfirmBuildFromPrd persists that tree;
+// expectedCount <= 0 omits the replace hint.
+func (c *Client) BuildFromPrd(prdID string) (json.RawMessage, error) {
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/prds/"+prdID+"/build", body, &out); err != nil {
+	if err := c.do(http.MethodPost, "/prds/"+prdID+"/build", map[string]any{}, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// ExpandNode grows one roadmap node into AI-proposed children
+// ConfirmBuildFromPrd writes a previously drafted tree
+// (POST /prds/{id}/build/confirm).
+func (c *Client) ConfirmBuildFromPrd(prdID string, tree json.RawMessage, expectedCount int) (json.RawMessage, error) {
+	body := map[string]any{"tree": json.RawMessage(tree)}
+	if expectedCount > 0 {
+		body["expectedCount"] = expectedCount
+	}
+	var out json.RawMessage
+	if err := c.do(http.MethodPost, "/prds/"+prdID+"/build/confirm", body, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ExpandNode drafts subtasks for one node and writes nothing
 // (POST /roadmap/{id}/expand).
 func (c *Client) ExpandNode(nodeID string) (json.RawMessage, error) {
 	var out json.RawMessage
 	if err := c.do(http.MethodPost, "/roadmap/"+nodeID+"/expand", map[string]any{}, &out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ConfirmExpandNode writes previously drafted subtasks
+// (POST /roadmap/{id}/expand/confirm).
+func (c *Client) ConfirmExpandNode(nodeID string, children json.RawMessage) (json.RawMessage, error) {
+	var out json.RawMessage
+	body := map[string]any{"children": json.RawMessage(children)}
+	if err := c.do(http.MethodPost, "/roadmap/"+nodeID+"/expand/confirm", body, &out); err != nil {
 		return nil, err
 	}
 	return out, nil

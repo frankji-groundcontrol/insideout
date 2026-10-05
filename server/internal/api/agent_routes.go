@@ -70,7 +70,9 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		if n.ParentID != nil {
 			parent = n.ParentID.String()
 		}
-		in.Nodes = append(in.Nodes, agentcontext.NodeIn{ID: n.ID.String(), ParentID: parent, Title: n.Title, Status: n.Status})
+		in.Nodes = append(in.Nodes, agentcontext.NodeIn{
+			ID: n.ID.String(), ParentID: parent, Title: n.Title, Status: n.Status, Deadline: n.Deadline,
+		})
 	}
 	if project.ID != uuid.Nil {
 		if prd, err := s.store.PrdByProject(r.Context(), userID, pid); err == nil && prd != nil {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
+import 'package:insideout/api/models.dart';
 import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/project/project_page.dart';
 import 'package:insideout/session/appearance.dart';
@@ -12,7 +13,7 @@ import 'package:provider/provider.dart';
 // generic edit/delete menu, which 403s for non-admins and never decides
 // anything anyway.
 class _FakeApi extends ApiClient {
-  _FakeApi(this.updates, {this.onDecide}) : super(
+  _FakeApi(this.updates, {this.onDecide, this.nodes = const []}) : super(
             baseUrl: 'http://127.0.0.1:9/api/v1',
             readAccess: () async => null,
             readRefresh: () async => null,
@@ -21,7 +22,9 @@ class _FakeApi extends ApiClient {
           );
 
   final List<Map<String, dynamic>> updates;
+  final List<RoadmapNode> nodes;
   void Function(String id, bool accept)? onDecide;
+  final List<({String projectId, String title, String? parentId})> created = [];
 
   @override
   Future<Map<String, dynamic>> getProject(String id) async => {
@@ -36,18 +39,36 @@ class _FakeApi extends ApiClient {
       };
 
   @override
+  Future<List<RoadmapNode>> listRoadmap(String projectId) async => nodes;
+
+  @override
+  Future<RoadmapNode> createRoadmapNode(String projectId, String title, {String? parentId}) async {
+    created.add((projectId: projectId, title: title, parentId: parentId));
+    return RoadmapNode(
+      id: 'node-${created.length}',
+      projectId: projectId,
+      title: title,
+      description: '',
+      status: 'pending',
+      position: created.length,
+      parentId: parentId,
+    );
+  }
+
+  @override
   Future<Map<String, dynamic>> decideProposal(String updateId, {required bool accept, String reason = '', bool apply = true}) async {
     onDecide?.call(updateId, accept);
     return {'decision': accept ? 'accepted' : 'rejected'};
   }
 }
 
-Map<String, dynamic> _update(String id, String kind) => {
+Map<String, dynamic> _update(String id, String kind, {List<Map<String, dynamic>>? items}) => {
       'id': id,
       'kind': kind,
       'content': kind == 'agent_proposal' ? 'Propose adding login throttling' : 'shipped the flow',
       'createdAt': '2026-10-01T00:00:00Z',
       'authorId': 'agent',
+      if (items != null) 'items': items,
     };
 
 Future<void> _pump(WidgetTester tester, _FakeApi api) async {
@@ -95,5 +116,19 @@ void main() {
     await tester.tap(find.text('Reject'));
     await tester.pumpAndSettle();
     expect(decided, ['up1:n']);
+  });
+
+  testWidgets('accepting a proposal with one item adds that roadmap node', (tester) async {
+    final api = _FakeApi([
+      _update('up1', 'agent_proposal', items: [
+        {'action': 'add_node', 'title': 'Login throttling', 'parentHint': ''},
+      ]),
+    ]);
+    await _pump(tester, api);
+
+    await tester.tap(find.text('Accept'));
+    await tester.pumpAndSettle();
+
+    expect(api.created, [(projectId: 'p1', title: 'Login throttling', parentId: null)]);
   });
 }

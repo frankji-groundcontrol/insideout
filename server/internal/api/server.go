@@ -10,7 +10,9 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/github"
 	"github.com/frankji-groundcontrol/insideout/server/internal/mail"
 	"github.com/frankji-groundcontrol/insideout/server/internal/presence"
+	"github.com/frankji-groundcontrol/insideout/server/internal/progresshub"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
 
 // Coach is the subset of internal/agent.Coach the API layer needs; kept as
@@ -32,6 +34,8 @@ type Server struct {
 	ghTokens *github.InstallationTokens
 	// presence is the in-memory canvas presence registry.
 	presence *presence.Registry
+	// progress is the in-memory fan-out for roadmap progress SSE.
+	progress *progresshub.Hub
 	// mail sends transactional email (magic links, password reset);
 	// without an API key it logs messages instead of delivering them.
 	mail *mail.Sender
@@ -43,9 +47,15 @@ type Server struct {
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
 	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner,
 		presence:     presence.New(30*time.Second, nil),
+		progress:     progresshub.New(),
 		mail:         mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log, cfg.MailDevBody),
 		authThrottle: newAuthThrottle(defaultThrottleConfig(), time.Now),
 	}
+		if st != nil {
+			st.OnRoadmapChange(func(projectID uuid.UUID) {
+				s.progress.Publish(projectID.String())
+			})
+		}
 	// GitHub App installation tokens for guide loading; nil disables the
 	// token path (public repos still load unauthenticated).
 	if cfg.GithubAppID != "" {

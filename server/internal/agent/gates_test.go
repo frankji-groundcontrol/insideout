@@ -84,6 +84,23 @@ func TestStageGate_ClarifyToDraft_RequiresAttestedFacts(t *testing.T) {
 	if _, err := ex.advanceStage(ctx, `{"next":"draft"}`); err != nil {
 		t.Fatalf("advance clarify->draft with all 4 facts attested: %v", err)
 	}
+	held, err := st.GetConversationForOwner(ctx, ex.conversationID, ex.actorID)
+	if err != nil {
+		t.Fatalf("get conversation: %v", err)
+	}
+	if held.Stage != StageClarify {
+		t.Fatalf("stage = %q before confirm, want %q", held.Stage, StageClarify)
+	}
+	if err := st.ConfirmConversationStage(ctx, ex.actorID, ex.conversationID, StageDraft); err != nil {
+		t.Fatalf("confirm proposed stage: %v", err)
+	}
+	confirmed, err := st.GetConversationForOwner(ctx, ex.conversationID, ex.actorID)
+	if err != nil {
+		t.Fatalf("get conversation after confirm: %v", err)
+	}
+	if confirmed.Stage != StageDraft {
+		t.Fatalf("stage = %q after confirm, want %q", confirmed.Stage, StageDraft)
+	}
 }
 
 func TestStageGate_ClarifyToDraft_RejectsEveryoneSegment(t *testing.T) {

@@ -35,6 +35,10 @@ class _VersionsPageState extends State<VersionsPage> {
     final api = context.read<Session>().api;
     _commits = api.listPrdCommits(widget.prdId);
     _readiness = api.prdReadiness(widget.prdId);
+    _commits.then((commits) {
+      if (!mounted) return;
+      context.read<LoopFocus>().rememberPrd(widget.prdId, committed: commits.isNotEmpty);
+    }, onError: (_) {});
   }
 
   Future<void> _commitDialog() async {

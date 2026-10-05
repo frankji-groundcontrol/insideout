@@ -88,6 +88,7 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 	if err != nil {
 		return 0, err
 	}
+	s.noteRoadmapChange(projectID)
 	return count, nil
 }
 
@@ -137,6 +138,9 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 	})
 	if err != nil {
 		return nil, err
+	}
+	if len(out) > 0 {
+		s.noteRoadmapChange(out[0].ProjectID)
 	}
 	return out, nil
 }

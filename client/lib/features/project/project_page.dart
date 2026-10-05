@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/client.dart';
 import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
@@ -55,10 +56,12 @@ class _ProjectPageState extends State<ProjectPage> {
 
   // FEAT-03: the proposal decision loop — the server resolves authority
   // (project owner or workspace admin); the web just surfaces the outcome.
-  Future<void> _decide(String updateId, {required bool accept}) async {
+  Future<void> _decide(ProjectUpdate update, {required bool accept}) async {
     final l10n = context.read<Appearance>();
+    final api = context.read<Session>().api;
     try {
-      await context.read<Session>().api.decideProposal(updateId, accept: accept);
+      await api.decideProposal(update.id, accept: accept);
+      if (accept) await _applyAcceptedItems(api, update);
     } on Object catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizedError(e, l10n.t))));
@@ -66,6 +69,27 @@ class _ProjectPageState extends State<ProjectPage> {
       return;
     }
     if (mounted) await _reload();
+  }
+
+  // Accepting a proposal changes the roadmap: each add_node item becomes a
+  // node. parentHint matches an existing node's title; empty means a root.
+  Future<void> _applyAcceptedItems(ApiClient api, ProjectUpdate update) async {
+    final nodes = await api.listRoadmap(widget.id);
+    for (final item in update.items) {
+      if (item.action != 'add_node' || item.title.trim().isEmpty) continue;
+      String? parentId;
+      final hint = item.parentHint.trim();
+      if (hint.isNotEmpty) {
+        for (final node in nodes) {
+          if (node.title == hint) {
+            parentId = node.id;
+            break;
+          }
+        }
+      }
+      final created = await api.createRoadmapNode(widget.id, item.title.trim(), parentId: parentId);
+      nodes.add(created);
+    }
   }
 
   @override
@@ -157,8 +181,8 @@ class _ProjectPageState extends State<ProjectPage> {
                                   ? Wrap(
                                       spacing: 8,
                                       children: [
-                                        FilledButton(onPressed: () => _decide(u.id, accept: true), child: Text(l10n.t('proposal.accept'))),
-                                        OutlinedButton(onPressed: () => _decide(u.id, accept: false), child: Text(l10n.t('proposal.reject'))),
+                                        FilledButton(onPressed: () => _decide(u, accept: true), child: Text(l10n.t('proposal.accept'))),
+                                        OutlinedButton(onPressed: () => _decide(u, accept: false), child: Text(l10n.t('proposal.reject'))),
                                       ],
                                     )
                                   : PopupMenuButton<String>(

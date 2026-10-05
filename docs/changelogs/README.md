@@ -15,6 +15,14 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-05 — Planning-flow remediation](2026-10-05-planning-flow-remediation.md)
+  — four-wave fix/harden/improve/add of the planning flow (40 slices from
+  the multirole review of it; 36 landed, 4 schema slices specified for the
+  gap-closing phase); both suites green after two post-run repairs.
+- [2026-10-05 — Roadmap progress SSE](2026-10-05-roadmap-progress-stream.md)
+  — `GET /projects/{id}/roadmap/progress/stream` emits the progress
+  payload when a node changes; the Flutter progress view subscribes.
+  Folded into the planning-flow remediation records.
 - [2026-10-05 — Host key store (hosts/) with audit/fill tooling](2026-10-05-hosts-keys.md)
   — module-grouped `keys/` tree (auth, database, github, llm, mail;
   8 YAML manifests, 12 keys, 10 filled), redacting `keys.py audit|fill`
