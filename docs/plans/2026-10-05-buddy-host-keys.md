@@ -31,6 +31,13 @@ Nothing deploys.
       local-stack, gh-app, gh-webhooks, github-token, llm-provider,
       mail-resend). Live pointers updated (usage README, SETENV,
       practice doc); slice-2 changelog text left as history.
+- [x] Restructured to mirror the store exactly + reference direction
+      fixed (user call): module folders `auth/ database/ github/ llm/
+      mail/` with filename = manifest `setting` (github/app.md, not
+      gh-app.md); every per-key file's part 6 now reads "this file is
+      the detail" with peer links only; SETENV.md Steps 1/2/3/5 link
+      down into the per-key files. Link-check over all affected files:
+      0 broken.
 - [x] `keys/auth/jwt.yaml` manifest; value filled from the local `.env`
       via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
       scripts/keys.py fill` (empty-only, 0600, never printed). User

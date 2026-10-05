@@ -38,6 +38,6 @@ authenticate as those roles.
 
 ## 6. Installation guide
 
-[SETENV.md](../../../SETENV.md) "Only if you run docker compose"
-(Step 5) and the compose walkthrough in
-[local-development.md](../local-development.md).
+This file is the detail — [SETENV.md](../../../SETENV.md) Step 5
+("Only if you run docker compose") links here. The compose walkthrough
+is in [local-development.md](../../local-development.md).

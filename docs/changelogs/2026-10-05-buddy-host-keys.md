@@ -101,6 +101,25 @@ deployed. Plan:
   practice doc's four references); slice 2's changelog text stays as
   the historical record of what existed then.
 
+## What changed (slice 6 — store-mirroring layout + reference direction)
+
+- **`docs/usage/keys/` restructured to mirror the store** (user call):
+  module folders `auth/ database/ github/ llm/ mail/`, filename = the
+  manifest's `setting` — `github/app.md` replaces the flat
+  `gh-app.md`, etc. One README indexes it exactly the way the hosts
+  keys READMEs index manifests (module-grouped table + shared flow +
+  per-host state).
+- **Reference direction inverted**: per-key files no longer route
+  readers into SETENV.md — each part 6 now states "this file is the
+  detail" with peer links (environment.md rows, consumer walkthroughs)
+  only; [SETENV.md](../SETENV.md) Steps 1/2/3/5 link **down** into the
+  per-key files as the per-key authority. Also corrected while at it:
+  the flat files' part-6 links were one directory too deep (pointed at
+  a nonexistent root-level SETENV.md), and mail/resend wrongly claimed
+  a SETENV step (mail has none).
+- Verification: relative-link check across all 12 affected files —
+  0 broken links.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the

@@ -32,5 +32,7 @@ CLI, MCP — they all ride the same tokens).
 
 ## 6. Installation guide
 
-[SETENV.md](../../../SETENV.md) Step 2 — required, generated with
-`openssl rand -hex 32`.
+This file is the detail — [SETENV.md](../../../SETENV.md) Step 2
+links here. The variable's contract row (`INSIDEOUT_JWT_SECRET`,
+required, min 32 chars) is in
+[environment.md](../../environment.md).

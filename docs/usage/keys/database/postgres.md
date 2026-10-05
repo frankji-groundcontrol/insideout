@@ -42,5 +42,7 @@ takes backups. Never swap them — the app role must not own the schema.
 
 ## 6. Installation guide
 
-[SETENV.md](../../../SETENV.md) Step 1 (both setup paths a/b) and the
-role model in [local-development.md](../local-development.md).
+This file is the detail — [SETENV.md](../../../SETENV.md) Step 1
+(both setup paths a/b) links here. The role model walkthrough is in
+[local-development.md](../../local-development.md); contract rows for
+both DSNs in [environment.md](../../environment.md).

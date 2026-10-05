@@ -40,5 +40,6 @@ invitations) ride it.
 
 ## 6. Installation guide
 
-[SETENV.md](../../../SETENV.md) Step 4 toggles; the variable contract
-in [environment.md](../environment.md).
+This file is the detail (no SETENV step — the key is optional and its
+empty-state is dev mode). Contract rows (`INSIDEOUT_MAIL_*`,
+`INSIDEOUT_PUBLIC_URL`) in [environment.md](../../environment.md).

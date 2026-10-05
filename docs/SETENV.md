@@ -155,13 +155,19 @@ server-side prepared statements do not survive transaction pooling.
 migrations and the app stay inside the `insideout` schema and never touch other
 tenants' objects ([why](architecture/database-and-rls.md)).
 
+Per-key detail (value source, tests, rotation, store paths):
+[usage/keys/database/postgres.md](usage/keys/database/postgres.md) for
+the DSNs, [usage/keys/database/local-stack.md](usage/keys/database/local-stack.md)
+for the compose passwords.
+
 ## Step 2 — `INSIDEOUT_JWT_SECRET` (required)
 
 HMAC signing secret for access/refresh JWTs, **minimum 32 characters**;
 under that the server refuses to start. `openssl rand -hex 32` yields 64 hex
 characters, well clear of the bar — or let `./scripts/env.sh init` generate and
 store it for you. Generate a fresh value per environment; never reuse a dev
-secret in production.
+secret in production. Per-key detail:
+[usage/keys/auth/jwt.md](usage/keys/auth/jwt.md).
 
 ## Step 3 — AI provider (a choice, not a gap)
 
@@ -173,6 +179,7 @@ in the skeleton. For a real provider, set `INSIDEOUT_LLM_API_KEY` (plus
 `INSIDEOUT_LLM_BASE_URL` if your provider is not the default). Put any `/v1`
 on the base URL yourself. `INSIDEOUT_LLM_MODEL` defaults to
 `claude-sonnet-4-20250514`; `INSIDEOUT_LLM_SCHEMA` is `messages` or `responses`.
+Per-key detail: [usage/keys/llm/provider.md](usage/keys/llm/provider.md).
 
 ## Step 4 — Local-dev toggles
 
@@ -202,6 +209,8 @@ Skip for bare `go run` / `dev.sh` use.
 - `SERVER_PORT` / `POSTGRES_PORT` — host-side mappings. Inside the containers
   the ports are fixed at `8080` / `5432`. Postgres binds to `127.0.0.1` on the
   host.
+
+Per-key detail: [usage/keys/database/local-stack.md](usage/keys/database/local-stack.md).
 
 ## Seeing and setting everything
 

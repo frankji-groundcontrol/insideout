@@ -37,4 +37,7 @@ offline, and never a crash.
 
 ## 6. Installation guide
 
-[SETENV.md](../../../SETENV.md) Step 3 — "a choice, not a gap".
+This file is the detail — [SETENV.md](../../../SETENV.md) Step 3
+("a choice, not a gap") links here. Contract rows for the key and its
+`INSIDEOUT_LLM_*` companions are in
+[environment.md](../../environment.md).

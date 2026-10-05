@@ -4,21 +4,25 @@ Every credential kind gets a standalone doc with the same six parts:
 **where** the `.key` file is, **how it is propagated**, **how to set
 it**, **how to test it**, **how it is used**, and **where the
 installation guide** covers it (the convention agents_home's
-`docs/usage/keys/` established). Files mirror the store's manifests
-under [`hosts/<host>/keys/`](../../../hosts/README.md) one to one.
+`docs/usage/keys/` established). The layout mirrors the store exactly:
+one module folder per
+[`hosts/<host>/keys/`](../../../hosts/README.md) module, one file per
+manifest, filename = the manifest's `setting`.
 
-## Files
-
-| File | Keys (env var) | Manifest |
+| Module | File | Keys (env var) |
 | --- | --- | --- |
-| [jwt.md](jwt.md) | jwt-secret (`INSIDEOUT_JWT_SECRET`) | `auth/jwt.yaml` |
-| [postgres.md](postgres.md) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) | `database/postgres.yaml` |
-| [local-stack.md](local-stack.md) | postgres-app-password, postgres-owner-password (`POSTGRES_*_PASSWORD`) | `database/local-stack.yaml` |
-| [gh-app.md](gh-app.md) | gh-app-id, gh-app-private-key, gh-client-secret (`INSIDEOUT_GH_*`) | `github/app.yaml` |
-| [gh-webhooks.md](gh-webhooks.md) | gh-webhook-secret (`INSIDEOUT_GH_WEBHOOK_SECRET`) | `github/webhooks.yaml` |
-| [github-token.md](github-token.md) | github-token (`GITHUB_TOKEN`, optional) | `github/tokens.yaml` |
-| [llm-provider.md](llm-provider.md) | llm-api-key (`INSIDEOUT_LLM_API_KEY`) | `llm/provider.yaml` |
-| [mail-resend.md](mail-resend.md) | mail-api-key (`INSIDEOUT_MAIL_API_KEY`) | `mail/resend.yaml` |
+| [auth/](auth/) | [jwt.md](auth/jwt.md) | jwt-secret (`INSIDEOUT_JWT_SECRET`) |
+| [database/](database/) | [postgres.md](database/postgres.md) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) |
+| [database/](database/) | [local-stack.md](database/local-stack.md) | postgres-app-password, postgres-owner-password (`POSTGRES_*_PASSWORD`) |
+| [github/](github/) | [app.md](github/app.md) | gh-app-id, gh-app-private-key, gh-client-secret (`INSIDEOUT_GH_*`) |
+| [github/](github/) | [webhooks.md](github/webhooks.md) | gh-webhook-secret (`INSIDEOUT_GH_WEBHOOK_SECRET`) |
+| [github/](github/) | [tokens.md](github/tokens.md) | github-token (`GITHUB_TOKEN`, optional) |
+| [llm/](llm/) | [provider.md](llm/provider.md) | llm-api-key (`INSIDEOUT_LLM_API_KEY`) |
+| [mail/](mail/) | [resend.md](mail/resend.md) | mail-api-key (`INSIDEOUT_MAIL_API_KEY`) |
+
+[SETENV.md](../../SETENV.md) — the `.env` operating manual — links
+into these files from its per-key steps; the detail lives here, not
+there.
 
 ## Shared flow (not repeated per file)
 
@@ -45,5 +49,6 @@ failure signals, is the practice record
 | postgres-app-password | filled | pending |
 | postgres-owner-password / github-token | empty by design | pending |
 
-The installation guide proper is [SETENV.md](../../SETENV.md); this
-folder adds the per-credential layer on top.
+The variable-level contract for every env var (credential or not) is
+[environment.md](../environment.md); the first-time path is
+[local-development.md](../local-development.md).

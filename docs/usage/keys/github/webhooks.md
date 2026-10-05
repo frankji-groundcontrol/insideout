@@ -35,6 +35,6 @@ Redeliveries are idempotent, so verification is the only gate.
 
 ## 6. Installation guide
 
-The guidance-system chapter of
-[cli-mcp-and-guidance.md](../cli-mcp-and-guidance.md) (step 4,
-installing the GitHub App).
+This file is the detail. The consumer walkthrough (step 4, installing
+the GitHub App) is
+[cli-mcp-and-guidance.md](../../cli-mcp-and-guidance.md).

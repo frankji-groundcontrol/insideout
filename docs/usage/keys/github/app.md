@@ -44,6 +44,6 @@ credential for the future invite-link flow.
 
 ## 6. Installation guide
 
-The guidance-system chapter of
-[cli-mcp-and-guidance.md](../cli-mcp-and-guidance.md); env contract in
-[environment.md](../environment.md).
+This file is the detail. The guidance-system walkthrough that consumes
+these keys is [cli-mcp-and-guidance.md](../../cli-mcp-and-guidance.md);
+env contract rows in [environment.md](../../environment.md).

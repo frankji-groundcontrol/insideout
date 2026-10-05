@@ -35,5 +35,5 @@ else; it is never required for the webhook receiver or the App flow
 
 ## 6. Installation guide
 
-Mentioned in [environment.md](../environment.md); no SETENV step —
-optional by design.
+This file is the detail; no SETENV step exists — optional by design.
+Contract row in [environment.md](../../environment.md).
