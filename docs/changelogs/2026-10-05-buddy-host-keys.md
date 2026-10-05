@@ -203,6 +203,21 @@ private-key warning (GitHub trio). Probes ran on `:8099` — `:8080` is
 held by an unrelated process on this machine (`INSIDEOUT_ADDR` to run
 a local server here).
 
+## Cross-host proof (closing the loop)
+
+The suite ran on MBP as the second host and caught **three real
+MBP-local issues**, all fixed in place: (1) its store copy of the App
+PEM was also the escaped single-line form — normalized (1702→1675 B;
+its `.env` keeps the env-embedded escaped form, which is that lane's
+correct format); (2) its `keys/*/.secrets` dirs were 0755 — chmod 700;
+(3) on MBP's case-insensitive filesystem the buddy host folder existed
+on disk as `Buddys-MacBook-Pro-2.local` while git tracks lowercase —
+two-step renamed to match. Plus one test fix valid everywhere: the
+multi-host CLI invocations interleaved `--root` between two
+positionals, which Python ≤3.9 argparse rejects (`81a9935`). Final
+state: **24 tests, OK on both hosts** (Buddy skips the two by-design
+keys; MBP runs them against its sanctioned empty placeholders).
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the
