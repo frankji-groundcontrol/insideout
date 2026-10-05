@@ -47,7 +47,7 @@ failure signals, is the practice record
 | --- | --- | --- |
 | jwt-secret | filled | filled |
 | database-app-dsn / database-owner-dsn | filled | filled |
-| llm-api-key | filled | pending |
+| llm-api-key | filled | filled |
 | mail-api-key | filled | pending |
 | gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | pending |
 | postgres-app-password | filled | pending |

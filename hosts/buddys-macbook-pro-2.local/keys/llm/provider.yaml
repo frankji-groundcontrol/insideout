@@ -1,0 +1,13 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: llm
+setting: provider
+recorded: '2026-10-05'
+# The PRD coach's model key. Empty selects the offline template-reply
+# coach (a valid local-dev choice); this host keeps a real key in its
+# .env. Metadata only — values live in .secrets/<name>.key.
+secrets:
+  llm-api-key:
+    var: INSIDEOUT_LLM_API_KEY
+    kind: value
+    note: present in this machine's .env (offline coach when empty)

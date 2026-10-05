@@ -52,7 +52,11 @@ Nothing deploys.
       Postgres DSNs, Supabase is just today's host): both DSNs filled
       from the local `.env`; manifest renamed on both hosts, values
       unaffected (module-shared `.secrets/`, keyed by name).
-- [ ] llm: provider key (env already set).
+- [x] llm: provider key — filled from the local `.env` (67 B, same as
+      MBP's record); boot probe: config loaded, offline-coach notice
+      absent (the listen bind on :8080 failed — that port is held by
+      an unrelated `api` process on this machine; use `INSIDEOUT_ADDR`
+      to run a local server here).
 - [ ] mail: Resend key (missing locally — copy from MBP's agents_home
       store when user calls it).
 - [ ] github: app id + PEM + client secret + webhook secret (missing

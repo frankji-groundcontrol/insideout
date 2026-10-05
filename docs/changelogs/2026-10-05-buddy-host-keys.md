@@ -140,6 +140,20 @@ deployed. Plan:
   per-key files.
 - Verification: relative-link check across 16 files — 0 broken.
 
+## What changed (slice 8 — LLM provider key)
+
+- **`llm/provider.yaml` on Buddy** + fill from the local `.env` (`1
+  written, 3 kept`; 67 B — the same size MBP's store records for this
+  key). Store now 4/12 on Buddy; the only unmapped env secret left is
+  `DASHSCOPE_API_KEY` (another tool's key, deliberately unmapped).
+- Verification: scoped audit `key=filled env=set` ×4; boot probe —
+  config and coach init completed with **no** offline-template notice
+  (it logs before the listen attempt), proving the key is read and
+  accepted. The listen itself failed on `:8080`, held by an unrelated
+  `api` process on this machine — irrelevant to the probe; a local
+  server here needs `INSIDEOUT_ADDR` on a free port.
+- State tables updated (Buddy keys README, usage keys README).
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the
