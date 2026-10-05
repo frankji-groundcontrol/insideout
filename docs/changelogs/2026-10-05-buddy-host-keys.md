@@ -60,7 +60,12 @@ deployed. Plan:
   (`5fe22eb`) to reflect the final doc scheme: per-key doc path
   `usage/keys/<module>/<key-name>.md`, doc-creation step in Records,
   and a shape failure signal (doc missing/lumped/misnamed) linking the
-  learning record.
+  learning record. Refreshed again after the testing slice
+  (`e07773d`): the shape suite moved into Verify with a cross-host
+  rerun rule, Test-the-key gained the warning-absence rule and the
+  bad-login/garbage-bearer probes, step 3 states copy-is-a-
+  transformation for dual-form values, and two failure signals were
+  added (boot Warn ≠ pass; suite failing only on the other host).
 
 ## What changed (slice 4 — Postgres DSNs + supabase→postgres rename)
 
