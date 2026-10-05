@@ -20,6 +20,10 @@ Nothing deploys.
       one family doc since every key shares one flow) with the per-host
       state table; indexed in `docs/usage/README.md`; cross-linked from
       `docs/SETENV.md`.
+- [x] Practice record: `docs/practices/2026-10-05-setting-up-a-key.md`
+      — the full per-key setup sequence (trigger / six-part frame /
+      steps / verification / failure signals), indexed in the practices
+      README.
 - [x] `keys/auth/jwt.yaml` manifest; value filled from the local `.env`
       via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
       scripts/keys.py fill` (empty-only, 0600, never printed). User

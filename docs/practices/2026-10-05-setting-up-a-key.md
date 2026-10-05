@@ -1,0 +1,73 @@
+# 2026-10-05 — Setting up a key on a host (full sequence)
+
+## Trigger
+
+Any time a credential kind must land on a machine in the
+[`hosts/<host>/keys/`](../../hosts/README.md) store: a new key, a new
+host, or a refill after rotation. Worked example: the jwt-secret slice
+on `buddys-macbook-pro-2.local`
+([changelog](../changelogs/2026-10-05-buddy-host-keys.md)).
+
+## The six-part frame
+
+Every key setup satisfies the same six parts (reference:
+[usage/keys.md](../usage/keys.md)): **where** (manifest + `.key`),
+**propagated** (`.env` stays the only consumer), **set** (`env.sh` +
+scoped `fill`), **tested** (audit + the key's probe), **used** (boot
+role), **install guide** (SETENV.md). The sequence below is parts 1–4
+operationalized; 5–6 are documented, not re-derived per key.
+
+## Repeatable sequence
+
+1. **Preconditions.** The host folder exists (`host.yml`, READMEs —
+   scaffold per the scheme if not). The value source is known from the
+   [usage/keys.md](../usage/keys.md) table. Never print a value at any
+   step.
+2. **Manifest first.** Create
+   `hosts/<host>/keys/<module>/<setting>.yaml` — metadata only
+   (`<name>: {var, kind, note}`); values never appear in tracked files.
+   A new module folder gets its row in the host's `keys/README.md`.
+3. **Value into the live consumer.** `./scripts/env.sh edit` (or
+   `init`) writes the root `.env` interactively and never prints. If
+   the value is already there, the scoped audit (step 5) reports
+   `env=set` without revealing it. PEM exception: keep the multi-line
+   key in the `.key` file and point
+   `INSIDEOUT_GH_PRIVATE_KEY_FILE` at it — no single-line env bridge.
+4. **Scoped fill.**
+   `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py fill` —
+   copies env values into **empty-only** `.key` files (dir 0700, file
+   0600). Existing values are kept, never overwritten.
+5. **Verify.**
+   - Scoped audit: `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py
+     audit` shows `key=filled env=set`.
+   - Perms: `.secrets` dir 0700, `.key` 0600, size plausible for the
+     kind (e.g. 64 B for `openssl rand -hex 32`).
+   - Isolation: the *other* host's scoped audit is unchanged — fill
+     cannot cross hosts.
+   - `git status` shows only the tracked manifest/README files — a
+     `.secrets` path appearing there means `.gitignore` is broken;
+     stop before committing.
+6. **Test the key itself.** `./scripts/env.sh check` (whole `.env`,
+   masked), then the kind's probe from usage/keys.md part 4 (migrate
+   for the owner DSN; no offline-coach notice for the LLM key; a
+   magic-link request for mail; signed deliveries answered 200 for the
+   webhook secret).
+7. **Records.** Update the host `keys/README.md` state table and the
+   per-host column in `docs/usage/keys.md`; tick the plan checklist;
+   extend the changelog. Commit **tracked metadata only**, push, and
+   fast-forward the other hosts' clones.
+
+## Failure signals
+
+- Fill reports `skip (env missing|placeholder)` — the value never
+  reached `.env`; run `env.sh edit` first.
+- The tool refuses with "several hosts … set INSIDEOUT_KEYS_HOST" —
+  scoping omitted once a second host exists; this refusal is what
+  prevents cross-host value mixing.
+- Audit `key=filled` but wrong size/perms — someone hand-wrote the
+  file; re-check 0600/0700 and the kind's expected shape.
+- A `.secrets` path in `git status` — do not commit; fix the ignore
+  rule first.
+- Everything filled but the probe fails — the value is set but stale
+  or wrong (e.g. compose password ≠ the DSN's embedded password);
+  rotate per usage/keys.md part 3.

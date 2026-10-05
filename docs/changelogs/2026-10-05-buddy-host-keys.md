@@ -47,6 +47,17 @@ deployed. Plan:
 - Indexed as a row in `docs/usage/README.md`; cross-linked from the
   `docs/SETENV.md` hosts paragraph (install guide ↔ store reference).
 
+## What changed (slice 3 — practice record)
+
+- **`docs/practices/2026-10-05-setting-up-a-key.md`** — the repeatable
+  full sequence for landing any key on any host, distilled from the jwt
+  slice: preconditions, manifest-first, `env.sh` as the value bridge,
+  scoped `keys.py fill`, the four-point verification (audit / perms /
+  cross-host isolation / git-blind check), the per-key probe, records,
+  and the failure signals (skip-when-placeholder, the multi-host
+  refusal that prevents value mixing, git-visible `.secrets`). Indexed
+  in `docs/practices/README.md`.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the
