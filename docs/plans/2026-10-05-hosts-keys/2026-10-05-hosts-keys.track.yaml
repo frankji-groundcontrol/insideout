@@ -8,7 +8,7 @@ main:
     credential kinds, git-ignored .secrets/ values; keys.py audit/fill never
     prints values; test_keys green in CI env-suites; docs + changelog closed
   owner: zcode-main
-  status: active
-  next_evidence: pushed, then CI env-suites green on the commit
+  status: completed
+  next_evidence: CI green on 4b1ff89; Resend key rotated + synced all homes 2026-10-05
 side_tracks: []
 updated_at: '2026-10-05T06:25:18Z'

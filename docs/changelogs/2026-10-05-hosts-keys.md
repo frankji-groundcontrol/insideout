@@ -55,5 +55,8 @@ nothing to deploy. Plan:
   `ls -a hosts/<host>/keys/<module>/` or `find hosts -name '*.key'`
   (documented in the keys README).
 - Rotation still means updating `.env` and the Railway `server` variables
-  to match; the store is the backup layer. The Resend key stays queued for
-  rotation if local transcripts can ever leave this machine.
+  to match; the store is the backup layer. The Resend key **was rotated
+  2026-10-05** (same day as this change): `.env` and Railway already held
+  the new value, and the store's `mail/resend.yaml` key was synced from
+  `.env` (comparison and write without printing the value); live
+  `/healthz` answered 200 after.

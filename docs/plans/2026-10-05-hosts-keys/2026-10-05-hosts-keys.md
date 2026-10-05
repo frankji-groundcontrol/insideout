@@ -1,6 +1,6 @@
 # 2026-10-05 — Host-keys scheme inside insideout
 
-**Status:** In flight 2026-10-05. **References:** the agents_home repo's
+**Status:** Finished 2026-10-05 (CI green on `4b1ff89`; Resend key rotated and all three homes synced same day). **References:** the agents_home repo's
 `hosts/<host>/keys/` scheme and the setup-piper repo's grouped manifests
 (`secrets: name → {var, kind}` YAMLs + shared `.secrets/`). Per operator
 direction: **all credentials under one `keys/` folder per host, module
@@ -32,9 +32,9 @@ printing a value; `scripts/test_keys.py` runs in CI.
       from an env file, 0600, no values) — plus `scripts/test_keys.py`
       (7 tests incl. multi-manifest and multi-module fixtures).
 - [x] CI: add `test_keys` to the env-suites job.
-- [ ] Docs: SETENV.md pointer to the key store, dated changelog, board row;
-      run `python3 -m unittest` in scripts/, commit (explicit staging),
-      push, CI green.
+- [x] Docs: SETENV.md pointer to the key store, dated changelog, board row;
+      `python3 -m unittest` 47/47, committed `4b1ff89` (explicit staging),
+      pushed, CI green.
 
 ## Decisions
 
