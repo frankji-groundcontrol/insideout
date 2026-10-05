@@ -17,17 +17,34 @@ deployed value rides the provider's variable store. Companion config
 
 ## 3. How to set it
 
-From your model provider's console. **Empty is a valid choice**: it
-selects the offline template-reply coach, which is the default local
-dev experience. One key per provider account; rotation is a plain
-paste-over in `.env` + provider store.
+The key comes from your model provider's console — but it is one of
+**four values that must agree**: `INSIDEOUT_LLM_API_KEY` +
+`INSIDEOUT_LLM_BASE_URL` + `INSIDEOUT_LLM_MODEL` +
+`INSIDEOUT_LLM_SCHEMA` (`messages` | `responses`, i.e. Anthropic- vs
+OpenAI-wire). A relay/proxy base URL is fine; put any `/v1` suffix on
+it yourself. Set all four in the same `.env` (they are catalog config,
+not store credentials — only the key is). **Empty key is a valid
+choice**: it selects the offline template-reply coach, the default
+local dev experience. Rotation is a plain paste-over in `.env` +
+provider store.
 
 ## 4. How to test it
 
-Boot the server and watch the log: the
-`INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach`
-notice must **not** appear; then one coach reply in a real
-conversation proves the key and the model id together.
+Three rungs, each proving more:
+
+1. **Key is read** — boot the server: the
+   `INSIDEOUT_LLM_API_KEY not set — using offline template-reply
+   coach` notice must **not** appear.
+2. **Key + endpoint + format + model agree** — an authenticated
+   provider ping, status-only (never print the key or body): POST
+   `$BASE_URL/v1/responses` with `Authorization: Bearer` for schema
+   `responses` (or `$BASE_URL/v1/messages` with `x-api-key` for
+   `messages`) and the real model id → expect 200.
+3. **App-level** — one coach reply in a real conversation.
+
+Caveat learned the hard way: a relay behind a tunnel (ngrok and
+friends) transiently refuses connections — a `000`/connection-failure
+on rung 2 means retry before blaming the key.
 
 ## 5. How it is used
 
