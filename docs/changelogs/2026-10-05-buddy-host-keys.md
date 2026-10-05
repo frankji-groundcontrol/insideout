@@ -239,6 +239,20 @@ keys; MBP runs them against its sanctioned empty placeholders).
 - Usage README keys row mentions the two-layer testing. Link-check
   across the touched surfaces: 0 broken.
 
+## What changed (slice 12 — llm six-part completed by evidence)
+
+- **`docs/usage/keys/llm/llm-api-key.md`** parts 3–4 rewritten from
+  the session's live findings: part 3 now states the key is one of
+  **four values that must agree** (key + base URL + model + schema,
+  with the wire-format meanings), and part 4 became a three-rung
+  testing ladder — notice-absent (key read) → authenticated
+  provider ping, status-only (key+endpoint+format+model agree;
+  verified live: 200 against the relay) → one real coach reply —
+  plus the tunnel caveat (a `000` on a relay behind ngrok means
+  retry, not a bad key; observed as a transient drop this session).
+  Six-part coverage for the llm module was otherwise complete; the
+  companions are catalog config, deliberately not store keys.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the
