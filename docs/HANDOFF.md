@@ -16,10 +16,11 @@ Resume here. The authoritative multi-task board is
    deployed. No follow-ups owed.
 2. **Buddy host key store in flight** ([plan](plans/2026-10-05-buddy-host-keys.md),
    [changelog](changelogs/2026-10-05-buddy-host-keys.md)): this machine
-   is now a second host in `hosts/`; jwt landed (manifest + filled
-   `.key`). Remaining keys land key-by-key with the user — DSNs + LLM
-   are already in the local `.env`, mail + GitHub keys copy from MBP's
-   agents_home store; audit/fill with
+   is now a second host in `hosts/`; 3 of 12 landed (jwt + both Postgres
+   DSNs — `supabase.yaml` renamed `postgres.yaml` on both hosts).
+   Remaining keys land key-by-key with the user — the LLM key is in the
+   local `.env`, mail + GitHub keys copy from MBP's agents_home store;
+   audit/fill with
    `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local`.
 3. **Both remediation rounds closed — operator actions remain.** The
    review-1 five-wave plan closed 2026-10-04
