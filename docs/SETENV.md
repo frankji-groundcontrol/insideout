@@ -16,6 +16,9 @@ functional-module subfolders, tracked YAML manifests per module, and
 git-ignored `.secrets/*.key` values, managed with
 `python3 scripts/keys.py audit|fill` (never prints values). Rebuilding a
 fresh `.env` still goes through `env.sh init`; paste from the `.key` files.
+The six-part reference for that store (where / propagated / set / tested /
+used / install guide, per credential kind and per host) is
+[usage/keys.md](usage/keys.md).
 
 ## Layout
 

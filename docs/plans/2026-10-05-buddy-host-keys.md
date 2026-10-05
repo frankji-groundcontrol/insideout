@@ -15,6 +15,11 @@ Nothing deploys.
 
 - [x] Host scaffold: `hosts/buddys-macbook-pro-2.local/` (host.yml,
       README.md, keys/README.md) + row in `hosts/README.md`.
+- [x] Usage installation part: `docs/usage/keys.md` — the six-part
+      reference (mirrors agents_home's `docs/usage/keys/` convention,
+      one family doc since every key shares one flow) with the per-host
+      state table; indexed in `docs/usage/README.md`; cross-linked from
+      `docs/SETENV.md`.
 - [x] `keys/auth/jwt.yaml` manifest; value filled from the local `.env`
       via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
       scripts/keys.py fill` (empty-only, 0600, never printed). User

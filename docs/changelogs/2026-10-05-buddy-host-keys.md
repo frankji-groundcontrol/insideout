@@ -36,6 +36,17 @@ deployed. Plan:
 - `git status` shows only the tracked manifest/readme files — the
   `.secrets/` dotfolder is git-ignored as designed.
 
+## What changed (slice 2 — usage installation part)
+
+- **`docs/usage/keys.md`** — the six-part reference for the key store
+  (where / propagated / set / tested / used / install guide), mirroring
+  agents_home's `docs/usage/keys/` convention; one family doc rather
+  than a file per key because every key here shares one flow. Includes
+  the 12-kind table with value sources and per-host state, the scoped
+  audit/fill loop, per-key test probes, and boot-time usage roles.
+- Indexed as a row in `docs/usage/README.md`; cross-linked from the
+  `docs/SETENV.md` hosts paragraph (install guide ↔ store reference).
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the

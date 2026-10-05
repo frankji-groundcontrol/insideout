@@ -7,6 +7,7 @@ How to run InsideOut — as a developer or an operator.
 | [local-development.md](local-development.md) | Developers | Prerequisites, env setup, database setup, running server + frontend, tests |
 | [../client/README.md](../../client/README.md) | Developers | Flutter client (`client/`): web / iOS / Android against the Go API |
 | [environment.md](environment.md) | Everyone | Environment variable reference: required/optional vars, defaults, the .env→process bridges (dev.sh, docker-compose), offline AI mode |
+| [keys.md](keys.md) | Operators | The host key store: six-part reference (where / propagated / set / tested / used / install guide) for all 12 credential kinds under `hosts/<host>/keys/`, per-host state |
 | [../SETENV.md](../SETENV.md) | First-timers | The environment operating manual: create the file, choose each key (`env.sh init` / `edit`), propagate to the components, prove it works |
 | [deployment.md](deployment.md) | Operators | docker-compose topology, image builds, ports, reverse-proxy expectations, current Railway public deploy |
 | [backup-restore.md](backup-restore.md) | Operators | The backup story: managed (Supabase toggle) + portable dumps (`scripts/backup-db.sh`), restore runbook, scratch-stack walkthrough |

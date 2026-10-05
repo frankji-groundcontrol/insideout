@@ -18,7 +18,8 @@ code) with relative links.
 - [2026-10-05 — Buddy host key store (key-by-key, jwt first)](2026-10-05-buddy-host-keys.md)
   — second host in `hosts/`, manifests land per verified key;
   `INSIDEOUT_KEYS_HOST` scopes audit/fill; jwt-secret filled from the
-  local `.env` without printing.
+  local `.env` without printing; `docs/usage/keys.md` adds the six-part
+  installation reference (indexed + SETENV cross-link).
 - [2026-10-05 — Install scripts + agent skill + README](2026-10-05-installer-and-readme.md)
   — `scripts/install.sh` (both binaries → `~/.local/bin` + idempotent
   PATH fix), `scripts/mcp-config.sh` (standard `mcpServers` JSON with
