@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-05 — Install scripts + agent skill + README](2026-10-05-installer-and-readme.md)
+  — `scripts/install.sh` (both binaries → `~/.local/bin` + idempotent
+  PATH fix), `scripts/mcp-config.sh` (standard `mcpServers` JSON with
+  placement hints), SKILL.md self-setup for agents, README rewritten
+  around what/install/usage/further-reading.
 - [2026-10-05 — Planning-flow remediation](2026-10-05-planning-flow-remediation.md)
   — four-wave fix/harden/improve/add of the planning flow (40 slices from
   the multirole review of it; 36 landed, 4 schema slices specified for the

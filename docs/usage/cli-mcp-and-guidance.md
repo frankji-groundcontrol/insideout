@@ -7,14 +7,30 @@ contract the web client uses.
 
 ## Setup
 
-The CLI ships inside the server binary:
+From a checkout of this repository (needs Go 1.22+), the installer builds
+and installs both binaries into `~/.local/bin` (override with the first
+argument or `INSIDEOUT_INSTALL_DIR`) and adds that directory to PATH via
+your shell rc when missing — idempotent, safe to re-run:
 
 ```bash
-cd server && go build -o /usr/local/bin/insideout ./cmd/insideout
+./scripts/install.sh
 export INSIDEOUT_API=https://<your-domain>/api/v1   # your deployment's domain, or your local server
 export INSIDEOUT_TOKEN="$(insideout login you@example.com)"   # prints only the token
 insideout whoami
 ```
+
+Manual fallback (the CLI ships inside the server binary):
+
+```bash
+cd server && go build -o /usr/local/bin/insideout ./cmd/insideout
+go build -o /usr/local/bin/insideout-mcp ./cmd/insideout-mcp
+```
+
+To register the MCP server with an agent, `scripts/mcp-config.sh` emits
+the standard `mcpServers` JSON (token from `INSIDEOUT_TOKEN`, else a
+paste-me placeholder; `-q` for JSON only) plus placement hints for common
+clients — the same snippet ports across Claude Code, Cursor, and anything
+speaking the standard shape.
 
 `login` prompts for the password on stderr; the token is the only
 stdout. Without `INSIDEOUT_TOKEN`, read verbs answer 401 with a hint.
@@ -60,6 +76,9 @@ verbs as tools (50 today), token via `INSIDEOUT_TOKEN`:
     "env": { "INSIDEOUT_API": "https://<your-domain>/api/v1",
              "INSIDEOUT_TOKEN": "…" } } } }
 ```
+
+(Equivalent to what `scripts/mcp-config.sh` prints, with the install
+path resolved for you.)
 
 Signup policy: registration is invitation-only by default
 (`GET /auth/config`); admins mint per-email invitations (`invite` /

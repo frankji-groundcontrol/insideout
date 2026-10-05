@@ -10,84 +10,144 @@
 
 ## 这是什么？ / What is this?
 
-InsideOut 帮你的团队跟踪其他人正在开发的项目、随手记录想法的火花，并通过 AI 教练的引导式对话把想法打磨成一份扎实的 PRD。特别适合协作型团队或工作坊场景——组长能一眼看到所有项目的最新动态，每个成员都能零门槛记录自己的想法。
+InsideOut 把一个想法一路带到可交付：**想法收集箱**随手记录念头 → 转化为 **PRD**（八个章节，可按受众导出）→ 长成 **路线图**（带截止日期的项目树）→ 由**人类提交（Commit）**定格为版本。绑定 GitHub 仓库后，提交、PR 和部署会作为**证据**自动挂到对应的路线图节点上——进展有据可查，而不是靠嘴说。协作是实时的：画布上能看到谁在线、光标在哪。
 
-InsideOut helps your team keep track of projects other people are building, capture ideas the moment they strike, and turn them into a solid PRD through a guided AI coaching conversation. It's built for collaborative teams and workshop settings — a group leader gets an at-a-glance view of every project's latest update, and every member gets a frictionless way to record ideas.
+InsideOut walks an idea all the way to shipped: capture sparks in the
+**idea inbox** → convert them into a **PRD** (eight sections, exportable per
+audience) → grow a **roadmap** (a project tree with deadlines) → pin it as a
+version with a human-only **Commit**. Bind a GitHub repository and commits,
+PRs, and deployments attach themselves to roadmap nodes as **evidence** —
+progress you can verify, not claims you have to trust. Collaboration is
+live: presence and cursors on the canvas, and a time-first progress view.
 
-## 核心功能 / Core Features
+三个使用面，同一套 `/api/v1` 契约：
 
-> 本节描述**当前可运行版本**的功能；确认中的目标产品体验见 [`PRODUCT.md`](PRODUCT.md)——其中已取代「僵化四阶段教练」与「管理员审批所有 PRD」的旧假设。
-> This section describes the **current runnable build**; the confirmed target product experience lives in [`PRODUCT.md`](PRODUCT.md), which supersedes the rigid four-stage coach and the admin-approves-all-PRDs model.
+Three surfaces, one `/api/v1` contract:
 
-### 📋 项目看板 / Project Board
-工作区内所有项目共享一个看板，实时显示进度、阻塞和备注。滞后太久没更新的项目会被特别标出——不用追着问也知道发生了什么。
-Every project in your workspace shows up on one shared board with live progress, blockers, and notes. Projects that have gone quiet too long get flagged — so you know what's happening without having to ask.
+- **Web 应用** — Flutter 网页端：想法箱、PRD 编辑、AI 教练对话、路线图画布、版本历史。
+- **`insideout` CLI** — 终端里的全部动词：认证、想法箱、PRD、路线图、版本、证据、代理词汇。
+- **`insideout-mcp` MCP 服务器** — 同样的 50 个工具暴露给任何支持 MCP 的编码代理；让 Claude Code、Cursor 或你自己的代理直接驱动这个产品。
 
-### 💡 想法收集箱 / Idea Inbox
-每个成员都有一个零门槛的想法收集箱：一句话记下念头，等准备好了再打磨，或者直接转化成 PRD 开始细化。
-Every member gets a frictionless idea inbox: jot down a thought in one sentence, come back to refine it whenever you're ready, or convert it straight into a PRD.
+- **Web app** — the Flutter client: inbox, PRD editing, the AI coach
+  conversation, the roadmap canvas, version history.
+- **`insideout` CLI** — every verb in the terminal: auth, idea inbox,
+  PRDs, roadmap, versions, evidence, the agent vocabulary.
+- **`insideout-mcp` MCP server** — the same surface as 50 tools for any
+  MCP-capable coding agent; let Claude Code, Cursor, or your own agent
+  drive the product directly.
 
-### 🤖 PRD 教练 / PRD Coach
-把一个想法转化后，AI 教练会陪你走完四个阶段：**澄清**你的问题和目标用户 → **起草**完整的 PRD 章节 → **批判**指出薄弱环节 → **定稿**给出完整度总结。教练直接把内容写进 PRD 章节，你能实时看到它成形。
-Convert an idea and an AI coach walks you through four stages: **clarify** the problem and target users → **draft** the full PRD sections → **critique** to call out weak spots → **finalize** with a completeness summary. The coach writes directly into your PRD sections — you watch it take shape live.
+## 安装 / Install
 
-### ✅ 评审流程 / Review Flow
-PRD 写好后提交评审，工作区管理员通过或驳回；被驳回的 PRD 可以修改后重新提交。每次快照都会保存为一个版本，随时可以回看历史。
-Submit a finished PRD for review; a workspace admin approves or rejects it. A rejected PRD can be revised and resubmitted. Every snapshot is saved as a version you can revisit anytime.
+### CLI 与 MCP（从源码构建 / from source）
 
-### 📤 导出 / Export
-随时把 PRD 导出为 Markdown 下载，或用浏览器打印功能另存为 PDF。
-Export any PRD to Markdown for download, or use your browser's print function to save it as a PDF.
+在一份仓库检出里执行（需要 Go 1.22+）：
 
-## 快速上手 / Quick Start
+From a checkout of this repository (needs Go 1.22+):
 
-1. 注册账号（邮箱 + 密码）/ Register an account (email + password)
-2. 创建一个工作区，或用邀请码加入已有的工作区 / Create a workspace, or join an existing one with an invite code
-3. 在项目看板里创建你的第一个项目 / Create your first project on the board
-4. 去想法收集箱记下一个念头 / Jot an idea down in the inbox
-5. 点「转化为 PRD」，开始和教练对话 / Hit "Convert to PRD" and start talking to the coach
+```bash
+./scripts/install.sh
+```
 
-> 注册默认是「仅限邀请」：新数据库播种 `signup_mode = invitation_only`，没有邀请码注册会返回 403。本地首次启动请先用 `insideout promote-admin <your-email>` 提升管理员、再生成邀请码（仅限本地开发可改用 `insideout signup-mode open`）。详见 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md)。
-> Registration is **invitation-only by default**: a fresh database seeds `signup_mode = invitation_only` and registering without an invite code returns 403. For a local first run, bootstrap with `insideout promote-admin <your-email>` and mint invites (or `insideout signup-mode open` for local dev only). See [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
+默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
 
-## 本地开发 / Local Development
+Installs both binaries into `~/.local/bin` by default (override with the
+first argument or `INSIDEOUT_INSTALL_DIR`) and, when that directory is not
+on PATH, appends one marked export line to your shell rc (zsh →
+`~/.zshrc`, bash → `~/.bashrc`, otherwise `~/.profile`). Idempotent.
+Manual fallback without the script: `cd server && go build -o
+/usr/local/bin/insideout ./cmd/insideout` (same for `insideout-mcp`).
+
+把 MCP 服务器注册进你的代理（同一段 JSON 适用于 Claude Code、Cursor 等标准 `mcpServers` 配置）：
+
+Register the MCP server with your agent (the same JSON snippet ports
+across Claude Code, Cursor, and anything speaking the standard
+`mcpServers` shape):
+
+```bash
+./scripts/mcp-config.sh                  # 打印说明 + JSON / hints + JSON
+./scripts/mcp-config.sh -q >> some.json  # 只输出 JSON / JSON only
+```
+
+### 网页端 / Web
+
+打开你的部署地址即可（注册默认**仅限邀请**，见下方快速上手）。自托管见 [docs/usage/deployment.md](docs/usage/deployment.md)。
+
+Open your deployment's URL (signup is **invitation-only** by default — see
+Quick start below). For self-hosting, see
+[docs/usage/deployment.md](docs/usage/deployment.md).
+
+### 本地开发 / Local development
 
 全部命令在仓库根目录执行 / all commands from the repo root:
 
 ```bash
-# 配置环境 / Set up the environment
-./scripts/env.sh init            # 交互式，绝不打印值 / interactive, never prints values
-
-# 后端 / Backend
-./scripts/dev.sh -C server go run ./cmd/insideout migrate   # 应用数据库迁移 / apply migrations
-./scripts/dev.sh -C server go run ./cmd/insideout seed      # 可选：演示数据 / optional: demo data
-./scripts/dev.sh -C server go run ./cmd/insideout           # 启动服务 / start the server
-
-# 前端 / Frontend (production is Flutter web)
-cd client && flutter run -d chrome
+./scripts/env.sh init                    # 交互式生成 .env，绝不打印值
+./scripts/dev.sh -C server go run ./cmd/insideout migrate   # 应用迁移
+./scripts/dev.sh -C server go run ./cmd/insideout           # 启动服务
+cd client && flutter run -d chrome       # 前端 / frontend
+docker compose up -d                     # 或一键后端栈 / or the backend stack
 ```
 
-托管站点 / hosted: `https://<your-app>.up.railway.app`（你的 Railway 部署地址 / your own Railway deployment's URL）
+`dev.sh` 是必需的：应用只读进程环境变量，由它先导出 `.env` 并做缺项检查。必填只有 `DATABASE_URL`（任意 PostgreSQL 14+）和 `INSIDEOUT_JWT_SECRET`（≥32 字符）；不设 `INSIDEOUT_LLM_API_KEY` 时教练走离线模板。详见 [docs/SETENV.md](docs/SETENV.md) 与 [docs/usage/local-development.md](docs/usage/local-development.md)。
 
-`dev.sh` 是必需的：应用本身不读取 `.env`（Go 只读进程环境变量），必须先由 `dev.sh` 导出。它每次启动前都会执行 `env.sh check`，缺项时明确报错。
-`dev.sh` is not optional: nothing in the app reads `.env` itself (Go reads the process environment), so it must be exported first — a bare `cd server && go run` sees none of your values. `dev.sh` also runs `env.sh check` before every launch and names what is missing.
+`dev.sh` is not optional: nothing reads `.env` itself (Go reads the
+process environment), so it exports it first and checks for missing keys.
+Only two variables are required — `DATABASE_URL` (any PostgreSQL 14+) and
+`INSIDEOUT_JWT_SECRET` (min 32 chars); without `INSIDEOUT_LLM_API_KEY` the
+coach falls back to an offline template. Step by step:
+[docs/SETENV.md](docs/SETENV.md) and
+[docs/usage/local-development.md](docs/usage/local-development.md).
 
-只有两个变量是必填的：`DATABASE_URL`（任意 PostgreSQL 14+ 实例）和 `INSIDEOUT_JWT_SECRET`（至少 32 字符）。未设置 `INSIDEOUT_LLM_API_KEY` 时教练使用离线模板回复，适合本地开发。
-Only two variables are required: `DATABASE_URL` (any PostgreSQL 14+ instance) and `INSIDEOUT_JWT_SECRET` (min 32 chars) — they are the only two left uncommented in `.env.example`. Without `INSIDEOUT_LLM_API_KEY` the coach falls back to an offline template reply, handy for local dev. Step-by-step: [docs/SETENV.md](docs/SETENV.md); every variable: [docs/usage/environment.md](docs/usage/environment.md).
+## 基本用法 / Basic usage
 
-或者直接用 docker-compose 一键启动后端技术栈（postgres + server）；Flutter 前端需另行启动（`cd client && flutter run -d chrome`）：
-Or bring up the backend stack (postgres + server) with docker-compose — the Flutter frontend runs separately (`cd client && flutter run -d chrome`):
+网页端的产品环：注册（或凭邀请码）→ 建工作区 → 在想法箱记一句话 → 「转化为 PRD」→ 和教练对话打磨 → 长出路线图、挂上仓库 → 人类 Commit 定格版本。
+
+The web loop: register (invite code in hand) → create a workspace → jot a
+one-line idea → "Convert to PRD" → refine it with the coach → grow the
+roadmap and bind a repo → a human Commits the version.
+
+CLI 一瞥（令牌只进环境变量，不进对话记录）：
+
+A CLI taste (the token lives in your environment, never in a transcript):
 
 ```bash
-docker compose up -d
+export INSIDEOUT_API=https://<your-domain>/api/v1
+export INSIDEOUT_TOKEN="$(insideout login you@example.com)"
+
+insideout whoami                       # 我是谁 / who am I
+insideout workspaces                   # 工作区列表 / list workspaces
+insideout ideas <ws-id>                # 想法箱 / the inbox
+insideout prd update <prd-id> --section goals="Ship the MVP"
+insideout roadmap list <proj-id>       # 路线图 / the roadmap tree
+insideout commit --name "v0.1" --audience decision <prd-id>   # 人类专属 / humans only
 ```
 
-## 了解更多 / Learn More
+代理词汇——代理汇报、人类决策：`agent-context`（简报）、`checkpoint`（记录工作）、`propose`（提议变更）、`proposal-decide`（人类批准或驳回）。完整动词表见 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md)。
 
-- 产品定义 / Product definition: [`PRODUCT.md`](PRODUCT.md)
-- 开发计划 / Development plan: [`docs/PLAN.md`](docs/PLAN.md)
-- 完整技术方案 / Full technical plan: [`docs/plans/2026-07-20-go-rewrite/`](docs/plans/2026-07-20-go-rewrite/README.md)
-- 开发进度 / Progress tracker: [`docs/TODO.md`](docs/TODO.md)
+The agent vocabulary — agents report, humans decide: `agent-context`
+(the briefing), `checkpoint` (record work), `propose` (propose changes),
+`proposal-decide` (a human accepts or rejects). Full verb table:
+[docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
+
+> 注册默认「仅限邀请」：全新数据库播种 `signup_mode = invitation_only`，无邀请码注册返回 403。本地首跑先用 `insideout promote-admin <your-email>` 提升管理员、再生成邀请码（本地开发可 `insideout signup-mode open`）。
+> Registration is **invitation-only by default**: a fresh database seeds
+> `signup_mode = invitation_only`; registering without an invite code
+> returns 403. For a local first run, bootstrap with `insideout
+> promote-admin <your-email>` then mint invites (`insideout signup-mode
+> open` for local dev only).
+
+## 了解更多 / Learn more
+
+| 想了解 / Want to know | 去看 / Read |
+| --- | --- |
+| 产品定义 / Product definition | [`PRODUCT.md`](PRODUCT.md) |
+| 文档总地图 / Doc map | [`docs/index.md`](docs/index.md) |
+| CLI / MCP / GitHub 证据环 / CLI, MCP, evidence loop | [`docs/usage/cli-mcp-and-guidance.md`](docs/usage/cli-mcp-and-guidance.md) |
+| 本地开发 / Local development | [`docs/usage/local-development.md`](docs/usage/local-development.md) |
+| 环境变量 / Environment variables | [`docs/usage/environment.md`](docs/usage/environment.md) · [`docs/SETENV.md`](docs/SETENV.md) |
+| 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |
+| 架构 / Architecture | [`docs/architecture/index.md`](docs/architecture/index.md) |
+| 变更记录 / Change log | [`docs/changelogs/`](docs/changelogs/README.md) |
 
 ## 第三方资源 / Third-party assets
 

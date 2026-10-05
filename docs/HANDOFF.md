@@ -7,7 +7,14 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. **Both remediation rounds closed — operator actions remain.** The
+1. **Install/onboarding slice closed 2026-10-05** ([plan](plans/2026-10-05-installer-and-readme.md),
+   [changelog](changelogs/2026-10-05-installer-and-readme.md)):
+   `scripts/install.sh` puts both binaries in `~/.local/bin` (PATH
+   appended idempotently), `scripts/mcp-config.sh` emits the
+   cross-agent MCP registration, README rewritten for
+   what/install/usage/further-reading. Scripts + docs only; nothing
+   deployed. No follow-ups owed.
+2. **Both remediation rounds closed — operator actions remain.** The
    review-1 five-wave plan closed 2026-10-04
    ([changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); review 2
    ([report](review/2026-10-04-multirole-2/README.md), 108 findings,
@@ -32,7 +39,7 @@ Resume here. The authoritative multi-task board is
    authority) are the next product work, each behind its own plan. Walk
    record:
    [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
-2. The recorded frontier is closed 2026-08-22
+3. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
    [depth](changelogs/2026-08-22-depth-thread.md)): audience-view web
@@ -40,12 +47,12 @@ Resume here. The authoritative multi-task board is
    live on top of presence, the time-first roadmap, and the full
    parity loop (50 MCP tools). What remains of PRODUCT.md is genuinely
    new product judgment — the next interview's findings decide it.
-3. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
+4. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (50 tools) and the
    CLI are live.
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
-4. Restore Ink & Seal on Flutter: slice closed 2026-08-23 — canvas v1
+5. Restore Ink & Seal on Flutter: slice closed 2026-08-23 — canvas v1
    (bands + minimap), presence hardening (reconnect + a web SSE
    transport that actually streams,
    [changelog](changelogs/2026-08-23-canvas-presence-hardening.md)), and
@@ -53,7 +60,7 @@ Resume here. The authoritative multi-task board is
    ([changelog](changelogs/2026-08-23-web-font-flash.md)). Native fonts
    bundled and signed off 2026-08-20.
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
-5. Flutter Android release when an SDK exists
+6. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash

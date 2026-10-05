@@ -14,13 +14,30 @@ CLI/MCP surface. This skill is the contract for the second mode.
 
 ## Setup
 
+From a checkout of this repository (needs Go 1.22+):
+
 ```bash
-cd server && go build -o /usr/local/bin/insideout ./cmd/insideout
-go build -o /usr/local/bin/insideout-mcp ./cmd/insideout-mcp
+./scripts/install.sh          # builds + installs both binaries into ~/.local/bin
+                              # (override: first arg or INSIDEOUT_INSTALL_DIR),
+                              # and adds that dir to PATH via the shell rc
 export INSIDEOUT_API=https://<your-domain>/api/v1   # your deployment's domain
 export INSIDEOUT_TOKEN="$(insideout login you@example.com)"   # or --code / --magic
 insideout whoami
 ```
+
+To register the MCP server in your own (or the user's) agent config, emit
+the standard snippet and merge it — the same JSON ports across MCP clients
+(Claude Code `.mcp.json`, Cursor `~/.cursor/mcp.json`, other
+`mcpServers` blocks):
+
+```bash
+./scripts/mcp-config.sh                    # prints hints + JSON (token from
+                                           # INSIDEOUT_TOKEN, else a placeholder)
+./scripts/mcp-config.sh -q --api "$INSIDEOUT_API"   # JSON only
+```
+
+Manual fallback (no script): `cd server && go build -o /usr/local/bin/insideout
+./cmd/insideout` and the same for `./cmd/insideout-mcp`.
 
 Signup is invitation-only by default: an admin mints a per-email code
 (`invite_create` / `insideout invite <email>`, revoke with
