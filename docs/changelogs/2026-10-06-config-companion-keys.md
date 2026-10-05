@@ -73,7 +73,12 @@ deploys.
   port ranges, exact `0`/`1` toggles, positive int, non-placeholder).
   Usage keys README rewritten (31 rows, never-absent rule stated; the
   phase-1 "pure-default knobs stay catalog-only" sentence superseded
-  and removed); tests README + both host READMEs re-indexed.
+  and removed); tests README + both host READMEs re-indexed. The
+  key-setup practice
+  ([2026-10-05-setting-up-a-key.md](../practices/2026-10-05-setting-up-a-key.md))
+  was extended to match: `init` placeholder step, blank-legality
+  fields in the manifest, and the undeclared-blank-lane failure
+  signal.
 
 ## Verification
 

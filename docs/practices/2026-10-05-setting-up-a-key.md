@@ -1,12 +1,21 @@
 # 2026-10-05 — Setting up a key on a host (full sequence)
 
+*Extended 2026-10-06 to every mapped kind (config companions and
+runtime knobs), the `init` placeholder step, and blank-lane legality
+([changelog](../changelogs/2026-10-06-config-companion-keys.md)).*
+
 ## Trigger
 
-Any time a credential kind must land on a machine in the
-[`hosts/<host>/keys/`](../../hosts/README.md) store: a new key, a new
-host, or a refill after rotation. Worked example: the jwt-secret slice
-on `buddys-macbook-pro-2.local`
-([changelog](../changelogs/2026-10-05-buddy-host-keys.md)).
+Any time a kind must land on a machine in the
+[`hosts/<host>/keys/`](../../hosts/README.md) store: a new credential,
+a config companion or runtime knob, a new host, or a refill after
+rotation. **Never-absent rule:** every kind mapped in a host's
+manifests has a `.key` file on that host — blank means "default in
+effect", absent means the scheme is broken. Worked examples: the
+jwt-secret slice on `buddys-macbook-pro-2.local`
+([changelog](../changelogs/2026-10-05-buddy-host-keys.md)); the
+full-scan extension to 31 kinds
+([changelog](../changelogs/2026-10-06-config-companion-keys.md)).
 
 ## The six-part frame
 
@@ -31,8 +40,13 @@ per setup.
 2. **Manifest first.** Create
    `hosts/<host>/keys/<module>/<setting>.yaml` — metadata only
    (`<name>: {var, kind, note}`); values never appear in tracked files.
-   A new module folder gets its row in the host's `keys/README.md`.
-   The module name also fixes the per-key doc's folder (step 7).
+   Declare blank-legality in the entry itself: a `fallback:` field
+   (with the catalog/compose default) when blank = that default, or
+   `optional:`/`operator_fills:` when blank is a deliberate lane on
+   that host — judged by the field's **presence**, not truthiness
+   (`fallback: ''` is a legal blank). A new module folder gets its row
+   in the host's `keys/README.md`. The module name also fixes the
+   per-key doc's folder (step 7).
 3. **Value into the live consumer.** `./scripts/env.sh edit` (or
    `init`) writes the root `.env` interactively and never prints. If
    the value is already there, the scoped audit (step 5) reports
@@ -44,23 +58,32 @@ per setup.
    consumer reads the file raw — the store keeps the canonical
    multi-line form, and deriving the env form is an escape. Same
    discipline for any dual-form value.
-4. **Scoped fill.**
+4. **Init placeholders, then scoped fill.**
+   `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py init` — an empty
+   0600 `.key` placeholder for **every** mapped kind (idempotent;
+   never touches a filled file), so no kind is absent even where a
+   default is in effect. Then
    `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py fill` —
    copies env values into **empty-only** `.key` files (dir 0700, file
-   0600). Existing values are kept, never overwritten.
+   0600). Existing values are kept, never overwritten. A kind the env
+   doesn't set stays blank — that is the declared fallback in effect,
+   not an error.
 5. **Verify.**
    - Scoped audit: `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py
-     audit` shows `key=filled env=set`.
+     audit` shows `key=filled env=set` (or `key=empty` with a
+     declared fallback).
    - Perms: `.secrets` dir 0700, `.key` 0600, size plausible for the
      kind (e.g. 64 B for `openssl rand -hex 32`).
    - Isolation: the *other* host's scoped audit is unchanged — fill
      cannot cross hosts.
    - Suite: `cd scripts && python3 -m unittest discover -s tests/keys
-     -t .` — per-key shape/placement plus store invariants green
-     (hosts without a `.secrets/` skip cleanly). After syncing another
+     -t .` — per-key shape/placement plus store invariants green:
+     never-absent on every present host, emptiness only with a
+     declared `fallback`/`optional`/`operator_fills` field (hosts
+     without a `.secrets/` skip cleanly). After syncing another
      host, run it **there** too: the cross-host run is what catches
      per-host state (escaped storage forms, 0755 dirs, wrong-case
-     folders on case-insensitive filesystems).
+     folders on case-insensitive filesystems, undeclared blank lanes).
    - `git status` shows only the tracked manifest/README files — a
      `.secrets` path appearing there means `.gitignore` is broken;
      stop before committing.
@@ -74,14 +97,16 @@ per setup.
    a failure, not a pass** — assert the warning's *absence* in the
    boot log, never just that the process started.
 7. **Records.** If the key kind is new: create its per-key doc
-   (six parts, filename = key name, module folder), add its row to the
+   (six parts, filename = key name, module folder, fallback-first
+   framing for config companions — "blank = catalog default X; the
+   file exists so the kind is always findable"), add its row to the
    `docs/usage/keys/README.md` table, and add the SETENV-step
    down-link when a step covers it. Update the host `keys/README.md`
    state table and the per-host state table in
    `docs/usage/keys/README.md`; tick the plan checklist; extend the
    changelog; keep the relative-link check at 0 broken. Commit
    **tracked metadata only**, push, and fast-forward the other hosts'
-   clones.
+   clones — then run `init` + `fill` + the suite on each of them.
 
 ## Failure signals
 
@@ -104,7 +129,13 @@ per setup.
   ("private key unusable", offline coach) — not a pass; grep for the
   warning's absence.
 - The suite fails only on the other host — per-host state (dir modes,
-  wrong-case folder, storage form); fix on that host and rerun there.
+  wrong-case folder, storage form, or a companion kind legitimately
+  blank there while its manifest entry lacks `optional`/`fallback`);
+  fix on that host — declare the lane in metadata, never fill a fake
+  value — and rerun there
+  ([why](../learning/2026-10-06-blank-lane-legality-lives-in-metadata.md)).
+- A mapped kind with no `.key` file on a host that has others — run
+  `keys.py init`; absence is the one state the scheme never allows.
 - A per-key doc missing, lumped into a group file, or named unlike the
   key — the scheme's **shape** is part of the contract (filename =
   key name, one file per key, router docs link down); fix before
