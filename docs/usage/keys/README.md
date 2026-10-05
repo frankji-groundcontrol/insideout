@@ -41,6 +41,35 @@ failure signals, is the practice record
 3. Scoped `audit` + `./scripts/env.sh check` + the key's own probe
    (each file's "how to test").
 
+## Testing
+
+Two layers, both required before a key counts as set up:
+
+1. **Shape/placement suite** (automated, repeatable) — from `scripts/`:
+
+   ```bash
+   python3 -m unittest discover -s tests/keys -t .
+   ```
+
+   [`scripts/tests/keys/`](../../../scripts/tests/keys/README.md)
+   mirrors this tree: one test file per key (filename = key name)
+   asserting mode 0600, non-empty unless operator-filled/optional, the
+   right env var mapped, and the kind's shape — PEM framing for the
+   App key, `re_` prefix for mail, DSN role (including pooler suffixes)
+   for the databases, minimum strength for self-minted secrets. Plus
+   store-wide invariants and the `keys.py` tool behaviors with
+   multi-host scoping. Values are never printed; hosts without a
+   `.secrets/` (CI) skip cleanly. Run it after any key lands, copies
+   between hosts, or rotates — and on every host the store describes:
+   its first cross-host run caught an escaped-form PEM, 0755 secrets
+   dirs, and a wrong-case host folder on the other machine.
+2. **Live probe** (each file's part 4) — the key actually working:
+   `migrate` for the owner DSN, a bad-login 401 for the app DSN, the
+   absent offline-coach notice for the LLM key, a magic-link request
+   for mail, signed deliveries answered 200 for the webhook secret.
+   A boot that only *warns* about an unusable key is a failure, not a
+   pass — grep for the warning's absence.
+
 ## Per-host state (2026-10-05)
 
 | Key | franks-macbook-pro | buddys-macbook-pro-2 |
@@ -52,10 +81,6 @@ failure signals, is the practice record
 | gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | filled (PEM normalized to real multi-line for the `_FILE` consumer) |
 | postgres-app-password | filled | filled |
 | postgres-owner-password / github-token | empty by design | empty by design |
-
-Per-key shape tests mirroring this tree:
-`scripts/tests/keys/` (run `python3 -m unittest discover -s tests/keys
--t .` from `scripts/`; CI runs it in the env-suites job).
 
 The variable-level contract for every env var (credential or not) is
 [environment.md](../environment.md); the first-time path is

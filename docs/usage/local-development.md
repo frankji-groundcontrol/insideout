@@ -158,3 +158,24 @@ Frontend (from `client/`):
 flutter analyze --no-fatal-infos
 flutter test
 ```
+
+Credential + env script suites (Python; the same two batteries CI runs
+in its env-suites job — from `scripts/`):
+
+```bash
+python3 -m unittest test_env_catalog test_env_writes      # env catalog + write batteries
+python3 -m unittest discover -s tests/keys -t .           # key store suites
+```
+
+The key suites mirror the key store itself
+([`scripts/tests/keys/`](../../scripts/tests/keys/README.md): one file
+per credential, filename = key name) and cover two layers: per-key
+**shape and placement** (mode 0600, non-empty unless operator-filled,
+the right env var mapped, kind-specific shape such as PEM framing or
+DSN role) and store-wide **invariants** (perms, git-blindness, host
+naming), plus the `keys.py` tool behaviors including multi-host
+scoping. They never print values and skip cleanly where a host's
+`.secrets/` is absent (CI). Run them after any key lands, copies
+between hosts, or rotates; the per-key **live probes** (part 4 of each
+doc under [keys/](keys/README.md)) remain the second layer — the suite
+says the key is well-formed and well-placed, the probe says it works.

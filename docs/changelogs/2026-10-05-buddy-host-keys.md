@@ -218,6 +218,22 @@ positionals, which Python ≤3.9 argparse rejects (`81a9935`). Final
 state: **24 tests, OK on both hosts** (Buddy skips the two by-design
 keys; MBP runs them against its sanctioned empty placeholders).
 
+## What changed (slice 11 — usage docs surface the testing)
+
+- **`docs/usage/keys/README.md`** gained a dedicated **Testing**
+  section: the two required layers — the automated shape/placement
+  suite (`python3 -m unittest discover -s tests/keys -t .` from
+  `scripts/`, what it asserts, when to run it, run it on every host)
+  and each key's live probe (part 4), with the boot-warning-is-not-a-
+  pass rule spelled out. The duplicate one-liner after the state table
+  was folded into it.
+- **`docs/usage/local-development.md`** Testing section now covers the
+  Python suites alongside Go/Flutter: the env batteries and the key
+  suites (same two batteries CI's env-suites job runs), what the key
+  suites cover, and the suite-vs-probe relationship.
+- Usage README keys row mentions the two-layer testing. Link-check
+  across the touched surfaces: 0 broken.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the
