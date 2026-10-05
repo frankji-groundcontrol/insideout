@@ -112,17 +112,19 @@ never-absent rule satisfied).
 | jwt-secret | filled | filled |
 | database-app-dsn / database-owner-dsn | filled | filled |
 | llm-api-key | filled | filled |
-| llm-base-url / llm-model / llm-schema | pending (offline coach locally; live values ride the deployment) | filled 2026-10-06 |
+| llm-base-url / llm-model / llm-schema | blank (offline coach locally; live values ride the deployment) | filled 2026-10-06 |
 | ai-max-concurrent / ai-queue-wait | blank-fallback | blank-fallback |
 | mail-api-key | filled | filled |
 | mail-from / public-url | filled 2026-10-06 | filled 2026-10-06 |
 | mail-dev-body | blank-fallback | blank-fallback |
 | gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | filled (PEM normalized to real multi-line for the `_FILE` consumer) |
-| gh-private-key-file | pending (uses the env-embedded lane) | filled 2026-10-06 |
+| gh-private-key-file | blank (env-embedded PEM lane on that host) | filled 2026-10-06 |
 | postgres-app-password | filled | filled |
 | postgres-owner-password / github-token | empty by design | empty by design |
-| addr / cookie-secure / cors-origins / dev-cors / access-ttl / refresh-ttl | blank-fallback | blank-fallback |
-| server-port / postgres-port / postgres-superuser-password / client-port | blank-fallback | blank-fallback |
+| addr / cookie-secure / cors-origins / dev-cors | blank-fallback | blank-fallback |
+| access-ttl / refresh-ttl | filled 2026-10-06 (env overrides) | blank-fallback |
+| server-port / postgres-port | filled 2026-10-06 (env overrides) | blank-fallback |
+| postgres-superuser-password / client-port | blank-fallback | blank-fallback |
 
 The variable-level contract for every env var (credential or not) is
 [environment.md](../environment.md); the first-time path is

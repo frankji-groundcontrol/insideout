@@ -10,11 +10,12 @@ Resume here. The authoritative multi-task board is
 1. **Key store never-absent rule closed 2026-10-06** ([plan](plans/2026-10-06-config-companion-keys.md),
    [changelog](changelogs/2026-10-06-config-companion-keys.md)): every
    env var mapped in the store (31 kinds — credentials, config
-   companions, runtime knobs with `fallback:` fields, compose ports)
-   has its `.key` file (blank = default in effect, never missing),
-   six-part doc under `docs/usage/keys/`, and per-key test — 46 tests
-   green on Buddy. `keys.py init` materializes placeholders on a new
-   host; remaining leg after this entry: MBP init + fill + suite.
+   companions, runtime knobs with `fallback:`/`optional:` fields,
+   compose ports) has its `.key` file (blank = default in effect,
+   never missing), six-part doc under `docs/usage/keys/`, and per-key
+   test — 46 tests green on BOTH hosts (the MBP run caught and fixed
+   the blank-companion-lane gap, `40635cf`). `keys.py init`
+   materializes placeholders on a new host.
 2. **Install/onboarding slice closed 2026-10-05** ([plan](plans/2026-10-05-installer-and-readme.md),
    [changelog](changelogs/2026-10-05-installer-and-readme.md)):
    `scripts/install.sh` puts both binaries in `~/.local/bin` (PATH

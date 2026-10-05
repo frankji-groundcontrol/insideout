@@ -67,8 +67,13 @@ Go/client code, nothing deploys.
       both host READMEs updated.
 - [x] 13 per-key tests (exists + shape-if-non-empty). Suite: 46 tests
       OK on Buddy.
-- [ ] Push + MBP sync; MBP init + fill for its env-present
-      companions; suite green on MBP.
+- [x] Push + MBP sync; MBP init (19 placeholders: 13 new + 6
+      companions) + fill (6 written: access-ttl, refresh-ttl,
+      mail-from, public-url, server-port, postgres-port — this host's
+      env overrides); suite **46 OK on MBP** after marking its four
+      blank-lane companion entries `optional: true` (offline coach +
+      env-embedded PEM lane) and making the phase-1 shape tests
+      blank-tolerant (fix commit `40635cf`).
 - [x] Records: changelog `2026-10-06-config-companion-keys.md`
       extended with phase 2; HANDOFF state line; board row closed
       after the MBP run.

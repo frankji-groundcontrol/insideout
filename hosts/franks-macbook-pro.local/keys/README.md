@@ -11,9 +11,9 @@ creates the empty placeholders.
 
 | Module | Manifest | Keys (env var) | State |
 | --- | --- | --- | --- |
-| [app/](app/) | [runtime.yaml](app/runtime.yaml) | addr, cookie-secure, cors-origins, dev-cors, access-ttl, refresh-ttl (`INSIDEOUT_ADDR` … `INSIDEOUT_REFRESH_TTL`) | blank-fallback 2026-10-06 (catalog defaults in effect) |
+| [app/](app/) | [runtime.yaml](app/runtime.yaml) | addr, cookie-secure, cors-origins, dev-cors, access-ttl, refresh-ttl (`INSIDEOUT_ADDR` … `INSIDEOUT_REFRESH_TTL`) | access-ttl/refresh-ttl filled 2026-10-06 (this host's env overrides); the rest blank-fallback |
 | [auth/](auth/) | [jwt.yaml](auth/jwt.yaml) | jwt-secret (`INSIDEOUT_JWT_SECRET`) | filled |
-| [compose/](compose/) | [stack.yaml](compose/stack.yaml) | server-port, postgres-port, postgres-superuser-password, client-port (`SERVER_PORT` … `CLIENT_PORT`) | blank-fallback 2026-10-06 (compose `:-` defaults in effect) |
+| [compose/](compose/) | [stack.yaml](compose/stack.yaml) | server-port, postgres-port, postgres-superuser-password, client-port (`SERVER_PORT` … `CLIENT_PORT`) | server-port/postgres-port filled 2026-10-06 (this host's env overrides); the other two blank-fallback |
 | [database/](database/) | [postgres.yaml](database/postgres.yaml) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) | both filled |
 | [database/](database/) | [local-stack.yaml](database/local-stack.yaml) | postgres-app-password, postgres-owner-password (`POSTGRES_*_PASSWORD`) | app filled; owner empty by design |
 | [github/](github/) | [app.yaml](github/app.yaml) | gh-app-id, gh-app-private-key, gh-client-secret, gh-private-key-file (`INSIDEOUT_GH_*` + the `_FILE` pointer, kind: path) | first three filled; pointer blank by design (this host uses the env-embedded lane) |

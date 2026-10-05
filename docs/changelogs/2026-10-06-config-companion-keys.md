@@ -79,10 +79,20 @@ deploys.
 
 - `python3 -m unittest discover -s tests/keys -t .` (scripts/): 31
   tests OK after phase 1; **46 tests OK on Buddy** after phase 2
-  (+13 per-key, +1 init tool, +1 never-absent invariant); cross-host
-  run on MBP after sync (see plan).
-- Scoped audits: Buddy 31 kinds, 0 unmapped, 16 filled + 15
-  legal-blank; `env.sh check` green after the MAIL_FROM replacement.
+  (+13 per-key, +1 init tool, +1 never-absent invariant).
+- **MBP cross-host run (the point of the suite):** first pass failed
+  5 — `init` had created empty files for phase-1 companion kinds on
+  MBP (offline coach for the llm trio, env-embedded PEM lane for the
+  pointer) whose manifest entries lacked `optional`/`fallback`
+  fields. Fixed by marking those four entries `optional: true` on
+  MBP's manifests and making the four phase-1 shape tests
+  blank-tolerant (blank = unset lane on that host, `40635cf`); suite
+  then **46 OK on MBP**. MBP `init` created 19 placeholders; its
+  `fill` wrote 6 env overrides (access-ttl, refresh-ttl, mail-from,
+  public-url, server-port, postgres-port).
+- Scoped audits: both hosts 31 kinds, 0 unmapped; Buddy 16 filled +
+  15 legal-blank; `env.sh check` green after the MAIL_FROM
+  replacement.
 
 ## Operators / users
 
