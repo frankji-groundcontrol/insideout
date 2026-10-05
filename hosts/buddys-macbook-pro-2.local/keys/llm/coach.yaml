@@ -1,0 +1,19 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: llm
+setting: coach
+recorded: '2026-10-05'
+# Coach concurrency/queueing knobs (not credentials). Config
+# companions: catalog defaults exist, so a blank .key means "default
+# in effect". Metadata only — values live in .secrets/<name>.key.
+secrets:
+  ai-max-concurrent:
+    var: INSIDEOUT_AI_MAX_CONCURRENT
+    kind: value
+    note: parallel coach requests; blank = '4'
+    fallback: '4'
+  ai-queue-wait:
+    var: INSIDEOUT_AI_QUEUE_WAIT
+    kind: value
+    note: queue admission wait (Go duration); blank = '15s'
+    fallback: 15s

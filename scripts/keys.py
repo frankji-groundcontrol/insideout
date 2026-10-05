@@ -153,6 +153,27 @@ def audit(root: str, host: str, envfile: str | None) -> int:
     return 0
 
 
+def init_cmd(root: str, host: str) -> int:
+    """Create an empty `.key` placeholder for every mapped kind — the
+    never-absent rule: a kind may be blank (fallback in effect) but
+    never missing. Never touches a non-empty file."""
+    created = kept = 0
+    for var, (_slug, path) in sorted(key_map(root, host).items()):
+        if os.path.exists(path):
+            kept += 1
+            action = "exists"
+        else:
+            os.makedirs(os.path.dirname(path), mode=0o700, exist_ok=True)
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT, 0o600)
+            os.fdopen(fd, "w").close()
+            os.chmod(path, 0o600)
+            created += 1
+            action = "created (empty — fallback in effect)"
+        print(f"  {var:32} {action:38} {os.path.relpath(path, root)}")
+    print(f"{created} created, {kept} exist (values never printed)")
+    return 0
+
+
 def fill(root: str, host: str, envfile: str, dry_run: bool) -> int:
     env = parse_env(envfile)
     written = kept = skipped = 0
@@ -181,7 +202,7 @@ def fill(root: str, host: str, envfile: str, dry_run: bool) -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("command", choices=["audit", "fill"])
+    ap.add_argument("command", choices=["audit", "fill", "init"])
     ap.add_argument("envfile", nargs="?", default=".env")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--root", default=repo_root())
@@ -189,6 +210,8 @@ def main() -> int:
     host = pick_host(a.root, os.environ.get("INSIDEOUT_KEYS_HOST"))
     if a.command == "audit":
         return audit(a.root, host, a.envfile if os.path.exists(a.envfile) else None)
+    if a.command == "init":
+        return init_cmd(a.root, host)
     if not os.path.exists(a.envfile):
         raise SystemExit(f"env file not found: {a.envfile}")
     return fill(a.root, host, a.envfile, a.dry_run)

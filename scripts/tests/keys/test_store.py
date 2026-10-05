@@ -39,7 +39,8 @@ class TestStoreInvariants(unittest.TestCase):
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600,
                              f"{path} must be 0600")
             permissive = "true" in (fields.get("operator_fills", ""),
-                                    fields.get("optional", ""))
+                                    fields.get("optional", "")) \
+                or "fallback" in fields  # present (even empty) = blank is legal
             if not permissive:
                 self.assertGreater(os.path.getsize(path), 0,
                                    f"{path} is mapped but empty and not operator-filled")
@@ -47,6 +48,25 @@ class TestStoreInvariants(unittest.TestCase):
             self.assertEqual(stat.S_IMODE(os.stat(secrets_dir).st_mode), 0o700,
                              f"{secrets_dir} must be 0700")
         self.assertGreater(checked, 0, "expected at least one .key on this machine")
+
+    def test_never_absent_rule(self):
+        """A host present on this machine (>=1 .key exists) must have a
+        `.key` file for EVERY mapped kind: a knob may be blank (its
+        fallback is in effect) but never missing."""
+        hosts_checked = 0
+        by_host = {}
+        for path, _fields in self.manifest_entries():
+            host = path.split(os.sep + "keys" + os.sep)[0]
+            by_host.setdefault(host, []).append(path)
+        for host, paths in sorted(by_host.items()):
+            if not any(os.path.exists(p) for p in paths):
+                continue  # host not present on this machine / CI checkout
+            hosts_checked += 1
+            missing = [p for p in paths if not os.path.exists(p)]
+            self.assertEqual(missing, [],
+                             f"{host}: mapped kinds with no .key file (run keys.py init): "
+                             f"{missing}")
+        self.assertGreater(hosts_checked, 0, "expected at least one host present here")
 
     def test_git_ignores_every_secrets_path(self):
         for path, _fields in self.manifest_entries():

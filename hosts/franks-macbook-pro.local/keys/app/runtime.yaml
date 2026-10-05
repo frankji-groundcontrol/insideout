@@ -1,0 +1,39 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: app
+setting: runtime
+recorded: '2026-10-05'
+# Server runtime knobs (address, cookies, CORS, session TTLs). Config
+# companions: every one has a catalog default, so a blank .key means
+# "default in effect". Metadata only — values live in .secrets/<name>.key.
+secrets:
+  addr:
+    var: INSIDEOUT_ADDR
+    kind: value
+    note: listen address; blank = ':8080'
+    fallback: ':8080'
+  cookie-secure:
+    var: INSIDEOUT_COOKIE_SECURE
+    kind: value
+    note: secure session cookies; default on, exactly '0' turns off
+    fallback: 'on'
+  cors-origins:
+    var: INSIDEOUT_CORS_ORIGINS
+    kind: value
+    note: comma-separated extra CORS origins; blank = none
+    fallback: ''
+  dev-cors:
+    var: INSIDEOUT_DEV_CORS
+    kind: value
+    note: permissive dev CORS; off by default, exactly '1' turns on
+    fallback: 'off'
+  access-ttl:
+    var: INSIDEOUT_ACCESS_TTL
+    kind: value
+    note: access-token TTL (Go duration); blank = '15m'
+    fallback: 15m
+  refresh-ttl:
+    var: INSIDEOUT_REFRESH_TTL
+    kind: value
+    note: refresh-token TTL (Go duration); blank = '720h'
+    fallback: 720h

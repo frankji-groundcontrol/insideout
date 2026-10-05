@@ -8,3 +8,17 @@ secrets:
     var: INSIDEOUT_LLM_API_KEY
     kind: value
     note: exists only in Railway variables plus this store
+  llm-base-url:
+    var: INSIDEOUT_LLM_BASE_URL
+    kind: value
+    note: config companion; blank = catalog default (fallback). The
+      file exists so the kind is always findable
+  llm-model:
+    var: INSIDEOUT_LLM_MODEL
+    kind: value
+    note: config companion; blank = catalog default (fallback)
+  llm-schema:
+    var: INSIDEOUT_LLM_SCHEMA
+    kind: value
+    note: config companion; blank = catalog default (fallback);
+      messages (Anthropic wire) or responses (OpenAI wire)

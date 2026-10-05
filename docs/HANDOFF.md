@@ -7,14 +7,22 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. **Install/onboarding slice closed 2026-10-05** ([plan](plans/2026-10-05-installer-and-readme.md),
+1. **Key store never-absent rule closed 2026-10-06** ([plan](plans/2026-10-06-config-companion-keys.md),
+   [changelog](changelogs/2026-10-06-config-companion-keys.md)): every
+   env var mapped in the store (31 kinds — credentials, config
+   companions, runtime knobs with `fallback:` fields, compose ports)
+   has its `.key` file (blank = default in effect, never missing),
+   six-part doc under `docs/usage/keys/`, and per-key test — 46 tests
+   green on Buddy. `keys.py init` materializes placeholders on a new
+   host; remaining leg after this entry: MBP init + fill + suite.
+2. **Install/onboarding slice closed 2026-10-05** ([plan](plans/2026-10-05-installer-and-readme.md),
    [changelog](changelogs/2026-10-05-installer-and-readme.md)):
    `scripts/install.sh` puts both binaries in `~/.local/bin` (PATH
    appended idempotently), `scripts/mcp-config.sh` emits the
    cross-agent MCP registration, README rewritten for
    what/install/usage/further-reading. Scripts + docs only; nothing
    deployed. No follow-ups owed.
-2. **Buddy host key store closed 2026-10-05** ([plan](plans/2026-10-05-buddy-host-keys.md),
+3. **Buddy host key store closed 2026-10-05** ([plan](plans/2026-10-05-buddy-host-keys.md),
    [changelog](changelogs/2026-10-05-buddy-host-keys.md)): this machine
    is a second host in `hosts/`, 10/12 filled (+2 empty by design),
    every landed key live-probed. Per-key shape tests live at
@@ -26,7 +34,7 @@ Resume here. The authoritative multi-task board is
    MBP's agents_home store if it ever adopts `_FILE`. Environment
    note: `:8080` on this machine is held by an unrelated process —
    use `INSIDEOUT_ADDR` for local servers.
-3. **Both remediation rounds closed — operator actions remain.** The
+4. **Both remediation rounds closed — operator actions remain.** The
    review-1 five-wave plan closed 2026-10-04
    ([changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); review 2
    ([report](review/2026-10-04-multirole-2/README.md), 108 findings,
@@ -51,7 +59,7 @@ Resume here. The authoritative multi-task board is
    authority) are the next product work, each behind its own plan. Walk
    record:
    [`design-qa/2026-09-18-cobalt-backend-walk.md`](design-qa/2026-09-18-cobalt-backend-walk.md).
-4. The recorded frontier is closed 2026-08-22
+5. The recorded frontier is closed 2026-08-22
    ([frontier](changelogs/2026-08-22-frontier.md), plus
    [follow-ons](changelogs/2026-08-22-product-follow-ons.md) and
    [depth](changelogs/2026-08-22-depth-thread.md)): audience-view web
@@ -59,12 +67,12 @@ Resume here. The authoritative multi-task board is
    live on top of presence, the time-first roadmap, and the full
    parity loop (50 MCP tools). What remains of PRODUCT.md is genuinely
    new product judgment — the next interview's findings decide it.
-5. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
+6. CLI / MCP parity: Stage 3 — write verbs + agent vocabulary
    (`context`, `focus`, `checkpoint/report`, `propose`, `version`) as
    API routes first, then projected. `insideout-mcp` (50 tools) and the
    CLI are live.
    Plan: [`docs/plans/2026-08-21-cli-mcp-parity.md`](plans/2026-08-21-cli-mcp-parity.md).
-6. Restore Ink & Seal on Flutter: slice closed 2026-08-23 — canvas v1
+7. Restore Ink & Seal on Flutter: slice closed 2026-08-23 — canvas v1
    (bands + minimap), presence hardening (reconnect + a web SSE
    transport that actually streams,
    [changelog](changelogs/2026-08-23-canvas-presence-hardening.md)), and
@@ -72,7 +80,7 @@ Resume here. The authoritative multi-task board is
    ([changelog](changelogs/2026-08-23-web-font-flash.md)). Native fonts
    bundled and signed off 2026-08-20.
    Plan: [`docs/plans/2026-08-19-restore-ink-seal.md`](plans/2026-08-19-restore-ink-seal.md).
-7. Flutter Android release when an SDK exists
+8. Flutter Android release when an SDK exists
    ([`docs/plans/2026-08-17-flutter-client.md`](plans/2026-08-17-flutter-client.md)).
 
 ```bash

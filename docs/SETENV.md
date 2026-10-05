@@ -9,15 +9,18 @@ consumer of every variable see [usage/environment.md](usage/environment.md);
 for the day-to-day dev workflow see
 [usage/local-development.md](usage/local-development.md).
 
-`.env` stays the only file processes read. Its credential values have a
-second, out-of-git home since 2026-10-05: the host key store under
+`.env` stays the only file processes read. Its values have a second,
+out-of-git home since 2026-10-05: the host key store under
 [`hosts/`](../hosts/README.md) — one `keys/` folder per host with
 functional-module subfolders, tracked YAML manifests per module, and
 git-ignored `.secrets/*.key` values, managed with
-`python3 scripts/keys.py audit|fill` (never prints values). Rebuilding a
+`python3 scripts/keys.py init|audit|fill` (never prints values). Every
+mapped kind — credential or config companion — has a `.key` file; a
+blank file means a catalog/compose default is in effect (never-absent
+rule; `init` creates the empty placeholders). Rebuilding a
 fresh `.env` still goes through `env.sh init`; paste from the `.key` files.
 The six-part reference for that store (where / propagated / set / tested /
-used / install guide, one standalone file per credential kind) starts at
+used / install guide, one standalone file per kind) starts at
 [usage/keys/](usage/keys/README.md).
 
 ## Layout

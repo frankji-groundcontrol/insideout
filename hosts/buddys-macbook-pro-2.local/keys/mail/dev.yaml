@@ -1,0 +1,15 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: mail
+setting: dev
+recorded: '2026-10-05'
+# Dev-only mail body capture knob. Config companion: a catalog default
+# exists, so a blank .key means "default in effect". Metadata only —
+# values live in .secrets/<name>.key.
+secrets:
+  mail-dev-body:
+    var: INSIDEOUT_MAIL_DEV_BODY
+    kind: value
+    note: dump rendered mail bodies to server logs; dev only, exactly
+      '1' turns on
+    fallback: 'off'

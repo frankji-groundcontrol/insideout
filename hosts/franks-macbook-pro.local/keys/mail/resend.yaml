@@ -8,3 +8,13 @@ secrets:
     var: INSIDEOUT_MAIL_API_KEY
     kind: value
     note: Resend; rotate if transcripts ever leave this machine
+  mail-from:
+    var: INSIDEOUT_MAIL_FROM
+    kind: value
+    note: config companion; blank = catalog default (the sandbox
+      sender)
+  public-url:
+    var: INSIDEOUT_PUBLIC_URL
+    kind: value
+    note: config companion; blank = catalog default (localhost) —
+      fail-fast forbids that once the mail key is set

@@ -147,6 +147,31 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(keys.env_state("InsideOut <noreply@example.com>"), "set")
         self.assertEqual(keys.env_state("postgres://u:<password>@h/db"), "placeholder")
 
+    def test_init_creates_empty_placeholders_without_touching_filled(self):
+        self.build_default()
+        env = dict(os.environ, INSIDEOUT_KEYS_HOST="testhost")
+        r = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS, "keys.py"),
+             "init", "--root", str(self.root)],
+            capture_output=True, text=True, env=env,
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        a = self.root / "hosts/testhost/keys/db/.secrets/a-dsn.key"
+        b = self.root / "hosts/testhost/keys/db/.secrets/b-key.key"
+        self.assertEqual(a.read_text(), "value-of-a-dsn",
+                         "init must never touch a filled key")
+        self.assertTrue(b.exists(), "the never-absent rule: every mapped kind gets a file")
+        self.assertEqual(b.read_text(), "", "placeholder starts empty (fallback in effect)")
+        self.assertEqual(stat.S_IMODE(b.stat().st_mode), 0o600)
+        # idempotent
+        r2 = subprocess.run(
+            [sys.executable, os.path.join(SCRIPTS, "keys.py"),
+             "init", "--root", str(self.root)],
+            capture_output=True, text=True, env=env,
+        )
+        self.assertEqual(r2.returncode, 0, r2.stderr)
+        self.assertEqual(a.read_text(), "value-of-a-dsn")
+
     def test_cli_audit_end_to_end(self):
         self.build_default()
         r = subprocess.run(

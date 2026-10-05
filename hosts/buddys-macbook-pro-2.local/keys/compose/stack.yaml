@@ -1,0 +1,31 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: compose
+setting: stack
+recorded: '2026-10-05'
+# docker-compose interpolation knobs for the local dev stack. Config
+# companions: compose-file defaults exist (`:-` fallbacks), so a blank
+# .key means "compose default in effect". Metadata only — values live
+# in .secrets/<name>.key.
+secrets:
+  server-port:
+    var: SERVER_PORT
+    kind: value
+    note: host port for the server container; blank = '8080'
+    fallback: '8080'
+  postgres-port:
+    var: POSTGRES_PORT
+    kind: value
+    note: host port for the Postgres container; blank = '5442'
+    fallback: '5442'
+  postgres-superuser-password:
+    var: POSTGRES_SUPERUSER_PASSWORD
+    kind: value
+    note: bootstrap-only superuser password for local Postgres; local
+      dev default, not a production credential
+    fallback: local dev default (see docker-compose.yml)
+  client-port:
+    var: CLIENT_PORT
+    kind: value
+    note: host port for the web client container; blank = '5173'
+    fallback: '5173'

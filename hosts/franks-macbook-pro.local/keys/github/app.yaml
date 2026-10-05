@@ -15,3 +15,8 @@ secrets:
     var: INSIDEOUT_GH_CLIENT_SECRET
     kind: value
     note: no server reader yet (tracked for the invite-link flow)
+  gh-private-key-file:
+    var: INSIDEOUT_GH_PRIVATE_KEY_FILE
+    kind: path
+    note: pointer to the canonical PEM .key above; this host currently
+      uses the env-embedded lane (blank = that lane)
