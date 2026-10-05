@@ -251,14 +251,26 @@ func NewTemplateRoadmapPlanner() RoadmapPlanner { return &templateRoadmapPlanner
 func (templateRoadmapPlanner) PlanMVP(_ context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
 	root := &store.RoadmapPlanNode{Title: prdTitle, Description: "交付第一个可用版本"}
 	seen := make(map[string]bool, len(sections))
-	add := func(title, body string) {
-		title = strings.TrimSpace(title)
+	// Each branch is titled "key — first clause of the body" so an offline
+	// plan still carries the PRD's own words, not just its section keys;
+	// the full body rides the description. Empty sections are skipped —
+	// gaps are readiness's job, not the plan's.
+	add := func(key, body string) {
 		body = strings.TrimSpace(body)
-		if title == "" || body == "" || seen[title] {
+		if body == "" || seen[key] {
 			return
 		}
-		seen[title] = true
-		root.Children = append(root.Children, store.RoadmapPlanNode{Title: title, Description: body})
+		seen[key] = true
+		firstLine := body
+		if i := strings.IndexAny(body, "\n。；;"); i > 0 {
+			firstLine = body[:i]
+		}
+		if r := []rune(firstLine); len(r) > 60 {
+			firstLine = string(r[:60]) + "…"
+		}
+		root.Children = append(root.Children, store.RoadmapPlanNode{
+			Title: key + " — " + firstLine, Description: body,
+		})
 	}
 	for _, key := range store.PrdSectionKeys {
 		add(key, sections[key])

@@ -152,9 +152,16 @@ func TestAssembleTree_CycleSafe(t *testing.T) {
 		if root == nil || root.Title != "Workshop tracker" {
 			t.Fatalf("root = %+v, want title Workshop tracker", root)
 		}
-		for _, title := range []string{"goals", "requirements"} {
-			if findNode(root, title) == nil {
-				t.Fatalf("section %q missing from template tree %+v", title, root)
+	for _, key := range []string{"goals", "requirements"} {
+		found := false
+		for i := range root.Children {
+			if strings.HasPrefix(root.Children[i].Title, key+" — ") {
+				found = true
+				break
 			}
 		}
+		if !found {
+			t.Fatalf("section %q missing from template tree %+v", key, root)
+		}
 	}
+}

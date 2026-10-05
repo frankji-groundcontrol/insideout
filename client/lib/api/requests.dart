@@ -69,12 +69,15 @@ ApiCall patchProjectUpdate(String updateId, String content) {
 
 ApiCall deleteProjectUpdate(String updateId) => ApiCall('DELETE', '/updates/$updateId');
 
-ApiCall patchRoadmapNode(String nodeId, {String? title, String? description, String? status, String? deadline}) {
+ApiCall patchRoadmapNode(String nodeId,
+    {String? title, String? description, String? status, String? deadline, String? acceptance, String? ownerId}) {
   return ApiCall('PATCH', '/roadmap/$nodeId', {
     if (title != null) 'title': title,
     if (description != null) 'description': description,
     if (status != null) 'status': status,
     if (deadline != null) 'deadline': deadline,
+    if (acceptance != null) 'acceptance': acceptance,
+    if (ownerId != null) 'ownerId': ownerId,
   });
 }
 

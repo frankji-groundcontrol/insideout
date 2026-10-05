@@ -293,6 +293,9 @@ class RoadmapNode {
     this.parentId,
     this.creatorName,
     this.editorName,
+    this.acceptance = '',
+    this.ownerId,
+    this.ownerName = '',
   });
 
   final String id;
@@ -307,6 +310,12 @@ class RoadmapNode {
   final String? creatorName;
   final String? editorName;
 
+  /// The sentence that says what done means ('' when unset), and the one
+  /// human owner of a Now execution item.
+  final String acceptance;
+  final String? ownerId;
+  final String ownerName;
+
   factory RoadmapNode.fromJson(Map<String, dynamic> j) => RoadmapNode(
         id: j['id'] as String,
         projectId: j['projectId'] as String,
@@ -319,6 +328,9 @@ class RoadmapNode {
         pressure: j['pressure'] as String?,
         creatorName: j['creatorName'] as String?,
         editorName: j['editorName'] as String?,
+        acceptance: (j['acceptance'] as String?) ?? '',
+        ownerId: j['ownerId'] as String?,
+        ownerName: (j['ownerName'] as String?) ?? '',
       );
 }
 
@@ -463,7 +475,15 @@ class PresenceEntry {
 }
 
 class ProgressItem {
-  ProgressItem({required this.id, required this.title, required this.status, this.deadline, this.pressure});
+  ProgressItem({
+    required this.id,
+    required this.title,
+    required this.status,
+    this.deadline,
+    this.pressure,
+    this.acceptance = '',
+    this.ownerName = '',
+  });
 
   final String id;
   final String title;
@@ -471,27 +491,44 @@ class ProgressItem {
   final String? deadline;
   final String? pressure;
 
+  /// What done means for this item, and who owns it (empty when unset).
+  final String acceptance;
+  final String ownerName;
+
   factory ProgressItem.fromJson(Map<String, dynamic> j) => ProgressItem(
         id: j['id'] as String,
         title: j['title'] as String,
         status: j['status'] as String,
         deadline: j['deadline'] as String?,
         pressure: j['pressure'] as String?,
+        acceptance: (j['acceptance'] as String?) ?? '',
+        ownerName: (j['ownerName'] as String?) ?? '',
       );
 }
 
 class RoadmapProgress {
-  RoadmapProgress({required this.now, required this.needsDeadline, required this.next, required this.doneCount});
+  RoadmapProgress({
+    required this.now,
+    required this.needsDeadline,
+    required this.next,
+    required this.doneCount,
+    this.doneItems = const [],
+  });
 
   final List<ProgressItem> now;
   final List<ProgressItem> needsDeadline;
   final List<ProgressItem> next;
   final int doneCount;
 
+  /// The finished leaves with their acceptance and owner, so Done answers
+  /// what was finished and by whom, not only how many.
+  final List<ProgressItem> doneItems;
+
   factory RoadmapProgress.fromJson(Map<String, dynamic> j) => RoadmapProgress(
         now: ((j['now'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
         needsDeadline: ((j['needsDeadline'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
         next: ((j['next'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
         doneCount: (j['doneCount'] as num?)?.toInt() ?? 0,
+        doneItems: ((j['doneItems'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
       );
 }

@@ -11,4 +11,7 @@ var (
 	ErrConflict   = errors.New("conflict")
 	ErrForbidden  = errors.New("forbidden")
 	ErrValidation = errors.New("validation")
+	// ErrInvalidTransition: a roadmap node status move outside the legal
+	// machine (e.g. pending straight to done).
+	ErrInvalidTransition = errors.New("invalid status transition")
 )

@@ -58,6 +58,7 @@ class RoadmapBands extends StatelessWidget {
           label: l10n.t('roadmap.bandNow'),
           color: palette.surfaceSunken,
           nodes: now,
+          allNodes: nodes,
           projectId: projectId,
           onReload: onReload,
         ),
@@ -66,6 +67,7 @@ class RoadmapBands extends StatelessWidget {
           label: l10n.t('roadmap.bandNext'),
           color: palette.brandSubtle,
           nodes: next,
+          allNodes: nodes,
           projectId: projectId,
           onReload: onReload,
         ),
@@ -75,6 +77,7 @@ class RoadmapBands extends StatelessWidget {
           color: palette.brand,
           labelColor: palette.btnFg,
           nodes: later,
+          allNodes: nodes,
           projectId: projectId,
           onReload: onReload,
         ),
@@ -88,6 +91,7 @@ class _BandRow extends StatelessWidget {
     required this.label,
     required this.color,
     required this.nodes,
+    required this.allNodes,
     required this.projectId,
     required this.onReload,
     this.labelColor,
@@ -97,6 +101,10 @@ class _BandRow extends StatelessWidget {
   final Color color;
   final Color? labelColor;
   final List<RoadmapNode> nodes;
+
+  /// Every node of the project — child progress needs siblings, not just
+  /// this band's members.
+  final List<RoadmapNode> allNodes;
   final String projectId;
   final Future<void> Function() onReload;
 
@@ -110,7 +118,13 @@ class _BandRow extends StatelessWidget {
         for (final n in nodes)
           SizedBox(
             width: 240,
-            child: RoadmapNodeCard(projectId: projectId, node: n, onReload: onReload, compact: true),
+            child: RoadmapNodeCard(
+              projectId: projectId,
+              node: n,
+              onReload: onReload,
+              compact: true,
+              childProgress: RoadmapNodeCard.childDoneShare(allNodes, n),
+            ),
           ),
       ],
     );

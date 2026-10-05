@@ -41,10 +41,11 @@ type NodeIn struct {
 	Title    string
 	Status   string
 	// Deadline is the node's commitment. Nil means none.
-	// Acceptance is not here: insideout.roadmap_nodes has no acceptance
-	// column (see 20260722120000_roadmap_nodes.sql). Adding it needs a
-	// migration this slice does not write.
 	Deadline *time.Time
+	// Acceptance is the sentence that says what done means; OwnerName is
+	// the one human owner of a Now execution item (both empty when unset).
+	Acceptance string
+	OwnerName  string
 }
 
 // Assemble returns the mode-shaped context map. Modes select fields:
@@ -93,6 +94,12 @@ func nodeContext(n *NodeIn, in Inputs) map[string]any {
 		"id": n.ID, "title": n.Title, "status": n.Status,
 		"evidence": in.EvidenceCounts[n.ID],
 	}
+	if n.Acceptance != "" {
+		ctx["acceptance"] = n.Acceptance
+	}
+	if n.OwnerName != "" {
+		ctx["owner"] = n.OwnerName
+	}
 	putDeadline(ctx, n, in)
 	var siblings []string
 	for _, other := range in.Nodes {
@@ -112,6 +119,7 @@ func leavesContext(leaves []NodeIn, in Inputs) []map[string]any {
 		n := &leaves[i]
 		row := map[string]any{
 			"id": n.ID, "title": n.Title, "status": n.Status, "evidence": in.EvidenceCounts[n.ID],
+			"acceptance": n.Acceptance, "owner": n.OwnerName,
 		}
 		putDeadline(row, n, in)
 		out = append(out, row)

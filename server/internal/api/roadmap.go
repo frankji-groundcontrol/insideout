@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/roadmaptime"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -35,6 +37,11 @@ type roadmapNodeView struct {
 	Pressure    string  `json:"pressure,omitempty"`
 	CreatedAt   string  `json:"createdAt"`
 	UpdatedAt   string  `json:"updatedAt"`
+	// What done means for this node, and the one human owner of a Now
+	// execution item (empty/omitted when unset).
+	Acceptance string  `json:"acceptance"`
+	OwnerID    *string `json:"ownerId,omitempty"`
+	OwnerName  string  `json:"ownerName,omitempty"`
 	// B3 attribution (D10): display names, not ids — the card shows the last
 	// editor's initial plus a "created by X · edited by Y" tooltip. Omitted when
 	// unknown (pre-migration rows, or a removed author → ON DELETE SET NULL).
@@ -59,6 +66,12 @@ func roadmapNodeResponse(n store.RoadmapNode) roadmapNodeView {
 	}
 	v.CreatorName = n.CreatorName
 	v.EditorName = n.EditorName
+	v.Acceptance = n.Acceptance
+	if n.OwnerID != nil {
+		id := n.OwnerID.String()
+		v.OwnerID = &id
+	}
+	v.OwnerName = n.OwnerName
 	return v
 }
 
@@ -145,6 +158,12 @@ type updateRoadmapNodeRequest struct {
 	Status      *string `json:"status"`
 	// Deadline: RFC3339 sets it, "" clears it, absent leaves it.
 	Deadline *string `json:"deadline"`
+	// Acceptance: the sentence that says what done means. Empty string is a
+	// real write (unset); absent leaves it.
+	Acceptance *string `json:"acceptance"`
+	// OwnerID: a workspace member's user id. "" clears the owner; absent
+	// leaves it.
+	OwnerID *string `json:"ownerId"`
 }
 
 func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request) {
@@ -160,8 +179,8 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	}
 	// Partial update: at least one field must be present. Only present fields
 	// are validated and written; absent fields are left untouched (D1/D9).
-	if req.Title == nil && req.Description == nil && req.Status == nil && req.Deadline == nil {
-		httpx.WriteError(w, http.StatusBadRequest, "at least one of title, description, status, or deadline is required", "", nil)
+	if req.Title == nil && req.Description == nil && req.Status == nil && req.Deadline == nil && req.Acceptance == nil && req.OwnerID == nil {
+		httpx.WriteError(w, http.StatusBadRequest, "at least one of title, description, status, deadline, acceptance, or ownerId is required", "", nil)
 		return
 	}
 	if req.Title != nil {
@@ -176,7 +195,23 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	fields := store.RoadmapNodeFields{Title: req.Title, Description: req.Description, Status: req.Status}
+	fields := store.RoadmapNodeFields{Title: req.Title, Description: req.Description, Status: req.Status, Acceptance: req.Acceptance}
+	if req.Acceptance != nil {
+		*req.Acceptance = strings.TrimSpace(*req.Acceptance)
+		fields.Acceptance = req.Acceptance
+	}
+	if req.OwnerID != nil {
+		if *req.OwnerID == "" {
+			fields.ClearOwner = true
+		} else {
+			oid, err := uuid.Parse(*req.OwnerID)
+			if err != nil {
+				httpx.WriteError(w, http.StatusBadRequest, "ownerId must be a user id (or \"\" to clear)", "", nil)
+				return
+			}
+			fields.OwnerID = &oid
+		}
+	}
 	if req.Deadline != nil {
 		if *req.Deadline == "" {
 			fields.ClearDeadline = true
@@ -195,7 +230,11 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace, and an assigned owner must be too", "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrInvalidTransition) {
+		httpx.WriteError(w, http.StatusBadRequest, err.Error(), "", nil)
 		return
 	}
 	if err != nil {

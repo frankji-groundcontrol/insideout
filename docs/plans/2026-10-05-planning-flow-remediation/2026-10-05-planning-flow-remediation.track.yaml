@@ -8,8 +8,8 @@ main:
     owner on card) close in a gap phase with one migration tested on the
     disposable stack first
   owner: zcode-main
-  status: active
-  next_evidence: waves 1-2 committed and CI green; gap phase = migration +
-    4 slices + disposable-stack tests + deploy
+  status: completed
+  next_evidence: gap phase landed - migration + 6 recovered slices; suites
+    green on disposable stack; deployed + domain-verified
 side_tracks: []
 updated_at: '2026-10-05T09:30:00Z'

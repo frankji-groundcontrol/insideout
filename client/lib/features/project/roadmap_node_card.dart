@@ -15,6 +15,7 @@ class RoadmapNodeCard extends StatelessWidget {
     required this.node,
     required this.onReload,
     this.compact = false,
+    this.childProgress,
   });
 
   final String projectId;
@@ -22,15 +23,23 @@ class RoadmapNodeCard extends StatelessWidget {
   final Future<void> Function() onReload;
   final bool compact;
 
+  /// Share of this node's children that are done (0..1), or null for a
+  /// leaf — leaves show no bar rather than an invented percentage. Only a
+  /// caller holding the whole tree can compute it.
+  final double? childProgress;
+
+  /// done-children share of [n] within [all], or null when [n] is a leaf.
+  static double? childDoneShare(List<RoadmapNode> all, RoadmapNode n) {
+    final children = all.where((o) => o.parentId == n.id).toList();
+    if (children.isEmpty) return null;
+    final done = children.where((c) => c.status == 'done').length;
+    return done / children.length;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
-    final progress = switch (node.status) {
-      'done' => 1.0,
-      'in_progress' => 0.55,
-      _ => 0.0,
-    };
     return FieldCard(
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
       child: Column(
@@ -55,11 +64,26 @@ class RoadmapNodeCard extends StatelessWidget {
                 tone: node.pressure == 'overdue' || node.pressure == 'high_risk' ? ShadeTone.danger : ShadeTone.neutral,
               ),
             ),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(value: progress, minHeight: 4),
-          ),
+          if (node.acceptance.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                '${l10n.t('roadmap.acceptance')}: ${node.acceptance}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (node.ownerName.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text('${l10n.t('roadmap.owner')}: ${node.ownerName}', style: theme.textTheme.bodySmall),
+            ),
+          if (childProgress != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: LinearProgressIndicator(value: childProgress, minHeight: 4),
+            ),
+          ],
         ],
       ),
     );
@@ -131,8 +155,18 @@ class _NodeMenu extends StatelessWidget {
     final api = context.read<Session>().api;
     final title = TextEditingController(text: node.title);
     final desc = TextEditingController(text: node.description);
+    final acceptance = TextEditingController(text: node.acceptance);
     var status = node.status;
     String? deadline = node.deadline;
+    String? ownerId = node.ownerId;
+    List<WorkspaceMember> members = const [];
+    try {
+      final project = await api.getProject(projectId);
+      final wsId = project['workspaceId'] as String?;
+      if (wsId != null) members = await api.listMembers(wsId);
+    } on Exception {
+      // Owner picker stays empty; the rest of the edit still works.
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
@@ -143,6 +177,22 @@ class _NodeMenu extends StatelessWidget {
             children: [
               TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('roadmap.rootPlaceholder'))),
               TextField(controller: desc, decoration: InputDecoration(labelText: l10n.t('roadmap.descPlaceholder'))),
+              TextField(
+                key: const Key('acceptance-field'),
+                controller: acceptance,
+                decoration: InputDecoration(labelText: l10n.t('roadmap.acceptanceHint')),
+              ),
+              DropdownButton<String?>(
+                key: const Key('owner-picker'),
+                isExpanded: true,
+                value: members.any((m) => m.userId == ownerId) ? ownerId : null,
+                hint: Text(l10n.t('roadmap.ownerPick')),
+                items: [
+                  DropdownMenuItem(value: null, child: Text(l10n.t('roadmap.ownerNone'))),
+                  ...members.map((m) => DropdownMenuItem(value: m.userId, child: Text(m.username))),
+                ],
+                onChanged: (v) => setLocal(() => ownerId = v),
+              ),
               DropdownButton<String>(
                 value: status,
                 items: ['locked', 'pending', 'in_progress', 'done']
@@ -182,10 +232,19 @@ class _NodeMenu extends StatelessWidget {
       ),
     );
     if (ok == true && context.mounted) {
-      await api.updateRoadmapNode(node.id, title: title.text.trim(), description: desc.text, status: status, deadline: deadline == '' ? '' : deadline);
+      await api.updateRoadmapNode(
+        node.id,
+        title: title.text.trim(),
+        description: desc.text,
+        status: status,
+        deadline: deadline == '' ? '' : deadline,
+        acceptance: acceptance.text.trim(),
+        ownerId: ownerId ?? '',
+      );
       await onReload();
     }
     title.dispose();
     desc.dispose();
+    acceptance.dispose();
   }
 }

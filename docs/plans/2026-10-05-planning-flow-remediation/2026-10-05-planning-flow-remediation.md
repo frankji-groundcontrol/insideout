@@ -1,7 +1,7 @@
 # 2026-10-05 — Planning-flow remediation
 
-**Status:** In flight 2026-10-05 — waves 1–2 landed (36 of 40 slices);
-gap-closing phase open. **Source:** the multirole review of the planning
+**Status:** Finished 2026-10-05 — waves 1–2 plus the gap-closing phase
+(all 40 slices delivered or recovered). **Source:** the multirole review of the planning
 flow (run `dwfrun-473205b2`, scores and register in its artifacts) —
 its 40-slice fix/harden/improve/add list is this plan's checklist.
 
@@ -25,16 +25,18 @@ its 40-slice fix/harden/improve/add list is this plan's checklist.
 - [x] Suites green after two coordinator repairs (nil-store hook guard;
       RoadmapBands progress wiring) — go all pass, flutter 89/89.
 - [x] Records: changelog + index + this plan + board row.
-- [ ] **Gap-closing phase (4 specified slices)** — one migration adding
-      `roadmap_nodes.acceptance` (text, default '') and
-      `roadmap_nodes.owner_user_id` (uuid → users), then: API write/read
-      through the existing node-update path; agent context carries
-      acceptance + deadline + pressure; progress payload + card render
-      both; failing tests first against the disposable local stack.
-- [ ] Gap-phase verification: disposable-stack store tests green, both
-      suites green, deploy both services, verify via the domain.
-- [ ] Close: changelog for the gap phase, board row → Finished, track
-      completed.
+- [x] **Gap-closing phase** — audit found 6 more workflow-reported-done
+      slices that never landed (8, 9, 12, 23, 25, 26); all recovered.
+      Migration `20261005120000_roadmap_acceptance_owner.sql` adds
+      `acceptance` + `owner_user_id`; legal status transitions enforced;
+      fresh tree seeds one in_progress leaf with a deadline; Done lists
+      its leaves; childless cards show no bar, parents show their done
+      share; the workspace board and the Evidence screen render counts
+      and leaf evidence. Failing tests written first; every DB test
+      actually executed against the disposable compose stack this time.
+- [x] Gap-phase verification: disposable-stack suites green (Go all,
+      Flutter 94/94); deploy + domain verify below.
+- [x] Close: this update + changelog + board + track.
 
 ## Decisions
 
@@ -54,3 +56,9 @@ its 40-slice fix/harden/improve/add list is this plan's checklist.
 - 2026-10-05: `go test` (agent/api/roadmaptime/store) all pass;
   `flutter test` 89/89 — after the two post-run repairs recorded in the
   changelog.
+
+- 2026-10-05 (gap phase): the f8f16eb suites were green only because
+  DB-gated tests skipped without DATABASE_URL; first real run on the
+  disposable stack caught the ListRoadmap scan arity, the planner/e2e
+  disagreement (template now titles branches "key — first clause of
+  body"), and the never-executed e2e path. Lesson recorded in learning.

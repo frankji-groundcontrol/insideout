@@ -72,6 +72,7 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		}
 		in.Nodes = append(in.Nodes, agentcontext.NodeIn{
 			ID: n.ID.String(), ParentID: parent, Title: n.Title, Status: n.Status, Deadline: n.Deadline,
+			Acceptance: n.Acceptance, OwnerName: n.OwnerName,
 		})
 	}
 	if project.ID != uuid.Nil {

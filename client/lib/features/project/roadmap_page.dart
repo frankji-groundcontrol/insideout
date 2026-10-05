@@ -230,7 +230,12 @@ class _RoadmapPageState extends State<RoadmapPage> {
                           Expanded(
                             child: RoadmapCanvas(
                               nodes: snap.data!,
-                              tileBuilder: (node, _) => RoadmapNodeCard(projectId: widget.projectId, node: node, onReload: _reload),
+                              tileBuilder: (node, _) => RoadmapNodeCard(
+                                projectId: widget.projectId,
+                                node: node,
+                                onReload: _reload,
+                                childProgress: RoadmapNodeCard.childDoneShare(snap.data!, node),
+                              ),
                               controller: _canvasController,
                               onCursor: _sendCursor,
                               cursors: _cursors.values.toList(),

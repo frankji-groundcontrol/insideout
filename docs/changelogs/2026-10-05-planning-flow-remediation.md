@@ -68,3 +68,40 @@ gap-closing phase with their own migration.
   restart `app` so nginx re-resolves).
 - The four schema slices land next with one migration; nothing to do
   until then.
+
+## Gap-closing phase (same day)
+
+The four schema slices plus six the workflow had reported done but never
+landed (8 legal transitions, 9 fresh tree visible, 12 done list, 23 honest
+progress bar, 25 workspace counts, 26 leaf evidence) — found by auditing
+every reported test name against the tree.
+
+- **Migration** `20261005120000_roadmap_acceptance_owner.sql`:
+  `roadmap_nodes.acceptance text NOT NULL DEFAULT ''` and
+  `roadmap_nodes.owner_user_id uuid → users ON DELETE SET NULL`. Applied to
+  the disposable compose stack first; the deployment applies it on boot.
+- **Store:** acceptance/owner on the node, read and write through
+  `UpdateRoadmapNode` (owner must be a workspace member); status moves only
+  through the legal machine (`ErrInvalidTransition`); `ReplaceRoadmapTree`
+  seeds the first leaf in_progress with a 7-day deadline.
+- **Payload + context:** progress items and Done list entries carry
+  acceptance and owner; the implementation agent context carries
+  acceptance, deadline, pressure, and owner.
+- **Client:** the edit dialog writes the acceptance sentence and picks the
+  owner from workspace members; cards and progress items render both; Done
+  lists its leaves; childless cards show no progress bar and parents show
+  their done share; the workspace board shows each project's Now/Done
+  counts; the Evidence screen lists done leaves with their evidence rows.
+
+**Verification.** Failing tests first; for the first time the DB-gated
+suites actually executed — on the disposable compose stack
+(`docker compose --env-file` with throwaway credentials, never the shared
+production DSN). `go test ./...` green with both role URLs;
+`flutter test` 94/94. The first real run caught a scan-arity break in
+ListRoadmap and a planner/e2e disagreement (template branches now titled
+"key — first clause of the body") — both fixed here. Lesson: a green suite
+without `DATABASE_URL` set says nothing about the DB path; the earlier
+"f8f16eb suites green" was skip-green.
+
+**Operator.** Deploy `server` (the migration applies on boot), then restart
+`app`. Nothing else to configure.

@@ -563,13 +563,24 @@ class ApiClient {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<RoadmapNode> updateRoadmapNode(String nodeId, {String? title, String? description, String? status, String? deadline}) async {
-    final res = await _exec(req.patchRoadmapNode(nodeId, title: title, description: description, status: status, deadline: deadline));
+  Future<RoadmapNode> updateRoadmapNode(String nodeId,
+      {String? title, String? description, String? status, String? deadline, String? acceptance, String? ownerId}) async {
+    final res = await _exec(req.patchRoadmapNode(nodeId,
+        title: title, description: description, status: status, deadline: deadline, acceptance: acceptance, ownerId: ownerId));
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
   Future<void> cursor(String projectId, double x, double y) async {
     await _dio.post('/projects/$projectId/cursor', data: {'x': x, 'y': y});
+  }
+
+  /// A node's delivery evidence, newest first (kind/detail/sourceUrl).
+  Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async {
+    final res = await _dio.get('/roadmap/$nodeId/evidence');
+    final body = res.data;
+    return (body is List ? body : const [])
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
   }
 
   Future<RoadmapProgress> roadmapProgress(String projectId) async {

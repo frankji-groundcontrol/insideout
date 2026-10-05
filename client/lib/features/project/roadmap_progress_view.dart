@@ -43,6 +43,10 @@ class RoadmapProgressView extends StatelessWidget {
           _ProgressBand(label: l10n.t('roadmap.needsDeadline'), color: palette.brandSubtle, items: progress.needsDeadline),
           const SizedBox(height: 16),
           _ProgressBand(label: l10n.t('roadmap.bandNext'), color: palette.brand, labelColor: palette.btnFg, items: progress.next),
+          if (progress.doneItems.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _ProgressBand(label: l10n.t('roadmap.bandDone'), color: palette.surfaceSunken, items: progress.doneItems),
+          ],
         ],
       ],
     );
@@ -85,6 +89,21 @@ class _ProgressBand extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(item.title, style: theme.textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  if (item.ownerName.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text('${l10n.t('roadmap.owner')}: ${item.ownerName}', style: theme.textTheme.bodySmall),
+                    ),
+                  if (item.acceptance.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        '${l10n.t('roadmap.acceptance')}: ${item.acceptance}',
+                        style: theme.textTheme.bodySmall,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   const SizedBox(height: 6),
                   Row(
                     children: [

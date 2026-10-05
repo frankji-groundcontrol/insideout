@@ -23,6 +23,8 @@ class ProjectPage extends StatefulWidget {
 
 class _ProjectPageState extends State<ProjectPage> {
   late Future<Map<String, dynamic>> _future;
+  late Future<List<({String title, List<Map<String, dynamic>> rows})>>
+  _leafEvidence;
   final repo = TextEditingController();
 
   @override
@@ -30,6 +32,7 @@ class _ProjectPageState extends State<ProjectPage> {
     super.initState();
     context.read<LoopFocus>().rememberProject(widget.id);
     _future = _load();
+    _leafEvidence = _loadLeafEvidence();
   }
 
   Future<Map<String, dynamic>> _load() async {
@@ -48,9 +51,32 @@ class _ProjectPageState extends State<ProjectPage> {
     super.dispose();
   }
 
+  /// Evidence rows for the done leaves (cap 5), so the Evidence screen
+  /// shows what finished work actually produced.
+  Future<List<({String title, List<Map<String, dynamic>> rows})>>
+  _loadLeafEvidence() async {
+    final api = context.read<Session>().api;
+    try {
+      final nodes = await api.listRoadmap(widget.id);
+      final done = nodes
+          .where((n) => n.parentId != null && n.status == 'done')
+          .take(5)
+          .toList();
+      return Future.wait(
+        done.map((n) async {
+          final rows = await api.listNodeEvidence(n.id);
+          return (title: n.title, rows: rows);
+        }),
+      );
+    } on Exception {
+      return const [];
+    }
+  }
+
   Future<void> _reload() async {
     setState(() {
       _future = _load();
+      _leafEvidence = _loadLeafEvidence();
     });
   }
 
@@ -64,7 +90,9 @@ class _ProjectPageState extends State<ProjectPage> {
       if (accept) await _applyAcceptedItems(api, update);
     } on Object catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(localizedError(e, l10n.t))));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(localizedError(e, l10n.t))));
       }
       return;
     }
@@ -87,7 +115,11 @@ class _ProjectPageState extends State<ProjectPage> {
           }
         }
       }
-      final created = await api.createRoadmapNode(widget.id, item.title.trim(), parentId: parentId);
+      final created = await api.createRoadmapNode(
+        widget.id,
+        item.title.trim(),
+        parentId: parentId,
+      );
       nodes.add(created);
     }
   }
@@ -99,29 +131,50 @@ class _ProjectPageState extends State<ProjectPage> {
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
         final theme = Theme.of(context);
-        final title = snap.data?['title'] as String? ?? l10n.t('evidence.title');
+        final title =
+            snap.data?['title'] as String? ?? l10n.t('evidence.title');
         final updates = ((snap.data?['updates'] as List?) ?? const [])
             .map((e) => ProjectUpdate.fromJson(e as Map<String, dynamic>))
             .toList();
         return AppScaffold(
           body: !snap.hasData
-              ? Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator())
+              ? Center(
+                  child: snap.hasError
+                      ? Text(localizedError(snap.error!, l10n.t))
+                      : const CircularProgressIndicator(),
+                )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(28, 64, 28, 140),
                   children: [
-                    Text(l10n.t('evidence.title').toUpperCase(), style: theme.textTheme.displaySmall),
+                    Text(
+                      l10n.t('evidence.title').toUpperCase(),
+                      style: theme.textTheme.displaySmall,
+                    ),
                     const SizedBox(height: 8),
                     Text(title, style: theme.textTheme.headlineSmall),
                     const SizedBox(height: 8),
-                    Text(l10n.t('evidence.lead'), style: theme.textTheme.bodyLarge),
+                    Text(
+                      l10n.t('evidence.lead'),
+                      style: theme.textTheme.bodyLarge,
+                    ),
                     const SizedBox(height: 20),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        FilledButton(onPressed: () => context.go('/projects/${widget.id}/roadmap'), child: Text(l10n.t('roadmap.title'))),
-                        OutlinedButton(onPressed: () => _edit(snap.data!), child: Text(l10n.t('project.edit'))),
-                        OutlinedButton(onPressed: () => _delete(snap.data!), child: Text(l10n.t('project.delete'))),
+                        FilledButton(
+                          onPressed: () =>
+                              context.go('/projects/${widget.id}/roadmap'),
+                          child: Text(l10n.t('roadmap.title')),
+                        ),
+                        OutlinedButton(
+                          onPressed: () => _edit(snap.data!),
+                          child: Text(l10n.t('project.edit')),
+                        ),
+                        OutlinedButton(
+                          onPressed: () => _delete(snap.data!),
+                          child: Text(l10n.t('project.delete')),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -129,27 +182,48 @@ class _ProjectPageState extends State<ProjectPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(l10n.t('github.title'), style: theme.textTheme.titleMedium),
+                          Text(
+                            l10n.t('github.title'),
+                            style: theme.textTheme.titleMedium,
+                          ),
                           const SizedBox(height: 12),
-                          TextField(controller: repo, decoration: InputDecoration(labelText: l10n.t('github.placeholder'))),
+                          TextField(
+                            controller: repo,
+                            decoration: InputDecoration(
+                              labelText: l10n.t('github.placeholder'),
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           Wrap(
                             spacing: 8,
                             children: [
                               OutlinedButton(
                                 onPressed: () async {
-                                  await context.read<Session>().api.setRepo(widget.id, repo.text.trim());
+                                  await context.read<Session>().api.setRepo(
+                                    widget.id,
+                                    repo.text.trim(),
+                                  );
                                   await _reload();
                                 },
                                 child: Text(l10n.t('github.save')),
                               ),
                               OutlinedButton(
                                 onPressed: () async {
-                                  final result = await context.read<Session>().api.syncGithub(widget.id);
+                                  final result = await context
+                                      .read<Session>()
+                                      .api
+                                      .syncGithub(widget.id);
                                   if (context.mounted) {
-                                    final count = result['added'] ?? result['count'] ?? 0;
+                                    final count =
+                                        result['added'] ?? result['count'] ?? 0;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(l10n.t('github.synced', {'count': count}))),
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.t('github.synced', {
+                                            'count': count,
+                                          }),
+                                        ),
+                                      ),
                                     );
                                   }
                                 },
@@ -160,10 +234,67 @@ class _ProjectPageState extends State<ProjectPage> {
                         ],
                       ),
                     ),
+                    FutureBuilder<
+                      List<({String title, List<Map<String, dynamic>> rows})>
+                    >(
+                      future: _leafEvidence,
+                      builder: (context, esnap) {
+                        if (!esnap.hasData || esnap.data!.isEmpty)
+                          return const SizedBox.shrink();
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.t('evidence.doneTitle'),
+                              style: theme.textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 12),
+                            for (final leaf in esnap.data!)
+                              FieldCard(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      leaf.title,
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                    if (leaf.rows.isEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          l10n.t('evidence.noRows'),
+                                          style: theme.textTheme.bodySmall,
+                                        ),
+                                      ),
+                                    for (final row in leaf.rows)
+                                      Padding(
+                                        padding: const EdgeInsets.only(top: 4),
+                                        child: Text(
+                                          '${row['kind'] ?? ''}: ${row['detail'] ?? ''}',
+                                          style: theme.textTheme.bodySmall,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            const SizedBox(height: 20),
+                          ],
+                        );
+                      },
+                    ),
                     const SizedBox(height: 20),
-                    Text(l10n.t('project.updates'), style: theme.textTheme.titleLarge),
+                    Text(
+                      l10n.t('project.updates'),
+                      style: theme.textTheme.titleLarge,
+                    ),
                     const SizedBox(height: 12),
-                    if (updates.isEmpty) Text(l10n.t('github.empty'), style: theme.textTheme.bodyLarge),
+                    if (updates.isEmpty)
+                      Text(
+                        l10n.t('github.empty'),
+                        style: theme.textTheme.bodyLarge,
+                      ),
                     for (final u in updates) ...[
                       FieldCard(
                         child: Column(
@@ -181,48 +312,90 @@ class _ProjectPageState extends State<ProjectPage> {
                                   ? Wrap(
                                       spacing: 8,
                                       children: [
-                                        FilledButton(onPressed: () => _decide(u, accept: true), child: Text(l10n.t('proposal.accept'))),
-                                        OutlinedButton(onPressed: () => _decide(u, accept: false), child: Text(l10n.t('proposal.reject'))),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              _decide(u, accept: true),
+                                          child: Text(
+                                            l10n.t('proposal.accept'),
+                                          ),
+                                        ),
+                                        OutlinedButton(
+                                          onPressed: () =>
+                                              _decide(u, accept: false),
+                                          child: Text(
+                                            l10n.t('proposal.reject'),
+                                          ),
+                                        ),
                                       ],
                                     )
                                   : PopupMenuButton<String>(
-                                onSelected: (value) async {
-                                  final api = context.read<Session>().api;
-                                  if (value == 'edit') {
-                                    final content = TextEditingController(text: u.content);
-                                    final ok = await showDialog<bool>(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        title: Text(l10n.t('common.edit')),
-                                        content: TextField(controller: content),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-                                          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.save'))),
-                                        ],
-                                      ),
-                                    );
-                                    if (ok == true && mounted) {
-                                      await api.editUpdate(u.id, content.text.trim());
-                                      await _reload();
-                                    }
-                                    content.dispose();
-                                  } else if (value == 'delete') {
-                                    await api.removeUpdate(u.id);
-                                    await _reload();
-                                  }
-                                },
-                                itemBuilder: (_) => [
-                                  PopupMenuItem(value: 'edit', child: Text(l10n.t('common.edit'))),
-                                  PopupMenuItem(value: 'delete', child: Text(l10n.t('common.delete'))),
-                                ],
-                              ),
+                                      onSelected: (value) async {
+                                        final api = context.read<Session>().api;
+                                        if (value == 'edit') {
+                                          final content = TextEditingController(
+                                            text: u.content,
+                                          );
+                                          final ok = await showDialog<bool>(
+                                            context: context,
+                                            builder: (ctx) => AlertDialog(
+                                              title: Text(
+                                                l10n.t('common.edit'),
+                                              ),
+                                              content: TextField(
+                                                controller: content,
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(ctx, false),
+                                                  child: Text(
+                                                    l10n.t('common.cancel'),
+                                                  ),
+                                                ),
+                                                FilledButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(ctx, true),
+                                                  child: Text(
+                                                    l10n.t('common.save'),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                          if (ok == true && mounted) {
+                                            await api.editUpdate(
+                                              u.id,
+                                              content.text.trim(),
+                                            );
+                                            await _reload();
+                                          }
+                                          content.dispose();
+                                        } else if (value == 'delete') {
+                                          await api.removeUpdate(u.id);
+                                          await _reload();
+                                        }
+                                      },
+                                      itemBuilder: (_) => [
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Text(l10n.t('common.edit')),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Text(l10n.t('common.delete')),
+                                        ),
+                                      ],
+                                    ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
                     ],
-                    FilledButton(onPressed: _addUpdate, child: Text(l10n.t('project.addUpdate'))),
+                    FilledButton(
+                      onPressed: _addUpdate,
+                      child: Text(l10n.t('project.addUpdate')),
+                    ),
                   ],
                 ),
         );
@@ -232,8 +405,12 @@ class _ProjectPageState extends State<ProjectPage> {
 
   Future<void> _edit(Map<String, dynamic> data) async {
     final l10n = context.read<Appearance>();
-    final titleCtrl = TextEditingController(text: data['title'] as String? ?? '');
-    final descCtrl = TextEditingController(text: data['description'] as String? ?? '');
+    final titleCtrl = TextEditingController(
+      text: data['title'] as String? ?? '',
+    );
+    final descCtrl = TextEditingController(
+      text: data['description'] as String? ?? '',
+    );
     var status = (data['status'] as String?) ?? 'planning';
     final ok = await showDialog<bool>(
       context: context,
@@ -243,32 +420,49 @@ class _ProjectPageState extends State<ProjectPage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: titleCtrl, decoration: InputDecoration(labelText: l10n.t('project.namePlaceholder'))),
-              TextField(controller: descCtrl, decoration: InputDecoration(labelText: l10n.t('project.updatePlaceholder'))),
+              TextField(
+                controller: titleCtrl,
+                decoration: InputDecoration(
+                  labelText: l10n.t('project.namePlaceholder'),
+                ),
+              ),
+              TextField(
+                controller: descCtrl,
+                decoration: InputDecoration(
+                  labelText: l10n.t('project.updatePlaceholder'),
+                ),
+              ),
               DropdownButton<String>(
                 value: status,
-                items: const ['planning', 'active', 'paused', 'done', 'archived']
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
+                items:
+                    const ['planning', 'active', 'paused', 'done', 'archived']
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
                 onChanged: (v) => setLocal(() => status = v ?? status),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.save'))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.t('common.save')),
+            ),
           ],
         ),
       ),
     );
     if (ok == true && mounted) {
       await context.read<Session>().api.updateProject(
-            widget.id,
-            title: titleCtrl.text.trim(),
-            description: descCtrl.text,
-            status: status,
-            ownerId: data['ownerId'] as String?,
-          );
+        widget.id,
+        title: titleCtrl.text.trim(),
+        description: descCtrl.text,
+        status: status,
+        ownerId: data['ownerId'] as String?,
+      );
       await _reload();
     }
     titleCtrl.dispose();
@@ -282,8 +476,14 @@ class _ProjectPageState extends State<ProjectPage> {
       builder: (ctx) => AlertDialog(
         title: Text(l10n.t('project.deleteConfirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.delete'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('common.delete')),
+          ),
         ],
       ),
     );
@@ -308,21 +508,38 @@ class _ProjectPageState extends State<ProjectPage> {
             children: [
               DropdownButton<String>(
                 value: kind,
-                items: const ['progress', 'blocker', 'note'].map((k) => DropdownMenuItem(value: k, child: Text(k))).toList(),
+                items: const ['progress', 'blocker', 'note']
+                    .map((k) => DropdownMenuItem(value: k, child: Text(k)))
+                    .toList(),
                 onChanged: (v) => setLocal(() => kind = v ?? kind),
               ),
-              TextField(controller: content, decoration: InputDecoration(labelText: l10n.t('project.updatePlaceholder'))),
+              TextField(
+                controller: content,
+                decoration: InputDecoration(
+                  labelText: l10n.t('project.updatePlaceholder'),
+                ),
+              ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('project.post'))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.t('project.post')),
+            ),
           ],
         ),
       ),
     );
     if (ok == true && content.text.trim().isNotEmpty && mounted) {
-      await context.read<Session>().api.addUpdate(widget.id, kind, content.text.trim());
+      await context.read<Session>().api.addUpdate(
+        widget.id,
+        kind,
+        content.text.trim(),
+      );
       await _reload();
     }
     content.dispose();

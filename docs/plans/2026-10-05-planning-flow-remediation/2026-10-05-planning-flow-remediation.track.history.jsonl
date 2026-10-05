@@ -1,1 +1,2 @@
 {"ts": "2026-10-05T09:30:00Z", "event": "waves 1-2 done: 36/40 slices via dynamic workflow dwfrun-fe34e20a + two coordinator repairs (nil-store hook, bands progress wiring); go + flutter suites green; 4 schema slices specified for gap phase", "by": "zcode-main"}
+{"ts": "2026-10-05T12:46:52+00:00", "event": "gap phase done: audit recovered 6 phantom-done slices; migration + acceptance/owner through store/api/context/client; DB tests really ran on disposable stack; go + flutter suites green", "by": "zcode-main"}

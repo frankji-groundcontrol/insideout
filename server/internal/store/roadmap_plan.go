@@ -83,7 +83,24 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 			}
 			return nil
 		}
-		return insert(nil, root)
+		if err := insert(nil, root); err != nil {
+			return err
+		}
+		// Seed the first leaf in_progress with a deadline, so a freshly
+		// built tree shows on Progress instead of filtering out entirely
+		// (every new node would otherwise be pending + undeadlined).
+		if _, err := tx.Exec(ctx, `
+			UPDATE insideout.roadmap_nodes leaf
+			SET status = 'in_progress', deadline = now() + interval '7 days'
+			WHERE leaf.id = (
+				SELECT n.id FROM insideout.roadmap_nodes n
+				WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
+				ORDER BY n.created_at, n.position
+				LIMIT 1
+			)`, projectID); err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		return 0, err
