@@ -18,5 +18,6 @@ secrets:
   gh-private-key-file:
     var: INSIDEOUT_GH_PRIVATE_KEY_FILE
     kind: path
+    optional: true
     note: pointer to the canonical PEM .key above; this host currently
       uses the env-embedded lane (blank = that lane)

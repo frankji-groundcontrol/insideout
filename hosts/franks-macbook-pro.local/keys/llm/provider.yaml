@@ -11,14 +11,17 @@ secrets:
   llm-base-url:
     var: INSIDEOUT_LLM_BASE_URL
     kind: value
+    optional: true
     note: config companion; blank = catalog default (fallback). The
       file exists so the kind is always findable
   llm-model:
     var: INSIDEOUT_LLM_MODEL
     kind: value
+    optional: true
     note: config companion; blank = catalog default (fallback)
   llm-schema:
     var: INSIDEOUT_LLM_SCHEMA
     kind: value
+    optional: true
     note: config companion; blank = catalog default (fallback);
       messages (Anthropic wire) or responses (OpenAI wire)

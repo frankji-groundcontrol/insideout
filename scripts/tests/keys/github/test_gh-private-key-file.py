@@ -20,6 +20,8 @@ class TestGhPrivateKeyFile(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             target = _helpers.read_bytes(path).decode().strip()
+            if not target:
+                continue  # blank = env-embedded PEM lane on this host
             self.assertTrue(os.path.exists(target),
                             f"{host}: pointer target does not exist")
             self.assertTrue(target.endswith("gh-app-private-key.key"),
