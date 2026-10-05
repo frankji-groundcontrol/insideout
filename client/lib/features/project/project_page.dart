@@ -62,12 +62,13 @@ class _ProjectPageState extends State<ProjectPage> {
           .where((n) => n.parentId != null && n.status == 'done')
           .take(5)
           .toList();
-      return Future.wait(
+      final leaves = await Future.wait(
         done.map((n) async {
           final rows = await api.listNodeEvidence(n.id);
           return (title: n.title, rows: rows);
         }),
       );
+      return leaves;
     } on Exception {
       return const [];
     }

@@ -13,7 +13,7 @@ import 'package:provider/provider.dart';
 // generic edit/delete menu, which 403s for non-admins and never decides
 // anything anyway.
 class _FakeApi extends ApiClient {
-  _FakeApi(this.updates, {this.onDecide, this.nodes = const []}) : super(
+  _FakeApi(this.updates, {this.onDecide}) : super(
             baseUrl: 'http://127.0.0.1:9/api/v1',
             readAccess: () async => null,
             readRefresh: () async => null,
@@ -22,7 +22,7 @@ class _FakeApi extends ApiClient {
           );
 
   final List<Map<String, dynamic>> updates;
-  final List<RoadmapNode> nodes;
+  final List<RoadmapNode> nodes = const [];
   void Function(String id, bool accept)? onDecide;
   final List<({String projectId, String title, String? parentId})> created = [];
 
