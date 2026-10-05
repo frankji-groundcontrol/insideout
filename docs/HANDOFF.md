@@ -14,14 +14,18 @@ Resume here. The authoritative multi-task board is
    cross-agent MCP registration, README rewritten for
    what/install/usage/further-reading. Scripts + docs only; nothing
    deployed. No follow-ups owed.
-2. **Buddy host key store in flight** ([plan](plans/2026-10-05-buddy-host-keys.md),
+2. **Buddy host key store closed 2026-10-05** ([plan](plans/2026-10-05-buddy-host-keys.md),
    [changelog](changelogs/2026-10-05-buddy-host-keys.md)): this machine
-   is now a second host in `hosts/`; 4 of 12 landed (jwt + both Postgres
-   DSNs + LLM key; `supabase.yaml` renamed `postgres.yaml` on both
-   hosts). Remaining keys land key-by-key with the user — mail + the
-   GitHub keys copy next from MBP's agents_home store, then `.env`
-   mirrors; audit/fill with
-   `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local`.
+   is a second host in `hosts/`, 10/12 filled (+2 empty by design),
+   every landed key live-probed. Per-key shape tests live at
+   `scripts/tests/keys/` (mirror of the store; hyphen filenames load
+   via a `load_tests` hook; CI runs them) — they caught the escaped-PEM
+   defect: the copied key was `\n`-escaped single-line, the `_FILE`
+   consumer reads raw, boot silently warned "guide loads
+   unauthenticated"; normalized, warning gone. Same trap noted for
+   MBP's agents_home store if it ever adopts `_FILE`. Environment
+   note: `:8080` on this machine is held by an unrelated process —
+   use `INSIDEOUT_ADDR` for local servers.
 3. **Both remediation rounds closed — operator actions remain.** The
    review-1 five-wave plan closed 2026-10-04
    ([changelog](changelogs/2026-10-04-remediation-wave-3-4.md)); review 2

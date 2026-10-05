@@ -1,11 +1,12 @@
-"""Unit tests for scripts/keys.py — the module-grouped key store audit/fill bridge.
+"""Unit tests for scripts/keys.py — the module-grouped key store audit/fill
+bridge (tool behaviors: manifest parsing, no-value-leak, empty-only fills,
+multi-host scoping).
 
-Fixtures build a miniature hosts/ tree in a temp dir using the same shape
+Fixtures build miniature hosts/ trees in a temp dir using the same shape
 the real tree uses (hosts/<host>/keys/<module>/ holding one or more YAML
-manifests plus a shared .secrets/ dir); assertions pin the manifest
-parsing (block and flow entry styles, multiple yamls per module), the
-no-value-leak guarantee, empty-only fills, 0600 modes, and the
-unmapped-secret report.
+manifests plus a shared .secrets/ dir). Organized under scripts/tests/keys/
+mirroring the store; the per-key suites live in the module folders beside
+this file; store-wide invariants live in test_store.py.
 """
 
 import io
@@ -18,7 +19,12 @@ import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+SCRIPTS = os.path.dirname(os.path.dirname(HERE))
+for p in (HERE, SCRIPTS):
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 import keys  # noqa: E402
 
 BLOCK_MANIFEST = """# Metadata only — values live in .secrets/<name>.key, never here.
@@ -137,12 +143,68 @@ class TestKeys(unittest.TestCase):
     def test_cli_audit_end_to_end(self):
         self.build_default()
         r = subprocess.run(
-            [sys.executable, os.path.join(os.path.dirname(__file__), "keys.py"),
+            [sys.executable, os.path.join(SCRIPTS, "keys.py"),
              "audit", "--root", str(self.root)],
             capture_output=True, text=True,
         )
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertIn("2 key kinds audited", r.stdout)
+
+
+def make_host(root: Path, host: str, module: str, setting: str,
+              name: str, env: str) -> None:
+    """A one-key host tree: manifest + a filled .key, for multi-host tests."""
+    mod = root / "hosts" / host / "keys" / module
+    (mod / ".secrets").mkdir(parents=True, mode=0o700)
+    (root / "hosts" / host / "host.yml").write_text(f"name: {host}\n")
+    (mod / f"{setting}.yaml").write_text(
+        FLOW_MANIFEST.format(module=module, setting=setting,
+                             b_name=name, b_env=env))
+    k = mod / ".secrets" / f"{name}.key"
+    fd = os.open(k, os.O_WRONLY | os.O_CREAT, 0o600)
+    with os.fdopen(fd, "w") as fh:
+        fh.write(f"value-of-{name}")
+    os.chmod(k, 0o600)
+
+
+class TestMultiHostScoping(unittest.TestCase):
+    """With more than one host, fill must be scoped and refuse to guess."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        self.addCleanup(self.tmp.cleanup)
+        self.keys_py = os.path.join(SCRIPTS, "keys.py")
+        make_host(self.root, "hosta", "db", "main", "a-dsn", "A_DSN")
+        make_host(self.root, "hostb", "db", "main", "b-dsn", "B_DSN")
+        (self.root / "env").write_text("A_DSN=new-a\nB_DSN=new-b\n")
+        # Both keys start filled; a scoped fill must keep them (empty-only)
+        # while proving the *other* host's tree is never even a candidate.
+
+    def test_cli_refuses_without_scoping(self):
+        r = subprocess.run(
+            [sys.executable, self.keys_py, "fill", "--root", str(self.root),
+             str(self.root / "env")],
+            capture_output=True, text=True,
+        )
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("INSIDEOUT_KEYS_HOST", r.stderr)
+
+    def test_scoped_fill_touches_only_its_host(self):
+        env = dict(os.environ, INSIDEOUT_KEYS_HOST="hosta")
+        r = subprocess.run(
+            [sys.executable, self.keys_py, "fill", "--root", str(self.root),
+             str(self.root / "env")],
+            capture_output=True, text=True, env=env,
+        )
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("hosts/hosta/keys", r.stdout)
+        self.assertNotIn("hosts/hostb/keys", r.stdout,
+                         "a scoped fill must never name another host's paths")
+        a = (self.root / "hosts/hosta/keys/db/.secrets/a-dsn.key").read_text()
+        b = (self.root / "hosts/hostb/keys/db/.secrets/b-dsn.key").read_text()
+        self.assertEqual(a, "value-of-a-dsn", "filled keys are kept, not rewritten")
+        self.assertEqual(b, "value-of-b-dsn", "the other host's values are untouched")
 
 
 if __name__ == "__main__":

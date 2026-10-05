@@ -103,5 +103,7 @@ jobs:
         working-directory: scripts
     steps:
       - uses: actions/checkout@v4
-      - name: unittest both env batteries
-        run: python3 -m unittest test_env_catalog test_env_writes test_keys
+      - name: unittest env batteries + key suites
+        run: |
+          python3 -m unittest test_env_catalog test_env_writes
+          python3 -m unittest discover -s tests/keys -t . -p "test_*.py" -v

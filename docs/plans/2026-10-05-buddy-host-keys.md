@@ -57,15 +57,36 @@ Nothing deploys.
       absent (the listen bind on :8080 failed — that port is held by
       an unrelated `api` process on this machine; use `INSIDEOUT_ADDR`
       to run a local server here).
-- [ ] mail: Resend key (missing locally — copy from MBP's agents_home
-      store when user calls it).
-- [ ] github: app id + PEM + client secret + webhook secret (missing
-      locally — copy from MBP's agents_home store).
-- [ ] database/local-stack: two compose passwords (mint when the
-      disposable stack is next used).
-- [ ] github/tokens: optional PAT (stays empty by default).
-- [ ] Close out: keys/README.md state table final, changelog, HANDOFF,
-      commit + push + MBP fast-forward.
+- [x] mail: Resend key — copied from MBP's store; `.env` mirrored
+      (with `INSIDEOUT_MAIL_FROM` + `INSIDEOUT_PUBLIC_URL` companions);
+      magic-link request accepted (200).
+- [x] github: app id + PEM + client secret + webhook secret — copied;
+      `.env` mirrored; PEM consumed via `INSIDEOUT_GH_PRIVATE_KEY_FILE`.
+- [x] database/local-stack: postgres-app-password copied;
+      postgres-owner-password empty by design (mint on next stack use).
+- [x] github/tokens: optional PAT — empty by design.
+- [x] Testing as unit suites, organized like the keys (user call):
+      `scripts/tests/keys/` — module folders, one file per key named by
+      key name (hyphens kept; a `load_tests` hook loads them since
+      Python can't import hyphenated modules), plus `test_tool.py`
+      (keys.py behaviors incl. multi-host scoping) and `test_store.py`
+      (real-tree invariants, CI-safe). 24 tests; CI env-suites job
+      updated to run the discovery.
+- [x] Real defects the tests caught and fixed: (1) the copied PEM was
+      the `\n`-escaped single-line form — the `_FILE` consumer reads
+      raw, so boot warned "private key unusable — guide loads will be
+      unauthenticated"; normalized to true multi-line (1702→1675 B),
+      warning gone on re-boot. (2) DSNs are pooler-form
+      (`insideout_app.<project-ref>` userinfo) — tests now encode that
+      shape instead of assuming bare-role DSNs.
+- [x] Live round-trips completed: `/me` no-token → 401; garbage bearer
+      → 401 (JWT verify path); bad login → 401 (app-DSN query under
+      `insideout_app`); migrate → up-to-date (owner DSN); boot without
+      offline-coach notice (LLM). Port note: `:8080` is held by an
+      unrelated process on this machine — probes used `:8099`.
+- [x] Close out: state tables final, changelog slices 9–10, HANDOFF,
+      commit + push + MBP fast-forward (+ suite run on MBP as the
+      cross-host proof).
 
 ## Decisions
 

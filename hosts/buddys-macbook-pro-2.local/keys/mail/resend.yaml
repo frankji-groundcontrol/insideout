@@ -1,0 +1,15 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: mail
+setting: resend
+recorded: '2026-10-05'
+# Resend key for transactional auth email. Empty selects mail dev mode
+# (logged, not sent). Setting a key requires INSIDEOUT_PUBLIC_URL so
+# emailed links never point at the localhost default. Metadata only —
+# values live in .secrets/<name>.key, never in this file.
+secrets:
+  mail-api-key:
+    var: INSIDEOUT_MAIL_API_KEY
+    kind: value
+    note: copied 2026-10-05 from the primary host's store; rotate if
+      transcripts ever leave either machine.

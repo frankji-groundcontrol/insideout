@@ -1,0 +1,7 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: github
+setting: webhooks
+recorded: '2026-10-05'
+secrets:
+  gh-webhook-secret: { var: INSIDEOUT_GH_WEBHOOK_SECRET, kind: value }

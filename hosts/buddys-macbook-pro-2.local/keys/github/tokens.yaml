@@ -1,0 +1,13 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: github
+setting: tokens
+recorded: '2026-10-05'
+# Operator-minted personal access token for review tooling; not needed
+# to run the app — empty by design on every host so far.
+secrets:
+  github-token:
+    var: GITHUB_TOKEN
+    kind: value
+    optional: true
+    operator_fills: true

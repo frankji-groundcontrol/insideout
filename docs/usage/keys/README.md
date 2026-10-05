@@ -48,10 +48,14 @@ failure signals, is the practice record
 | jwt-secret | filled | filled |
 | database-app-dsn / database-owner-dsn | filled | filled |
 | llm-api-key | filled | filled |
-| mail-api-key | filled | pending |
-| gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | pending |
-| postgres-app-password | filled | pending |
-| postgres-owner-password / github-token | empty by design | pending |
+| mail-api-key | filled | filled |
+| gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | filled (PEM normalized to real multi-line for the `_FILE` consumer) |
+| postgres-app-password | filled | filled |
+| postgres-owner-password / github-token | empty by design | empty by design |
+
+Per-key shape tests mirroring this tree:
+`scripts/tests/keys/` (run `python3 -m unittest discover -s tests/keys
+-t .` from `scripts/`; CI runs it in the env-suites job).
 
 The variable-level contract for every env var (credential or not) is
 [environment.md](../environment.md); the first-time path is

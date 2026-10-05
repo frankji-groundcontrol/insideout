@@ -154,6 +154,55 @@ deployed. Plan:
   server here needs `INSIDEOUT_ADDR` on a free port.
 - State tables updated (Buddy keys README, usage keys README).
 
+## What changed (slices 9–10 — store completed + per-key test suite)
+
+**Slice 9 — the remaining keys landed on Buddy (10/12; +2 by design):**
+mail, gh-app-id, gh-app-private-key, gh-client-secret, gh-webhook-secret,
+postgres-app-password copied from MBP's agents_home store via scp
+(values never displayed); manifests created (mail/resend, github/app,
+github/webhooks, github/tokens, database/local-stack); `.env` mirrored
+no-echo from MBP for the six values + `INSIDEOUT_MAIL_FROM` +
+`INSIDEOUT_PUBLIC_URL` + `INSIDEOUT_GH_PRIVATE_KEY_FILE` (PEM consumed
+from the store, not embedded). `env.sh check` green; scoped audit 10
+filled / 2 by-design empty.
+
+**Slice 10 — the testing, as unit suites organized like the keys**
+(user call): `scripts/tests/keys/` mirrors the store and the usage
+docs — module folders, one file per key, filename = key name
+(hyphens included; a `load_tests` hook in the package `__init__`
+loads them by path because Python cannot import hyphenated module
+names — and replaces plain discovery, which silently skips them).
+`test_tool.py` (keys.py behaviors + multi-host scoping) and
+`test_store.py` (real-tree invariants: 0600/0700, non-empty unless
+operator-filled, git-blindness, host.yml naming; CI-safe) sit at the
+root with a README index. `scripts/test_keys.py` retired; CI
+env-suites now discovers the new tree. 24 tests, 22 pass + 2 by-design
+skips on Buddy.
+
+**Real defects the tests surfaced (and their fixes):**
+- The copied PEM was the `\n`-escaped single-line env form.
+  `github.LoadPrivateKey` reads the `_FILE` variant raw, so boot only
+  **warned** — "private key unusable — guide loads will be
+  unauthenticated" — a silent degradation my earlier boot checks
+  counted as a pass. Normalized the `.key` to true multi-line PEM
+  (1702→1675 B); re-boot shows the warning gone. Note for the other
+  repo: MBP's agents_home store still holds the escaped form — fine
+  while MBP embeds the env var, normalize before ever pointing
+  `INSIDEOUT_GH_PRIVATE_KEY_FILE` at it.
+- The DSNs are pooler-form (`insideout_app.<project-ref>` userinfo,
+  `pgbouncer=true` setups) — the per-key tests now encode that shape
+  instead of assuming bare-role DSNs.
+
+**Live round-trips completed (part 4 of every landed key):**
+`/api/v1/me` no-token → 401; garbage bearer → 401 (JWT verification
+path); bad login → 401 (app-DSN query under `insideout_app` against
+the real database); `migrate` → up to date (owner DSN); boot without
+the offline-coach notice (LLM); magic-link request → 200 (mail key
+accepted; inbox delivery remains the human check); boot without the
+private-key warning (GitHub trio). Probes ran on `:8099` — `:8080` is
+held by an unrelated process on this machine (`INSIDEOUT_ADDR` to run
+a local server here).
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the

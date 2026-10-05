@@ -58,6 +58,10 @@ per setup.
    `docs/usage/keys/<module>/<key-name>.md` (migrate for the owner
    DSN; no offline-coach notice for the LLM key; a magic-link request
    for mail; signed deliveries answered 200 for the webhook secret).
+   The shape/placement layer of that probe is automated: `cd scripts
+   && python3 -m unittest discover -s tests/keys -t .` runs the
+   per-key suites (one file per key, mirroring the store — see
+   `scripts/tests/keys/README.md`).
 7. **Records.** If the key kind is new: create its per-key doc
    (six parts, filename = key name, module folder), add its row to the
    `docs/usage/keys/README.md` table, and add the SETENV-step

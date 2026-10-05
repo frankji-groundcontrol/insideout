@@ -1,0 +1,18 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: github
+setting: app
+recorded: '2026-10-05'
+# The GitHub App installation: identity + authenticating material.
+# The PEM is consumed via INSIDEOUT_GH_PRIVATE_KEY_FILE pointing at
+# the .key itself — never a single-line env-file bridge. Metadata only.
+secrets:
+  gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value }
+  gh-app-private-key:
+    var: INSIDEOUT_GH_PRIVATE_KEY
+    kind: value
+    note: multi-line PEM (1702 B); read via INSIDEOUT_GH_PRIVATE_KEY_FILE
+  gh-client-secret:
+    var: INSIDEOUT_GH_CLIENT_SECRET
+    kind: value
+    note: no server reader yet (tracked for the invite-link flow)
