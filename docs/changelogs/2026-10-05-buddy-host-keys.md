@@ -120,6 +120,22 @@ deployed. Plan:
 - Verification: relative-link check across all 12 affected files —
   0 broken links.
 
+## What changed (slice 7 — filenames = key names, one file per key)
+
+- **12 per-key files, filename = the key name** (user call, matching
+  the `.key` files exactly): singles renamed (`auth/jwt-secret.md`,
+  `github/gh-webhook-secret.md`, `github/github-token.md`,
+  `llm/llm-api-key.md`, `mail/mail-api-key.md`); the three multi-key
+  manifest docs split — `database/postgres.md` →
+  `database-app-dsn.md` + `database-owner-dsn.md`,
+  `local-stack.md` → the two password files, `github/app.md` →
+  `gh-app-id.md` + `gh-app-private-key.md` + `gh-client-secret.md` —
+  each standalone with a six-part structure and a sibling cross-link.
+- keys/README table now one row per key (module | file | env var |
+  manifest); SETENV Step 1/2/3/5 down-links retargeted to the
+  per-key files.
+- Verification: relative-link check across 16 files — 0 broken.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the

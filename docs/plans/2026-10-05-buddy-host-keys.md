@@ -38,6 +38,12 @@ Nothing deploys.
       the detail" with peer links only; SETENV.md Steps 1/2/3/5 link
       down into the per-key files. Link-check over all affected files:
       0 broken.
+- [x] Filenames = key names, one file per key (user call): 12 files
+      named exactly like their `.key` files (`jwt-secret.md`,
+      `database-app-dsn.md`, … `gh-app-private-key.md`, …); the three
+      multi-key manifest docs split into per-key files with sibling
+      cross-links; README table 12 rows; SETENV Step 1/2/3/5 links
+      retargeted. Link-check: 16 files, 0 broken.
 - [x] `keys/auth/jwt.yaml` manifest; value filled from the local `.env`
       via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
       scripts/keys.py fill` (empty-only, 0600, never printed). User

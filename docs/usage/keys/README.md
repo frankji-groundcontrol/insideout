@@ -4,21 +4,25 @@ Every credential kind gets a standalone doc with the same six parts:
 **where** the `.key` file is, **how it is propagated**, **how to set
 it**, **how to test it**, **how it is used**, and **where the
 installation guide** covers it (the convention agents_home's
-`docs/usage/keys/` established). The layout mirrors the store exactly:
-one module folder per
-[`hosts/<host>/keys/`](../../../hosts/README.md) module, one file per
-manifest, filename = the manifest's `setting`.
+`docs/usage/keys/` established). The filename is the **key name** —
+exactly like the `.key` file it documents — inside the module folder
+of its manifest under
+[`hosts/<host>/keys/`](../../../hosts/README.md).
 
-| Module | File | Keys (env var) |
-| --- | --- | --- |
-| [auth/](auth/) | [jwt.md](auth/jwt.md) | jwt-secret (`INSIDEOUT_JWT_SECRET`) |
-| [database/](database/) | [postgres.md](database/postgres.md) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) |
-| [database/](database/) | [local-stack.md](database/local-stack.md) | postgres-app-password, postgres-owner-password (`POSTGRES_*_PASSWORD`) |
-| [github/](github/) | [app.md](github/app.md) | gh-app-id, gh-app-private-key, gh-client-secret (`INSIDEOUT_GH_*`) |
-| [github/](github/) | [webhooks.md](github/webhooks.md) | gh-webhook-secret (`INSIDEOUT_GH_WEBHOOK_SECRET`) |
-| [github/](github/) | [tokens.md](github/tokens.md) | github-token (`GITHUB_TOKEN`, optional) |
-| [llm/](llm/) | [provider.md](llm/provider.md) | llm-api-key (`INSIDEOUT_LLM_API_KEY`) |
-| [mail/](mail/) | [resend.md](mail/resend.md) | mail-api-key (`INSIDEOUT_MAIL_API_KEY`) |
+| Module | File | Env var | Manifest |
+| --- | --- | --- | --- |
+| [auth/](auth/) | [jwt-secret.md](auth/jwt-secret.md) | `INSIDEOUT_JWT_SECRET` | `auth/jwt.yaml` |
+| [database/](database/) | [database-app-dsn.md](database/database-app-dsn.md) | `DATABASE_URL` | `database/postgres.yaml` |
+| [database/](database/) | [database-owner-dsn.md](database/database-owner-dsn.md) | `DATABASE_OWNER_URL` | `database/postgres.yaml` |
+| [database/](database/) | [postgres-app-password.md](database/postgres-app-password.md) | `POSTGRES_APP_PASSWORD` | `database/local-stack.yaml` |
+| [database/](database/) | [postgres-owner-password.md](database/postgres-owner-password.md) | `POSTGRES_OWNER_PASSWORD` | `database/local-stack.yaml` |
+| [github/](github/) | [gh-app-id.md](github/gh-app-id.md) | `INSIDEOUT_GH_APP_ID` | `github/app.yaml` |
+| [github/](github/) | [gh-app-private-key.md](github/gh-app-private-key.md) | `INSIDEOUT_GH_PRIVATE_KEY` | `github/app.yaml` |
+| [github/](github/) | [gh-client-secret.md](github/gh-client-secret.md) | `INSIDEOUT_GH_CLIENT_SECRET` | `github/app.yaml` |
+| [github/](github/) | [gh-webhook-secret.md](github/gh-webhook-secret.md) | `INSIDEOUT_GH_WEBHOOK_SECRET` | `github/webhooks.yaml` |
+| [github/](github/) | [github-token.md](github/github-token.md) | `GITHUB_TOKEN` (optional) | `github/tokens.yaml` |
+| [llm/](llm/) | [llm-api-key.md](llm/llm-api-key.md) | `INSIDEOUT_LLM_API_KEY` | `llm/provider.yaml` |
+| [mail/](mail/) | [mail-api-key.md](mail/mail-api-key.md) | `INSIDEOUT_MAIL_API_KEY` | `mail/resend.yaml` |
 
 [SETENV.md](../../SETENV.md) — the `.env` operating manual — links
 into these files from its per-key steps; the detail lives here, not
@@ -39,10 +43,10 @@ failure signals, is the practice record
 
 ## Per-host state (2026-10-05)
 
-| Kind | franks-macbook-pro | buddys-macbook-pro-2 |
+| Key | franks-macbook-pro | buddys-macbook-pro-2 |
 | --- | --- | --- |
 | jwt-secret | filled | filled |
-| database-app-dsn / -owner-dsn | filled | filled |
+| database-app-dsn / database-owner-dsn | filled | filled |
 | llm-api-key | filled | pending |
 | mail-api-key | filled | pending |
 | gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | pending |
