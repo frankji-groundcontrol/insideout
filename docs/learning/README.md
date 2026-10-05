@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-05 | [A boot-time warning is not a pass — grep for silent degradations](2026-10-05-boot-warning-is-not-a-pass.md) | [buddy-host-keys changelog](../changelogs/2026-10-05-buddy-host-keys.md) |
 | 2026-10-05 | [Port a reference scheme structurally, not by approximation](2026-10-05-port-reference-schemes-structurally.md) | [buddy-host-keys changelog](../changelogs/2026-10-05-buddy-host-keys.md) |
 | 2026-10-04 | [Go test census: `=== RUN` lines double-count subtests](2026-10-04-go-test-census-counts-subtests.md) | [multirole review critic §4](../review/2026-10-04-multirole/30-completeness-critic.md) |
 | 2026-07-21 | [RLS + row locking: EvalPlanQual silently drops rows](2026-07-21-rls-row-locking-evalplanqual.md) | [BUG-007](../issues/2026-07-20-bug-007-rls-against-real-postgres.md) |
