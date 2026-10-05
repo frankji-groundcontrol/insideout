@@ -39,6 +39,11 @@ per setup.
    `env=set` without revealing it. PEM exception: keep the multi-line
    key in the `.key` file and point
    `INSIDEOUT_GH_PRIVATE_KEY_FILE` at it — no single-line env bridge.
+   **A copy between consumers is a transformation, not a byte copy:**
+   the PEM's env form is `\n`-escaped single-line, the `_FILE`
+   consumer reads the file raw — the store keeps the canonical
+   multi-line form, and deriving the env form is an escape. Same
+   discipline for any dual-form value.
 4. **Scoped fill.**
    `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py fill` —
    copies env values into **empty-only** `.key` files (dir 0700, file
@@ -50,18 +55,24 @@ per setup.
      kind (e.g. 64 B for `openssl rand -hex 32`).
    - Isolation: the *other* host's scoped audit is unchanged — fill
      cannot cross hosts.
+   - Suite: `cd scripts && python3 -m unittest discover -s tests/keys
+     -t .` — per-key shape/placement plus store invariants green
+     (hosts without a `.secrets/` skip cleanly). After syncing another
+     host, run it **there** too: the cross-host run is what catches
+     per-host state (escaped storage forms, 0755 dirs, wrong-case
+     folders on case-insensitive filesystems).
    - `git status` shows only the tracked manifest/README files — a
      `.secrets` path appearing there means `.gitignore` is broken;
      stop before committing.
 6. **Test the key itself.** `./scripts/env.sh check` (whole `.env`,
    masked), then the key's probe from part 4 of its doc
    `docs/usage/keys/<module>/<key-name>.md` (migrate for the owner
-   DSN; no offline-coach notice for the LLM key; a magic-link request
-   for mail; signed deliveries answered 200 for the webhook secret).
-   The shape/placement layer of that probe is automated: `cd scripts
-   && python3 -m unittest discover -s tests/keys -t .` runs the
-   per-key suites (one file per key, mirroring the store — see
-   `scripts/tests/keys/README.md`).
+   DSN; a bad login → 401 for the app DSN; a garbage bearer → 401 for
+   the JWT path; no offline-coach notice for the LLM key; a
+   magic-link request for mail; signed deliveries answered 200 for the
+   webhook secret). **A boot that only warns about an unusable key is
+   a failure, not a pass** — assert the warning's *absence* in the
+   boot log, never just that the process started.
 7. **Records.** If the key kind is new: create its per-key doc
    (six parts, filename = key name, module folder), add its row to the
    `docs/usage/keys/README.md` table, and add the SETENV-step
@@ -84,8 +95,16 @@ per setup.
 - A `.secrets` path in `git status` — do not commit; fix the ignore
   rule first.
 - Everything filled but the probe fails — the value is set but stale
-  or wrong (e.g. compose password ≠ the DSN's embedded password);
-  rotate per part 3 of the key's doc.
+  or wrong (e.g. compose password ≠ the DSN's embedded password), or
+  it is the wrong **storage form** for its consumer (escaped env PEM
+  in a raw-read `_FILE` slot); rotate per part 3 of the key's doc or
+  transform to the consumer's form
+  ([why](../learning/2026-10-05-boot-warning-is-not-a-pass.md)).
+- Boot succeeds but the log carries a degradation Warn about the key
+  ("private key unusable", offline coach) — not a pass; grep for the
+  warning's absence.
+- The suite fails only on the other host — per-host state (dir modes,
+  wrong-case folder, storage form); fix on that host and rerun there.
 - A per-key doc missing, lumped into a group file, or named unlike the
   key — the scheme's **shape** is part of the contract (filename =
   key name, one file per key, router docs link down); fix before
