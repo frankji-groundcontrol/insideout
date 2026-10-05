@@ -1,0 +1,20 @@
+schema_version: 1
+host: buddys-macbook-pro-2.local
+module: database
+setting: postgres
+recorded: '2026-10-05'
+# Role-scoped Postgres DSNs consumed by the server and by migrations;
+# named for the kind (postgres), not today's host of the instance
+# (Supabase). Local .env points at the same shared instance. Metadata
+# only — values live in .secrets/<name>.key, never in this file.
+secrets:
+  database-app-dsn:
+    var: DATABASE_URL
+    kind: value
+    note: runtime Postgres DSN for the insideout_app role (contains the
+      app password); shared deployment database.
+  database-owner-dsn:
+    var: DATABASE_OWNER_URL
+    kind: value
+    note: migration DSN for the insideout_owner role; used by
+      `go run ./cmd/insideout migrate` and scripts/backup-db.sh.

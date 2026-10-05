@@ -58,6 +58,34 @@ deployed. Plan:
   refusal that prevents value mixing, git-visible `.secrets`). Indexed
   in `docs/practices/README.md`.
 
+## What changed (slice 4 — Postgres DSNs + supabase→postgres rename)
+
+- **`database/postgres.yaml` on both hosts** — the manifest was
+  `supabase.yaml`; renamed because the *kind* is the role-scoped
+  Postgres DSNs while Supabase is merely today's host of the instance
+  (user call, 2026-10-05). Values unaffected: `.key` files live in the
+  module's shared `.secrets/`, keyed by name, not by manifest filename
+  — MBP's filled values survive the rename untouched.
+- **Buddy: both DSNs filled** from the local `.env` via the scoped
+  `keys.py fill` (`2 written, 1 kept` — the kept one is jwt,
+  empty-only semantics observed). Files 161/163 B at 0600 — the same
+  byte sizes MBP's store records for the same DSNs.
+- **Docs surfaces updated**: both hosts' `keys/README.md` tables
+  (postgres.yaml row; Buddy state row), `docs/usage/keys.md` DSN rows
+  (source now "managed Postgres DSN (Supabase today)"; Buddy column
+  filled), plan checklist.
+
+## Verification (slice 4)
+
+- Scoped audit after the rename: all 3 mapped kinds `key=filled
+  env=set` (the glob reads `database/postgres.yaml` fine); git status
+  shows no `.secrets` paths.
+- `./scripts/env.sh check`: 4 ok, 0 warnings, 0 failures.
+- Owner-DSN live probe:
+  `./scripts/dev.sh -C server go run ./cmd/insideout migrate` →
+  `migrate: nothing to do, already up to date` — real connection,
+  real authentication, currency confirmed.
+
 ## Operators / users
 
 Nothing to do elsewhere. Remaining keys land in later slices per the

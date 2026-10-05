@@ -28,8 +28,10 @@ Nothing deploys.
       via `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3
       scripts/keys.py fill` (empty-only, 0600, never printed). User
       minted the secret with openssl.
-- [ ] database/supabase: both DSNs (env already set — fill when user
-      calls it).
+- [x] database/postgres (renamed from supabase 2026-10-05 — the kind is
+      Postgres DSNs, Supabase is just today's host): both DSNs filled
+      from the local `.env`; manifest renamed on both hosts, values
+      unaffected (module-shared `.secrets/`, keyed by name).
 - [ ] llm: provider key (env already set).
 - [ ] mail: Resend key (missing locally — copy from MBP's agents_home
       store when user calls it).

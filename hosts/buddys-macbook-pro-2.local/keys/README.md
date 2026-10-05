@@ -8,6 +8,7 @@ is the live state.
 | Module | Manifest | Keys (env var) | State |
 | --- | --- | --- | --- |
 | [auth/](auth/) | [jwt.yaml](auth/jwt.yaml) | jwt-secret (`INSIDEOUT_JWT_SECRET`) | filled 2026-10-05 (openssl-minted, per-environment) |
+| [database/](database/) | [postgres.yaml](database/postgres.yaml) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) | both filled 2026-10-05 from the local `.env` (shared deployment Postgres) |
 
 With more than one host in `hosts/`, scope the tooling:
 `INSIDEOUT_KEYS_HOST=buddys-macbook-pro-2.local python3 scripts/keys.py

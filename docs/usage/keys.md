@@ -23,8 +23,8 @@ folder per key.
 | Kind | Env var | Value source | franks-mbp | buddys-mbp-2 |
 | --- | --- | --- | --- | --- |
 | `jwt-secret` | `INSIDEOUT_JWT_SECRET` | self-minted (`openssl rand -hex 32`), one per environment | filled | filled 2026-10-05 |
-| `database-app-dsn` | `DATABASE_URL` | Supabase connection string, `insideout_app` role | filled | env set — store pending |
-| `database-owner-dsn` | `DATABASE_OWNER_URL` | Supabase connection string, `insideout_owner` role | filled | env set — store pending |
+| `database-app-dsn` | `DATABASE_URL` | managed Postgres DSN (Supabase today), `insideout_app` role | filled | filled 2026-10-05 |
+| `database-owner-dsn` | `DATABASE_OWNER_URL` | managed Postgres DSN (Supabase today), `insideout_owner` role | filled | filled 2026-10-05 |
 | `llm-api-key` | `INSIDEOUT_LLM_API_KEY` | LLM provider (deploy-only values live in Railway) | filled | env set — store pending |
 | `mail-api-key` | `INSIDEOUT_MAIL_API_KEY` | Resend dashboard (deploy value in Railway) | filled | pending |
 | `gh-webhook-secret` | `INSIDEOUT_GH_WEBHOOK_SECRET` | self-minted; same string in the GitHub App webhook config | filled | pending |

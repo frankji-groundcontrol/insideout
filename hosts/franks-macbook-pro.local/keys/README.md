@@ -10,7 +10,7 @@ never appear in tracked files.
 | Module | Manifest | Keys (env var) |
 | --- | --- | --- |
 | [auth/](auth/) | [jwt.yaml](auth/jwt.yaml) | jwt-secret (`INSIDEOUT_JWT_SECRET`) |
-| [database/](database/) | [supabase.yaml](database/supabase.yaml) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) |
+| [database/](database/) | [postgres.yaml](database/postgres.yaml) | database-app-dsn (`DATABASE_URL`), database-owner-dsn (`DATABASE_OWNER_URL`) |
 | [database/](database/) | [local-stack.yaml](database/local-stack.yaml) | postgres-app-password, postgres-owner-password (`POSTGRES_*_PASSWORD`) |
 | [github/](github/) | [app.yaml](github/app.yaml) | gh-app-id, gh-app-private-key, gh-client-secret (`INSIDEOUT_GH_*`) |
 | [github/](github/) | [webhooks.yaml](github/webhooks.yaml) | gh-webhook-secret (`INSIDEOUT_GH_WEBHOOK_SECRET`) |

@@ -1,0 +1,18 @@
+schema_version: 1
+host: franks-macbook-pro.local
+module: database
+setting: postgres
+recorded: '2026-10-05'
+# Renamed supabase→postgres 2026-10-05: the kind is the role-scoped
+# Postgres DSNs; Supabase is merely today's host of that instance.
+# Values keyed by name in the module's shared .secrets/ — unaffected by
+# the manifest rename. Metadata only — values never in this file.
+secrets:
+  database-app-dsn:
+    var: DATABASE_URL
+    kind: value
+    note: app role DSN
+  database-owner-dsn:
+    var: DATABASE_OWNER_URL
+    kind: value
+    note: schema-owner DSN used by migrations
