@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-07 — Setup TUI: live walks verified and the series landed](2026-10-07-setup-tui-landed.md)
+  — PTY walks of both branches (remote: honest live rejection, no
+  config write; local own-URL: exit 0, 31 migrations); walk-caught
+  SignedIn-message bug fixed; bundled-Docker gate closed by
+  acceptance; six per-task local commits (no push).
 - [2026-10-07 — Setup TUI: interactive local branch wired](2026-10-07-setup-tui-interactive-local.md)
   — the form's local choice now runs the slice-2 assembly
   (LocalSetup join hook; flow stays pure); 25 pkgs green.
@@ -24,7 +29,7 @@ code) with relative links.
   README, SKILL all teach `insideout setup`. Live: api ok · db ok.
 - [2026-10-07 — Setup TUI slice 2: local mode assembled and live-exercised](2026-10-07-setup-tui-slice-2.md)
   — `setup --local` end-to-end (env write, compose, pgx probe,
-  in-process migrate, boot offer, summary gate); 23 migrations live
+  in-process migrate, boot offer, summary gate); 31 migrations live
   on a scratch PostgreSQL 18, `/healthz` 200; 25 pkgs green.
 - [2026-10-07 — Setup TUI slice 1: setup subcommand via parallel workflow + join](2026-10-07-setup-tui-slice-1.md)
   — slots A–E (clientconfig, flow, ui, catalog, envwrite, probe,
