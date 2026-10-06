@@ -137,7 +137,7 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrConflict) {
@@ -230,7 +230,7 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace, and an assigned owner must be too", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap, and an assigned owner must be a member", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrInvalidTransition) {
@@ -278,7 +278,7 @@ func (s *Server) handleMoveRoadmapNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrConflict) {
@@ -305,7 +305,7 @@ func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
 		return
 	}
 	if err != nil {

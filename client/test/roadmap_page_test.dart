@@ -32,6 +32,7 @@ class _FakeApi extends ApiClient {
   Future<RoadmapProgress> roadmapProgress(String projectId) async => RoadmapProgress.fromJson({
         'now': [
           {'id': 'n1', 'title': 'Payment retry', 'status': 'in_progress', 'deadline': '2026-10-06T00:00:00Z', 'pressure': 'near'},
+          {'id': 'n1b', 'title': 'Steady work', 'status': 'in_progress', 'deadline': '2026-10-20T00:00:00Z', 'pressure': 'normal'},
           {'id': 'n2', 'title': 'Legacy migration', 'status': 'in_progress', 'deadline': '2026-09-01T00:00:00Z', 'pressure': 'overdue'},
         ],
         'needsDeadline': [
@@ -87,6 +88,8 @@ void main() {
     expect(find.text('Payment retry'), findsOneWidget);
     expect(find.text('2026-10-06'), findsOneWidget);
     expect(find.text('near'), findsOneWidget);
+    expect(find.text('normal'), findsOneWidget);
+    expect(find.text('roadmap.pressure.normal'), findsNothing);
     expect(find.text('overdue'), findsOneWidget);
     expect(find.text('Docs pass'), findsOneWidget);
 

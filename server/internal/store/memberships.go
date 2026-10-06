@@ -162,3 +162,32 @@ func requireMember(ctx context.Context, tx pgx.Tx, workspaceID, userID uuid.UUID
 	}
 	return role, err
 }
+
+// requirePlanWriter allows the project owner or a workspace admin to
+// change the plan. A plain member can read it and leave notes, but
+// not add, edit, move, or delete roadmap nodes, and not file a
+// proposal (BUG-020).
+func requirePlanWriter(ctx context.Context, tx pgx.Tx, projectID, userID uuid.UUID) error {
+	var workspaceID uuid.UUID
+	var ownerID *uuid.UUID
+	err := tx.QueryRow(ctx,
+		`SELECT workspace_id, owner_id FROM insideout.projects WHERE id = $1`, projectID,
+	).Scan(&workspaceID, &ownerID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if ownerID != nil && *ownerID == userID {
+		return nil
+	}
+	role, err := requireMember(ctx, tx, workspaceID, userID)
+	if err != nil {
+		return err
+	}
+	if role != "admin" {
+		return ErrForbidden
+	}
+	return nil
+}

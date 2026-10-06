@@ -6,6 +6,8 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-06 | [A statement timestamp cannot order a batch](2026-10-06-a-statement-timestamp-cannot-order-a-batch.md) | [BUG-019](../issues/2026-10-06-bug-019-applied-proposal-reorders-items.md) |
+| 2026-10-06 | [A deadline must bound the await, not just the loop around it](2026-10-06-a-deadline-must-bound-the-await.md) | [BUG-016](../issues/2026-10-06-bug-016-web-boot-gate-hangs-on-font-load.md) |
 | 2026-10-06 | [A blank placeholder is only legal if metadata says so — declare the lane first](2026-10-06-blank-lane-legality-lives-in-metadata.md) | [config-companion-keys changelog](../changelogs/2026-10-06-config-companion-keys.md) |
 | 2026-10-05 | [A boot-time warning is not a pass — grep for silent degradations](2026-10-05-boot-warning-is-not-a-pass.md) | [buddy-host-keys changelog](../changelogs/2026-10-05-buddy-host-keys.md) |
 | 2026-10-05 | [Skip-green and phantom-done](2026-10-05-skip-green-and-phantom-done.md) | [planning-flow-remediation plan](../plans/2026-10-05-planning-flow-remediation/2026-10-05-planning-flow-remediation.md) |

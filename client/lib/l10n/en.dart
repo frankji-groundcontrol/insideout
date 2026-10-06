@@ -240,6 +240,7 @@ const enUS = <String, String>{
   'roadmap.viewList': 'List',
   'roadmap.setDeadline': 'Set deadline',
   'roadmap.clearDeadline': 'Clear deadline',
+  'roadmap.pressure.normal': 'normal',
   'roadmap.pressure.near': 'near',
   'roadmap.pressure.high_risk': 'high risk',
   'roadmap.pressure.overdue': 'overdue',

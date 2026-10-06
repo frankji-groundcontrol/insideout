@@ -4,6 +4,7 @@ Repeatable sequences and guardrails distilled from real failures in this repo. E
 
 | Date | Practice |
 |------|----------|
+| 2026-10-06 | [Simulate a user across CLI, Web, and MCP](2026-10-06-simulate-a-user-across-surfaces.md) |
 | 2026-07-21 | [Verify database-dependent work against real PostgreSQL](2026-07-21-verify-against-real-database.md) |
 | 2026-07-21 | [Docker layer-cache COPY must include every manifest the installer reads](2026-07-21-docker-copy-manifest-completeness.md) |
 | 2026-07-21 | [Live-exercise streaming (SSE) endpoints before completion](2026-07-21-live-exercise-streaming-endpoints.md) |

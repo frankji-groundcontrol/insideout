@@ -7,7 +7,19 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
-1. **Key store never-absent rule closed 2026-10-06** ([plan](plans/2026-10-06-config-companion-keys.md),
+1. **The four simulation bugs are fixed**
+   ([plan](plans/2026-10-06-close-simulation-bugs.md),
+   [changelog](changelogs/2026-10-06-simulation-bug-fixes.md)): a roadmap
+   move shifts its siblings, pressure says "正常", proposal items keep
+   the order they were given, and only the project owner or a workspace
+   admin can change the roadmap or file a proposal. Verified against
+   the restarted sim server on `127.0.0.1:8091`. The release web build
+   on :5174 predates the two client changes, so it still shows the raw
+   pressure key and the decided-proposal buttons until it is rebuilt.
+   Nothing from the simulation or these fixes is committed.
+   `roadmap.go` is 403 lines; the split is filed
+   ([issue](issues/2026-10-06-roadmap-go-line-budget.md)).
+2. **Key store never-absent rule closed 2026-10-06** ([plan](plans/2026-10-06-config-companion-keys.md),
    [changelog](changelogs/2026-10-06-config-companion-keys.md)): every
    env var mapped in the store (31 kinds — credentials, config
    companions, runtime knobs with `fallback:`/`optional:` fields,

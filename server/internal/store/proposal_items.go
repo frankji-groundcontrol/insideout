@@ -17,15 +17,17 @@ type ProposalItem struct {
 	ParentHint string
 }
 
-// AddProposalItems records a proposal's structured items (propose time).
-// Caller has already written the project_updates row in the same
-// conceptual transaction; items are capped by the API layer.
+// AddProposalItems records a proposal's structured items (propose time),
+// in the order given. Position is that order: created_at is one
+// statement timestamp, so it cannot order a batch (BUG-019). Caller
+// has already written the project_updates row; items are capped by
+// the API layer.
 func (s *Store) AddProposalItems(ctx context.Context, actorID, updateID uuid.UUID, items []ProposalItem) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		for _, it := range items {
+		for i, it := range items {
 			if _, err := tx.Exec(ctx, `
-				INSERT INTO insideout.proposal_items (update_id, action, title, parent_hint)
-				VALUES ($1, $2, $3, $4)`, updateID, it.Action, it.Title, it.ParentHint); err != nil {
+					INSERT INTO insideout.proposal_items (update_id, action, title, parent_hint, position)
+					VALUES ($1, $2, $3, $4, $5)`, updateID, it.Action, it.Title, it.ParentHint, i); err != nil {
 				return err
 			}
 		}
@@ -38,9 +40,9 @@ func (s *Store) ListProposalItems(ctx context.Context, actorID, updateID uuid.UU
 	var out []ProposalItem
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
-			SELECT id, update_id, action, title, parent_hint
-			FROM insideout.proposal_items WHERE update_id = $1
-			ORDER BY created_at, id`, updateID)
+				SELECT id, update_id, action, title, parent_hint
+				FROM insideout.proposal_items WHERE update_id = $1
+				ORDER BY position, created_at, id`, updateID)
 		if err != nil {
 			return err
 		}

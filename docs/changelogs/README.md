@@ -15,6 +15,16 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-06 — The four simulation bugs are fixed](2026-10-06-simulation-bug-fixes.md)
+  — move shifts siblings, pressure is translated, proposal items keep
+  their order, and a plain member can no longer change the plan.
+- [2026-10-06 — Three personas exercised live across CLI, Web, and MCP](2026-10-06-user-simulation-three-personas.md)
+  — the 3×3×3 simulation matrix, with the parity table. No product
+  code. Findings: [BUG-020](../issues/2026-10-06-bug-020-workspace-member-writes-the-plan.md)
+  plus the still-open 017–019.
+- [2026-10-06 — Web boot gate no longer hangs on an unreachable font host](2026-10-06-web-boot-font-gate-timeout.md)
+  — per-await timeout on `document.fonts.load()` so the boot deadline
+  can expire ([BUG-016](../issues/2026-10-06-bug-016-web-boot-gate-hangs-on-font-load.md)).
 - [2026-10-06 — Config-companion key kinds: every value gets the triple](2026-10-06-config-companion-keys.md)
   — llm trio + mail pair + the PEM pointer become store-backed key
   kinds with docs and tests (18 kinds); keys.py placeholder detector

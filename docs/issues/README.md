@@ -7,7 +7,7 @@ evidence get a dated folder. English only.
 
 Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
-records continue the numbering (next: BUG-016).
+records continue the numbering (next: BUG-021).
 
 ## Bug records
 
@@ -59,10 +59,33 @@ records continue the numbering (next: BUG-016).
   with fetch + ReadableStream; Coach web POST joined that transport
   2026-09-18.
 - [BUG-015 — SetSignupMode sent POST to a PUT-only route](2026-09-03-bug-015-signup-mode-wrong-method.md)
+- [BUG-016 — Web boot gate hangs when Google Fonts is unreachable](2026-10-06-bug-016-web-boot-gate-hangs-on-font-load.md)
+  — `document.fonts.load()` never settles on a dead font host, so the
+  boot gate's deadline (checked only between awaits) never fires and
+  the app spins forever. Fixed with a per-await timeout.
   — CLI `signup-mode <mode>` 405'd against the real API since the
   invitation slice; httptest pinned the client's consistency, not its
   correctness. Fixed (PUT) same day; lesson: projected verbs need one
   live call before closing.
+- [BUG-017 — roadmap move collides with a sibling position](2026-10-06-bug-017-roadmap-move-collides-sibling-position.md)
+  — `move --position 0` leaves the previous occupant at 0, so two
+  siblings share a position. Fixed 2026-10-06: the move shifts siblings.
+- [BUG-018 — roadmap pressure renders as a raw localization key](2026-10-06-bug-018-roadmap-pressure-label-untranslated.md)
+  — the web progress view prints `roadmap.pressure.normal` beside the
+  deadline. Fixed 2026-10-06: the key is translated. The release bundle
+  on :5174 predates it.
+- [BUG-019 — accepting a proposal applies its items out of order](2026-10-06-bug-019-applied-proposal-reorders-items.md)
+  — Intake, Verification, Handoff, Archive landed as Intake, Handoff,
+  Verification, Archive. Fixed 2026-10-06: items carry an explicit
+  position.
+- [BUG-020 — a workspace member can write the plan](2026-10-06-bug-020-workspace-member-writes-the-plan.md)
+  — membership alone lets a reader add roadmap nodes and file
+  proposals. Fixed 2026-10-06: only the project owner or a workspace
+  admin may change the roadmap or file a proposal.
+
+- [2026-10-06 — roadmap.go over the ~350-line budget](2026-10-06-roadmap-go-line-budget.md)
+  — 403 lines after the sibling-shift fix; target split is
+  `roadmap.go` + `roadmap_move.go` at the next structural touch.
 
 ## Other open issues
 

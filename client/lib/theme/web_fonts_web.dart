@@ -36,7 +36,15 @@ const _sample =
 
 Future<bool> _allFacesLoaded() async {
   for (final f in _faces) {
-    final loaded = await document.fonts.load(f, _sample).toDart.catchError((_) => <FontFace>[].toJS);
+    // fonts.load() resolves empty while the face is unparsed, but it
+    // never settles when the font host is unreachable — a pending await
+    // here would pin the boot gate open. A timeout counts as not loaded
+    // and the outer deadline gives up.
+    final loaded = await document.fonts
+        .load(f, _sample)
+        .toDart
+        .timeout(const Duration(seconds: 2), onTimeout: () => <FontFace>[].toJS)
+        .catchError((_) => <FontFace>[].toJS);
     if (loaded.toDart.isEmpty) return false;
   }
   return true;

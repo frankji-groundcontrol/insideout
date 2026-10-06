@@ -154,6 +154,7 @@ class ProjectUpdate {
     required this.createdAt,
     required this.authorId,
     this.items = const [],
+    this.decision = '',
   });
 
   final String id;
@@ -162,6 +163,9 @@ class ProjectUpdate {
   final String createdAt;
   final String authorId;
   final List<ProposalItem> items;
+
+  /// "accepted" or "rejected" once a human has decided a proposal.
+  final String decision;
 
   factory ProjectUpdate.fromJson(Map<String, dynamic> j) => ProjectUpdate(
         id: j['id'] as String,
@@ -172,6 +176,7 @@ class ProjectUpdate {
         items: ((j['items'] as List?) ?? const [])
             .map((e) => ProposalItem.fromJson(e as Map<String, dynamic>))
             .toList(),
+        decision: j['decision'] as String? ?? '',
       );
 }
 

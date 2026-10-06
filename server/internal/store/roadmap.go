@@ -101,15 +101,11 @@ func nodeWorkspace(ctx context.Context, tx pgx.Tx, nodeID uuid.UUID) (uuid.UUID,
 }
 
 // CreateRoadmapNode appends a node under parentID (nil = root) at the next
-// sibling position. The roadmap is collaborative: any workspace member may add.
+// sibling position. Only the project owner or a workspace admin may add.
 func (s *Store) CreateRoadmapNode(ctx context.Context, actorID, projectID uuid.UUID, parentID *uuid.UUID, title, description string) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := projectWorkspace(ctx, tx, projectID)
-		if err != nil {
-			return err
-		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 
@@ -227,17 +223,24 @@ func statusTransitionAllowed(from, to string) bool {
 	return false
 }
 
-// UpdateRoadmapNode edits a node's content/status. Any workspace member; the
-// owner, when assigned, must also be a member; status moves only through the
-// legal transitions.
+// UpdateRoadmapNode edits a node's content/status. Only the project owner
+// or a workspace admin; the assigned owner, when set, must also be a
+// member; status moves only through the legal transitions.
 func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, f RoadmapNodeFields) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := nodeWorkspace(ctx, tx, nodeID)
-		if err != nil {
+		var projectID uuid.UUID
+		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrNotFound
+			}
 			return err
 		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+			return err
+		}
+		wsID, err := nodeWorkspace(ctx, tx, nodeID)
+		if err != nil {
 			return err
 		}
 		if f.OwnerID != nil && *f.OwnerID != uuid.Nil {
@@ -283,25 +286,25 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 
 // MoveRoadmapNode reparents a node (newParentID nil = make it a root) and sets
 // its sibling position. It refuses to move a node under itself or one of its
-// own descendants, which would create a cycle. Any workspace member.
+// own descendants, which would create a cycle. Only the project owner or a
+// workspace admin.
 func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, newParentID *uuid.UUID, position int) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := nodeWorkspace(ctx, tx, nodeID)
-		if err != nil {
+		var projectID uuid.UUID
+		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrNotFound
+			}
 			return err
 		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 
 		// Serialize all structural writes within the project so two opposing
 		// moves can't both pass the cycle guard and forge a cycle under
 		// READ COMMITTED (same advisory-lock idiom as ReplaceRoadmapTree).
-		var projectID uuid.UUID
-		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
-			return err
-		}
 		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, projectID.String()); err != nil {
 			return err
 		}
@@ -332,11 +335,36 @@ func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, 
 			}
 		}
 
+		// Close the gap the node leaves, then open the slot it takes, so
+		// two siblings never share a position (BUG-017). The node is
+		// excluded from both so a same-parent move does not count
+		// itself, and the per-project advisory lock above keeps the
+		// two updates atomic with the rest of the move.
+		if _, err := tx.Exec(ctx, `
+				UPDATE insideout.roadmap_nodes
+				SET position = position - 1
+				WHERE project_id = $1
+				  AND parent_id IS NOT DISTINCT FROM (SELECT parent_id FROM insideout.roadmap_nodes WHERE id = $2)
+				  AND id <> $2
+				  AND position > (SELECT position FROM insideout.roadmap_nodes WHERE id = $2)`,
+			projectID, nodeID); err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `
+				UPDATE insideout.roadmap_nodes
+				SET position = position + 1
+				WHERE project_id = $1
+				  AND parent_id IS NOT DISTINCT FROM $2
+				  AND id <> $3
+				  AND position >= $4`,
+			projectID, newParentID, nodeID, position); err != nil {
+			return err
+		}
 		row := tx.QueryRow(ctx, `
-			UPDATE insideout.roadmap_nodes
-			SET parent_id = $2, position = $3, updated_by = $4
-			WHERE id = $1
-			RETURNING `+roadmapNodeColumns,
+				UPDATE insideout.roadmap_nodes
+				SET parent_id = $2, position = $3, updated_by = $4
+				WHERE id = $1
+				RETURNING `+roadmapNodeColumns,
 			nodeID, newParentID, position, actorID,
 		)
 		var scanErr error
@@ -351,21 +379,20 @@ func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, 
 }
 
 // DeleteRoadmapNode removes a node; its subtree cascades via the parent_id
-// FK's ON DELETE CASCADE. Any workspace member.
+// FK's ON DELETE CASCADE. Only the project owner or a workspace admin.
 func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) error {
 	var projectID uuid.UUID
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := nodeWorkspace(ctx, tx, nodeID)
-		if err != nil {
-			return err
-		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
-			return err
-		}
 		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return ErrNotFound
+			}
 			return err
 		}
-		_, err = tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+			return err
+		}
+		_, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)
 		return err
 	})
 	if err != nil {

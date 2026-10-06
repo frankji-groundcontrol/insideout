@@ -37,10 +37,16 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-	if _, err := st.JoinWorkspace(ctx, member.ID, ws.Code); err != nil {
-		t.Fatalf("member join: %v", err)
-	}
-	proj, err := st.CreateProject(ctx, admin.ID, ws.ID, "Roadmap Project", "")
+		if _, err := st.JoinWorkspace(ctx, member.ID, ws.Code); err != nil {
+			t.Fatalf("member join: %v", err)
+		}
+		// Writing the plan takes a workspace admin (BUG-020). The joined
+		// role is member; promote so the collaborative-write assertions
+		// below still describe two people editing one tree.
+		if err := st.UpdateMemberRole(ctx, admin.ID, ws.ID, member.ID, "admin"); err != nil {
+			t.Fatalf("promote member to admin: %v", err)
+		}
+		proj, err := st.CreateProject(ctx, admin.ID, ws.ID, "Roadmap Project", "")
 	if err != nil {
 		t.Fatalf("create project: %v", err)
 	}
@@ -67,10 +73,10 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create branchA: %v", err)
 	}
-	branchB, err := st.CreateRoadmapNode(ctx, member.ID, pid, &root.ID, "Launch", "")
-	if err != nil {
-		t.Fatalf("create branchB (member): %v", err)
-	}
+		branchB, err := st.CreateRoadmapNode(ctx, member.ID, pid, &root.ID, "Launch", "")
+		if err != nil {
+			t.Fatalf("create branchB (second admin): %v", err)
+		}
 	if branchA.Position != 0 || branchB.Position != 1 {
 		t.Fatalf("sibling positions: want 0,1 got %d,%d", branchA.Position, branchB.Position)
 	}
@@ -101,10 +107,10 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 		t.Fatalf("parentage wrong: %+v", idx)
 	}
 
-	// Collaborative: a plain member can update status.
-	if _, err := st.UpdateRoadmapNode(ctx, member.ID, branchA.ID, RoadmapNodeFields{Title: sp("Core MVP"), Description: sp(""), Status: sp("in_progress")}); err != nil {
-		t.Fatalf("member UpdateRoadmapNode: %v", err)
-	}
+		// A second admin can update status.
+		if _, err := st.UpdateRoadmapNode(ctx, member.ID, branchA.ID, RoadmapNodeFields{Title: sp("Core MVP"), Description: sp(""), Status: sp("in_progress")}); err != nil {
+			t.Fatalf("second admin UpdateRoadmapNode: %v", err)
+		}
 
 	// Reparent branchB under branchA.
 	moved, err := st.MoveRoadmapNode(ctx, admin.ID, branchB.ID, &branchA.ID, 1)
@@ -380,10 +386,13 @@ func TestRoadmap_Attribution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-	if _, err := st.JoinWorkspace(ctx, bob.ID, ws.Code); err != nil {
-		t.Fatalf("bob join: %v", err)
-	}
-	proj, err := st.CreateProject(ctx, alice.ID, ws.ID, "Attr", "")
+		if _, err := st.JoinWorkspace(ctx, bob.ID, ws.Code); err != nil {
+			t.Fatalf("bob join: %v", err)
+		}
+		if err := st.UpdateMemberRole(ctx, alice.ID, ws.ID, bob.ID, "admin"); err != nil {
+			t.Fatalf("promote bob: %v", err)
+		}
+		proj, err := st.CreateProject(ctx, alice.ID, ws.ID, "Attr", "")
 	if err != nil {
 		t.Fatalf("create project: %v", err)
 	}
@@ -490,5 +499,63 @@ func TestRoadmap_Attribution(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("spoofed created_by: want RLS rejection, got nil")
+	}
+}
+
+// Moving a node onto a position a sibling already holds must shift the
+// others, so the list never shows two siblings at the same position
+// (BUG-017).
+func TestRoadmap_MoveShiftsSiblings(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	admin := mkUser(t, st)
+	ws, err := st.CreateWorkspace(ctx, admin.ID, "Move WS", "")
+	if err != nil {
+		t.Fatalf("create workspace: %v", err)
+	}
+	proj, err := st.CreateProject(ctx, admin.ID, ws.ID, "Move", "")
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+	a, err := st.CreateRoadmapNode(ctx, admin.ID, proj.ID, nil, "A", "")
+	if err != nil {
+		t.Fatalf("create A: %v", err)
+	}
+	b, err := st.CreateRoadmapNode(ctx, admin.ID, proj.ID, nil, "B", "")
+	if err != nil {
+		t.Fatalf("create B: %v", err)
+	}
+	c, err := st.CreateRoadmapNode(ctx, admin.ID, proj.ID, nil, "C", "")
+	if err != nil {
+		t.Fatalf("create C: %v", err)
+	}
+
+	if _, err := st.MoveRoadmapNode(ctx, admin.ID, c.ID, nil, 0); err != nil {
+		t.Fatalf("move C to position 0: %v", err)
+	}
+	nodes, err := st.ListRoadmap(ctx, admin.ID, proj.ID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	got := make([]string, 0, len(nodes))
+	seen := map[int]bool{}
+	for _, n := range nodes {
+		if n.ParentID != nil {
+			continue
+		}
+		if seen[n.Position] {
+			t.Fatalf("two roots share position %d: %+v", n.Position, nodes)
+		}
+		seen[n.Position] = true
+		got = append(got, n.Title)
+	}
+	want := []string{"C", "A", "B"}
+	if len(got) != len(want) {
+		t.Fatalf("roots: got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("order: got %v, want %v (ids a=%s b=%s c=%s)", got, want, a.ID, b.ID, c.ID)
+		}
 	}
 }

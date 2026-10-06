@@ -16,10 +16,15 @@ type ProjectUpdate struct {
 	Kind      string
 	Content   string
 	CreatedAt time.Time
+	// Decision is set only for an agent_proposal that a human has
+	// accepted or rejected. Empty means still open.
+	Decision string
 }
 
 // AddProjectUpdate requires actorID to currently be a member of the
-// project's workspace.
+// project's workspace. A proposal changes the plan, so only the
+// project owner or a workspace admin may file one; notes, progress,
+// and blockers stay open to any member (BUG-020).
 func (s *Store) AddProjectUpdate(ctx context.Context, actorID, projectID uuid.UUID, kind, content string) (*ProjectUpdate, error) {
 	var u ProjectUpdate
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -33,6 +38,11 @@ func (s *Store) AddProjectUpdate(ctx context.Context, actorID, projectID uuid.UU
 		}
 		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
 			return err
+		}
+		if kind == "agent_proposal" {
+			if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+				return err
+			}
 		}
 
 		return tx.QueryRow(ctx, `
@@ -67,14 +77,16 @@ func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.
 	var out []ProjectUpdate
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
-			SELECT id, project_id, author_id, kind, content, created_at
-			FROM insideout.project_updates
-			WHERE project_id = $1
-			  AND ($2::uuid IS NULL OR (created_at, id) < (
-			    SELECT created_at, id FROM insideout.project_updates WHERE id = $2
-			  ))
-			ORDER BY created_at DESC, id DESC
-			LIMIT $3`, projectID, before, limit,
+				SELECT pu.id, pu.project_id, pu.author_id, pu.kind, pu.content, pu.created_at,
+				       COALESCE(pd.decision, '')
+				FROM insideout.project_updates pu
+				LEFT JOIN insideout.proposal_decisions pd ON pd.update_id = pu.id
+				WHERE pu.project_id = $1
+				  AND ($2::uuid IS NULL OR (pu.created_at, pu.id) < (
+				    SELECT created_at, id FROM insideout.project_updates WHERE id = $2
+				  ))
+				ORDER BY pu.created_at DESC, pu.id DESC
+				LIMIT $3`, projectID, before, limit,
 		)
 		if err != nil {
 			return err
@@ -83,7 +95,7 @@ func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.
 
 		for rows.Next() {
 			var u ProjectUpdate
-			if err := rows.Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt); err != nil {
+			if err := rows.Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt, &u.Decision); err != nil {
 				return err
 			}
 			out = append(out, u)

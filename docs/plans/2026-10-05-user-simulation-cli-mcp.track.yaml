@@ -1,0 +1,13 @@
+version: 1
+task: Simulating real users across CLI, Web, and MCP
+coordinator: zcode-main
+main:
+  outcome: 3 personas x 3 surfaces x 3 cases exercised. The four bugs
+    it found (017-020) were fixed the same day; see
+    2026-10-06-close-simulation-bugs. Commit, push, and MBP sync not done.
+  owner: zcode-main
+  status: exercised
+  next_evidence: an explicit commit of the simulation records and the
+    bug fixes
+side_tracks: []
+updated_at: '2026-10-06T08:40:00Z'

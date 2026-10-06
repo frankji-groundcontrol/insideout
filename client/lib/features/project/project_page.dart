@@ -309,7 +309,7 @@ class _ProjectPageState extends State<ProjectPage> {
                               alignment: Alignment.centerRight,
                               // FEAT-03: an agent proposal is decided, not
                               // edited — Accept/Reject own the record.
-                              child: u.kind == 'agent_proposal'
+                              child: u.kind == 'agent_proposal' && u.decision.isEmpty
                                   ? Wrap(
                                       spacing: 8,
                                       children: [

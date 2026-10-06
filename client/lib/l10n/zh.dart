@@ -231,6 +231,7 @@ const zhCN = <String, String>{
   'roadmap.viewList': '列表',
   'roadmap.setDeadline': '设置截止',
   'roadmap.clearDeadline': '清除截止',
+  'roadmap.pressure.normal': '正常',
   'roadmap.pressure.near': '临近',
   'roadmap.pressure.high_risk': '高风险',
   'roadmap.pressure.overdue': '已逾期',

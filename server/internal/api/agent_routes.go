@@ -174,7 +174,7 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can propose a change", "", nil)
 		return
 	}
 	if err != nil {

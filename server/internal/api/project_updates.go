@@ -17,12 +17,16 @@ type projectUpdateView struct {
 	Kind      string `json:"kind"`
 	Content   string `json:"content"`
 	CreatedAt string `json:"createdAt"`
+	// Decision is "accepted" or "rejected" once a human has decided an
+	// agent proposal, and empty while it is still open.
+	Decision string `json:"decision,omitempty"`
 }
 
 func projectUpdateResponse(u store.ProjectUpdate) projectUpdateView {
 	return projectUpdateView{
 		ID: u.ID.String(), ProjectID: u.ProjectID.String(), AuthorID: u.AuthorID.String(),
 		Kind: u.Kind, Content: u.Content, CreatedAt: u.CreatedAt.Format(timeLayout),
+		Decision: u.Decision,
 	}
 }
 
