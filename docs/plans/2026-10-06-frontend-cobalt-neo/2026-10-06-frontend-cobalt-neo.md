@@ -14,7 +14,7 @@ app; the hue family stays the current blue (cobalt).
 
 ## Status
 
-**Finished** 2026-10-06 — waves 1–7 are committed to main.
+**Finished** 2026-10-06 — waves 1–7 are on `main` as `28e1fb1`.
 The local gate in `client/` passed: `flutter analyze --no-fatal-infos`
 exit 0, no errors or warnings, 32 infos (`32 issues found. (ran in
 0.9s)`); `flutter test` `00:09 +143: All tests passed!` (`TEST_EXIT:0`);

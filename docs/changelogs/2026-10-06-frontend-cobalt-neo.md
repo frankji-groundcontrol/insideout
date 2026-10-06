@@ -3,7 +3,7 @@
 Waves 1–3 were already checked. This pass lands waves 4–7 in the
 worktree and closes the
 [plan](../plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md).
-Committed to main. Nothing here is deployed.
+On `main` as `28e1fb1`. Nothing here is deployed.
 
 ## What changed
 

@@ -11,7 +11,7 @@ Resume here. The authoritative multi-task board is
 ([plan](plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md),
 [changelog](changelogs/2026-10-06-frontend-cobalt-neo.md)).
 Local gate: analyze has no errors or warnings (32 infos) and flutter
-test is 143 passed. Committed to main. Still open: W3-N2 minified console
+test is 143 passed. On `main` as `28e1fb1`. Still open: W3-N2 minified console
 errors ([issue](issues/2026-10-06-wave3-minified-console.md)). Do not
 start a second implementation.
 

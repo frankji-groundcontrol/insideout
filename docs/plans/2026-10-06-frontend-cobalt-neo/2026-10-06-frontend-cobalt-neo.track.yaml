@@ -10,7 +10,7 @@ main:
   status: complete
   next_evidence: 'Local gate 2026-10-06: flutter analyze --no-fatal-infos exit 0 (32
     infos, no errors or warnings); flutter test 00:09 +143 All tests passed TEST_EXIT:0;
-    dart format --set-exit-if-changed exit 0. Committed to main.'
+    dart format --set-exit-if-changed exit 0. On main as 28e1fb1.'
 side_tracks: []
 updated_at: '2026-10-06T07:40:16Z'
 plan:
