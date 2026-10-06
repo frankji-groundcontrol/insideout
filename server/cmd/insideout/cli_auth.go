@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
+	"golang.org/x/term"
 )
 
 func runAuthCommand(cmd string, args []string, api string) (bool, int) {
@@ -45,8 +46,16 @@ func runAuthCommand(cmd string, args []string, api string) (bool, int) {
 		fmt.Fprintln(os.Stderr, "if that account exists, a reset link is on its way; finish with `insideout reset-password` (paste the link) or in the browser")
 		return true, 0
 	case "reset-password":
-		link := prompt("reset link or token: ")
-		password := prompt("new password: ")
+		link, lerr := readSecret("reset link or token: ")
+		if lerr != nil {
+			fmt.Fprintln(os.Stderr, lerr)
+			return true, 1
+		}
+		password, perr := readSecret("new password: ")
+		if perr != nil {
+			fmt.Fprintln(os.Stderr, perr)
+			return true, 1
+		}
 		if link == "" || password == "" {
 			fmt.Fprintln(os.Stderr, "reset-password: link and password are required")
 			return true, 2
@@ -77,7 +86,11 @@ func loginCommand(c *apiclient.Client, positional []string, useCode, useMagic bo
 			break
 		}
 		fmt.Fprintf(os.Stderr, "code sent (if the account exists) — check %s\n", email)
-		code := prompt("code: ")
+		code, serr := readSecret("code: ")
+		if serr != nil {
+			err = serr
+			break
+		}
 		if code == "" {
 			fmt.Fprintln(os.Stderr, "login: empty code")
 			return true, 2
@@ -88,7 +101,11 @@ func loginCommand(c *apiclient.Client, positional []string, useCode, useMagic bo
 			break
 		}
 		fmt.Fprintln(os.Stderr, "link sent (if the account exists) — paste the link (or token) from the email")
-		link := prompt("link or token: ")
+		link, serr := readSecret("link or token: ")
+		if serr != nil {
+			err = serr
+			break
+		}
 		if link == "" {
 			fmt.Fprintln(os.Stderr, "login: empty link")
 			return true, 2
@@ -120,7 +137,11 @@ func registerCommand(c *apiclient.Client, positional []string, inviteCode string
 	if username == "" {
 		username = emailLocalPart(email)
 	}
-	password := prompt("password: ")
+	password, serr := readSecret("password: ")
+	if serr != nil {
+		fmt.Fprintln(os.Stderr, serr)
+		return true, 1
+	}
 	if password == "" {
 		fmt.Fprintln(os.Stderr, "register: empty password")
 		return true, 2
@@ -146,6 +167,30 @@ func prompt(label string) string {
 		return ""
 	}
 	return strings.TrimSpace(line)
+}
+
+// readSecret reads one secret answer without echoing it. On a terminal
+// it must first discard whatever the shared buffered reader already
+// holds (a pasted multi-line input would otherwise leave stale bytes
+// that shadow the term.ReadPassword answer), then read raw with echo
+// off. term.ReadPassword consumes the trailing Enter itself (x/term's
+// readPasswordLine returns without the newline), so nothing may be
+// read afterwards: an extra read would block for another Enter and
+// echo it, echo being already restored. On a pipe it stays on the
+// shared buffered reader so agents, scripts and tests keep working
+// unchanged.
+func readSecret(label string) (string, error) {
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		return prompt(label), nil
+	}
+	fmt.Fprint(os.Stderr, label)
+	stdin.Reset(os.Stdin)
+	secret, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		return "", err
+	}
+	fmt.Fprintln(os.Stderr)
+	return strings.TrimSpace(string(secret)), nil
 }
 
 func argAt(args []string, i int) string {
