@@ -1,5 +1,11 @@
 class ApiException implements Exception {
-  ApiException(this.message, {this.status, this.code, this.retryAfterSeconds, this.liveCount});
+  ApiException(
+    this.message, {
+    this.status,
+    this.code,
+    this.retryAfterSeconds,
+    this.liveCount,
+  });
 
   final String message;
   final int? status;
@@ -31,7 +37,9 @@ ApiException toApiError(int? status, Map<String, dynamic> body) {
 
 /// Codes Nuxt treats as a Coach send backoff (countdown, composer locked).
 bool isCoachBackoff(ApiException e) {
-  return e.code == 'APP_THROTTLE' || e.code == 'CIRCUIT_OPEN' || e.code == 'ANTHROPIC_RATE_LIMIT';
+  return e.code == 'APP_THROTTLE' ||
+      e.code == 'CIRCUIT_OPEN' ||
+      e.code == 'ANTHROPIC_RATE_LIMIT';
 }
 
 int coachRetrySeconds(ApiException e) {

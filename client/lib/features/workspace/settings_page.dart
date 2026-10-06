@@ -8,6 +8,7 @@ import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../widgets/guarded_action.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required this.workspaceId});
@@ -60,22 +61,39 @@ class _SettingsPageState extends State<SettingsPage> {
           title: l10n.t('workspace.settingsTitle'),
           paintTitle: true,
           body: !snap.hasData
-              ? Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator())
+              ? Center(
+                  child: snap.hasError
+                      ? Text(localizedError(snap.error!, l10n.t))
+                      : const CircularProgressIndicator(),
+                )
               : ListView(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
                   children: [
-                    TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('workspace.createNamePlaceholder'))),
+                    TextField(
+                      controller: title,
+                      decoration: InputDecoration(
+                        labelText: l10n.t('workspace.createNamePlaceholder'),
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    TextField(controller: description, decoration: InputDecoration(labelText: l10n.t('workspace.createDescPlaceholder'))),
+                    TextField(
+                      controller: description,
+                      decoration: InputDecoration(
+                        labelText: l10n.t('workspace.createDescPlaceholder'),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     FilledButton(
                       onPressed: () async {
-                        await context.read<Session>().api.updateWorkspace(
-                              widget.workspaceId,
-                              title: title.text.trim(),
-                              description: description.text,
-                            );
-                        await _reload();
+                        final done = await guardWrite(
+                          context,
+                          () => context.read<Session>().api.updateWorkspace(
+                            widget.workspaceId,
+                            title: title.text.trim(),
+                            description: description.text,
+                          ),
+                        );
+                        if (done && mounted) await _reload();
                       },
                       child: Text(l10n.t('common.save')),
                     ),
@@ -84,47 +102,85 @@ class _SettingsPageState extends State<SettingsPage> {
                         final ok = await showDialog<bool>(
                           context: context,
                           builder: (ctx) => AlertDialog(
-                            title: Text(l10n.t('workspace.deleteWorkspaceConfirm')),
+                            title: Text(
+                              l10n.t('workspace.deleteWorkspaceConfirm'),
+                            ),
                             actions: [
-                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-                              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.delete'))),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text(l10n.t('common.cancel')),
+                              ),
+                              FilledButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: Text(l10n.t('common.delete')),
+                              ),
                             ],
                           ),
                         );
-                        if (ok == true && mounted) {
-                          await context.read<Session>().api.deleteWorkspace(widget.workspaceId);
-                          if (context.mounted) context.go('/dashboard');
+                        if (ok == true && context.mounted) {
+                          final done = await guardWrite(
+                            context,
+                            () => context.read<Session>().api.deleteWorkspace(
+                              widget.workspaceId,
+                            ),
+                          );
+                          if (done && context.mounted) context.go('/dashboard');
                         }
                       },
                       child: Text(l10n.t('workspace.deleteWorkspace')),
                     ),
                     ListTile(
-                      title: Text(l10n.t('workspace.inviteCode', {'code': snap.data!.ws.code})),
+                      title: Text(
+                        l10n.t('workspace.inviteCode', {
+                          'code': snap.data!.ws.code,
+                        }),
+                      ),
                       subtitle: Text(l10n.t('workspace.inviteHint')),
                       trailing: IconButton(
                         icon: const Icon(Icons.copy),
-                        onPressed: () => Clipboard.setData(ClipboardData(text: snap.data!.ws.code)),
+                        onPressed: () => Clipboard.setData(
+                          ClipboardData(text: snap.data!.ws.code),
+                        ),
                       ),
                     ),
                     const Divider(),
                     ...snap.data!.members.map(
                       (m) => ListTile(
                         title: Text(m.username),
-                        subtitle: Text('${m.email} · ${l10n.t('workspace.role.${m.role}')}'),
+                        subtitle: Text(
+                          '${m.email} · ${l10n.t('workspace.role.${m.role}')}',
+                        ),
                         trailing: PopupMenuButton<String>(
                           onSelected: (value) async {
                             final api = context.read<Session>().api;
-                            if (value == 'remove') {
-                              await api.removeMember(widget.workspaceId, m.userId);
-                            } else {
-                              await api.updateMemberRole(widget.workspaceId, m.userId, value);
-                            }
-                            await _reload();
+                            final done = await guardWrite(
+                              context,
+                              () => value == 'remove'
+                                  ? api.removeMember(
+                                      widget.workspaceId,
+                                      m.userId,
+                                    )
+                                  : api.updateMemberRole(
+                                      widget.workspaceId,
+                                      m.userId,
+                                      value,
+                                    ),
+                            );
+                            if (done && mounted) await _reload();
                           },
                           itemBuilder: (_) => [
-                            PopupMenuItem(value: 'admin', child: Text(l10n.t('workspace.role.admin'))),
-                            PopupMenuItem(value: 'member', child: Text(l10n.t('workspace.role.member'))),
-                            PopupMenuItem(value: 'remove', child: Text(l10n.t('workspace.removeMember'))),
+                            PopupMenuItem(
+                              value: 'admin',
+                              child: Text(l10n.t('workspace.role.admin')),
+                            ),
+                            PopupMenuItem(
+                              value: 'member',
+                              child: Text(l10n.t('workspace.role.member')),
+                            ),
+                            PopupMenuItem(
+                              value: 'remove',
+                              child: Text(l10n.t('workspace.removeMember')),
+                            ),
                           ],
                         ),
                       ),

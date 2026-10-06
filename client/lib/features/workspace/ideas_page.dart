@@ -11,6 +11,7 @@ import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/field_card.dart';
+import '../../widgets/guarded_action.dart';
 
 class IdeasPage extends StatefulWidget {
   const IdeasPage({super.key, required this.workspaceId});
@@ -35,10 +36,15 @@ class _IdeasPageState extends State<IdeasPage> {
 
   Future<void> _seedProject() async {
     final focus = context.read<LoopFocus>();
-    if (focus.projectId != null) return;
+    if (focus.projectFor(widget.workspaceId) != null) return;
     try {
-      final projects = await context.read<Session>().api.listProjects(widget.workspaceId);
-      if (!mounted || focus.projectId != null || projects.isEmpty) return;
+      final projects = await context.read<Session>().api.listProjects(
+        widget.workspaceId,
+      );
+      if (!mounted ||
+          focus.projectFor(widget.workspaceId) != null ||
+          projects.isEmpty)
+        return;
       focus.rememberProject(projects.first.id, workspaceId: widget.workspaceId);
     } catch (_) {}
   }
@@ -60,7 +66,14 @@ class _IdeasPageState extends State<IdeasPage> {
   Future<void> _captureNow() async {
     final title = _capture.text.trim();
     if (title.isEmpty) return;
-    await context.read<Session>().api.createIdea(widget.workspaceId, title, '');
+    // 4.2: on failure the SnackBar shows and the typed text stays in the
+    // field for a retry — only a successful write clears it.
+    final ok = await guardWrite(
+      context,
+      () =>
+          context.read<Session>().api.createIdea(widget.workspaceId, title, ''),
+    );
+    if (!ok) return;
     _capture.clear();
     await _reload();
   }
@@ -74,14 +87,23 @@ class _IdeasPageState extends State<IdeasPage> {
       builder: (ctx) => AlertDialog(
         title: Text(l10n.t('idea.dropConfirm')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('idea.drop'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('idea.drop')),
+          ),
         ],
       ),
     );
     if (ok == true && mounted) {
-      await context.read<Session>().api.dropIdea(idea.id);
-      await _reload();
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.dropIdea(idea.id),
+      );
+      if (done) await _reload();
     }
   }
 
@@ -96,22 +118,48 @@ class _IdeasPageState extends State<IdeasPage> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('idea.titlePlaceholder'))),
-            TextField(controller: content, decoration: InputDecoration(labelText: l10n.t('idea.contentPlaceholder')), maxLines: 4),
+            TextField(
+              controller: title,
+              decoration: InputDecoration(
+                labelText: l10n.t('idea.titlePlaceholder'),
+              ),
+            ),
+            TextField(
+              controller: content,
+              decoration: InputDecoration(
+                labelText: l10n.t('idea.contentPlaceholder'),
+              ),
+              maxLines: 4,
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.save'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('common.save')),
+          ),
         ],
       ),
     );
     if (ok == true && mounted) {
-      await context.read<Session>().api.updateIdea(idea.id, title: title.text.trim(), content: content.text);
-      await _reload();
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.updateIdea(
+          idea.id,
+          title: title.text.trim(),
+          content: content.text,
+        ),
+      );
+      if (done) await _reload();
     }
-    title.dispose();
-    content.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextFields mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. Ephemeral controllers are GC'd once
+    // the dialog unmounts.
   }
 
   @override
@@ -122,7 +170,11 @@ class _IdeasPageState extends State<IdeasPage> {
         future: _future,
         builder: (context, snap) {
           if (!snap.hasData) {
-            return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
+            return Center(
+              child: snap.hasError
+                  ? Text(localizedError(snap.error!, l10n.t))
+                  : const CircularProgressIndicator(),
+            );
           }
           return _IdeasWall(
             ideas: snap.data!,
@@ -131,12 +183,18 @@ class _IdeasPageState extends State<IdeasPage> {
             onEdit: _edit,
             onDrop: _drop,
             onConvert: (idea) async {
-              final ids = await context.read<Session>().api.convertIdea(idea.id);
-              final prdId = ids['prdId'];
-              if (prdId != null && context.mounted) {
-                context.read<LoopFocus>().rememberPrd(prdId);
-                context.go('/prd/$prdId');
-              }
+              // 4.2: on failure the guard shows the error and the idea card
+              // stays as-is — nothing is cleared, so retrying is safe.
+              await guardWrite(context, () async {
+                final ids = await context.read<Session>().api.convertIdea(
+                  idea.id,
+                );
+                final prdId = ids['prdId'];
+                if (prdId != null && context.mounted) {
+                  context.read<LoopFocus>().rememberPrd(prdId);
+                  context.go('/prd/$prdId');
+                }
+              });
             },
             onOpenPrd: (idea) {
               if (idea.prdId == null) return;
@@ -197,7 +255,13 @@ class _IdeasWall extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 720),
             child: Material(
               color: palette.surfaceRaised,
-              shape: StadiumBorder(side: BorderSide(color: palette.strokeSubtle)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+                side: BorderSide(
+                  color: palette.strokeSubtle,
+                  width: Cobalt.borderContainer,
+                ),
+              ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 6, 6, 6),
                 child: Row(
@@ -215,7 +279,10 @@ class _IdeasWall extends StatelessWidget {
                         onSubmitted: (_) => onCapture(),
                       ),
                     ),
-                    FilledButton(onPressed: onCapture, child: Text(l10n.t('idea.capture'))),
+                    FilledButton(
+                      onPressed: onCapture,
+                      child: Text(l10n.t('idea.capture')),
+                    ),
                   ],
                 ),
               ),
@@ -224,7 +291,11 @@ class _IdeasWall extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Center(
-          child: Text(l10n.t('idea.privateHint'), style: theme.textTheme.bodySmall?.copyWith(color: palette.fgMuted), textAlign: TextAlign.center),
+          child: Text(
+            l10n.t('idea.privateHint'),
+            style: theme.textTheme.bodySmall?.copyWith(color: palette.fgMuted),
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: 28),
         if (ideas.isEmpty)
@@ -236,7 +307,11 @@ class _IdeasWall extends StatelessWidget {
             children: [
               for (final idea in ideas)
                 SizedBox(
-                  width: width >= 1100 ? (width - 88) / 3 : width >= 760 ? (width - 72) / 2 : width - 56,
+                  width: width >= 1100
+                      ? (width - 88) / 3
+                      : width >= 760
+                      ? (width - 72) / 2
+                      : width - 56,
                   child: _IdeaPoster(
                     idea: idea,
                     onEdit: () => onEdit(idea),
@@ -248,7 +323,11 @@ class _IdeasWall extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          Text(l10n.t('idea.noFolders'), style: theme.textTheme.labelSmall, textAlign: TextAlign.center),
+          Text(
+            l10n.t('idea.noFolders'),
+            style: theme.textTheme.labelSmall,
+            textAlign: TextAlign.center,
+          ),
         ],
       ],
     );
@@ -308,32 +387,53 @@ class _IdeaPoster extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text(idea.title.toUpperCase(), style: theme.textTheme.headlineSmall)),
+                      Expanded(
+                        child: Text(
+                          idea.title.toUpperCase(),
+                          style: theme.textTheme.headlineSmall,
+                        ),
+                      ),
                       PopupMenuButton<String>(
                         onSelected: (value) {
                           if (value == 'edit') onEdit();
                           if (value == 'drop') onDrop();
                         },
                         itemBuilder: (_) => [
-                          PopupMenuItem(value: 'edit', child: Text(l10n.t('common.edit'))),
-                          PopupMenuItem(value: 'drop', child: Text(l10n.t('idea.drop'))),
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Text(l10n.t('common.edit')),
+                          ),
+                          PopupMenuItem(
+                            value: 'drop',
+                            child: Text(l10n.t('idea.drop')),
+                          ),
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    idea.content.isEmpty ? idea.status : idea.content,
+                    idea.content.isEmpty
+                        ? l10n.t('idea.status.${idea.status}')
+                        : idea.content,
                     style: theme.textTheme.bodyLarge,
                     maxLines: 4,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 20),
-                  ShadePill(label: l10n.t('idea.touched', {'when': timeAgo(idea.createdAt, l10n.t)})),
+                  ShadePill(
+                    label: l10n.t('idea.touched', {
+                      'when': timeAgo(idea.createdAt, l10n.t),
+                    }),
+                  ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: idea.prdId == null ? onConvert : onOpenPrd,
-                    child: Text(idea.prdId == null ? l10n.t('idea.convert') : l10n.t('prd.title')),
+                    child: Text(
+                      idea.prdId == null
+                          ? l10n.t('idea.convert')
+                          : l10n.t('prd.title'),
+                    ),
                   ),
                 ],
               ),

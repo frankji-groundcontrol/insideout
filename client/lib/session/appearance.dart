@@ -21,7 +21,8 @@ class MemorySettingsStore implements SettingsStore {
 }
 
 class SecureSettingsStore implements SettingsStore {
-  SecureSettingsStore([FlutterSecureStorage? storage]) : _storage = storage ?? const FlutterSecureStorage();
+  SecureSettingsStore([FlutterSecureStorage? storage])
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
 
@@ -29,12 +30,16 @@ class SecureSettingsStore implements SettingsStore {
   Future<String?> read(String key) => _storage.read(key: key);
 
   @override
-  Future<void> write(String key, String value) => _storage.write(key: key, value: value);
+  Future<void> write(String key, String value) =>
+      _storage.write(key: key, value: value);
 }
 
 class Appearance extends ChangeNotifier {
-  Appearance({SettingsStore? store, this.locale = defaultLocale, this.dark = false})
-      : _store = store ?? MemorySettingsStore();
+  Appearance({
+    SettingsStore? store,
+    this.locale = defaultLocale,
+    this.dark = true,
+  }) : _store = store ?? MemorySettingsStore();
 
   static const localeKey = 'insideout_locale';
   static const themeKey = 'insideout_theme';
@@ -45,7 +50,8 @@ class Appearance extends ChangeNotifier {
 
   ThemeMode get themeMode => dark ? ThemeMode.dark : ThemeMode.light;
 
-  String t(String key, [Map<String, Object?>? args]) => lookup(locale, key, args);
+  String t(String key, [Map<String, Object?>? args]) =>
+      lookup(locale, key, args);
 
   List<String> suggestions(String stage) => coachSuggestions(locale, stage);
 

@@ -2,6 +2,31 @@ import 'package:flutter/material.dart';
 
 import 'cobalt.dart';
 
+/// Cast shadow color — solid ink on the dark ramp, black at ~15% on light.
+Color castShadowColor(Brightness brightness) => brightness == Brightness.dark
+    ? const Color(0xFF05070A)
+    : const Color(0x26000000);
+
+/// Cobalt-Neo cast shadow — hard 4×4 offset, zero blur, zero spread.
+List<BoxShadow> cast(Brightness brightness) => <BoxShadow>[
+  BoxShadow(
+    color: castShadowColor(brightness),
+    offset: const Offset(4, 4),
+    blurRadius: 0,
+    spreadRadius: 0,
+  ),
+];
+
+/// Hover-state cast shadow — hard 2×2 offset, zero blur, zero spread.
+List<BoxShadow> castSm(Brightness brightness) => <BoxShadow>[
+  BoxShadow(
+    color: castShadowColor(brightness),
+    offset: const Offset(2, 2),
+    blurRadius: 0,
+    spreadRadius: 0,
+  ),
+];
+
 ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
   final scheme = ColorScheme(
     brightness: brightness,
@@ -26,11 +51,12 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
   );
 
   final shapeControl = RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+    borderRadius: BorderRadius.circular(Cobalt.radiusControl),
   );
   final shapeCard = RoundedRectangleBorder(
     borderRadius: BorderRadius.circular(Cobalt.radiusCard),
   );
+  final castColor = castShadowColor(brightness);
 
   final text = _textTheme(c);
 
@@ -40,6 +66,7 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
     colorScheme: scheme,
     scaffoldBackgroundColor: c.surfaceBase,
     canvasColor: c.surfaceBase,
+    shadowColor: castColor,
     fontFamily: Cobalt.sans,
     textTheme: text,
     primaryTextTheme: text,
@@ -54,10 +81,19 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
     cardTheme: CardThemeData(
       color: c.surfaceRaised,
       elevation: 0,
+      shadowColor: castColor,
       shape: shapeCard.copyWith(
-        side: BorderSide(color: c.strokeSubtle),
+        side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
       ),
       margin: EdgeInsets.zero,
+    ),
+    dialogTheme: DialogThemeData(
+      backgroundColor: c.surfaceRaised,
+      elevation: 0,
+      shadowColor: castColor,
+      shape: shapeCard.copyWith(
+        side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -66,23 +102,50 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
         shape: shapeControl,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
         textStyle: text.labelLarge,
+        animationDuration: Cobalt.pressDuration,
+        elevation: 0,
+        shadowColor: castColor,
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: c.btn,
+        foregroundColor: c.btnFg,
+        shape: shapeControl,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        textStyle: text.labelLarge,
+        animationDuration: Cobalt.pressDuration,
+        elevation: 0,
+        shadowColor: castColor,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: c.fgPrimary,
-        side: BorderSide(color: c.strokeSubtle),
+        side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
         shape: shapeControl,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+        animationDuration: Cobalt.pressDuration,
+        elevation: 0,
+        shadowColor: castColor,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: c.fgBrand),
+      style: TextButton.styleFrom(
+        foregroundColor: c.fgBrand,
+        shape: shapeControl,
+        animationDuration: Cobalt.pressDuration,
+        elevation: 0,
+      ),
     ),
     floatingActionButtonTheme: FloatingActionButtonThemeData(
       backgroundColor: c.btn,
       foregroundColor: c.btnFg,
-      shape: const StadiumBorder(),
+      shape: const RoundedRectangleBorder(),
+      elevation: 0,
+      hoverElevation: 0,
+      focusElevation: 0,
+      highlightElevation: 0,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -90,42 +153,64 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
       hintStyle: TextStyle(color: c.fgMuted, fontSize: 17.5),
       labelStyle: TextStyle(color: c.fgSecondary, fontSize: 12),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        borderSide: BorderSide(color: c.strokeSubtle),
+        borderRadius: BorderRadius.circular(Cobalt.radiusControl),
+        borderSide: BorderSide(
+          color: c.strokeSubtle,
+          width: Cobalt.borderContainer,
+        ),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        borderSide: BorderSide(color: c.strokeSubtle),
+        borderRadius: BorderRadius.circular(Cobalt.radiusControl),
+        borderSide: BorderSide(
+          color: c.strokeSubtle,
+          width: Cobalt.borderContainer,
+        ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        borderSide: const BorderSide(color: Cobalt.hue500, width: 1.5),
+        borderRadius: BorderRadius.circular(Cobalt.radiusControl),
+        borderSide: const BorderSide(
+          color: Cobalt.hue500,
+          width: Cobalt.borderContainer,
+        ),
       ),
     ),
     chipTheme: ChipThemeData(
       backgroundColor: c.brandSubtle,
       selectedColor: c.brand,
-      labelStyle: TextStyle(color: c.fgPrimary, fontSize: 12, fontWeight: FontWeight.w600),
-      shape: const StadiumBorder(),
-      side: BorderSide(color: c.strokeSubtle),
+      labelStyle: TextStyle(
+        color: c.fgPrimary,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+      ),
+      shape: shapeControl,
+      side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
     ),
     dividerColor: c.strokeSubtle,
     snackBarTheme: SnackBarThemeData(
       backgroundColor: c.fgPrimary,
       contentTextStyle: TextStyle(color: c.fgInverse),
+      elevation: 0,
+      shape: shapeCard.copyWith(
+        side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
+      ),
     ),
   );
 }
 
 TextTheme _textTheme(Cobalt c) {
-  TextStyle sans(double size, FontWeight weight, {Color? color, double height = 1.45}) => TextStyle(
-        fontFamily: Cobalt.sans,
-        fontFamilyFallback: Cobalt.sansFallback,
-        fontSize: size,
-        fontWeight: weight,
-        height: height,
-        color: color ?? c.fgPrimary,
-      );
+  TextStyle sans(
+    double size,
+    FontWeight weight, {
+    Color? color,
+    double height = 1.45,
+  }) => TextStyle(
+    fontFamily: Cobalt.sans,
+    fontFamilyFallback: Cobalt.sansFallback,
+    fontSize: size,
+    fontWeight: weight,
+    height: height,
+    color: color ?? c.fgPrimary,
+  );
   return TextTheme(
     displayLarge: sans(56, FontWeight.w700, height: 0.95),
     displayMedium: sans(52, FontWeight.w700, height: 0.95),
@@ -145,7 +230,13 @@ TextTheme _textTheme(Cobalt c) {
   );
 }
 
-TextStyle cobaltSerif(Cobalt c, {double size = 26, FontWeight weight = FontWeight.w600, Color? color, double height = 1.35}) {
+TextStyle cobaltSerif(
+  Cobalt c, {
+  double size = 26,
+  FontWeight weight = FontWeight.w600,
+  Color? color,
+  double height = 1.35,
+}) {
   return TextStyle(
     fontFamily: Cobalt.serif,
     fontFamilyFallback: Cobalt.serifFallback,

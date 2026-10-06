@@ -4,63 +4,125 @@ import 'package:provider/provider.dart';
 
 import '../session/appearance.dart';
 import '../theme/cobalt.dart';
+import '../theme/cobalt_theme.dart';
+import '../widgets/pressable_block.dart';
 import 'loop_focus.dart';
 
 enum DockItem { capture, ideas, version, commit, roadmap, evidence }
 
-/// Lock chrome E — floating pill dock. No left rail at any breakpoint.
+/// Where a dock tap can go right now. A null path means the item lacks the
+/// id it needs and renders disabled instead of bouncing to the dashboard;
+/// `pulse` means the destination is already on screen and the tap asks the
+/// page for a scroll-highlight.
+typedef _DockTarget = ({String? path, bool pulse});
+
+/// Lock chrome E — floating block dock. No left rail at any breakpoint.
+///
+/// Items that lack the id they need (cold focus) render disabled rather
+/// than silently re-routing to the dashboard. Below [_labeledMinWidth]
+/// items collapse to icons so all six stay visible and tappable; labels
+/// live on in tooltips and semantics.
 class ProductDock extends StatelessWidget {
   const ProductDock({super.key});
 
   static const height = 88.0;
 
+  /// The labeled dock needs about this much width under worst-case label
+  /// metrics (the en "Unfinished: Commit" swap); below it items show icons
+  /// only so the body can never blow out a narrow surface (W3-N1).
+  static const _labeledMinWidth = 840.0;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    final location = GoRouterState.of(context).uri.path;
-    final current = _current(location);
+    final current = _current(GoRouterState.of(context).uri.path);
     final focus = context.watch<LoopFocus>();
     final unfinished = _firstUnfinished(focus);
     final palette = Cobalt.of(context);
+    final brightness = Theme.of(context).brightness;
 
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Center(
-        child: Material(
-          color: palette.brand,
-          elevation: 8,
-          shadowColor: Cobalt.lightInk.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (final item in DockItem.values)
-                  _DockButton(
-                    item: item,
-                    selected: item == current,
-                    unfinished: item == unfinished && item != current,
-                    label: l10n.t(_labelKey(item)),
-                    unfinishedLabel: l10n.t('dock.unfinished', {'step': l10n.t(_labelKey(item))}),
-                    onTap: () => _go(context, item),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        heightFactor: 1.0,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final narrow = constraints.maxWidth < _labeledMinWidth;
+            // Narrow cap: a long unfinished label cannot stretch the pill
+            // to the viewport edge. Below 840px the items are icons only.
+            return ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: narrow ? 360 : double.infinity,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: palette.brand,
+                  borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+                  border: Border.all(
+                    color: castShadowColor(brightness),
+                    width: Cobalt.borderContainer,
                   ),
-              ],
-            ),
-          ),
+                  boxShadow: cast(brightness),
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final item in DockItem.values)
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: narrow ? 2 : 4,
+                            ),
+                            child: Builder(
+                              builder: (context) {
+                                final target = _target(context, item);
+                                final enabled =
+                                    target.path != null || target.pulse;
+                                return _DockButton(
+                                  item: item,
+                                  selected: item == current,
+                                  unfinished:
+                                      item == unfinished && item != current,
+                                  enabled: enabled,
+                                  iconOnly: narrow,
+                                  label: l10n.t(_labelKey(item)),
+                                  unfinishedLabel: l10n.t('dock.unfinished', {
+                                    'step': l10n.t(_labelKey(item)),
+                                  }),
+                                  onTap: enabled
+                                      ? () => _activate(context, item)
+                                      : null,
+                                );
+                              },
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
   static String _labelKey(DockItem item) => switch (item) {
-        DockItem.capture => 'dock.capture',
-        DockItem.ideas => 'dock.ideas',
-        DockItem.version => 'dock.version',
-        DockItem.commit => 'dock.commit',
-        DockItem.roadmap => 'dock.roadmap',
-        DockItem.evidence => 'dock.evidence',
-      };
+    DockItem.capture => 'dock.capture',
+    DockItem.ideas => 'dock.ideas',
+    DockItem.version => 'dock.version',
+    DockItem.commit => 'dock.commit',
+    DockItem.roadmap => 'dock.roadmap',
+    DockItem.evidence => 'dock.evidence',
+  };
 
   static DockItem? _current(String path) {
     if (path.contains('/ideas')) return DockItem.ideas;
@@ -86,57 +148,71 @@ class ProductDock extends StatelessWidget {
     return match?.group(1);
   }
 
-  static void _go(BuildContext context, DockItem item) {
-    final focus = context.read<LoopFocus>();
-    final project = focus.projectId ?? _projectOnRoute(context);
-    void stay() {
-      if (project != null) {
-        context.go('/projects/$project');
-      } else {
-        context.go('/dashboard');
-      }
-    }
+  /// The workspace the current route is already on, so Capture/Ideas target
+  /// the workspace being viewed rather than a stale remembered one.
+  static String? _workspaceOnRoute(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    final match = RegExp(r'^/workspace/([^/]+)').firstMatch(path);
+    return match?.group(1);
+  }
 
-    switch (item) {
-      case DockItem.capture:
-      case DockItem.ideas:
-        final ws = focus.workspaceId;
-        if (ws != null) {
-          context.go('/workspace/$ws/ideas');
-        } else {
-          stay();
-        }
-      case DockItem.version:
-        final prd = focus.prdId;
-        if (prd != null) {
-          context.go('/prd/$prd');
-        } else {
-          stay();
-        }
-      case DockItem.commit:
-        final prd = focus.prdId;
-        if (prd != null) {
-          context.go('/prd/$prd/versions');
-        } else {
-          stay();
-        }
-      case DockItem.roadmap:
-        if (project != null) {
-          context.go('/projects/$project/roadmap');
-        } else {
-          stay();
-        }
-      case DockItem.evidence:
-        stay();
+  static _DockTarget _target(BuildContext context, DockItem item) {
+    final focus = context.read<LoopFocus>();
+    final location = GoRouterState.of(context).uri.path;
+    final workspace = _workspaceOnRoute(context) ?? focus.workspaceId;
+    final project =
+        _projectOnRoute(context) ??
+        (workspace != null ? focus.projectFor(workspace) : null) ??
+        focus.projectId;
+    return switch (item) {
+      DockItem.capture || DockItem.ideas => (
+        path: workspace != null ? '/workspace/$workspace/ideas' : null,
+        pulse: false,
+      ),
+      // Version rides to the versions route; from the PRD desk the old
+      // /prd/<id> target was a self-navigation dead click.
+      DockItem.version || DockItem.commit => (
+        path: focus.prdId != null ? '/prd/${focus.prdId}/versions' : null,
+        pulse: false,
+      ),
+      DockItem.roadmap => (
+        path: project != null ? '/projects/$project/roadmap' : null,
+        pulse: false,
+      ),
+      DockItem.evidence => (
+        path: project != null && location != '/projects/$project'
+            ? '/projects/$project'
+            : null,
+        pulse: project != null && location == '/projects/$project',
+      ),
+    };
+  }
+
+  static void _activate(BuildContext context, DockItem item) {
+    final (:path, :pulse) = _target(context, item);
+    if (pulse) {
+      // Already on the evidence destination: no re-push, ask the page to
+      // scroll-highlight its evidence section instead.
+      context.read<LoopFocus>().pulseEvidence();
+      return;
     }
+    if (path == null) return; // disabled items never fire
+    if (GoRouterState.of(context).uri.path == path) return; // already there
+    context.go(path);
   }
 }
+
+/// Amber warn block for unfinished steps. Square per the Cobalt-Neo decree;
+/// #FFD166 computes ≈7:1 on the dock brand surface (both themes).
+const dockWarnAmber = Color(0xFFFFD166);
 
 class _DockButton extends StatelessWidget {
   const _DockButton({
     required this.item,
     required this.selected,
     required this.unfinished,
+    required this.enabled,
+    required this.iconOnly,
     required this.label,
     required this.unfinishedLabel,
     required this.onTap,
@@ -145,40 +221,75 @@ class _DockButton extends StatelessWidget {
   final DockItem item;
   final bool selected;
   final bool unfinished;
+  final bool enabled;
+
+  /// Narrow dock: icon + warn square only; the label moves to the tooltip
+  /// and semantics so six items always fit.
+  final bool iconOnly;
   final String label;
   final String unfinishedLabel;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final palette = Cobalt.of(context);
     return Tooltip(
       message: unfinished ? unfinishedLabel : label,
-      child: InkWell(
-        key: unfinished ? ValueKey('dock-unfinished-${item.name}') : null,
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? palette.btnFg.withValues(alpha: 0.16) : Colors.transparent,
-            border: unfinished ? Border.all(color: palette.statusWarnFg, width: 1.5) : null,
-            borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(_icon(item), size: 20, color: unfinished ? palette.statusWarnFg : palette.btnFg),
-              const SizedBox(height: 2),
-              Text(
-                unfinished ? unfinishedLabel : label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: unfinished ? palette.statusWarnFg : palette.btnFg,
-                  fontSize: 11,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.4,
+        child: PressableBlock(
+          key: unfinished ? ValueKey('dock-unfinished-${item.name}') : null,
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: EdgeInsets.symmetric(
+              horizontal: iconOnly ? 12 : 10,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: selected
+                  ? Color.alphaBlend(
+                      palette.btnFg.withValues(alpha: 0.16),
+                      palette.brandHover,
+                    )
+                  : palette.brandHover,
+              borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(_icon(item), size: 20, color: palette.btnFg),
+                    if (!iconOnly) ...[
+                      const SizedBox(height: 2),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 180),
+                        child: Text(
+                          unfinished ? unfinishedLabel : label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          softWrap: false,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: palette.btnFg, fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-            ],
+                if (unfinished)
+                  const Positioned(
+                    top: 0,
+                    right: 0,
+                    child: SizedBox(
+                      width: 8,
+                      height: 8,
+                      child: ColoredBox(color: dockWarnAmber),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -186,11 +297,11 @@ class _DockButton extends StatelessWidget {
   }
 
   static IconData _icon(DockItem item) => switch (item) {
-        DockItem.capture => Icons.add,
-        DockItem.ideas => Icons.auto_awesome_outlined,
-        DockItem.version => Icons.description_outlined,
-        DockItem.commit => Icons.verified_outlined,
-        DockItem.roadmap => Icons.map_outlined,
-        DockItem.evidence => Icons.fact_check_outlined,
-      };
+    DockItem.capture => Icons.add,
+    DockItem.ideas => Icons.auto_awesome_outlined,
+    DockItem.version => Icons.description_outlined,
+    DockItem.commit => Icons.verified_outlined,
+    DockItem.roadmap => Icons.map_outlined,
+    DockItem.evidence => Icons.fact_check_outlined,
+  };
 }

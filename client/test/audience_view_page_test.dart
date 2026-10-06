@@ -10,19 +10,20 @@ import 'package:provider/provider.dart';
 
 class _FakeApi extends ApiClient {
   _FakeApi(this.payload, {this.prd})
-      : super(
-          baseUrl: 'http://127.0.0.1:9/api/v1',
-          readAccess: () async => null,
-          readRefresh: () async => null,
-          writeTokens: (a, r) async {},
-          clearTokens: () async {},
-        );
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
 
   final Map<String, dynamic> payload;
   final Prd? prd;
 
   @override
-  Future<Map<String, dynamic>> prdView(String id, String audience) async => payload;
+  Future<Map<String, dynamic>> prdView(String id, String audience) async =>
+      payload;
 
   @override
   Future<Prd> getPrd(String id) async =>
@@ -58,7 +59,11 @@ void main() {
         'readiness': {
           'ready': false,
           'gaps': [
-            {'section': 'risks', 'priority': 'should_clarify_this_version', 'reason': 'the decisions the answer requires now'},
+            {
+              'section': 'risks',
+              'priority': 'should_clarify_this_version',
+              'reason': 'the decisions the answer requires now',
+            },
           ],
           'carryIntoCommit': [],
         },
@@ -81,10 +86,15 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
           ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
-        child: const MaterialApp(home: AudienceViewPage(prdId: 'p1', initialAudience: 'decision')),
+        child: const MaterialApp(
+          home: AudienceViewPage(prdId: 'p1', initialAudience: 'decision'),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -98,53 +108,80 @@ void main() {
     expect(find.text('Goals & Success Metrics'), findsOneWidget);
     expect(find.textContaining('(not yet written'), findsOneWidget);
     expect(find.textContaining('Latest Commit: v3'), findsOneWidget);
-    expect(find.textContaining('the decisions the answer requires now'), findsOneWidget);
-  });
-
-  testWidgets('audience view shows blocking gaps first and labels the rest as later', (tester) async {
-    final session = Session();
-    session.ready = true;
-    session.api = _FakeApi({
-      'prdId': 'p1',
-      'title': 'Gap order',
-      'projection': {
-        'audience': 'decision',
-        'purpose': 'why now',
-        'sections': const <String, String>{},
-      },
-      'readiness': {
-        'gaps': [
-          {'section': 'goals', 'priority': 'should_clarify_this_version', 'reason': 'the investment being decided on'},
-          {'section': 'stories', 'priority': 'validate_later', 'reason': 'useful eventually'},
-          {'section': 'background', 'priority': 'must_clarify_now', 'reason': 'the why-this argument'},
-        ],
-      },
-    });
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
-          ChangeNotifierProvider(create: (_) => LoopFocus()),
-        ],
-        child: const MaterialApp(home: AudienceViewPage(prdId: 'p1')),
-      ),
+    expect(
+      find.textContaining('the decisions the answer requires now'),
+      findsOneWidget,
     );
-    await tester.pumpAndSettle();
-
-    expect(tester.takeException(), isNull);
-    final blocking = tester.getTopLeft(find.textContaining('the why-this argument'));
-    final laterHeading = tester.getTopLeft(find.text('Later'));
-    final should = tester.getTopLeft(find.textContaining('the investment being decided on'));
-    final validate = tester.getTopLeft(find.textContaining('useful eventually'));
-    expect(blocking.dy, lessThan(laterHeading.dy));
-    expect(laterHeading.dy, lessThan(should.dy));
-    expect(should.dy, lessThan(validate.dy));
-    expect(find.textContaining('must_clarify_now'), findsNothing);
-    expect(find.textContaining('should_clarify_this_version'), findsNothing);
-    expect(find.textContaining('validate_later'), findsNothing);
   });
+
+  testWidgets(
+    'audience view shows blocking gaps first and labels the rest as later',
+    (tester) async {
+      final session = Session();
+      session.ready = true;
+      session.api = _FakeApi({
+        'prdId': 'p1',
+        'title': 'Gap order',
+        'projection': {
+          'audience': 'decision',
+          'purpose': 'why now',
+          'sections': const <String, String>{},
+        },
+        'readiness': {
+          'gaps': [
+            {
+              'section': 'goals',
+              'priority': 'should_clarify_this_version',
+              'reason': 'the investment being decided on',
+            },
+            {
+              'section': 'stories',
+              'priority': 'validate_later',
+              'reason': 'useful eventually',
+            },
+            {
+              'section': 'background',
+              'priority': 'must_clarify_now',
+              'reason': 'the why-this argument',
+            },
+          ],
+        },
+      });
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: session),
+            ChangeNotifierProvider(
+              create: (_) =>
+                  Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+            ),
+            ChangeNotifierProvider(create: (_) => LoopFocus()),
+          ],
+          child: const MaterialApp(home: AudienceViewPage(prdId: 'p1')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      final blocking = tester.getTopLeft(
+        find.textContaining('the why-this argument'),
+      );
+      final laterHeading = tester.getTopLeft(find.text('Later'));
+      final should = tester.getTopLeft(
+        find.textContaining('the investment being decided on'),
+      );
+      final validate = tester.getTopLeft(
+        find.textContaining('useful eventually'),
+      );
+      expect(blocking.dy, lessThan(laterHeading.dy));
+      expect(laterHeading.dy, lessThan(should.dy));
+      expect(should.dy, lessThan(validate.dy));
+      expect(find.textContaining('must_clarify_now'), findsNothing);
+      expect(find.textContaining('should_clarify_this_version'), findsNothing);
+      expect(find.textContaining('validate_later'), findsNothing);
+    },
+  );
 }

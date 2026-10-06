@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 /// CSS `cubic-bezier(0.16, 1, 0.3, 1)` from the Nuxt Ink & Seal landing / AuthDoor.
 const inkEase = Cubic(0.16, 1.0, 0.3, 1.0);
 
-bool inkReduceMotion(BuildContext context) => MediaQuery.disableAnimationsOf(context);
+bool inkReduceMotion(BuildContext context) =>
+    MediaQuery.disableAnimationsOf(context);
 
 /// Fade + rise (and optional scale) on mount, or when first scrolled into view.
 class InkReveal extends StatefulWidget {
@@ -28,7 +29,8 @@ class InkReveal extends StatefulWidget {
   State<InkReveal> createState() => _InkRevealState();
 }
 
-class _InkRevealState extends State<InkReveal> with SingleTickerProviderStateMixin {
+class _InkRevealState extends State<InkReveal>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c;
   ScrollNotificationObserverState? _scroll;
   var _started = false;
@@ -36,7 +38,10 @@ class _InkRevealState extends State<InkReveal> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: widget.delay + widget.duration);
+    _c = AnimationController(
+      vsync: this,
+      duration: widget.delay + widget.duration,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryStart());
   }
 
@@ -82,7 +87,10 @@ class _InkRevealState extends State<InkReveal> with SingleTickerProviderStateMix
   @override
   Widget build(BuildContext context) {
     final start = widget.delay.inMilliseconds / _c.duration!.inMilliseconds;
-    final t = CurvedAnimation(parent: _c, curve: Interval(start, 1, curve: inkEase));
+    final t = CurvedAnimation(
+      parent: _c,
+      curve: Interval(start, 1, curve: inkEase),
+    );
     return AnimatedBuilder(
       animation: t,
       builder: (context, child) {
@@ -120,13 +128,17 @@ class InkStamp extends StatefulWidget {
   State<InkStamp> createState() => _InkStampState();
 }
 
-class _InkStampState extends State<InkStamp> with SingleTickerProviderStateMixin {
+class _InkStampState extends State<InkStamp>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _c;
 
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: widget.delay + widget.duration);
+    _c = AnimationController(
+      vsync: this,
+      duration: widget.delay + widget.duration,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (inkReduceMotion(context)) {
@@ -146,7 +158,10 @@ class _InkStampState extends State<InkStamp> with SingleTickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final start = widget.delay.inMilliseconds / _c.duration!.inMilliseconds;
-    final t = CurvedAnimation(parent: _c, curve: Interval(start, 1, curve: inkEase));
+    final t = CurvedAnimation(
+      parent: _c,
+      curve: Interval(start, 1, curve: inkEase),
+    );
     return AnimatedBuilder(
       animation: t,
       builder: (context, child) {

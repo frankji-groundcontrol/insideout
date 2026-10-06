@@ -48,7 +48,11 @@ class _ProfilePageState extends State<ProfilePage> {
       final updated = await session.api.updateMe(
         username: username.text.trim(),
         bio: bio.text,
-        keywords: keywords.text.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList(),
+        keywords: keywords.text
+            .split(',')
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .toList(),
       );
       await session.applyUser(updated);
     } catch (e) {
@@ -70,14 +74,37 @@ class _ProfilePageState extends State<ProfilePage> {
         children: [
           Text(user?.email ?? '', style: Theme.of(context).textTheme.bodySmall),
           const SizedBox(height: 16),
-          TextField(controller: username, decoration: InputDecoration(labelText: l10n.t('profile.username'))),
+          TextField(
+            controller: username,
+            decoration: InputDecoration(labelText: l10n.t('profile.username')),
+          ),
           const SizedBox(height: 12),
-          TextField(controller: bio, decoration: InputDecoration(labelText: l10n.t('profile.bio'), hintText: l10n.t('profile.bioPlaceholder')), maxLines: 3),
+          TextField(
+            controller: bio,
+            decoration: InputDecoration(
+              labelText: l10n.t('profile.bio'),
+              hintText: l10n.t('profile.bioPlaceholder'),
+            ),
+            maxLines: 3,
+          ),
           const SizedBox(height: 12),
-          TextField(controller: keywords, decoration: InputDecoration(labelText: l10n.t('profile.keywords'), hintText: l10n.t('profile.keywordsPlaceholder'))),
-          if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(localizedError(error!, l10n.t))),
+          TextField(
+            controller: keywords,
+            decoration: InputDecoration(
+              labelText: l10n.t('profile.keywords'),
+              hintText: l10n.t('profile.keywordsPlaceholder'),
+            ),
+          ),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(localizedError(error!, l10n.t)),
+            ),
           const SizedBox(height: 20),
-          FilledButton(onPressed: busy ? null : _save, child: Text(l10n.t('profile.save'))),
+          FilledButton(
+            onPressed: busy ? null : _save,
+            child: Text(l10n.t('profile.save')),
+          ),
           if (user?.isAdmin ?? false) const AdminSection(),
         ],
       ),

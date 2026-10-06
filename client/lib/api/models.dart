@@ -24,16 +24,16 @@ class UserProfile {
   bool get isAdmin => systemRole == 'admin';
 
   factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
-        id: j['id'] as String,
-        email: j['email'] as String,
-        username: j['username'] as String,
-        bio: (j['bio'] as String?) ?? '',
-        keywords: ((j['keywords'] as List?) ?? const []).cast<String>(),
-        avatarUrl: j['avatarUrl'] as String?,
-        accessToken: j['accessToken'] as String?,
-        refreshToken: j['refreshToken'] as String?,
-        systemRole: j['systemRole'] as String?,
-      );
+    id: j['id'] as String,
+    email: j['email'] as String,
+    username: j['username'] as String,
+    bio: (j['bio'] as String?) ?? '',
+    keywords: ((j['keywords'] as List?) ?? const []).cast<String>(),
+    avatarUrl: j['avatarUrl'] as String?,
+    accessToken: j['accessToken'] as String?,
+    refreshToken: j['refreshToken'] as String?,
+    systemRole: j['systemRole'] as String?,
+  );
 }
 
 class Workspace {
@@ -58,15 +58,15 @@ class Workspace {
   final String createdAt;
 
   factory Workspace.fromJson(Map<String, dynamic> j) => Workspace(
-        id: j['id'] as String,
-        title: j['title'] as String,
-        description: (j['description'] as String?) ?? '',
-        code: j['code'] as String,
-        status: j['status'] as String,
-        memberCount: (j['memberCount'] as num?)?.toInt() ?? 0,
-        myRole: j['myRole'] as String,
-        createdAt: j['createdAt'] as String,
-      );
+    id: j['id'] as String,
+    title: j['title'] as String,
+    description: (j['description'] as String?) ?? '',
+    code: j['code'] as String,
+    status: j['status'] as String,
+    memberCount: (j['memberCount'] as num?)?.toInt() ?? 0,
+    myRole: j['myRole'] as String,
+    createdAt: j['createdAt'] as String,
+  );
 }
 
 class WorkspaceMember {
@@ -83,11 +83,11 @@ class WorkspaceMember {
   final String role;
 
   factory WorkspaceMember.fromJson(Map<String, dynamic> j) => WorkspaceMember(
-        userId: j['userId'] as String,
-        username: j['username'] as String,
-        email: j['email'] as String,
-        role: j['role'] as String,
-      );
+    userId: j['userId'] as String,
+    username: j['username'] as String,
+    email: j['email'] as String,
+    role: j['role'] as String,
+  );
 }
 
 class Project {
@@ -118,32 +118,36 @@ class Project {
   final String? latestUpdateAt;
 
   factory Project.fromJson(Map<String, dynamic> j) => Project(
-        id: j['id'] as String,
-        workspaceId: j['workspaceId'] as String,
-        title: j['title'] as String,
-        description: (j['description'] as String?) ?? '',
-        status: j['status'] as String,
-        repoUrl: (j['repoUrl'] as String?) ?? '',
-        createdAt: j['createdAt'] as String,
-        flagged: (j['flagged'] as bool?) ?? false,
-        latestUpdateKind: j['latestUpdateKind'] as String?,
-        latestUpdateContent: j['latestUpdateContent'] as String?,
-        latestUpdateAt: j['latestUpdateAt'] as String?,
-      );
+    id: j['id'] as String,
+    workspaceId: j['workspaceId'] as String,
+    title: j['title'] as String,
+    description: (j['description'] as String?) ?? '',
+    status: j['status'] as String,
+    repoUrl: (j['repoUrl'] as String?) ?? '',
+    createdAt: j['createdAt'] as String,
+    flagged: (j['flagged'] as bool?) ?? false,
+    latestUpdateKind: j['latestUpdateKind'] as String?,
+    latestUpdateContent: j['latestUpdateContent'] as String?,
+    latestUpdateAt: j['latestUpdateAt'] as String?,
+  );
 }
 
 class ProposalItem {
-  ProposalItem({required this.action, required this.title, this.parentHint = ''});
+  ProposalItem({
+    required this.action,
+    required this.title,
+    this.parentHint = '',
+  });
 
   final String action;
   final String title;
   final String parentHint;
 
   factory ProposalItem.fromJson(Map<String, dynamic> j) => ProposalItem(
-        action: (j['action'] as String?) ?? 'add_node',
-        title: j['title'] as String,
-        parentHint: (j['parentHint'] as String?) ?? '',
-      );
+    action: (j['action'] as String?) ?? 'add_node',
+    title: j['title'] as String,
+    parentHint: (j['parentHint'] as String?) ?? '',
+  );
 }
 
 class ProjectUpdate {
@@ -168,16 +172,16 @@ class ProjectUpdate {
   final String decision;
 
   factory ProjectUpdate.fromJson(Map<String, dynamic> j) => ProjectUpdate(
-        id: j['id'] as String,
-        kind: j['kind'] as String,
-        content: j['content'] as String,
-        createdAt: j['createdAt'] as String,
-        authorId: j['authorId'] as String,
-        items: ((j['items'] as List?) ?? const [])
-            .map((e) => ProposalItem.fromJson(e as Map<String, dynamic>))
-            .toList(),
-        decision: j['decision'] as String? ?? '',
-      );
+    id: j['id'] as String,
+    kind: j['kind'] as String,
+    content: j['content'] as String,
+    createdAt: j['createdAt'] as String,
+    authorId: j['authorId'] as String,
+    items: ((j['items'] as List?) ?? const [])
+        .map((e) => ProposalItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    decision: j['decision'] as String? ?? '',
+  );
 }
 
 class Idea {
@@ -200,14 +204,14 @@ class Idea {
   final String? prdId;
 
   factory Idea.fromJson(Map<String, dynamic> j) => Idea(
-        id: j['id'] as String,
-        workspaceId: j['workspaceId'] as String,
-        title: j['title'] as String,
-        content: (j['content'] as String?) ?? '',
-        status: j['status'] as String,
-        createdAt: j['createdAt'] as String,
-        prdId: j['prdId'] as String?,
-      );
+    id: j['id'] as String,
+    workspaceId: j['workspaceId'] as String,
+    title: j['title'] as String,
+    content: (j['content'] as String?) ?? '',
+    status: j['status'] as String,
+    createdAt: j['createdAt'] as String,
+    prdId: j['prdId'] as String?,
+  );
 }
 
 class Prd {
@@ -234,18 +238,18 @@ class Prd {
   final String? projectId;
 
   factory Prd.fromJson(Map<String, dynamic> j) => Prd(
-        id: j['id'] as String,
-        workspaceId: j['workspaceId'] as String,
-        title: j['title'] as String,
-        sections: ((j['sections'] as Map?) ?? const {}).map(
-          (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
-        ),
-        status: j['status'] as String,
-        currentRevision: (j['currentRevision'] as num?)?.toInt() ?? 0,
-        updatedAt: j['updatedAt'] as String,
-        authorId: j['authorId'] as String?,
-        projectId: j['projectId'] as String?,
-      );
+    id: j['id'] as String,
+    workspaceId: j['workspaceId'] as String,
+    title: j['title'] as String,
+    sections: ((j['sections'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
+    ),
+    status: j['status'] as String,
+    currentRevision: (j['currentRevision'] as num?)?.toInt() ?? 0,
+    updatedAt: j['updatedAt'] as String,
+    authorId: j['authorId'] as String?,
+    projectId: j['projectId'] as String?,
+  );
 }
 
 const prdSectionKeys = [
@@ -275,14 +279,14 @@ class PrdRevision {
   final Map<String, String> sections;
 
   factory PrdRevision.fromJson(Map<String, dynamic> j) => PrdRevision(
-        id: j['id'] as String,
-        revision: (j['revision'] as num?)?.toInt() ?? 0,
-        createdAt: j['createdAt'] as String,
-        note: j['note'] as String?,
-        sections: ((j['sections'] as Map?) ?? const {}).map(
-          (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
-        ),
-      );
+    id: j['id'] as String,
+    revision: (j['revision'] as num?)?.toInt() ?? 0,
+    createdAt: j['createdAt'] as String,
+    note: j['note'] as String?,
+    sections: ((j['sections'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(k.toString(), v?.toString() ?? ''),
+    ),
+  );
 }
 
 class RoadmapNode {
@@ -322,21 +326,21 @@ class RoadmapNode {
   final String ownerName;
 
   factory RoadmapNode.fromJson(Map<String, dynamic> j) => RoadmapNode(
-        id: j['id'] as String,
-        projectId: j['projectId'] as String,
-        parentId: j['parentId'] as String?,
-        title: j['title'] as String,
-        description: (j['description'] as String?) ?? '',
-        status: j['status'] as String,
-        position: (j['position'] as num?)?.toInt() ?? 0,
-        deadline: j['deadline'] as String?,
-        pressure: j['pressure'] as String?,
-        creatorName: j['creatorName'] as String?,
-        editorName: j['editorName'] as String?,
-        acceptance: (j['acceptance'] as String?) ?? '',
-        ownerId: j['ownerId'] as String?,
-        ownerName: (j['ownerName'] as String?) ?? '',
-      );
+    id: j['id'] as String,
+    projectId: j['projectId'] as String,
+    parentId: j['parentId'] as String?,
+    title: j['title'] as String,
+    description: (j['description'] as String?) ?? '',
+    status: j['status'] as String,
+    position: (j['position'] as num?)?.toInt() ?? 0,
+    deadline: j['deadline'] as String?,
+    pressure: j['pressure'] as String?,
+    creatorName: j['creatorName'] as String?,
+    editorName: j['editorName'] as String?,
+    acceptance: (j['acceptance'] as String?) ?? '',
+    ownerId: j['ownerId'] as String?,
+    ownerName: (j['ownerName'] as String?) ?? '',
+  );
 }
 
 class Conversation {
@@ -353,11 +357,11 @@ class Conversation {
   final String status;
 
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(
-        id: j['id'] as String,
-        prdId: j['prdId'] as String,
-        stage: j['stage'] as String,
-        status: j['status'] as String,
-      );
+    id: j['id'] as String,
+    prdId: j['prdId'] as String,
+    stage: j['stage'] as String,
+    status: j['status'] as String,
+  );
 }
 
 class ChatMessage {
@@ -368,10 +372,10 @@ class ChatMessage {
   final String content;
 
   factory ChatMessage.fromJson(Map<String, dynamic> j) => ChatMessage(
-        id: j['id'] as String,
-        role: j['role'] as String,
-        content: j['content'] as String,
-      );
+    id: j['id'] as String,
+    role: j['role'] as String,
+    content: j['content'] as String,
+  );
 }
 
 class PrdCommit {
@@ -413,8 +417,12 @@ class PrdCommit {
       createdAt: j['createdAt'] as String,
       changeSummary: j['changeSummary']?.toString() ?? '',
       decisionNote: j['decisionNote']?.toString() ?? '',
-      unresolved: ((j['unresolved'] as List?) ?? const []).map((e) => e.toString()).toList(),
-      diffCounts: counts.map((k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0)),
+      unresolved: ((j['unresolved'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      diffCounts: counts.map(
+        (k, v) => MapEntry(k.toString(), (v as num?)?.toInt() ?? 0),
+      ),
       diffSections: sections.map((k, v) {
         final change = (v as Map?)?['change']?.toString() ?? '';
         return MapEntry(k.toString(), change);
@@ -425,7 +433,11 @@ class PrdCommit {
 }
 
 class ReadinessGap {
-  ReadinessGap({required this.section, required this.priority, required this.reason});
+  ReadinessGap({
+    required this.section,
+    required this.priority,
+    required this.reason,
+  });
 
   final String section;
   final String priority;
@@ -433,24 +445,34 @@ class ReadinessGap {
 }
 
 class AudienceReadiness {
-  AudienceReadiness({required this.audience, required this.ready, required this.gaps, required this.carryIntoCommit});
+  AudienceReadiness({
+    required this.audience,
+    required this.ready,
+    required this.gaps,
+    required this.carryIntoCommit,
+  });
 
   final String audience;
   final bool ready;
   final List<ReadinessGap> gaps;
   final List<String> carryIntoCommit;
 
-  factory AudienceReadiness.fromJson(String audience, Map<String, dynamic> j) => AudienceReadiness(
+  factory AudienceReadiness.fromJson(String audience, Map<String, dynamic> j) =>
+      AudienceReadiness(
         audience: audience,
         ready: j['ready'] as bool? ?? false,
         gaps: ((j['gaps'] as List?) ?? const [])
-            .map((e) => ReadinessGap(
-                  section: (e as Map)['section']?.toString() ?? '',
-                  priority: e['priority']?.toString() ?? '',
-                  reason: e['reason']?.toString() ?? '',
-                ))
+            .map(
+              (e) => ReadinessGap(
+                section: (e as Map)['section']?.toString() ?? '',
+                priority: e['priority']?.toString() ?? '',
+                reason: e['reason']?.toString() ?? '',
+              ),
+            )
             .toList(),
-        carryIntoCommit: ((j['carryIntoCommit'] as List?) ?? const []).map((e) => e.toString()).toList(),
+        carryIntoCommit: ((j['carryIntoCommit'] as List?) ?? const [])
+            .map((e) => e.toString())
+            .toList(),
       );
 }
 
@@ -460,23 +482,31 @@ class PrdReadiness {
   final Map<String, AudienceReadiness> audiences;
 
   factory PrdReadiness.fromJson(Map<String, dynamic> j) => PrdReadiness(
-        audiences: ((j['audiences'] as Map?) ?? const {})
-            .map((k, v) => MapEntry(k.toString(), AudienceReadiness.fromJson(k.toString(), v as Map<String, dynamic>))),
-      );
+    audiences: ((j['audiences'] as Map?) ?? const {}).map(
+      (k, v) => MapEntry(
+        k.toString(),
+        AudienceReadiness.fromJson(k.toString(), v as Map<String, dynamic>),
+      ),
+    ),
+  );
 }
 
 class PresenceEntry {
-  PresenceEntry({required this.sessionId, required this.userId, required this.name});
+  PresenceEntry({
+    required this.sessionId,
+    required this.userId,
+    required this.name,
+  });
 
   final String sessionId;
   final String userId;
   final String name;
 
   factory PresenceEntry.fromJson(Map<String, dynamic> j) => PresenceEntry(
-        sessionId: j['sessionId'] as String,
-        userId: j['userId'] as String,
-        name: j['name'] as String,
-      );
+    sessionId: j['sessionId'] as String,
+    userId: j['userId'] as String,
+    name: j['name'] as String,
+  );
 }
 
 class ProgressItem {
@@ -501,14 +531,14 @@ class ProgressItem {
   final String ownerName;
 
   factory ProgressItem.fromJson(Map<String, dynamic> j) => ProgressItem(
-        id: j['id'] as String,
-        title: j['title'] as String,
-        status: j['status'] as String,
-        deadline: j['deadline'] as String?,
-        pressure: j['pressure'] as String?,
-        acceptance: (j['acceptance'] as String?) ?? '',
-        ownerName: (j['ownerName'] as String?) ?? '',
-      );
+    id: j['id'] as String,
+    title: j['title'] as String,
+    status: j['status'] as String,
+    deadline: j['deadline'] as String?,
+    pressure: j['pressure'] as String?,
+    acceptance: (j['acceptance'] as String?) ?? '',
+    ownerName: (j['ownerName'] as String?) ?? '',
+  );
 }
 
 class RoadmapProgress {
@@ -530,10 +560,18 @@ class RoadmapProgress {
   final List<ProgressItem> doneItems;
 
   factory RoadmapProgress.fromJson(Map<String, dynamic> j) => RoadmapProgress(
-        now: ((j['now'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
-        needsDeadline: ((j['needsDeadline'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
-        next: ((j['next'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
-        doneCount: (j['doneCount'] as num?)?.toInt() ?? 0,
-        doneItems: ((j['doneItems'] as List?) ?? const []).map((e) => ProgressItem.fromJson(e as Map<String, dynamic>)).toList(),
-      );
+    now: ((j['now'] as List?) ?? const [])
+        .map((e) => ProgressItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    needsDeadline: ((j['needsDeadline'] as List?) ?? const [])
+        .map((e) => ProgressItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    next: ((j['next'] as List?) ?? const [])
+        .map((e) => ProgressItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    doneCount: (j['doneCount'] as num?)?.toInt() ?? 0,
+    doneItems: ((j['doneItems'] as List?) ?? const [])
+        .map((e) => ProgressItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }

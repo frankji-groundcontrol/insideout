@@ -13,17 +13,19 @@ import 'package:provider/provider.dart';
 // deadline is needsDeadline on the server, so it must not land in Now.
 class _FakeApi extends ApiClient {
   _FakeApi()
-      : super(
-          baseUrl: 'http://127.0.0.1:9/api/v1',
-          readAccess: () async => null,
-          readRefresh: () async => null,
-          writeTokens: (a, r) async {},
-          clearTokens: () async {},
-        );
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
 }
 
 void main() {
-  testWidgets('in-progress node without a deadline is not in Now', (tester) async {
+  testWidgets('in-progress node without a deadline is not in Now', (
+    tester,
+  ) async {
     final session = Session();
     session.ready = true;
     session.api = _FakeApi();
@@ -39,7 +41,11 @@ void main() {
     final progress = RoadmapProgress(
       now: const [],
       needsDeadline: [
-        ProgressItem(id: undeadlined.id, title: undeadlined.title, status: undeadlined.status),
+        ProgressItem(
+          id: undeadlined.id,
+          title: undeadlined.title,
+          status: undeadlined.status,
+        ),
       ],
       next: const [],
       doneCount: 0,
@@ -52,7 +58,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
         ],
         child: MaterialApp(
           theme: cobaltTheme(Cobalt.light, brightness: Brightness.light),

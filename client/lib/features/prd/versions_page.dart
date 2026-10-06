@@ -5,6 +5,7 @@ import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/session.dart';
+import '../../widgets/guarded_action.dart';
 import 'versions_commit_dialog.dart';
 import 'versions_stack.dart';
 
@@ -37,31 +38,41 @@ class _VersionsPageState extends State<VersionsPage> {
     _readiness = api.prdReadiness(widget.prdId);
     _commits.then((commits) {
       if (!mounted) return;
-      context.read<LoopFocus>().rememberPrd(widget.prdId, committed: commits.isNotEmpty);
+      context.read<LoopFocus>().rememberPrd(
+        widget.prdId,
+        committed: commits.isNotEmpty,
+      );
     }, onError: (_) {});
   }
 
   Future<void> _commitDialog() async {
     List<String> carry;
     try {
-      carry = (await _readiness).audiences[audience]?.carryIntoCommit ?? const [];
+      carry =
+          (await _readiness).audiences[audience]?.carryIntoCommit ?? const [];
     } catch (_) {
       carry = const [];
     }
     if (!mounted) return;
     final result = await showDialog<CommitFormResult>(
       context: context,
-      builder: (ctx) => VersionsCommitDialog(initialAudience: audience, carryCount: carry.length),
+      builder: (ctx) => VersionsCommitDialog(
+        initialAudience: audience,
+        carryCount: carry.length,
+      ),
     );
-    if (result == null || result.name.isEmpty) return;
-    await context.read<Session>().api.commitPrd(
-          widget.prdId,
-          name: result.name,
-          audience: result.audience,
-          summary: result.summary,
-          unresolved: carry,
-        );
-    if (mounted) setState(_reload);
+    if (result == null || result.name.isEmpty || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.commitPrd(
+        widget.prdId,
+        name: result.name,
+        audience: result.audience,
+        summary: result.summary,
+        unresolved: carry,
+      ),
+    );
+    if (done && mounted) setState(_reload);
   }
 
   @override
@@ -71,10 +82,14 @@ class _VersionsPageState extends State<VersionsPage> {
         future: Future.wait([_readiness, _commits]),
         builder: (context, snap) {
           if (snap.hasError) return Center(child: Text('${snap.error}'));
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData)
+            return const Center(child: CircularProgressIndicator());
           final readiness = snap.data![0] as PrdReadiness;
           final commits = snap.data![1] as List<PrdCommit>;
-          final selected = commits.cast<PrdCommit?>().firstWhere((c) => c!.id == selectedId, orElse: () => commits.isEmpty ? null : commits.first);
+          final selected = commits.cast<PrdCommit?>().firstWhere(
+            (c) => c!.id == selectedId,
+            orElse: () => commits.isEmpty ? null : commits.first,
+          );
           return VersionsStack(
             prdId: widget.prdId,
             commits: commits,

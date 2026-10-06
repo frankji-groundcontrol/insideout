@@ -32,4 +32,11 @@ remediation plan.
   no Criticals; one production-invisible critic bug, a web failure-path
   cluster, and an honest features-left ledger. ~5–7 focused days in
   [40-remediation-plan.md](2026-10-04-multirole-2/40-remediation-plan.md).
+- [2026-10-06 — Frontend & Cobalt design-language review](2026-10-06-frontend-cobalt/README.md)
+  — main @ f185e94; 10 reviewers + skeptics + critic; 114 findings
+  (7 Critical, 22 High; 28 confirmed, 1 downgraded, 0 refuted). Verdict:
+  sound engineering core, unfinished visual layer — dock renders at
+  viewport center, chrome fails contrast, zero of four Cobalt-Neo
+  mechanics implemented. ~11–12 engineer-days in
+  [40-remediation-plan.md](2026-10-06-frontend-cobalt/40-remediation-plan.md).
 

@@ -1,6 +1,6 @@
 ---
 name: InsideOut
-description: Cobalt card lock — track the work, refine the ideas, ship better PRDs.
+description: Cobalt-Neo block lock — track the work, refine the ideas, ship better PRDs.
 colors:
   cobalt-50: "#EEF2FF"
   cobalt-200: "#C7D2FE"
@@ -9,8 +9,16 @@ colors:
   cobalt-950: "#1E2A5A"
   light-ground: "#F7F8FA"
   light-ink: "#0B0D12"
+  light-stroke-subtle: "#7B8CE0"
+  light-stroke-strong: "#5A6FE0"
   dark-ground: "#0B0D12"
   dark-type: "#F7F8FA"
+  dark-raised: "#14171D"
+  dark-sunken: "#16181E"
+  dark-stroke-subtle: "#646A78"
+  dark-stroke-strong: "#788098"
+  cast-dark: "#05070A"
+  warn-amber: "#FFD166"
 typography:
   display:
     fontFamily: '"Archivo", "Noto Sans SC", system-ui, sans-serif'
@@ -25,9 +33,20 @@ typography:
     fontWeight: 600
     lineHeight: 1.35
 rounded:
-  control: "9999px"
-  card: "1.25rem"
-  hero: "1.75rem"
+  control: "0"
+  card: "0"
+  hero: "0"
+  pill: "0"
+borders:
+  container: "2px solid"
+  divider: "1px solid"
+shadows:
+  cast: "4px 4px 0 0"
+  castSm: "2px 2px 0 0"
+motion:
+  pressDuration: "100ms"
+  hoverOffset: "2px 2px"
+  activeOffset: "4px 4px"
 spacing:
   unit: "4px"
 components:
@@ -35,55 +54,105 @@ components:
     backgroundColor: "{colors.cobalt-500}"
     textColor: "#FFFFFF"
     rounded: "{rounded.control}"
-    padding: "14px 24px"
+    border: "{borders.container}"
+    shadow: "{shadows.cast}"
   chip-shade:
     backgroundColor: "{colors.cobalt-50}"
     textColor: "{colors.cobalt-700}"
     rounded: "{rounded.control}"
+    border: "{borders.container}"
   card:
     backgroundColor: "#FFFFFF"
     rounded: "{rounded.card}"
+    border: "{borders.container}"
+    shadow: "{shadows.cast}"
 ---
 
 # Design System: InsideOut
 
 ## Overview
 
-**Creative North Star: Cobalt cards on a field.**
+**Creative North Star: Cobalt-Neo — cobalt blocks on a field.**
 
 One hue. Neutrals carry the page. Light and dark are required. The product
 loop — Idea → version → human Commit → timed Roadmap → Git evidence — is
-read as rounded cards on a ground, large type, and a bottom dock. Not a
-full-bleed slab, not a single floating card on a blank page, not type-rows,
-not a left rail.
+read as **squared blocks on a ground**: 0px corners, 2px solid borders,
+hard 4px 4px zero-blur cast shadows, and a 100ms press-the-block motion.
+Not a full-bleed slab, not rounded cards, not type-rows, not a left rail.
 
 Lock screens live in
 [`docs/design-system/cobalt/`](docs/design-system/cobalt/README.md).
 The Flutter tokens are `Cobalt` in
-[`client/lib/theme/cobalt.dart`](client/lib/theme/cobalt.dart).
+[`client/lib/theme/cobalt.dart`](client/lib/theme/cobalt.dart); cast shadows
+and theme wiring in
+[`client/lib/theme/cobalt_theme.dart`](client/lib/theme/cobalt_theme.dart);
+press motion in
+[`client/lib/widgets/pressable_block.dart`](client/lib/widgets/pressable_block.dart).
+The signed-off token table and its verification record live in
+[`docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md`](docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md).
 
 **Key Characteristics:**
 
 - One accent: cobalt-500. Shades do hover, Now, focus, and chips.
+- **Every corner is 0px.** The radius token names are kept (`radiusControl`,
+  `radiusCard`, `radiusHero`, `radiusPill`) but pinned to 0 — the decree is
+  semantic, not a per-call-site choice.
+- **Borders come in two weights:** 2px `borderContainer` for blocks (cards,
+  chips, modals, dock, inputs), 1px `borderDivider` for hairlines (table
+  rows, separators, underlines).
+- **Shadows are cast, not blurred:** `cast` = offset (4,4), blur 0, spread 0;
+  `castSm` = offset (2,2). Dark theme: solid ink `#05070A`. Light theme:
+  black at 15% (`#26000000`).
+- **Motion is press-the-block, 100ms:** rest sits on `cast`; hover translates
+  (2,2) and shrinks to `castSm`; active translates (4,4) with the shadow
+  gone — the block presses into the page.
 - Light ground `#F7F8FA` / ink `#0B0D12`. Dark ground `#0B0D12` / type `#F7F8FA`.
+- Dark surfaces are a **neutral ramp** (raised `#14171D`, sunken `#16181E`);
+  cobalt-950 is demoted to `brandSubtle` and dark status-chip backgrounds —
+  never a page surface.
 - Body **17.5**. Titles **26+**. Display **48–58**. Meta **12**.
 - Ideas wall display `clamp(64px, 10vw, 320px)` on wide web.
 - UI sans: Archivo (Latin) + Noto Sans SC (CJK). zh-CN is the default locale.
+- Dark is the default theme; a saved explicit choice still wins.
 - Coach-only serif: Source Serif 4 + Noto Serif SC.
 - Primary action is **cobalt**, not ink.
-- Status is a shade pill, not a chop.
+- Status is a squared shade chip, not a chop; status dots and loaders are
+  square blocks.
 
 ## Colors
 
 | Token | Hex | Use |
 | --- | --- | --- |
-| cobalt-50 | `#EEF2FF` | Light wash / raised wash |
-| cobalt-200 | `#C7D2FE` | Hairline, chip, poster edge |
+| cobalt-50 | `#EEF2FF` | Light wash / chip bg |
+| cobalt-200 | `#C7D2FE` | Chip edge, poster edge, dark fgBrand |
 | cobalt-500 | `#3B5BFF` | Primary action, focus, Now |
-| cobalt-700 | `#1D4ED8` | Pressed / dark primary |
-| cobalt-950 | `#1E2A5A` | Dark-mode field / deep band |
+| cobalt-700 | `#1D4ED8` | Pressed / chip text (light) |
+| cobalt-950 | `#1E2A5A` | `brandSubtle` (dark), dark status-chip bg only |
 
-No magenta, lime, orange, cream, or extra brand hues.
+Strokes (verified against the WCAG script in `client/test/cobalt_test.dart`):
+
+| Token | Theme | Hex | Measured contrast |
+| --- | --- | --- | --- |
+| strokeSubtle | light | `#7B8CE0` | 3.15:1 on white / lightGround |
+| strokeStrong | light | `#5A6FE0` | 4.39:1 on white / lightGround |
+| strokeSubtle | dark | `#646A78` | 3.27:1 on sunken, 3.58:1 on ground |
+| strokeStrong | dark | `#788098` | 4.47:1 on sunken, 4.89:1 on ground |
+
+Accent exceptions:
+
+| Item | Hex | Note |
+| --- | --- | --- |
+| Dock warn dot | `#FFD166` | Square 8×8 block; measured 3.53:1 on the cobalt dock (≥3:1 non-text pass; the plan's "≈7:1" estimate was wrong, value stands) |
+| Cast shadow (dark) | `#05070A` | Solid ink |
+| Cast shadow (light) | `#26000000` | Black 15% |
+
+Cast shadows are decorative depth, not informational graphics: they sit at
+~1.2:1 against their own ground by construction (any ≥3:1 "shadow" would be
+a gray glow). The WCAG script asserts they are strictly darker than the
+ground instead (WCAG 1.4.11 exemption).
+
+No magenta, lime, orange, cream, or extra brand hues. Amber appears only as
+the dock warn dot.
 
 ## Typography
 
@@ -100,30 +169,46 @@ Web loads faces from `client/web/index.html` and gates the first frame in
 
 ## Layout
 
-Rounded cards on a field. Home is an index card plus a giant numeral with
-workspace cards beside it. Ideas is a type wall and poster cards. PRD + Coach
-is a split desk. Commit is a centered fanned stack. Roadmap is Now / Next /
-Later shade bands that still hold item cards. Signed-in chrome is a bottom
-dock. Locale and theme stay in the top-right cluster.
+Squared blocks on a field. Home is an index block plus a giant numeral with
+workspace blocks beside it. Ideas is a type wall and poster blocks. PRD +
+Coach is a split desk. Commit is a centered fanned stack. Roadmap is Now /
+Next / Later shade bands that still hold item blocks. Signed-in chrome is a
+bottom dock. Locale and theme stay in the top-right cluster.
 
 ## Components
 
 ### Buttons
 
-Primary is a cobalt pill. Hover/press uses cobalt-700. Focus is a cobalt ring.
+Primary is a cobalt block: 0 radius, 2px border, `cast` shadow, 100ms
+press-the-block (theme button styles supply the squared geometry, duration,
+and zero elevation; the translate choreography lives in `PressableBlock` for
+custom interactive blocks like the dock — Material's `ButtonStyle` cannot
+translate its shell). Hover/press color is cobalt-700. Focus is a cobalt ring.
 
 ### Chips
 
-Cobalt-shade pills for lifecycle. Not chops.
+Cobalt-shade blocks for lifecycle: 0 radius, 2px border. Chip text is
+cobalt-700 on cobalt-50 in light (5.99:1 — DESIGN.md is the authority for
+chip text; code aligns to it). Status marks are square blocks, never dots.
+Not chops.
 
 ### Cards
 
-20px radius, hairline cobalt-200, raised white (light) or lifted dark (dark).
+0 radius, 2px `strokeSubtle` border, `cast` shadow, raised white (light) or
+neutral raised `#14171D` (dark).
 
 ### Navigation
 
-Bottom dock for signed-in product surfaces. No Linear-style left rail at any
-breakpoint.
+Bottom dock for signed-in product surfaces: a 0-radius block with a 2px ink
+border and `cast` shadow. Every dock item is a `PressableBlock`. An
+unfinished item carries an amber `#FFD166` square at its top-right corner.
+No Linear-style left rail at any breakpoint.
+
+### Identity exception
+
+The brand mark (landing logo, auth-modal avatar) stays a disc — it is
+identity, not a status indicator or container. Everything interactive or
+informational is a block.
 
 ## Do's and Don'ts
 
@@ -131,12 +216,20 @@ breakpoint.
 
 - Do keep one hue and let neutrals carry the page.
 - Do put the primary action on cobalt-500.
+- Do square every corner — reach for the radius tokens, never a raw
+  `BorderRadius.circular`.
+- Do give new blocks a 2px border and a `cast` shadow, and new interactive
+  blocks the press-the-block motion via `PressableBlock`.
 - Do use the serif only in the Coach column.
 - Do keep zh-CN and en-US as separate strings.
 
 ### Don't
 
+- Don't round corners, blur shadows, or add elevation glow — the decree is
+  0 / 2px / (4,4) zero-blur.
 - Don't bring back chops, wax stamps, or ink-as-primary buttons.
 - Don't use full-bleed slabs, 20px type-rows, or one small card on a blank field.
 - Don't add a left rail.
+- Don't put cobalt-950 on a page surface in dark mode — it is brandSubtle
+  and status-chip backgrounds only.
 - Don't mash Chinese and English in one string.

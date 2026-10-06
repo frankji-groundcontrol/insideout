@@ -12,10 +12,30 @@ import 'assembly_step.dart';
 import 'step_peek.dart';
 
 const _steps = [
-  AssemblyStepData(n: 1, titleKey: 'landing.step1Title', bodyKey: 'landing.step1Body', kind: PeekKind.idea),
-  AssemblyStepData(n: 2, titleKey: 'landing.step2Title', bodyKey: 'landing.step2Body', kind: PeekKind.prd),
-  AssemblyStepData(n: 3, titleKey: 'landing.step3Title', bodyKey: 'landing.step3Body', kind: PeekKind.roadmap),
-  AssemblyStepData(n: 4, titleKey: 'landing.step4Title', bodyKey: 'landing.step4Body', kind: PeekKind.shipped),
+  AssemblyStepData(
+    n: 1,
+    titleKey: 'landing.step1Title',
+    bodyKey: 'landing.step1Body',
+    kind: PeekKind.idea,
+  ),
+  AssemblyStepData(
+    n: 2,
+    titleKey: 'landing.step2Title',
+    bodyKey: 'landing.step2Body',
+    kind: PeekKind.prd,
+  ),
+  AssemblyStepData(
+    n: 3,
+    titleKey: 'landing.step3Title',
+    bodyKey: 'landing.step3Body',
+    kind: PeekKind.roadmap,
+  ),
+  AssemblyStepData(
+    n: 4,
+    titleKey: 'landing.step4Title',
+    bodyKey: 'landing.step4Body',
+    kind: PeekKind.shipped,
+  ),
 ];
 
 class LandingPage extends StatefulWidget {
@@ -56,7 +76,10 @@ class _LandingPageState extends State<LandingPage> {
                 Container(
                   width: 22,
                   height: 22,
-                  decoration: const BoxDecoration(color: Color(0xFF3B5BFF), shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF3B5BFF),
+                    shape: BoxShape.circle,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Text(l10n.t('nav.brand')),
@@ -69,9 +92,15 @@ class _LandingPageState extends State<LandingPage> {
                 icon: const Icon(Icons.translate),
               ),
               IconButton(
-                tooltip: l10n.t(l10n.dark ? 'theme.toggleLight' : 'theme.toggleDark'),
+                tooltip: l10n.t(
+                  l10n.dark ? 'theme.toggleLight' : 'theme.toggleDark',
+                ),
                 onPressed: l10n.toggleTheme,
-                icon: Icon(l10n.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+                icon: Icon(
+                  l10n.dark
+                      ? Icons.light_mode_outlined
+                      : Icons.dark_mode_outlined,
+                ),
               ),
             ],
           ),
@@ -88,14 +117,22 @@ class _LandingPageState extends State<LandingPage> {
                         children: [
                           InkReveal(
                             duration: const Duration(milliseconds: 700),
-                            child: Text(l10n.t('landing.heroTitle'), style: theme.textTheme.displaySmall, textAlign: TextAlign.center),
+                            child: Text(
+                              l10n.t('landing.heroTitle'),
+                              style: theme.textTheme.displaySmall,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                           const SizedBox(height: 16),
                           InkReveal(
                             delay: const Duration(milliseconds: 150),
                             duration: const Duration(milliseconds: 600),
                             dy: 20,
-                            child: Text(l10n.t('landing.heroSubtitle'), style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
+                            child: Text(
+                              l10n.t('landing.heroSubtitle'),
+                              style: theme.textTheme.bodyLarge,
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                           const SizedBox(height: 32),
                           InkReveal(
@@ -115,7 +152,11 @@ class _LandingPageState extends State<LandingPage> {
                                       _open(AuthPrompt.register);
                                     }
                                   },
-                                  child: Text(signedIn ? l10n.t('nav.dashboard') : l10n.t('landing.ctaPrimary')),
+                                  child: Text(
+                                    signedIn
+                                        ? l10n.t('nav.dashboard')
+                                        : l10n.t('landing.ctaPrimary'),
+                                  ),
                                 ),
                                 if (!signedIn)
                                   OutlinedButton(
@@ -136,7 +177,9 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                 ),
                 for (var i = 0; i < _steps.length; i++)
-                  Center(child: AssemblyStep(data: _steps[i], flip: i.isOdd)),
+                  Center(
+                    child: AssemblyStep(data: _steps[i], flip: i.isOdd),
+                  ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
                   child: Center(
@@ -150,12 +193,23 @@ class _LandingPageState extends State<LandingPage> {
                             Container(
                               width: 56,
                               height: 56,
-                              decoration: const BoxDecoration(color: Color(0xFF3B5BFF), shape: BoxShape.circle),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF3B5BFF),
+                                shape: BoxShape.circle,
+                              ),
                             ),
                             const SizedBox(height: 20),
-                            Text(l10n.t('landing.ctaCloseTitle'), style: theme.textTheme.headlineMedium, textAlign: TextAlign.center),
+                            Text(
+                              l10n.t('landing.ctaCloseTitle'),
+                              style: theme.textTheme.headlineMedium,
+                              textAlign: TextAlign.center,
+                            ),
                             const SizedBox(height: 12),
-                            Text(l10n.t('landing.ctaCloseBody'), style: theme.textTheme.bodyLarge, textAlign: TextAlign.center),
+                            Text(
+                              l10n.t('landing.ctaCloseBody'),
+                              style: theme.textTheme.bodyLarge,
+                              textAlign: TextAlign.center,
+                            ),
                             const SizedBox(height: 24),
                             FilledButton(
                               onPressed: () {
@@ -165,7 +219,11 @@ class _LandingPageState extends State<LandingPage> {
                                   _open(AuthPrompt.register);
                                 }
                               },
-                              child: Text(signedIn ? l10n.t('nav.dashboard') : l10n.t('landing.ctaCloseButton')),
+                              child: Text(
+                                signedIn
+                                    ? l10n.t('nav.dashboard')
+                                    : l10n.t('landing.ctaCloseButton'),
+                              ),
                             ),
                           ],
                         ),
@@ -179,12 +237,18 @@ class _LandingPageState extends State<LandingPage> {
         ),
         if (_prompt != null)
           AuthDoor(
-            greeting: l10n.t(_prompt == AuthPrompt.register ? 'register.title' : 'login.title'),
+            greeting: l10n.t(
+              _prompt == AuthPrompt.register ? 'register.title' : 'login.title',
+            ),
             onClose: _close,
             child: AuthForm(
               prompt: _prompt!,
               inviteCode: widget.invite,
-              onSwitch: () => _open(_prompt == AuthPrompt.login ? AuthPrompt.register : AuthPrompt.login),
+              onSwitch: () => _open(
+                _prompt == AuthPrompt.login
+                    ? AuthPrompt.register
+                    : AuthPrompt.login,
+              ),
             ),
           ),
       ],

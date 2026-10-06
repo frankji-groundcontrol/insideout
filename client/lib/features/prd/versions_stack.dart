@@ -43,14 +43,26 @@ class VersionsStack extends StatelessWidget {
             child: Wrap(
               spacing: 8,
               children: [
-                for (final a in const ['validation', 'decision', 'management', 'delivery'])
-                  ChoiceChip(label: Text(l10n.t('versions.audience.$a')), selected: a == audience, onSelected: (_) => onAudience(a)),
+                for (final a in const [
+                  'validation',
+                  'decision',
+                  'management',
+                  'delivery',
+                ])
+                  ChoiceChip(
+                    label: Text(l10n.t('versions.audience.$a')),
+                    selected: a == audience,
+                    onSelected: (_) => onAudience(a),
+                  ),
               ],
             ),
           ),
         const SizedBox(height: 12),
         Text(
-          l10n.t('versions.stackEyebrow', {'n': selected?.revision ?? 0, 'total': commits.length}),
+          l10n.t('versions.stackEyebrow', {
+            'n': selected?.revision ?? 0,
+            'total': commits.length,
+          }),
           textAlign: TextAlign.center,
           style: theme.textTheme.labelSmall,
         ),
@@ -68,7 +80,10 @@ class VersionsStack extends StatelessWidget {
                       top: i * 36.0,
                       left: 32 + i * 8.0,
                       right: 32 + i * 8.0,
-                      child: _PeekCard(name: behind[i].name, onTap: () => onSelect(behind[i].id)),
+                      child: _PeekCard(
+                        name: behind[i].name,
+                        onTap: () => onSelect(behind[i].id),
+                      ),
                     ),
                   Positioned(
                     top: behind.length * 44.0,
@@ -110,11 +125,15 @@ class _PeekCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
             decoration: BoxDecoration(
               color: palette.brand,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(Cobalt.radiusCard),
+              ),
             ),
             child: Text(
               name,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: palette.btnFg),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: palette.btnFg),
             ),
           ),
           FieldCard(
@@ -154,20 +173,39 @@ class _FrontCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.verified, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                Icons.verified,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(width: 8),
               if (commit == null)
-                Expanded(child: Text(l10n.t('versions.empty'), style: theme.textTheme.headlineSmall))
+                Expanded(
+                  child: Text(
+                    l10n.t('versions.empty'),
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                )
               else ...[
-                Text('${commit!.revision}', style: theme.textTheme.headlineLarge),
+                Text(
+                  '${commit!.revision}',
+                  style: theme.textTheme.headlineLarge,
+                ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(commit!.name, style: theme.textTheme.headlineSmall)),
+                Expanded(
+                  child: Text(
+                    commit!.name,
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                ),
               ],
             ],
           ),
           const SizedBox(height: 16),
           if (ar != null) ...[
-            Text(ar.ready ? l10n.t('versions.ready') : l10n.t('versions.notReady'), style: theme.textTheme.titleSmall),
+            Text(
+              ar.ready ? l10n.t('versions.ready') : l10n.t('versions.notReady'),
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 8),
             for (final g in ar.gaps)
               Padding(
@@ -176,12 +214,19 @@ class _FrontCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      g.priority == 'must_clarify_now' ? Icons.radio_button_unchecked : Icons.check_circle_outline,
+                      g.priority == 'must_clarify_now'
+                          ? Icons.radio_button_unchecked
+                          : Icons.check_circle_outline,
                       size: 18,
                       color: Theme.of(context).colorScheme.primary,
                     ),
                     const SizedBox(width: 8),
-                    Expanded(child: Text('${l10n.t('prd.sections.${g.section}')} — ${g.reason}', style: theme.textTheme.bodyMedium)),
+                    Expanded(
+                      child: Text(
+                        '${l10n.t('prd.sections.${g.section}')} — ${g.reason}',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -189,7 +234,8 @@ class _FrontCard extends StatelessWidget {
           if (commit != null) ...[
             const SizedBox(height: 12),
             Text(l10n.t('versions.details'), style: theme.textTheme.labelSmall),
-            if (commit!.changeSummary.isNotEmpty) Text(commit!.changeSummary, style: theme.textTheme.bodyLarge),
+            if (commit!.changeSummary.isNotEmpty)
+              Text(commit!.changeSummary, style: theme.textTheme.bodyLarge),
             Text(
               l10n.t('versions.diffTitle', {
                 'a': commit!.diffCounts['added'] ?? 0,
@@ -204,9 +250,15 @@ class _FrontCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text(commit?.committedByName ?? '', style: theme.textTheme.bodySmall),
+                child: Text(
+                  commit?.committedByName ?? '',
+                  style: theme.textTheme.bodySmall,
+                ),
               ),
-              TextButton(onPressed: () => context.go('/prd/$prdId'), child: Text(l10n.t('prd.backToPrd'))),
+              TextButton(
+                onPressed: () => context.go('/prd/$prdId'),
+                child: Text(l10n.t('prd.backToPrd')),
+              ),
               const SizedBox(width: 8),
               FilledButton.icon(
                 key: const Key('commit-now'),

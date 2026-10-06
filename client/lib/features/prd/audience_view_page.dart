@@ -16,7 +16,11 @@ const _audiences = ['decision', 'management', 'delivery', 'validation'];
 /// audience's readiness gaps, and the latest Commit for context.
 /// Read-only by design: the projection never becomes a second document.
 class AudienceViewPage extends StatefulWidget {
-  const AudienceViewPage({super.key, required this.prdId, this.initialAudience = 'decision'});
+  const AudienceViewPage({
+    super.key,
+    required this.prdId,
+    this.initialAudience = 'decision',
+  });
 
   final String prdId;
   final String initialAudience;
@@ -51,14 +55,16 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
         Wrap(
           spacing: 6,
           children: _audiences
-              .map((a) => ChoiceChip(
-                    label: Text(a),
-                    selected: a == audience,
-                    onSelected: (_) => setState(() {
-                      audience = a;
-                      _load();
-                    }),
-                  ))
+              .map(
+                (a) => ChoiceChip(
+                  label: Text(a),
+                  selected: a == audience,
+                  onSelected: (_) => setState(() {
+                    audience = a;
+                    _load();
+                  }),
+                ),
+              )
               .toList(),
         ),
         const SizedBox(width: 12),
@@ -67,7 +73,11 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
         future: _future,
         builder: (context, snap) {
           if (!snap.hasData) {
-            return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
+            return Center(
+              child: snap.hasError
+                  ? Text(localizedError(snap.error!, l10n.t))
+                  : const CircularProgressIndicator(),
+            );
           }
           final data = snap.data!;
           final title = data['title'] as String? ?? '';
@@ -75,8 +85,16 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
           final sections = proj['sections'] as Map<String, dynamic>;
           final readiness = data['readiness'] as Map<String, dynamic>;
           final gaps = (readiness['gaps'] as List? ?? const []);
-          final blocking = [for (final g in gaps) if (g is Map && g['priority']?.toString() == 'must_clarify_now') g];
-          final later = [for (final g in gaps) if (g is! Map || g['priority']?.toString() != 'must_clarify_now') g];
+          final blocking = [
+            for (final g in gaps)
+              if (g is Map && g['priority']?.toString() == 'must_clarify_now')
+                g,
+          ];
+          final later = [
+            for (final g in gaps)
+              if (g is! Map || g['priority']?.toString() != 'must_clarify_now')
+                g,
+          ];
           final latest = data['latestCommit'] as Map<String, dynamic>?;
 
           return ListView(
@@ -84,38 +102,68 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
             children: [
               Text(title, style: theme.textTheme.headlineSmall),
               const SizedBox(height: 4),
-              Text(proj['purpose']?.toString() ?? '', style: theme.textTheme.bodySmall),
+              Text(
+                proj['purpose']?.toString() ?? '',
+                style: theme.textTheme.bodySmall,
+              ),
               const SizedBox(height: 4),
-              Text(l10n.t('view.projectionNote'), style: theme.textTheme.bodySmall),
+              Text(
+                l10n.t('view.projectionNote'),
+                style: theme.textTheme.bodySmall,
+              ),
               if (latest != null) ...[
                 const SizedBox(height: 8),
-                Text(l10n.t('view.latestCommit', {
-                      'n': latest['revision']?.toString() ?? '',
-                      'name': latest['name']?.toString() ?? '',
-                    }), style: theme.textTheme.bodySmall),
+                Text(
+                  l10n.t('view.latestCommit', {
+                    'n': latest['revision']?.toString() ?? '',
+                    'name': latest['name']?.toString() ?? '',
+                  }),
+                  style: theme.textTheme.bodySmall,
+                ),
               ],
               const Divider(height: 24),
               for (final key in sections.keys) ...[
-                Text(l10n.t('prd.sections.$key'), style: theme.textTheme.titleMedium),
-                Text('${l10n.t('view.whyYouRead')}: ${sections[key]}', style: theme.textTheme.bodySmall),
+                Text(
+                  l10n.t('prd.sections.$key'),
+                  style: theme.textTheme.titleMedium,
+                ),
+                Text(
+                  '${l10n.t('view.whyYouRead')}: ${sections[key]}',
+                  style: theme.textTheme.bodySmall,
+                ),
                 const SizedBox(height: 4),
                 _SectionBody(prdId: widget.prdId, sectionKey: key),
                 const SizedBox(height: 16),
               ],
               if (gaps.isNotEmpty) ...[
                 const Divider(height: 24),
-                Text(l10n.t('view.gapsTitle'), style: theme.textTheme.titleMedium),
+                Text(
+                  l10n.t('view.gapsTitle'),
+                  style: theme.textTheme.titleMedium,
+                ),
                 for (final g in blocking)
-                  Text('  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}', style: theme.textTheme.bodySmall),
+                  Text(
+                    '  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}',
+                    style: theme.textTheme.bodySmall,
+                  ),
                 if (later.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Text(l10n.t('roadmap.bandLater'), style: theme.textTheme.titleSmall),
+                  Text(
+                    l10n.t('roadmap.bandLater'),
+                    style: theme.textTheme.titleSmall,
+                  ),
                   for (final g in later)
-                    Text('  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}', style: theme.textTheme.bodySmall),
+                    Text(
+                      '  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}',
+                      style: theme.textTheme.bodySmall,
+                    ),
                 ],
               ],
               const SizedBox(height: 24),
-              TextButton(onPressed: () => context.go('/prd/${widget.prdId}/versions'), child: Text(l10n.t('versions.entry'))),
+              TextButton(
+                onPressed: () => context.go('/prd/${widget.prdId}/versions'),
+                child: Text(l10n.t('versions.entry')),
+              ),
             ],
           );
         },
@@ -153,7 +201,10 @@ class _SectionBodyState extends State<_SectionBody> {
         if (!snap.hasData) return const SizedBox.shrink();
         final content = snap.data!.sections[widget.sectionKey] ?? '';
         if (content.trim().isEmpty) {
-          return Text(context.read<Appearance>().t('view.carriedOpen'), style: Theme.of(context).textTheme.bodySmall);
+          return Text(
+            context.read<Appearance>().t('view.carriedOpen'),
+            style: Theme.of(context).textTheme.bodySmall,
+          );
         }
         return Text(content);
       },

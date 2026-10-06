@@ -4,9 +4,14 @@ import 'cobalt.dart';
 
 enum ShadeTone { locked, pending, progress, done, neutral, danger }
 
-/// Cobalt-shade pill. One hue — not a chop.
+/// Cobalt-shade chip. One hue — not a chop.
 class ShadeChip extends StatelessWidget {
-  const ShadeChip({super.key, required this.label, required this.tone, this.compact = true});
+  const ShadeChip({
+    super.key,
+    required this.label,
+    required this.tone,
+    this.compact = true,
+  });
 
   final String label;
   final ShadeTone tone;
@@ -33,21 +38,30 @@ class ShadeChip extends StatelessWidget {
       ShadeTone.danger => (palette.statusWarnBg, palette.fgDanger),
     };
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 12, vertical: compact ? 3 : 5),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 8 : 12,
+        vertical: compact ? 3 : 5,
+      ),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        border: Border.all(color: palette.strokeSubtle),
+        border: Border.all(
+          color: palette.strokeSubtle,
+          width: Cobalt.borderContainer,
+        ),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: fg, fontWeight: FontWeight.w600),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: fg,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
 }
 
-/// Round status mark — not a square 印 chop.
+/// Square status mark — the Cobalt-Neo block language (dots are blocks now).
 class ShadeMark extends StatelessWidget {
   const ShadeMark({super.key, required this.status, this.size = 10});
 
@@ -66,7 +80,7 @@ class ShadeMark extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      decoration: BoxDecoration(color: color),
     );
   }
 }

@@ -5,8 +5,8 @@ main:
   outcome: BUG-017 move shifts siblings, BUG-018 pressure translates,
     BUG-019 proposal items keep order, BUG-020 only owner or admin
     writes the plan. Store tests and the widget test green; live
-    checks on the restarted sim server match. roadmap.go is 403 lines
-    and the split is filed, not done.
+    checks on the restarted sim server match. Pushed to main as f185e94.
+    roadmap.go is 403 lines and the split is filed, not done.
   owner: zcode-main
   status: fixed
   next_evidence: rebuild the release web bundle so :5174 shows the

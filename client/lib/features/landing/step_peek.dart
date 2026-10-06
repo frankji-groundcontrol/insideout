@@ -39,7 +39,10 @@ class StepPeek extends StatelessWidget {
             Positioned(
               top: 0,
               right: 0,
-              child: Text('1:1', style: theme.textTheme.bodySmall?.copyWith(letterSpacing: 0.6)),
+              child: Text(
+                '1:1',
+                style: theme.textTheme.bodySmall?.copyWith(letterSpacing: 0.6),
+              ),
             ),
           ],
         ),
@@ -62,7 +65,10 @@ class _Bar extends StatelessWidget {
       alignment: Alignment.centerLeft,
       child: Container(
         height: height,
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(99)),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+        ),
       ),
     );
   }
@@ -81,9 +87,21 @@ class _IdeaPeek extends StatelessWidget {
       children: [
         Row(
           children: [
-            Container(width: 8, height: 8, decoration: BoxDecoration(color: palette.brand, shape: BoxShape.circle)),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: palette.brand,
+                shape: BoxShape.circle,
+              ),
+            ),
             const SizedBox(width: 8),
-            Expanded(child: _Bar(widthFactor: 0.55, color: palette.fgPrimary.withValues(alpha: 0.75))),
+            Expanded(
+              child: _Bar(
+                widthFactor: 0.55,
+                color: palette.fgPrimary.withValues(alpha: 0.75),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
@@ -114,13 +132,20 @@ class _PrdPeek extends StatelessWidget {
             decoration: BoxDecoration(
               color: palette.surfaceSunken,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(4),
-                topRight: Radius.circular(12),
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
+                topLeft: Radius.circular(Cobalt.radiusControl),
+                topRight: Radius.circular(Cobalt.radiusCard),
+                bottomLeft: Radius.circular(Cobalt.radiusCard),
+                bottomRight: Radius.circular(Cobalt.radiusCard),
               ),
             ),
-            child: SizedBox(width: 160, child: _Bar(widthFactor: 1, color: palette.strokeSubtle, height: 8)),
+            child: SizedBox(
+              width: 160,
+              child: _Bar(
+                widthFactor: 1,
+                color: palette.strokeSubtle,
+                height: 8,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -131,13 +156,20 @@ class _PrdPeek extends StatelessWidget {
             decoration: BoxDecoration(
               color: palette.btn,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(4),
-                bottomLeft: Radius.circular(12),
-                bottomRight: Radius.circular(12),
+                topLeft: Radius.circular(Cobalt.radiusCard),
+                topRight: Radius.circular(Cobalt.radiusControl),
+                bottomLeft: Radius.circular(Cobalt.radiusCard),
+                bottomRight: Radius.circular(Cobalt.radiusCard),
               ),
             ),
-            child: SizedBox(width: 96, child: _Bar(widthFactor: 1, color: palette.btnFg.withValues(alpha: 0.7), height: 8)),
+            child: SizedBox(
+              width: 96,
+              child: _Bar(
+                widthFactor: 1,
+                color: palette.btnFg.withValues(alpha: 0.7),
+                height: 8,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 12),
@@ -150,13 +182,24 @@ class _PrdPeek extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(width: 96, child: _Bar(widthFactor: 1, color: palette.fgPrimary.withValues(alpha: 0.8), height: 10)),
+              SizedBox(
+                width: 96,
+                child: _Bar(
+                  widthFactor: 1,
+                  color: palette.fgPrimary.withValues(alpha: 0.8),
+                  height: 10,
+                ),
+              ),
               const SizedBox(height: 8),
               _Bar(widthFactor: 1, color: palette.surfaceSunken, height: 6),
               const SizedBox(height: 6),
               _Bar(widthFactor: 0.83, color: palette.surfaceSunken, height: 6),
               const SizedBox(height: 6),
-              _Bar(widthFactor: 0.5, color: palette.brand.withValues(alpha: 0.7), height: 6),
+              _Bar(
+                widthFactor: 0.5,
+                color: palette.brand.withValues(alpha: 0.7),
+                height: 6,
+              ),
             ],
           ),
         ),
@@ -175,16 +218,44 @@ class _RoadmapPeek extends StatelessWidget {
     final l10n = context.watch<Appearance>();
     return Column(
       children: [
-        _RoadRow(dot: palette.statusSuccessFg, bar: 0.7, chip: ShadeChip(label: l10n.t('roadmap.status.done'), tone: ShadeTone.done)),
-        _RoadRow(dot: palette.brand, bar: 0.55, indent: true, chip: ShadeChip(label: l10n.t('roadmap.status.in_progress'), tone: ShadeTone.progress)),
-        _RoadRow(dot: palette.statusNeutralFg, bar: 0.45, indent: true, chip: ShadeChip(label: l10n.t('roadmap.status.locked'), tone: ShadeTone.locked)),
+        _RoadRow(
+          dot: palette.statusSuccessFg,
+          bar: 0.7,
+          chip: ShadeChip(
+            label: l10n.t('roadmap.status.done'),
+            tone: ShadeTone.done,
+          ),
+        ),
+        _RoadRow(
+          dot: palette.brand,
+          bar: 0.55,
+          indent: true,
+          chip: ShadeChip(
+            label: l10n.t('roadmap.status.in_progress'),
+            tone: ShadeTone.progress,
+          ),
+        ),
+        _RoadRow(
+          dot: palette.statusNeutralFg,
+          bar: 0.45,
+          indent: true,
+          chip: ShadeChip(
+            label: l10n.t('roadmap.status.locked'),
+            tone: ShadeTone.locked,
+          ),
+        ),
       ],
     );
   }
 }
 
 class _RoadRow extends StatelessWidget {
-  const _RoadRow({required this.dot, required this.bar, required this.chip, this.indent = false});
+  const _RoadRow({
+    required this.dot,
+    required this.bar,
+    required this.chip,
+    this.indent = false,
+  });
 
   final Color dot;
   final double bar;
@@ -198,9 +269,15 @@ class _RoadRow extends StatelessWidget {
       padding: EdgeInsets.only(left: indent ? 16 : 0, bottom: 10),
       child: Row(
         children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(color: dot, shape: BoxShape.circle)),
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(color: dot),
+          ),
           const SizedBox(width: 10),
-          Expanded(child: _Bar(widthFactor: bar, color: palette.surfaceSunken)),
+          Expanded(
+            child: _Bar(widthFactor: bar, color: palette.surfaceSunken),
+          ),
           const SizedBox(width: 8),
           chip,
         ],
@@ -229,7 +306,10 @@ class _ShippedPeek extends StatelessWidget {
                 Container(
                   width: 14,
                   height: 14,
-                  decoration: BoxDecoration(color: palette.brand, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(
+                    color: palette.brand,
+                    borderRadius: BorderRadius.circular(Cobalt.radiusControl),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -238,15 +318,27 @@ class _ShippedPeek extends StatelessWidget {
                     children: [
                       _Bar(widthFactor: 0.7, color: palette.surfaceSunken),
                       const SizedBox(height: 6),
-                      _Bar(widthFactor: 0.28, color: palette.surfaceSunken.withValues(alpha: 0.7), height: 6),
+                      _Bar(
+                        widthFactor: 0.28,
+                        color: palette.surfaceSunken.withValues(alpha: 0.7),
+                        height: 6,
+                      ),
                     ],
                   ),
                 ),
-                Text(h, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontFamily: 'monospace')),
+                Text(
+                  h,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontFamily: 'monospace'),
+                ),
               ],
             ),
           ),
-        Text(l10n.t('github.synced', {'count': 12}), style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          l10n.t('github.synced', {'count': 12}),
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }

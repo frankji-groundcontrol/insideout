@@ -8,7 +8,7 @@ This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git histo
 ## Prerequisites
 
 - **Go 1.25+** (see `server/go.mod`)
-- **Flutter 3** (for `client/`; see [`client/README.md`](../../client/README.md))
+- **Flutter 3.44.x** (for `client/`; CI and `client/Dockerfile` pin 3.44.0; see [`client/README.md`](../../client/README.md))
 - **PostgreSQL 14+** reachable via `DATABASE_URL` — either your own instance or the bundled one below
 - **Docker** (optional) — only needed for the bundled Postgres / full-compose runs
 

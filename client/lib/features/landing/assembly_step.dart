@@ -40,11 +40,19 @@ class AssemblyStep extends StatelessWidget {
               width: 36,
               height: 36,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(color: Color(0xFF3B5BFF), shape: BoxShape.circle),
-              child: Text('${data.n}', style: theme.textTheme.titleSmall?.copyWith(color: Colors.white)),
+              decoration: const BoxDecoration(color: Color(0xFF3B5BFF)),
+              child: Text(
+                '${data.n}',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: Colors.white,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
-            Text(l10n.t('landing.stepLabel', {'n': data.n}), style: theme.textTheme.bodySmall),
+            Text(
+              l10n.t('landing.stepLabel', {'n': data.n}),
+              style: theme.textTheme.bodySmall,
+            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -101,7 +109,12 @@ class AssemblyStep extends StatelessWidget {
             else
               Column(
                 children: [
-                  InkReveal(whenVisible: true, duration: const Duration(milliseconds: 650), dy: 28, child: copy),
+                  InkReveal(
+                    whenVisible: true,
+                    duration: const Duration(milliseconds: 650),
+                    dy: 28,
+                    child: copy,
+                  ),
                   const SizedBox(height: 24),
                   InkReveal(
                     whenVisible: true,

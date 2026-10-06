@@ -9,6 +9,7 @@ import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../widgets/guarded_action.dart';
 import 'coach_panel.dart';
 import 'prd_desk.dart';
 
@@ -56,11 +57,16 @@ class _PrdPageState extends State<PrdPage> {
       titleCtrl.text = loaded.title;
       for (final key in prdSectionKeys) {
         sectionCtrls[key]?.dispose();
-        sectionCtrls[key] = TextEditingController(text: loaded.sections[key] ?? '');
+        sectionCtrls[key] = TextEditingController(
+          text: loaded.sections[key] ?? '',
+        );
       }
       context.read<LoopFocus>().rememberWorkspace(loaded.workspaceId);
       if (loaded.projectId != null) {
-        context.read<LoopFocus>().rememberProject(loaded.projectId!, workspaceId: loaded.workspaceId);
+        context.read<LoopFocus>().rememberProject(
+          loaded.projectId!,
+          workspaceId: loaded.workspaceId,
+        );
       }
       setState(() {
         prd = loaded;
@@ -77,13 +83,17 @@ class _PrdPageState extends State<PrdPage> {
   }
 
   Future<void> _save({bool titleOnly = false}) async {
-    final sections = titleOnly ? <String, String>{} : {for (final e in sectionCtrls.entries) e.key: e.value.text};
-    final updated = await context.read<Session>().api.updatePrd(
-          widget.id,
-          title: titleCtrl.text.trim(),
-          sections: titleOnly ? null : sections,
-        );
-    setState(() => prd = updated);
+    final sections = titleOnly
+        ? <String, String>{}
+        : {for (final e in sectionCtrls.entries) e.key: e.value.text};
+    await guardWrite(context, () async {
+      final updated = await context.read<Session>().api.updatePrd(
+        widget.id,
+        title: titleCtrl.text.trim(),
+        sections: titleOnly ? null : sections,
+      );
+      if (mounted) setState(() => prd = updated);
+    });
   }
 
   Future<void> _snapshot() async {
@@ -93,46 +103,78 @@ class _PrdPageState extends State<PrdPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.t('prd.snapshotRevision')),
-        content: TextField(controller: note, decoration: InputDecoration(labelText: l10n.t('prd.revisionNote'))),
+        content: TextField(
+          controller: note,
+          decoration: InputDecoration(labelText: l10n.t('prd.revisionNote')),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.save'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('common.save')),
+          ),
         ],
       ),
     );
     if (ok == true && mounted) {
-      await context.read<Session>().api.createRevision(widget.id, note: note.text.trim().isEmpty ? null : note.text.trim());
+      await guardWrite(
+        context,
+        () => context.read<Session>().api.createRevision(
+          widget.id,
+          note: note.text.trim().isEmpty ? null : note.text.trim(),
+        ),
+      );
     }
-    note.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextField mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   Future<void> _build() async {
     final api = context.read<Session>().api;
     final l10n = context.read<Appearance>();
-    try {
-      final result = await api.buildFromPrd(widget.id);
-      if (mounted) _goProject(result);
-    } on ApiException catch (e) {
-      if (e.code == 'replace_conflict' && e.liveCount != null) {
-        final ok = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: Text(l10n.t('prd.buildMVP')),
-            content: Text(l10n.t('prd.buildReplaceConfirm', {'count': e.liveCount})),
-            actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-              FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.confirm'))),
-            ],
-          ),
-        );
-        if (ok == true && mounted) {
-          final result = await api.buildFromPrd(widget.id, expectedCount: e.liveCount);
-          if (mounted) _goProject(result);
+    // The replace-conflict retry is part of the write; anything else the
+    // server rejects surfaces through the guard's SnackBar.
+    await guardWrite(context, () async {
+      try {
+        final result = await api.buildFromPrd(widget.id);
+        if (mounted) _goProject(result);
+      } on ApiException catch (e) {
+        if (e.code == 'replace_conflict' && e.liveCount != null) {
+          final ok = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              title: Text(l10n.t('prd.buildMVP')),
+              content: Text(
+                l10n.t('prd.buildReplaceConfirm', {'count': e.liveCount}),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(l10n.t('common.cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(l10n.t('common.confirm')),
+                ),
+              ],
+            ),
+          );
+          if (ok == true && mounted) {
+            final result = await api.buildFromPrd(
+              widget.id,
+              expectedCount: e.liveCount,
+            );
+            if (mounted) _goProject(result);
+          }
+        } else {
+          rethrow;
         }
-      } else {
-        rethrow;
       }
-    }
+    });
   }
 
   void _goProject(Map<String, dynamic> result) {
@@ -143,8 +185,13 @@ class _PrdPageState extends State<PrdPage> {
   }
 
   Future<void> _requestReview() async {
-    final updated = await context.read<Session>().api.updatePrdStatus(widget.id, 'reviewing');
-    setState(() => prd = updated);
+    await guardWrite(context, () async {
+      final updated = await context.read<Session>().api.updatePrdStatus(
+        widget.id,
+        'reviewing',
+      );
+      if (mounted) setState(() => prd = updated);
+    });
   }
 
   @override
@@ -154,20 +201,20 @@ class _PrdPageState extends State<PrdPage> {
     final desk = loading
         ? const Center(child: CircularProgressIndicator())
         : error != null && prd == null
-            ? Center(child: Text(localizedError(error!, l10n.t)))
-            : (wide
-                ? Row(
-                    children: [
-                      Expanded(flex: 3, child: _prdColumn()),
-                      Expanded(flex: 2, child: _coach()),
-                    ],
-                  )
-                : ListView(
-                    children: [
-                      SizedBox(height: 640, child: _prdColumn()),
-                      SizedBox(height: 520, child: _coach()),
-                    ],
-                  ));
+        ? Center(child: Text(localizedError(error!, l10n.t)))
+        : (wide
+              ? Row(
+                  children: [
+                    Expanded(flex: 3, child: _prdColumn()),
+                    Expanded(flex: 2, child: _coach()),
+                  ],
+                )
+              : ListView(
+                  children: [
+                    SizedBox(height: 640, child: _prdColumn()),
+                    SizedBox(height: 520, child: _coach()),
+                  ],
+                ));
     return AppScaffold(body: desk);
   }
 
@@ -188,7 +235,12 @@ class _PrdPageState extends State<PrdPage> {
         final convNow = conversation;
         if (convNow == null) return;
         setState(() {
-          conversation = Conversation(id: convNow.id, prdId: convNow.prdId, stage: stage, status: convNow.status);
+          conversation = Conversation(
+            id: convNow.id,
+            prdId: convNow.prdId,
+            stage: stage,
+            status: convNow.status,
+          );
         });
       },
     );
@@ -206,8 +258,13 @@ class _PrdPageState extends State<PrdPage> {
       onSnapshot: _snapshot,
       onBuild: _build,
       onStatus: (status) async {
-        final updated = await context.read<Session>().api.updatePrdStatus(widget.id, status);
-        if (mounted) setState(() => prd = updated);
+        await guardWrite(context, () async {
+          final updated = await context.read<Session>().api.updatePrdStatus(
+            widget.id,
+            status,
+          );
+          if (mounted) setState(() => prd = updated);
+        });
       },
     );
   }

@@ -17,6 +17,7 @@ class AssemblyDiagram extends StatefulWidget {
   final AssemblyDiagramMode mode;
   final int currentStep;
   final String? semanticsLabel;
+
   /// Play the click-in when the widget first enters the viewport (step mini-maps).
   final bool whenVisible;
 
@@ -24,7 +25,8 @@ class AssemblyDiagram extends StatefulWidget {
   State<AssemblyDiagram> createState() => _AssemblyDiagramState();
 }
 
-class _AssemblyDiagramState extends State<AssemblyDiagram> with SingleTickerProviderStateMixin {
+class _AssemblyDiagramState extends State<AssemblyDiagram>
+    with SingleTickerProviderStateMixin {
   static const _span = Duration(milliseconds: 1500);
   late final AnimationController _c;
   ScrollNotificationObserverState? _scroll;
@@ -125,11 +127,7 @@ class _AssemblyPainter extends CustomPainter {
 
   static const cx = [45.0, 150.0, 255.0, 345.0];
   static const cy = 65.0;
-  static const arrows = [
-    (82.0, 113.0),
-    (187.0, 218.0),
-    (292.0, 322.0),
-  ];
+  static const arrows = [(82.0, 113.0), (187.0, 218.0), (292.0, 322.0)];
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -209,10 +207,7 @@ class _AssemblyPainter extends CustomPainter {
     final path = Path()
       ..moveTo(x1, cy)
       ..lineTo(x2 - 6, cy);
-    canvas.drawPath(
-      path,
-      paint..strokeCap = StrokeCap.round,
-    );
+    canvas.drawPath(path, paint..strokeCap = StrokeCap.round);
     // dashed look: overlay with a dash effect by drawing short segments
     final dash = Paint()
       ..color = paint.color
@@ -308,7 +303,10 @@ class _AssemblyPainter extends CustomPainter {
 
   void _commitMark(Canvas canvas, Paint stroke) {
     stroke.strokeWidth = 3.5;
-    canvas.drawRRect(RRect.fromLTRBR(-19, -19, 19, 19, const Radius.circular(7)), stroke);
+    canvas.drawRRect(
+      RRect.fromLTRBR(-19, -19, 19, 19, const Radius.circular(7)),
+      stroke,
+    );
     canvas.drawPath(
       Path()
         ..moveTo(-9, 1)

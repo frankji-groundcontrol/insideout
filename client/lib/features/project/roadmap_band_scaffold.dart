@@ -35,11 +35,22 @@ class RoadmapBandScaffold extends StatelessWidget {
         children: [
           SizedBox(
             width: 72,
-            child: Text(label.toUpperCase(), style: theme.textTheme.labelSmall?.copyWith(color: labelColor, letterSpacing: 0.6)),
+            child: Text(
+              label.toUpperCase(),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: labelColor,
+                letterSpacing: 0.6,
+              ),
+            ),
           ),
           Expanded(
             child: items.isEmpty
-                ? Text('—', style: theme.textTheme.bodySmall?.copyWith(color: labelColor))
+                ? Text(
+                    '—',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: labelColor,
+                    ),
+                  )
                 : Wrap(spacing: 12, runSpacing: 12, children: items),
           ),
         ],

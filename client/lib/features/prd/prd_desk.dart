@@ -42,7 +42,10 @@ class PrdDeskColumn extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(28, 64, 24, 140),
       children: [
-        Text(l10n.t('prd.pageTitle').toUpperCase(), style: theme.textTheme.displaySmall),
+        Text(
+          l10n.t('prd.pageTitle').toUpperCase(),
+          style: theme.textTheme.displaySmall,
+        ),
         const SizedBox(height: 20),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,13 +66,22 @@ class PrdDeskColumn extends StatelessWidget {
             ),
             FilledButton(
               onPressed: prd?.status == 'draft' ? onRequestReview : null,
-              child: Text(prd?.status == 'draft' ? l10n.t('prd.next.requestReview') : l10n.t('prd.requestReview')),
+              child: Text(
+                prd?.status == 'draft'
+                    ? l10n.t('prd.next.requestReview')
+                    : l10n.t('prd.requestReview'),
+              ),
             ),
           ],
         ),
         const SizedBox(height: 4),
         Text(l10n.t('prd.workingVersion'), style: theme.textTheme.titleMedium),
-        Container(width: 48, height: 3, margin: const EdgeInsets.only(top: 8, bottom: 12), color: palette.brand),
+        Container(
+          width: 48,
+          height: 3,
+          margin: const EdgeInsets.only(top: 8, bottom: 12),
+          color: palette.brand,
+        ),
         Text(
           'v${prd?.currentRevision ?? 0} · ${prd?.updatedAt ?? ''}',
           style: theme.textTheme.bodySmall,
@@ -91,7 +103,10 @@ class PrdDeskColumn extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.t('prd.sections.$key'), style: theme.textTheme.titleLarge),
+                  Text(
+                    l10n.t('prd.sections.$key'),
+                    style: theme.textTheme.titleLarge,
+                  ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: sectionCtrls[key],
@@ -147,8 +162,14 @@ class _DeskActions extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         FilledButton(onPressed: onSave, child: Text(l10n.t('common.save'))),
-        OutlinedButton(onPressed: status == 'approved' ? onBuild : null, child: Text(l10n.t('prd.buildMVP'))),
-        OutlinedButton(onPressed: () => context.go('/prd/$prdId/view'), child: Text(l10n.t('view.entry'))),
+        OutlinedButton(
+          onPressed: status == 'approved' ? onBuild : null,
+          child: Text(l10n.t('prd.buildMVP')),
+        ),
+        OutlinedButton(
+          onPressed: () => context.go('/prd/$prdId/view'),
+          child: Text(l10n.t('view.entry')),
+        ),
         PopupMenuButton<String>(
           tooltip: l10n.t('prd.moreActions'),
           onSelected: (value) {
@@ -168,17 +189,36 @@ class _DeskActions extends StatelessWidget {
             }
           },
           itemBuilder: (_) => [
-            PopupMenuItem(value: 'revisions', child: Text(l10n.t('prd.revisionHistory'))),
-            PopupMenuItem(value: 'versions', child: Text(l10n.t('versions.entry'))),
+            PopupMenuItem(
+              value: 'revisions',
+              child: Text(l10n.t('prd.revisionHistory')),
+            ),
+            PopupMenuItem(
+              value: 'versions',
+              child: Text(l10n.t('versions.entry')),
+            ),
             PopupMenuItem(value: 'view', child: Text(l10n.t('view.entry'))),
-            PopupMenuItem(value: 'export', child: Text(l10n.t('prd.exportMarkdown'))),
-            PopupMenuItem(value: 'snapshot', child: Text(l10n.t('prd.snapshotRevision'))),
+            PopupMenuItem(
+              value: 'export',
+              child: Text(l10n.t('prd.exportMarkdown')),
+            ),
+            PopupMenuItem(
+              value: 'snapshot',
+              child: Text(l10n.t('prd.snapshotRevision')),
+            ),
             const PopupMenuDivider(),
-            for (final s in const ['draft', 'reviewing', 'approved', 'rejected'])
+            for (final s in const [
+              'draft',
+              'reviewing',
+              'approved',
+              'rejected',
+            ])
               PopupMenuItem(
                 value: s,
                 enabled: _prdNextStatuses[status]?.contains(s) ?? false,
-                child: Text('${s == status ? '● ' : ''}${l10n.t('prd.status.$s')}'),
+                child: Text(
+                  '${s == status ? '● ' : ''}${l10n.t('prd.status.$s')}',
+                ),
               ),
           ],
         ),

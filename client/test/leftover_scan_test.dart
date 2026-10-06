@@ -35,6 +35,10 @@ void main() {
         }
       }
     }
-    expect(hits, isEmpty, reason: 'Ink & Seal leftovers on live surfaces:\n${hits.join('\n')}');
+    expect(
+      hits,
+      isEmpty,
+      reason: 'Ink & Seal leftovers on live surfaces:\n${hits.join('\n')}',
+    );
   });
 }

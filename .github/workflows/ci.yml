@@ -89,6 +89,7 @@ jobs:
       # Infos are the accepted baseline (see docs/plans board); warnings
       # and errors stay fatal.
       - run: flutter analyze --no-fatal-infos
+      - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter test
       # The web target is the production surface, and VM tests can't see
       # web-only conditional imports (they broke exactly this way once).

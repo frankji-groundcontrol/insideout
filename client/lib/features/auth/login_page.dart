@@ -8,5 +8,6 @@ class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) => const LandingPage(initialPrompt: AuthPrompt.login);
+  Widget build(BuildContext context) =>
+      const LandingPage(initialPrompt: AuthPrompt.login);
 }

@@ -3,7 +3,12 @@ import 'package:insideout/api/requests.dart';
 
 void main() {
   test('workspace update and delete match Nuxt', () {
-    final patch = patchWorkspace('ws1', title: 'T', description: 'D', coverUrl: null);
+    final patch = patchWorkspace(
+      'ws1',
+      title: 'T',
+      description: 'D',
+      coverUrl: null,
+    );
     expect(patch.method, 'PATCH');
     expect(patch.path, '/workspaces/ws1');
     expect(patch.body, {'title': 'T', 'description': 'D', 'coverUrl': null});
@@ -33,10 +38,21 @@ void main() {
   });
 
   test('project patch/delete and update patch/delete match Nuxt', () {
-    final patch = patchProject('p1', title: 'P', description: 'd', status: 'active', ownerId: 'u1');
+    final patch = patchProject(
+      'p1',
+      title: 'P',
+      description: 'd',
+      status: 'active',
+      ownerId: 'u1',
+    );
     expect(patch.method, 'PATCH');
     expect(patch.path, '/projects/p1');
-    expect(patch.body, {'title': 'P', 'description': 'd', 'status': 'active', 'ownerId': 'u1'});
+    expect(patch.body, {
+      'title': 'P',
+      'description': 'd',
+      'status': 'active',
+      'ownerId': 'u1',
+    });
     expect(deleteProject('p1').path, '/projects/p1');
     expect(deleteProject('p1').method, 'DELETE');
     final edit = patchProjectUpdate('up1', 'revised');
@@ -76,7 +92,9 @@ void main() {
     expect(bare.method, 'POST');
     expect(bare.path, '/prds/prd1/revisions');
     expect(bare.body, isNull);
-    expect(postPrdRevision('prd1', note: 'before review').body, {'note': 'before review'});
+    expect(postPrdRevision('prd1', note: 'before review').body, {
+      'note': 'before review',
+    });
   });
 
   test('roadmap create sends parentId only for a child', () {
@@ -84,7 +102,10 @@ void main() {
     expect(root.method, 'POST');
     expect(root.path, '/projects/p1/roadmap');
     expect(root.body, {'title': 'Ship'});
-    expect(postRoadmapNode('p1', 'Task', parentId: 'n1').body, {'title': 'Task', 'parentId': 'n1'});
+    expect(postRoadmapNode('p1', 'Task', parentId: 'n1').body, {
+      'title': 'Task',
+      'parentId': 'n1',
+    });
   });
 
   test('PRD status and build-from-PRD first call vs confirm', () {

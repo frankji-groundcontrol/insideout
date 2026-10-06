@@ -12,6 +12,7 @@ import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/cobalt.dart';
+import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
 import 'roadmap_canvas.dart';
 import 'roadmap_node_card.dart';
@@ -38,7 +39,8 @@ class _RoadmapPageState extends State<RoadmapPage> {
   final Map<String, CursorDot> _cursors = {};
   DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
   Timer? _retryTimer;
-  late final String _clientId = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+  late final String _clientId = DateTime.now().microsecondsSinceEpoch
+      .toRadixString(36);
 
   Future<void> _backoff(Duration d) {
     final done = Completer<void>();
@@ -50,7 +52,11 @@ class _RoadmapPageState extends State<RoadmapPage> {
     final now = DateTime.now();
     if (now.difference(_lastCursorSent).inMilliseconds < 200) return;
     _lastCursorSent = now;
-    context.read<Session>().api.cursor(widget.projectId, x, y).catchError((_) {});
+    context
+        .read<Session>()
+        .api
+        .cursor(widget.projectId, x, y)
+        .catchError((_) {});
   }
 
   Future<void> _progressLoop(ApiClient api) async {
@@ -67,7 +73,9 @@ class _RoadmapPageState extends State<RoadmapPage> {
       } catch (_) {}
       if (fatal || !mounted) return;
       await _backoff(backoff);
-      backoff = backoff * 2 > const Duration(seconds: 5) ? const Duration(seconds: 5) : backoff * 2;
+      backoff = backoff * 2 > const Duration(seconds: 5)
+          ? const Duration(seconds: 5)
+          : backoff * 2;
     }
   }
 
@@ -76,21 +84,35 @@ class _RoadmapPageState extends State<RoadmapPage> {
     while (mounted) {
       var fatal = false;
       try {
-        await api.presenceStream(widget.projectId, _clientId, (entries) {
-          if (!mounted) return;
-          final live = entries.map((e) => e.sessionId).toSet();
-          _cursors.removeWhere((id, _) => !live.contains(id));
-          setState(() => _presence = entries);
-        }, onCursor: (sessionId, name, x, y) {
-          if (!mounted || sessionId == _clientId) return;
-          setState(() => _cursors[sessionId] = CursorDot(sessionId: sessionId, name: name, x: x, y: y));
-        });
+        await api.presenceStream(
+          widget.projectId,
+          _clientId,
+          (entries) {
+            if (!mounted) return;
+            final live = entries.map((e) => e.sessionId).toSet();
+            _cursors.removeWhere((id, _) => !live.contains(id));
+            setState(() => _presence = entries);
+          },
+          onCursor: (sessionId, name, x, y) {
+            if (!mounted || sessionId == _clientId) return;
+            setState(
+              () => _cursors[sessionId] = CursorDot(
+                sessionId: sessionId,
+                name: name,
+                x: x,
+                y: y,
+              ),
+            );
+          },
+        );
       } on ApiException catch (e) {
         fatal = e.status == 401 || e.status == 403 || e.status == 404;
       } catch (_) {}
       if (fatal || !mounted) return;
       await _backoff(backoff);
-      backoff = backoff * 2 > const Duration(seconds: 5) ? const Duration(seconds: 5) : backoff * 2;
+      backoff = backoff * 2 > const Duration(seconds: 5)
+          ? const Duration(seconds: 5)
+          : backoff * 2;
     }
   }
 
@@ -106,14 +128,17 @@ class _RoadmapPageState extends State<RoadmapPage> {
     super.initState();
     context.read<LoopFocus>().rememberProject(widget.projectId);
     _future = context.read<Session>().api.listRoadmap(widget.projectId);
-    _progressFuture = context.read<Session>().api.roadmapProgress(widget.projectId);
+    _progressFuture = context.read<Session>().api.roadmapProgress(
+      widget.projectId,
+    );
     _progressLoop(context.read<Session>().api);
     _presenceLoop(context.read<Session>().api);
   }
 
   void _scrollToBand(int i) {
     if (!_canvasController.hasClients) return;
-    final target = i * (RoadmapCanvas.bandWidth + RoadmapCanvas.bandSpacing) - 24;
+    final target =
+        i * (RoadmapCanvas.bandWidth + RoadmapCanvas.bandSpacing) - 24;
     _canvasController.animateTo(
       target.clamp(0.0, _canvasController.position.maxScrollExtent).toDouble(),
       duration: const Duration(milliseconds: 300),
@@ -123,7 +148,9 @@ class _RoadmapPageState extends State<RoadmapPage> {
 
   Future<void> _reload() async {
     final nodes = context.read<Session>().api.listRoadmap(widget.projectId);
-    final progress = context.read<Session>().api.roadmapProgress(widget.projectId);
+    final progress = context.read<Session>().api.roadmapProgress(
+      widget.projectId,
+    );
     setState(() {
       _future = nodes;
       _progressFuture = progress;
@@ -139,18 +166,37 @@ class _RoadmapPageState extends State<RoadmapPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.t('roadmap.addRoot')),
-        content: TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('roadmap.rootPlaceholder'))),
+        content: TextField(
+          controller: title,
+          decoration: InputDecoration(
+            labelText: l10n.t('roadmap.rootPlaceholder'),
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('roadmap.add'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('roadmap.add')),
+          ),
         ],
       ),
     );
     if (ok == true && title.text.trim().isNotEmpty && mounted) {
-      await context.read<Session>().api.createRoadmapNode(widget.projectId, title.text.trim());
-      await _reload();
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.createRoadmapNode(
+          widget.projectId,
+          title.text.trim(),
+        ),
+      );
+      if (done && mounted) await _reload();
     }
-    title.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextField mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   @override
@@ -161,9 +207,18 @@ class _RoadmapPageState extends State<RoadmapPage> {
       actions: [
         SegmentedButton<_RoadmapView>(
           segments: [
-            ButtonSegment(value: _RoadmapView.progress, label: Text(l10n.t('roadmap.viewProgress'))),
-            ButtonSegment(value: _RoadmapView.bands, label: Text(l10n.t('roadmap.viewBands'))),
-            ButtonSegment(value: _RoadmapView.canvas, label: Text(l10n.t('roadmap.viewCanvas'))),
+            ButtonSegment(
+              value: _RoadmapView.progress,
+              label: Text(l10n.t('roadmap.viewProgress')),
+            ),
+            ButtonSegment(
+              value: _RoadmapView.bands,
+              label: Text(l10n.t('roadmap.viewBands')),
+            ),
+            ButtonSegment(
+              value: _RoadmapView.canvas,
+              label: Text(l10n.t('roadmap.viewCanvas')),
+            ),
           ],
           selected: {_view},
           onSelectionChanged: (s) => setState(() => _view = s.first),
@@ -180,13 +235,22 @@ class _RoadmapPageState extends State<RoadmapPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(l10n.t('roadmap.title').toUpperCase(), style: theme.textTheme.displaySmall),
+                      Text(
+                        l10n.t('roadmap.title').toUpperCase(),
+                        style: theme.textTheme.displaySmall,
+                      ),
                       const SizedBox(height: 8),
-                      Text(l10n.t('roadmap.lead'), style: theme.textTheme.bodyLarge),
+                      Text(
+                        l10n.t('roadmap.lead'),
+                        style: theme.textTheme.bodyLarge,
+                      ),
                     ],
                   ),
                 ),
-                FilledButton(onPressed: _addRoot, child: Text(l10n.t('roadmap.newItem'))),
+                FilledButton(
+                  onPressed: _addRoot,
+                  child: Text(l10n.t('roadmap.newItem')),
+                ),
               ],
             ),
           ),
@@ -196,8 +260,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
               child: Wrap(
                 spacing: 6,
                 children: [
-                  Icon(Icons.groups_2_outlined, size: 16, color: Cobalt.of(context).brand),
-                  for (final e in _presence) Chip(label: Text(e.name, style: theme.textTheme.bodySmall)),
+                  Icon(
+                    Icons.groups_2_outlined,
+                    size: 16,
+                    color: Cobalt.of(context).brand,
+                  ),
+                  for (final e in _presence)
+                    Chip(label: Text(e.name, style: theme.textTheme.bodySmall)),
                 ],
               ),
             ),
@@ -208,24 +277,44 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     builder: (context, snap) {
                       final progress = _liveProgress ?? snap.data;
                       if (progress == null) {
-                        return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
+                        return Center(
+                          child: snap.hasError
+                              ? Text(localizedError(snap.error!, l10n.t))
+                              : const CircularProgressIndicator(),
+                        );
                       }
-                      return RoadmapProgressView(progress: progress, emptyLabel: l10n.t('roadmap.empty'));
+                      return RoadmapProgressView(
+                        progress: progress,
+                        emptyLabel: l10n.t('roadmap.empty'),
+                      );
                     },
                   )
                 : FutureBuilder(
                     future: _future,
                     builder: (context, snap) {
                       if (!snap.hasData) {
-                        return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
+                        return Center(
+                          child: snap.hasError
+                              ? Text(localizedError(snap.error!, l10n.t))
+                              : const CircularProgressIndicator(),
+                        );
                       }
-                      if (snap.data!.isEmpty) return Center(child: Text(l10n.t('roadmap.empty')));
+                      if (snap.data!.isEmpty)
+                        return Center(child: Text(l10n.t('roadmap.empty')));
                       if (_view == _RoadmapView.bands) {
-                        return RoadmapBands(projectId: widget.projectId, nodes: snap.data!, onReload: _reload, progress: _liveProgress);
+                        return RoadmapBands(
+                          projectId: widget.projectId,
+                          nodes: snap.data!,
+                          onReload: _reload,
+                          progress: _liveProgress,
+                        );
                       }
                       return Column(
                         children: [
-                          RoadmapMinimap(nodes: snap.data!, onTapBand: _scrollToBand),
+                          RoadmapMinimap(
+                            nodes: snap.data!,
+                            onTapBand: _scrollToBand,
+                          ),
                           const Divider(height: 1),
                           Expanded(
                             child: RoadmapCanvas(
@@ -234,7 +323,10 @@ class _RoadmapPageState extends State<RoadmapPage> {
                                 projectId: widget.projectId,
                                 node: node,
                                 onReload: _reload,
-                                childProgress: RoadmapNodeCard.childDoneShare(snap.data!, node),
+                                childProgress: RoadmapNodeCard.childDoneShare(
+                                  snap.data!,
+                                  node,
+                                ),
                               ),
                               controller: _canvasController,
                               onCursor: _sendCursor,

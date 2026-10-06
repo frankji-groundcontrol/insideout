@@ -60,7 +60,8 @@ class MemoryTokenStore implements TokenStore {
 }
 
 class SecureTokenStore implements TokenStore {
-  SecureTokenStore([FlutterSecureStorage? storage]) : _storage = storage ?? const FlutterSecureStorage();
+  SecureTokenStore([FlutterSecureStorage? storage])
+    : _storage = storage ?? const FlutterSecureStorage();
 
   static const accessKey = 'insideout_access';
   static const refreshKey = 'insideout_refresh';

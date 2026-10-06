@@ -27,12 +27,14 @@ class RoadmapBands extends StatelessWidget {
   final RoadmapProgress? progress;
 
   List<RoadmapNode> _band(String Function(RoadmapNode n) bucket, String name) {
-    return nodes.where((n) => bucket(n) == name).toList()..sort((a, b) => a.position.compareTo(b.position));
+    return nodes.where((n) => bucket(n) == name).toList()
+      ..sort((a, b) => a.position.compareTo(b.position));
   }
 
   List<RoadmapNode> _matching(List<ProgressItem> items) {
     final ids = items.map((i) => i.id).toSet();
-    return nodes.where((n) => ids.contains(n.id)).toList()..sort((a, b) => a.position.compareTo(b.position));
+    return nodes.where((n) => ids.contains(n.id)).toList()
+      ..sort((a, b) => a.position.compareTo(b.position));
   }
 
   static String bucket(RoadmapNode n) {
@@ -47,10 +49,19 @@ class RoadmapBands extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final palette = Cobalt.of(context);
-    final placed = progress == null ? const <String>{} : {...progress!.now, ...progress!.next}.map((i) => i.id).toSet();
-    final now = progress == null ? _band(bucket, 'now') : _matching(progress!.now);
-    final next = progress == null ? _band(bucket, 'next') : _matching(progress!.next);
-    final later = progress == null ? _band(bucket, 'later') : (nodes.where((n) => !placed.contains(n.id)).toList()..sort((a, b) => a.position.compareTo(b.position)));
+    final placed = progress == null
+        ? const <String>{}
+        : {...progress!.now, ...progress!.next}.map((i) => i.id).toSet();
+    final now = progress == null
+        ? _band(bucket, 'now')
+        : _matching(progress!.now);
+    final next = progress == null
+        ? _band(bucket, 'next')
+        : _matching(progress!.next);
+    final later = progress == null
+        ? _band(bucket, 'later')
+        : (nodes.where((n) => !placed.contains(n.id)).toList()
+            ..sort((a, b) => a.position.compareTo(b.position)));
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 140),
       children: [

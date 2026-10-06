@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -9,8 +11,10 @@ import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
+import '../../widgets/guarded_action.dart';
 
 class ProjectPage extends StatefulWidget {
   const ProjectPage({super.key, required this.id});
@@ -26,13 +30,51 @@ class _ProjectPageState extends State<ProjectPage> {
   late Future<List<({String title, List<Map<String, dynamic>> rows})>>
   _leafEvidence;
   final repo = TextEditingController();
+  final _scroll = ScrollController();
+  Timer? _flashTimer;
+  var _flash = false;
+  var _lastPulse = 0;
+  late final LoopFocus _focus;
 
   @override
   void initState() {
     super.initState();
-    context.read<LoopFocus>().rememberProject(widget.id);
+    _focus = context.read<LoopFocus>();
+    _focus.rememberProject(widget.id);
+    // The dock bumps evidencePulse when its Evidence step is tapped while
+    // this page is already the destination; one-shot per bump (the counter
+    // also filters the focus's other notifications).
+    _lastPulse = _focus.evidencePulse;
+    _focus.addListener(_onEvidencePulse);
     _future = _load();
     _leafEvidence = _loadLeafEvidence();
+  }
+
+  @override
+  void dispose() {
+    // Already deactivated: context.read would throw and skip the timer cancel.
+    _flashTimer?.cancel();
+    _focus.removeListener(_onEvidencePulse);
+    _scroll.dispose();
+    repo.dispose();
+    super.dispose();
+  }
+
+  /// Pulse from the dock's Evidence item: scroll the evidence header back
+  /// into view and flash it, so the tap reads as "you are here".
+  void _onEvidencePulse() {
+    if (_focus.evidencePulse == _lastPulse) return;
+    _lastPulse = _focus.evidencePulse;
+    if (!mounted) return;
+    setState(() => _flash = true);
+    _flashTimer?.cancel();
+    _flashTimer = Timer(const Duration(seconds: 1), () {
+      if (mounted) setState(() => _flash = false);
+    });
+    if (_scroll.hasClients) {
+      // A ticker animation does not move on the pump that shows the flash.
+      _scroll.jumpTo(0);
+    }
   }
 
   Future<Map<String, dynamic>> _load() async {
@@ -40,15 +82,9 @@ class _ProjectPageState extends State<ProjectPage> {
     final data = await api.getProject(widget.id);
     if (!mounted) return data;
     final ws = data['workspaceId'] as String?;
-    context.read<LoopFocus>().rememberProject(widget.id, workspaceId: ws);
+    _focus.rememberProject(widget.id, workspaceId: ws);
     repo.text = (data['repoUrl'] as String?) ?? '';
     return data;
-  }
-
-  @override
-  void dispose() {
-    repo.dispose();
-    super.dispose();
   }
 
   /// Evidence rows for the done leaves (cap 5), so the Evidence screen
@@ -84,20 +120,12 @@ class _ProjectPageState extends State<ProjectPage> {
   // FEAT-03: the proposal decision loop — the server resolves authority
   // (project owner or workspace admin); the web just surfaces the outcome.
   Future<void> _decide(ProjectUpdate update, {required bool accept}) async {
-    final l10n = context.read<Appearance>();
     final api = context.read<Session>().api;
-    try {
+    final done = await guardWrite(context, () async {
       await api.decideProposal(update.id, accept: accept);
       if (accept) await _applyAcceptedItems(api, update);
-    } on Object catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(localizedError(e, l10n.t))));
-      }
-      return;
-    }
-    if (mounted) await _reload();
+    });
+    if (done && mounted) await _reload();
   }
 
   // Accepting a proposal changes the roadmap: each add_node item becomes a
@@ -132,6 +160,7 @@ class _ProjectPageState extends State<ProjectPage> {
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
         final theme = Theme.of(context);
+        final palette = Cobalt.of(context);
         final title =
             snap.data?['title'] as String? ?? l10n.t('evidence.title');
         final updates = ((snap.data?['updates'] as List?) ?? const [])
@@ -145,18 +174,44 @@ class _ProjectPageState extends State<ProjectPage> {
                       : const CircularProgressIndicator(),
                 )
               : ListView(
+                  controller: _scroll,
                   padding: const EdgeInsets.fromLTRB(28, 64, 28, 140),
                   children: [
-                    Text(
-                      l10n.t('evidence.title').toUpperCase(),
-                      style: theme.textTheme.displaySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(title, style: theme.textTheme.headlineSmall),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.t('evidence.lead'),
-                      style: theme.textTheme.bodyLarge,
+                    // The dock's Evidence pulse flashes this header — a
+                    // brandSubtle fill behind a strokeStrong border that
+                    // fades back out (Cobalt-Neo tokens, 0 radius).
+                    AnimatedContainer(
+                      key: const ValueKey('evidence-pulse-flash'),
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _flash
+                            ? palette.brandSubtle
+                            : palette.brandSubtle.withValues(alpha: 0),
+                        border: Border.all(
+                          color: _flash
+                              ? palette.strokeStrong
+                              : palette.strokeStrong.withValues(alpha: 0),
+                          width: Cobalt.borderContainer,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.t('evidence.title').toUpperCase(),
+                            style: theme.textTheme.labelSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(title, style: theme.textTheme.displaySmall),
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.t('evidence.lead'),
+                            style: theme.textTheme.bodyLarge,
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Wrap(
@@ -200,33 +255,42 @@ class _ProjectPageState extends State<ProjectPage> {
                             children: [
                               OutlinedButton(
                                 onPressed: () async {
-                                  await context.read<Session>().api.setRepo(
-                                    widget.id,
-                                    repo.text.trim(),
+                                  final done = await guardWrite(
+                                    context,
+                                    () => context.read<Session>().api.setRepo(
+                                      widget.id,
+                                      repo.text.trim(),
+                                    ),
                                   );
-                                  await _reload();
+                                  if (done && mounted) await _reload();
                                 },
                                 child: Text(l10n.t('github.save')),
                               ),
                               OutlinedButton(
                                 onPressed: () async {
-                                  final result = await context
-                                      .read<Session>()
-                                      .api
-                                      .syncGithub(widget.id);
-                                  if (context.mounted) {
-                                    final count =
-                                        result['added'] ?? result['count'] ?? 0;
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.t('github.synced', {
-                                            'count': count,
-                                          }),
+                                  await guardWrite(context, () async {
+                                    final result = await context
+                                        .read<Session>()
+                                        .api
+                                        .syncGithub(widget.id);
+                                    if (context.mounted) {
+                                      final count =
+                                          result['added'] ??
+                                          result['count'] ??
+                                          0;
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.t('github.synced', {
+                                              'count': count,
+                                            }),
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  }
+                                      );
+                                    }
+                                  });
                                 },
                                 child: Text(l10n.t('github.sync')),
                               ),
@@ -309,7 +373,9 @@ class _ProjectPageState extends State<ProjectPage> {
                               alignment: Alignment.centerRight,
                               // FEAT-03: an agent proposal is decided, not
                               // edited — Accept/Reject own the record.
-                              child: u.kind == 'agent_proposal' && u.decision.isEmpty
+                              child:
+                                  u.kind == 'agent_proposal' &&
+                                      u.decision.isEmpty
                                   ? Wrap(
                                       spacing: 8,
                                       children: [
@@ -363,17 +429,31 @@ class _ProjectPageState extends State<ProjectPage> {
                                               ],
                                             ),
                                           );
-                                          if (ok == true && mounted) {
-                                            await api.editUpdate(
-                                              u.id,
-                                              content.text.trim(),
+                                          if (ok == true && context.mounted) {
+                                            final done = await guardWrite(
+                                              context,
+                                              () => api.editUpdate(
+                                                u.id,
+                                                content.text.trim(),
+                                              ),
                                             );
+                                            if (done && context.mounted) {
+                                              await _reload();
+                                            }
+                                          }
+                                          // Not disposed: the pop animation keeps the
+                                          // dialog's TextField mounted past this
+                                          // await, and the guard's SnackBar rebuilds
+                                          // the overlay — a disposed controller would
+                                          // throw. GC'd once the dialog unmounts.
+                                        } else if (value == 'delete') {
+                                          final done = await guardWrite(
+                                            context,
+                                            () => api.removeUpdate(u.id),
+                                          );
+                                          if (done && context.mounted) {
                                             await _reload();
                                           }
-                                          content.dispose();
-                                        } else if (value == 'delete') {
-                                          await api.removeUpdate(u.id);
-                                          await _reload();
                                         }
                                       },
                                       itemBuilder: (_) => [
@@ -457,17 +537,21 @@ class _ProjectPageState extends State<ProjectPage> {
       ),
     );
     if (ok == true && mounted) {
-      await context.read<Session>().api.updateProject(
-        widget.id,
-        title: titleCtrl.text.trim(),
-        description: descCtrl.text,
-        status: status,
-        ownerId: data['ownerId'] as String?,
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.updateProject(
+          widget.id,
+          title: titleCtrl.text.trim(),
+          description: descCtrl.text,
+          status: status,
+          ownerId: data['ownerId'] as String?,
+        ),
       );
-      await _reload();
+      if (done && mounted) await _reload();
     }
-    titleCtrl.dispose();
-    descCtrl.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextFields mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   Future<void> _delete(Map<String, dynamic> data) async {
@@ -490,8 +574,11 @@ class _ProjectPageState extends State<ProjectPage> {
     );
     if (ok == true && mounted) {
       final wsId = data['workspaceId'] as String;
-      await context.read<Session>().api.deleteProject(widget.id);
-      if (context.mounted) context.go('/workspace/$wsId');
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.deleteProject(widget.id),
+      );
+      if (done && mounted) context.go('/workspace/$wsId');
     }
   }
 
@@ -529,20 +616,25 @@ class _ProjectPageState extends State<ProjectPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.t('project.post')),
+              child: Text(l10n.t('common.post')),
             ),
           ],
         ),
       ),
     );
     if (ok == true && content.text.trim().isNotEmpty && mounted) {
-      await context.read<Session>().api.addUpdate(
-        widget.id,
-        kind,
-        content.text.trim(),
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.addUpdate(
+          widget.id,
+          kind,
+          content.text.trim(),
+        ),
       );
-      await _reload();
+      if (done && mounted) await _reload();
     }
-    content.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextField mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 }

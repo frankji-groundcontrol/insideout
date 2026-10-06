@@ -1,0 +1,40 @@
+version: 2
+task: Finish Cobalt-Neo waves 4-7 and close the plan
+coordinator: grok
+history_file: 2026-10-06-frontend-cobalt-neo.track.history.jsonl
+main:
+  outcome: All seven Cobalt-Neo waves are in the worktree. flutter analyze has no
+    errors or warnings (32 infos) and flutter test is 143 passed. Plan, changelog,
+    and handoff match that gate. W3-N2 stays filed, not fixed.
+  owner: finish-cobalt-neo
+  status: complete
+  next_evidence: 'Local gate 2026-10-06: flutter analyze --no-fatal-infos exit 0 (32
+    infos, no errors or warnings); flutter test 00:09 +143 All tests passed TEST_EXIT:0;
+    dart format --set-exit-if-changed exit 0. Committed to main.'
+side_tracks: []
+updated_at: '2026-10-06T07:40:16Z'
+plan:
+- step: Wave 1 one-line and token fixes (94/94)
+  owner: wave1
+  status: completed
+- step: Wave 2 dock geometry and clearance (shots-wave2)
+  owner: wave2
+  status: completed
+- step: Wave 3 Cobalt-Neo tokens and DESIGN.md (107/107, shots-wave3)
+  owner: wave3
+  status: completed
+- step: Wave 4 guarded writes, coach timeout, dock taps
+  owner: reliability
+  status: completed
+- step: Wave 5 minimap shape channel and WCAG re-run
+  owner: minimap
+  status: completed
+- step: Wave 6 dock overlap test, auth geometry, format gate, Flutter pin
+  owner: wave6
+  status: completed
+- step: Wave 7 drop CJK fonts from the web bundle and strip URL secrets
+  owner: bundle
+  status: completed
+- step: 'Closure: changelog, handoff, issues, plan Finished'
+  owner: close
+  status: completed

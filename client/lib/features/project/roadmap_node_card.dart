@@ -5,8 +5,10 @@ import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
+import '../../widgets/guarded_action.dart';
 
 class RoadmapNodeCard extends StatelessWidget {
   const RoadmapNodeCard({
@@ -47,21 +49,27 @@ class RoadmapNodeCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              ShadeChip(label: l10n.t('roadmap.status.${node.status}'), tone: ShadeChip.fromStatus(node.status)),
+              ShadeChip(
+                label: l10n.t('roadmap.status.${node.status}'),
+                tone: ShadeChip.fromStatus(node.status),
+              ),
               const Spacer(),
               _NodeMenu(projectId: projectId, node: node, onReload: onReload),
             ],
           ),
           const SizedBox(height: 10),
           Text(node.title, style: theme.textTheme.titleMedium),
-          if (node.editorName != null) Text(node.editorName!, style: theme.textTheme.bodySmall),
+          if (node.editorName != null)
+            Text(node.editorName!, style: theme.textTheme.bodySmall),
           if (node.deadline != null)
             Padding(
               padding: const EdgeInsets.only(top: 6),
               child: ShadeChip(
                 label:
                     '${isoDate(node.deadline!)}${node.pressure != null && node.pressure != 'normal' ? ' · ${l10n.t('roadmap.pressure.${node.pressure}')}' : ''}',
-                tone: node.pressure == 'overdue' || node.pressure == 'high_risk' ? ShadeTone.danger : ShadeTone.neutral,
+                tone: node.pressure == 'overdue' || node.pressure == 'high_risk'
+                    ? ShadeTone.danger
+                    : ShadeTone.neutral,
               ),
             ),
           if (node.acceptance.isNotEmpty)
@@ -75,13 +83,19 @@ class RoadmapNodeCard extends StatelessWidget {
           if (node.ownerName.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text('${l10n.t('roadmap.owner')}: ${node.ownerName}', style: theme.textTheme.bodySmall),
+              child: Text(
+                '${l10n.t('roadmap.owner')}: ${node.ownerName}',
+                style: theme.textTheme.bodySmall,
+              ),
             ),
           if (childProgress != null) ...[
             const SizedBox(height: 12),
             ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: LinearProgressIndicator(value: childProgress, minHeight: 4),
+              borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+              child: LinearProgressIndicator(
+                value: childProgress,
+                minHeight: 4,
+              ),
             ),
           ],
         ],
@@ -91,7 +105,11 @@ class RoadmapNodeCard extends StatelessWidget {
 }
 
 class _NodeMenu extends StatelessWidget {
-  const _NodeMenu({required this.projectId, required this.node, required this.onReload});
+  const _NodeMenu({
+    required this.projectId,
+    required this.node,
+    required this.onReload,
+  });
 
   final String projectId;
   final RoadmapNode node;
@@ -124,30 +142,70 @@ class _NodeMenu extends StatelessWidget {
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text(l10n.t('roadmap.addChild')),
-          content: TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('roadmap.childPlaceholder'))),
+          content: TextField(
+            controller: title,
+            decoration: InputDecoration(
+              labelText: l10n.t('roadmap.childPlaceholder'),
+            ),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('roadmap.add'))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.t('roadmap.add')),
+            ),
           ],
         ),
       );
       if (ok == true && title.text.trim().isNotEmpty && context.mounted) {
-        await api.createRoadmapNode(projectId, title.text.trim(), parentId: node.id);
-        await onReload();
+        final done = await guardWrite(
+          context,
+          () => api.createRoadmapNode(
+            projectId,
+            title.text.trim(),
+            parentId: node.id,
+          ),
+        );
+        if (done && context.mounted) await onReload();
       }
-      title.dispose();
+      // Not disposed: the pop animation keeps the dialog's TextField mounted
+      // past this await, and the guard's SnackBar rebuilds the overlay — a
+      // disposed controller would throw. GC'd once the dialog unmounts.
     } else if (value == 'up') {
-      await api.moveRoadmapNode(node.id, parentId: node.parentId, position: node.position == 0 ? 0 : node.position - 1);
-      await onReload();
+      final done = await guardWrite(
+        context,
+        () => api.moveRoadmapNode(
+          node.id,
+          parentId: node.parentId,
+          position: node.position == 0 ? 0 : node.position - 1,
+        ),
+      );
+      if (done && context.mounted) await onReload();
     } else if (value == 'down') {
-      await api.moveRoadmapNode(node.id, parentId: node.parentId, position: node.position + 1);
-      await onReload();
+      final done = await guardWrite(
+        context,
+        () => api.moveRoadmapNode(
+          node.id,
+          parentId: node.parentId,
+          position: node.position + 1,
+        ),
+      );
+      if (done && context.mounted) await onReload();
     } else if (value == 'expand') {
-      await api.expandRoadmapNode(node.id);
-      await onReload();
+      final done = await guardWrite(
+        context,
+        () => api.expandRoadmapNode(node.id),
+      );
+      if (done && context.mounted) await onReload();
     } else if (value == 'delete') {
-      await api.deleteRoadmapNode(node.id);
-      await onReload();
+      final done = await guardWrite(
+        context,
+        () => api.deleteRoadmapNode(node.id),
+      );
+      if (done && context.mounted) await onReload();
     }
   }
 
@@ -175,12 +233,24 @@ class _NodeMenu extends StatelessWidget {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('roadmap.rootPlaceholder'))),
-              TextField(controller: desc, decoration: InputDecoration(labelText: l10n.t('roadmap.descPlaceholder'))),
+              TextField(
+                controller: title,
+                decoration: InputDecoration(
+                  labelText: l10n.t('roadmap.rootPlaceholder'),
+                ),
+              ),
+              TextField(
+                controller: desc,
+                decoration: InputDecoration(
+                  labelText: l10n.t('roadmap.descPlaceholder'),
+                ),
+              ),
               TextField(
                 key: const Key('acceptance-field'),
                 controller: acceptance,
-                decoration: InputDecoration(labelText: l10n.t('roadmap.acceptanceHint')),
+                decoration: InputDecoration(
+                  labelText: l10n.t('roadmap.acceptanceHint'),
+                ),
               ),
               DropdownButton<String?>(
                 key: const Key('owner-picker'),
@@ -188,15 +258,28 @@ class _NodeMenu extends StatelessWidget {
                 value: members.any((m) => m.userId == ownerId) ? ownerId : null,
                 hint: Text(l10n.t('roadmap.ownerPick')),
                 items: [
-                  DropdownMenuItem(value: null, child: Text(l10n.t('roadmap.ownerNone'))),
-                  ...members.map((m) => DropdownMenuItem(value: m.userId, child: Text(m.username))),
+                  DropdownMenuItem(
+                    value: null,
+                    child: Text(l10n.t('roadmap.ownerNone')),
+                  ),
+                  ...members.map(
+                    (m) => DropdownMenuItem(
+                      value: m.userId,
+                      child: Text(m.username),
+                    ),
+                  ),
                 ],
                 onChanged: (v) => setLocal(() => ownerId = v),
               ),
               DropdownButton<String>(
                 value: status,
                 items: ['locked', 'pending', 'in_progress', 'done']
-                    .map((s) => DropdownMenuItem(value: s, child: Text(l10n.t('roadmap.status.$s'))))
+                    .map(
+                      (s) => DropdownMenuItem(
+                        value: s,
+                        child: Text(l10n.t('roadmap.status.$s')),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setLocal(() => status = v ?? status),
               ),
@@ -206,13 +289,26 @@ class _NodeMenu extends StatelessWidget {
                     onPressed: () async {
                       final picked = await showDatePicker(
                         context: ctx,
-                        initialDate: DateTime.now().add(const Duration(days: 7)),
-                        firstDate: DateTime.now().subtract(const Duration(days: 1)),
-                        lastDate: DateTime.now().add(const Duration(days: 365 * 3)),
+                        initialDate: DateTime.now().add(
+                          const Duration(days: 7),
+                        ),
+                        firstDate: DateTime.now().subtract(
+                          const Duration(days: 1),
+                        ),
+                        lastDate: DateTime.now().add(
+                          const Duration(days: 365 * 3),
+                        ),
                       );
-                      if (picked != null) setLocal(() => deadline = picked.toUtc().toIso8601String());
+                      if (picked != null)
+                        setLocal(
+                          () => deadline = picked.toUtc().toIso8601String(),
+                        );
                     },
-                    child: Text(deadline == null ? l10n.t('roadmap.setDeadline') : isoDate(deadline!)),
+                    child: Text(
+                      deadline == null
+                          ? l10n.t('roadmap.setDeadline')
+                          : isoDate(deadline!),
+                    ),
                   ),
                   if (deadline != null)
                     IconButton(
@@ -225,26 +321,35 @@ class _NodeMenu extends StatelessWidget {
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('roadmap.save'))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.t('common.cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.t('roadmap.save')),
+            ),
           ],
         ),
       ),
     );
     if (ok == true && context.mounted) {
-      await api.updateRoadmapNode(
-        node.id,
-        title: title.text.trim(),
-        description: desc.text,
-        status: status,
-        deadline: deadline == '' ? '' : deadline,
-        acceptance: acceptance.text.trim(),
-        ownerId: ownerId ?? '',
+      final done = await guardWrite(
+        context,
+        () => api.updateRoadmapNode(
+          node.id,
+          title: title.text.trim(),
+          description: desc.text,
+          status: status,
+          deadline: deadline == '' ? '' : deadline,
+          acceptance: acceptance.text.trim(),
+          ownerId: ownerId ?? '',
+        ),
       );
-      await onReload();
+      if (done && context.mounted) await onReload();
     }
-    title.dispose();
-    desc.dispose();
-    acceptance.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextFields mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 }

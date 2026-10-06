@@ -23,7 +23,9 @@ void main() {
   test('login JSON persist stores both tokens via Session', () async {
     final store = MemoryTokenStore();
     final session = Session(store: store);
-    final profile = UserProfile.fromJson(Map<String, dynamic>.from(loginFixture));
+    final profile = UserProfile.fromJson(
+      Map<String, dynamic>.from(loginFixture),
+    );
     await session.applyAuthProfile(profile);
     expect(await store.readAccess(), loginFixture['accessToken']);
     expect(await store.readRefresh(), loginFixture['refreshToken']);
@@ -114,7 +116,9 @@ void main() {
 
   test('clear signs the user out so the app routes to the auth door', () async {
     final session = Session(store: MemoryTokenStore());
-    await session.applyAuthProfile(UserProfile.fromJson(Map<String, dynamic>.from(loginFixture)));
+    await session.applyAuthProfile(
+      UserProfile.fromJson(Map<String, dynamic>.from(loginFixture)),
+    );
     var notified = 0;
     session.addListener(() => notified++);
 
@@ -128,7 +132,9 @@ void main() {
     final auth = tokensFromAuthBody(Map<String, dynamic>.from(loginFixture));
     expect(auth!.access, 'access-from-login');
     expect(auth.refresh, 'refresh-from-login');
-    final rotated = tokensFromRefreshBody(Map<String, dynamic>.from(refreshFixture));
+    final rotated = tokensFromRefreshBody(
+      Map<String, dynamic>.from(refreshFixture),
+    );
     expect(rotated.access, 'access-rotated');
     expect(rotated.refresh, 'refresh-rotated');
   });

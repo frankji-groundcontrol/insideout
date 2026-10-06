@@ -54,7 +54,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(l10n.t('forgot.sent'), style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    l10n.t('forgot.sent'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () => context.go('/login'),
@@ -68,12 +71,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 children: [
                   TextField(
                     controller: email,
-                    decoration: InputDecoration(labelText: l10n.t('forgot.email')),
+                    decoration: InputDecoration(
+                      labelText: l10n.t('forgot.email'),
+                    ),
                     autofillHints: const [AutofillHints.email],
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 12),
-                    Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   FilledButton(

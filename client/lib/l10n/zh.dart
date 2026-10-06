@@ -16,7 +16,8 @@ const zhCN = <String, String>{
   'nav.dashboard': '工作台',
   'nav.profile': '个人资料',
   'landing.heroTitle': '把想法，一件件打磨出来。',
-  'landing.heroSubtitle': 'InsideOut 陪你走完全程：随手记下灵感，用 AI 教练打磨成 PRD，拆成可以并行推进的路线图，再同步真实提交，一路跟踪到交付。',
+  'landing.heroSubtitle':
+      'InsideOut 陪你走完全程：随手记下灵感，用 AI 教练打磨成 PRD，拆成可以并行推进的路线图，再同步真实提交，一路跟踪到交付。',
   'landing.ctaPrimary': '开始打磨',
   'landing.ctaSecondary': '登录',
   'landing.stepLabel': '第 {n} 步',
@@ -33,6 +34,9 @@ const zhCN = <String, String>{
   'landing.ctaCloseBody': '带上团队的下一个想法，InsideOut 陪它一路走到交付。',
   'landing.ctaCloseButton': '开始打磨',
   'idea.status.inbox': '收集箱',
+  'idea.status.refining': '打磨中',
+  'idea.status.converted': '已转化',
+  'idea.status.dropped': '已丢弃',
   'login.title': '登录',
   'login.welcome': '欢迎回来',
   'login.noAccount': '还没有账号？',
@@ -340,29 +344,14 @@ const zhCN = <String, String>{
   'error.server': '服务器开小差了，请稍后重试',
   'error.network': '网络异常，请检查连接',
   'error.generic': '出错了，请重试',
+  'write.failed': '保存失败：{error}',
   'proposal.accept': '接受',
   'proposal.reject': '驳回',
 };
 
 const zhCoachSuggest = <String, List<String>>{
-  'clarify': [
-    '这到底解决了什么问题？',
-    '目标用户是谁？',
-    '它和现有方案相比有何不同？',
-  ],
-  'draft': [
-    '起草目标与成功指标。',
-    '写一写核心用户故事。',
-    '列出功能需求。',
-  ],
-  'critique': [
-    '这里哪些地方含糊或缺失？',
-    '挑战一下范围——哪些该列为非目标？',
-    '有哪些我没看到的风险？',
-  ],
-  'finalize': [
-    '把所有章节的语言收紧一遍。',
-    '用一段话总结这份 PRD。',
-    '这份 PRD 可以交给团队做了吗？',
-  ],
+  'clarify': ['这到底解决了什么问题？', '目标用户是谁？', '它和现有方案相比有何不同？'],
+  'draft': ['起草目标与成功指标。', '写一写核心用户故事。', '列出功能需求。'],
+  'critique': ['这里哪些地方含糊或缺失？', '挑战一下范围——哪些该列为非目标？', '有哪些我没看到的风险？'],
+  'finalize': ['把所有章节的语言收紧一遍。', '用一段话总结这份 PRD。', '这份 PRD 可以交给团队做了吗？'],
 };

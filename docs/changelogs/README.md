@@ -15,6 +15,12 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-06 — Cobalt-Neo remediation closed](2026-10-06-frontend-cobalt-neo.md)
+  — waves 4–7 landed in the worktree (guarded writes, 75s coach idle
+  timeout, minimap shape channel, dock and auth geometry tests, CI
+  format step, web font assets limited to native, URL secrets stripped).
+  Analyze has no errors or warnings (32 infos); flutter test 143 passed.
+  Committed to main. W3-N2 minified console errors stay open.
 - [2026-10-06 — The four simulation bugs are fixed](2026-10-06-simulation-bug-fixes.md)
   — move shifts siblings, pressure is translated, proposal items keep
   their order, and a plain member can no longer change the plan.

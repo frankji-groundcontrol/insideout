@@ -25,17 +25,23 @@ import 'session/session.dart';
 final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/': (c, s) => const LandingPage(),
   '/login': (c, s) => const LoginPage(),
-  '/register': (c, s) => RegisterPage(invite: s.uri.queryParameters['invite'] ?? ''),
+  '/register': (c, s) =>
+      RegisterPage(invite: s.uri.queryParameters['invite'] ?? ''),
   '/forgot-password': (c, s) => const ForgotPasswordPage(),
-  '/reset-password': (c, s) => ResetPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
-  '/magic-link': (c, s) => MagicLinkPage(token: s.uri.queryParameters['token'] ?? ''),
+  '/reset-password': (c, s) =>
+      ResetPasswordPage(token: s.uri.queryParameters['token'] ?? ''),
+  '/magic-link': (c, s) =>
+      MagicLinkPage(token: s.uri.queryParameters['token'] ?? ''),
   '/dashboard': (c, s) => const DashboardPage(),
   '/profile': (c, s) => const ProfilePage(),
   '/workspace/:id': (c, s) => WorkspacePage(id: s.pathParameters['id']!),
-  '/workspace/:id/ideas': (c, s) => IdeasPage(workspaceId: s.pathParameters['id']!),
-  '/workspace/:id/settings': (c, s) => SettingsPage(workspaceId: s.pathParameters['id']!),
+  '/workspace/:id/ideas': (c, s) =>
+      IdeasPage(workspaceId: s.pathParameters['id']!),
+  '/workspace/:id/settings': (c, s) =>
+      SettingsPage(workspaceId: s.pathParameters['id']!),
   '/projects/:id': (c, s) => ProjectPage(id: s.pathParameters['id']!),
-  '/projects/:id/roadmap': (c, s) => RoadmapPage(projectId: s.pathParameters['id']!),
+  '/projects/:id/roadmap': (c, s) =>
+      RoadmapPage(projectId: s.pathParameters['id']!),
   '/prd/:id': (c, s) => PrdPage(id: s.pathParameters['id']!),
   '/prd/:id/revisions': (c, s) => RevisionsPage(prdId: s.pathParameters['id']!),
   '/prd/:id/versions': (c, s) => VersionsPage(prdId: s.pathParameters['id']!),
@@ -55,7 +61,8 @@ GoRouter buildRouter(Session session) {
       location: state.matchedLocation,
     ),
     routes: [
-      for (final e in productRouteBuilders.entries) GoRoute(path: e.key, builder: e.value),
+      for (final e in productRouteBuilders.entries)
+        GoRoute(path: e.key, builder: e.value),
     ],
   );
 }

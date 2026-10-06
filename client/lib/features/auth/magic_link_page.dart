@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../secret_query_scrub.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import 'auth_door.dart';
@@ -20,16 +21,19 @@ class MagicLinkPage extends StatefulWidget {
 
 class _MagicLinkPageState extends State<MagicLinkPage> {
   bool _working = true;
+  late final String _token;
 
   @override
   void initState() {
     super.initState();
+    _token = widget.token;
+    scrubSecretQueryKeys(const ['token']);
     WidgetsBinding.instance.addPostFrameCallback((_) => _consume());
   }
 
   Future<void> _consume() async {
     try {
-      await context.read<Session>().consumeMagicLink(widget.token);
+      await context.read<Session>().consumeMagicLink(_token);
       if (mounted) context.go('/dashboard');
     } catch (e) {
       if (mounted) setState(() => _working = false);
@@ -50,14 +54,20 @@ class _MagicLinkPageState extends State<MagicLinkPage> {
                 children: [
                   const CircularProgressIndicator(),
                   const SizedBox(height: 16),
-                  Text(l10n.t('magic.working'), style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    l10n.t('magic.working'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                 ],
               )
             : Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(l10n.t('magic.error'), style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    l10n.t('magic.error'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: () => context.go('/login'),

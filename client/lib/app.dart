@@ -80,7 +80,10 @@ class AppScaffold extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(24, 16, 88, 0),
                     child: Align(
                       alignment: Alignment.centerLeft,
-                      child: Text(title!, style: Theme.of(context).textTheme.headlineSmall),
+                      child: Text(
+                        title!,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
                     ),
                   ),
                 ),
@@ -93,37 +96,49 @@ class AppScaffold extends StatelessWidget {
             child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ...?actions,
-                    IconButton(
-                      tooltip: appearance.t('lang.switchTo'),
-                      onPressed: appearance.toggleLocale,
-                      icon: const Icon(Icons.translate),
-                    ),
-                    IconButton(
-                      tooltip: appearance.t(appearance.dark ? 'theme.toggleLight' : 'theme.toggleDark'),
-                      onPressed: appearance.toggleTheme,
-                      icon: Icon(appearance.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
-                    ),
-                    if (signedIn)
+                child: Material(
+                  color: palette.surfaceRaised.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ...?actions,
                       IconButton(
-                        tooltip: appearance.t('nav.profile'),
-                        onPressed: () => context.go('/profile'),
-                        icon: const Icon(Icons.person_outline),
+                        tooltip: appearance.t('lang.switchTo'),
+                        onPressed: appearance.toggleLocale,
+                        icon: const Icon(Icons.translate),
                       ),
-                    if (signedIn)
                       IconButton(
-                        tooltip: appearance.t('nav.logout'),
-                        onPressed: () async {
-                          context.read<LoopFocus>().clear();
-                          await session.logout();
-                          if (context.mounted) context.go('/');
-                        },
-                        icon: const Icon(Icons.logout),
+                        tooltip: appearance.t(
+                          appearance.dark
+                              ? 'theme.toggleLight'
+                              : 'theme.toggleDark',
+                        ),
+                        onPressed: appearance.toggleTheme,
+                        icon: Icon(
+                          appearance.dark
+                              ? Icons.light_mode_outlined
+                              : Icons.dark_mode_outlined,
+                        ),
                       ),
-                  ],
+                      if (signedIn)
+                        IconButton(
+                          tooltip: appearance.t('nav.profile'),
+                          onPressed: () => context.go('/profile'),
+                          icon: const Icon(Icons.person_outline),
+                        ),
+                      if (signedIn)
+                        IconButton(
+                          tooltip: appearance.t('nav.logout'),
+                          onPressed: () async {
+                            context.read<LoopFocus>().clear();
+                            await session.logout();
+                            if (context.mounted) context.go('/');
+                          },
+                          icon: const Icon(Icons.logout),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

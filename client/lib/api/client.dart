@@ -27,49 +27,55 @@ class ApiClient {
        _readRefresh = readRefresh,
        _writeTokens = writeTokens,
        _clearTokens = clearTokens {
-    _dio = Dio(BaseOptions(
-      baseUrl: baseUrl,
-      headers: {'Content-Type': 'application/json'},
-      validateStatus: (s) => s != null && s < 500,
-    ));
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        final token = await _readAccess();
-        if (token != null && token.isNotEmpty) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-      // validateStatus (<500) delivers 401s here as ordinary responses, so
-      // the expired-token recovery lives in onResponse rather than onError:
-      // refresh once, retry the request, and let a terminal 401 fall through
-      // to _parse, which surfaces it as the same ApiException as before.
-      onResponse: (response, handler) async {
-        final options = response.requestOptions;
-        // /auth/* endpoints establish sessions; a 401 there is terminal
-        // (bad credentials, dead link) and must surface untouched.
-        if (response.statusCode != 401 ||
-            options.path.startsWith('/auth/') ||
-            options.extra[_retriedKey] == true) {
-          handler.next(response);
-          return;
-        }
-        options.extra[_retriedKey] = true;
-        try {
-          await _refreshSingleFlight();
-        } catch (_) {
-          await _clearTokens();
-          handler.next(response);
-          return;
-        }
-        // The onRequest interceptor re-attaches the rotated bearer token.
-        try {
-          handler.resolve(await _dio.fetch<dynamic>(options));
-        } on DioException catch (e) {
-          handler.reject(e);
-        }
-      },
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: baseUrl,
+        connectTimeout: Duration(seconds: 10),
+        receiveTimeout: Duration(seconds: 30),
+        headers: {'Content-Type': 'application/json'},
+        validateStatus: (s) => s != null && s < 500,
+      ),
+    );
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          final token = await _readAccess();
+          if (token != null && token.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+        // validateStatus (<500) delivers 401s here as ordinary responses, so
+        // the expired-token recovery lives in onResponse rather than onError:
+        // refresh once, retry the request, and let a terminal 401 fall through
+        // to _parse, which surfaces it as the same ApiException as before.
+        onResponse: (response, handler) async {
+          final options = response.requestOptions;
+          // /auth/* endpoints establish sessions; a 401 there is terminal
+          // (bad credentials, dead link) and must surface untouched.
+          if (response.statusCode != 401 ||
+              options.path.startsWith('/auth/') ||
+              options.extra[_retriedKey] == true) {
+            handler.next(response);
+            return;
+          }
+          options.extra[_retriedKey] = true;
+          try {
+            await _refreshSingleFlight();
+          } catch (_) {
+            await _clearTokens();
+            handler.next(response);
+            return;
+          }
+          // The onRequest interceptor re-attaches the rotated bearer token.
+          try {
+            handler.resolve(await _dio.fetch<dynamic>(options));
+          } on DioException catch (e) {
+            handler.reject(e);
+          }
+        },
+      ),
+    );
   }
 
   static const _retriedKey = 'io_retried';
@@ -100,24 +106,36 @@ class ApiClient {
   }
 
   Future<Response<dynamic>> _exec(req.ApiCall call) {
-    return _dio.request<dynamic>(call.path, data: call.body, options: Options(method: call.method));
+    return _dio.request<dynamic>(
+      call.path,
+      data: call.body,
+      options: Options(method: call.method),
+    );
   }
 
-  Future<UserProfile> register(String email, String password, String username, {String inviteCode = ''}) async {
-    final res = await _dio.post('/auth/register', data: {
-      'email': email,
-      'password': password,
-      'username': username,
-      if (inviteCode.isNotEmpty) 'inviteCode': inviteCode,
-    });
+  Future<UserProfile> register(
+    String email,
+    String password,
+    String username, {
+    String inviteCode = '',
+  }) async {
+    final res = await _dio.post(
+      '/auth/register',
+      data: {
+        'email': email,
+        'password': password,
+        'username': username,
+        if (inviteCode.isNotEmpty) 'inviteCode': inviteCode,
+      },
+    );
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
   Future<UserProfile> login(String email, String password) async {
-    final res = await _dio.post('/auth/login', data: {
-      'email': email,
-      'password': password,
-    });
+    final res = await _dio.post(
+      '/auth/login',
+      data: {'email': email, 'password': password},
+    );
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
@@ -133,7 +151,10 @@ class ApiClient {
   /// as login). Throws with status 401 when the link is invalid, expired,
   /// or already used.
   Future<UserProfile> consumeMagicLink(String token) async {
-    final res = await _dio.post('/auth/magic-link/consume', data: {'token': token});
+    final res = await _dio.post(
+      '/auth/magic-link/consume',
+      data: {'token': token},
+    );
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
@@ -148,26 +169,30 @@ class ApiClient {
   /// login). Throws with status 401 when the code is wrong, expired, or
   /// exhausted by failed attempts.
   Future<UserProfile> verifyLoginCode(String email, String code) async {
-    final res = await _dio.post('/auth/login-code/verify', data: {
-      'email': email,
-      'code': code,
-    });
+    final res = await _dio.post(
+      '/auth/login-code/verify',
+      data: {'email': email, 'code': code},
+    );
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
   /// Requests a password-reset email for [email] (uniform 200 contract).
   Future<void> forgotPassword(String email) async {
-    final res = await _dio.post('/auth/forgot-password', data: {'email': email});
+    final res = await _dio.post(
+      '/auth/forgot-password',
+      data: {'email': email},
+    );
     await _parse(res, (d) => d);
   }
+
   /// Sets a new password with an emailed reset token. On success every
   /// existing session of that account has been revoked server-side, so the
   /// next step is always a fresh login.
   Future<void> resetPassword(String token, String password) async {
-    final res = await _dio.post('/auth/reset-password', data: {
-      'token': token,
-      'password': password,
-    });
+    final res = await _dio.post(
+      '/auth/reset-password',
+      data: {'token': token, 'password': password},
+    );
     await _parse(res, (d) => d);
   }
 
@@ -217,7 +242,10 @@ class ApiClient {
     if (refresh == null || refresh.isEmpty) {
       throw ApiException('no refresh token', status: 401);
     }
-    final res = await _dio.post('/auth/refresh', data: {'refreshToken': refresh});
+    final res = await _dio.post(
+      '/auth/refresh',
+      data: {'refreshToken': refresh},
+    );
     final data = await _parse(res, (d) => d as Map<String, dynamic>);
     final pair = tokensFromRefreshBody(data);
     await _writeTokens(pair.access, pair.refresh);
@@ -233,21 +261,28 @@ class ApiClient {
     required String bio,
     required List<String> keywords,
   }) async {
-    final res = await _dio.patch('/me', data: {
-      'username': username,
-      'bio': bio,
-      'keywords': keywords,
-    });
+    final res = await _dio.patch(
+      '/me',
+      data: {'username': username, 'bio': bio, 'keywords': keywords},
+    );
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
   Future<List<Workspace>> listWorkspaces() async {
     final res = await _dio.get('/workspaces');
-    return _parse(res, (d) => (d as List).map((e) => Workspace.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => Workspace.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
   Future<Workspace> createWorkspace(String title, String description) async {
-    final res = await _dio.post('/workspaces', data: {'title': title, 'description': description});
+    final res = await _dio.post(
+      '/workspaces',
+      data: {'title': title, 'description': description},
+    );
     return _parse(res, (d) => Workspace.fromJson(d as Map<String, dynamic>));
   }
 
@@ -263,11 +298,28 @@ class ApiClient {
 
   Future<List<WorkspaceMember>> listMembers(String id) async {
     final res = await _dio.get('/workspaces/$id/members');
-    return _parse(res, (d) => (d as List).map((e) => WorkspaceMember.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => WorkspaceMember.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
-  Future<Workspace> updateWorkspace(String id, {required String title, required String description, String? coverUrl}) async {
-    final res = await _exec(req.patchWorkspace(id, title: title, description: description, coverUrl: coverUrl));
+  Future<Workspace> updateWorkspace(
+    String id, {
+    required String title,
+    required String description,
+    String? coverUrl,
+  }) async {
+    final res = await _exec(
+      req.patchWorkspace(
+        id,
+        title: title,
+        description: description,
+        coverUrl: coverUrl,
+      ),
+    );
     return _parse(res, (d) => Workspace.fromJson(d as Map<String, dynamic>));
   }
 
@@ -275,8 +327,15 @@ class ApiClient {
     await _parse(await _exec(req.deleteWorkspace(id)), (d) => d);
   }
 
-  Future<void> updateMemberRole(String workspaceId, String userId, String role) async {
-    await _parse(await _exec(req.patchMemberRole(workspaceId, userId, role)), (d) => d);
+  Future<void> updateMemberRole(
+    String workspaceId,
+    String userId,
+    String role,
+  ) async {
+    await _parse(
+      await _exec(req.patchMemberRole(workspaceId, userId, role)),
+      (d) => d,
+    );
   }
 
   Future<void> removeMember(String workspaceId, String userId) async {
@@ -285,14 +344,23 @@ class ApiClient {
 
   Future<List<Project>> listProjects(String workspaceId) async {
     final res = await _dio.get('/workspaces/$workspaceId/projects');
-    return _parse(res, (d) => (d as List).map((e) => Project.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => Project.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
-  Future<Project> createProject(String workspaceId, String title, String description) async {
-    final res = await _dio.post('/workspaces/$workspaceId/projects', data: {
-      'title': title,
-      'description': description,
-    });
+  Future<Project> createProject(
+    String workspaceId,
+    String title,
+    String description,
+  ) async {
+    final res = await _dio.post(
+      '/workspaces/$workspaceId/projects',
+      data: {'title': title, 'description': description},
+    );
     return _parse(res, (d) => Project.fromJson(d as Map<String, dynamic>));
   }
 
@@ -308,7 +376,15 @@ class ApiClient {
     required String status,
     String? ownerId,
   }) async {
-    final res = await _exec(req.patchProject(id, title: title, description: description, status: status, ownerId: ownerId));
+    final res = await _exec(
+      req.patchProject(
+        id,
+        title: title,
+        description: description,
+        status: status,
+        ownerId: ownerId,
+      ),
+    );
     return _parse(res, (d) => Project.fromJson(d as Map<String, dynamic>));
   }
 
@@ -317,12 +393,18 @@ class ApiClient {
   }
 
   Future<void> addUpdate(String projectId, String kind, String content) async {
-    final res = await _dio.post('/projects/$projectId/updates', data: {'kind': kind, 'content': content});
+    final res = await _dio.post(
+      '/projects/$projectId/updates',
+      data: {'kind': kind, 'content': content},
+    );
     await _parse(res, (d) => d);
   }
 
   Future<void> editUpdate(String updateId, String content) async {
-    await _parse(await _exec(req.patchProjectUpdate(updateId, content)), (d) => d);
+    await _parse(
+      await _exec(req.patchProjectUpdate(updateId, content)),
+      (d) => d,
+    );
   }
 
   Future<void> removeUpdate(String updateId) async {
@@ -330,7 +412,10 @@ class ApiClient {
   }
 
   Future<Project> setRepo(String projectId, String repoUrl) async {
-    final res = await _dio.put('/projects/$projectId/repo', data: {'repoUrl': repoUrl});
+    final res = await _dio.put(
+      '/projects/$projectId/repo',
+      data: {'repoUrl': repoUrl},
+    );
     return _parse(res, (d) => Project.fromJson(d as Map<String, dynamic>));
   }
 
@@ -342,7 +427,12 @@ class ApiClient {
   /// FEAT-03 (review 2): proposals stay proposals until a human decides.
   /// Accept defaults to apply=true so the structured items become roadmap
   /// nodes as the deciding human — the same default the CLI/MCP carries.
-  Future<Map<String, dynamic>> decideProposal(String updateId, {required bool accept, String reason = '', bool apply = true}) async {
+  Future<Map<String, dynamic>> decideProposal(
+    String updateId, {
+    required bool accept,
+    String reason = '',
+    bool apply = true,
+  }) async {
     final res = await _dio.post(
       '/agent/proposals/$updateId/decision',
       data: {
@@ -356,11 +446,23 @@ class ApiClient {
 
   Future<List<Idea>> listIdeas(String workspaceId) async {
     final res = await _dio.get('/workspaces/$workspaceId/ideas');
-    return _parse(res, (d) => (d as List).map((e) => Idea.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => Idea.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
-  Future<Idea> createIdea(String workspaceId, String title, String content) async {
-    final res = await _dio.post('/workspaces/$workspaceId/ideas', data: {'title': title, 'content': content});
+  Future<Idea> createIdea(
+    String workspaceId,
+    String title,
+    String content,
+  ) async {
+    final res = await _dio.post(
+      '/workspaces/$workspaceId/ideas',
+      data: {'title': title, 'content': content},
+    );
     return _parse(res, (d) => Idea.fromJson(d as Map<String, dynamic>));
   }
 
@@ -369,7 +471,11 @@ class ApiClient {
     return _parse(res, (d) => Idea.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<Idea> updateIdea(String id, {required String title, required String content}) async {
+  Future<Idea> updateIdea(
+    String id, {
+    required String title,
+    required String content,
+  }) async {
     final res = await _exec(req.patchIdea(id, title: title, content: content));
     return _parse(res, (d) => Idea.fromJson(d as Map<String, dynamic>));
   }
@@ -380,7 +486,10 @@ class ApiClient {
 
   Future<Map<String, String>> convertIdea(String ideaId) async {
     final res = await _dio.post('/ideas/$ideaId/convert');
-    return _parse(res, (d) => (d as Map).map((k, v) => MapEntry(k.toString(), v.toString())));
+    return _parse(
+      res,
+      (d) => (d as Map).map((k, v) => MapEntry(k.toString(), v.toString())),
+    );
   }
 
   Future<Prd> getPrd(String id) async {
@@ -388,27 +497,49 @@ class ApiClient {
     return _parse(res, (d) => Prd.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<Prd> updatePrd(String id, {String? title, Map<String, String>? sections}) async {
-    final res = await _dio.patch('/prds/$id', data: {
-      if (title != null) 'title': title,
-      if (sections != null) 'sections': sections,
-    });
+  Future<Prd> updatePrd(
+    String id, {
+    String? title,
+    Map<String, String>? sections,
+  }) async {
+    final res = await _dio.patch(
+      '/prds/$id',
+      data: {
+        if (title != null) 'title': title,
+        if (sections != null) 'sections': sections,
+      },
+    );
     return _parse(res, (d) => Prd.fromJson(d as Map<String, dynamic>));
   }
 
   Future<List<PrdCommit>> listPrdCommits(String id) async {
     final res = await _dio.get('/prds/$id/commits');
-    return _parse(res, (d) => (d as List).map((e) => PrdCommit.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => PrdCommit.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
-  Future<PrdCommit> commitPrd(String id, {required String name, required String audience, String summary = '', List<String>? unresolved, String note = ''}) async {
-    final res = await _dio.post('/prds/$id/commit', data: {
-      'name': name,
-      'primaryAudience': audience,
-      'changeSummary': summary,
-      'unresolved': unresolved ?? const [],
-      'decisionNote': note,
-    });
+  Future<PrdCommit> commitPrd(
+    String id, {
+    required String name,
+    required String audience,
+    String summary = '',
+    List<String>? unresolved,
+    String note = '',
+  }) async {
+    final res = await _dio.post(
+      '/prds/$id/commit',
+      data: {
+        'name': name,
+        'primaryAudience': audience,
+        'changeSummary': summary,
+        'unresolved': unresolved ?? const [],
+        'decisionNote': note,
+      },
+    );
     return _parse(res, (d) => PrdCommit.fromJson(d as Map<String, dynamic>));
   }
 
@@ -419,7 +550,12 @@ class ApiClient {
 
   Future<List<PrdRevision>> listRevisions(String id) async {
     final res = await _dio.get('/prds/$id/revisions');
-    return _parse(res, (d) => (d as List).map((e) => PrdRevision.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => PrdRevision.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
   Future<void> createRevision(String id, {String? note}) async {
@@ -431,7 +567,12 @@ class ApiClient {
     if (audience != null) params['audience'] = audience;
     final res = await _dio.get('/prds/$id/export', queryParameters: params);
     if (res.statusCode != null && res.statusCode! >= 400) {
-      throw toApiError(res.statusCode, res.data is Map<String, dynamic> ? res.data as Map<String, dynamic> : {});
+      throw toApiError(
+        res.statusCode,
+        res.data is Map<String, dynamic>
+            ? res.data as Map<String, dynamic>
+            : {},
+      );
     }
     return res.data.toString();
   }
@@ -449,7 +590,12 @@ class ApiClient {
 
   Future<List<ChatMessage>> listMessages(String conversationId) async {
     final res = await _dio.get('/conversations/$conversationId/messages');
-    return _parse(res, (d) => (d as List).map((e) => ChatMessage.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
   Future<Prd> updatePrdStatus(String id, String status) async {
@@ -457,12 +603,19 @@ class ApiClient {
     return _parse(res, (d) => Prd.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<Map<String, dynamic>> buildFromPrd(String id, {int? expectedCount}) async {
+  Future<Map<String, dynamic>> buildFromPrd(
+    String id, {
+    int? expectedCount,
+  }) async {
     final res = await _exec(req.postPrdBuild(id, expectedCount: expectedCount));
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
-  Future<void> sendCoach(String conversationId, String content, CoachHandlers handlers) async {
+  Future<void> sendCoach(
+    String conversationId,
+    String content,
+    CoachHandlers handlers,
+  ) async {
     final token = await _readAccess();
     final open = coachSseOpen(
       baseUrl: baseUrl,
@@ -483,7 +636,12 @@ class ApiClient {
             content: content,
             accessToken: await _readAccess(),
           );
-          return fetchSseAttempt(o.url, o.headers, method: o.method, body: o.body);
+          return fetchSseAttempt(
+            o.url,
+            o.headers,
+            method: o.method,
+            body: o.body,
+          );
         },
         _refreshSingleFlight,
         _clearTokens,
@@ -492,22 +650,29 @@ class ApiClient {
       final res = await _dio.post<ResponseBody>(
         '/conversations/$conversationId/messages',
         data: {'content': content},
-        options: Options(responseType: ResponseType.stream, headers: open.headers),
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: open.headers,
+        ),
       );
       if (res.statusCode != null && res.statusCode! >= 400) {
         throw ApiException('coach failed', status: res.statusCode);
       }
       chunks = res.data!.stream;
     }
-    await readCoachSse(chunks, handlers);
+    await readCoachSse(chunks, handlers, idleTimeout: coachSseIdleTimeout);
   }
 
   /// Subscribes to the project's live presence (canvas who-is-here).
   /// Every snapshot replace-calls [onChange]; the stream ends when the
   /// caller cancels the dio request (dio has no per-request cancel
   /// here, so the page closes by letting it die with dispose).
-  Future<void> presenceStream(String projectId, String clientId, void onChange(List<PresenceEntry> entries),
-      {void Function(String sessionId, String name, double x, double y)? onCursor}) async {
+  Future<void> presenceStream(
+    String projectId,
+    String clientId,
+    void onChange(List<PresenceEntry> entries), {
+    void Function(String sessionId, String name, double x, double y)? onCursor,
+  }) async {
     final token = await _readAccess();
     final headers = {
       if (token != null) 'Authorization': 'Bearer $token',
@@ -516,8 +681,9 @@ class ApiClient {
     Stream<List<int>> chunks;
     if (kIsWeb) {
       chunks = fetchSseStream(
-          '$baseUrl/projects/$projectId/presence/stream?client=${Uri.encodeQueryComponent(clientId)}',
-          headers);
+        '$baseUrl/projects/$projectId/presence/stream?client=${Uri.encodeQueryComponent(clientId)}',
+        headers,
+      );
     } else {
       final res = await _dio.get<ResponseBody>(
         '/projects/$projectId/presence/stream',
@@ -537,9 +703,11 @@ class ApiClient {
       for (final frame in parsed.frames) {
         if (frame.event == 'presence') {
           final list = jsonDecode(frame.data);
-          onChange((list is List ? list : const [])
-              .map((e) => PresenceEntry.fromJson(e as Map<String, dynamic>))
-              .toList());
+          onChange(
+            (list is List ? list : const [])
+                .map((e) => PresenceEntry.fromJson(e as Map<String, dynamic>))
+                .toList(),
+          );
         } else if (frame.event == 'cursor' && onCursor != null) {
           final m = jsonDecode(frame.data) as Map<String, dynamic>;
           onCursor(
@@ -555,18 +723,45 @@ class ApiClient {
 
   Future<List<RoadmapNode>> listRoadmap(String projectId) async {
     final res = await _dio.get('/projects/$projectId/roadmap');
-    return _parse(res, (d) => (d as List).map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
-  Future<RoadmapNode> createRoadmapNode(String projectId, String title, {String? parentId}) async {
-    final res = await _exec(req.postRoadmapNode(projectId, title, parentId: parentId));
+  Future<RoadmapNode> createRoadmapNode(
+    String projectId,
+    String title, {
+    String? parentId,
+  }) async {
+    final res = await _exec(
+      req.postRoadmapNode(projectId, title, parentId: parentId),
+    );
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<RoadmapNode> updateRoadmapNode(String nodeId,
-      {String? title, String? description, String? status, String? deadline, String? acceptance, String? ownerId}) async {
-    final res = await _exec(req.patchRoadmapNode(nodeId,
-        title: title, description: description, status: status, deadline: deadline, acceptance: acceptance, ownerId: ownerId));
+  Future<RoadmapNode> updateRoadmapNode(
+    String nodeId, {
+    String? title,
+    String? description,
+    String? status,
+    String? deadline,
+    String? acceptance,
+    String? ownerId,
+  }) async {
+    final res = await _exec(
+      req.patchRoadmapNode(
+        nodeId,
+        title: title,
+        description: description,
+        status: status,
+        deadline: deadline,
+        acceptance: acceptance,
+        ownerId: ownerId,
+      ),
+    );
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
@@ -585,12 +780,18 @@ class ApiClient {
 
   Future<RoadmapProgress> roadmapProgress(String projectId) async {
     final res = await _dio.get('/projects/$projectId/roadmap/progress');
-    return _parse(res, (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>));
+    return _parse(
+      res,
+      (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>),
+    );
   }
 
   /// Subscribes to live progress snapshots. Every `progress` frame
   /// replace-calls [onProgress]; the stream ends when the page disposes.
-  Future<void> progressStream(String projectId, void Function(RoadmapProgress progress) onProgress) async {
+  Future<void> progressStream(
+    String projectId,
+    void Function(RoadmapProgress progress) onProgress,
+  ) async {
     final token = await _readAccess();
     final headers = {
       if (token != null) 'Authorization': 'Bearer $token',
@@ -598,7 +799,10 @@ class ApiClient {
     };
     Stream<List<int>> chunks;
     if (kIsWeb) {
-      chunks = fetchSseStream('$baseUrl/projects/$projectId/roadmap/progress/stream', headers);
+      chunks = fetchSseStream(
+        '$baseUrl/projects/$projectId/roadmap/progress/stream',
+        headers,
+      );
     } else {
       final res = await _dio.get<ResponseBody>(
         '/projects/$projectId/roadmap/progress/stream',
@@ -612,8 +816,14 @@ class ApiClient {
     await readProgressSse(chunks, onProgress);
   }
 
-  Future<RoadmapNode> moveRoadmapNode(String nodeId, {String? parentId, required int position}) async {
-    final res = await _exec(req.moveRoadmapNode(nodeId, parentId: parentId, position: position));
+  Future<RoadmapNode> moveRoadmapNode(
+    String nodeId, {
+    String? parentId,
+    required int position,
+  }) async {
+    final res = await _exec(
+      req.moveRoadmapNode(nodeId, parentId: parentId, position: position),
+    );
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
@@ -623,11 +833,19 @@ class ApiClient {
 
   Future<List<RoadmapNode>> expandRoadmapNode(String nodeId) async {
     final res = await _exec(req.expandRoadmapNode(nodeId));
-    return _parse(res, (d) => (d as List).map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>)).toList());
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
   }
 
   Future<Map<String, dynamic>> prdView(String id, String audience) async {
-    final res = await _dio.get('/prds/$id/view', queryParameters: {'audience': audience});
+    final res = await _dio.get(
+      '/prds/$id/view',
+      queryParameters: {'audience': audience},
+    );
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 }

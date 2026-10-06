@@ -11,13 +11,16 @@ void main() {
     expect(() => exportQueryParams('html'), throwsArgumentError);
   });
 
-  test('ExportPage segments use the same query values the API helper allows', () {
-    expect(
-      prdExportFormats.map((f) => f.query).toSet(),
-      {'markdown', 'print'},
-    );
-    for (final option in prdExportFormats) {
-      expect(exportQueryParams(option.query)['format'], option.query);
-    }
-  });
+  test(
+    'ExportPage segments use the same query values the API helper allows',
+    () {
+      expect(prdExportFormats.map((f) => f.query).toSet(), {
+        'markdown',
+        'print',
+      });
+      for (final option in prdExportFormats) {
+        expect(exportQueryParams(option.query)['format'], option.query);
+      }
+    },
+  );
 }

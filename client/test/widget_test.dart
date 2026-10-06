@@ -15,7 +15,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
         ],
         child: const MaterialApp(home: LandingPage()),
       ),

@@ -11,32 +11,36 @@ import 'package:provider/provider.dart';
 
 class _DraftApi extends ApiClient {
   _DraftApi()
-      : super(
-          baseUrl: 'http://127.0.0.1:9/api/v1',
-          readAccess: () async => null,
-          readRefresh: () async => null,
-          writeTokens: (a, r) async {},
-          clearTokens: () async {},
-        );
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
 
   Map<String, dynamic>? saved;
 
   @override
   Future<Prd> getPrd(String id) async => Prd(
-        id: id,
-        workspaceId: 'ws-1',
-        title: 'Ship a thing',
-        sections: const {},
-        status: 'draft',
-        currentRevision: 1,
-        updatedAt: '2026-10-05T00:00:00Z',
-      );
+    id: id,
+    workspaceId: 'ws-1',
+    title: 'Ship a thing',
+    sections: const {},
+    status: 'draft',
+    currentRevision: 1,
+    updatedAt: '2026-10-05T00:00:00Z',
+  );
 
   @override
   Future<Conversation?> conversationForPrd(String prdId) async => null;
 
   @override
-  Future<Prd> updatePrd(String id, {String? title, Map<String, String>? sections}) async {
+  Future<Prd> updatePrd(
+    String id, {
+    String? title,
+    Map<String, String>? sections,
+  }) async {
     saved = {'id': id, 'title': title, 'sections': sections};
     return Prd(
       id: id,
@@ -52,7 +56,10 @@ class _DraftApi extends ApiClient {
 
 bool _enabled(WidgetTester tester, String label) {
   final button = tester.widget<ButtonStyleButton>(
-    find.ancestor(of: find.text(label), matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)),
+    find.ancestor(
+      of: find.text(label),
+      matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+    ),
   );
   return button.onPressed != null;
 }
@@ -69,7 +76,10 @@ void main() {
     final router = GoRouter(
       initialLocation: '/prd/prd-1',
       routes: [
-        GoRoute(path: '/prd/:id', builder: (_, s) => PrdPage(id: s.pathParameters['id']!)),
+        GoRoute(
+          path: '/prd/:id',
+          builder: (_, s) => PrdPage(id: s.pathParameters['id']!),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -78,7 +88,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
           ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
         child: MaterialApp.router(routerConfig: router),
@@ -102,11 +115,19 @@ void main() {
     await tester.pumpAndSettle();
 
     // The menu mirrors prdTransitions: a draft's one legal jump is reviewing.
-    final reviewing = tester.widget<PopupMenuItem<String>>(find.widgetWithText(PopupMenuItem<String>, 'In review'));
+    final reviewing = tester.widget<PopupMenuItem<String>>(
+      find.widgetWithText(PopupMenuItem<String>, 'In review'),
+    );
     expect(reviewing.enabled, isTrue);
     for (final status in ['● Draft', 'Approved', 'Rejected']) {
-      final item = tester.widget<PopupMenuItem<String>>(find.widgetWithText(PopupMenuItem<String>, status));
-      expect(item.enabled, isFalse, reason: '$status is not the next step of a draft');
+      final item = tester.widget<PopupMenuItem<String>>(
+        find.widgetWithText(PopupMenuItem<String>, status),
+      );
+      expect(
+        item.enabled,
+        isFalse,
+        reason: '$status is not the next step of a draft',
+      );
     }
   });
 }

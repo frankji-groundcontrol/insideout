@@ -28,7 +28,9 @@ Future<SseAttempt> fetchSseAttempt(
   final responseBody = res.body;
   return SseAttempt(
     status: res.status,
-    chunks: responseBody == null ? const Stream<Uint8List>.empty() : _readChunks(responseBody),
+    chunks: responseBody == null
+        ? const Stream<Uint8List>.empty()
+        : _readChunks(responseBody),
   );
 }
 
@@ -50,7 +52,12 @@ Stream<Uint8List> fetchSseStream(
   String method = 'GET',
   String? body,
 }) async* {
-  final attempt = await fetchSseAttempt(url, headers, method: method, body: body);
+  final attempt = await fetchSseAttempt(
+    url,
+    headers,
+    method: method,
+    body: body,
+  );
   if (attempt.status >= 400) {
     throw ApiException('stream failed', status: attempt.status);
   }

@@ -16,7 +16,8 @@ class _FakeServer {
   String get baseUrl => 'http://127.0.0.1:${http.port}/api/v1';
 
   int get hitsForMe => hits.where((h) => h == 'GET /api/v1/me').length;
-  int get hitsForRefresh => hits.where((h) => h == 'POST /api/v1/auth/refresh').length;
+  int get hitsForRefresh =>
+      hits.where((h) => h == 'POST /api/v1/auth/refresh').length;
 
   static Future<_FakeServer> start({
     required bool refreshSucceeds,
@@ -38,13 +39,23 @@ class _FakeServer {
       switch (req.uri.path) {
         case '/api/v1/me':
           if (!meAlways401 && auth == 'Bearer access-2') {
-            json(200, {'id': 'user-1', 'email': 'ada@example.com', 'username': 'ada', 'bio': '', 'keywords': <String>[]});
+            json(200, {
+              'id': 'user-1',
+              'email': 'ada@example.com',
+              'username': 'ada',
+              'bio': '',
+              'keywords': <String>[],
+            });
           } else {
             json(401, {'error': 'invalid or expired session'});
           }
         case '/api/v1/auth/refresh':
           if (refreshSucceeds) {
-            json(200, {'ok': true, 'accessToken': 'access-2', 'refreshToken': 'refresh-2'});
+            json(200, {
+              'ok': true,
+              'accessToken': 'access-2',
+              'refreshToken': 'refresh-2',
+            });
           } else {
             json(401, {'error': 'invalid refresh token'});
           }
@@ -97,25 +108,31 @@ void main() {
     expect(server.hitsForRefresh, 1);
   });
 
-  test('401 with a failing refresh clears the session and surfaces the error', () async {
-    final server = await _FakeServer.start(refreshSucceeds: false);
-    addTearDown(server.http.close);
-    final h = _Harness(server.baseUrl);
+  test(
+    '401 with a failing refresh clears the session and surfaces the error',
+    () async {
+      final server = await _FakeServer.start(refreshSucceeds: false);
+      addTearDown(server.http.close);
+      final h = _Harness(server.baseUrl);
 
-    await expectLater(
-      h.client.me(),
-      throwsA(isA<ApiException>().having((e) => e.status, 'status', 401)),
-    );
+      await expectLater(
+        h.client.me(),
+        throwsA(isA<ApiException>().having((e) => e.status, 'status', 401)),
+      );
 
-    expect(h.cleared, isTrue);
-    expect(h.access, isNull);
-    expect(h.refresh, isNull);
-    expect(server.hitsForMe, 1);
-    expect(server.hitsForRefresh, 1);
-  });
+      expect(h.cleared, isTrue);
+      expect(h.access, isNull);
+      expect(h.refresh, isNull);
+      expect(server.hitsForMe, 1);
+      expect(server.hitsForRefresh, 1);
+    },
+  );
 
   test('a second 401 on the retried request does not loop', () async {
-    final server = await _FakeServer.start(refreshSucceeds: true, meAlways401: true);
+    final server = await _FakeServer.start(
+      refreshSucceeds: true,
+      meAlways401: true,
+    );
     addTearDown(server.http.close);
     final h = _Harness(server.baseUrl);
 

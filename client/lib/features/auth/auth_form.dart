@@ -11,7 +11,12 @@ import 'auth_door.dart';
 enum _LoginMode { password, magic, code }
 
 class AuthForm extends StatefulWidget {
-  const AuthForm({super.key, required this.prompt, this.inviteCode = '', this.onSwitch});
+  const AuthForm({
+    super.key,
+    required this.prompt,
+    this.inviteCode = '',
+    this.onSwitch,
+  });
 
   final AuthPrompt prompt;
 
@@ -46,9 +51,18 @@ class _AuthFormState extends State<AuthForm> {
       }
       // Public config decides whether the invitation field shows; a fetch
       // failure falls back to hidden so the server's own 403 explains.
-      context.read<Session>().api.authConfig().then((mode) {
-        if (mounted) setState(() => inviteRequired = mode == 'invitation_only' || mode == 'closed');
-      }).catchError((_) {});
+      context
+          .read<Session>()
+          .api
+          .authConfig()
+          .then((mode) {
+            if (mounted)
+              setState(
+                () => inviteRequired =
+                    mode == 'invitation_only' || mode == 'closed',
+              );
+          })
+          .catchError((_) {});
     }
   }
 
@@ -92,8 +106,12 @@ class _AuthFormState extends State<AuthForm> {
         await session.loginWithCode(email.text.trim(), code.text.trim());
         if (mounted) context.go('/dashboard');
       } else if (_register) {
-        await session.register(email.text.trim(), password.text, username.text.trim(),
-            inviteCode: invite.text.trim());
+        await session.register(
+          email.text.trim(),
+          password.text,
+          username.text.trim(),
+          inviteCode: invite.text.trim(),
+        );
         if (mounted) context.go('/dashboard');
       } else {
         await session.login(email.text.trim(), password.text);
@@ -122,10 +140,10 @@ class _AuthFormState extends State<AuthForm> {
   }
 
   void _backToPassword() => setState(() {
-        _mode = _LoginMode.password;
-        linkSent = false;
-        codeSent = false;
-      });
+    _mode = _LoginMode.password;
+    linkSent = false;
+    codeSent = false;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +153,10 @@ class _AuthFormState extends State<AuthForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.t('login.magicSent'), style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            l10n.t('login.magicSent'),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 20),
           TextButton(
             onPressed: _backToPassword,
@@ -149,7 +170,10 @@ class _AuthFormState extends State<AuthForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(l10n.t('login.codeSent'), style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            l10n.t('login.codeSent'),
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
           const SizedBox(height: 16),
           TextField(
             controller: code,
@@ -160,7 +184,10 @@ class _AuthFormState extends State<AuthForm> {
           ),
           if (error != null) ...[
             const SizedBox(height: 12),
-            Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+            Text(
+              error!,
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
           ],
           const SizedBox(height: 20),
           FilledButton(
@@ -185,12 +212,17 @@ class _AuthFormState extends State<AuthForm> {
       children: [
         TextField(
           controller: email,
-          decoration: InputDecoration(labelText: l10n.t(_register ? 'register.email' : 'login.username')),
+          decoration: InputDecoration(
+            labelText: l10n.t(_register ? 'register.email' : 'login.username'),
+          ),
           autofillHints: const [AutofillHints.email],
         ),
         if (_register) ...[
           const SizedBox(height: 12),
-          TextField(controller: username, decoration: InputDecoration(labelText: l10n.t('register.username'))),
+          TextField(
+            controller: username,
+            decoration: InputDecoration(labelText: l10n.t('register.username')),
+          ),
           if (inviteRequired) ...[
             const SizedBox(height: 12),
             TextField(
@@ -204,7 +236,9 @@ class _AuthFormState extends State<AuthForm> {
           TextField(
             controller: password,
             decoration: InputDecoration(
-              labelText: l10n.t(_register ? 'register.password' : 'login.password'),
+              labelText: l10n.t(
+                _register ? 'register.password' : 'login.password',
+              ),
               helperText: _register ? l10n.t('register.passwordHint') : null,
             ),
             obscureText: true,
@@ -212,16 +246,21 @@ class _AuthFormState extends State<AuthForm> {
         ],
         if (error != null) ...[
           const SizedBox(height: 12),
-          Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          Text(
+            error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ],
         const SizedBox(height: 20),
         FilledButton(
           onPressed: busy ? null : _submit,
-          child: Text(l10n.t(switch (_mode) {
-            _LoginMode.magic => 'login.magicSubmit',
-            _LoginMode.code => 'login.codeSubmit',
-            _ => _register ? 'register.submit' : 'login.loginButton',
-          })),
+          child: Text(
+            l10n.t(switch (_mode) {
+              _LoginMode.magic => 'login.magicSubmit',
+              _LoginMode.code => 'login.codeSubmit',
+              _ => _register ? 'register.submit' : 'login.loginButton',
+            }),
+          ),
         ),
         if (_magic || _code) ...[
           const SizedBox(height: 4),
@@ -285,7 +324,9 @@ class _AuthFormState extends State<AuthForm> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         const Expanded(child: Divider()),

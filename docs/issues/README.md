@@ -89,6 +89,10 @@ records continue the numbering (next: BUG-021).
 
 ## Other open issues
 
+- [2026-10-06 — W3-N2 minified console errors](2026-10-06-wave3-minified-console.md)
+  — three identical uncaught `Error`s in the Wave 3 390px dock tap
+  pass; stack is minified (`main.dart.js:85738`); no visible UI
+  failure. Deferred from the Cobalt-Neo close for a symbolized rebuild.
 - [2026-10-04 — Multirole review findings register](../review/2026-10-04-multirole/01-findings-register.md)
   — 75 verified findings (12 High confirmed) with fixes and a five-wave
   remediation plan; the review of record for prioritization. Duplicates

@@ -11,31 +11,33 @@ import 'package:provider/provider.dart';
 
 class _DraftApi extends ApiClient {
   _DraftApi()
-      : super(
-          baseUrl: 'http://127.0.0.1:9/api/v1',
-          readAccess: () async => null,
-          readRefresh: () async => null,
-          writeTokens: (a, r) async {},
-          clearTokens: () async {},
-        );
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
 
   @override
   Future<Prd> getPrd(String id) async => Prd(
-        id: id,
-        workspaceId: 'ws-1',
-        title: 'Ship a thing',
-        sections: const {},
-        status: 'draft',
-        currentRevision: 1,
-        updatedAt: '2026-10-05T00:00:00Z',
-      );
+    id: id,
+    workspaceId: 'ws-1',
+    title: 'Ship a thing',
+    sections: const {},
+    status: 'draft',
+    currentRevision: 1,
+    updatedAt: '2026-10-05T00:00:00Z',
+  );
 
   @override
   Future<Conversation?> conversationForPrd(String prdId) async => null;
 }
 
 void main() {
-  testWidgets('the audience action is visible without opening a menu', (tester) async {
+  testWidgets('the audience action is visible without opening a menu', (
+    tester,
+  ) async {
     final session = Session();
     session.ready = true;
     session.api = _DraftApi();
@@ -45,8 +47,14 @@ void main() {
     final router = GoRouter(
       initialLocation: '/prd/prd-1',
       routes: [
-        GoRoute(path: '/prd/:id', builder: (_, s) => PrdPage(id: s.pathParameters['id']!)),
-        GoRoute(path: '/prd/:id/view', builder: (_, __) => const Text('audience page')),
+        GoRoute(
+          path: '/prd/:id',
+          builder: (_, s) => PrdPage(id: s.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: '/prd/:id/view',
+          builder: (_, __) => const Text('audience page'),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -55,7 +63,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
           ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
         child: MaterialApp.router(routerConfig: router),
@@ -65,7 +76,10 @@ void main() {
 
     expect(find.byType(PopupMenuItem<String>), findsNothing);
     final button = tester.widget<ButtonStyleButton>(
-      find.ancestor(of: find.text('Audience view'), matching: find.byWidgetPredicate((w) => w is ButtonStyleButton)),
+      find.ancestor(
+        of: find.text('Audience view'),
+        matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+      ),
     );
     expect(button.onPressed, isNotNull);
 

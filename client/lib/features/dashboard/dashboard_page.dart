@@ -9,6 +9,7 @@ import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/field_card.dart';
+import '../../widgets/guarded_action.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -39,18 +40,35 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.t('workspace.createTitle')),
-        content: TextField(controller: title, decoration: InputDecoration(labelText: l10n.t('workspace.createNamePlaceholder'))),
+        content: TextField(
+          controller: title,
+          decoration: InputDecoration(
+            labelText: l10n.t('workspace.createNamePlaceholder'),
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('workspace.create'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('workspace.create')),
+          ),
         ],
       ),
     );
     if (ok == true && title.text.trim().isNotEmpty && mounted) {
-      await context.read<Session>().api.createWorkspace(title.text.trim(), '');
-      await _reload();
+      final done = await guardWrite(
+        context,
+        () =>
+            context.read<Session>().api.createWorkspace(title.text.trim(), ''),
+      );
+      if (done && mounted) await _reload();
     }
-    title.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextField mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   Future<void> _join() async {
@@ -60,18 +78,34 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(l10n.t('workspace.joinTitle')),
-        content: TextField(controller: code, decoration: InputDecoration(labelText: l10n.t('workspace.joinCodePlaceholder'))),
+        content: TextField(
+          controller: code,
+          decoration: InputDecoration(
+            labelText: l10n.t('workspace.joinCodePlaceholder'),
+          ),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('workspace.join'))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.t('common.cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.t('workspace.join')),
+          ),
         ],
       ),
     );
     if (ok == true && code.text.trim().isNotEmpty && mounted) {
-      await context.read<Session>().api.joinWorkspace(code.text.trim());
-      await _reload();
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.joinWorkspace(code.text.trim()),
+      );
+      if (done && mounted) await _reload();
     }
-    code.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextField mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   void _openWorkspace(Workspace w) {
@@ -96,7 +130,8 @@ class _DashboardPageState extends State<DashboardPage> {
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) return Center(child: Text('${snap.error}'));
-          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+          if (!snap.hasData)
+            return const Center(child: CircularProgressIndicator());
           final list = snap.data!;
           return _HomeField(
             workspaces: list,
@@ -132,7 +167,9 @@ class _HomeField extends StatelessWidget {
     final theme = Theme.of(context);
     final palette = Cobalt.of(context);
     final wide = MediaQuery.sizeOf(context).width >= 900;
-    final numeral = workspaces.isEmpty ? '00' : workspaces.length.toString().padLeft(2, '0');
+    final numeral = workspaces.isEmpty
+        ? '00'
+        : workspaces.length.toString().padLeft(2, '0');
     return ListView(
       padding: const EdgeInsets.fromLTRB(28, 72, 28, 140),
       children: [
@@ -143,9 +180,15 @@ class _HomeField extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l10n.t('home.loopTitle').toUpperCase(), style: theme.textTheme.displaySmall),
+                  Text(
+                    l10n.t('home.loopTitle').toUpperCase(),
+                    style: theme.textTheme.displaySmall,
+                  ),
                   const SizedBox(height: 8),
-                  Text(l10n.t('home.loopLead'), style: theme.textTheme.bodyLarge),
+                  Text(
+                    l10n.t('home.loopLead'),
+                    style: theme.textTheme.bodyLarge,
+                  ),
                 ],
               ),
             ),
@@ -164,17 +207,32 @@ class _HomeField extends StatelessWidget {
               children: [
                 Expanded(child: _IndexCard(numeral: numeral)),
                 const SizedBox(width: 16),
-                Expanded(child: _WorkspaceColumn(workspaces: workspaces, onOpen: onOpen, onJoin: onJoin, onCreate: onCreate)),
+                Expanded(
+                  child: _WorkspaceColumn(
+                    workspaces: workspaces,
+                    onOpen: onOpen,
+                    onJoin: onJoin,
+                    onCreate: onCreate,
+                  ),
+                ),
               ],
             ),
           )
         else ...[
           _IndexCard(numeral: numeral),
           const SizedBox(height: 16),
-          _WorkspaceColumn(workspaces: workspaces, onOpen: onOpen, onJoin: onJoin, onCreate: onCreate),
+          _WorkspaceColumn(
+            workspaces: workspaces,
+            onOpen: onOpen,
+            onJoin: onJoin,
+            onCreate: onCreate,
+          ),
         ],
         const SizedBox(height: 24),
-        Text(l10n.t('home.loopTrail'), style: theme.textTheme.labelSmall?.copyWith(color: palette.fgBrand)),
+        Text(
+          l10n.t('home.loopTrail'),
+          style: theme.textTheme.labelSmall?.copyWith(color: palette.fgBrand),
+        ),
       ],
     );
   }
@@ -195,13 +253,23 @@ class _IndexCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.t('home.chapterEyebrow', {'n': numeral}), style: theme.textTheme.labelSmall?.copyWith(color: palette.fgBrand)),
+          Text(
+            l10n.t('home.chapterEyebrow', {'n': numeral}),
+            style: theme.textTheme.labelSmall?.copyWith(color: palette.fgBrand),
+          ),
           const SizedBox(height: 12),
-          Text(l10n.t('home.chapterTitle'), style: theme.textTheme.headlineLarge),
+          Text(
+            l10n.t('home.chapterTitle'),
+            style: theme.textTheme.headlineLarge,
+          ),
           const SizedBox(height: 8),
           Text(
             numeral,
-            style: theme.textTheme.displayLarge?.copyWith(color: palette.brand, fontSize: 120, height: 0.9),
+            style: theme.textTheme.displayLarge?.copyWith(
+              color: palette.brand,
+              fontSize: 120,
+              height: 0.9,
+            ),
           ),
           const SizedBox(height: 12),
           Text(l10n.t('home.chapterBody'), style: theme.textTheme.bodyLarge),
@@ -238,8 +306,14 @@ class _WorkspaceColumn extends StatelessWidget {
             Wrap(
               spacing: 8,
               children: [
-                FilledButton(onPressed: onCreate, child: Text(l10n.t('workspace.create'))),
-                OutlinedButton(onPressed: onJoin, child: Text(l10n.t('workspace.join'))),
+                FilledButton(
+                  onPressed: onCreate,
+                  child: Text(l10n.t('workspace.create')),
+                ),
+                OutlinedButton(
+                  onPressed: onJoin,
+                  child: Text(l10n.t('workspace.join')),
+                ),
               ],
             ),
           ],
@@ -254,7 +328,12 @@ class _WorkspaceColumn extends StatelessWidget {
             children: [
               const Icon(Icons.group_add_outlined),
               const SizedBox(width: 12),
-              Expanded(child: Text(l10n.t('workspace.joinTitle'), style: theme.textTheme.titleMedium)),
+              Expanded(
+                child: Text(
+                  l10n.t('workspace.joinTitle'),
+                  style: theme.textTheme.titleMedium,
+                ),
+              ),
               const Icon(Icons.chevron_right),
             ],
           ),
@@ -270,7 +349,10 @@ class _WorkspaceColumn extends StatelessWidget {
                   children: [
                     Text(
                       (i + 1).toString().padLeft(2, '0'),
-                      style: theme.textTheme.displaySmall?.copyWith(fontSize: 48, height: 1),
+                      style: theme.textTheme.displaySmall?.copyWith(
+                        fontSize: 48,
+                        height: 1,
+                      ),
                     ),
                     const Spacer(),
                     const Icon(Icons.chevron_right),

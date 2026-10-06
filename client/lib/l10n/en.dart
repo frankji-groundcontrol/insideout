@@ -21,7 +21,8 @@ const enUS = <String, String>{
   'landing.ctaPrimary': 'Start shaping',
   'landing.ctaSecondary': 'Log in',
   'landing.stepLabel': 'Step {n}',
-  'landing.diagramAlt': 'The path from idea to shipped: capture, PRD, roadmap, shipped.',
+  'landing.diagramAlt':
+      'The path from idea to shipped: capture, PRD, roadmap, shipped.',
   'landing.step1Title': 'Capture the spark',
   'landing.step1Body':
       'A frictionless inbox for every member. Jot the idea in a sentence and refine it whenever you are ready — nothing gets lost.',
@@ -35,9 +36,13 @@ const enUS = <String, String>{
   'landing.step4Body':
       'Log progress and sync real GitHub commits onto one timeline. Leads see every project at a glance — the idea becomes evidence.',
   'landing.ctaCloseTitle': 'Ready to walk the loop?',
-  'landing.ctaCloseBody': "Bring your team's next idea. InsideOut walks it all the way to shipped.",
+  'landing.ctaCloseBody':
+      "Bring your team's next idea. InsideOut walks it all the way to shipped.",
   'landing.ctaCloseButton': 'Start shaping',
   'idea.status.inbox': 'Inbox',
+  'idea.status.refining': 'Refining',
+  'idea.status.converted': 'Converted',
+  'idea.status.dropped': 'Dropped',
   'login.title': 'Log in',
   'login.welcome': 'Welcome back',
   'login.noAccount': "Don't have an account?",
@@ -78,11 +83,13 @@ const enUS = <String, String>{
   'reset.mismatch': 'Passwords do not match',
   'reset.done': 'Your password has been reset. Sign in with the new one.',
   'reset.doneLogin': 'Go to login',
-  'reset.error': 'This reset link is invalid or has expired. Request a new one.',
+  'reset.error':
+      'This reset link is invalid or has expired. Request a new one.',
   'reset.back': 'Back to login',
   'magic.title': 'Sign-in link',
   'magic.working': 'Signing you in…',
-  'magic.error': 'This sign-in link is invalid or has expired. Request a new one.',
+  'magic.error':
+      'This sign-in link is invalid or has expired. Request a new one.',
   'magic.back': 'Back to login',
   'register.invite': 'Invitation code',
   'admin.title': 'Admin',
@@ -116,7 +123,8 @@ const enUS = <String, String>{
   'workspace.joinTitle': 'Join with a code',
   'workspace.joinCodePlaceholder': 'Invite code',
   'workspace.join': 'Join',
-  'workspace.empty': "You haven't joined any workspace yet. Create one or enter an invite code.",
+  'workspace.empty':
+      "You haven't joined any workspace yet. Create one or enter an invite code.",
   'workspace.inviteCode': 'Invite code: {code}',
   'workspace.members': '{count} members',
   'workspace.ideas': 'Ideas',
@@ -130,7 +138,8 @@ const enUS = <String, String>{
   'workspace.role.member': 'Member',
   'workspace.removeMember': 'Remove',
   'workspace.deleteWorkspace': 'Delete this workspace',
-  'workspace.deleteWorkspaceConfirm': 'Delete this workspace? This cannot be undone.',
+  'workspace.deleteWorkspaceConfirm':
+      'Delete this workspace? This cannot be undone.',
   'workspace.notFound': 'Workspace not found',
   'project.title': 'Projects',
   'project.newProject': 'New project',
@@ -156,7 +165,8 @@ const enUS = <String, String>{
   'project.edit': 'Edit project',
   'project.statusLabel': 'Status',
   'roadmap.title': 'Roadmap',
-  'roadmap.empty': 'No roadmap yet. Add a top-level goal and branch it into parallel tracks.',
+  'roadmap.empty':
+      'No roadmap yet. Add a top-level goal and branch it into parallel tracks.',
   'roadmap.rootPlaceholder': 'A top-level goal (e.g. Ship the MVP)',
   'roadmap.addRoot': 'Add goal',
   'roadmap.addChild': 'Add sub-task',
@@ -197,7 +207,8 @@ const enUS = <String, String>{
   'idea.contentPlaceholder': 'Describe the idea in a sentence or two...',
   'idea.capture': 'Capture',
   'idea.empty': 'No ideas yet. What are you thinking about?',
-  'idea.privateHint': 'Private to you — ideas are visible only to their author (workspace admins excepted) until converted.',
+  'idea.privateHint':
+      'Private to you — ideas are visible only to their author (workspace admins excepted) until converted.',
   'idea.convert': 'Convert to PRD',
   'idea.drop': 'Drop',
   'idea.dropConfirm': 'Drop this idea?',
@@ -231,7 +242,8 @@ const enUS = <String, String>{
   'versions.entry': 'Versions',
   'view.entry': 'Audience view',
   'view.title': 'Audience view',
-  'view.projectionNote': 'Projected from the working version — the PRD core stays the single source.',
+  'view.projectionNote':
+      'Projected from the working version — the PRD core stays the single source.',
   'view.whyYouRead': 'Why you read this',
   'view.gapsTitle': 'Open gaps for this audience',
   'view.carriedOpen': '(not yet written — carried as an open question)',
@@ -261,12 +273,15 @@ const enUS = <String, String>{
   'versions.audience.management': 'Management',
   'versions.audience.delivery': 'Delivery',
   'versions.summaryLabel': 'Change summary (optional)',
-  'versions.carryInfo': '{n} open item(s) will be carried as unresolved — forming a version now keeps gaps visible.',
+  'versions.carryInfo':
+      '{n} open item(s) will be carried as unresolved — forming a version now keeps gaps visible.',
   'versions.ready': 'Ready for this audience',
-  'versions.notReady': 'Gaps for this audience — you can still form a version now',
+  'versions.notReady':
+      'Gaps for this audience — you can still form a version now',
   'versions.empty': 'No committed versions yet — form the first one now.',
   'versions.revisionN': 'Version {n}',
-  'versions.diffTitle': 'Diff from previous: {a} added, {c} changed, {r} removed',
+  'versions.diffTitle':
+      'Diff from previous: {a} added, {c} changed, {r} removed',
   'versions.diff.added': 'added',
   'versions.diff.removed': 'removed',
   'versions.diff.changed': 'changed',
@@ -277,7 +292,8 @@ const enUS = <String, String>{
   'coach.send': 'Send',
   'coach.thinking': 'Thinking...',
   'coach.rateLimited': 'Rate limited. Retry in {seconds}s...',
-  'coach.serviceUnavailable': 'AI service temporarily unavailable. Retry in {seconds}s...',
+  'coach.serviceUnavailable':
+      'AI service temporarily unavailable. Retry in {seconds}s...',
   'coach.stage.clarify': 'Clarifying',
   'coach.stage.draft': 'Drafting',
   'coach.stage.critique': 'Reviewing',
@@ -307,7 +323,8 @@ const enUS = <String, String>{
   'dock.evidence': 'Evidence',
   'dock.unfinished': 'Unfinished: {step}',
   'home.loopTitle': 'The loop',
-  'home.loopLead': 'Every idea in the workspace moves the same five steps. Nothing skips one.',
+  'home.loopLead':
+      'Every idea in the workspace moves the same five steps. Nothing skips one.',
   'home.chapterEyebrow': 'Chapter {n} · Commit',
   'home.chapterTitle': 'Commit is the one step a machine cannot do.',
   'home.chapterBody':
@@ -331,7 +348,8 @@ const enUS = <String, String>{
   'roadmap.viewBands': 'Bands',
   'roadmap.viewProgress': 'Progress',
   'roadmap.newItem': 'New item',
-  'roadmap.lead': 'Plan the work, then write the cohort. Shade is distance, not decoration.',
+  'roadmap.lead':
+      'Plan the work, then write the cohort. Shade is distance, not decoration.',
   'evidence.title': 'Evidence',
   'evidence.lead': 'Git and project updates sit on the same field.',
   'versions.stackEyebrow': 'Commit {n} of {total}',
@@ -341,7 +359,8 @@ const enUS = <String, String>{
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',
   'time.daysAgo': '{n}d ago',
-  'error.badRequest': 'That request was rejected — check the input and try again',
+  'error.badRequest':
+      'That request was rejected — check the input and try again',
   'error.unauthorized': 'Session expired — sign in again',
   'error.forbidden': 'You do not have permission to do that',
   'error.notFound': 'Not found — it may have been deleted',
@@ -350,6 +369,7 @@ const enUS = <String, String>{
   'error.server': 'Server hiccup — try again',
   'error.network': 'Network problem — check the connection',
   'error.generic': 'Something went wrong — try again',
+  'write.failed': 'Save failed — {error}',
   'proposal.accept': 'Accept',
   'proposal.reject': 'Reject',
 };

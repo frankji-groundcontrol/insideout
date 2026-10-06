@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../secret_query_scrub.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import 'auth_door.dart';
@@ -24,6 +25,14 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   String? error;
   bool busy = false;
   bool done = false;
+  late final String _token;
+
+  @override
+  void initState() {
+    super.initState();
+    _token = widget.token;
+    scrubSecretQueryKeys(const ['token']);
+  }
 
   @override
   void dispose() {
@@ -43,7 +52,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
       error = null;
     });
     try {
-      await context.read<Session>().api.resetPassword(widget.token, password.text);
+      await context.read<Session>().api.resetPassword(_token, password.text);
       if (mounted) setState(() => done = true);
     } catch (e) {
       if (mounted) setState(() => error = l10n.t('reset.error'));
@@ -64,7 +73,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(l10n.t('reset.done'), style: Theme.of(context).textTheme.bodyMedium),
+                  Text(
+                    l10n.t('reset.done'),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
                   const SizedBox(height: 20),
                   FilledButton(
                     onPressed: () => context.go('/login'),
@@ -87,12 +99,19 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: confirm,
-                    decoration: InputDecoration(labelText: l10n.t('reset.confirm')),
+                    decoration: InputDecoration(
+                      labelText: l10n.t('reset.confirm'),
+                    ),
                     obscureText: true,
                   ),
                   if (error != null) ...[
                     const SizedBox(height: 12),
-                    Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                    Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   FilledButton(

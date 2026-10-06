@@ -1,0 +1,679 @@
+{
+  "reviews": [
+    {
+      "role": "first-run-user",
+      "bottom_line": "The landing page and ideas wall show a coherent, trustworthy product with a clear story, but the first three minutes derail immediately after login: the floating dock renders at mid-viewport on every screen (root cause: an expanding Center inside Scaffold.bottomNavigationBar), which also pushes the create-project FAB off-screen, several dock buttons are silent dead clicks, the project page is headlined '证据' instead of the project name, and workspace/project/PRD surfaces read as empty shells. A new user can register and capture an idea, but cannot reliably navigate the loop the landing page just promised. The visual identity is strong; the chrome and wayfinding are not.",
+      "score": 4,
+      "strengths": [
+        "01-landing-logged-out.png: hero '把想法，一件件打磨出来。' plus a one-sentence subtitle that precisely explains the idea→PRD→roadmap→ship loop, with a 4-step assembly story below (client/lib/features/landing/landing_page.dart:14-19).",
+        "08-ideas-wall-dark.png / 14-ideas-wall-light.png: capture input is front-and-center and the privacy hint '仅自己可见——想法默认只有作者能看到（工作区管理员除外），转化前不会分享。' (client/lib/l10n/zh.dart:192) is exactly the trust copy a first-run user needs.",
+        "Light/dark pairs (04/05, 06/12, 07/13, 08/14, 09/15, 10/16, 11/17) are visually coherent with no token breakage; the zh/en catalogs are at exact parity (347 keys each).",
+        "11/17-versions: per-audience tabs (验证/决策/管理/交付) plus a concrete readiness checklist and a clear '提交版本' CTA — the strongest first-run page after the ideas wall.",
+        "10/16-roadmap empty state tells the user what to do ('还没有路线图。先加一个顶层目标，再拆成可并行的分支。', client/lib/l10n/zh.dart:151).",
+        "03-register-modal.png: password rule '至少 8 个字符' is stated inline before submission (client/lib/features/auth/auth_form.dart:208)."
+      ],
+      "findings": [
+        {
+          "id": "dock-pill-mid-screen-root-cause",
+          "severity": "Critical",
+          "dimension": "chrome/layout",
+          "file": "client/lib/chrome/product_dock.dart:26",
+          "summary": "The dock is a Center inside Scaffold.bottomNavigationBar, so the nav bar expands to full height and the pill renders at the viewport's vertical center, overlaying body content on every signed-in page.",
+          "evidence": {
+            "quote": "    return SafeArea(\n      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),\n      child: Center(\n        child: Material(\n... (client/lib/app.dart:135) bottomNavigationBar: signedIn ? const ProductDock() : null,\n... (client/lib/app.dart:71)      extendBody: true,\n... (client/lib/chrome/product_dock.dart:15)  static const height = 88.0;  // never referenced anywhere"
+          },
+          "failure_scenario": "Every page (04-18) shows the dock floating mid-screen over text: the dashboard chapter paragraph is clipped behind it (04/05 ≈(720,443)), the workspace delete row is half-hidden (06/12), the versions checklist lines 约束与依赖/非目标 are obscured (11/17). Pages pad bottom:140 expecting a bottom dock that never materializes at the bottom, and the intended 88px height constant is dead code.",
+          "fix": "Bound the nav bar: wrap ProductDock in SizedBox(height: ProductDock.height) (or replace Center with Align(alignment: Alignment.bottomCenter)), drop extendBody or keep it with a real bottom inset, and have AppScaffold own a single bottom-safe-area constant that body pages consume instead of ad-hoc bottom padding."
+        },
+        {
+          "id": "create-project-fab-invisible",
+          "severity": "High",
+          "dimension": "dead end / task failure",
+          "file": "client/lib/features/workspace/workspace_page.dart:115",
+          "summary": "The create-project FAB is the only way to create a project, and it is not visible anywhere on the workspace page (06/12) — almost certainly pushed off-position by the full-height bottomNavigationBar.",
+          "evidence": {
+            "quote": "          fab: FloatingActionButton(\n            onPressed: _createProject,\n            child: const Icon(Icons.add),\n          ),\n... (client/lib/app.dart:133-134) floatingActionButton: fab,\n      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat\nScreenshot 06-workspace-dark.png and 12-workspace-light.png: no FAB in any corner; bottom-right is empty."
+          },
+          "failure_scenario": "A brand-new user who just joined a workspace sees one project card and four label rows; the only path to 'start my own project' is an invisible button. The happy path the landing page promised (idea → PRD → roadmap) cannot be started in a fresh workspace.",
+          "fix": "Fix the dock height (finding above) so the endFloat FAB returns; additionally surface an explicit 'new project' button in the projects section so creation does not depend on a lone FAB. Verify by loading /workspace/<id> and asserting a visible create affordance."
+        },
+        {
+          "id": "dock-dead-clicks-evidence-version",
+          "severity": "High",
+          "dimension": "wayfinding",
+          "file": "client/lib/chrome/product_dock.dart:129",
+          "summary": "Two of six dock items silently do nothing in common states: 证据 is a guaranteed no-op (stay()), and 版本 is a dead click on the PRD desk because it navigates to the page already open.",
+          "evidence": {
+            "quote": "      case DockItem.evidence:\n        stay();\n... (client/lib/chrome/product_dock.dart:109-112) case DockItem.version:\n        final prd = focus.prdId;\n        if (prd != null) {\n          context.go('/prd/$prd');\n\nDock walk in captures.md: '证据 — Dead click from project roadmap — no navigation, no feedback (A7)'; '版本 — From /prd desk → dead click'."
+          },
+          "failure_scenario": "A first-run user tapping 证据 from the roadmap, or 版本 while on the desk, gets zero feedback and concludes the app is broken; the six-item dock — the app's primary navigation — teaches them that clicks are unreliable.",
+          "fix": "For 证据: navigate to /projects/<id> only when not already there, else scroll/highlight the evidence section; for 版本: go to /prd/<id>/versions (same target as 提交) or render the current item disabled instead of silently re-pushing the current route."
+        },
+        {
+          "id": "project-page-evidence-heading",
+          "severity": "High",
+          "dimension": "information architecture",
+          "file": "client/lib/features/project/project_page.dart:150",
+          "summary": "The project page leads with a giant display heading '证据' (Evidence) and demotes the actual project name below it, so the page reads as an Evidence page, not a project overview.",
+          "evidence": {
+            "quote": "                    Text(\n                      l10n.t('evidence.title').toUpperCase(),\n                      style: theme.textTheme.displaySmall,\n                    ),\n                    const SizedBox(height: 8),\n                    Text(title, style: theme.textTheme.headlineSmall),\n\nScreenshot 07-project-dark.png / 13-project-light.png: '证据' at ≈(75,95) is the largest text on screen; 'Onboarding Revamp' sits under it."
+          },
+          "failure_scenario": "A new user clicking into 'Onboarding Revamp' lands on a page whose biggest word is '证据' with the poetic lead 'Git 与项目更新落在同一块场地上。' — they cannot confirm which project they are in, and the breadcrumb-less navigation compounds it (deep links 404, A8).",
+          "fix": "Make the project title the display heading; demote 证据 to an eyebrow/section label over the updates/evidence feed, or retitle the page with project-specific copy."
+        },
+        {
+          "id": "auth-card-untitled-header-on-scrim",
+          "severity": "Medium",
+          "dimension": "onboarding UX",
+          "file": "client/lib/features/auth/auth_door.dart:50",
+          "summary": "The auth modal card has no title on it — the cobalt disc, 'InsideOut' wordmark, and greeting (the only '登录/创建账号' labels) render outside the card, floating on the dimmed landing.",
+          "evidence": {
+            "quote": "                          InkReveal(\n                            child: Container(\n                              width: 56,\n                              height: 56,\n                              decoration: const BoxDecoration(color: Cobalt.hue500, shape: BoxShape.circle),\n                            ),\n                          ),\n                          const SizedBox(height: 20),\n                          InkReveal(\n                            ...\n                            child: Text('InsideOut', style: theme.textTheme.headlineSmall),\n...\n(child: Text(greeting, style: theme.textTheme.bodySmall), — auth_door.dart:69)\n\nScreenshot 02-login-modal.png: card contains only 邮箱/密码 fields and a 登录 button; the wordmark floats above the card over the hero text."
+          },
+          "failure_scenario": "This is the code-level why behind the confirmed shot-02 collision (wordmark overlapping 开始打磨/登录): because the header is a sibling of the card inside a centered Column, it lands wherever the layout pushes it — and even when it does not collide, the greeting is 12px bodySmall dark text on a black54 scrim, so the modal is effectively untitled for first-run users and screen-reader context.",
+          "fix": "Move the disc + wordmark + greeting inside the raised Material card as its header, deleting the floating scrim stack; keep Esc/scrim-tap close behavior."
+        },
+        {
+          "id": "idea-card-body-not-tappable",
+          "severity": "Medium",
+          "dimension": "affordance",
+          "file": "client/lib/features/workspace/ideas_page.dart:278",
+          "summary": "Idea poster cards look like the primary object but are not tappable — only the small 'PRD' text button or the '…' menu does anything.",
+          "evidence": {
+            "quote": "    return FieldCard(\n      color: palette.surfaceRaised,\n      padding: EdgeInsets.zero,\n      child: Container(\n        constraints: const BoxConstraints(minHeight: 240),\n...\n(child: TextButton(\n  onPressed: idea.prdId == null ? onConvert : onOpenPrd,\n  child: Text(idea.prdId == null ? l10n.t('idea.convert') : l10n.t('prd.title')), — ideas_page.dart:334-337)\n\nScreenshot 08/14 ≈(255,457): clicking the title/body is a dead click (captures.md A6d)."
+          },
+          "failure_scenario": "A new user's first idea is the natural thing to click; nothing happens, so they hunt for the tiny PRD chip. The most prominent interactive-looking element on the wall is inert.",
+          "fix": "Give the poster FieldCard an onTap that opens the PRD (or starts conversion when none exists), with the menu chip retained for edit/drop."
+        },
+        {
+          "id": "workspace-rows-empty-shells",
+          "severity": "Medium",
+          "dimension": "affordance / destructive action",
+          "file": "client/lib/features/workspace/workspace_page.dart:160",
+          "summary": "想法/设置/编辑/删除这个工作区 are label-only rows with no chevron, no description, and the destructive delete row styled identically to neutral rows.",
+          "evidence": {
+            "quote": "                      FieldCard(\n                        onTap: _delete,\n                        child: Text(\n                          l10n.t('workspace.deleteWorkspace'),\n                          style: theme.textTheme.titleMedium,\n                        ),\n                      ),\n\nFieldCard (client/lib/theme/field_card.dart:22-40) has no chevron/trailing affordance of any kind. Screenshot 06/12 ≈(720,192)-(720,443): four identical rows; 设置 vs 编辑 distinction is unexplained."
+          },
+          "failure_scenario": "First-run users cannot tell the rows navigate anywhere (no chevron, unlike dashboard cards which do show '>'), may confuse 设置 with 编辑, and the workspace-deleting row looks exactly like the others — a misclick away from a destructive, confirm-dialogged action presented with zero warning color.",
+          "fix": "Add trailing chevrons and one-line descriptions; render the delete row in fgDanger and visually separated (or behind the settings page)."
+        },
+        {
+          "id": "create-workspace-unreachable-nonempty",
+          "severity": "Medium",
+          "dimension": "dead end",
+          "file": "client/lib/features/dashboard/dashboard_page.dart:231",
+          "summary": "The create-workspace button only exists in the empty state; once a user has one workspace, the dashboard offers join-only, and onCreate is never wired in the non-empty branch.",
+          "evidence": {
+            "quote": "    if (workspaces.isEmpty) {\n      return FieldCard(\n        child: Column(\n          crossAxisAlignment: CrossAxisAlignment.start,\n          children: [\n            Text(l10n.t('workspace.empty'), style: theme.textTheme.bodyLarge),\n            const SizedBox(height: 16),\n            Wrap(\n              spacing: 8,\n              children: [\n                FilledButton(onPressed: onCreate, child: Text(l10n.t('workspace.create'))),\n...\n(dashboard_page.dart:249-289: the non-empty Column uses onJoin/onOpen only; the onCreate field is dead in that branch)"
+          },
+          "failure_scenario": "A user in 'InsideOut Demo Team' who wants their own workspace has no UI path to create one — the dialog exists (dashboard_page.dart:35-54) but is unreachable; they must know to leave/join instead.",
+          "fix": "Keep 创建工作区 visible next to 用邀请码加入 in the non-empty state (a Wrap of two outlined buttons above the workspace list)."
+        },
+        {
+          "id": "raw-kind-and-iso-timestamps",
+          "severity": "Medium",
+          "dimension": "l10n / formatting consistency",
+          "file": "client/lib/features/project/project_page.dart:304",
+          "summary": "The updates feed shows the raw English enum 'progress' as the kind chip and a raw ISO-8601 timestamp, while localized keys and friendly time exist elsewhere in the same app.",
+          "evidence": {
+            "quote": "                            ShadeChip(label: u.kind, tone: ShadeTone.neutral),\n                            const SizedBox(height: 8),\n                            Text(u.content, style: theme.textTheme.titleMedium),\n                            Text(u.createdAt, style: theme.textTheme.bodySmall),\n\n'project.updateKind.progress': '进展', exists at client/lib/l10n/zh.dart:140 and is used at workspace_page.dart:252; timeAgo is used at workspace_page.dart:274.\nScreenshot 07/13 ≈(120,588): chip 'progress' + '2026-10-06T00:31:05+08:00'; 09/15 ≈(120,232): 'v1 · 2026-10-06T00:31:05+08:00' (prd_desk.dart:74)."
+          },
+          "failure_scenario": "The zh UI suddenly shows English enum names and machine timestamps on the two screens a new user reads most; the same data renders as '进展 · 8 小时前' two clicks away, so the product feels half-localized and unfinished.",
+          "fix": "Use l10n.t('project.updateKind.${u.kind}') and parse createdAt into timeAgo()/isoDate(); do the same for prd_desk.dart's updatedAt composite."
+        },
+        {
+          "id": "versions-readiness-mixed-language",
+          "severity": "Medium",
+          "dimension": "l10n",
+          "file": "client/lib/features/prd/versions_stack.dart:184",
+          "summary": "The readiness gap checklist concatenates a localized section name with the server's raw English reason, producing half-Chinese lines like '背景与问题陈述 — the why-this, why-now argument a decision maker needs'.",
+          "evidence": {
+            "quote": "                    Expanded(child: Text('${l10n.t('prd.sections.${g.section}')} — ${g.reason}', style: theme.textTheme.bodyMedium)),\n\nScreenshot 11-versions-dark.png / 17-versions-light.png: six rows of zh section name + en gloss; only the 背景与问题陈述 row is unchecked."
+          },
+          "failure_scenario": "A zh-first user on the commit-readiness screen — the page the dock nudges them toward — must read English glosses to understand what is missing; the reason text also cannot be themed or copied consistently.",
+          "fix": "Localize gap reasons: either accept a locale parameter server-side, or map known reason identifiers to l10n keys client-side and fall back to the raw string only for unknown ids."
+        },
+        {
+          "id": "prd-section-cards-blank-no-placeholder",
+          "severity": "Medium",
+          "dimension": "empty state",
+          "file": "client/lib/features/prd/prd_desk.dart:96",
+          "summary": "PRD section editors are borderless TextFields with no hintText, so empty sections render as heading-only cards that give no hint they are editable or what to write.",
+          "evidence": {
+            "quote": "                  TextField(\n                    controller: sectionCtrls[key],\n                    maxLines: null,\n                    minLines: 3,\n                    style: theme.textTheme.bodyLarge,\n                    decoration: const InputDecoration(\n                      border: InputBorder.none,\n                      enabledBorder: InputBorder.none,\n                      focusedBorder: InputBorder.none,\n                      filled: false,\n                    ),\n                  ),\n\nScreenshot 09/15: 背景与问题陈述 / 目标用户与画像 / 目标与成功指标 are all heading + blank space (captures.md A14)."
+          },
+          "failure_scenario": "The first-run flow lands here right after converting an idea; the coach asks questions on the right while the left shows three big empty cards — the user has no idea answers belong in those cards or what shape they should take.",
+          "fix": "Add per-section hintText (l10n) and a subtle editable affordance (hover tint / '编写…' placeholder); consider seeding one example line for the demo PRD."
+        },
+        {
+          "id": "unfinished-dock-label-overlaps-icon",
+          "severity": "Low",
+          "dimension": "visual wobble",
+          "file": "client/lib/chrome/product_dock.dart:43",
+          "summary": "The 'unfinished' nudge replaces the 提交 button's label with the longer '未完成：提交', which overflows its slot and renders as a pill on top of the icon — reading exactly like a stuck tooltip.",
+          "evidence": {
+            "quote": "                    unfinished: item == unfinished && item != current,\n                    label: l10n.t(_labelKey(item)),\n                    unfinishedLabel: l10n.t('dock.unfinished', {'step': l10n.t(_labelKey(item))}),\n...\nText(\n  unfinished ? unfinishedLabel : label,\n...\n'dock.unfinished': '未完成：{step}', (zh.dart:299)\n\nScreenshot 10-roadmap-dark.png ≈(735,443) and 18-profile-light.png ≈(735,443): white pill '未完成；提交' sits on the 提交 icon; absent in 16 (state flipped between passes, so it is designed behavior with broken layout, not a stuck overlay — correcting captures.md A5)."
+          },
+          "failure_scenario": "Users see a white blob obscuring a dock icon with no explanation of what is unfinished or why; the label swap also widens the button and shifts neighbors.",
+          "fix": "Keep the short label and add a non-overlapping indicator (warn-colored dot above the icon, or a small badge offset), with the explanation in the Tooltip only."
+        }
+      ],
+      "recommendations": [
+        "Fix the dock first: one layout bug (Center in bottomNavigationBar) is responsible for the content overlap on every page, the mid-screen pill, and the missing project FAB; pages already carry bottom:140 padding that will finally work once the dock is truly 88px at the bottom.",
+        "Add a sim-script assertion to scripts/sim that walks register → capture idea → convert → PRD desk → versions and fails on dead clicks (evidence/version dock items, idea card body).",
+        "Audit raw-string rendering as a class: snap.error on dashboard_page.dart:98 and versions_page.dart:73, u.kind/u.createdAt on project_page.dart:304-307, idea.status fallback at ideas_page.dart:326, and g.reason at versions_stack.dart:184 — wire localizedError/timeAgo/existing l10n keys everywhere.",
+        "Product pass on the dashboard: label the workspace card as a workspace, demote the chapter card or move it below the index, and keep creation (workspace + project) affordances always visible.",
+        "Revisit manifesto-as-UI copy placements (idea.noFolders '没有标签，也没有文件夹。' mid-wall at ideas_page.dart:251, home.loopTrail, coach.pullQuotes '大段引语' under the coach title at coach_panel.dart:142, and the dangling colon in workspace.inviteHint '把这个邀请码分享给队友：') — either give them context or move them to empty states/tooltips.",
+        "Restyle destructive rows (workspace delete, project delete) with the danger token and add chevrons to all navigable FieldCards so affordance is consistent with the dashboard's '>' cards."
+      ],
+      "next_first": "Bound the dock: wrap ProductDock in SizedBox(height: ProductDock.height), swap Center for Align(alignment: Alignment.bottomCenter) in product_dock.dart, and confirm at 1440x900 and 390x844 that the pill sits at the bottom — this unblocks the invisible create-project FAB and the content overlap in one change.",
+      "markdown_section": "## First-Run User Review\n\nI walked the new-user path in order against the capture set in `docs/review/2026-10-06-frontend-cobalt/shots/` — landing (01), login modal (02), register modal (03), dashboard light/dark (04/05), then workspace (06/12), project (07/13), ideas wall (08/14), PRD desk (09/15), roadmap (10/16), versions (11/17), profile (18), plus the narrow shots (19/20) — and read the code behind each beat: `landing_page.dart`, `auth_door.dart`, `auth_form.dart`, `dashboard_page.dart`, `app.dart`, `product_dock.dart`, `workspace_page.dart`, `project_page.dart`, `ideas_page.dart`, `prd_desk.dart`, `coach_panel.dart`, `versions_stack.dart`, and the zh/en catalogs. I scored the first three minutes **4/10**.\n\n**What works.** The landing page is the best part of the funnel. The hero (\"把想法，一件件打磨出来。\") plus one sentence of subtitle tells a new visitor exactly what InsideOut does — capture ideas, let an AI coach grind them into a PRD, split them into a parallel roadmap, and track real commits to delivery — and the four-step assembly story below reinforces it (`landing_page.dart:14-19`). The register modal states the password rule inline. The ideas wall is the strongest in-product surface: the capture input is the visual focus, and the privacy caption (\"仅自己可见——想法默认只有作者能看到…\") is precisely the reassurance a first-time user needs before typing an unpolished thought. Light and dark themes are coherent across every paired shot, zh/en catalogs are at parity, and the versions page's per-audience readiness checklist is a genuinely good piece of product design. The roadmap empty state tells you what to do next.\n\n**Where it breaks.** The first failure is the chrome. The floating dock renders at the *vertical center* of every signed-in screen, not the bottom: the dashboard chapter paragraph is clipped mid-sentence (04/05), the workspace delete row is half-hidden (06/12), and the versions checklist's last two items are unreadable (11/17). The cause is in `product_dock.dart:26-29`: the widget returns `SafeArea(child: Center(...))` and `AppScaffold` (app.dart:135) inserts it as `Scaffold.bottomNavigationBar` — a `Center` expands to fill the loose height the Scaffold offers, so the nav bar silently becomes full-height and the pill centers in it. The intended `static const height = 88.0` exists but is never referenced. This one bug also explains why the workspace page's create-project FAB (its only creation affordance, `workspace_page.dart:115-118`) is nowhere in shots 06/12: the FAB anchors relative to a nav bar whose top is at the viewport top. A new user in a fresh workspace quite literally cannot start a project.\n\nThe dock also teaches unreliability. `DockItem.evidence` unconditionally calls `stay()` (product_dock.dart:129-130) — a labeled navigation button that is a guaranteed no-op with no toast, no disabled state. `DockItem.version` navigates to `/prd/$prd`, which is the page already open when you're on the desk — another silent dead click (captures.md A6). On top of that, the \"unfinished\" nudge replaces the 提交 label with the longer \"未完成：提交\", which overflows its slot and lands as a white pill on the icon (10/18) — designed behavior that reads as a stuck tooltip.\n\nInformation architecture adds friction. The project page headlines itself \"证据\" in the largest type, with the actual project name demoted beneath (`project_page.dart:150-155`), so a user who clicked \"Onboarding Revamp\" can't confirm where they are. The workspace page is four label-only rows — 想法 / 设置 / 编辑 / 删除这个工作区 — with no chevron and no description, and the destructive row is styled identically to the neutral ones (A7); FieldCard has no trailing affordance at all. The dashboard hides \"create workspace\" once you have one (the button only exists in the empty state, `dashboard_page.dart:231-247`). The auth modal card itself is untitled: the disc, \"InsideOut\", and the \"登录/创建账号\" greeting are siblings *above* the card in a centered Column (`auth_door.dart:50-71`), which is why the wordmark floats over the landing hero and collides with the 开始打磨/登录 buttons in shot 02 (the lead reviewer's confirmed defect) — and even when it doesn't collide, the greeting is 12px bodySmall dark text on a black54 scrim.\n\nData surfaces feel half-finished. The updates feed shows a raw English enum chip (\"progress\") and a raw ISO timestamp (`project_page.dart:304-307`) while the workspace card two screens away renders \"进展 · 8 小时前\" from the same data — the l10n keys exist. The PRD desk shows three big section cards with no body, no placeholder, and borderless fields (`prd_desk.dart:96-107`), so the first-run user has no idea the coach's questions are meant to be answered there. The versions readiness list mixes languages on one line: localized section name + raw server English gloss (`versions_stack.dart:184`). Smaller wobbles: clicking an idea card's title or body does nothing (only the tiny PRD chip works); the invite banner's hint ends in a dangling colon; \"大段引语\" renders as a permanent subtitle under the coach title with nothing beneath it; the cryptic manifesto line \"没有标签，也没有文件夹。\" floats centered below the only idea card.\n\n**What I would do first.** Fix the dock layout: bound `bottomNavigationBar` to the already-defined 88px height and bottom-align the pill. That single change clears the content overlap on every screen, restores the create-project FAB, and makes the existing per-page bottom padding actually meaningful. Immediately after, wire the two silent dock dead clicks and the idea-card tap, re-run the sim walk in `scripts/sim`, and only then take the copy/IA pass (project heading, dashboard labels, destructive-row styling). The bones of a trustworthy product are visible on the landing page and ideas wall; the chrome between them is currently spending that trust faster than the screens earn it back."
+    },
+    {
+      "role": "design-fidelity",
+      "bottom_line": "The current UI is a coherent, well-disciplined execution of the *rounded* Cobalt card lock — and that is precisely the problem: against the Cobalt-Neo target it fails all four structural pillars. There is no shadow system at all (elevation is explicitly zeroed and the only two shadows in the app are soft Material blurs), every radius token (12/20/28/999) is the exact inverse of the 0px decree, container borders are 1px periwinkle hairlines instead of 2px, and no press-the-block interaction or 100ms motion token exists anywhere. The cobalt palette itself is faithfully and cleanly tokenized, and dark/light parity is real — so the migration is a token-layer rebuild, not a rewrite. Score 2.5/10 against the Cobalt-Neo target.",
+      "score": 2.5,
+      "strengths": [
+        "One-hue cobalt palette kept and centrally tokenized: client/lib/theme/cobalt.dart:62-66 defines hue50-hue950; the pre-built code map found zero withOpacity/fromRGBO and only 5 hardcoded color lines across all of client/lib.",
+        "True dark/light parity from a single class: cobalt.dart:102-154 mirrors every semantic key; shots 05-dashboard-dark and 09-prd-desk-dark render consistently with their light twins 04/15.",
+        "Ideas-wall display type matches the lock spec clamp(64px,10vw,320px): ideas_page.dart:181-192, visible in shots 08/14.",
+        "Cobalt-500 on white measures 5.09:1 (computed) — primary buttons pass WCAG AA; btn/btnFg pairing is disciplined in both themes (cobalt.dart:117-118, 144-145).",
+        "Chrome consistency: the capture-to-evidence bottom dock renders identically on every signed-in surface (shots 04-11, 16-17), matching DESIGN.md's loop-navigation intent."
+      ],
+      "findings": [
+        {
+          "id": "no-shadow-system",
+          "severity": "Critical",
+          "dimension": "Elevation/shadow tokens",
+          "file": "client/lib/theme/cobalt_theme.dart:54-61",
+          "summary": "The Cobalt token class defines zero shadow/elevation tokens and the theme actively zeroes elevation everywhere, so the neo-brutalist signature — unblurred 4px 4px 0 0 cast shadows on every container — has no substrate in the codebase.",
+          "evidence": {
+            "quote": "    cardTheme: CardThemeData(\n      color: c.surfaceRaised,\n      elevation: 0,\n      shape: shapeCard.copyWith(\n        side: BorderSide(color: c.strokeSubtle),\n      ),\n      margin: EdgeInsets.zero,\n    ),"
+          },
+          "failure_scenario": "A migration that adds 0px radius and 2px borders without hard shadows produces flat, undifferentiated boxes — in dark mode the current surface steps sit only 1.09–1.42:1 apart (computed from cobalt.dart values), so cards dissolve into the page. Nothing in theme/ can express 'shadow-brutal', so every feature improvises or skips it.",
+          "fix": "Add shadow tokens to Cobalt: cast (4px 4px 0 0), castSm (2px 2px 0 0), each with a per-theme shadowColor (solid ink in dark; ~15% alpha ink in light per the reference brief); wire them into FieldCard, cardTheme, AuthDoor, ProductDock, dialogs, and toasts; remove Material elevation from those surfaces."
+        },
+        {
+          "id": "radius-decree-inverse",
+          "severity": "Critical",
+          "dimension": "Corner radius",
+          "file": "client/lib/theme/cobalt.dart:72-75",
+          "summary": "The four radius tokens are 12/20/28/999 — every control class (buttons, inputs, chips, cards, dock, modal) ships rounded, the exact inverse of the 0px-by-decree target, and features add hardcoded radii on top.",
+          "evidence": {
+            "quote": "  static const radiusControl = 12.0;\n  static const radiusCard = 20.0;\n  static const radiusHero = 28.0;\n  static const radiusPill = 999.0;"
+          },
+          "failure_scenario": "Shots 01/02/08/14/16 show pills on every button and input, 20px cards, a 28px modal, a circular brand disc, and a StadiumBorder capture bar (ideas_page.dart:200) — none of which can survive the 0px decree; a token-by-token swap is unavoidable and touches ~20 call sites plus hardcoded radii (step_peek.dart:65 circular(99), roadmap_node_card.dart:83 circular(99), versions_stack.dart:113 vertical top 10, roadmap_canvas.dart:194/204/216).",
+          "fix": "Set all four constants to 0.0 (or delete the group and migrate call sites to a single radiusZero), then sweep the hardcoded BorderRadius values in features; keep BoxShape.circle brand marks only if the spec explicitly exempts identity marks."
+        },
+        {
+          "id": "no-press-the-block",
+          "severity": "Critical",
+          "dimension": "Interaction/motion tokens",
+          "file": "client/lib/theme/ink_motion.dart:4",
+          "summary": "There is no press-the-block interaction anywhere: no hover state, no shadow-shrink-plus-translate, no 100ms motion token — the only motion system is a 650ms expo ease for mount reveals, and the lone MouseRegion in the app is the roadmap canvas cursor tracker.",
+          "evidence": {
+            "quote": "const inkEase = Cubic(0.16, 1.0, 0.3, 1.0);"
+          },
+          "failure_scenario": "The target's core feel — hover: shadow 4px→2px + translate(2,2); active: shadow gone + translate(4,4); 100ms — cannot be implemented per-widget without a shared token, so each developer will invent different durations/curves; today's UI gives only the Material ink splash (FieldCard's InkWell, field_card.dart:35-39) and an unrelated 180ms fade on dock selection (product_dock.dart:162).",
+          "fix": "Define motion tokens in Cobalt (pressDuration 100ms, pressCurve, hoverShadow 2px, hoverOffset (2,2), activeOffset (4,4), disabled rule) and ship one shared InkWell/ButtonStyle extension implementing the shadow+translate swap; convert FieldCard, buttons, dock items, and node cards to it."
+        },
+        {
+          "id": "hairline-border-weight",
+          "severity": "High",
+          "dimension": "Border width",
+          "file": "client/lib/theme/field_card.dart:29",
+          "summary": "Every container border in the app is a default 1.0px BorderSide in cobalt-200 (#C7D2FE light) — the 'border-everything at 2px' rule is halved, and the light hairline measures only 1.49:1 on white (computed).",
+          "evidence": {
+            "quote": "        side: BorderSide(color: borderColor ?? palette.strokeSubtle),"
+          },
+          "failure_scenario": "In light shots (01/14) card borders are barely-there pastel hairlines, so cards read as floating whitespace rather than bordered blocks; the focused input is 1.5px (cobalt_theme.dart:102) and the dock's unfinished outline is 1.5px (product_dock.dart:166), so border widths are already inconsistent and will get worse when someone 'ups the border' screen by screen.",
+          "fix": "Introduce borderWidth tokens (container 2.0, divider 1.0) in Cobalt and apply BorderSide(width: Cobalt.borderContainer) in FieldCard, cardTheme, ShadeChip, AuthDoor, ProductDock, inputs, and dialogs; reserve 1px strictly for inner dividers."
+        },
+        {
+          "id": "blue-tinted-dark-ramp",
+          "severity": "High",
+          "dimension": "Dark surface ramp",
+          "file": "client/lib/theme/cobalt.dart:133-137",
+          "summary": "The dark 'elevation ladder' is blue-tinted (ground #0B0D12, raised #141820, sunken #1E2A5A = hue950) with the three steps only 1.09–1.42:1 apart (computed) — not the dark-first neutral gray ramp (#000/#111/#1A1A1A/#222 + #333 border) the target requires, and sunken is literally the brand hue at 15% lightness.",
+          "evidence": {
+            "quote": "    surfaceBase: darkGround,\n    surfaceRaised: Color(0xFF141820),\n    surfaceSunken: hue950,\n    strokeSubtle: Color(0xFF2A3358),\n    strokeStrong: Color(0xFF3B4A7A),"
+          },
+          "failure_scenario": "Shot 05 shows the result: the workspace chapter card, index cards, and page ground are three near-identical navy blacks, so 'depth from layered grays' is imperceptible; under Cobalt-Neo, elevation must be carried by a neutral ramp plus cast shadows, and there is no token slot for the four-step ladder (page/secondary/tertiary/surface) the reference uses for nav, wells, table headers, and cards.",
+          "fix": "The spec must define a neutral dark gray ramp (page/secondary/tertiary/surface + border) as new Cobalt keys, decide what happens to hue950 (demote to brandSubtle-only), and re-map statusNeutralBg #1A1F2E onto the ramp."
+        },
+        {
+          "id": "light-mode-default",
+          "severity": "High",
+          "dimension": "Theme default",
+          "file": "client/lib/session/appearance.dart:36",
+          "summary": "The app boots light-first: Appearance defaults dark=false and hydrate() only turns dark on an explicit stored 'dark' value — the inverse of the target's dark-first requirement.",
+          "evidence": {
+            "quote": "  Appearance({SettingsStore? store, this.locale = defaultLocale, this.dark = false})"
+          },
+          "failure_scenario": "New visitors and cleared-storage sessions always see light mode; a dark-first Cobalt-Neo must flip the default, decide the prefers-color-scheme fallback (currently ignored), and define hydrate behavior for the no-stored-preference case — otherwise the 'dark is the hard default' rule silently never happens.",
+          "fix": "Default dark=true (or system-aware via PlatformDispatcher brightness), keep the stored override, and record the new default in DESIGN.md; re-shoot all lock screens dark-first."
+        },
+        {
+          "id": "semantic-hues-absent",
+          "severity": "Medium",
+          "dimension": "Semantic color roles",
+          "file": "client/lib/theme/cobalt.dart:116-126",
+          "summary": "All status semantics are cobalt washes — success background is hue50, warning is hue200, and fgDanger is cobalt-700 in light mode — so 'done', 'warning', and 'danger' are indistinguishable shades of blue; the only true red in the app is a hardcoded #B3261E in admin_section.dart:167.",
+          "evidence": {
+            "quote": "    fgDanger: hue700,\n    ...\n    statusWarnBg: hue200,\n    statusWarnFg: hue700,\n    statusSuccessBg: hue50,\n    statusSuccessFg: hue700,"
+          },
+          "failure_scenario": "ShadeChip (cobalt_chip.dart:27-34) renders done/pending/locked in near-identical cobalt tints, so lifecycle state is invisible at a glance on the ideas wall and versions pages; the neo reference keeps error/success/warning hues at 15-20% alpha tint behind 2px same-hue borders — the migration spec must either adopt semantic hues or explicitly codify the one-hue monochrome rule with distinct enough cobalt steps.",
+          "fix": "Define semantic tokens (success/warning/error bg+fg+2px border hue) in the spec; if the one-hue brand rule is kept, codify minimum separation (e.g. done=cobalt-950 well, warning=cobalt-200 fill, danger=borrowed red) and delete the hardcoded #B3261E in favor of the token."
+        },
+        {
+          "id": "coach-panel-off-ladder",
+          "severity": "Medium",
+          "dimension": "Surface roles",
+          "file": "client/lib/features/prd/coach_panel.dart:111-112",
+          "summary": "The PRD coach panel is an always-dark navy surface reached by hardcoding Cobalt.hue950 and Cobalt.darkType in light mode, with dark mode detected by comparing surfaceBase identity — a surface that exists entirely outside the token ladder.",
+          "evidence": {
+            "quote": "    final ink = palette.brightnessIsDark ? palette.fgPrimary : Cobalt.darkType;\n    final field = palette.brightnessIsDark ? palette.surfaceSunken : Cobalt.hue950;"
+          },
+          "failure_scenario": "Shot 15 (light PRD desk) shows the panel staying navy while the rest of the page is light; the feature had to invent an identity-based brightness hack (coach_panel.dart:231 `surfaceBase == Cobalt.darkGround`) that breaks the moment the dark ground value changes — exactly the kind of shadow dependency a neo token system (inverse/alway-dark well role) must eliminate.",
+          "fix": "Add an explicit inverse-panel token pair to Cobalt (panelBg/panelFg in both themes, dark-navy values in light mode) and replace the identity check with Theme.brightness; the spec must decide whether inverse wells survive migration or join the gray ramp."
+        },
+        {
+          "id": "light-sunken-blue-wells",
+          "severity": "Medium",
+          "dimension": "Light surface ramp",
+          "file": "client/lib/theme/cobalt.dart:106-108",
+          "summary": "Light-mode wells are brand-tinted, not neutral: surfaceSunken is hue50 (#EEF2FF) and the ground is a cool #F7F8FA, so 'sunken' reads as 'cobalt wash' everywhere it appears (chips, status backgrounds, search areas).",
+          "evidence": {
+            "quote": "    surfaceBase: lightGround,\n    surfaceRaised: Color(0xFFFFFFFF),\n    surfaceSunken: hue50,"
+          },
+          "failure_scenario": "Under the neo light theme the reference uses neutral warm off-whites with a translucent shadow twin; if the spec does not decide whether Cobalt-Neo light keeps blue-tinted wells or moves to neutral grays, feature authors will keep reaching for brandSubtle (hue50) as a gray substitute and the light theme will never form a legible ladder.",
+          "fix": "Spec decision: define the light ramp explicitly (e.g. ground #F7F8FA / secondary #FFFFFF / tertiary #F0F1F4 / surface #FFFFFF or a warm variant), give brandSubtle a single documented role, and stop using it as the sunken step."
+        },
+        {
+          "id": "type-spacing-unscaled",
+          "severity": "Medium",
+          "dimension": "Type & spacing scale",
+          "file": "client/lib/theme/cobalt_theme.dart:139-144",
+          "summary": "There is no 4px spacing scale and the type ramp is coarse: both body roles are 17.5px, labels are 12px, and spacing is ad hoc per widget (FieldCard padding 24, buttons h24/v14, chips h8/v3, bands 16, dock h10/v8).",
+          "evidence": {
+            "quote": "    bodyLarge: sans(17.5, FontWeight.w400, color: c.fgSecondary),\n    bodyMedium: sans(17.5, FontWeight.w400, color: c.fgSecondary),\n    bodySmall: sans(12, FontWeight.w400, color: c.fgMuted, height: 1.4),\n    labelLarge: sans(14, FontWeight.w600, color: c.btnFg, height: 1.2),"
+          },
+          "failure_scenario": "The reference vocabulary depends on a compact scale (body 14, meta 12, weight-driven hierarchy) and 4px-rhythm padding (p-4/p-6, gap-3); InsideOut's 17.5px body makes dense neo tables, badges, and dropdowns physically impossible at 1440x900 without a spec decision, and ad-hoc padding means the 2px-border boxes will each have their own rhythm.",
+          "fix": "The spec must fix the Cobalt-Neo type scale (keep Archivo, but define body/title/display sizes and whether 17.5 survives) and add spacing tokens (unit 4, controlGap 12, cardPadding 16/24, sectionBreak 32) to Cobalt; then normalize FieldCard/button/chip/dock paddings onto them."
+        },
+        {
+          "id": "dark-shadow-color-undefined",
+          "severity": "Low",
+          "dimension": "Shadow color (dark)",
+          "file": "client/lib/chrome/product_dock.dart:31-33",
+          "summary": "The only dark-mode shadow in the app is a hand-tuned 18%-alpha lightInk blur on the dock, and the token class has no shadowColor slot — the spec must define what a hard shadow is made of in dark mode (solid black, cobalt-tinted, or near-black ink).",
+          "evidence": {
+            "quote": "          elevation: 8,\n          shadowColor: Cobalt.lightInk.withValues(alpha: 0.18),\n          borderRadius: BorderRadius.circular(Cobalt.radiusPill),"
+          },
+          "failure_scenario": "Hard 4px 4px 0 0 shadows in pure black crush detail on a near-black dark ground; each implementer will pick a different dark shadow color (black vs #0B0D12 vs cobalt-950) and the app will subtly disagree with itself across surfaces.",
+          "fix": "Define per-theme shadow colors in the spec: e.g. light = ink at ~15% alpha twin of solid, dark = solid near-black (or a slightly-lightened ink so the cast is visible on #000-#222); encode as Cobalt.shadowCast/shadowCastSm colors used by all shadow tokens."
+        },
+        {
+          "id": "design-md-contract-stale",
+          "severity": "Low",
+          "dimension": "Docs/token contract",
+          "file": "DESIGN.md:27-45",
+          "summary": "DESIGN.md still prescribes the rounded lock (rounded.control 9999px, card 1.25rem, hero 1.75rem, hairline cobalt-200 cards) and even disagrees with code (doc says control radius 9999px; cobalt.dart radiusControl is 12.0), so the documented contract will actively fight the migration.",
+          "evidence": {
+            "quote": "rounded:\n  control: \"9999px\"\n  card: \"1.25rem\"\n  hero: \"1.75rem\""
+          },
+          "failure_scenario": "Anyone migrating a screen against DESIGN.md will re-implement pills and hairlines; the design-system CHANGELOG (docs/design-system/CHANGELOG.md) requires a major 2.0.0 bump 'when the token contract breaks', which this migration does — without that, the guardrails and review checklists point at the old system.",
+          "fix": "Rewrite DESIGN.md to the Cobalt-Neo contract (0px radius, 2px borders, cast shadows, press states, gray ramp, dark-first) in the same migration PR that lands the new tokens, and add the 2.0.0 entry naming every touched file per the CHANGELOG rules."
+        }
+      ],
+      "recommendations": [
+        "Write the Cobalt-Neo token spec before touching widgets: new gray ramps (dark 4-step + light 4-step), borderWidth tokens, cast/pressed shadow tokens with per-theme shadow colors, press-motion tokens, semantic-hue policy, dark-first default, and the type/spacing scale decision.",
+        "Land tokens as Cobalt 2.0.0 in client/lib/theme/cobalt.dart + cobalt_theme.dart with the design-system CHANGELOG major bump and DESIGN.md rewrite in the same commit set.",
+        "Migrate theme-level widgets first (FieldCard, ShadeChip, AuthDoor, ProductDock, button/input themes) so features inherit the neo grammar for free, then sweep feature hardcodes (radii 99/12/10/4/3/1, StadiumBorder capture bar, segmented control).",
+        "Build one shared pressable (hover shrink+translate, active press, 100ms, reduce-motion safe) and convert every InkWell/tappable card to it in a single pass.",
+        "Flip the default to dark-first only after the dark gray ramp lands, and re-shoot the six lock screens in docs/design-system/cobalt/ as the new acceptance baseline.",
+        "Convert the coach panel onto an explicit inverse-panel token and delete the surfaceBase-identity brightness hack."
+      ],
+      "next_first": "Draft the Cobalt-Neo token table (gray ramps, border widths, cast shadows + dark shadow color, press-motion tokens, semantic policy, dark-first default) as a dated plan in docs/plans/ and get it reviewed — every code change above is blocked on those values being decided.",
+      "markdown_section": "## Design-Fidelity Review — Cobalt-Neo Migration Gap Analysis\n\nI compared the shipped Flutter client against the Cobalt-Neo target (0px radius, 2px container borders, hard 4px 4px 0 0 offset shadows, press-the-block interactions at 100ms, dark-first neutral gray ramp, cobalt-#3B5BFF palette retained). Evidence came from a full read of `client/lib/theme/cobalt.dart`, `cobalt_theme.dart`, `field_card.dart`, `cobalt_chip.dart`, `ink_motion.dart`, `chrome/product_dock.dart`, `features/auth/auth_door.dart`, `session/appearance.dart`, and `features/prd/coach_panel.dart`; `DESIGN.md`, `docs/design-system/cobalt/README.md`, and `docs/design-system/CHANGELOG.md`; the reference neo-brutalist brief; the pre-built code map; nine screenshots across both themes (01, 02, 04, 05, 08, 09, 14, 16 plus the capture index); and computed WCAG contrast ratios for every relevant token pair. A repo-wide grep confirmed there is no existing neo/brutalist mention anywhere — the migration spec is genuinely greenfield.\n\n**What is already right.** The palette half of the contract is in excellent shape. `cobalt.dart:62-66` defines the hue50–hue950 ramp once, both themes mirror every semantic key (`cobalt.dart:102-154`), and the code map's token-discipline pass found almost no color bypasses — five hardcoded lines in features, zero `withOpacity`/`fromRGBO`. Cobalt-500 on white computes to 5.09:1, so primary actions pass AA today. Dark and light genuinely parity: shots 05/09 and 04/15 are faithful twins. The ideas-wall display type implements the lock's `clamp(64px,10vw,320px)` spec exactly (`ideas_page.dart:181-192`), and the bottom dock gives every signed-in surface consistent loop chrome. The failure is not execution quality — it is that the executed design is the wrong design.\n\n**Finding 1 — there is no shadow system (Critical).** The `Cobalt` class contains no shadow or elevation tokens of any kind, and the theme suppresses the Material defaults: `cardTheme` has `elevation: 0` (`cobalt_theme.dart:56`), the AppBar has `elevation: 0` (:49). The only two shadows in the entire app are soft, blurred Material elevations — the auth modal (`auth_door.dart:79-80`, elevation 6, black at 35% alpha) and the dock (`product_dock.dart:31`, elevation 8). The neo-brutalist signature is an unblurred `4px 4px 0 0` cast on every container, and there is no substrate to hang it on. This matters beyond aesthetics: with 0px radius and 2px borders but no cast shadow, boxes go flat. I computed the current dark-mode surface separation — raised-on-base is 1.09:1, sunken-on-base 1.42:1, stroke-on-raised 1.45:1 — so in dark mode cards already barely separate from the page, and the reference system solves that with shadows plus border weight, not contrast.\n\n**Finding 2 — the radius decree is inverted (Critical).** `cobalt.dart:72-75` defines `radiusControl = 12.0`, `radiusCard = 20.0`, `radiusHero = 28.0`, `radiusPill = 999.0`. Buttons, FilledButtons, text inputs, chips, the FAB, and the dock are pills by theme wiring (`cobalt_theme.dart:28-33`, `87-111`); FieldCard is 20px everywhere (`field_card.dart:28`); the auth card is 28px; the capture bar is a literal `StadiumBorder` (`ideas_page.dart:200`); and features hardcode further radii — `circular(99)` twice, top-radius 10 on the versions stack, and 12/4/3/1px corners on the roadmap canvas. Every shot confirms it: 01, 02, 08, 14, and 16 are a sea of pills. Against a 0px-by-decree target this is the single widest-scoped change.\n\n**Finding 3 — no press-the-block interaction exists (Critical).** The target's feel is hover: shadow 4→2px + translate(2,2); active: shadow gone + translate(4,4); 100ms. I grepped the whole client: the only `MouseRegion` is the roadmap canvas's remote-cursor tracker. Tappables get Material's default ink splash (`field_card.dart:35-39`) and one unrelated 180ms selection fade on the dock (`product_dock.dart:162`). The motion file (`ink_motion.dart`) is a mount-reveal system — 650ms expo ease — philosophically opposite to fast mechanical press motion, and there are no duration/curve/offset tokens to implement the target with.\n\n**Findings 4–6 — borders, dark ramp, theme default (High).** Every container border is a default-width 1.0px `BorderSide` in cobalt-200 (`field_card.dart:29`), a 1.49:1 hairline in light mode; focused inputs and the dock's unfinished outline are already 1.5px, so widths drift. The dark ramp is blue-tinted — ground `#0B0D12`, raised `#141820`, sunken literally `hue950` (`#1E2A5A`) — not the neutral `#000/#111/#1A1A1A/#222 + #333 border` ladder, and shot 05 shows three near-identical navy blacks where elevation should be. And the app is light-first: `Appearance({..., this.dark = false})` (`appearance.dart:36`) with no `prefers-color-scheme` fallback — the inverse of the dark-first requirement.\n\n**Findings 7–12 (Medium/Low).** Status semantics are cobalt washes — `statusSuccessBg: hue50`, `statusWarnBg: hue200`, `fgDanger: hue700` (`cobalt.dart:116-126`) — so done/warning/danger differ only by cobalt step, and the app's only true red is a hardcoded `#B3261E` in `admin_section.dart:167`. The coach panel is an off-ladder always-dark navy built on `Cobalt.hue950` with dark mode detected by `surfaceBase == Cobalt.darkGround` identity (`coach_panel.dart:111-112, 231`) — visible staying navy in light shot 15. Light-mode wells are brand-tinted (`surfaceSunken: hue50`). There is no 4px spacing scale, both body roles are 17.5px, and paddings are per-widget ad hoc. The dark shadow color is undefined (the dock hand-rolls 18% lightInk). And `DESIGN.md:27-45` still prescribes the rounded lock — it even disagrees with code (doc control radius 9999px vs `radiusControl` 12.0) — so the documented contract will fight the migration until rewritten alongside a CHANGELOG 2.0.0 major bump.\n\n**What I would do first.** Nothing above can be coded until the values exist. Draft the Cobalt-Neo token table — dark and light gray ramps, border widths (2px container / 1px divider), cast and pressed shadows with an explicit dark-mode shadow color, press-motion tokens (100ms, offsets, curve), the semantic-hue policy, the type/spacing scale decision, and the dark-first default — as a dated reviewed plan, then land it as `Cobalt` 2.0.0 with the theme-level widgets (FieldCard, ShadeChip, AuthDoor, ProductDock, button/input themes) converted before any feature screen is touched."
+    },
+    {
+      "role": "a11y-visual",
+      "bottom_line": "The Cobalt token system is fundamentally sound for body text — every foreground/background pair I computed passes WCAG AA in both light and dark (4.55:1 to 18.29:1) — but the chrome around it fails badly: the dock's 'unfinished step' state is 1.32:1 blue-on-blue in light theme, the floating top-bar icons are 1.42:1 over the navy coach panel on the PRD page, every stroke/border token sits at 1.40–2.26:1 against WCAG 1.4.11's 3:1, and the roadmap minimap encodes status as unlabeled 4px color marks at 1.40–2.90:1. There is no focus strategy anywhere in client/lib (zero focusColor/FocusNode usages), text ships at 9–11px in three places, and the known brightness-sniff in coach_panel.dart is both fragile (color identity) and currently a no-op ternary whose two branches resolve to identical colors. Score 4.5/10: a strong type/contrast foundation undermined by systemic non-text contrast failures on primary navigation.",
+      "score": 4.5,
+      "strengths": [
+        "client/lib/theme/cobalt.dart:102-154 — all body-text token pairs pass WCAG AA in both themes (computed: fgPrimary 18.29:1 both, fgSecondary 9.93:1 light / 11.81:1 dark, fgMuted 4.55:1 light / 6.28:1 dark, btn text 5.09:1 light / 4.79:1 dark)",
+        "client/lib/theme/cobalt_theme.dart:100-103 — focused input border explicitly styled (hue500, 1.5px), the one place focus is visibly addressed",
+        "Tooltips on every chrome icon: client/lib/app.dart:101-124, client/lib/chrome/product_dock.dart:156, client/lib/features/prd/coach_panel.dart:117,157, client/lib/features/prd/prd_desk.dart:153, client/lib/features/project/roadmap_node_card.dart:219",
+        "client/lib/theme/ink_motion.dart:6 — motion layer honors MediaQuery.disableAnimations (reduced-motion support)",
+        "No textScaler/textScaleFactor overrides anywhere — OS text scaling flows through; CJK font fallback chain (cobalt.dart:88-93) prevents zh-CN tofu",
+        "Only 6 hardcoded Color(0x...) literals outside theme/ across ~10k lines (grep-verified), most the locked brand hue — token discipline is otherwise excellent"
+      ],
+      "findings": [
+        {
+          "id": "dock-unfinished-blue-on-blue",
+          "severity": "Critical",
+          "dimension": "Contrast / wayfinding",
+          "file": "client/lib/chrome/product_dock.dart:166",
+          "summary": "The dock's 'unfinished step' cue paints icon, 11px label, and 1.5px border in the warn token on the cobalt dock — 1.32:1 in light theme, 3.41:1 in dark.",
+          "evidence": {
+            "quote": "border: unfinished ? Border.all(color: palette.statusWarnFg, width: 1.5) : null,\n...\nIcon(_icon(item), size: 20, color: unfinished ? palette.statusWarnFg : palette.btnFg),\n// cobalt.dart light: statusWarnFg: hue700 (#1D4ED8) drawn on palette.brand = hue500 (#3B5BFF)\n// computed: light #1D4ED8/#3B5BFF = 1.32:1; dark #C7D2FE/#3B5BFF = 3.41:1 — shot 10-roadmap-dark.png shows the periwinkle '未完成；提交' label+icon on the cobalt pill"
+          },
+          "failure_scenario": "The primary navigation's only 'you skipped the human commit step' signal is invisible in light theme (blue on cobalt) and below the 4.5:1 body-text bar in dark; users never learn the loop is incomplete, and the A5 stuck-badge behavior makes it worse.",
+          "fix": "Introduce an on-brand warn token (e.g. #FFD166 amber: ~7:1 on hue500) or drop the warn color on the pill entirely and mark unfinished steps with a white dot + tooltip; recompute with the same WCAG script until ≥4.5:1."
+        },
+        {
+          "id": "topbar-icons-invisible-over-navy",
+          "severity": "Critical",
+          "dimension": "Contrast / chrome layering",
+          "file": "client/lib/app.dart:90",
+          "summary": "The floating utility icons (language/theme/profile/logout) have no backdrop and render dark-on-navy — 1.42:1 — wherever a page's dark content reaches the top strip, e.g. the PRD coach panel in light theme.",
+          "evidence": {
+            "quote": "Positioned(\n  top: 0,\n  right: 0,\n  child: SafeArea(\n    child: Padding(\n      padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),\n      child: Row( // IconButtons at app.dart:100-125, no background\n// coach_panel.dart:112: final field = palette.brightnessIsDark ? palette.surfaceSunken : Cobalt.hue950;\n// lightInk #0B0D12 on hue950 #1E2A5A = 1.42:1 — shot 15-prd-desk-light.png ≈(1287-1410,28): four icons nearly invisible on the navy panel"
+          },
+          "failure_scenario": "A light-theme user on /prd/:id cannot see the theme toggle, profile, or logout buttons (1.42:1); the same layering will break on any future full-bleed dark surface.",
+          "fix": "Give the utilities Row a surfaceRaised/95% background pill (or hoist a real AppBar with backgroundColor) so icon color always pairs with a known surface; add a golden screenshot asserting ≥3:1 for those icons."
+        },
+        {
+          "id": "stroke-tokens-fail-non-text-contrast",
+          "severity": "High",
+          "dimension": "Contrast / UI chrome (WCAG 1.4.11)",
+          "file": "client/lib/theme/cobalt.dart:109",
+          "summary": "All four stroke tokens are 1.40–2.26:1 against their surfaces — every card border, input border, outlined button, chip border, and divider in the app fails the 3:1 non-text minimum.",
+          "evidence": {
+            "quote": "strokeSubtle: hue200,   // #C7D2FE: 1.40:1 on surfaceBase, 1.49:1 on surfaceRaised (light)\nstrokeStrong: Color(0xFF9AA7E8),  // 2.18:1 (light); dark strokeSubtle #2A3358 = 1.59:1, strokeStrong #3B4A7A = 2.26:1\n// used for input borders cobalt_theme.dart:94,98, cards :58, outlined buttons :74, chips :110, dividerColor :112\n// shot 02-login-modal.png: 邮箱/密码 field outlines are barely perceptible on the white card"
+          },
+          "failure_scenario": "Low-vision users cannot perceive form field boundaries (1.49:1 on white) — the entire auth flow and every editor input — or card edges; the light-theme UI reads as borderless gray mush.",
+          "fix": "Retune stroke tokens to ≥3:1 (light strokeStrong ≈ #6E7FD6, light strokeSubtle ≈ #94A3E8; dark strokeSubtle ≈ #4A5680); the WCAG python script already in this review becomes the regression check."
+        },
+        {
+          "id": "minimap-color-only-invisible-marks",
+          "severity": "High",
+          "dimension": "Color-only encoding / non-text contrast",
+          "file": "client/lib/features/project/roadmap_canvas.dart:172",
+          "summary": "The roadmap minimap encodes node status as unlabeled 4px color bars whose colors fail 3:1 — locked 1.40:1, pending 2.18:1 (light) — so status is conveyed by color alone, mostly invisibly, on a navigation control.",
+          "evidence": {
+            "quote": "Color mark(String status) {\n  switch (status) {\n    case 'done': return theme.colorScheme.tertiary;      // hue700: 2.90:1 dark\n    case 'in_progress': return theme.colorScheme.secondary; // hue500: 3.82:1 dark\n    case 'locked': return theme.colorScheme.outline;       // strokeSubtle: 1.40:1 light / 1.59:1 dark\n    default: return theme.colorScheme.outlineVariant;      // strokeStrong: 2.18:1 light / 2.26:1 dark\n  }\n} // bars are height 4, no label, no tooltip (roadmap_canvas.dart:211-218)"
+          },
+          "failure_scenario": "On a project with locked/pending nodes, the minimap shows nothing at all (marks nearly identical to the page ground); colorblind users can't distinguish done vs in-progress even where marks are visible — band status is only in color.",
+          "fix": "Raise mark colors to ≥3:1 vs surface and add a non-color channel: filled bar = done, hollow (bordered) = pending, hatched/dashed = locked, or an aria-style Semantics label + tooltip per column."
+        },
+        {
+          "id": "admin-hardcoded-red-dark-unreadable",
+          "severity": "High",
+          "dimension": "Contrast / theme bypass",
+          "file": "client/lib/features/profile/admin_section.dart:167",
+          "summary": "Error text uses a literal Color(0xFFB3261E) instead of the theme's fgDanger, giving 2.72:1 in dark mode against surfaceRaised #141820 (theme token would give 13.03:1).",
+          "evidence": {
+            "quote": "child: Text(localizedError(error!, lang.t), style: const TextStyle(color: Color(0xFFB3261E))))\n// computed: #B3261E / #FFFFFF = 6.54:1 (light OK); #B3261E / #141820 = 2.72:1 (dark FAIL, needs 4.5:1)\n// theme already ships fgDanger: hue700 (light) / hue200 (dark) at cobalt.dart:116,143"
+          },
+          "failure_scenario": "Admin-facing failure messages (invite/revoke errors) are unreadable in dark theme exactly when the operator needs them most.",
+          "fix": "Replace the literal with Theme.of(context).colorScheme.error (or palette.fgDanger) and add a lint banning Color(0x outside theme/."
+        },
+        {
+          "id": "no-focus-indicators",
+          "severity": "Medium",
+          "dimension": "Keyboard focus",
+          "file": "client/lib/theme/cobalt_theme.dart:37",
+          "summary": "Grep finds zero focusColor, zero FocusNode, zero focus-highlight customization anywhere in client/lib — keyboard focus relies on Material defaults, which on the cobalt dock compute to ~1.3:1, and the dock's selected state is a 1.31:1 white wash.",
+          "evidence": {
+            "quote": "grep 'FocusNode|focusColor|Focus\\b|focusNode|autofocus' over client/lib → only matches: auth_door.dart:30-31 Focus(autofocus: true) (Esc handling), auth_form.dart:159 autofocus: true, plus LoopFocus (unrelated nav state)\n// product_dock.dart:165: color: selected ? palette.btnFg.withValues(alpha: 0.16) : Colors.transparent  // computed selected-wash vs brand = 1.31:1"
+          },
+          "failure_scenario": "Keyboard users tabbing the dock or top bar get a ~12% primary-tint overlay on an already-cobalt surface — indistinguishable; combined with the invisible selected state, neither 'where is focus' nor 'which page am I on' is answerable without a mouse.",
+          "fix": "Set ThemeData.focusColor/focusNode highlights with a 2px offset ring at ≥3:1, and redesign the dock selected state (solid white icon+text on cobalt, or a white outline) to ≥3:1."
+        },
+        {
+          "id": "dark-status-pills-collapse",
+          "severity": "Medium",
+          "dimension": "Color semantics / theme parity",
+          "file": "client/lib/theme/cobalt.dart:143",
+          "summary": "In dark mode fgDanger, statusInfoFg, statusWarnFg and statusSuccessFg are all the same hue200 periwinkle on identical hue950 backgrounds — danger text is visually indistinguishable from info/brand accents; light warn pill also hairline-fails at 4.49:1.",
+          "evidence": {
+            "quote": "fgDanger: hue200,\n...\nstatusInfoBg: hue950, statusInfoFg: hue200,\nstatusWarnBg: hue950,  statusWarnFg: hue200,\nstatusSuccessBg: hue950, statusSuccessFg: hue200,  // dark: all three pills = #C7D2FE on #1E2A5A\n// light warn pill computed: statusWarnFg hue700 / statusWarnBg hue200 = 4.49:1 (fails 4.5 by 0.01 at 12px semibold)"
+          },
+          "failure_scenario": "A destructive/danger state in dark mode reads as a neutral informational accent (they are literally the same hex), so error semantics are lost; the light warn pill is one hundredth off AA at 12px.",
+          "fix": "Give dark fgDanger a true red ramp (e.g. #F2B8B5 / #FF8A80, both >4.5 on the dark surfaces) and differentiate warn with an amber; nudge light warn bg or fg to clear 4.5:1."
+        },
+        {
+          "id": "brightness-sniff-noop-ternary",
+          "severity": "Medium",
+          "dimension": "Light/dark parity bug",
+          "file": "client/lib/features/prd/coach_panel.dart:230",
+          "summary": "Dark mode is detected by palette color identity (`surfaceBase == Cobalt.darkGround`), and the ternary it feeds currently resolves both branches to identical colors, so the check is both fragile and a no-op.",
+          "evidence": {
+            "quote": "extension on Cobalt {\n  bool get brightnessIsDark => surfaceBase == Cobalt.darkGround;\n}\n// coach_panel.dart:111-112:\nfinal ink = palette.brightnessIsDark ? palette.fgPrimary : Cobalt.darkType;   // #F7F8FA both ways\nfinal field = palette.brightnessIsDark ? palette.surfaceSunken : Cobalt.hue950; // #1E2A5A both ways\n// Cobalt.of (cobalt.dart:100) already exposes Theme.of(context).brightness"
+          },
+          "failure_scenario": "The day anyone retunes dark fgPrimary/surfaceSunken (e.g. to fix finding dark-status-pills), the two branches diverge and the light-theme coach panel silently flips to mixed colors — a parity regression no test will catch.",
+          "fix": "Delete the extension; use `Theme.of(context).brightness == Brightness.dark` (or pass brightness into the palette lookup) and replace the ternaries with a single `field`/`ink` constant pair; add a widget test asserting coach panel colors identical pre/post palette tweak."
+        },
+        {
+          "id": "sub-12px-text",
+          "severity": "Medium",
+          "dimension": "Readability / minimum type size",
+          "file": "client/lib/features/project/roadmap_canvas.dart:100",
+          "summary": "Production UI ships 9–11px text: 10px remote-cursor names, 9px minimap band labels clipped to 6 chars, and 11px labels on every primary-nav dock button.",
+          "evidence": {
+            "quote": "roadmap_canvas.dart:100: Text(c.name, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10))\nroadmap_canvas.dart:226: style: theme.textTheme.bodySmall?.copyWith(fontSize: 9)  // label clipped: _clip() -> s.substring(0, 6)\nchrome/product_dock.dart:178: fontSize: 11,  // the only text label on each dock button"
+          },
+          "failure_scenario": "At 1440px, 9–11px text is hard to read for many users and becomes unreadable under Windows/browser text zoom steps; the dock — the app's main navigation — has no larger-than-11px label anywhere.",
+          "fix": "Set 12px as a hard floor (grep lint on fontSize:), raise dock labels to 12–13px, and give minimap bands a tooltip with the full title instead of 9px truncated text."
+        },
+        {
+          "id": "brand-on-dark-accents-fail",
+          "severity": "Low",
+          "dimension": "Contrast / theme parity",
+          "file": "client/lib/features/workspace/ideas_page.dart:191",
+          "summary": "The locked brand hue500 is used directly on dark surfaces where it only reaches 3.82:1 (large text only) or below 3:1 (graphics): the ideas-wall display title, remote-cursor icons at 2.69:1, and the coach accent bar at 2.69:1.",
+          "evidence": {
+            "quote": "ideas_page.dart:188-192: style: theme.textTheme.displayLarge?.copyWith(fontSize: display, height: 0.9, color: palette.brand, // hue500 on darkGround = 3.82:1 (shot 08-ideas-wall-dark.png — title noticeably dimmer than in light)\nroadmap_canvas.dart:99: Icon(Icons.navigation, size: 14, color: Theme.of(context).colorScheme.secondary) // hue500 on hue950 = 2.69:1 — non-text FAIL\ncoach_panel.dart:152: Container(width: 36, height: 3, ..., color: Cobalt.hue500) // 2.69:1 on the navy panel"
+          },
+          "failure_scenario": "Dark-theme users see a dimmer, muddier brand than light-theme users (parity break), and the presence cursors — the only indicator of another live user — fail even the 3:1 graphics bar.",
+          "fix": "Add a `brandOnDark` token (hue200) chosen via Cobalt.of for dark grounds; use it for the cursor icon and any brand graphic on dark, or darken-lighten as the surface dictates."
+        },
+        {
+          "id": "coach-alpha-text-below-aa",
+          "severity": "Low",
+          "dimension": "Contrast / alpha-blended text",
+          "file": "client/lib/features/prd/coach_panel.dart:215",
+          "summary": "Coach panel hint text at 50% ink over the navy field computes 4.37:1 — a hairline fail for its 17.5px body size (the 60%/70% blends pass at 5.64/7.08).",
+          "evidence": {
+            "quote": "hintStyle: TextStyle(color: ink.withValues(alpha: 0.5)),  // coach_panel.dart:215; also :143 alpha .7 (OK) and _Quote role :254 alpha .6 (OK)\n// computed: #F7F8FA @50% over #1E2A5A → #8A91AA, 4.37:1 vs 4.5 required"
+          },
+          "failure_scenario": "The placeholder prompting the user how to reply to the AI coach is the single faintest text in the product and just under AA.",
+          "fix": "Bump the hint alpha to 0.55+ (≈4.75:1) or introduce a dedicated mutedOnNavy token so alpha math doesn't get re-derived ad hoc."
+        },
+        {
+          "id": "light-warn-pill-borderline",
+          "severity": "Low",
+          "dimension": "Contrast / status pills",
+          "file": "client/lib/theme/cobalt_chip.dart:33",
+          "summary": "The light-theme warn/danger pill (hue700 text on hue200 background) computes 4.49:1 — 0.01 under the 4.5:1 AA bar for its 12px semibold label.",
+          "evidence": {
+            "quote": "ShadeTone.danger => (palette.statusWarnBg, palette.fgDanger),  // cobalt_chip.dart:33\n// cobalt.dart:123-124 light: statusWarnBg: hue200 (#C7D2FE), statusWarnFg: hue700 (#1D4ED8) → 4.49:1; label is labelSmall 12px semibold = normal text threshold"
+          },
+          "failure_scenario": "Any status rendered with the warn tone (the dock's unfinished border uses statusWarnFg too) is technically non-compliant for body-sized text, and sits within measurement noise of failing — a font-weight or anti-aliasing change could tip it over.",
+          "fix": "Darken the light warn fg one step (e.g. #1E40AF) or lighten the bg (hue50), re-run the ratio script; while there, add the planned Shape differentiation from the minimap finding to pills."
+        }
+      ],
+      "recommendations": [
+        "Fix the tokens first (strokeSubtle/strokeStrong, dark fgDanger, an on-brand warn color, brandOnDark) in cobalt.dart — findings 1, 3, 4, 7, 10, 12 are all token-level and inherit everywhere at once.",
+        "Land a Dart contrast test that recomputes WCAG ratios from Cobalt.of values for both themes so palette tweaks fail CI instead of shipping silent 1.3:1 chrome (the python3 script from this review ports in ~30 lines).",
+        "Add an a11y lint pass: no Color(0x outside theme/, no fontSize < 12, no text colors applied via withValues(alpha:) without a ratio assertion, no palette-color identity comparisons.",
+        "Design and implement a focus system: focusColor with a visible ring, a ≥3:1 dock selected state, and a golden screenshot with an injected focused element.",
+        "Add Semantics (status labels on minimap columns, selected state on dock) — only one Semantics widget exists in the whole app (assembly_diagram.dart:80)."
+      ],
+      "next_first": "Retune the stroke tokens and the dock's warn/selected colors in client/lib/theme/cobalt.dart + client/lib/chrome/product_dock.dart, verifying with the WCAG ratio script — this single change clears the widest-reaching failures (input/card borders system-wide, the 1.32:1 unfinished cue, and the 1.31:1 selected wash) before any widget-level work.",
+      "markdown_section": "## Accessibility & Visual Review — Cobalt Frontend\n\nI reviewed the theme system and its application across the product: `client/lib/theme/cobalt.dart` (palette tokens) and `cobalt_theme.dart` (ThemeData wiring, type roles) read in full; every other widget file cross-referenced through the pre-built code map; all 20 in-app screenshots in `docs/review/2026-10-06-frontend-cobalt/shots/` inspected at native resolution; and WCAG 2.x contrast ratios computed with a python3 script over every meaningful foreground/background pair in both themes. I also grepped `client/lib` for `fontSize:`, `Focus`/`focusColor`/`focusNode`/`autofocus`, `Color(0x` literals, `Semantics`, and `textScaler` overrides. Findings below are mine alone; the two lead-confirmed defects (auth-modal header collision, dock overlaying body content) are cited only where they intersect accessibility.\n\n### What is genuinely good\n\nThe type-and-color foundation is better than most design systems I review. Every body-text token pair passes WCAG AA in both themes, computed: fgPrimary/surface 18.29:1 (both themes), fgSecondary 9.93:1 light / 11.81:1 dark, fgMuted 4.55:1 light / 6.28:1 dark, button text on brand 5.09:1 light / 4.79:1 dark, dark fgBrand 13.03:1. Tooltips are on every chrome icon button. The motion layer honors `MediaQuery.disableAnimations` (`ink_motion.dart:6`). Nothing overrides text scaling. CJK fallback chains are declared so zh-CN never tofu. Only six hardcoded color literals exist outside `theme/`, most of them the locked brand hue. And the focused input border is explicitly styled (`cobalt_theme.dart:100-103`) — the one place keyboard-adjacent states got real design attention.\n\n### Critical\n\n**Dock \"unfinished\" cue is blue-on-cobalt (1.32:1 light / 3.41:1 dark).** `product_dock.dart:166,172,177` paints the icon, the 11px label, and a 1.5px border in `statusWarnFg` on the brand-colored pill. In light theme both are blues from the same ramp — `#1D4ED8` on `#3B5BFF` — and the result is invisible in `10-roadmap-dark.png` and would be worse in light. This is the product's only \"you skipped the human commit step\" signal, on its primary navigation. It needs an on-brand warn token (amber clears 7:1 on hue500) or a shape/position treatment instead of color.\n\n**Top-bar icons float with no backdrop (1.42:1 on the PRD page).** `app.dart:90-130` positions the language/theme/profile/logout `IconButton`s in a bare `Positioned` row; the coach panel fills the right column full-bleed with navy `hue950` even in light theme (`coach_panel.dart:112`), so in light mode those icons render `#0B0D12` on `#1E2A5A`. Shot `15-prd-desk-light.png` shows all four effectively gone — theme toggle, profile, and logout unreachable for light-theme users on `/prd/:id`. Give the strip a surface background pill or a real AppBar.\n\n### High\n\n**Every stroke token fails WCAG 1.4.11 (1.40–2.26:1).** `strokeSubtle`/`strokeStrong` (`cobalt.dart:109-110,136-137`) are used for input borders, card borders, outlined buttons, chip borders, and dividers — so form boundaries are 1.49:1 on white (see the login modal's near-outline-less fields in `02-login-modal.png`) and card edges are 1.40–2.26:1 everywhere. Low-vision users will read the light UI as borderless. Retune to ≥3:1.\n\n**Roadmap minimap: color-only, mostly invisible status.** `roadmap_canvas.dart:172-183` draws unlabeled 4px bars per node status using outline tokens — locked 1.40:1, pending 2.18:1 (light), done 2.90:1 (dark). The control encodes state purely by color, and the colors fail the 3:1 graphics floor; on a project with locked/pending nodes the minimap shows nothing at all. Raise contrast and add a non-color channel (filled/hollow/hatched) plus tooltips.\n\n**Admin error red bypasses the theme (2.72:1 dark).** `admin_section.dart:167` hardcodes `Color(0xFFB3261E)` where the theme already ships a dark-safe `fgDanger` (13.03:1). The literal is unreadable on dark `surfaceRaised`.\n\n### Medium\n\n**No focus strategy exists.** Grep finds zero `focusColor`, zero `FocusNode`, no focus styling anywhere; only `Focus(autofocus: true)` for Esc handling in the auth modal and one autofocus on the login field. Material's default ~12% primary-tint focus overlay on the cobalt dock computes to ~1.3:1, and the dock's selected state is a 1.31:1 white alpha wash (`product_dock.dart:165`) — so neither focus location nor current route is perceivable keyboard-only.\n\n**Dark-theme status pills collapse into one color.** `cobalt.dart:142-153` sets dark `fgDanger`, `statusInfoFg`, `statusWarnFg`, `statusSuccessFg` all to hue200 on identical hue950 backgrounds — danger text is hex-identical to informational accents. Light warn pill is 4.49:1, one-hundredth under AA at its 12px semibold size.\n\n**The brightness sniff is fragile and a no-op.** `coach_panel.dart:230-232` defines `brightnessIsDark => surfaceBase == Cobalt.darkGround` — a palette identity check — and the ternary it feeds resolves both branches to identical colors (`#F7F8FA`/`#1E2A5A` either way). It works today by accident and will silently break the first time someone retunes the dark palette. `Theme.of(context).brightness` is right there in `Cobalt.of`.\n\n**Text ships at 9–11px.** Remote-cursor names at 10px (`roadmap_canvas.dart:100`), minimap labels at 9px clipped to six characters (`:226`), and every dock button's only label at 11px (`product_dock.dart:178`).\n\n### Low\n\nBrand hue500 on dark surfaces reaches only 3.82:1 as large display text (the ideas-wall title, `ideas_page.dart:191`) and 2.69:1 as graphics (presence-cursor icons, coach accent bar) — a dark-theme parity break. The coach input hint at 50% alpha computes 4.37:1. Both are near-misses with cheap token fixes.\n\n### What I would do first\n\nFix the tokens before any widget work: retune `strokeSubtle/strokeStrong`, add a true dark danger red, an on-brand warn color, and a `brandOnDark`, all verified by a checked-in Dart contrast test that recomputes these ratios in CI. That single file (`cobalt.dart`) plus `product_dock.dart`'s warn/selected colors clears the widest-reaching failures — borders, the unfinished cue, the selected wash — everywhere at once, and converts this system's genuinely strong text contrast into chrome that low-vision and keyboard users can actually operate."
+    },
+    {
+      "role": "responsive",
+      "bottom_line": "The dock overlap is not a padding bug: ProductDock's Center child expands to the full bounded height the Scaffold gives a bottomNavigationBar, so the pill renders at the vertical center of the viewport on every signed-in page (verified against shots 04, 06, 09, 11, 16, 19, 20). Beyond that, the web index.html is missing the viewport meta tag, the coach panel and roadmap canvas reserve no bottom space for the dock, several dialogs/sections use fixed pixel sizes that overflow at 390px, and mobile coverage exists for only 2 of 13 routes. Desktop >=900px code discipline (Expanded, Wrap, breakpoints) is good, but shipped responsive behavior is broken at every width.",
+      "score": 3,
+      "strengths": [
+        "Single consistent breakpoint: dashboard_page.dart:134, prd_page.dart:153, assembly_step.dart:33 all use MediaQuery.sizeOf(context).width >= 900, and narrow branches exist (dashboard cards stack at dashboard_page.dart:171-175; PRD switches to a stacked ListView at prd_page.dart:165-169).",
+        "Button groups use Wrap, not fixed Rows: project_page.dart:162-180 and 198-234 cannot overflow horizontally at 1024px.",
+        "Ideas-wall grid math is self-consistent with its ListView padding: ideas_page.dart:239 (width - 88)/3, (width - 72)/2, width - 56 exactly fill the content column at the 1100/760 breakpoints.",
+        "FieldCard clips decorative overflow (theme/field_card.dart:31 clipBehavior: Clip.antiAlias), so the idea poster's negative-positioned 160px circle (ideas_page.dart:292-302) is safely clipped rather than bleeding (visible clean in shot 20).",
+        "SafeArea used for the dock (product_dock.dart:26), top-right utilities (app.dart:93), auth modal (auth_door.dart:41); fluid display type via clamp at cobalt.dart:97.",
+        "PRD split uses Expanded(flex: 3)/Expanded(flex: 2) (prd_page.dart:161-162) rather than fixed widths; dashboard cards use Expanded (dashboard_page.dart:165-167)."
+      ],
+      "findings": [
+        {
+          "id": "dock-renders-at-viewport-center",
+          "severity": "Critical",
+          "dimension": "app shell / dock layout",
+          "file": "client/lib/chrome/product_dock.dart:26-28 (wired at client/lib/app.dart:135)",
+          "summary": "The dock pill is not at the bottom of the screen; a Center widget inside the bottomNavigationBar expands to the full bounded height the Scaffold gives that slot, so the pill floats at the vertical center of the viewport, covering content on every signed-in page.",
+          "evidence": {
+            "quote": "client/lib/chrome/product_dock.dart:26-28: \"return SafeArea(\\n      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),\\n      child: Center(\"; client/lib/app.dart:135: \"bottomNavigationBar: signedIn ? const ProductDock() : null,\"; Flutter 3.44.8 scaffold.dart:1035,1049-1052 lays the bottomNavigationBar out with fullWidthConstraints (height bounded to the viewport), and rendering/shifted_box.dart RenderPositionedBox.performLayout: \"shrinkWrapHeight = _heightFactor != null || constraints.maxHeight == double.infinity\" is false, so Center expands to the 900px bound. Shots 04/06/09/11/16: pill centered at ~(720,440) of 1440x900; shots 19/20: pill centered at ~(390,825) of 780x1688."
+          },
+          "failure_scenario": "Primary navigation obscures body content everywhere: the dashboard chapter numeral is hidden (19), the idea card body is unreadable (20), readiness checklist lines 约束与依赖/非目标 are covered (11), and the destructive 删除这个工作区 row sits under the pill (06). Users cannot read or tap what the dock covers.",
+          "fix": "Replace Center with Align(alignment: Alignment.bottomCenter, heightFactor: 1.0) in ProductDock.build (heightFactor restores shrink-wrap), or delete Center entirely; then re-shoot all pages since every bottom:140 assumption re-anchors against a truly bottom dock."
+        },
+        {
+          "id": "no-dock-clearance-coach-and-canvas",
+          "severity": "High",
+          "dimension": "dock clearance / extendBody",
+          "file": "client/lib/app.dart:71 + client/lib/features/prd/coach_panel.dart:129 + client/lib/features/project/roadmap_page.dart:172-250",
+          "summary": "With extendBody: true, body content paints behind the dock, but the coach panel (bottom padding 8) and the roadmap canvas view (no bottom padding) reserve no space for it, unlike the ListView pages that hardcode 140 — so the moment the Center bug is fixed, the coach chat input and canvas bottom row slide under the dock.",
+          "evidence": {
+            "quote": "client/lib/app.dart:71: \"extendBody: true,\"; client/lib/features/prd/coach_panel.dart:129: \"padding: const EdgeInsets.fromLTRB(28, 64, 16, 8),\"; client/lib/features/project/roadmap_page.dart:176: \"padding: const EdgeInsets.fromLTRB(28, 64, 28, 8),\"; contrast dashboard_page.dart:137: \"padding: const EdgeInsets.fromLTRB(28, 72, 28, 140),\"."
+          },
+          "failure_scenario": "After fixing the dock anchoring, the PRD coach's message input (the panel's fixed bottom Row) and the bottom of the collaborative roadmap canvas sit beneath the ~100px dock and are untappable/unreadable; today this is masked only because the dock floats mid-screen.",
+          "fix": "Give CoachPanel's root Column and the roadmap canvas Column a bottom padding equal to ProductDock.height + 16 + MediaQuery.paddingOf(context).bottom, or drop extendBody and let the Scaffold inset the body above the dock automatically."
+        },
+        {
+          "id": "missing-viewport-meta",
+          "severity": "High",
+          "dimension": "mobile web meta",
+          "file": "client/web/index.html:19-36",
+          "summary": "index.html has no <meta name=\"viewport\"> tag (only description and apple meta tags), so real mobile browsers render the page at the ~980px fallback width instead of the device's width, defeating the 390px layout and touch targets.",
+          "evidence": {
+            "quote": "client/web/index.html:19-36 contains \"<meta charset=\\\"UTF-8\\\">\", \"<meta name=\\\"description\\\" ...>\", \"<meta name=\\\"mobile-web-app-capable\\\" content=\\\"yes\\\">\" — no <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> anywhere; the stock Flutter template line is absent."
+          },
+          "failure_scenario": "Opening the app on an actual phone (outside CDP emulation, which forces metrics and is why shots 19/20 look correct) shows a scaled-down, desktop-width page with unreadable text and missed taps; it also contributes to the stuck-canvas resize symptom in shot 21.",
+          "fix": "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> to client/web/index.html head and rebuild."
+        },
+        {
+          "id": "window-resize-canvas-stuck",
+          "severity": "Medium",
+          "dimension": "resize/orientation",
+          "file": "docs/review/2026-10-06-frontend-cobalt/shots/21-narrow-resize-gutter.png",
+          "summary": "Shrinking the browser window after boot leaves the Flutter canvas stuck at an intermediate width with a white gutter on the right; dispatching a resize event does not recover it (booting directly at 390px is fine).",
+          "evidence": {
+            "quote": "Shot 21 (780x1688): dashboard content confined to the left ~390px column with a white band filling the right third; the dock pill again floats mid-content. captures.md A11: \"the Flutter canvas stays at an intermediate ~245 px column with a white band on the right; dispatching a resize event does not fix it\"."
+          },
+          "failure_scenario": "Any user who narrows a desktop window, docks a browser side-by-side, or rotates a tablet loses the right portion of the app until a full reload; orientation change on tablets breaks the layout.",
+          "fix": "Add the viewport meta (previous finding), then verify Flutter's engine resize handling against a window.resizeTo pass in scripts/sim/web_driver.py; if it persists, file against the engine with a minimal repro since main.dart has no custom sizing code."
+        },
+        {
+          "id": "top-utility-row-no-width-budget",
+          "severity": "Medium",
+          "dimension": "top bar overflow at narrow widths",
+          "file": "client/lib/app.dart:90-130",
+          "summary": "The top-right utilities Row is Positioned with mainAxisSize: min and no width constraint, stacking page actions plus 4 icon buttons; the roadmap page's 3-segment SegmentedButton makes the row ~400-460px wide, which cannot fit a 390px viewport.",
+          "evidence": {
+            "quote": "client/lib/app.dart:90-97: \"Positioned(\\n            top: 0,\\n            right: 0,\\n            child: SafeArea(\\n              child: Padding(\\n                padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),\\n                child: Row(\\n                  mainAxisSize: MainAxisSize.min,\"; client/lib/features/project/roadmap_page.dart:161-171 passes a 3-segment SegmentedButton as actions. Shot 16 shows the occupied width at 1440px (~320px); no narrow roadmap shot exists to confirm the overflow."
+          },
+          "failure_scenario": "At 390-480px (or in EN locale with longer segment/tooltip labels) the SegmentedButton plus translate/theme/profile/logout icons overflow off the right edge or overlap the page title; the overflow error paints black/yellow stripes in debug and clipped, unreachable buttons in release.",
+          "fix": "Constrain the utility Row (e.g., Flexible + Wrap, or move page actions next to the painted title), and add a 390px capture of /projects/:id/roadmap to the sim suite to gate it."
+        },
+        {
+          "id": "commit-dialog-fixed-width-420",
+          "severity": "Medium",
+          "dimension": "dialog overflow at 390px",
+          "file": "client/lib/features/prd/versions_commit_dialog.dart:51-53",
+          "summary": "The commit dialog hardcodes content width 420px, exceeding the ~310px available inside a Material AlertDialog (default 40px horizontal insets) on a 390px viewport.",
+          "evidence": {
+            "quote": "client/lib/features/prd/versions_commit_dialog.dart:51-53: \"content: SizedBox(\\n        width: 420,\\n        child: SingleChildScrollView(\""
+          },
+          "failure_scenario": "Tapping 提交版本 on a phone (or a narrow desktop window) opens a dialog ~110px wider than the screen, triggering a horizontal RenderFlex overflow and clipped form fields exactly where first-run users commit their first version.",
+          "fix": "Replace with width: min(420, MediaQuery.sizeOf(context).width - 96) or drop the SizedBox width entirely and let the dialog size to its insets."
+        },
+        {
+          "id": "versions-stack-fixed-height-580",
+          "severity": "Medium",
+          "dimension": "fixed section height",
+          "file": "client/lib/features/prd/versions_stack.dart:60-63",
+          "summary": "The commit stack pins a 580px-high Stack whose front FieldCard holds an unbounded Column of readiness gaps, so a long gap list overflows 580px with no scroll, and 580px is wasted/scroll-chopped on short viewports.",
+          "evidence": {
+            "quote": "client/lib/features/prd/versions_stack.dart:60-63: \"constraints: const BoxConstraints(maxWidth: 640),\\n            child: SizedBox(\\n              height: 580,\\n              child: Stack(\"; _FrontCard (versions_stack.dart:151-221) is a FieldCard(Column(...)) with no scrollable and no height cap; readiness gap rows at 172-187 are unbounded."
+          },
+          "failure_scenario": "A PRD with many must-clarify gaps pushes the checklist past 580px → bottom-overflow stripes and an unreachable 提交版本 button; on a 700px-tall laptop window the fixed block dominates and the checklist is clipped by the fold.",
+          "fix": "Make _FrontCard's Column scrollable (e.g., wrap the gaps list in Expanded+SingleChildScrollView inside a LayoutBuilder) or size the stack from the viewport (min(580, availableHeight)) instead of a constant."
+        },
+        {
+          "id": "prd-narrow-fixed-heights-640-520",
+          "severity": "Medium",
+          "dimension": "narrow breakpoint layout",
+          "file": "client/lib/features/prd/prd_page.dart:165-169",
+          "summary": "Below 900px the PRD page stacks the desk and coach inside fixed 640px/520px SizedBoxes, decoupled from both content height and viewport height.",
+          "evidence": {
+            "quote": "client/lib/features/prd/prd_page.dart:167-168: \"SizedBox(height: 640, child: _prdColumn()),\\n                      SizedBox(height: 520, child: _coach()),\""
+          },
+          "failure_scenario": "On a 390x844 phone the desk gets exactly 640px regardless of section count (clipped when longer, giant emptiness when shorter) and the coach is force-fitted into 520px; in landscape (~390px tall) both boxes exceed the viewport and only the outer ListView's coarse scroll saves it.",
+          "fix": "Let _prdColumn keep its own ListView with natural height (remove the SizedBox heights) or use LayoutBuilder-driven fractions of the viewport."
+        },
+        {
+          "id": "dead-dock-height-constant-and-magic-140s",
+          "severity": "Low",
+          "dimension": "magic numbers / drift risk",
+          "file": "client/lib/chrome/product_dock.dart:15",
+          "summary": "ProductDock declares static const height = 88.0 that no file references, while six pages independently hardcode bottom: 140 as the dock clearance — two disconnected guesses at the same number.",
+          "evidence": {
+            "quote": "client/lib/chrome/product_dock.dart:15: \"static const height = 88.0;\" (zero references in client/lib); dashboard_page.dart:137 \"padding: const EdgeInsets.fromLTRB(28, 72, 28, 140),\"; same 140 at workspace_page.dart:128, project_page.dart:148, ideas_page.dart:183, prd_desk.dart:43, settings_page.dart:65, profile_page.dart:69, export_page.dart:47, roadmap_bands.dart:55, roadmap_progress_view.dart:28."
+          },
+          "failure_scenario": "Any change to dock height/ SafeArea padding silently desyncs page clearance (either content under the dock again or a growing dead band); the unused constant misleads the next editor into thinking pages derive from it.",
+          "fix": "Reference ProductDock.height + 16 + MediaQuery.paddingOf(context).bottom from a shared scaffold/page helper, or drop extendBody and remove all manual clearance."
+        },
+        {
+          "id": "paint-title-right-padding-88-vs-icons-180",
+          "severity": "Low",
+          "dimension": "title/utility collision",
+          "file": "client/lib/app.dart:76-86",
+          "summary": "The painted title reserves only 88px on the right, but the top-right utility Row (4 icon buttons plus page actions) measures ~180-460px, so long workspace/project names slide beneath the icons, which paint on top.",
+          "evidence": {
+            "quote": "client/lib/app.dart:80: \"padding: const EdgeInsets.fromLTRB(24, 16, 88, 0),\" versus the Positioned Row at app.dart:90-130 containing actions + 4 IconButtons inside Padding(EdgeInsets.fromLTRB(8, 8, 12, 8)) — a minimum of ~180px before actions."
+          },
+          "failure_scenario": "A workspace with a long name (workspace_page uses AppScaffold(title: ..., paintTitle: true)) renders its title under the translate/theme/profile/logout icons in EN or on narrow screens, and page actions (roadmap's SegmentedButton) make it worse.",
+          "fix": "Reserve the measured utility width (or a Row with Spacer between title and utilities) instead of the 88 constant; cap the title with maxLines: 1, overflow: ellipsis."
+        },
+        {
+          "id": "narrow-shot-coverage-gaps",
+          "severity": "Low",
+          "dimension": "test coverage",
+          "file": "docs/review/2026-10-06-frontend-cobalt/shots/",
+          "summary": "Mobile evidence exists only for dashboard (19), ideas wall (20), and the resize anomaly (21); roadmap, workspace, project, versions, PRD, and profile were never captured at 390px, leaving the highest-risk surfaces (SegmentedButton top bar, fixed 580/640 sections, 420px dialog) unverified at narrow width.",
+          "evidence": {
+            "quote": "Shots directory listing: 19-dashboard-narrow.png, 20-ideas-wall-narrow.png, 21-narrow-resize-gutter.png are the only 780x1688 files; 01-18 are all 1440x900. captures.md shot index rows for 06/07/09/10/11/13/15/16/17/18 have no narrow counterpart."
+          },
+          "failure_scenario": "Narrow-width regressions on the majority of routes ship undetected; findings 5-8 are reasoned from code, not screenshots, precisely because this coverage is missing.",
+          "fix": "Extend scripts/sim/web_driver.py's narrow pass to walk every dock route (workspace, project, roadmap, prd desk, versions, profile) at 390x844."
+        },
+        {
+          "id": "fixed-240-side-panes",
+          "severity": "Low",
+          "dimension": "fixed pane widths",
+          "file": "client/lib/features/project/roadmap_bands.dart:120 + client/lib/features/project/roadmap_progress_view.dart:81",
+          "summary": "Roadmap band/progress views pin a 240px leading pane; safe at 1024px but it consumes 72% of a 390px content column, squeezing node titles to ~80px.",
+          "evidence": {
+            "quote": "client/lib/features/project/roadmap_bands.dart:120: \"width: 240,\" and client/lib/features/project/roadmap_progress_view.dart:81: \"width: 240,\" inside ListView padding EdgeInsets.fromLTRB(24, 8, 24, 140)."
+          },
+          "failure_scenario": "On phones the Now/Next/Later band labels truncate heavily and node cards compress; not an overflow crash, but a readability cliff the breakpoint logic (only the PRD and dashboard pages branch at 900px) never addresses for roadmap surfaces.",
+          "fix": "Scale the pane with a clamp (e.g., max(150, width * 0.25)) or stack the band label above the cards below 600px."
+        }
+      ],
+      "recommendations": [
+        "Fix ProductDock's Center first (one-line Align(heightFactor: 1.0) swap), then immediately re-shoot every page, because all bottom:140 assumptions and the A2/A10 overlaps re-validate against a truly bottom-anchored dock.",
+        "Add the viewport meta tag to client/web/index.html and rebuild before any further mobile judgement; CDP emulation masks its absence.",
+        "After the dock fix, audit CoachPanel and the roadmap canvas view for bottom clearance (finding 2), since they are the only full-height surfaces without it.",
+        "Replace the six magic bottom:140 paddings with a single clearance expression derived from ProductDock.height and MediaQuery padding, or drop extendBody entirely.",
+        "Extend the sim suite to 390px captures on all routes and add a window-resize (shrink) capture to gate the stuck-canvas regression."
+      ],
+      "next_first": "Replace Center with Align(alignment: Alignment.bottomCenter, heightFactor: 1.0) in client/lib/chrome/product_dock.dart:28 and re-run the capture agent against 04/06/09/11/16/19/20 to confirm the pill anchors to the bottom.",
+      "markdown_section": "## Responsive/Overflow Reviewer\n\n### What I examined\n\nI read the app chrome (`client/lib/app.dart`, `client/lib/chrome/product_dock.dart`), every page-level layout file (`dashboard_page.dart`, `workspace_page.dart`, `project_page.dart`, `ideas_page.dart`, `prd_page.dart`, `roadmap_page.dart`, `versions_stack.dart`, `versions_commit_dialog.dart`, `coach_panel.dart`, `field_card.dart`), the web host file (`client/web/index.html`, `client/lib/main.dart`), the local Flutter 3.44.8 SDK sources for `Scaffold` and `RenderPositionedBox` layout behavior, the pre-built code map, and the capture index. I personally inspected shots 04, 06, 09, 11, 16, 19, 20, and 21 at full resolution; the remaining desktop shots are corroborated by the capture index (A2). Mobile coverage at 390px exists only for dashboard (19), ideas wall (20), and the resize anomaly (21) — a gap I flag as a finding in itself.\n\n### The confirmed defect, with its real root cause\n\nThe lead-confirmed defect — \"at 1440x900 the bottom dock overlays dashboard body content\" — is real but misdiagnosed by its symptom. The dock does not sit at the bottom at all. In shot 04 the pill is centered at approximately (720, 440) of a 1440x900 viewport; in the narrow shots 19/20 it is centered at approximately (390, 825) of 780x1688 — in both cases the vertical midpoint of the screen, with a large empty band below. Shot 21 shows the same mid-screen placement after resize.\n\nThe cause is a three-part chain. `AppScaffold` passes the dock as `bottomNavigationBar: signedIn ? const ProductDock() : null` (`client/lib/app.dart:135`) on a `Scaffold` with `extendBody: true` (`app.dart:71`). `ProductDock.build` returns `SafeArea(minimum: EdgeInsets.fromLTRB(16, 0, 16, 16), child: Center(child: Material(...)))` (`client/lib/chrome/product_dock.dart:26-28`). The Scaffold's own layout delegate (`scaffold.dart:1035,1049-1052` in the SDK) lays out the bottomNavigationBar with `fullWidthConstraints` — width tightened to the viewport, height bounded to it. `Center` is `Align` with no factors, and `RenderPositionedBox.performLayout` only shrink-wraps when `constraints.maxHeight == double.infinity`; here it is finite, so the `Center` expands to the full 900px and vertically centers the pill inside it. The 900px-tall bottomNavigationBar is then positioned at `bottom - height = 0`, so the pill lands at the viewport's vertical center on every signed-in route. The correct minimal fix is `Align(alignment: Alignment.bottomCenter, heightFactor: 1.0)` — the `heightFactor` restores shrink-wrap — after which the pill truly anchors at the bottom and every page's `bottom: 140` padding starts meaning what it was written to mean.\n\n### Strengths worth keeping\n\nThe code underneath the bug is more disciplined than the rendering suggests. There is a single breakpoint convention — `MediaQuery.sizeOf(context).width >= 900` at `dashboard_page.dart:134`, `prd_page.dart:153`, `assembly_step.dart:33` — and narrow branches genuinely exist (dashboard cards stack at `dashboard_page.dart:171-175`; the PRD split becomes a stacked ListView at `prd_page.dart:165-169`). Button groups on the project page use `Wrap` (`project_page.dart:162-180`), which cannot overflow horizontally. The ideas-wall grid math at `ideas_page.dart:239` — `(width - 88) / 3`, `(width - 72) / 2`, `width - 56` — is exactly self-consistent with its ListView's 56px horizontal padding at both breakpoints. `FieldCard` clips (`field_card.dart:31`), which safely contains the idea poster's deliberately off-edge decorative circle (`ideas_page.dart:292-302`). `SafeArea` is used for the dock, the top-right utilities, and the auth modal, and the display type is fluid via a clamp (`cobalt.dart:97`).\n\n### Findings walkthrough (severity order)\n\nBeyond re-rooting the dock defect, the High items are latent or host-level. The coach panel (`coach_panel.dart:129`, bottom padding 8) and the roadmap canvas view (`roadmap_page.dart:176` header bottom 8, canvas `Expanded` with no clearance) are the only full-height surfaces with no dock clearance; today this is masked by the floating dock, but once the pill is bottom-anchored the coach's input row and the canvas bottom will sit under it — these must land in the same change set as the dock fix. Separately, `client/web/index.html` has no `<meta name=\"viewport\">` at all — only description and apple meta tags — so on a real phone the page renders at the browser's ~980px fallback width; the 390px shots look correct only because CDP emulation forces device metrics. This also plausibly contributes to the resize gutter in shot 21, where shrinking the window post-boot leaves a stuck ~245px canvas column with a white band, unrecovered by dispatched resize events.\n\nMedium findings: the top-right utility `Row` (`app.dart:90-97`) is a `Positioned` `mainAxisSize: min` with no width budget — fine for the bare four icons (~180px), but the roadmap page injects a three-segment `SegmentedButton` as actions and no narrow roadmap shot exists to prove it survives 390px. `versions_commit_dialog.dart:52` hardcodes `width: 420` inside an AlertDialog whose default insets leave ~310px at 390px — a guaranteed horizontal overflow at the single most important first-run action (first commit). `versions_stack.dart:62` pins the commit stack to `height: 580` with an unbounded readiness-gap `Column` inside — a long gap list overflows with no scroll, and the fixed block dominates short windows. `prd_page.dart:167-168` fixes narrow-layout desk/coach heights at 640/520 regardless of content or viewport. Low findings: the dead `static const height = 88.0` (`product_dock.dart:15`, zero references) versus six independently hardcoded `bottom: 140` paddings; the painted title's 88px right reservation against a ~180-460px utility row (`app.dart:80`); the missing narrow captures for ten of thirteen routes; and the fixed 240px side panes in the roadmap band/progress views that consume 72% of a 390px column.\n\n### What I would do first\n\nSwap `Center` for `Align(alignment: Alignment.bottomCenter, heightFactor: 1.0)` in `ProductDock.build` — one line — and immediately re-shoot pages 04, 06, 09, 11, 16, 19, and 20. That single change converts every \"overlapping dock\" symptom from a mystery into a measurable bottom-clearance question, at which point findings 2, 9, and 10 become a small, well-defined cleanup rather than a forensic exercise. The viewport meta tag should land in the same hour; everything else can follow the re-shoot evidence."
+    }
+  ],
+  "verdicts": [],
+  "critic": {}
+}

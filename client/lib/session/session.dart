@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/client.dart';
+import '../api/errors.dart';
 import '../api/models.dart';
 import 'token_store.dart';
 
@@ -44,23 +45,31 @@ class Session extends ChangeNotifier {
 
   Future<void> hydrate() async {
     try {
-      final token = await _store.readAccess();
-      if (token == null || token.isEmpty) {
-        user = null;
-        return;
-      }
-      try {
-        user = await _me();
-      } catch (_) {
-        await _refresh();
-        user = await _me();
+      await _hydrate().timeout(const Duration(seconds: 15));
+    } on ApiException catch (e) {
+      user = null;
+      if (e.status == 401 || e.status == 403) {
+        await clear();
       }
     } catch (_) {
       user = null;
-      await clear();
     } finally {
       ready = true;
       notifyListeners();
+    }
+  }
+
+  Future<void> _hydrate() async {
+    final token = await _store.readAccess();
+    if (token == null || token.isEmpty) {
+      user = null;
+      return;
+    }
+    try {
+      user = await _me();
+    } catch (_) {
+      await _refresh();
+      user = await _me();
     }
   }
 
@@ -85,8 +94,15 @@ class Session extends ChangeNotifier {
     await saveTokens(pair.access, pair.refresh);
   }
 
-  Future<void> register(String email, String password, String username, {String inviteCode = ''}) async {
-    await applyAuthProfile(await api.register(email, password, username, inviteCode: inviteCode));
+  Future<void> register(
+    String email,
+    String password,
+    String username, {
+    String inviteCode = '',
+  }) async {
+    await applyAuthProfile(
+      await api.register(email, password, username, inviteCode: inviteCode),
+    );
   }
 
   Future<void> login(String email, String password) async {

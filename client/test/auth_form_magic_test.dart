@@ -7,14 +7,19 @@ import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
 void main() {
-  testWidgets('login form switches to magic-link mode and back', (tester) async {
+  testWidgets('login form switches to magic-link mode and back', (
+    tester,
+  ) async {
     final session = Session();
     session.ready = true;
     await tester.pumpWidget(
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
         ],
         child: MaterialApp(
           home: AuthDoor(
@@ -56,7 +61,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
         ],
         child: MaterialApp(
           home: AuthDoor(

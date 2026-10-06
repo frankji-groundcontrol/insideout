@@ -7,11 +7,22 @@ import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
+import '../../chrome/product_dock.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/field_card.dart';
+import '../../widgets/guarded_action.dart';
 import 'ideas_page.dart';
+
+// N1: the square quick-capture FAB floats over the dock's top-right corner.
+// The body extends behind the dock (AppScaffold extendBody), so reserve the
+// whole FAB zone as scrollable inset — dock + FAB + the scaffold's FAB
+// margin + a breathing gap — or the last project card's date row slides
+// under the button.
+const double _fabSize = 56;
+const double _bottomInset =
+    ProductDock.height + _fabSize + kFloatingActionButtonMargin + 16;
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key, required this.id});
@@ -49,7 +60,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     final projects = await api.listProjects(widget.id);
     if (!mounted) return (ws: ws, projects: projects);
     final focus = context.read<LoopFocus>();
-    if (focus.projectId == null && projects.isNotEmpty) {
+    if (focus.projectFor(widget.id) == null && projects.isNotEmpty) {
       focus.rememberProject(projects.first.id, workspaceId: widget.id);
     }
     return (ws: ws, projects: projects);
@@ -81,16 +92,23 @@ class _WorkspacePageState extends State<WorkspacePage> {
       ),
     );
     if (ok == true && title.text.trim().isNotEmpty && mounted) {
-      await context.read<Session>().api.createProject(
-        widget.id,
-        title.text.trim(),
-        '',
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.createProject(
+          widget.id,
+          title.text.trim(),
+          '',
+        ),
       );
-      setState(() {
-        _future = _load();
-      });
+      if (done && mounted) {
+        setState(() {
+          _future = _load();
+        });
+      }
     }
-    title.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextField mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   Future<void> _refresh() async {
@@ -125,7 +143,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
               : RefreshIndicator(
                   onRefresh: _refresh,
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 140),
+                    padding: const EdgeInsets.fromLTRB(24, 8, 24, _bottomInset),
                     children: [
                       FieldCard(
                         child: Row(
@@ -191,6 +209,20 @@ class _WorkspacePageState extends State<WorkspacePage> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      FieldCard(
+                        onTap: _createProject,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.add),
+                            const SizedBox(width: 12),
+                            Text(
+                              l10n.t('project.newProject'),
+                              style: theme.textTheme.titleMedium,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       if (snap.data!.projects.isEmpty)
                         Text(
                           l10n.t('project.empty'),
@@ -332,17 +364,23 @@ class _WorkspacePageState extends State<WorkspacePage> {
       ),
     );
     if (ok == true && mounted) {
-      await context.read<Session>().api.updateWorkspace(
-        widget.id,
-        title: title.text.trim(),
-        description: desc.text,
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.updateWorkspace(
+          widget.id,
+          title: title.text.trim(),
+          description: desc.text,
+        ),
       );
-      setState(() {
-        _future = _load();
-      });
+      if (done && mounted) {
+        setState(() {
+          _future = _load();
+        });
+      }
     }
-    title.dispose();
-    desc.dispose();
+    // Not disposed: the pop animation keeps the dialog's TextFields mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   Future<void> _delete() async {
@@ -364,8 +402,11 @@ class _WorkspacePageState extends State<WorkspacePage> {
       ),
     );
     if (ok == true && mounted) {
-      await context.read<Session>().api.deleteWorkspace(widget.id);
-      if (context.mounted) context.go('/dashboard');
+      final done = await guardWrite(
+        context,
+        () => context.read<Session>().api.deleteWorkspace(widget.id),
+      );
+      if (done && mounted) context.go('/dashboard');
     }
   }
 }

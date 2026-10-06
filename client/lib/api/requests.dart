@@ -7,7 +7,12 @@ class ApiCall {
   final Map<String, dynamic>? body;
 }
 
-ApiCall patchWorkspace(String id, {required String title, required String description, String? coverUrl}) {
+ApiCall patchWorkspace(
+  String id, {
+  required String title,
+  required String description,
+  String? coverUrl,
+}) {
   return ApiCall('PATCH', '/workspaces/$id', {
     'title': title,
     'description': description,
@@ -18,7 +23,9 @@ ApiCall patchWorkspace(String id, {required String title, required String descri
 ApiCall deleteWorkspace(String id) => ApiCall('DELETE', '/workspaces/$id');
 
 ApiCall patchMemberRole(String workspaceId, String userId, String role) {
-  return ApiCall('PATCH', '/workspaces/$workspaceId/members/$userId', {'role': role});
+  return ApiCall('PATCH', '/workspaces/$workspaceId/members/$userId', {
+    'role': role,
+  });
 }
 
 ApiCall deleteMember(String workspaceId, String userId) {
@@ -36,7 +43,11 @@ ApiCall getIdea(String id) => ApiCall('GET', '/ideas/$id');
 ApiCall getConversation(String id) => ApiCall('GET', '/conversations/$id');
 
 ApiCall postPrdRevision(String id, {String? note}) {
-  return ApiCall('POST', '/prds/$id/revisions', note == null ? null : {'note': note});
+  return ApiCall(
+    'POST',
+    '/prds/$id/revisions',
+    note == null ? null : {'note': note},
+  );
 }
 
 ApiCall postRoadmapNode(String projectId, String title, {String? parentId}) {
@@ -67,10 +78,18 @@ ApiCall patchProjectUpdate(String updateId, String content) {
   return ApiCall('PATCH', '/updates/$updateId', {'content': content});
 }
 
-ApiCall deleteProjectUpdate(String updateId) => ApiCall('DELETE', '/updates/$updateId');
+ApiCall deleteProjectUpdate(String updateId) =>
+    ApiCall('DELETE', '/updates/$updateId');
 
-ApiCall patchRoadmapNode(String nodeId,
-    {String? title, String? description, String? status, String? deadline, String? acceptance, String? ownerId}) {
+ApiCall patchRoadmapNode(
+  String nodeId, {
+  String? title,
+  String? description,
+  String? status,
+  String? deadline,
+  String? acceptance,
+  String? ownerId,
+}) {
   return ApiCall('PATCH', '/roadmap/$nodeId', {
     if (title != null) 'title': title,
     if (description != null) 'description': description,
@@ -81,16 +100,22 @@ ApiCall patchRoadmapNode(String nodeId,
   });
 }
 
-ApiCall moveRoadmapNode(String nodeId, {String? parentId, required int position}) {
+ApiCall moveRoadmapNode(
+  String nodeId, {
+  String? parentId,
+  required int position,
+}) {
   return ApiCall('POST', '/roadmap/$nodeId/move', {
     'parentId': parentId,
     'position': position,
   });
 }
 
-ApiCall deleteRoadmapNode(String nodeId) => ApiCall('DELETE', '/roadmap/$nodeId');
+ApiCall deleteRoadmapNode(String nodeId) =>
+    ApiCall('DELETE', '/roadmap/$nodeId');
 
-ApiCall expandRoadmapNode(String nodeId) => ApiCall('POST', '/roadmap/$nodeId/expand');
+ApiCall expandRoadmapNode(String nodeId) =>
+    ApiCall('POST', '/roadmap/$nodeId/expand');
 
 ApiCall postPrdStatus(String id, String status) {
   return ApiCall('POST', '/prds/$id/status', {'status': status});

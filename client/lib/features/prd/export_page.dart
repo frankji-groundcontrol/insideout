@@ -30,7 +30,11 @@ class _ExportPageState extends State<ExportPage> {
       body = null;
     });
     try {
-      final text = await context.read<Session>().api.exportPrd(widget.prdId, format, audience: audience);
+      final text = await context.read<Session>().api.exportPrd(
+        widget.prdId,
+        format,
+        audience: audience,
+      );
       setState(() => body = text);
     } catch (e) {
       setState(() => error = e.toString());
@@ -51,7 +55,13 @@ class _ExportPageState extends State<ExportPage> {
               for (final option in prdExportFormats)
                 ButtonSegment(
                   value: option.query,
-                  label: Text(l10n.t(option.query == 'print' ? 'prd.exportPrint' : 'prd.exportMarkdown')),
+                  label: Text(
+                    l10n.t(
+                      option.query == 'print'
+                          ? 'prd.exportPrint'
+                          : 'prd.exportMarkdown',
+                    ),
+                  ),
                 ),
             ],
             selected: {format},
@@ -60,17 +70,31 @@ class _ExportPageState extends State<ExportPage> {
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: audience,
-            decoration: InputDecoration(labelText: l10n.t('prd.exportAudience')),
+            decoration: InputDecoration(
+              labelText: l10n.t('prd.exportAudience'),
+            ),
             items: [
-              DropdownMenuItem(value: null, child: Text(l10n.t('prd.exportFull'))),
-              for (final a in const ['decision', 'management', 'delivery', 'validation'])
+              DropdownMenuItem(
+                value: null,
+                child: Text(l10n.t('prd.exportFull')),
+              ),
+              for (final a in const [
+                'decision',
+                'management',
+                'delivery',
+                'validation',
+              ])
                 DropdownMenuItem(value: a, child: Text(a)),
             ],
             onChanged: (v) => setState(() => audience = v),
           ),
           const SizedBox(height: 12),
           FilledButton(onPressed: _run, child: Text(l10n.t('common.save'))),
-          if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(localizedError(error!, l10n.t))),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(localizedError(error!, l10n.t)),
+            ),
           if (body != null) ...[
             Padding(
               padding: const EdgeInsets.only(top: 16),
@@ -78,7 +102,11 @@ class _ExportPageState extends State<ExportPage> {
                 children: [
                   if (format == 'markdown')
                     FilledButton.tonal(
-                      onPressed: () => downloadTextFile('prd-${widget.prdId}.md', body!, mime: 'text/markdown'),
+                      onPressed: () => downloadTextFile(
+                        'prd-${widget.prdId}.md',
+                        body!,
+                        mime: 'text/markdown',
+                      ),
                       child: Text(l10n.t('common.download')),
                     )
                   else
@@ -88,7 +116,11 @@ class _ExportPageState extends State<ExportPage> {
                       // away, with a download fallback when tabs are blocked.
                       onPressed: () {
                         if (!openTextInNewTab(body!, mime: 'text/html')) {
-                          downloadTextFile('prd-${widget.prdId}.html', body!, mime: 'text/html');
+                          downloadTextFile(
+                            'prd-${widget.prdId}.html',
+                            body!,
+                            mime: 'text/html',
+                          );
                         }
                       },
                       child: Text(l10n.t('prd.exportPrint')),

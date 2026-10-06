@@ -23,16 +23,30 @@ void main() {
   });
 
   test('backoff codes and 429 collapse to throttled', () {
-    expect(key(ApiException('slow down', status: 429, code: 'APP_THROTTLE')), 'error.throttled');
-    expect(key(ApiException('circuit', status: 503, code: 'CIRCUIT_OPEN')), 'error.throttled');
-    expect(key(ApiException('anthropic', status: 429, code: 'ANTHROPIC_RATE_LIMIT')), 'error.throttled');
+    expect(
+      key(ApiException('slow down', status: 429, code: 'APP_THROTTLE')),
+      'error.throttled',
+    );
+    expect(
+      key(ApiException('circuit', status: 503, code: 'CIRCUIT_OPEN')),
+      'error.throttled',
+    );
+    expect(
+      key(ApiException('anthropic', status: 429, code: 'ANTHROPIC_RATE_LIMIT')),
+      'error.throttled',
+    );
     expect(key(ApiException('plain 429', status: 429)), 'error.throttled');
   });
 
   test('transport failures read as network, everything else as generic', () {
     expect(key(TimeoutException('t')), 'error.network');
     expect(
-      key(DioException(requestOptions: RequestOptions(), type: DioExceptionType.connectionTimeout)),
+      key(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.connectionTimeout,
+        ),
+      ),
       'error.network',
     );
     expect(key(StateError('untouched')), 'error.generic');

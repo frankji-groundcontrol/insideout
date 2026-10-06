@@ -7,6 +7,7 @@ import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../widgets/guarded_action.dart';
 
 class RevisionsPage extends StatefulWidget {
   const RevisionsPage({super.key, required this.prdId});
@@ -40,39 +41,74 @@ class _RevisionsPageState extends State<RevisionsPage> {
             context: context,
             builder: (ctx) => AlertDialog(
               title: Text(l10n.t('prd.snapshotRevision')),
-              content: TextField(controller: note, decoration: InputDecoration(labelText: l10n.t('prd.revisionNote'))),
+              content: TextField(
+                controller: note,
+                decoration: InputDecoration(
+                  labelText: l10n.t('prd.revisionNote'),
+                ),
+              ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.t('common.cancel'))),
-                FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.t('common.save'))),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: Text(l10n.t('common.cancel')),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: Text(l10n.t('common.save')),
+                ),
               ],
             ),
           );
-          if (ok == true && mounted) {
-            await context.read<Session>().api.createRevision(widget.prdId, note: note.text.trim().isEmpty ? null : note.text.trim());
-            setState(() {
-            _future = context.read<Session>().api.listRevisions(widget.prdId);
-          });
+          if (ok == true && context.mounted) {
+            final done = await guardWrite(
+              context,
+              () => context.read<Session>().api.createRevision(
+                widget.prdId,
+                note: note.text.trim().isEmpty ? null : note.text.trim(),
+              ),
+            );
+            if (done && context.mounted) {
+              setState(() {
+                _future = context.read<Session>().api.listRevisions(
+                  widget.prdId,
+                );
+              });
+            }
           }
-          note.dispose();
+          // Not disposed: the pop animation keeps the dialog's TextField
+          // mounted past this await, and the guard's SnackBar rebuilds the
+          // overlay — a disposed controller would throw. GC'd once the
+          // dialog unmounts.
         },
         child: const Icon(Icons.add),
       ),
       body: FutureBuilder(
         future: _future,
         builder: (context, snap) {
-          if (!snap.hasData) return Center(child: snap.hasError ? Text(localizedError(snap.error!, l10n.t)) : const CircularProgressIndicator());
+          if (!snap.hasData)
+            return Center(
+              child: snap.hasError
+                  ? Text(localizedError(snap.error!, l10n.t))
+                  : const CircularProgressIndicator(),
+            );
           if (snap.data!.isEmpty) {
             return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(l10n.t('prd.emptyRevisions')),
-                  TextButton(onPressed: () => context.go('/prd/${widget.prdId}'), child: Text(l10n.t('prd.backToPrd'))),
+                  TextButton(
+                    onPressed: () => context.go('/prd/${widget.prdId}'),
+                    child: Text(l10n.t('prd.backToPrd')),
+                  ),
                 ],
               ),
             );
           }
-          final selected = snap.data!.cast<PrdRevision?>().firstWhere((r) => r!.id == selectedId, orElse: () => snap.data!.first)!;
+          final selected = snap.data!.cast<PrdRevision?>().firstWhere(
+            (r) => r!.id == selectedId,
+            orElse: () => snap.data!.first,
+          )!;
           return Row(
             children: [
               SizedBox(
@@ -82,8 +118,12 @@ class _RevisionsPageState extends State<RevisionsPage> {
                       .map(
                         (r) => ListTile(
                           selected: r.id == selected.id,
-                          title: Text(l10n.t('prd.revisionN', {'n': r.revision})),
-                          subtitle: Text(r.note?.isNotEmpty == true ? r.note! : r.createdAt),
+                          title: Text(
+                            l10n.t('prd.revisionN', {'n': r.revision}),
+                          ),
+                          subtitle: Text(
+                            r.note?.isNotEmpty == true ? r.note! : r.createdAt,
+                          ),
                           onTap: () => setState(() => selectedId = r.id),
                         ),
                       )
@@ -101,9 +141,16 @@ class _RevisionsPageState extends State<RevisionsPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(l10n.t('prd.sections.$key'), style: Theme.of(context).textTheme.titleSmall),
+                            Text(
+                              l10n.t('prd.sections.$key'),
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
                             const SizedBox(height: 4),
-                            Text(selected.sections[key]?.isNotEmpty == true ? selected.sections[key]! : '—'),
+                            Text(
+                              selected.sections[key]?.isNotEmpty == true
+                                  ? selected.sections[key]!
+                                  : '—',
+                            ),
                           ],
                         ),
                       ),

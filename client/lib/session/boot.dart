@@ -19,7 +19,7 @@ class BootController extends ChangeNotifier {
   }
 }
 
-/// Text-free boot mark: a cobalt disc + spinner. Appearance (locale) may
+/// Text-free boot mark: a cobalt block + spinner. Appearance (locale) may
 /// not be hydrated yet, and on web the CJK fonts the gate exists for are
 /// not loaded yet.
 class BootLoadingPage extends StatelessWidget {
@@ -38,7 +38,7 @@ class BootLoadingPage extends StatelessWidget {
               key: const Key('boot-mark'),
               width: 64,
               height: 64,
-              decoration: const BoxDecoration(color: Cobalt.hue500, shape: BoxShape.circle),
+              decoration: const BoxDecoration(color: Cobalt.hue500),
             ),
             const SizedBox(height: 28),
             const SizedBox(

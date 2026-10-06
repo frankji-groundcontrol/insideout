@@ -69,14 +69,27 @@ class Cobalt {
   static const darkGround = Color(0xFF0B0D12);
   static const darkType = Color(0xFFF7F8FA);
 
-  static const radiusControl = 12.0;
-  static const radiusCard = 20.0;
-  static const radiusHero = 28.0;
-  static const radiusPill = 999.0;
+  /// Decree radius — Cobalt-Neo squares every corner. Names kept; the value
+  /// is pinned to 0 (see docs/plans/2026-10-06-frontend-cobalt-neo.md).
+  static const radiusControl = 0.0;
+  static const radiusCard = 0.0;
+  static const radiusHero = 0.0;
+  static const radiusPill = 0.0;
+
+  /// Border widths — 2px container blocks, 1px hairline dividers.
+  static const borderContainer = 2.0;
+  static const borderDivider = 1.0;
+
+  /// Press-the-block motion: rest sits on the full cast shadow, hover shifts
+  /// (2,2) with the small cast, active shifts (4,4) with the shadow gone.
+  static const pressDuration = Duration(milliseconds: 100);
+  static const hoverOffset = Offset(2, 2);
+  static const activeOffset = Offset(4, 4);
 
   /// Web Latin UI face. CJK falls back to [sansCjk] so zh-CN never tofu.
   static const sansWeb = 'Archivo';
   static const sansCjkWeb = 'Noto Sans SC';
+
   /// Coach-only serif. Latin + CJK pair.
   static const serifWeb = 'Source Serif 4';
   static const serifCjkWeb = 'Noto Serif SC';
@@ -94,7 +107,8 @@ class Cobalt {
   static List<String> get serifFallback => [serifCjk];
 
   /// Ideas wall display: clamp(64px, 10vw, 320px) on wide web.
-  static double ideasDisplaySize(double width) => (width * 0.10).clamp(64.0, 320.0);
+  static double ideasDisplaySize(double width) =>
+      (width * 0.10).clamp(64.0, 320.0);
 
   static Cobalt of(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark ? dark : light;
@@ -106,8 +120,8 @@ class Cobalt {
     surfaceBase: lightGround,
     surfaceRaised: Color(0xFFFFFFFF),
     surfaceSunken: hue50,
-    strokeSubtle: hue200,
-    strokeStrong: Color(0xFF9AA7E8),
+    strokeSubtle: Color(0xFF7B8CE0),
+    strokeStrong: Color(0xFF5A6FE0),
     fgPrimary: lightInk,
     fgSecondary: Color(0xFF3A3F4A),
     fgMuted: Color(0xFF6B7280),
@@ -117,7 +131,7 @@ class Cobalt {
     btn: hue500,
     btnFg: Color(0xFFFFFFFF),
     statusNeutralBg: hue50,
-    statusNeutralFg: Color(0xFF3A3F4A),
+    statusNeutralFg: hue700,
     statusInfoBg: hue50,
     statusInfoFg: hue700,
     statusWarnBg: hue200,
@@ -131,10 +145,10 @@ class Cobalt {
     brandHover: hue700,
     brandSubtle: hue950,
     surfaceBase: darkGround,
-    surfaceRaised: Color(0xFF141820),
-    surfaceSunken: hue950,
-    strokeSubtle: Color(0xFF2A3358),
-    strokeStrong: Color(0xFF3B4A7A),
+    surfaceRaised: Color(0xFF14171D),
+    surfaceSunken: Color(0xFF16181E),
+    strokeSubtle: Color(0xFF646A78),
+    strokeStrong: Color(0xFF788098),
     fgPrimary: darkType,
     fgSecondary: Color(0xFFC5CAD3),
     fgMuted: Color(0xFF8B93A1),

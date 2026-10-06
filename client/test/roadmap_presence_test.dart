@@ -13,36 +13,39 @@ import 'package:provider/provider.dart';
 
 class _FakeApi extends ApiClient {
   _FakeApi()
-      : super(
-          baseUrl: 'http://127.0.0.1:9/api/v1',
-          readAccess: () async => null,
-          readRefresh: () async => null,
-          writeTokens: (a, r) async {},
-          clearTokens: () async {},
-        );
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
 
   int streams = 0;
   final _hold = Completer<void>();
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [
-        RoadmapNode.fromJson({
-          'id': 'n1',
-          'projectId': projectId,
-          'title': 'Ship it',
-          'description': '',
-          'status': 'in_progress',
-          'position': 0,
-        }),
-      ];
+    RoadmapNode.fromJson({
+      'id': 'n1',
+      'projectId': projectId,
+      'title': 'Ship it',
+      'description': '',
+      'status': 'in_progress',
+      'position': 0,
+    }),
+  ];
 
-	@override
-	Future<void> progressStream(String projectId, void Function(RoadmapProgress progress) onProgress) {
-		return _hold.future;
-	}
+  @override
+  Future<void> progressStream(
+    String projectId,
+    void Function(RoadmapProgress progress) onProgress,
+  ) {
+    return _hold.future;
+  }
 
-	@override
-	Future<void> presenceStream(
+  @override
+  Future<void> presenceStream(
     String projectId,
     String clientId,
     void Function(List<PresenceEntry> entries) onChange, {
@@ -53,14 +56,20 @@ class _FakeApi extends ApiClient {
       throw ApiException('presence failed', status: 500);
     }
     onChange([
-      PresenceEntry.fromJson({'sessionId': 'other', 'userId': 'u2', 'name': 'mover'}),
+      PresenceEntry.fromJson({
+        'sessionId': 'other',
+        'userId': 'u2',
+        'name': 'mover',
+      }),
     ]);
     await _hold.future; // stay "connected" without pending timers
   }
 }
 
 void main() {
-  testWidgets('roadmap presence reconnects after a stream drop', (tester) async {
+  testWidgets('roadmap presence reconnects after a stream drop', (
+    tester,
+  ) async {
     final session = Session();
     session.ready = true;
     final fake = _FakeApi();
@@ -70,7 +79,10 @@ void main() {
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US')),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
           ChangeNotifierProvider(create: (_) => LoopFocus()),
         ],
         child: const MaterialApp(home: RoadmapPage(projectId: 'p1')),
