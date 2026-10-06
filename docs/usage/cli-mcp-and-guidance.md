@@ -7,18 +7,33 @@ contract the web client uses.
 
 ## Setup
 
-From a checkout of this repository (needs Go 1.22+), the installer builds
-and installs both binaries into `~/.local/bin` (override with the first
-argument or `INSIDEOUT_INSTALL_DIR`) and adds that directory to PATH via
-your shell rc when missing — idempotent, safe to re-run:
+From a checkout of this repository (needs Go 1.25+, see
+`server/go.mod`), the installer builds and installs both binaries
+into `~/.local/bin` (override with the first argument or
+`INSIDEOUT_INSTALL_DIR`) and adds that directory to PATH via your
+shell rc when missing. The binaries call the hosted API unless
+`INSIDEOUT_API` is set. `./scripts/default-api.sh` prints the URL.
+The full guide is [installation.md](installation.md).
 
 ```bash
 ./scripts/install.sh
-export INSIDEOUT_API=https://<your-domain>/api/v1   # your deployment's domain, or your local server
-export INSIDEOUT_TOKEN="$(insideout login you@example.com)"   # prints only the token
-insideout whoami
 ```
 
+Then `insideout setup` is the front door — an interactive form on a
+terminal (remote sign-in or a local PostgreSQL server, secrets
+hidden as you type, the result saved to a 0600 config file the CLI
+reads), or flags for agents:
+
+```bash
+insideout setup                       # interactive (needs a terminal)
+insideout setup --hosted              # confirm the hosted path
+insideout setup --local --postgres bundled|own [--no-start]
+insideout setup --check [--llm]       # re-run the health probes now
+insideout whoami                      # authentication required until sign-in
+```
+
+`./scripts/setup.sh` remains the pre-binary fallback (before
+`install.sh` has run) and covers the same local-server ground.
 Manual fallback (the CLI ships inside the server binary):
 
 ```bash
@@ -27,10 +42,10 @@ go build -o /usr/local/bin/insideout-mcp ./cmd/insideout-mcp
 ```
 
 To register the MCP server with an agent, `scripts/mcp-config.sh` emits
-the standard `mcpServers` JSON (token from `INSIDEOUT_TOKEN`, else a
-paste-me placeholder; `-q` for JSON only) plus placement hints for common
-clients — the same snippet ports across Claude Code, Cursor, and anything
-speaking the standard shape.
+the standard `mcpServers` JSON (`INSIDEOUT_TOKEN` included only when
+that variable is already set; `-q` for JSON only) plus placement hints
+for common clients — the same snippet ports across Claude Code, Cursor,
+and anything speaking the standard shape.
 
 `login` prompts for the password on stderr; the token is the only
 stdout. Without `INSIDEOUT_TOKEN`, read verbs answer 401 with a hint.

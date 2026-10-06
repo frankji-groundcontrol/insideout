@@ -4,6 +4,8 @@ How to run InsideOut — as a developer or an operator.
 
 | Doc | Audience | Covers |
 |-----|----------|--------|
+| [installation.md](installation.md) | Users + agents | Hosted install with no environment variables, and the guided PostgreSQL setup (`scripts/setup.sh`) for a server on this machine |
+| [../../skills/insideout-setup/](../../skills/insideout-setup/SKILL.md) | Agents | The installation skill: bare macOS/Ubuntu machine → verified install, module-by-module steps, key store, host record |
 | [local-development.md](local-development.md) | Developers | Prerequisites, env setup, database setup, running server + frontend, tests |
 | [../client/README.md](../../client/README.md) | Developers | Flutter client (`client/`): web / iOS / Android against the Go API |
 | [environment.md](environment.md) | Everyone | Environment variable reference: required/optional vars, defaults, the .env→process bridges (dev.sh, docker-compose), offline AI mode |

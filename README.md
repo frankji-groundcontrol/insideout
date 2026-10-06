@@ -40,22 +40,51 @@ Three surfaces, one `/api/v1` contract:
 
 ### CLI 与 MCP（从源码构建 / from source）
 
-在一份仓库检出里执行（需要 Go 1.22+）：
+在一份仓库检出里执行（需要 Go 1.25+）：
 
-From a checkout of this repository (needs Go 1.22+):
+From a checkout of this repository (needs Go 1.25+):
 
 ```bash
 ./scripts/install.sh
 ```
 
-默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
+默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。装好后 CLI 与 MCP 直接调用托管 API，不必设置环境变量；`./scripts/default-api.sh` 打印该地址。自建服务（含 PostgreSQL）用 `./scripts/setup.sh`，完整步骤见 [docs/usage/installation.md](docs/usage/installation.md)。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
 
 Installs both binaries into `~/.local/bin` by default (override with the
 first argument or `INSIDEOUT_INSTALL_DIR`) and, when that directory is not
 on PATH, appends one marked export line to your shell rc (zsh →
 `~/.zshrc`, bash → `~/.bashrc`, otherwise `~/.profile`). Idempotent.
+The CLI and MCP server then call the hosted API with no environment
+variables. `./scripts/default-api.sh` prints that URL. Sign in with
+`insideout login <email>`. A server on this machine, including
+PostgreSQL, is `./scripts/setup.sh`. The full walk-through is
+[docs/usage/installation.md](docs/usage/installation.md).
 Manual fallback without the script: `cd server && go build -o
 /usr/local/bin/insideout ./cmd/insideout` (same for `insideout-mcp`).
+
+装好后，一条命令就是安装向导：交互式表单选择远程（托管/自建，密码、邮箱验证码或
+magic link 登录，密钥隐藏输入）或本地（PostgreSQL 引导配置、迁移、健康探测），
+结果存入 0600 配置文件；代理用标志驱动同一入口：
+
+Once installed, one command is the wizard: an interactive form picks
+remote (hosted/self-hosted; password, emailed code, or magic-link
+sign-in, secrets hidden) or local (guided PostgreSQL, migrations,
+health probes), saving the result to a 0600 config file — agents
+drive the same door with flags:
+
+```bash
+insideout setup                       # 交互式 / interactive
+insideout setup --local --postgres bundled   # 本地服务 / own server
+insideout setup --check               # 健康探测 / re-run health probes
+```
+
+从零开始的新机器（macOS / Ubuntu）？让你的编码代理加载安装技能，按模块装齐
+工具链、配置环境并留下安装记录：
+
+Starting from a bare machine (macOS / Ubuntu)? Have your coding agent
+load the installation skill — module-by-module toolchain install,
+environment setup, and a written installation record:
+[`skills/insideout-setup/SKILL.md`](skills/insideout-setup/SKILL.md).
 
 把 MCP 服务器注册进你的代理（同一段 JSON 适用于 Claude Code、Cursor 等标准 `mcpServers` 配置）：
 
@@ -111,10 +140,8 @@ CLI 一瞥（令牌只进环境变量，不进对话记录）：
 A CLI taste (the token lives in your environment, never in a transcript):
 
 ```bash
-export INSIDEOUT_API=https://<your-domain>/api/v1
-export INSIDEOUT_TOKEN="$(insideout login you@example.com)"
-
-insideout whoami                       # 我是谁 / who am I
+insideout whoami                       # hosted API; no INSIDEOUT_API required
+insideout login you@example.com        # password on stdin, token on stdout
 insideout workspaces                   # 工作区列表 / list workspaces
 insideout ideas <ws-id>                # 想法箱 / the inbox
 insideout prd update <prd-id> --section goals="Ship the MVP"
@@ -143,6 +170,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 | 产品定义 / Product definition | [`PRODUCT.md`](PRODUCT.md) |
 | 文档总地图 / Doc map | [`docs/index.md`](docs/index.md) |
 | CLI / MCP / GitHub 证据环 / CLI, MCP, evidence loop | [`docs/usage/cli-mcp-and-guidance.md`](docs/usage/cli-mcp-and-guidance.md) |
+| 安装 / Installation | [`docs/usage/installation.md`](docs/usage/installation.md) |
 | 本地开发 / Local development | [`docs/usage/local-development.md`](docs/usage/local-development.md) |
 | 环境变量 / Environment variables | [`docs/usage/environment.md`](docs/usage/environment.md) · [`docs/SETENV.md`](docs/SETENV.md) |
 | 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |

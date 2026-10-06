@@ -89,6 +89,21 @@ records continue the numbering (next: BUG-021).
 
 ## Other open issues
 
+- [2026-10-07 — Own-URL fresh-database bootstrap: setup does not check or provision the two roles](2026-10-07-own-url-fresh-db-bootstrap.md)
+  — fresh own-URL databases fail mid-migration
+  (`insideout_owner` missing, or recursion without BYPASSRLS);
+  proposal: probe + offer provisioning per the bundled init script.
+
+- [2026-10-07 — Env-catalog truth duplicated (Go + Python readers)](2026-10-07-env-catalog-go-python-duplication.md)
+  — the Go setup TUI adds a second `.env.example` reader beside the
+  Python one. Form-rule tests guard both now; consolidation (single
+  home or CI parity test) is decided after the setup slices land.
+
+- [2026-10-06 — Install skill's Ubuntu path has never run on real Ubuntu](2026-10-06-install-skill-ubuntu-unverified.md)
+  — `skills/insideout-setup/` is macOS-proven; every Ubuntu command is
+  check-then-choose but unexecuted on real Ubuntu hardware. Resolution:
+  the next Ubuntu onboarding runs the skill end-to-end and records it.
+
 - [2026-10-06 — W3-N2 minified console errors](2026-10-06-wave3-minified-console.md)
   — three identical uncaught `Error`s in the Wave 3 390px dock tap
   pass; stack is minified (`main.dart.js:85738`); no visible UI

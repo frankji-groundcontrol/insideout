@@ -14,26 +14,37 @@ CLI/MCP surface. This skill is the contract for the second mode.
 
 ## Setup
 
-From a checkout of this repository (needs Go 1.22+):
+From a checkout of this repository (needs Go 1.25+, see
+`server/go.mod`). Setting up a machine from scratch — installing the
+toolchains, choosing hosted vs own server, the key store, and the
+installation record — is its own skill:
+[skills/insideout-setup/SKILL.md](skills/insideout-setup/SKILL.md).
 
 ```bash
-./scripts/install.sh          # builds + installs both binaries into ~/.local/bin
-                              # (override: first arg or INSIDEOUT_INSTALL_DIR),
-                              # and adds that dir to PATH via the shell rc
-export INSIDEOUT_API=https://<your-domain>/api/v1   # your deployment's domain
-export INSIDEOUT_TOKEN="$(insideout login you@example.com)"   # or --code / --magic
-insideout whoami
+./scripts/install.sh          # binaries into ~/.local/bin; hosted API, no env vars
+insideout setup               # the front door: interactive remote/local, or flags —
+                              #   --hosted | --local --postgres bundled|own [--no-start] | --check
+insideout whoami              # authentication required until you sign in
 ```
 
-To register the MCP server in your own (or the user's) agent config, emit
-the standard snippet and merge it — the same JSON ports across MCP clients
-(Claude Code `.mcp.json`, Cursor `~/.cursor/mcp.json`, other
-`mcpServers` blocks):
+`insideout setup` signs in (password / emailed code / magic link,
+hidden input) and saves the token to a 0600 config file every client
+surface reads (env vars still win); `--local` writes `.env`, migrates,
+and can boot the server; `--check` re-runs the health probes.
+
+A server on this machine is `./scripts/setup.sh --local` (bundled
+Docker Postgres, or your own URL on stdin). Then set
+`INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI keeps calling
+the hosted API. Full steps, including the questions an agent should
+ask: [docs/usage/installation.md](docs/usage/installation.md).
+
+To register the MCP server, emit the snippet and merge it. With no
+token the `INSIDEOUT_TOKEN` field is omitted; sign in with
+`insideout login` or the `auth_*` tools:
 
 ```bash
-./scripts/mcp-config.sh                    # prints hints + JSON (token from
-                                           # INSIDEOUT_TOKEN, else a placeholder)
-./scripts/mcp-config.sh -q --api "$INSIDEOUT_API"   # JSON only
+./scripts/mcp-config.sh
+./scripts/mcp-config.sh -q
 ```
 
 Manual fallback (no script): `cd server && go build -o /usr/local/bin/insideout

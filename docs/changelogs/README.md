@@ -15,6 +15,43 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-07 — Setup TUI: interactive local branch wired](2026-10-07-setup-tui-interactive-local.md)
+  — the form's local choice now runs the slice-2 assembly
+  (LocalSetup join hook; flow stays pure); 25 pkgs green.
+- [2026-10-07 — Setup TUI slice 3: `--check` + docs teach the front door](2026-10-07-setup-tui-slice-3.md)
+  — offline-safe probe re-verification (API/DB/GitHub/LLM, `--llm`
+  live opt-in); installation.md, CLI reference, install skill,
+  README, SKILL all teach `insideout setup`. Live: api ok · db ok.
+- [2026-10-07 — Setup TUI slice 2: local mode assembled and live-exercised](2026-10-07-setup-tui-slice-2.md)
+  — `setup --local` end-to-end (env write, compose, pgx probe,
+  in-process migrate, boot offer, summary gate); 23 migrations live
+  on a scratch PostgreSQL 18, `/healthz` 200; 25 pkgs green.
+- [2026-10-07 — Setup TUI slice 1: setup subcommand via parallel workflow + join](2026-10-07-setup-tui-slice-1.md)
+  — slots A–E (clientconfig, flow, ui, catalog, envwrite, probe,
+  hidden prompts) + `cli_setup.go` join; 25 packages green, hosted
+  401 live, binary 19,760,802 bytes. Local mode (slice 2) next.
+- [2026-10-07 — mcp-config.sh reads the setup config file](2026-10-07-mcp-config-config-file.md)
+  — early join item: flags > env > config file > hosted default;
+  verified with five live precedence cases. Behavior unchanged
+  without a config file.
+- [2026-10-07 — Setup TUI plan: binding parallel-workflows strategy](2026-10-07-setup-tui-parallel-workflows.md)
+  — six disjoint slots after a lone deps commit, join points and
+  shared-docs discipline named; serial pass explicitly rejected.
+- [2026-10-07 — Setup TUI standardized on Go (plan revision)](2026-10-07-setup-tui-standardizes-on-go.md)
+  — user-directed language call: `insideout setup` subcommand with
+  bubbletea/huh, config persistence in slice 1, catalog ported with a
+  consolidation issue; Python tooling untouched and green.
+- [2026-10-07 — Setup TUI plan opened](2026-10-07-setup-tui-plan.md)
+  — planning only: the guided two-mode install experience (remote
+  URL+login / local env+probes) designed around existing pieces;
+  engineering review gates slice 1.
+- [2026-10-06 — Install skill for agent-guided from-scratch setup](2026-10-06-install-skill.md)
+  — `skills/insideout-setup/` ships the macOS/Ubuntu installer flow
+  (modules, paths, key store, host record); pointers wired from
+  SKILL/README/doc map/usage. Docs + skill files only.
+- [2026-10-06 — Install calls the hosted API](2026-10-06-install-hosted-default.md)
+  — CLI and MCP default to the hosted API; `setup.sh` guides a local
+  PostgreSQL server. Not deployed.
 - [2026-10-06 — Cobalt-Neo remediation closed](2026-10-06-frontend-cobalt-neo.md)
   — waves 4–7 landed in the worktree (guarded writes, 75s coach idle
   timeout, minimap shape channel, dock and auth geometry tests, CI

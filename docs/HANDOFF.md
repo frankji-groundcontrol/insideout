@@ -7,6 +7,40 @@ Resume here. The authoritative multi-task board is
 
 ## What to do next
 
+**Setup TUI: done and committed locally (2026-10-07).**
+`insideout setup` is the complete front door — interactive remote
+AND local, flag-driven agents, `--check [--llm]`, docs everywhere.
+All gates closed: 25 pkgs + batteries 47+37 green, hosted 401 live,
+scratch PostgreSQL 18 live (31 migrations, `/healthz` 200), and
+real-TTY walks of both branches recorded
+([practice](practices/2026-10-07-live-tty-walk-insideout-setup.md)
+— it caught and fixed one real bug). The bundled-Docker gate was
+**closed by acceptance** (no Docker on this host; the own-URL
+scratch run stands in, bundled lane unit-covered). Landed as
+per-task local commits (deps → hosted-default → install skill →
+slots → join/local/check → docs). Optional slice 4 (release
+pipeline) stays behind its own gate
+([plan](plans/2026-10-07-setup-tui.md),
+[s1](changelogs/2026-10-07-setup-tui-slice-1.md),
+[s2](changelogs/2026-10-07-setup-tui-slice-2.md),
+[s3](changelogs/2026-10-07-setup-tui-slice-3.md),
+[wire](changelogs/2026-10-07-setup-tui-interactive-local.md));
+[issue](issues/2026-10-07-own-url-fresh-db-bootstrap.md) tracks
+own-URL role provisioning.
+
+**The install skill ships in the repo (2026-10-06).** A bare macOS or
+Ubuntu machine → verified install is agent-guided by
+[`skills/insideout-setup/`](../skills/insideout-setup/SKILL.md)
+(macOS-proven; Ubuntu path not yet run on real hardware —
+[issue](issues/2026-10-06-install-skill-ubuntu-unverified.md),
+[changelog](changelogs/2026-10-06-install-skill.md)).
+
+**Install calls the hosted API (2026-10-06).** A clean `insideout whoami`
+reaches that API and returns unauthorized until sign-in. Own-server
+setup is `./scripts/setup.sh`
+([plan](plans/2026-10-06-install-hosted-default/2026-10-06-install-hosted-default.md),
+[changelog](changelogs/2026-10-06-install-hosted-default.md)).
+
 **Cobalt-Neo, all seven waves, finished in the worktree 2026-10-06**
 ([plan](plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md),
 [changelog](changelogs/2026-10-06-frontend-cobalt-neo.md)).
@@ -131,8 +165,11 @@ The PRODUCT.md version-first slice stays on the board as P2.
 
 ## Worktree to preserve
 
-Both machines and origin were synced at the last `[checkpoint]` commit; the
-worktree is clean. Do not revert unrelated edits.
+HEAD is the setup-TUI per-task commit series on top of `9c572ce`
+(`main`). Still uncommitted: the breakout icon assets (client icons,
+manifest, design-system records and their index rows) — that slice
+stages separately — and `.grok/`, untracked before these slices. Do
+not revert unrelated edits. Do not use `git add .`.
 
 Exception (2026-08-24): closed — the email-auth slice (magic link +
 password reset + code login) is committed and deployed to Railway

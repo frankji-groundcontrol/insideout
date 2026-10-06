@@ -24,12 +24,16 @@ keeps its original bilingual text as a historical record).
 
 - [CLAUDE.md](../CLAUDE.md) — Claude Code router.
 - [AGENTS.md](../AGENTS.md) — Codex and general coding-agent contract.
+- [skills/insideout-setup/](../skills/insideout-setup/SKILL.md) — the
+  installation skill: any agent follows it to take a bare macOS or
+  Ubuntu machine to a verified install, module by module, and write
+  the host record.
 
 ## Records
 
 - [architecture/](architecture/index.md) — current system shape: backend,
   database and RLS, PRD Coach agent, frontend, deployment.
-- [usage/](usage/README.md) — local development and operator/deployment
+- [usage/](usage/README.md) — installation, local development, and operator/deployment
   guides.
 - [SETENV.md](SETENV.md) — the environment operating manual: create the file,
   choose each key, see and set everything (`env.sh edit`), propagate to the

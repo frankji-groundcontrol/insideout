@@ -6,6 +6,13 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-07 | [The own-URL path's hidden precondition: provisioned roles with owner BYPASSRLS](2026-10-07-own-url-role-provisioning-precondition.md) | [setup TUI slice 2](../changelogs/2026-10-07-setup-tui-slice-2.md) |
+| 2026-10-07 | [Parallel slots on a dirty worktree can revert unrelated uncommitted lines](2026-10-07-parallel-slots-dirty-worktree.md) | [setup TUI slice 1](../changelogs/2026-10-07-setup-tui-slice-1.md) |
+| 2026-10-07 | [A workflow gate must use absolute paths: world.run's cwd is not guaranteed to be the repo root](2026-10-07-workflow-gates-need-absolute-paths.md) | [setup TUI workflow](../changelogs/2026-10-07-setup-tui-parallel-workflows.md) |
+| 2026-10-07 | [x/term ReadPassword already consumes the trailing newline](2026-10-07-xterm-readpassword-consumes-newline.md) | [setup TUI workflow](../changelogs/2026-10-07-setup-tui-parallel-workflows.md) |
+| 2026-10-07 | [go mod tidy silently strips newly added but not-yet-imported deps](2026-10-07-go-mod-tidy-strips-unused-new-deps.md) | [setup TUI plan deps step](../plans/2026-10-07-setup-tui.md) |
+| 2026-10-06 | [Relative links are depth-sensitive: resolve them mechanically](2026-10-06-relative-links-are-depth-sensitive.md) | [install-skill changelog](../changelogs/2026-10-06-install-skill.md) |
+| 2026-10-06 | [A localhost API default makes a finished install unusable](2026-10-06-localhost-default-makes-install-unusable.md) | [install hosted default](../changelogs/2026-10-06-install-hosted-default.md) |
 | 2026-10-06 | [A statement timestamp cannot order a batch](2026-10-06-a-statement-timestamp-cannot-order-a-batch.md) | [BUG-019](../issues/2026-10-06-bug-019-applied-proposal-reorders-items.md) |
 | 2026-10-06 | [A deadline must bound the await, not just the loop around it](2026-10-06-a-deadline-must-bound-the-await.md) | [BUG-016](../issues/2026-10-06-bug-016-web-boot-gate-hangs-on-font-load.md) |
 | 2026-10-06 | [A blank placeholder is only legal if metadata says so — declare the lane first](2026-10-06-blank-lane-legality-lives-in-metadata.md) | [config-companion-keys changelog](../changelogs/2026-10-06-config-companion-keys.md) |
