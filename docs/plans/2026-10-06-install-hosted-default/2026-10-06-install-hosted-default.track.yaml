@@ -1,0 +1,21 @@
+version: 2
+task: Install reaches the hosted API
+coordinator: grok
+history_file: 2026-10-06-install-hosted-default.track.history.jsonl
+main:
+  outcome: insideout whoami with a clean environment reaches the hosted API
+  owner: grok
+  status: complete
+  next_evidence: Re-run install.sh on machines that still have the localhost binary
+side_tracks: []
+updated_at: '2026-10-06T15:16:23Z'
+plan:
+- step: Share one hosted API default across CLI, MCP, and mcp-config.sh
+  owner: grok
+  status: completed
+- step: Guide local Postgres setup and write the installation guide
+  owner: grok
+  status: completed
+- step: Prove whoami reaches the hosted API
+  owner: grok
+  status: completed

@@ -61,8 +61,21 @@ else
 fi
 
 echo
-echo "Done. Next steps:"
-echo "  export INSIDEOUT_API=https://<your-domain>/api/v1    # or your local server"
+api_base=$("$repo_root/scripts/default-api.sh")
+echo "Done. The CLI and MCP server call the hosted API with no environment variables:"
+echo "  $api_base"
+echo
+echo "Sign in (password is read from the terminal; only the token is printed):"
 echo "  export INSIDEOUT_TOKEN=\"\$(insideout login you@example.com)\""
 echo "  insideout whoami"
-echo "  scripts/mcp-config.sh    # emit the MCP registration for your agent"
+echo
+echo "Own server, including PostgreSQL: ./scripts/setup.sh"
+echo "Full guide: docs/usage/installation.md"
+echo "MCP registration: ./scripts/mcp-config.sh"
+if [ -t 0 ]; then
+  printf 'Set up your own server on this machine now? [y/N] '
+  read -r answer
+  case "$answer" in
+    y|Y|yes|YES) exec "$repo_root/scripts/setup.sh" --local ;;
+  esac
+fi

@@ -14,13 +14,12 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/mcpserver"
 )
 
-const defaultAPIBase = "http://127.0.0.1:8080/api/v1"
-
 func main() {
-	api := flag.String("api", envOr("INSIDEOUT_API", defaultAPIBase), "API base URL")
+	api := flag.String("api", envOr("INSIDEOUT_API", apiclient.DefaultBase), "API base URL")
 	flag.Parse()
 
 	if err := server.ServeStdio(mcpserver.Build(*api)); err != nil {
