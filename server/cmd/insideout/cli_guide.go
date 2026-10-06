@@ -21,7 +21,7 @@ func runGuideCommand(args []string, api string) (bool, int) {
 		return true, 2
 	}
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 	g, err := c.Guide(fs.Args()[0])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)

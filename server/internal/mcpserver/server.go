@@ -13,6 +13,7 @@ import (
 	"github.com/mark3labs/mcp-go/server"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
+	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
 // Build returns the MCP server for the given API base. Configure with
@@ -44,14 +45,25 @@ var session struct {
 }
 
 // sessionToken returns the in-process login token, falling back to
-// INSIDEOUT_TOKEN.
+// INSIDEOUT_TOKEN, then to the config file `insideout setup` writes —
+// the same precedence every client surface resolves through
+// internal/clientconfig (docs/plans/2026-10-07-setup-tui.md).
 func sessionToken() string {
 	session.Lock()
-	defer session.Unlock()
-	if session.token != "" {
-		return session.token
+	inProcess := session.token
+	session.Unlock()
+	if inProcess != "" {
+		return inProcess
 	}
-	return os.Getenv("INSIDEOUT_TOKEN")
+	if v := os.Getenv("INSIDEOUT_TOKEN"); v != "" {
+		return v
+	}
+	if path, err := clientconfig.DefaultPath(); err == nil {
+		if cfg, err := clientconfig.Load(path); err == nil {
+			return cfg.Token
+		}
+	}
+	return ""
 }
 
 func setSessionToken(tok string) {

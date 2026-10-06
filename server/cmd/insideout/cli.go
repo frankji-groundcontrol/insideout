@@ -16,7 +16,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-const defaultAPIBase = "http://127.0.0.1:8080/api/v1"
+const defaultAPIBase = apiclient.DefaultBase
 
 // runClientCommand handles login/whoami/workspaces/projects/prd and
 // reports whether the argument was a client command (already executed;
@@ -29,7 +29,7 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 
 	// CRUD-completion sub-verbs piggyback on the existing read verbs
 	// (idea/prd/workspaces/projects) and add ideas/evidence.
-	apiBase := envOr("INSIDEOUT_API", defaultAPIBase)
+	apiBase := clientAPIBase()
 	if len(rest) > 0 {
 		switch cmd + " " + rest[0] {
 		case "idea update", "idea delete", "prd update", "workspaces create", "projects create":
@@ -37,41 +37,43 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		}
 	}
 	switch cmd {
+	case "setup":
+		return runSetupCommand(rest)
 	case "health":
 		// Container probe: no API client, no flags — see cli_health.go.
 		return true, runHealthCommand()
 	case "ideas", "evidence", "join":
 		return runCrudCommand(cmd, rest, apiBase)
 	case "roadmap":
-		return runRoadmapCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runRoadmapCommand(rest, clientAPIBase())
 	case "build", "expand", "build-confirm", "expand-confirm":
-		return runAgentCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runAgentCommand(cmd, rest, clientAPIBase())
 	case "repo", "sync":
-		return runGithubCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runGithubCommand(cmd, rest, clientAPIBase())
 	case "guide":
-		return runGuideCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runGuideCommand(rest, clientAPIBase())
 	case "commit", "versions", "readiness", "view", "agent-context", "checkpoint", "propose", "revisions", "snapshot":
-		return runVersionCommands(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runVersionCommands(cmd, rest, clientAPIBase())
 	case "presence":
-		return runRoadmapCommand(append([]string{"presence"}, rest...), envOr("INSIDEOUT_API", defaultAPIBase))
+		return runRoadmapCommand(append([]string{"presence"}, rest...), clientAPIBase())
 	case "idea":
-		return runIdeaCommand(rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runIdeaCommand(rest, clientAPIBase())
 	case "login", "register", "forgot-password", "reset-password":
-		return runAuthCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runAuthCommand(cmd, rest, clientAPIBase())
 	case "invite", "invites", "signup-mode":
-		return runAdminCommand(cmd, rest, envOr("INSIDEOUT_API", defaultAPIBase))
+		return runAdminCommand(cmd, rest, clientAPIBase())
 	case "whoami", "workspaces", "projects", "prd":
 	default:
 		return false, 0
 	}
 
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	api := fs.String("api", envOr("INSIDEOUT_API", defaultAPIBase), "API base URL")
+	api := fs.String("api", clientAPIBase(), "API base URL")
 	if err := fs.Parse(rest); err != nil {
 		return true, 2
 	}
 	c := apiclient.New(*api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 
 	switch cmd {
 	case "whoami":
@@ -98,7 +100,10 @@ func credentials(args []string) (string, string, error) {
 	if len(args) != 1 {
 		return "", "", fmt.Errorf("usage: insideout login <email>  (password is read from stdin)")
 	}
-	pw := prompt("password: ")
+	pw, err := readSecret("password: ")
+	if err != nil {
+		return "", "", err
+	}
 	if pw == "" {
 		return "", "", fmt.Errorf("empty password")
 	}

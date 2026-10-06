@@ -25,7 +25,7 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 	}
 	sub, rest := args[0], args[1:]
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 
 	switch sub {
 	case "progress":
@@ -156,7 +156,7 @@ func runAgentCommand(cmd string, args []string, api string) (bool, int) {
 		return true, 2
 	}
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 	switch cmd {
 	case "build":
 		return printJSON(c.BuildFromPrd(fs.Args()[0]))
@@ -178,7 +178,7 @@ func runGithubCommand(cmd string, args []string, api string) (bool, int) {
 		return true, 2
 	}
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 	switch cmd {
 	case "repo":
 		if len(fs.Args()) != 3 || fs.Args()[0] != "set" {

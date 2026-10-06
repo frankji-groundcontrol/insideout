@@ -35,7 +35,7 @@ func runCrudCommand(cmd string, args []string, api string) (bool, int) {
 	}
 	positional := fs.Args()
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 
 	need := func(n int, usage string) bool {
 		if len(positional) != n {

@@ -19,7 +19,7 @@ func runAdminCommand(cmd string, args []string, api string) (bool, int) {
 		return true, 2
 	}
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 
 	switch cmd {
 	case "invite":

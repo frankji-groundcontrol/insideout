@@ -18,7 +18,7 @@ func runIdeaCommand(args []string, api string) (bool, int) {
 	}
 	sub, rest := args[0], args[1:]
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 
 	switch sub {
 	case "create":

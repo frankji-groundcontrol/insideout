@@ -13,7 +13,7 @@ import (
 
 func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 	c := apiclient.New(api)
-	c.SetToken(os.Getenv("INSIDEOUT_TOKEN"))
+	c.SetToken(clientToken())
 	if cmd == "revisions" {
 		fs := flag.NewFlagSet("revisions", flag.ContinueOnError)
 		applyAPIFlag(fs, &api)
