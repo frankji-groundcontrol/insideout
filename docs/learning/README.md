@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-07 | [A documented curl|bash URL is a release asset contract](2026-10-07-curlbash-url-is-a-release-asset.md) | [release pipeline](../changelogs/2026-10-07-release-pipeline.md) |
 | 2026-10-07 | [The own-URL path's hidden precondition: provisioned roles with owner BYPASSRLS](2026-10-07-own-url-role-provisioning-precondition.md) | [setup TUI slice 2](../changelogs/2026-10-07-setup-tui-slice-2.md) |
 | 2026-10-07 | [Parallel slots on a dirty worktree can revert unrelated uncommitted lines](2026-10-07-parallel-slots-dirty-worktree.md) | [setup TUI slice 1](../changelogs/2026-10-07-setup-tui-slice-1.md) |
 | 2026-10-07 | [A workflow gate must use absolute paths: world.run's cwd is not guaranteed to be the repo root](2026-10-07-workflow-gates-need-absolute-paths.md) | [setup TUI workflow](../changelogs/2026-10-07-setup-tui-parallel-workflows.md) |
