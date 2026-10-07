@@ -1,0 +1,67 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: release-${{ github.ref }}
+  # Publishing must not be cancelled mid-flight; a re-run of the same tag
+  # queues behind the in-progress one and gh upload --clobber repairs assets.
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: release (build + publish)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      - name: Build, tar, and checksum the four targets
+        run: |
+          set -euo pipefail
+          dist="$GITHUB_WORKSPACE/dist"
+          mkdir -p "$dist"
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64; do
+            os=${target%/*}
+            arch=${target#*/}
+            # CGO is off per build: the amd64-linux runner cannot
+            # cross-link cgo for the other three targets.
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
+              go build -o "build/$os-$arch/insideout" ./cmd/insideout
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
+              go build -o "build/$os-$arch/insideout-mcp" ./cmd/insideout-mcp
+            # Both binaries sit at the top level of the archive, where
+            # scripts/bootstrap.sh extracts them from.
+            tar -czf "$dist/insideout-$os-$arch.tar.gz" \
+              -C "build/$os-$arch" insideout insideout-mcp
+          done
+          (cd "$dist" && sha256sum insideout-*.tar.gz > checksums.txt)
+          # Ship the installer with the release so
+          # curl -fsSL .../releases/latest/download/bootstrap.sh | bash
+          # always fetches the bootstrap that matches these assets.
+          cp "$GITHUB_WORKSPACE/scripts/bootstrap.sh" "$dist"/
+          ls -l "$dist"
+      - name: Publish the GitHub release
+        run: |
+          set -euo pipefail
+          dist="$GITHUB_WORKSPACE/dist"
+          if gh release create "$GITHUB_REF_NAME" "$dist"/* \
+              --title "$GITHUB_REF_NAME" --generate-notes; then
+            echo "==> Created release $GITHUB_REF_NAME"
+          else
+            echo "==> Release $GITHUB_REF_NAME already exists; uploading assets over it"
+            gh release upload "$GITHUB_REF_NAME" "$dist"/* --clobber
+          fi

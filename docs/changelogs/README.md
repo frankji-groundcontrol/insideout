@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-07 — Release pipeline: prebuilt binaries + bootstrap one-liner](2026-10-07-release-pipeline.md)
+  — `v*` tag → four-target tarballs + checksums + `bootstrap.sh`
+  via gh; `curl | bash` installs sha256-verified binaries; all
+  workflow gates green, review clean; first real tag push is
+  user-owned.
 - [2026-10-07 — Setup TUI: live walks verified and the series landed](2026-10-07-setup-tui-landed.md)
   — PTY walks of both branches (remote: honest live rejection, no
   config write; local own-URL: exit 0, 31 migrations); walk-caught

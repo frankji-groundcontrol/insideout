@@ -38,6 +38,19 @@ Three surfaces, one `/api/v1` contract:
 
 ## 安装 / Install
 
+### CLI 与 MCP（预编译二进制 / prebuilt binaries）
+
+首个 `v*` 版本发布后，无需检出仓库与 Go 工具链，一条命令装好经
+sha256 校验的两个二进制（macOS/Ubuntu，amd64/arm64）：
+
+Once a `v*` release is tagged, one command installs both binaries,
+sha256-verified, with no checkout and no Go toolchain
+(macOS/Ubuntu, amd64/arm64):
+
+```bash
+curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
+```
+
 ### CLI 与 MCP（从源码构建 / from source）
 
 在一份仓库检出里执行（需要 Go 1.25+）：

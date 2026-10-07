@@ -12,6 +12,22 @@ Print the hosted API the binaries call:
 ./scripts/default-api.sh
 ```
 
+## Prebuilt binaries (once a release is tagged)
+
+No checkout, no Go toolchain — the bootstrap script downloads the
+right `insideout` + `insideout-mcp` for your OS and architecture
+(macOS/Ubuntu, amd64/arm64), verifies the sha256 checksums, and
+installs them the same way `install.sh` does:
+
+```bash
+curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
+# or from a checkout: scripts/bootstrap.sh [install-dir]
+```
+
+`INSIDEOUT_RELEASE_BASE` overrides the download base (self-hosted
+mirrors, testing). This path works from the first pushed `v*` tag —
+until then use the checkout paths below.
+
 ## Hosted service
 
 From a checkout of this repository (Go 1.25+, see `server/go.mod`):

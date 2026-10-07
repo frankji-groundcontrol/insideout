@@ -70,7 +70,12 @@ use it.) The scripts are run from the repo root throughout.
 
 Once `./scripts/install.sh` has built the binaries, the front door is
 `insideout setup` (interactive on a terminal; flags for you, the
-agent). The scripts below remain the pre-binary fallback.
+agent). The scripts below remain the pre-binary fallback. If a `v*`
+release already exists, `./scripts/bootstrap.sh` (or the
+`curl | bash` form in
+[installation.md](../../docs/usage/installation.md)) installs
+prebuilt checksum-verified binaries instead — same Step 2 checkout
+still needed for `--local` (migrations, compose, `.env.example`).
 
 **A. Hosted API** — from [installation.md](../../docs/usage/installation.md):
 

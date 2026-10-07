@@ -26,7 +26,13 @@ pipeline) stays behind its own gate
 [s3](changelogs/2026-10-07-setup-tui-slice-3.md),
 [wire](changelogs/2026-10-07-setup-tui-interactive-local.md));
 [issue](issues/2026-10-07-own-url-fresh-db-bootstrap.md) tracks
-own-URL role provisioning.
+own-URL role provisioning. **Slice 4 (release pipeline) done
+2026-10-07** ([changelog](changelogs/2026-10-07-release-pipeline.md)):
+pushing a `v*` tag now builds all four targets and publishes
+tarball+checksums+`bootstrap.sh`; `curl -fsSL
+<release-url>/bootstrap.sh | bash` installs checksum-verified
+binaries. All workflow gates green, review clean. The first real
+tag push + HTTPS download is the user-owned check.
 
 **The install skill ships in the repo (2026-10-06).** A bare macOS or
 Ubuntu machine → verified install is agent-guided by
