@@ -49,7 +49,18 @@ motion:
   activeOffset: "4px 4px"
 spacing:
   unit: "4px"
+  scale: "4 / 8 / 12 / 16 / 24 / 32 / 40"
+layout:
+  contentMaxWidth: "1120"
+  breakpoints: "600 / 900 / 1200"
 components:
+  heights:
+    buttonSm: "32"
+    buttonMd: "40"
+    buttonLg: "52"
+    field: "44"
+    fieldDense: "40"
+    modalMaxWidth: "512"
   button-primary:
     backgroundColor: "{colors.cobalt-500}"
     textColor: "#FFFFFF"
@@ -88,6 +99,9 @@ and theme wiring in
 [`client/lib/theme/cobalt_theme.dart`](client/lib/theme/cobalt_theme.dart);
 press motion in
 [`client/lib/widgets/pressable_block.dart`](client/lib/widgets/pressable_block.dart).
+The component layer — buttons, fields, the one modal chrome, chrome
+pieces, and read states — lives in `client/lib/theme/block_*.dart`
+(see [Block primitives](#block-primitives)).
 The signed-off token table and its verification record live in
 [`docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md`](docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md).
 
@@ -106,6 +120,13 @@ The signed-off token table and its verification record live in
 - **Motion is press-the-block, 100ms:** rest sits on `cast`; hover translates
   (2,2) and shrinks to `castSm`; active translates (4,4) with the shadow
   gone — the block presses into the page.
+- **Controls have fixed measured heights, border included:** buttons
+  32 / 40 / 52 (`sm` / `md` / `lg`), fields and selects 44, dense fields
+  40, the shared modal chrome caps at 512 wide.
+- **Spacing is the named 4px scale** (`space1`–`space10` = 4 / 8 / 12 / 16 /
+  24 / 32 / 40); breakpoints are 600 / 900 / 1200 (`bpNarrow` / `bpWide` /
+  `bpDesk`); signed-in read surfaces cap their content column at **1120**
+  (`contentMaxWidth`) on wide viewports.
 - Light ground `#F7F8FA` / ink `#0B0D12`. Dark ground `#0B0D12` / type `#F7F8FA`.
 - Dark surfaces are a **neutral ramp** (raised `#14171D`, sunken `#16181E`);
   cobalt-950 is demoted to `brandSubtle` and dark status-chip backgrounds —
@@ -142,7 +163,7 @@ Accent exceptions:
 
 | Item | Hex | Note |
 | --- | --- | --- |
-| Dock warn dot | `#FFD166` | Square 8×8 block; measured 3.53:1 on the cobalt dock (≥3:1 non-text pass; the plan's "≈7:1" estimate was wrong, value stands) |
+| Warn channel | `#FFD166` | Amber is the warning channel only: the dock warn dot (square 8×8 block; measured 3.53:1 on the cobalt dock — ≥3:1 non-text pass; the plan's "≈7:1" estimate was wrong, value stands) and warning-tone block chrome (`BlockBanner` strips, badges) in dark theme. On light grounds the warning tone darkens to cobalt-700, because pure amber cannot clear 3:1 against a pale surface. |
 | Cast shadow (dark) | `#05070A` | Solid ink |
 | Cast shadow (light) | `#26000000` | Black 15% |
 
@@ -152,7 +173,7 @@ a gray glow). The WCAG script asserts they are strictly darker than the
 ground instead (WCAG 1.4.11 exemption).
 
 No magenta, lime, orange, cream, or extra brand hues. Amber appears only as
-the dock warn dot.
+the warn channel.
 
 ## Typography
 
@@ -173,17 +194,56 @@ Squared blocks on a field. Home is an index block plus a giant numeral with
 workspace blocks beside it. Ideas is a type wall and poster blocks. PRD +
 Coach is a split desk. Commit is a centered fanned stack. Roadmap is Now /
 Next / Later shade bands that still hold item blocks. Signed-in chrome is a
-bottom dock. Locale and theme stay in the top-right cluster.
+bottom dock. Locale and theme stay in the top-right cluster. Signed-in read
+surfaces constrain their content column to 1120 (`contentMaxWidth`) on wide
+viewports instead of spanning the full window.
 
 ## Components
+
+### Block primitives
+
+The component layer lives in `client/lib/theme/` and is the mandated
+grammar for interactive surfaces — no stock Material dialogs, default-
+chrome buttons, floating-label fields, or round spinners:
+
+- [`block_button.dart`](client/lib/theme/block_button.dart) — `BlockButton`
+  (fixed outer heights 32 / 40 / 52 for `sm` / `md` / `lg`; variants
+  `primary`, `secondary`, `danger`, `ghost`) and `BlockChoice`, the
+  pressable pick-one selection block (brand fill + ink edge selected,
+  raised block unselected).
+- [`block_field.dart`](client/lib/theme/block_field.dart) — `BlockField`,
+  `BlockTextarea`, `BlockSelect`: label above (12, w600), raised
+  fixed-height box (44; dense 40), 2px border `strokeSubtle` at rest →
+  `brand` on focus → `fgDanger` on error, `helper` and error slots below.
+- [`block_modal.dart`](client/lib/theme/block_modal.dart) — `showBlockModal`
+  / `showBlockConfirm`: the one modal chrome (512 max width, header +
+  close block, 2px divider, scroll body, sunken footer bar).
+- [`block_chrome.dart`](client/lib/theme/block_chrome.dart) — `BlockBanner`
+  (4px tone strip), `BlockIconButton`, `BlockBadge`, `BlockTag`,
+  `BlockIconWell`, and the square `BlockLoader`.
+- [`block_state.dart`](client/lib/theme/block_state.dart) — `BlockEmpty` /
+  `BlockLoading` / `BlockError`; `BlockError` localizes through
+  `api/errors_l10n.dart` and offers a retry — never a raw error string.
+- [`block_form.dart`](client/lib/theme/block_form.dart) — `showBlockForm`
+  builds a labeled form dialog on the shared chrome.
 
 ### Buttons
 
 Primary is a cobalt block: 0 radius, 2px border, `cast` shadow, 100ms
-press-the-block (theme button styles supply the squared geometry, duration,
-and zero elevation; the translate choreography lives in `PressableBlock` for
-custom interactive blocks like the dock — Material's `ButtonStyle` cannot
-translate its shell). Hover/press color is cobalt-700. Focus is a cobalt ring.
+press-the-block. `BlockButton` implements the choreography directly — rest
+`cast` → hover `castSm` + translate (2,2) → active flush + translate (4,4)
+— because Material's `ButtonStyle` cannot translate its shell;
+`PressableBlock` supplies the same motion for custom interactive blocks
+like the dock, and the theme button styles keep the squared geometry,
+duration, and zero elevation for any Material button that survives.
+Primary and danger are bordered in ink (`lightInk`) in **both** themes —
+the hard ink edge against cobalt is the defining detail; danger is
+cobalt-700 fill, distinguished by weight, never by hue. Hover/press color
+is cobalt-700. Focus is a cobalt ring: `BlockFocus`
+(`client/lib/theme/block_focus.dart`) gives every interactive block Tab
+traversal and Enter/Space activation, and paints the 2px `brand` ring
+outside the block's own bounds so the fixed control heights never move.
+A disabled block is not wrapped, so it leaves focus traversal.
 
 ### Chips
 
@@ -220,6 +280,9 @@ informational is a block.
   `BorderRadius.circular`.
 - Do give new blocks a 2px border and a `cast` shadow, and new interactive
   blocks the press-the-block motion via `PressableBlock`.
+- Do build dialogs, buttons, fields, banners, and read states from the
+  `theme/block_*` primitives — never stock `AlertDialog`, floating-label
+  `TextField`s, bare `IconButton`s, or round spinners.
 - Do use the serif only in the Coach column.
 - Do keep zh-CN and en-US as separate strings.
 

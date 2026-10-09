@@ -7,6 +7,7 @@ import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/prd/prd_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
+import 'package:insideout/theme/block_button.dart';
 import 'package:provider/provider.dart';
 
 class _DraftApi extends ApiClient {
@@ -55,11 +56,8 @@ class _DraftApi extends ApiClient {
 }
 
 bool _enabled(WidgetTester tester, String label) {
-  final button = tester.widget<ButtonStyleButton>(
-    find.ancestor(
-      of: find.text(label),
-      matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
-    ),
+  final button = tester.widget<BlockButton>(
+    find.ancestor(of: find.text(label), matching: find.byType(BlockButton)),
   );
   return button.onPressed != null;
 }
@@ -115,11 +113,12 @@ void main() {
     await tester.pumpAndSettle();
 
     // The menu mirrors prdTransitions: a draft's one legal jump is reviewing.
+    // The current status carries a square mark — dots are blocks now.
     final reviewing = tester.widget<PopupMenuItem<String>>(
       find.widgetWithText(PopupMenuItem<String>, 'In review'),
     );
     expect(reviewing.enabled, isTrue);
-    for (final status in ['● Draft', 'Approved', 'Rejected']) {
+    for (final status in ['■ Draft', 'Approved', 'Rejected']) {
       final item = tester.widget<PopupMenuItem<String>>(
         find.widgetWithText(PopupMenuItem<String>, status),
       );

@@ -3,12 +3,25 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
+import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/block_modal.dart';
+import '../../theme/block_state.dart';
+import '../../theme/cobalt.dart';
+import '../../theme/cobalt_theme.dart';
+import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
+
+/// A settings form reads as a document, not a dashboard — the column stays
+/// narrower than the content cap.
+const double _formColumnWidth = 640;
+const double _bottomInset = ProductDock.height + Cobalt.space10 + Cobalt.space4;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required this.workspaceId});
@@ -51,9 +64,49 @@ class _SettingsPageState extends State<SettingsPage> {
     });
   }
 
+  Future<void> _save() async {
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.updateWorkspace(
+        widget.workspaceId,
+        title: title.text.trim(),
+        description: description.text,
+      ),
+    );
+    if (done && mounted) await _reload();
+  }
+
+  Future<void> _delete() async {
+    final t = context.read<Appearance>().t;
+    final ok = await showBlockConfirm(
+      context: context,
+      title: t('workspace.deleteWorkspace'),
+      message: t('workspace.deleteWorkspaceConfirm'),
+      confirmText: t('common.delete'),
+      danger: true,
+    );
+    if (!ok || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.deleteWorkspace(widget.workspaceId),
+    );
+    if (done && mounted) context.go('/dashboard');
+  }
+
+  Future<void> _memberAction(WorkspaceMember m, String value) async {
+    final api = context.read<Session>().api;
+    final done = await guardWrite(
+      context,
+      () => value == 'remove'
+          ? api.removeMember(widget.workspaceId, m.userId)
+          : api.updateMemberRole(widget.workspaceId, m.userId, value),
+    );
+    if (done && mounted) await _reload();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<({Workspace ws, List<WorkspaceMember> members})>(
       future: _future,
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
@@ -61,134 +114,142 @@ class _SettingsPageState extends State<SettingsPage> {
           title: l10n.t('workspace.settingsTitle'),
           paintTitle: true,
           body: !snap.hasData
-              ? Center(
-                  child: snap.hasError
-                      ? Text(localizedError(snap.error!, l10n.t))
-                      : const CircularProgressIndicator(),
-                )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
-                  children: [
-                    TextField(
-                      controller: title,
-                      decoration: InputDecoration(
-                        labelText: l10n.t('workspace.createNamePlaceholder'),
+              ? snap.hasError
+                    ? BlockError(error: snap.error, onRetry: _reload)
+                    : const BlockLoading()
+              : Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: _formColumnWidth,
+                    ),
+                    child: ListView(
+                      padding: EdgeInsets.fromLTRB(
+                        Cobalt.space4,
+                        Cobalt.space4,
+                        Cobalt.space4,
+                        _bottomInset,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: description,
-                      decoration: InputDecoration(
-                        labelText: l10n.t('workspace.createDescPlaceholder'),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: () async {
-                        final done = await guardWrite(
-                          context,
-                          () => context.read<Session>().api.updateWorkspace(
-                            widget.workspaceId,
-                            title: title.text.trim(),
-                            description: description.text,
-                          ),
-                        );
-                        if (done && mounted) await _reload();
-                      },
-                      child: Text(l10n.t('common.save')),
-                    ),
-                    TextButton(
-                      onPressed: () async {
-                        final ok = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text(
-                              l10n.t('workspace.deleteWorkspaceConfirm'),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: Text(l10n.t('common.cancel')),
-                              ),
-                              FilledButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                child: Text(l10n.t('common.delete')),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (ok == true && context.mounted) {
-                          final done = await guardWrite(
-                            context,
-                            () => context.read<Session>().api.deleteWorkspace(
-                              widget.workspaceId,
-                            ),
-                          );
-                          if (done && context.mounted) context.go('/dashboard');
-                        }
-                      },
-                      child: Text(l10n.t('workspace.deleteWorkspace')),
-                    ),
-                    ListTile(
-                      title: Text(
-                        l10n.t('workspace.inviteCode', {
-                          'code': snap.data!.ws.code,
-                        }),
-                      ),
-                      subtitle: Text(l10n.t('workspace.inviteHint')),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.copy),
-                        onPressed: () => Clipboard.setData(
-                          ClipboardData(text: snap.data!.ws.code),
+                      children: [
+                        BlockField(
+                          label: l10n.t('workspace.createNamePlaceholder'),
+                          controller: title,
                         ),
-                      ),
-                    ),
-                    const Divider(),
-                    ...snap.data!.members.map(
-                      (m) => ListTile(
-                        title: Text(m.username),
-                        subtitle: Text(
-                          '${m.email} · ${l10n.t('workspace.role.${m.role}')}',
+                        const SizedBox(height: Cobalt.space3),
+                        BlockTextarea(
+                          label: l10n.t('workspace.createDescPlaceholder'),
+                          controller: description,
                         ),
-                        trailing: PopupMenuButton<String>(
-                          onSelected: (value) async {
-                            final api = context.read<Session>().api;
-                            final done = await guardWrite(
-                              context,
-                              () => value == 'remove'
-                                  ? api.removeMember(
-                                      widget.workspaceId,
-                                      m.userId,
-                                    )
-                                  : api.updateMemberRole(
-                                      widget.workspaceId,
-                                      m.userId,
-                                      value,
-                                    ),
-                            );
-                            if (done && mounted) await _reload();
-                          },
-                          itemBuilder: (_) => [
-                            PopupMenuItem(
-                              value: 'admin',
-                              child: Text(l10n.t('workspace.role.admin')),
-                            ),
-                            PopupMenuItem(
-                              value: 'member',
-                              child: Text(l10n.t('workspace.role.member')),
-                            ),
-                            PopupMenuItem(
-                              value: 'remove',
-                              child: Text(l10n.t('workspace.removeMember')),
-                            ),
-                          ],
+                        const SizedBox(height: Cobalt.space4),
+                        BlockButton(
+                          label: l10n.t('common.save'),
+                          icon: Icons.save_outlined,
+                          expand: true,
+                          onPressed: _save,
                         ),
-                      ),
+                        const SizedBox(height: Cobalt.space8),
+                        _inviteCard(context, snap.data!.ws),
+                        const SizedBox(height: Cobalt.space8),
+                        Text(
+                          l10n.t('workspace.membersTitle').toUpperCase(),
+                          style: eyebrow(context),
+                        ),
+                        const SizedBox(height: Cobalt.space3),
+                        for (final m in snap.data!.members) ...[
+                          _memberCard(context, m),
+                          const SizedBox(height: Cobalt.space3),
+                        ],
+                        const SizedBox(height: Cobalt.space4),
+                        BlockButton(
+                          label: l10n.t('workspace.deleteWorkspace'),
+                          icon: Icons.delete_outline,
+                          variant: BlockButtonVariant.danger,
+                          expand: true,
+                          onPressed: _delete,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
         );
       },
+    );
+  }
+
+  Widget _inviteCard(BuildContext context, Workspace ws) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    return FieldCard(
+      padding: const EdgeInsets.all(Cobalt.space4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.t('workspace.inviteHint').toUpperCase(),
+                  style: eyebrow(context),
+                ),
+                const SizedBox(height: Cobalt.space1),
+                Text(
+                  l10n.t('workspace.inviteCode', {'code': ws.code}),
+                  style: theme.textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          BlockIconButton(
+            icon: Icons.copy,
+            tooltip: l10n.t('common.copy'),
+            onPressed: () => Clipboard.setData(ClipboardData(text: ws.code)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _memberCard(BuildContext context, WorkspaceMember m) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    return FieldCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Cobalt.space4,
+        vertical: Cobalt.space3,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(m.username, style: theme.textTheme.titleSmall),
+                Text(
+                  '${m.email} · ${l10n.t('workspace.role.${m.role}')}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          PopupMenuButton<String>(
+            tooltip: l10n.t('common.moreActions'),
+            onSelected: (value) => _memberAction(m, value),
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'admin',
+                child: Text(l10n.t('workspace.role.admin')),
+              ),
+              PopupMenuItem(
+                value: 'member',
+                child: Text(l10n.t('workspace.role.member')),
+              ),
+              PopupMenuItem(
+                value: 'remove',
+                child: Text(l10n.t('workspace.removeMember')),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

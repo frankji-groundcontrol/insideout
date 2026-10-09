@@ -42,7 +42,12 @@ class ProductDock extends StatelessWidget {
     final brightness = Theme.of(context).brightness;
 
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      minimum: const EdgeInsets.fromLTRB(
+        Cobalt.space4,
+        0,
+        Cobalt.space4,
+        Cobalt.space4,
+      ),
       child: Align(
         alignment: Alignment.bottomCenter,
         heightFactor: 1.0,
@@ -65,46 +70,43 @@ class ProductDock extends StatelessWidget {
                   ),
                   boxShadow: cast(brightness),
                 ),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (final item in DockItem.values)
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: narrow ? 2 : 4,
-                            ),
-                            child: Builder(
-                              builder: (context) {
-                                final target = _target(context, item);
-                                final enabled =
-                                    target.path != null || target.pulse;
-                                return _DockButton(
-                                  item: item,
-                                  selected: item == current,
-                                  unfinished:
-                                      item == unfinished && item != current,
-                                  enabled: enabled,
-                                  iconOnly: narrow,
-                                  label: l10n.t(_labelKey(item)),
-                                  unfinishedLabel: l10n.t('dock.unfinished', {
-                                    'step': l10n.t(_labelKey(item)),
-                                  }),
-                                  onTap: enabled
-                                      ? () => _activate(context, item)
-                                      : null,
-                                );
-                              },
-                            ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Cobalt.space3,
+                    vertical: Cobalt.space2,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final item in DockItem.values)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Cobalt.space1,
                           ),
-                      ],
-                    ),
+                          child: Builder(
+                            builder: (context) {
+                              final target = _target(context, item);
+                              final enabled =
+                                  target.path != null || target.pulse;
+                              return _DockButton(
+                                item: item,
+                                selected: item == current,
+                                unfinished:
+                                    item == unfinished && item != current,
+                                enabled: enabled,
+                                iconOnly: narrow,
+                                label: l10n.t(_labelKey(item)),
+                                unfinishedLabel: l10n.t('dock.unfinished', {
+                                  'step': l10n.t(_labelKey(item)),
+                                }),
+                                onTap: enabled
+                                    ? () => _activate(context, item)
+                                    : null,
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -202,10 +204,6 @@ class ProductDock extends StatelessWidget {
   }
 }
 
-/// Amber warn block for unfinished steps. Square per the Cobalt-Neo decree;
-/// #FFD166 computes ≈7:1 on the dock brand surface (both themes).
-const dockWarnAmber = Color(0xFFFFD166);
-
 class _DockButton extends StatelessWidget {
   const _DockButton({
     required this.item,
@@ -236,15 +234,15 @@ class _DockButton extends StatelessWidget {
     return Tooltip(
       message: unfinished ? unfinishedLabel : label,
       child: Opacity(
-        opacity: enabled ? 1 : 0.4,
+        opacity: enabled ? 1 : 0.5,
         child: PressableBlock(
           key: unfinished ? ValueKey('dock-unfinished-${item.name}') : null,
           onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: EdgeInsets.symmetric(
-              horizontal: iconOnly ? 12 : 10,
-              vertical: 8,
+            duration: Cobalt.pressDuration,
+            padding: const EdgeInsets.symmetric(
+              horizontal: Cobalt.space3,
+              vertical: Cobalt.space2,
             ),
             decoration: BoxDecoration(
               color: selected
@@ -263,7 +261,7 @@ class _DockButton extends StatelessWidget {
                   children: [
                     Icon(_icon(item), size: 20, color: palette.btnFg),
                     if (!iconOnly) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: Cobalt.space1),
                       ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 180),
                         child: Text(
@@ -272,20 +270,22 @@ class _DockButton extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           softWrap: false,
                           style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(color: palette.btnFg, fontSize: 11),
+                              ?.copyWith(color: palette.btnFg),
                         ),
                       ),
                     ],
                   ],
                 ),
+                // Amber warn square for unfinished steps — the warning
+                // channel, 3.53:1 on the cobalt dock (DESIGN.md).
                 if (unfinished)
                   const Positioned(
                     top: 0,
                     right: 0,
                     child: SizedBox(
-                      width: 8,
-                      height: 8,
-                      child: ColoredBox(color: dockWarnAmber),
+                      width: Cobalt.space2,
+                      height: Cobalt.space2,
+                      child: ColoredBox(color: Cobalt.warnAmber),
                     ),
                   ),
               ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import '../../theme/ink_motion.dart';
@@ -24,10 +25,14 @@ class AuthDoor extends StatelessWidget {
   static const cardKey = Key('auth-door-card');
   static const wordmarkKey = Key('auth-door-wordmark');
 
+  /// Shared with `showBlockModal` so the prompt reads as the same chrome.
+  static const barrierColor = Color(0xB3000000);
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final palette = Cobalt.of(context);
+    final closeLabel = MaterialLocalizations.of(context).closeButtonLabel;
     return Material(
       color: Colors.transparent,
       child: CallbackShortcuts(
@@ -40,13 +45,13 @@ class AuthDoor extends StatelessWidget {
               Positioned.fill(
                 child: GestureDetector(
                   onTap: onClose,
-                  child: const ColoredBox(color: Colors.black54),
+                  child: const ColoredBox(color: barrierColor),
                 ),
               ),
               SafeArea(
                 child: Center(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(Cobalt.space4),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 384),
                       child: InkReveal(
@@ -74,14 +79,15 @@ class AuthDoor extends StatelessWidget {
                               children: [
                                 Padding(
                                   padding: const EdgeInsets.fromLTRB(
-                                    32,
-                                    40,
-                                    32,
-                                    32,
+                                    Cobalt.space8,
+                                    Cobalt.space10,
+                                    Cobalt.space8,
+                                    Cobalt.space8,
                                   ),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
+                                      // Identity exception: the mark is a disc.
                                       InkReveal(
                                         child: Container(
                                           width: 56,
@@ -107,7 +113,7 @@ class AuthDoor extends StatelessWidget {
                                           style: theme.textTheme.headlineSmall,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: Cobalt.space2),
                                       InkReveal(
                                         delay: const Duration(
                                           milliseconds: 400,
@@ -118,23 +124,23 @@ class AuthDoor extends StatelessWidget {
                                         dy: 12,
                                         child: Text(
                                           greeting,
+                                          textAlign: TextAlign.center,
                                           style: theme.textTheme.bodySmall,
                                         ),
                                       ),
-                                      const SizedBox(height: 32),
+                                      const SizedBox(height: Cobalt.space8),
                                       child,
                                     ],
                                   ),
                                 ),
                                 Positioned(
-                                  top: 8,
-                                  right: 8,
-                                  child: IconButton(
-                                    tooltip: MaterialLocalizations.of(
-                                      context,
-                                    ).closeButtonTooltip,
+                                  top: Cobalt.space2,
+                                  right: Cobalt.space2,
+                                  child: BlockIconButton(
+                                    icon: Icons.close,
+                                    tooltip: closeLabel,
+                                    semanticLabel: closeLabel,
                                     onPressed: onClose,
-                                    icon: const Icon(Icons.close, size: 20),
                                   ),
                                 ),
                               ],

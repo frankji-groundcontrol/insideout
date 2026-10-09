@@ -2,16 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
-import '../../chrome/time_ago.dart';
+import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_field.dart';
+import '../../theme/block_form.dart';
+import '../../theme/block_modal.dart';
+import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
-import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
+import 'idea_poster.dart';
+
+/// The wall keeps breathing room under the top-right utility block and above
+/// the dock (AppScaffold extendBody — the body scrolls behind it).
+const double _topInset = 56;
+const double _bottomInset = ProductDock.height + Cobalt.space10 + Cobalt.space4;
+
+/// The capture bar reads as one instrument: capped narrower than the content
+/// column so the eye lands mid-page.
+const double _captureMaxWidth = 720;
 
 class IdeasPage extends StatefulWidget {
   const IdeasPage({super.key, required this.workspaceId});
@@ -43,8 +56,9 @@ class _IdeasPageState extends State<IdeasPage> {
       );
       if (!mounted ||
           focus.projectFor(widget.workspaceId) != null ||
-          projects.isEmpty)
+          projects.isEmpty) {
         return;
+      }
       focus.rememberProject(projects.first.id, workspaceId: widget.workspaceId);
     } catch (_) {}
   }
@@ -81,101 +95,60 @@ class _IdeasPageState extends State<IdeasPage> {
   // USER-09: drop is a terminal action on a one-tap menu item — confirm
   // with the translated prompt before the card disappears for good.
   Future<void> _drop(Idea idea) async {
-    final l10n = context.read<Appearance>();
-    final ok = await showDialog<bool>(
+    final t = context.read<Appearance>().t;
+    final ok = await showBlockConfirm(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('idea.dropConfirm')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('idea.drop')),
-          ),
-        ],
-      ),
+      title: t('common.confirmTitle'),
+      message: t('idea.dropConfirm'),
+      confirmText: t('idea.drop'),
+      danger: true,
     );
-    if (ok == true && mounted) {
-      final done = await guardWrite(
-        context,
-        () => context.read<Session>().api.dropIdea(idea.id),
-      );
-      if (done) await _reload();
-    }
+    if (!ok || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.dropIdea(idea.id),
+    );
+    if (done) await _reload();
   }
 
   Future<void> _edit(Idea idea) async {
-    final l10n = context.read<Appearance>();
-    final title = TextEditingController(text: idea.title);
-    final content = TextEditingController(text: idea.content);
-    final ok = await showDialog<bool>(
+    final t = context.read<Appearance>().t;
+    final values = await showBlockForm(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('common.edit')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: title,
-              decoration: InputDecoration(
-                labelText: l10n.t('idea.titlePlaceholder'),
-              ),
-            ),
-            TextField(
-              controller: content,
-              decoration: InputDecoration(
-                labelText: l10n.t('idea.contentPlaceholder'),
-              ),
-              maxLines: 4,
-            ),
-          ],
+      title: t('common.edit'),
+      confirmLabel: t('common.save'),
+      fields: [
+        BlockFormField(label: t('idea.titlePlaceholder'), initial: idea.title),
+        BlockFormField(
+          label: t('idea.contentPlaceholder'),
+          initial: idea.content,
+          multiline: true,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('common.save')),
-          ),
-        ],
+      ],
+    );
+    if (values == null || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.updateIdea(
+        idea.id,
+        title: values[0].trim(),
+        content: values[1],
       ),
     );
-    if (ok == true && mounted) {
-      final done = await guardWrite(
-        context,
-        () => context.read<Session>().api.updateIdea(
-          idea.id,
-          title: title.text.trim(),
-          content: content.text,
-        ),
-      );
-      if (done) await _reload();
-    }
-    // Not disposed: the pop animation keeps the dialog's TextFields mounted
-    // past this await, and the guard's SnackBar rebuilds the overlay — a
-    // disposed controller would throw. Ephemeral controllers are GC'd once
-    // the dialog unmounts.
+    if (done) await _reload();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     return AppScaffold(
-      body: FutureBuilder(
+      body: FutureBuilder<List<Idea>>(
         future: _future,
         builder: (context, snap) {
-          if (!snap.hasData) {
-            return Center(
-              child: snap.hasError
-                  ? Text(localizedError(snap.error!, l10n.t))
-                  : const CircularProgressIndicator(),
-            );
+          if (snap.hasError) {
+            return BlockError(error: snap.error, onRetry: _reload);
           }
+          if (!snap.hasData) return const BlockLoading();
           return _IdeasWall(
             ideas: snap.data!,
             capture: _capture,
@@ -237,234 +210,104 @@ class _IdeasWall extends StatelessWidget {
     final palette = Cobalt.of(context);
     final width = MediaQuery.sizeOf(context).width;
     final display = Cobalt.ideasDisplaySize(width);
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 56, 28, 140),
-      children: [
-        Text(
-          l10n.t('idea.wallTitle').toUpperCase(),
-          textAlign: TextAlign.center,
-          style: theme.textTheme.displayLarge?.copyWith(
-            fontSize: display,
-            height: 0.9,
-            color: palette.brand,
-          ),
-        ),
-        const SizedBox(height: 28),
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
-            child: Material(
-              color: palette.surfaceRaised,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-                side: BorderSide(
-                  color: palette.strokeSubtle,
-                  width: Cobalt.borderContainer,
-                ),
+    final hPad = width >= Cobalt.bpDesk
+        ? Cobalt.space8
+        : width >= Cobalt.bpNarrow
+        ? Cobalt.space6
+        : Cobalt.space4;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(hPad, _topInset, hPad, _bottomInset),
+          children: [
+            Text(
+              l10n.t('idea.wallTitle').toUpperCase(),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.displayLarge?.copyWith(
+                fontSize: display,
+                height: 0.9,
+                color: palette.brand,
               ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 6, 6, 6),
+            ),
+            const SizedBox(height: Cobalt.space8),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _captureMaxWidth),
                 child: Row(
                   children: [
                     Expanded(
-                      child: TextField(
+                      child: BlockField(
                         controller: capture,
-                        decoration: InputDecoration(
-                          hintText: l10n.t('idea.captureHint'),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          filled: false,
-                        ),
+                        hint: l10n.t('idea.captureHint'),
                         onSubmitted: (_) => onCapture(),
                       ),
                     ),
-                    FilledButton(
+                    const SizedBox(width: Cobalt.space3),
+                    BlockButton(
+                      label: l10n.t('idea.capture'),
                       onPressed: onCapture,
-                      child: Text(l10n.t('idea.capture')),
                     ),
                   ],
                 ),
               ),
             ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            l10n.t('idea.privateHint'),
-            style: theme.textTheme.bodySmall?.copyWith(color: palette.fgMuted),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 28),
-        if (ideas.isEmpty)
-          Center(child: Text(emptyLabel, style: theme.textTheme.bodyLarge))
-        else ...[
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final idea in ideas)
-                SizedBox(
-                  width: width >= 1100
-                      ? (width - 88) / 3
-                      : width >= 760
-                      ? (width - 72) / 2
-                      : width - 56,
-                  child: _IdeaPoster(
-                    idea: idea,
-                    onEdit: () => onEdit(idea),
-                    onDrop: () => onDrop(idea),
-                    onConvert: () => onConvert(idea),
-                    onOpenPrd: () => onOpenPrd(idea),
+            const SizedBox(height: Cobalt.space3),
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: _captureMaxWidth),
+                child: Text(
+                  l10n.t('idea.privateHint'),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: palette.fgMuted,
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Text(
-            l10n.t('idea.noFolders'),
-            style: theme.textTheme.labelSmall,
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _IdeaPoster extends StatelessWidget {
-  const _IdeaPoster({
-    required this.idea,
-    required this.onEdit,
-    required this.onDrop,
-    required this.onConvert,
-    required this.onOpenPrd,
-  });
-
-  final Idea idea;
-  final VoidCallback onEdit;
-  final VoidCallback onDrop;
-  final VoidCallback onConvert;
-  final VoidCallback onOpenPrd;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.watch<Appearance>();
-    final theme = Theme.of(context);
-    final palette = Cobalt.of(context);
-    return FieldCard(
-      color: palette.surfaceRaised,
-      padding: EdgeInsets.zero,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 240),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [palette.surfaceRaised, palette.brandSubtle],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -36,
-              bottom: -48,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.brand.withValues(alpha: 0.08),
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 12, 18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+            const SizedBox(height: Cobalt.space8),
+            if (ideas.isEmpty)
+              BlockEmpty(icon: Icons.lightbulb_outline, body: emptyLabel)
+            else ...[
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final cols = w >= Cobalt.bpWide
+                      ? 3
+                      : w >= Cobalt.bpNarrow
+                      ? 2
+                      : 1;
+                  const gap = Cobalt.space4;
+                  final cardWidth = (w - gap * (cols - 1)) / cols;
+                  return Wrap(
+                    spacing: gap,
+                    runSpacing: gap,
                     children: [
-                      Expanded(
-                        child: Text(
-                          idea.title.toUpperCase(),
-                          style: theme.textTheme.headlineSmall,
+                      for (final idea in ideas)
+                        SizedBox(
+                          width: cardWidth,
+                          child: IdeaPoster(
+                            idea: idea,
+                            onEdit: () => onEdit(idea),
+                            onDrop: () => onDrop(idea),
+                            onConvert: () => onConvert(idea),
+                            onOpenPrd: () => onOpenPrd(idea),
+                          ),
                         ),
-                      ),
-                      PopupMenuButton<String>(
-                        onSelected: (value) {
-                          if (value == 'edit') onEdit();
-                          if (value == 'drop') onDrop();
-                        },
-                        itemBuilder: (_) => [
-                          PopupMenuItem(
-                            value: 'edit',
-                            child: Text(l10n.t('common.edit')),
-                          ),
-                          PopupMenuItem(
-                            value: 'drop',
-                            child: Text(l10n.t('idea.drop')),
-                          ),
-                        ],
-                      ),
                     ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    idea.content.isEmpty
-                        ? l10n.t('idea.status.${idea.status}')
-                        : idea.content,
-                    style: theme.textTheme.bodyLarge,
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 20),
-                  ShadePill(
-                    label: l10n.t('idea.touched', {
-                      'when': timeAgo(idea.createdAt, l10n.t),
-                    }),
-                  ),
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: idea.prdId == null ? onConvert : onOpenPrd,
-                    child: Text(
-                      idea.prdId == null
-                          ? l10n.t('idea.convert')
-                          : l10n.t('prd.title'),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-            ),
+              const SizedBox(height: Cobalt.space6),
+              Text(
+                l10n.t('idea.noFolders'),
+                style: theme.textTheme.labelSmall?.copyWith(letterSpacing: 0.8),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),
     );
   }
-}
-
-class ShadePill extends StatelessWidget {
-  const ShadePill({super.key, required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Cobalt.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: palette.surfaceRaised,
-        borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        border: BorderSide(color: palette.strokeSubtle).toBorder(),
-      ),
-      child: Text(label, style: Theme.of(context).textTheme.labelSmall),
-    );
-  }
-}
-
-extension on BorderSide {
-  BoxBorder toBorder() => Border.fromBorderSide(this);
 }

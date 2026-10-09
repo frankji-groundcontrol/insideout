@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors_l10n.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_field.dart';
+import '../../theme/block_modal.dart';
+import '../../theme/block_state.dart';
+import '../../theme/cobalt.dart';
 import '../../widgets/guarded_action.dart';
 import 'coach_panel.dart';
 import 'prd_desk.dart';
@@ -26,7 +30,7 @@ class _PrdPageState extends State<PrdPage> {
   Prd? prd;
   Conversation? conversation;
   List<ChatMessage> messages = [];
-  String? error;
+  Object? error;
   bool loading = true;
   final titleCtrl = TextEditingController();
   final sectionCtrls = <String, TextEditingController>{};
@@ -49,6 +53,7 @@ class _PrdPageState extends State<PrdPage> {
 
   Future<void> _load() async {
     final api = context.read<Session>().api;
+    final focus = context.read<LoopFocus>();
     try {
       final loaded = await api.getPrd(widget.id);
       final conv = await api.conversationForPrd(widget.id);
@@ -61,22 +66,27 @@ class _PrdPageState extends State<PrdPage> {
           text: loaded.sections[key] ?? '',
         );
       }
-      context.read<LoopFocus>().rememberWorkspace(loaded.workspaceId);
+      focus.rememberWorkspace(loaded.workspaceId);
       if (loaded.projectId != null) {
-        context.read<LoopFocus>().rememberProject(
+        focus.rememberProject(
           loaded.projectId!,
           workspaceId: loaded.workspaceId,
         );
       }
+      if (!mounted) return;
       setState(() {
         prd = loaded;
         conversation = conv;
         messages = msgs;
+        error = null;
         loading = false;
       });
     } catch (e) {
+      // Keep the object, not its toString: localizedError maps ApiException
+      // by status and a stringified error always falls through to generic.
+      if (!mounted) return;
       setState(() {
-        error = e.toString();
+        error = e;
         loading = false;
       });
     }
@@ -98,26 +108,23 @@ class _PrdPageState extends State<PrdPage> {
 
   Future<void> _snapshot() async {
     final note = TextEditingController();
-    final l10n = context.read<Appearance>();
-    final ok = await showDialog<bool>(
+    final t = context.read<Appearance>().t;
+    final navigator = Navigator.of(context);
+    final ok = await showBlockModal<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('prd.snapshotRevision')),
-        content: TextField(
-          controller: note,
-          decoration: InputDecoration(labelText: l10n.t('prd.revisionNote')),
+      title: t('prd.snapshotRevision'),
+      body: BlockField(label: t('prd.revisionNote'), controller: note),
+      footer: [
+        BlockButton(
+          label: t('common.cancel'),
+          variant: BlockButtonVariant.secondary,
+          onPressed: () => navigator.pop(false),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('common.save')),
-          ),
-        ],
-      ),
+        BlockButton(
+          label: t('common.save'),
+          onPressed: () => navigator.pop(true),
+        ),
+      ],
     );
     if (ok == true && mounted) {
       await guardWrite(
@@ -128,14 +135,14 @@ class _PrdPageState extends State<PrdPage> {
         ),
       );
     }
-    // Not disposed: the pop animation keeps the dialog's TextField mounted
-    // past this await, and the guard's SnackBar rebuilds the overlay — a
-    // disposed controller would throw. GC'd once the dialog unmounts.
+    // Not disposed: the pop animation keeps the modal's field mounted past
+    // this await, and the guard's SnackBar rebuilds the overlay — a disposed
+    // controller would throw. GC'd once the modal unmounts.
   }
 
   Future<void> _build() async {
     final api = context.read<Session>().api;
-    final l10n = context.read<Appearance>();
+    final t = context.read<Appearance>().t;
     // The replace-conflict retry is part of the write; anything else the
     // server rejects surfaces through the guard's SnackBar.
     await guardWrite(context, () async {
@@ -144,26 +151,15 @@ class _PrdPageState extends State<PrdPage> {
         if (mounted) _goProject(result);
       } on ApiException catch (e) {
         if (e.code == 'replace_conflict' && e.liveCount != null) {
-          final ok = await showDialog<bool>(
+          if (!mounted) return;
+          final ok = await showBlockConfirm(
             context: context,
-            builder: (ctx) => AlertDialog(
-              title: Text(l10n.t('prd.buildMVP')),
-              content: Text(
-                l10n.t('prd.buildReplaceConfirm', {'count': e.liveCount}),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: Text(l10n.t('common.cancel')),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: Text(l10n.t('common.confirm')),
-                ),
-              ],
-            ),
+            title: t('prd.buildMVP'),
+            message: t('prd.buildReplaceConfirm', {'count': e.liveCount}),
+            confirmText: t('common.confirm'),
+            danger: true,
           );
-          if (ok == true && mounted) {
+          if (ok && mounted) {
             final result = await api.buildFromPrd(
               widget.id,
               expectedCount: e.liveCount,
@@ -196,12 +192,11 @@ class _PrdPageState extends State<PrdPage> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.watch<Appearance>();
-    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final wide = MediaQuery.sizeOf(context).width >= Cobalt.bpWide;
     final desk = loading
-        ? const Center(child: CircularProgressIndicator())
+        ? const BlockLoading()
         : error != null && prd == null
-        ? Center(child: Text(localizedError(error!, l10n.t)))
+        ? BlockError(error: error, onRetry: _load)
         : (wide
               ? Row(
                   children: [
@@ -212,7 +207,10 @@ class _PrdPageState extends State<PrdPage> {
               : ListView(
                   children: [
                     SizedBox(height: 640, child: _prdColumn()),
-                    SizedBox(height: 520, child: _coach()),
+                    // 640, not 520: the coach chrome (header + prompt blocks +
+                    // composer + dock clearance) leaves the quote list a real
+                    // viewport instead of a negative one.
+                    SizedBox(height: 640, child: _coach()),
                   ],
                 ));
     return AppScaffold(body: desk);

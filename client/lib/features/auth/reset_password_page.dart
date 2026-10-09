@@ -5,6 +5,10 @@ import 'package:provider/provider.dart';
 import '../../secret_query_scrub.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/cobalt.dart';
 import 'auth_door.dart';
 
 /// `/reset-password?token=...`: the landing page for the emailed reset
@@ -77,10 +81,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     l10n.t('reset.done'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 20),
-                  FilledButton(
+                  const SizedBox(height: Cobalt.space6),
+                  BlockButton(
+                    label: l10n.t('reset.doneLogin'),
+                    expand: true,
                     onPressed: () => context.go('/login'),
-                    child: Text(l10n.t('reset.doneLogin')),
                   ),
                 ],
               )
@@ -88,39 +93,34 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextField(
+                  BlockField(
                     controller: password,
-                    decoration: InputDecoration(
-                      labelText: l10n.t('reset.password'),
-                      helperText: l10n.t('reset.passwordHint'),
-                    ),
-                    obscureText: true,
+                    label: l10n.t('reset.password'),
+                    obscure: true,
+                    helper: l10n.t('reset.passwordHint'),
                   ),
-                  const SizedBox(height: 12),
-                  TextField(
+                  const SizedBox(height: Cobalt.space3),
+                  BlockField(
                     controller: confirm,
-                    decoration: InputDecoration(
-                      labelText: l10n.t('reset.confirm'),
-                    ),
-                    obscureText: true,
+                    label: l10n.t('reset.confirm'),
+                    obscure: true,
                   ),
                   if (error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
+                    const SizedBox(height: Cobalt.space3),
+                    BlockBanner(message: error!),
                   ],
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: busy ? null : _submit,
-                    child: Text(l10n.t('reset.submit')),
+                  const SizedBox(height: Cobalt.space6),
+                  BlockButton(
+                    label: l10n.t('reset.submit'),
+                    expand: true,
+                    busy: busy,
+                    onPressed: _submit,
                   ),
-                  TextButton(
+                  BlockButton(
+                    label: l10n.t('reset.back'),
+                    variant: BlockButtonVariant.ghost,
+                    expand: true,
                     onPressed: () => context.go('/login'),
-                    child: Text(l10n.t('reset.back')),
                   ),
                 ],
               ),

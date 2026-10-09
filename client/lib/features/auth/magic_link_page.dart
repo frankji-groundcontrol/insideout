@@ -5,6 +5,9 @@ import 'package:provider/provider.dart';
 import '../../secret_query_scrub.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/cobalt.dart';
 import 'auth_door.dart';
 
 /// `/magic-link?token=...`: the landing page for the emailed sign-in link.
@@ -52,8 +55,8 @@ class _MagicLinkPageState extends State<MagicLinkPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
+                  const BlockLoader(size: Cobalt.space6),
+                  const SizedBox(height: Cobalt.space4),
                   Text(
                     l10n.t('magic.working'),
                     style: Theme.of(context).textTheme.bodyMedium,
@@ -64,14 +67,12 @@ class _MagicLinkPageState extends State<MagicLinkPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    l10n.t('magic.error'),
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton(
+                  BlockBanner(message: l10n.t('magic.error')),
+                  const SizedBox(height: Cobalt.space6),
+                  BlockButton(
+                    label: l10n.t('magic.back'),
+                    expand: true,
                     onPressed: () => context.go('/login'),
-                    child: Text(l10n.t('magic.back')),
                   ),
                 ],
               ),

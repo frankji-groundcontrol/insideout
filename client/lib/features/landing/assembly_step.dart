@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
+import '../../theme/cobalt.dart';
 import '../../theme/ink_motion.dart';
 import 'assembly_diagram.dart';
 import 'step_peek.dart';
@@ -30,7 +31,8 @@ class AssemblyStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
-    final wide = MediaQuery.sizeOf(context).width >= 900;
+    final palette = Cobalt.of(context);
+    final wide = MediaQuery.sizeOf(context).width >= Cobalt.bpWide;
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -40,15 +42,21 @@ class AssemblyStep extends StatelessWidget {
               width: 36,
               height: 36,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(color: Color(0xFF3B5BFF)),
+              decoration: BoxDecoration(
+                color: Cobalt.hue500,
+                border: Border.all(
+                  color: Cobalt.lightInk,
+                  width: Cobalt.borderContainer,
+                ),
+              ),
               child: Text(
                 '${data.n}',
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: Colors.white,
+                  color: palette.btnFg,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Cobalt.space3),
             Text(
               l10n.t('landing.stepLabel', {'n': data.n}),
               style: theme.textTheme.bodySmall,
@@ -57,15 +65,18 @@ class AssemblyStep extends StatelessWidget {
         ),
         const SizedBox(height: 20),
         Text(l10n.t(data.titleKey), style: theme.textTheme.headlineMedium),
-        const SizedBox(height: 12),
+        const SizedBox(height: Cobalt.space3),
         Text(l10n.t(data.bodyKey), style: theme.textTheme.bodyLarge),
       ],
     );
     final peek = StepPeek(kind: data.kind);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Cobalt.space6,
+        vertical: Cobalt.space8,
+      ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1100),
+        constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
         child: Column(
           children: [
             InkReveal(
@@ -115,7 +126,7 @@ class AssemblyStep extends StatelessWidget {
                     dy: 28,
                     child: copy,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: Cobalt.space6),
                   InkReveal(
                     whenVisible: true,
                     delay: const Duration(milliseconds: 80),

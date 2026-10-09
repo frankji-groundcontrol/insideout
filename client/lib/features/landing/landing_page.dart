@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/cobalt.dart';
 import '../../theme/ink_motion.dart';
 import '../auth/auth_door.dart';
 import '../auth/auth_form.dart';
@@ -73,35 +76,45 @@ class _LandingPageState extends State<LandingPage> {
           appBar: AppBar(
             title: Row(
               children: [
+                // Identity exception: the mark is a disc.
                 Container(
                   width: 22,
                   height: 22,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF3B5BFF),
+                    color: Cobalt.hue500,
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: Cobalt.space2),
                 Text(l10n.t('nav.brand')),
               ],
             ),
             actions: [
-              IconButton(
-                tooltip: l10n.t('lang.switchTo'),
-                onPressed: l10n.toggleLocale,
-                icon: const Icon(Icons.translate),
-              ),
-              IconButton(
-                tooltip: l10n.t(
-                  l10n.dark ? 'theme.toggleLight' : 'theme.toggleDark',
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Cobalt.space1),
+                child: BlockIconButton(
+                  icon: Icons.translate,
+                  tooltip: l10n.t('lang.switchTo'),
+                  semanticLabel: l10n.t('lang.switchTo'),
+                  onPressed: l10n.toggleLocale,
                 ),
-                onPressed: l10n.toggleTheme,
-                icon: Icon(
-                  l10n.dark
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Cobalt.space1),
+                child: BlockIconButton(
+                  icon: l10n.dark
                       ? Icons.light_mode_outlined
                       : Icons.dark_mode_outlined,
+                  tooltip: l10n.t(
+                    l10n.dark ? 'theme.toggleLight' : 'theme.toggleDark',
+                  ),
+                  semanticLabel: l10n.t(
+                    l10n.dark ? 'theme.toggleLight' : 'theme.toggleDark',
+                  ),
+                  onPressed: l10n.toggleTheme,
                 ),
               ),
+              const SizedBox(width: Cobalt.space2),
             ],
           ),
           body: ScrollNotificationObserver(
@@ -109,7 +122,12 @@ class _LandingPageState extends State<LandingPage> {
               padding: const EdgeInsets.only(bottom: 80),
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 48, 24, 16),
+                  padding: const EdgeInsets.fromLTRB(
+                    Cobalt.space6,
+                    48,
+                    Cobalt.space6,
+                    Cobalt.space4,
+                  ),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 720),
@@ -123,7 +141,7 @@ class _LandingPageState extends State<LandingPage> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: Cobalt.space4),
                           InkReveal(
                             delay: const Duration(milliseconds: 150),
                             duration: const Duration(milliseconds: 600),
@@ -134,17 +152,21 @@ class _LandingPageState extends State<LandingPage> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: Cobalt.space8),
                           InkReveal(
                             delay: const Duration(milliseconds: 300),
                             duration: const Duration(milliseconds: 600),
                             dy: 20,
                             child: Wrap(
                               alignment: WrapAlignment.center,
-                              spacing: 12,
-                              runSpacing: 12,
+                              spacing: Cobalt.space3,
+                              runSpacing: Cobalt.space3,
                               children: [
-                                FilledButton(
+                                BlockButton(
+                                  size: BlockButtonSize.lg,
+                                  label: signedIn
+                                      ? l10n.t('nav.dashboard')
+                                      : l10n.t('landing.ctaPrimary'),
                                   onPressed: () {
                                     if (signedIn) {
                                       context.go('/dashboard');
@@ -152,16 +174,13 @@ class _LandingPageState extends State<LandingPage> {
                                       _open(AuthPrompt.register);
                                     }
                                   },
-                                  child: Text(
-                                    signedIn
-                                        ? l10n.t('nav.dashboard')
-                                        : l10n.t('landing.ctaPrimary'),
-                                  ),
                                 ),
                                 if (!signedIn)
-                                  OutlinedButton(
+                                  BlockButton(
+                                    size: BlockButtonSize.lg,
+                                    variant: BlockButtonVariant.secondary,
+                                    label: l10n.t('landing.ctaSecondary'),
                                     onPressed: () => _open(AuthPrompt.login),
-                                    child: Text(l10n.t('landing.ctaSecondary')),
                                   ),
                               ],
                             ),
@@ -181,7 +200,12 @@ class _LandingPageState extends State<LandingPage> {
                     child: AssemblyStep(data: _steps[i], flip: i.isOdd),
                   ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
+                  padding: const EdgeInsets.fromLTRB(
+                    Cobalt.space6,
+                    Cobalt.space8,
+                    Cobalt.space6,
+                    Cobalt.space4,
+                  ),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 560),
@@ -190,11 +214,12 @@ class _LandingPageState extends State<LandingPage> {
                         duration: const Duration(milliseconds: 700),
                         child: Column(
                           children: [
+                            // Identity exception: the mark is a disc.
                             Container(
                               width: 56,
                               height: 56,
                               decoration: const BoxDecoration(
-                                color: Color(0xFF3B5BFF),
+                                color: Cobalt.hue500,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -204,14 +229,18 @@ class _LandingPageState extends State<LandingPage> {
                               style: theme.textTheme.headlineMedium,
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: Cobalt.space3),
                             Text(
                               l10n.t('landing.ctaCloseBody'),
                               style: theme.textTheme.bodyLarge,
                               textAlign: TextAlign.center,
                             ),
-                            const SizedBox(height: 24),
-                            FilledButton(
+                            const SizedBox(height: Cobalt.space6),
+                            BlockButton(
+                              size: BlockButtonSize.lg,
+                              label: signedIn
+                                  ? l10n.t('nav.dashboard')
+                                  : l10n.t('landing.ctaCloseButton'),
                               onPressed: () {
                                 if (signedIn) {
                                   context.go('/dashboard');
@@ -219,11 +248,6 @@ class _LandingPageState extends State<LandingPage> {
                                   _open(AuthPrompt.register);
                                 }
                               },
-                              child: Text(
-                                signedIn
-                                    ? l10n.t('nav.dashboard')
-                                    : l10n.t('landing.ctaCloseButton'),
-                              ),
                             ),
                           ],
                         ),

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
+import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
+import '../../theme/field_card.dart';
 
 enum PeekKind { idea, prd, roadmap, shipped }
 
@@ -15,37 +17,22 @@ class StepPeek extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final palette = Cobalt.of(context);
-    return Material(
-      color: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Cobalt.radiusCard),
-        side: BorderSide(color: theme.colorScheme.outline),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-        child: Stack(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: switch (kind) {
-                PeekKind.idea => _IdeaPeek(palette: palette),
-                PeekKind.prd => _PrdPeek(palette: palette),
-                PeekKind.roadmap => _RoadmapPeek(palette: palette),
-                PeekKind.shipped => _ShippedPeek(palette: palette),
-              },
-            ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Text(
-                '1:1',
-                style: theme.textTheme.bodySmall?.copyWith(letterSpacing: 0.6),
-              ),
-            ),
-          ],
-        ),
+    return FieldCard(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, Cobalt.space4),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: Cobalt.space2),
+            child: switch (kind) {
+              PeekKind.idea => _IdeaPeek(palette: palette),
+              PeekKind.prd => _PrdPeek(palette: palette),
+              PeekKind.roadmap => _RoadmapPeek(palette: palette),
+              PeekKind.shipped => _ShippedPeek(palette: palette),
+            },
+          ),
+          const Positioned(top: 0, right: 0, child: BlockTag(label: '1:1')),
+        ],
       ),
     );
   }
@@ -63,13 +50,7 @@ class _Bar extends StatelessWidget {
     return FractionallySizedBox(
       widthFactor: widthFactor,
       alignment: Alignment.centerLeft,
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(Cobalt.radiusPill),
-        ),
-      ),
+      child: Container(height: height, color: color),
     );
   }
 }
@@ -87,6 +68,7 @@ class _IdeaPeek extends StatelessWidget {
       children: [
         Row(
           children: [
+            // Identity exception: the mark is a disc.
             Container(
               width: 8,
               height: 8,
@@ -95,7 +77,7 @@ class _IdeaPeek extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: Cobalt.space2),
             Expanded(
               child: _Bar(
                 widthFactor: 0.55,
@@ -104,11 +86,11 @@ class _IdeaPeek extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Cobalt.space3),
         _Bar(widthFactor: 0.92, color: palette.surfaceSunken),
-        const SizedBox(height: 8),
+        const SizedBox(height: Cobalt.space2),
         _Bar(widthFactor: 0.58, color: palette.surfaceSunken),
-        const SizedBox(height: 12),
+        const SizedBox(height: Cobalt.space3),
         ShadeChip(label: l10n.t('idea.status.inbox'), tone: ShadeTone.neutral),
       ],
     );
@@ -128,16 +110,11 @@ class _PrdPeek extends StatelessWidget {
         Align(
           alignment: Alignment.centerLeft,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: palette.surfaceSunken,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(Cobalt.radiusControl),
-                topRight: Radius.circular(Cobalt.radiusCard),
-                bottomLeft: Radius.circular(Cobalt.radiusCard),
-                bottomRight: Radius.circular(Cobalt.radiusCard),
-              ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Cobalt.space3,
+              vertical: Cobalt.space2,
             ),
+            color: palette.surfaceSunken,
             child: SizedBox(
               width: 160,
               child: _Bar(
@@ -148,20 +125,15 @@ class _PrdPeek extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Cobalt.space2),
         Align(
           alignment: Alignment.centerRight,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: palette.btn,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(Cobalt.radiusCard),
-                topRight: Radius.circular(Cobalt.radiusControl),
-                bottomLeft: Radius.circular(Cobalt.radiusCard),
-                bottomRight: Radius.circular(Cobalt.radiusCard),
-              ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Cobalt.space3,
+              vertical: Cobalt.space2,
             ),
+            color: palette.btn,
             child: SizedBox(
               width: 96,
               child: _Bar(
@@ -172,12 +144,14 @@ class _PrdPeek extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Cobalt.space3),
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Cobalt.space3),
           decoration: BoxDecoration(
-            border: Border.all(color: palette.strokeSubtle),
-            borderRadius: BorderRadius.circular(Cobalt.radiusControl),
+            border: Border.all(
+              color: palette.strokeSubtle,
+              width: Cobalt.borderContainer,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,11 +164,11 @@ class _PrdPeek extends StatelessWidget {
                   height: 10,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Cobalt.space2),
               _Bar(widthFactor: 1, color: palette.surfaceSunken, height: 6),
-              const SizedBox(height: 6),
+              const SizedBox(height: Cobalt.space1),
               _Bar(widthFactor: 0.83, color: palette.surfaceSunken, height: 6),
-              const SizedBox(height: 6),
+              const SizedBox(height: Cobalt.space1),
               _Bar(
                 widthFactor: 0.5,
                 color: palette.brand.withValues(alpha: 0.7),
@@ -266,19 +240,18 @@ class _RoadRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = Cobalt.of(context);
     return Padding(
-      padding: EdgeInsets.only(left: indent ? 16 : 0, bottom: 10),
+      padding: EdgeInsets.only(
+        left: indent ? Cobalt.space4 : 0,
+        bottom: Cobalt.space2,
+      ),
       child: Row(
         children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: dot),
-          ),
-          const SizedBox(width: 10),
+          Container(width: 10, height: 10, color: dot),
+          const SizedBox(width: Cobalt.space2),
           Expanded(
             child: _Bar(widthFactor: bar, color: palette.surfaceSunken),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Cobalt.space2),
           chip,
         ],
       ),
@@ -300,24 +273,17 @@ class _ShippedPeek extends StatelessWidget {
       children: [
         for (final h in hashes)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: Cobalt.space3),
             child: Row(
               children: [
-                Container(
-                  width: 14,
-                  height: 14,
-                  decoration: BoxDecoration(
-                    color: palette.brand,
-                    borderRadius: BorderRadius.circular(Cobalt.radiusControl),
-                  ),
-                ),
-                const SizedBox(width: 12),
+                Container(width: 14, height: 14, color: palette.brand),
+                const SizedBox(width: Cobalt.space3),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _Bar(widthFactor: 0.7, color: palette.surfaceSunken),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: Cobalt.space1),
                       _Bar(
                         widthFactor: 0.28,
                         color: palette.surfaceSunken.withValues(alpha: 0.7),

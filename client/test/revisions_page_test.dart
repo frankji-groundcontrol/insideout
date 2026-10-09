@@ -72,9 +72,9 @@ void main() {
       },
     );
     await _pump(tester, api);
-    expect(find.byType(ListTile), findsOneWidget);
+    expect(find.byKey(const Key('revision-row')), findsOneWidget);
 
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byKey(const Key('revisions-snapshot')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'should not stick');
     await tester.tap(find.text('Save'));
@@ -84,7 +84,7 @@ void main() {
       find.text('Save failed — Server hiccup — try again'),
       findsOneWidget,
     );
-    expect(find.byType(ListTile), findsOneWidget);
+    expect(find.byKey(const Key('revision-row')), findsOneWidget);
     expect(find.text('snapshot 2'), findsNothing);
   });
 
@@ -106,13 +106,13 @@ void main() {
     );
     await _pump(tester, api);
 
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byKey(const Key('revisions-snapshot')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'second snapshot');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(ListTile), findsNWidgets(2));
+    expect(find.byKey(const Key('revision-row')), findsNWidgets(2));
     expect(find.text('second snapshot'), findsOneWidget);
   });
 }

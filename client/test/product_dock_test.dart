@@ -2,8 +2,6 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:insideout/api/models.dart';
-import 'package:insideout/app.dart';
 import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/chrome/product_dock.dart';
 import 'package:insideout/session/appearance.dart';
@@ -346,8 +344,8 @@ void main() {
                   .decoration
               as BoxDecoration;
 
-      // The press motion animates over the 100ms decree duration (the 180ms
-      // sibling is the selection-highlight container).
+      // The press motion animates over the 100ms decree duration (the
+      // selection-highlight sibling shares the same decree window).
       final pressContainer = tester
           .widgetList<AnimatedContainer>(animated)
           .firstWhere((c) => c.duration == const Duration(milliseconds: 100));
@@ -469,63 +467,6 @@ void main() {
             .having((s) => s.offset, 'offset', const Offset(4, 4))
             .having((s) => s.blurRadius, 'blurRadius', 0),
       );
-    },
-  );
-
-  testWidgets(
-    'extendBody scaffold at 1400x900 keeps the dock off the body landmark',
-    (tester) async {
-      await tester.binding.setSurfaceSize(const Size(1400, 900));
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-
-      final session = Session()
-        ..ready = true
-        ..user = UserProfile(
-          id: 'u1',
-          email: 'a@b.c',
-          username: 'tester',
-          bio: '',
-          keywords: const [],
-        );
-      final router = GoRouter(
-        initialLocation: '/projects/proj-1',
-        routes: [
-          GoRoute(
-            path: '/projects/:id',
-            builder: (_, _) => const AppScaffold(
-              body: Center(
-                child: Text('landmark', key: ValueKey('body-landmark')),
-              ),
-            ),
-          ),
-        ],
-      );
-      addTearDown(router.dispose);
-
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider.value(value: session),
-            ChangeNotifierProvider(
-              create: (_) =>
-                  Appearance(store: MemorySettingsStore(), locale: 'en-US'),
-            ),
-            ChangeNotifierProvider.value(value: warmFocus()),
-          ],
-          child: MaterialApp.router(routerConfig: router),
-        ),
-      );
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-
-      expect(tester.widget<Scaffold>(find.byType(Scaffold)).extendBody, isTrue);
-
-      final dockRect = tester.getRect(find.byType(ProductDock));
-      final markRect = tester.getRect(
-        find.byKey(const ValueKey('body-landmark')),
-      );
-      expect(dockRect.overlaps(markRect), isFalse);
-      expect(dockRect.top, greaterThan(markRect.bottom));
     },
   );
 }

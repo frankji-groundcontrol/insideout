@@ -10,8 +10,10 @@ import '../../api/sse.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
+import 'coach_column.dart';
 
 class CoachPanel extends StatefulWidget {
   const CoachPanel({
@@ -111,6 +113,8 @@ class _CoachPanelState extends State<CoachPanel> {
     }
   }
 
+  bool get _busy => sending || retry > 0;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
@@ -118,83 +122,36 @@ class _CoachPanelState extends State<CoachPanel> {
     final stage = widget.conversation?.stage ?? 'clarify';
     final err = error;
     final suggestions = l10n.suggestions(stage);
-    final ink = palette.brightnessIsDark ? palette.fgPrimary : Cobalt.darkType;
-    final field = palette.brightnessIsDark
-        ? palette.surfaceSunken
-        : Cobalt.hue950;
+    final ink = coachInk(context);
     if (!open) {
       return Align(
         alignment: Alignment.centerRight,
-        child: IconButton(
-          tooltip: l10n.t('coach.openCoach'),
-          onPressed: () => setState(() => open = true),
-          icon: const Icon(Icons.chat_bubble_outline),
+        child: Padding(
+          padding: const EdgeInsets.all(Cobalt.space4),
+          child: BlockIconButton(
+            icon: Icons.chat_bubble_outline,
+            tooltip: l10n.t('coach.openCoach'),
+            onPressed: () => setState(() => open = true),
+          ),
         ),
       );
     }
     return ColoredBox(
-      color: field,
+      color: coachSlab(context),
       child: Padding(
         padding: EdgeInsets.only(
           bottom:
-              ProductDock.height + 16 + MediaQuery.of(context).padding.bottom,
+              ProductDock.height +
+              Cobalt.space4 +
+              MediaQuery.of(context).padding.bottom,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(28, 64, 16, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.t('coach.title').toUpperCase(),
-                          style: cobaltSerif(
-                            palette,
-                            size: 32,
-                            color: ink,
-                            weight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          l10n.t('coach.pullQuotes'),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: ink.withValues(alpha: 0.7)),
-                        ),
-                        if (widget.conversation != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.t('coach.stage.$stage'),
-                            style: Theme.of(
-                              context,
-                            ).textTheme.labelLarge?.copyWith(color: ink),
-                          ),
-                        ],
-                        Container(
-                          width: 36,
-                          height: 3,
-                          margin: const EdgeInsets.only(top: 10),
-                          color: Cobalt.hue500,
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.t('coach.closeCoach'),
-                    onPressed: () => setState(() => open = false),
-                    color: ink,
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-            ),
+            _header(context, palette, l10n, stage, ink),
             if (widget.conversation == null)
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(Cobalt.space6),
                 child: Text(
                   l10n.t('coach.noConversation'),
                   style: cobaltSerif(palette, size: 20, color: ink),
@@ -203,35 +160,55 @@ class _CoachPanelState extends State<CoachPanel> {
             else ...[
               if (suggestions.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Wrap(
-                    spacing: 8,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Cobalt.space6,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      for (final prompt in suggestions)
-                        ActionChip(
-                          label: Text(prompt),
-                          onPressed: sending || retry > 0
-                              ? null
-                              : () => _send(prompt),
+                      Text(
+                        l10n.t('coach.suggestTitle'),
+                        style: cobaltSerif(
+                          palette,
+                          size: 12,
+                          weight: FontWeight.w600,
+                          color: ink.withValues(alpha: 0.7),
                         ),
+                      ),
+                      const SizedBox(height: Cobalt.space2),
+                      Wrap(
+                        spacing: Cobalt.space2,
+                        runSpacing: Cobalt.space2,
+                        children: [
+                          for (final prompt in suggestions)
+                            CoachPrompt(
+                              label: prompt,
+                              onTap: _busy ? null : () => _send(prompt),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.fromLTRB(28, 16, 28, 16),
+                  padding: const EdgeInsets.fromLTRB(
+                    Cobalt.space6,
+                    Cobalt.space4,
+                    Cobalt.space6,
+                    Cobalt.space4,
+                  ),
                   children: [
                     ...widget.messages.map(
-                      (m) => _Quote(text: m.content, role: m.role, ink: ink),
+                      (m) => CoachQuote(text: m.content, role: m.role),
                     ),
                     if (stream.isNotEmpty)
-                      _Quote(text: stream, role: 'assistant', ink: ink),
+                      CoachQuote(text: stream, role: 'assistant'),
                     for (final finding in findings)
                       if (finding['issue'] is String)
-                        _Quote(
+                        CoachQuote(
                           text: finding['issue'] as String,
                           role: 'critic',
-                          ink: ink,
                         ),
                   ],
                 ),
@@ -239,57 +216,51 @@ class _CoachPanelState extends State<CoachPanel> {
             ],
             if (err != null)
               Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  localizedError(err, l10n.t),
-                  style: TextStyle(color: ink),
+                padding: const EdgeInsets.fromLTRB(
+                  Cobalt.space6,
+                  0,
+                  Cobalt.space6,
+                  Cobalt.space3,
+                ),
+                child: CoachNotice(
+                  message: localizedError(err, l10n.t),
+                  accent: Cobalt.hue200,
                 ),
               ),
             if (retry > 0)
               Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  l10n.t(
+                padding: const EdgeInsets.fromLTRB(
+                  Cobalt.space6,
+                  0,
+                  Cobalt.space6,
+                  Cobalt.space3,
+                ),
+                child: CoachNotice(
+                  message: l10n.t(
                     err is String && err.contains('unavailable')
                         ? 'coach.serviceUnavailable'
                         : 'coach.rateLimited',
                     {'seconds': retry},
                   ),
-                  style: TextStyle(color: ink),
+                  accent: Cobalt.warnAmber,
                 ),
               ),
             if (widget.conversation != null)
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: draft,
-                        style: cobaltSerif(
-                          palette,
-                          size: 17.5,
-                          color: ink,
-                          weight: FontWeight.w400,
-                        ),
-                        enabled: !sending && retry == 0,
-                        decoration: InputDecoration(
-                          hintText: sending
-                              ? l10n.t('coach.thinking')
-                              : l10n.t('coach.placeholder'),
-                          hintStyle: TextStyle(
-                            color: ink.withValues(alpha: 0.5),
-                          ),
-                          fillColor: field,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: sending || retry > 0 ? null : _send,
-                      color: ink,
-                      icon: const Icon(Icons.send),
-                    ),
-                  ],
+                padding: const EdgeInsets.fromLTRB(
+                  Cobalt.space4,
+                  Cobalt.space2,
+                  Cobalt.space4,
+                  Cobalt.space4,
+                ),
+                child: CoachComposer(
+                  controller: draft,
+                  enabled: !_busy,
+                  hint: _busy
+                      ? l10n.t('coach.thinking')
+                      : l10n.t('coach.placeholder'),
+                  sendTooltip: l10n.t('coach.send'),
+                  onSend: _busy ? null : () => _send(),
                 ),
               ),
           ],
@@ -297,43 +268,73 @@ class _CoachPanelState extends State<CoachPanel> {
       ),
     );
   }
-}
 
-extension on Cobalt {
-  bool get brightnessIsDark => surfaceBase == Cobalt.darkGround;
-}
-
-class _Quote extends StatelessWidget {
-  const _Quote({required this.text, required this.role, required this.ink});
-
-  final String text;
-  final String role;
-  final Color ink;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = Cobalt.of(context);
+  Widget _header(
+    BuildContext context,
+    Cobalt palette,
+    Appearance l10n,
+    String stage,
+    Color ink,
+  ) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(
+        Cobalt.space6,
+        64,
+        Cobalt.space4,
+        Cobalt.space2,
+      ),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '“$text”',
-            style: cobaltSerif(
-              palette,
-              size: 26,
-              color: ink,
-              weight: FontWeight.w600,
-              height: 1.35,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.t('coach.title').toUpperCase(),
+                  style: cobaltSerif(
+                    palette,
+                    size: 32,
+                    color: ink,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: Cobalt.space2),
+                Text(
+                  l10n.t('coach.pullQuotes'),
+                  style: cobaltSerif(
+                    palette,
+                    size: 12,
+                    color: ink.withValues(alpha: 0.7),
+                    weight: FontWeight.w400,
+                  ),
+                ),
+                if (widget.conversation != null) ...[
+                  const SizedBox(height: Cobalt.space2),
+                  Text(
+                    l10n.t('coach.stage.$stage'),
+                    style: cobaltSerif(
+                      palette,
+                      size: 14,
+                      color: ink,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                Container(
+                  width: Cobalt.space10,
+                  height: Cobalt.space1,
+                  margin: const EdgeInsets.only(top: Cobalt.space3),
+                  color: Cobalt.hue500,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            role,
-            style: Theme.of(
-              context,
-            ).textTheme.labelSmall?.copyWith(color: ink.withValues(alpha: 0.6)),
+          const SizedBox(width: Cobalt.space2),
+          BlockIconButton(
+            icon: Icons.close,
+            tooltip: l10n.t('coach.closeCoach'),
+            onPressed: () => setState(() => open = false),
           ),
         ],
       ),

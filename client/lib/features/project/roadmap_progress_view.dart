@@ -40,14 +40,32 @@ class RoadmapProgressView extends StatelessWidget {
         else ...[
           Align(
             alignment: Alignment.centerLeft,
-            child: Chip(
-              avatar: Icon(
-                Icons.check_circle_outline,
-                size: 18,
-                color: palette.brand,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Cobalt.space3,
+                vertical: Cobalt.space2,
               ),
-              label: Text(
-                l10n.t('roadmap.doneCount', {'n': progress.doneCount}),
+              decoration: BoxDecoration(
+                color: palette.surfaceRaised,
+                border: Border.all(
+                  color: palette.strokeSubtle,
+                  width: Cobalt.borderContainer,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.check_circle_outline,
+                    size: 16,
+                    color: palette.brand,
+                  ),
+                  const SizedBox(width: Cobalt.space2),
+                  Text(
+                    l10n.t('roadmap.doneCount', {'n': progress.doneCount}),
+                    style: theme.textTheme.labelMedium,
+                  ),
+                ],
               ),
             ),
           ),

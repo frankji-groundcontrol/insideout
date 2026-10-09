@@ -27,6 +27,13 @@ List<BoxShadow> castSm(Brightness brightness) => <BoxShadow>[
   ),
 ];
 
+/// The uppercase eyebrow/meta label — labelSmall in the brand ink with 0.8
+/// tracking. One shared recipe for every surface.
+TextStyle eyebrow(BuildContext context) => Theme.of(context)
+    .textTheme
+    .labelSmall!
+    .copyWith(color: Cobalt.of(context).fgBrand, letterSpacing: 0.8);
+
 ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
   final scheme = ColorScheme(
     brightness: brightness,

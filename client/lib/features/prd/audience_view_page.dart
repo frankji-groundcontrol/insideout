@@ -7,6 +7,12 @@ import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_state.dart';
+import '../../theme/cobalt.dart';
+import '../../theme/field_card.dart';
+import 'audience_selector.dart';
 
 const _audiences = ['decision', 'management', 'delivery', 'validation'];
 
@@ -47,126 +53,228 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    final theme = Theme.of(context);
     return AppScaffold(
       title: l10n.t('view.title'),
       paintTitle: true,
-      actions: [
-        Wrap(
-          spacing: 6,
-          children: _audiences
-              .map(
-                (a) => ChoiceChip(
-                  label: Text(a),
-                  selected: a == audience,
-                  onSelected: (_) => setState(() {
-                    audience = a;
-                    _load();
-                  }),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(width: 12),
-      ],
       body: FutureBuilder<Map<String, dynamic>>(
         future: _future,
         builder: (context, snap) {
-          if (!snap.hasData) {
-            return Center(
-              child: snap.hasError
-                  ? Text(localizedError(snap.error!, l10n.t))
-                  : const CircularProgressIndicator(),
+          if (snap.hasError) {
+            return BlockError(
+              error: snap.error,
+              onRetry: () => setState(_load),
             );
           }
-          final data = snap.data!;
-          final title = data['title'] as String? ?? '';
-          final proj = data['projection'] as Map<String, dynamic>;
-          final sections = proj['sections'] as Map<String, dynamic>;
-          final readiness = data['readiness'] as Map<String, dynamic>;
-          final gaps = (readiness['gaps'] as List? ?? const []);
-          final blocking = [
-            for (final g in gaps)
-              if (g is Map && g['priority']?.toString() == 'must_clarify_now')
-                g,
-          ];
-          final later = [
-            for (final g in gaps)
-              if (g is! Map || g['priority']?.toString() != 'must_clarify_now')
-                g,
-          ];
-          final latest = data['latestCommit'] as Map<String, dynamic>?;
+          if (!snap.hasData) return const BlockLoading();
+          return _Projection(
+            prdId: widget.prdId,
+            data: snap.data!,
+            audience: audience,
+            onAudience: (a) => setState(() {
+              audience = a;
+              _load();
+            }),
+          );
+        },
+      ),
+    );
+  }
+}
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text(title, style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 4),
-              Text(
-                proj['purpose']?.toString() ?? '',
-                style: theme.textTheme.bodySmall,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l10n.t('view.projectionNote'),
-                style: theme.textTheme.bodySmall,
-              ),
-              if (latest != null) ...[
-                const SizedBox(height: 8),
-                Text(
+class _Projection extends StatelessWidget {
+  const _Projection({
+    required this.prdId,
+    required this.data,
+    required this.audience,
+    required this.onAudience,
+  });
+
+  final String prdId;
+  final Map<String, dynamic> data;
+  final String audience;
+  final ValueChanged<String> onAudience;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    final title = data['title'] as String? ?? '';
+    final proj = data['projection'] as Map<String, dynamic>;
+    final sections = proj['sections'] as Map<String, dynamic>;
+    final readiness = data['readiness'] as Map<String, dynamic>;
+    final gaps = (readiness['gaps'] as List? ?? const []);
+    final blocking = [
+      for (final g in gaps)
+        if (g is Map && g['priority']?.toString() == 'must_clarify_now') g,
+    ];
+    final later = [
+      for (final g in gaps)
+        if (g is! Map || g['priority']?.toString() != 'must_clarify_now') g,
+    ];
+    final latest = data['latestCommit'] as Map<String, dynamic>?;
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            Cobalt.space6,
+            Cobalt.space4,
+            Cobalt.space6,
+            140,
+          ),
+          children: [
+            AudienceSelector(
+              audiences: _audiences,
+              selected: audience,
+              onSelected: onAudience,
+              labels: (a) => l10n.t('versions.audience.$a'),
+              alignment: WrapAlignment.start,
+            ),
+            const SizedBox(height: Cobalt.space6),
+            Text(title, style: theme.textTheme.headlineSmall),
+            const SizedBox(height: Cobalt.space2),
+            Text(
+              proj['purpose']?.toString() ?? '',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: Cobalt.space2),
+            Text(
+              l10n.t('view.projectionNote'),
+              style: theme.textTheme.bodySmall,
+            ),
+            if (latest != null)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: Cobalt.space3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Cobalt.space3,
+                  vertical: Cobalt.space2,
+                ),
+                decoration: BoxDecoration(
+                  color: palette.surfaceSunken,
+                  border: Border(
+                    left: BorderSide(color: palette.brand, width: 4),
+                  ),
+                ),
+                child: Text(
                   l10n.t('view.latestCommit', {
                     'n': latest['revision']?.toString() ?? '',
                     'name': latest['name']?.toString() ?? '',
                   }),
                   style: theme.textTheme.bodySmall,
                 ),
-              ],
-              const Divider(height: 24),
-              for (final key in sections.keys) ...[
-                Text(
-                  l10n.t('prd.sections.$key'),
-                  style: theme.textTheme.titleMedium,
+              ),
+            const SizedBox(height: Cobalt.space6),
+            for (final key in sections.keys)
+              Padding(
+                padding: const EdgeInsets.only(bottom: Cobalt.space4),
+                child: FieldCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.t('prd.sections.$key'),
+                        style: theme.textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: Cobalt.space2),
+                      Text(
+                        '${l10n.t('view.whyYouRead')}: ${sections[key]}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: Cobalt.space3),
+                      Divider(
+                        height: Cobalt.borderDivider,
+                        thickness: Cobalt.borderDivider,
+                        color: palette.strokeSubtle,
+                      ),
+                      const SizedBox(height: Cobalt.space3),
+                      _SectionBody(prdId: prdId, sectionKey: key),
+                    ],
+                  ),
                 ),
-                Text(
-                  '${l10n.t('view.whyYouRead')}: ${sections[key]}',
-                  style: theme.textTheme.bodySmall,
+              ),
+            if (gaps.isNotEmpty) ...[
+              const SizedBox(height: Cobalt.space4),
+              Container(
+                padding: const EdgeInsets.only(bottom: Cobalt.space2),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: palette.brand,
+                      width: Cobalt.borderContainer,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
-                _SectionBody(prdId: widget.prdId, sectionKey: key),
-                const SizedBox(height: 16),
-              ],
-              if (gaps.isNotEmpty) ...[
-                const Divider(height: 24),
-                Text(
+                child: Text(
                   l10n.t('view.gapsTitle'),
                   style: theme.textTheme.titleMedium,
                 ),
-                for (final g in blocking)
-                  Text(
-                    '  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                if (later.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.t('roadmap.bandLater'),
-                    style: theme.textTheme.titleSmall,
-                  ),
-                  for (final g in later)
-                    Text(
-                      '  · ${l10n.t('prd.sections.${g['section']}')} — ${g['reason']}',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                ],
-              ],
-              const SizedBox(height: 24),
-              TextButton(
-                onPressed: () => context.go('/prd/${widget.prdId}/versions'),
-                child: Text(l10n.t('versions.entry')),
               ),
+              const SizedBox(height: Cobalt.space3),
+              for (final g in blocking) _GapRow(gap: g, blocking: true),
+              if (later.isNotEmpty) ...[
+                const SizedBox(height: Cobalt.space4),
+                Text(
+                  l10n.t('roadmap.bandLater'),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: Cobalt.space2),
+                for (final g in later) _GapRow(gap: g, blocking: false),
+              ],
             ],
-          );
-        },
+            const SizedBox(height: Cobalt.space6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: BlockButton(
+                label: l10n.t('versions.entry'),
+                icon: Icons.layers_outlined,
+                variant: BlockButtonVariant.secondary,
+                onPressed: () => context.go('/prd/$prdId/versions'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One readiness gap: a square mark (never a dot) plus the localized section
+/// name and the reason. The raw priority enum never reaches the page.
+class _GapRow extends StatelessWidget {
+  const _GapRow({required this.gap, required this.blocking});
+
+  final Map<dynamic, dynamic> gap;
+  final bool blocking;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Cobalt.space2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: Cobalt.space2,
+            height: Cobalt.space2,
+            margin: const EdgeInsets.only(top: Cobalt.space2),
+            color: blocking ? palette.brand : palette.strokeStrong,
+          ),
+          const SizedBox(width: Cobalt.space2),
+          Expanded(
+            child: Text(
+              '${l10n.t('prd.sections.${gap['section']}')} — ${gap['reason']}',
+              style: theme.textTheme.bodyMedium,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -195,18 +303,26 @@ class _SectionBodyState extends State<_SectionBody> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return FutureBuilder<Prd>(
       future: _future,
       builder: (context, snap) {
-        if (!snap.hasData) return const SizedBox.shrink();
+        if (snap.hasError) {
+          return BlockBanner(
+            message: localizedError(snap.error!, context.read<Appearance>().t),
+          );
+        }
+        if (!snap.hasData) {
+          return const BlockLoader(size: Cobalt.space4);
+        }
         final content = snap.data!.sections[widget.sectionKey] ?? '';
         if (content.trim().isEmpty) {
           return Text(
             context.read<Appearance>().t('view.carriedOpen'),
-            style: Theme.of(context).textTheme.bodySmall,
+            style: theme.textTheme.bodySmall,
           );
         }
-        return Text(content);
+        return Text(content, style: theme.textTheme.bodyMedium);
       },
     );
   }

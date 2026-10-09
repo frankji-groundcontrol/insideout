@@ -5,6 +5,7 @@ import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/session.dart';
+import '../../theme/block_state.dart';
 import '../../widgets/guarded_action.dart';
 import 'versions_commit_dialog.dart';
 import 'versions_stack.dart';
@@ -22,6 +23,7 @@ class VersionsPage extends StatefulWidget {
 class _VersionsPageState extends State<VersionsPage> {
   late Future<List<PrdCommit>> _commits;
   late Future<PrdReadiness> _readiness;
+  late Future<List<Object>> _both;
   String audience = 'decision';
   String? selectedId;
 
@@ -36,6 +38,9 @@ class _VersionsPageState extends State<VersionsPage> {
     final api = context.read<Session>().api;
     _commits = api.listPrdCommits(widget.prdId);
     _readiness = api.prdReadiness(widget.prdId);
+    // Cached: rebuilding the wait on every setState used to drop the stack
+    // back to its loading state on a plain selection change.
+    _both = Future.wait<Object>([_readiness, _commits]);
     _commits.then((commits) {
       if (!mounted) return;
       context.read<LoopFocus>().rememberPrd(
@@ -54,12 +59,10 @@ class _VersionsPageState extends State<VersionsPage> {
       carry = const [];
     }
     if (!mounted) return;
-    final result = await showDialog<CommitFormResult>(
+    final result = await showVersionsCommit(
       context: context,
-      builder: (ctx) => VersionsCommitDialog(
-        initialAudience: audience,
-        carryCount: carry.length,
-      ),
+      initialAudience: audience,
+      carryCount: carry.length,
     );
     if (result == null || result.name.isEmpty || !mounted) return;
     final done = await guardWrite(
@@ -78,12 +81,16 @@ class _VersionsPageState extends State<VersionsPage> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      body: FutureBuilder(
-        future: Future.wait([_readiness, _commits]),
+      body: FutureBuilder<List<Object>>(
+        future: _both,
         builder: (context, snap) {
-          if (snap.hasError) return Center(child: Text('${snap.error}'));
-          if (!snap.hasData)
-            return const Center(child: CircularProgressIndicator());
+          if (snap.hasError) {
+            return BlockError(
+              error: snap.error,
+              onRetry: () => setState(_reload),
+            );
+          }
+          if (!snap.hasData) return const BlockLoading();
           final readiness = snap.data![0] as PrdReadiness;
           final commits = snap.data![1] as List<PrdCommit>;
           final selected = commits.cast<PrdCommit?>().firstWhere(

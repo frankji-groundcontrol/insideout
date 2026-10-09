@@ -4,6 +4,7 @@ import 'package:insideout/api/client.dart';
 import 'package:insideout/router.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
+import 'package:insideout/theme/block_field.dart';
 import 'package:provider/provider.dart';
 
 class _FakeApi extends ApiClient {
@@ -69,7 +70,10 @@ void main() {
     await tester.pumpAndSettle();
 
     final inviteField = tester.widget<TextField>(
-      find.widgetWithText(TextField, 'Invitation code'),
+      find.descendant(
+        of: find.widgetWithText(BlockField, 'Invitation code'),
+        matching: find.byType(TextField),
+      ),
     );
     expect(inviteField.controller?.text, 'CODE123');
   });

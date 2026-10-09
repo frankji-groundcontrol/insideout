@@ -3,17 +3,22 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../chrome/product_dock.dart';
-import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_form.dart';
+import '../../theme/block_modal.dart';
+import '../../theme/block_state.dart';
+import '../../theme/cobalt.dart';
+import '../../theme/cobalt_theme.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
-import 'ideas_page.dart';
+import 'board_project_card.dart';
 
 // N1: the square quick-capture FAB floats over the dock's top-right corner.
 // The body extends behind the dock (AppScaffold extendBody), so reserve the
@@ -22,7 +27,7 @@ import 'ideas_page.dart';
 // under the button.
 const double _fabSize = 56;
 const double _bottomInset =
-    ProductDock.height + _fabSize + kFloatingActionButtonMargin + 16;
+    ProductDock.height + _fabSize + kFloatingActionButtonMargin + Cobalt.space4;
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key, required this.id});
@@ -66,66 +71,83 @@ class _WorkspacePageState extends State<WorkspacePage> {
     return (ws: ws, projects: projects);
   }
 
-  Future<void> _createProject() async {
-    final l10n = context.read<Appearance>();
-    final title = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('project.newProject')),
-        content: TextField(
-          controller: title,
-          decoration: InputDecoration(
-            labelText: l10n.t('project.namePlaceholder'),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('project.create')),
-          ),
-        ],
-      ),
-    );
-    if (ok == true && title.text.trim().isNotEmpty && mounted) {
-      final done = await guardWrite(
-        context,
-        () => context.read<Session>().api.createProject(
-          widget.id,
-          title.text.trim(),
-          '',
-        ),
-      );
-      if (done && mounted) {
-        setState(() {
-          _future = _load();
-        });
-      }
-    }
-    // Not disposed: the pop animation keeps the dialog's TextField mounted
-    // past this await, and the guard's SnackBar rebuilds the overlay — a
-    // disposed controller would throw. GC'd once the dialog unmounts.
+  Future<void> _reload() async {
+    setState(() {
+      _future = _load();
+    });
+    await _future;
   }
 
-  Future<void> _refresh() async {
-    final future = _load();
-    setState(() {
-      _future = future;
-    });
-    await future;
+  Future<void> _createProject() async {
+    final t = context.read<Appearance>().t;
+    final values = await showBlockForm(
+      context: context,
+      title: t('project.newProject'),
+      confirmLabel: t('project.create'),
+      fields: [BlockFormField(label: t('project.namePlaceholder'))],
+    );
+    final title = values?.first.trim() ?? '';
+    if (title.isEmpty || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.createProject(widget.id, title, ''),
+    );
+    if (done && mounted) await _reload();
+  }
+
+  Future<void> _edit(Workspace ws) async {
+    final t = context.read<Appearance>().t;
+    final values = await showBlockForm(
+      context: context,
+      title: t('common.edit'),
+      confirmLabel: t('common.save'),
+      fields: [
+        BlockFormField(
+          label: t('workspace.createNamePlaceholder'),
+          initial: ws.title,
+        ),
+        BlockFormField(
+          label: t('workspace.createDescPlaceholder'),
+          initial: ws.description,
+          multiline: true,
+        ),
+      ],
+    );
+    if (values == null || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.updateWorkspace(
+        widget.id,
+        title: values[0].trim(),
+        description: values[1],
+      ),
+    );
+    if (done && mounted) await _reload();
+  }
+
+  Future<void> _delete() async {
+    final t = context.read<Appearance>().t;
+    final ok = await showBlockConfirm(
+      context: context,
+      title: t('workspace.deleteWorkspace'),
+      message: t('workspace.deleteWorkspaceConfirm'),
+      confirmText: t('common.delete'),
+      danger: true,
+    );
+    if (!ok || !mounted) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.deleteWorkspace(widget.id),
+    );
+    if (done && mounted) context.go('/dashboard');
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
+    return FutureBuilder<({Workspace ws, List<Project> projects})>(
       future: _future,
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
-        final theme = Theme.of(context);
         final title = snap.data?.ws.title ?? l10n.t('workspace.title');
         return AppScaffold(
           title: title,
@@ -135,278 +157,171 @@ class _WorkspacePageState extends State<WorkspacePage> {
             child: const Icon(Icons.add),
           ),
           body: !snap.hasData
-              ? Center(
-                  child: snap.hasError
-                      ? Text(localizedError(snap.error!, l10n.t))
-                      : const CircularProgressIndicator(),
-                )
+              ? snap.hasError
+                    ? BlockError(error: snap.error, onRetry: _reload)
+                    : const BlockLoading()
               : RefreshIndicator(
-                  onRefresh: _refresh,
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, _bottomInset),
-                    children: [
-                      FieldCard(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.t('workspace.inviteCode', {
-                                      'code': snap.data!.ws.code,
-                                    }),
-                                    style: theme.textTheme.titleMedium,
-                                  ),
-                                  Text(
-                                    l10n.t('workspace.inviteHint'),
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.copy),
-                              onPressed: () => Clipboard.setData(
-                                ClipboardData(text: snap.data!.ws.code),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FieldCard(
-                        onTap: () =>
-                            context.go('/workspace/${widget.id}/ideas'),
-                        child: Text(
-                          l10n.t('workspace.ideas'),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FieldCard(
-                        onTap: () =>
-                            context.go('/workspace/${widget.id}/settings'),
-                        child: Text(
-                          l10n.t('workspace.settings'),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FieldCard(
-                        onTap: () => _edit(snap.data!.ws),
-                        child: Text(
-                          l10n.t('common.edit'),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FieldCard(
-                        onTap: _delete,
-                        child: Text(
-                          l10n.t('workspace.deleteWorkspace'),
-                          style: theme.textTheme.titleMedium,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      FieldCard(
-                        onTap: _createProject,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.add),
-                            const SizedBox(width: 12),
-                            Text(
-                              l10n.t('project.newProject'),
-                              style: theme.textTheme.titleMedium,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (snap.data!.projects.isEmpty)
-                        Text(
-                          l10n.t('project.empty'),
-                          style: theme.textTheme.bodyLarge,
-                        )
-                      else
-                        for (final p in snap.data!.projects) ...[
-                          FieldCard(
-                            onTap: () {
-                              context.read<LoopFocus>().rememberProject(
-                                p.id,
-                                workspaceId: widget.id,
-                              );
-                              context.go('/projects/${p.id}');
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        p.title,
-                                        style: theme.textTheme.titleLarge,
-                                      ),
-                                    ),
-                                    if (p.flagged)
-                                      ShadePill(label: l10n.t('project.quiet')),
-                                  ],
-                                ),
-                                Text(
-                                  l10n.t('project.status.${p.status}'),
-                                  style: theme.textTheme.bodySmall,
-                                ),
-                                FutureBuilder<RoadmapProgress>(
-                                  future: progressFutureFor(p.id),
-                                  builder: (context, psnap) {
-                                    if (!psnap.hasData)
-                                      return const SizedBox.shrink();
-                                    return Padding(
-                                      padding: const EdgeInsets.only(top: 4),
-                                      child: Text(
-                                        l10n.t('workspace.nowDone', {
-                                          'now': psnap.data!.now.length,
-                                          'done': psnap.data!.doneCount,
-                                        }),
-                                        style: theme.textTheme.bodySmall,
-                                      ),
-                                    );
-                                  },
-                                ),
-                                if (p.latestUpdateKind != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          l10n.t(
-                                            'project.updateKind.${p.latestUpdateKind}',
-                                          ),
-                                          style: theme.textTheme.labelSmall
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            p.latestUpdateContent ?? '',
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: theme.textTheme.bodySmall,
-                                          ),
-                                        ),
-                                        if (p.latestUpdateAt != null)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 8,
-                                            ),
-                                            child: Text(
-                                              timeAgo(
-                                                p.latestUpdateAt!,
-                                                l10n.t,
-                                              ),
-                                              style: theme.textTheme.bodySmall,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                    ],
-                  ),
+                  onRefresh: _reload,
+                  child: _board(context, snap.data!),
                 ),
         );
       },
     );
   }
 
-  Future<void> _edit(Workspace ws) async {
-    final title = TextEditingController(text: ws.title);
-    final desc = TextEditingController(text: ws.description);
-    final l10n = context.read<Appearance>();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('common.edit')),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+  Widget _board(
+    BuildContext context,
+    ({Workspace ws, List<Project> projects}) data,
+  ) {
+    final l10n = context.watch<Appearance>();
+    final width = MediaQuery.sizeOf(context).width;
+    final hPad = width >= Cobalt.bpDesk
+        ? Cobalt.space8
+        : width >= Cobalt.bpNarrow
+        ? Cobalt.space6
+        : Cobalt.space4;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
+        child: ListView(
+          padding: EdgeInsets.fromLTRB(hPad, Cobalt.space2, hPad, _bottomInset),
           children: [
-            TextField(
-              controller: title,
-              decoration: InputDecoration(
-                labelText: l10n.t('workspace.createNamePlaceholder'),
-              ),
+            _inviteCard(context, data.ws),
+            const SizedBox(height: Cobalt.space3),
+            _navCard(
+              context,
+              icon: Icons.lightbulb_outline,
+              label: l10n.t('workspace.ideas'),
+              onTap: () => context.go('/workspace/${widget.id}/ideas'),
             ),
-            TextField(
-              controller: desc,
-              decoration: InputDecoration(
-                labelText: l10n.t('workspace.createDescPlaceholder'),
-              ),
+            const SizedBox(height: Cobalt.space3),
+            _navCard(
+              context,
+              icon: Icons.settings_outlined,
+              label: l10n.t('workspace.settings'),
+              onTap: () => context.go('/workspace/${widget.id}/settings'),
             ),
+            const SizedBox(height: Cobalt.space4),
+            Wrap(
+              spacing: Cobalt.space3,
+              runSpacing: Cobalt.space3,
+              children: [
+                BlockButton(
+                  label: l10n.t('common.edit'),
+                  icon: Icons.edit_outlined,
+                  variant: BlockButtonVariant.secondary,
+                  onPressed: () => _edit(data.ws),
+                ),
+                BlockButton(
+                  label: l10n.t('workspace.deleteWorkspace'),
+                  icon: Icons.delete_outline,
+                  variant: BlockButtonVariant.danger,
+                  onPressed: _delete,
+                ),
+              ],
+            ),
+            const SizedBox(height: Cobalt.space8),
+            if (data.projects.isEmpty)
+              BlockEmpty(
+                icon: Icons.account_tree_outlined,
+                title: l10n.t('project.title'),
+                body: l10n.t('project.empty'),
+                action: BlockButton(
+                  label: l10n.t('project.newProject'),
+                  icon: Icons.add,
+                  onPressed: _createProject,
+                ),
+              )
+            else ...[
+              Row(
+                children: [
+                  Text(
+                    l10n.t('project.title').toUpperCase(),
+                    style: eyebrow(context),
+                  ),
+                  const Spacer(),
+                  BlockButton(
+                    label: l10n.t('project.newProject'),
+                    icon: Icons.add,
+                    size: BlockButtonSize.sm,
+                    onPressed: _createProject,
+                  ),
+                ],
+              ),
+              const SizedBox(height: Cobalt.space3),
+              for (final p in data.projects) ...[
+                BoardProjectCard(
+                  project: p,
+                  progress: progressFutureFor(p.id),
+                  onOpen: () {
+                    context.read<LoopFocus>().rememberProject(
+                      p.id,
+                      workspaceId: widget.id,
+                    );
+                    context.go('/projects/${p.id}');
+                  },
+                ),
+                const SizedBox(height: Cobalt.space3),
+              ],
+            ],
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('common.save')),
-          ),
-        ],
       ),
     );
-    if (ok == true && mounted) {
-      final done = await guardWrite(
-        context,
-        () => context.read<Session>().api.updateWorkspace(
-          widget.id,
-          title: title.text.trim(),
-          description: desc.text,
-        ),
-      );
-      if (done && mounted) {
-        setState(() {
-          _future = _load();
-        });
-      }
-    }
-    // Not disposed: the pop animation keeps the dialog's TextFields mounted
-    // past this await, and the guard's SnackBar rebuilds the overlay — a
-    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
-  Future<void> _delete() async {
-    final l10n = context.read<Appearance>();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('workspace.deleteWorkspaceConfirm')),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
+  Widget _inviteCard(BuildContext context, Workspace ws) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    return FieldCard(
+      padding: const EdgeInsets.all(Cobalt.space4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.t('workspace.inviteHint').toUpperCase(),
+                  style: eyebrow(context),
+                ),
+                const SizedBox(height: Cobalt.space1),
+                Text(
+                  l10n.t('workspace.inviteCode', {'code': ws.code}),
+                  style: theme.textTheme.titleMedium,
+                ),
+              ],
+            ),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('common.delete')),
+          BlockIconButton(
+            icon: Icons.copy,
+            tooltip: l10n.t('common.copy'),
+            onPressed: () => Clipboard.setData(ClipboardData(text: ws.code)),
           ),
         ],
       ),
     );
-    if (ok == true && mounted) {
-      final done = await guardWrite(
-        context,
-        () => context.read<Session>().api.deleteWorkspace(widget.id),
-      );
-      if (done && mounted) context.go('/dashboard');
-    }
+  }
+
+  Widget _navCard(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    return FieldCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(Cobalt.space4),
+      child: Row(
+        children: [
+          BlockIconWell(icon: icon, size: 40, iconSize: 20),
+          const SizedBox(width: Cobalt.space3),
+          Expanded(child: Text(label, style: theme.textTheme.titleMedium)),
+          Icon(Icons.chevron_right, color: palette.fgMuted),
+        ],
+      ),
+    );
   }
 }

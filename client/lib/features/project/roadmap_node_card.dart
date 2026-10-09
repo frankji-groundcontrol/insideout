@@ -5,6 +5,11 @@ import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/block_form.dart';
+import '../../theme/block_modal.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
@@ -137,43 +142,21 @@ class _NodeMenu extends StatelessWidget {
     if (value == 'edit') {
       await _edit(context, l10n);
     } else if (value == 'child') {
-      final title = TextEditingController();
-      final ok = await showDialog<bool>(
+      final t = l10n.t;
+      final values = await showBlockForm(
         context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(l10n.t('roadmap.addChild')),
-          content: TextField(
-            controller: title,
-            decoration: InputDecoration(
-              labelText: l10n.t('roadmap.childPlaceholder'),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.t('common.cancel')),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.t('roadmap.add')),
-            ),
-          ],
-        ),
+        title: t('roadmap.addChild'),
+        confirmLabel: t('roadmap.add'),
+        fields: [BlockFormField(label: t('roadmap.childPlaceholder'))],
       );
-      if (ok == true && title.text.trim().isNotEmpty && context.mounted) {
-        final done = await guardWrite(
-          context,
-          () => api.createRoadmapNode(
-            projectId,
-            title.text.trim(),
-            parentId: node.id,
-          ),
-        );
-        if (done && context.mounted) await onReload();
-      }
-      // Not disposed: the pop animation keeps the dialog's TextField mounted
-      // past this await, and the guard's SnackBar rebuilds the overlay — a
-      // disposed controller would throw. GC'd once the dialog unmounts.
+      if (values == null || !context.mounted) return;
+      final title = values.first.trim();
+      if (title.isEmpty) return;
+      final done = await guardWrite(
+        context,
+        () => api.createRoadmapNode(projectId, title, parentId: node.id),
+      );
+      if (done && context.mounted) await onReload();
     } else if (value == 'up') {
       final done = await guardWrite(
         context,
@@ -201,6 +184,14 @@ class _NodeMenu extends StatelessWidget {
       );
       if (done && context.mounted) await onReload();
     } else if (value == 'delete') {
+      final ok = await showBlockConfirm(
+        context: context,
+        title: l10n.t('roadmap.delete'),
+        message: l10n.t('roadmap.deleteConfirm'),
+        confirmText: l10n.t('common.delete'),
+        danger: true,
+      );
+      if (!ok || !context.mounted) return;
       final done = await guardWrite(
         context,
         () => api.deleteRoadmapNode(node.id),
@@ -211,6 +202,8 @@ class _NodeMenu extends StatelessWidget {
 
   Future<void> _edit(BuildContext context, Appearance l10n) async {
     final api = context.read<Session>().api;
+    final t = l10n.t;
+    final navigator = Navigator.of(context);
     final title = TextEditingController(text: node.title);
     final desc = TextEditingController(text: node.description);
     final acceptance = TextEditingController(text: node.acceptance);
@@ -225,113 +218,101 @@ class _NodeMenu extends StatelessWidget {
     } on Exception {
       // Owner picker stays empty; the rest of the edit still works.
     }
-    final ok = await showDialog<bool>(
+    if (!context.mounted) return;
+    final ok = await showBlockModal<bool>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: Text(l10n.t('roadmap.edit')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: title,
-                decoration: InputDecoration(
-                  labelText: l10n.t('roadmap.rootPlaceholder'),
-                ),
-              ),
-              TextField(
-                controller: desc,
-                decoration: InputDecoration(
-                  labelText: l10n.t('roadmap.descPlaceholder'),
-                ),
-              ),
-              TextField(
-                key: const Key('acceptance-field'),
-                controller: acceptance,
-                decoration: InputDecoration(
-                  labelText: l10n.t('roadmap.acceptanceHint'),
-                ),
-              ),
-              DropdownButton<String?>(
-                key: const Key('owner-picker'),
-                isExpanded: true,
-                value: members.any((m) => m.userId == ownerId) ? ownerId : null,
-                hint: Text(l10n.t('roadmap.ownerPick')),
-                items: [
-                  DropdownMenuItem(
-                    value: null,
-                    child: Text(l10n.t('roadmap.ownerNone')),
-                  ),
-                  ...members.map(
-                    (m) => DropdownMenuItem(
-                      value: m.userId,
-                      child: Text(m.username),
-                    ),
-                  ),
-                ],
-                onChanged: (v) => setLocal(() => ownerId = v),
-              ),
-              DropdownButton<String>(
-                value: status,
-                items: ['locked', 'pending', 'in_progress', 'done']
-                    .map(
-                      (s) => DropdownMenuItem(
-                        value: s,
-                        child: Text(l10n.t('roadmap.status.$s')),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) => setLocal(() => status = v ?? status),
-              ),
-              Row(
-                children: [
-                  TextButton(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: ctx,
-                        initialDate: DateTime.now().add(
-                          const Duration(days: 7),
-                        ),
-                        firstDate: DateTime.now().subtract(
-                          const Duration(days: 1),
-                        ),
-                        lastDate: DateTime.now().add(
-                          const Duration(days: 365 * 3),
-                        ),
-                      );
-                      if (picked != null)
-                        setLocal(
-                          () => deadline = picked.toUtc().toIso8601String(),
-                        );
-                    },
-                    child: Text(
-                      deadline == null
-                          ? l10n.t('roadmap.setDeadline')
-                          : isoDate(deadline!),
-                    ),
-                  ),
-                  if (deadline != null)
-                    IconButton(
-                      tooltip: l10n.t('roadmap.clearDeadline'),
-                      onPressed: () => setLocal(() => deadline = ''),
-                      icon: const Icon(Icons.event_busy, size: 18),
-                    ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.t('common.cancel')),
+      title: t('roadmap.edit'),
+      body: StatefulBuilder(
+        builder: (ctx, setLocal) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BlockField(controller: title, label: t('roadmap.rootPlaceholder')),
+            const SizedBox(height: Cobalt.space4),
+            BlockField(controller: desc, label: t('roadmap.descPlaceholder')),
+            const SizedBox(height: Cobalt.space4),
+            BlockField(
+              key: const Key('acceptance-field'),
+              controller: acceptance,
+              label: t('roadmap.acceptanceHint'),
             ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.t('roadmap.save')),
+            const SizedBox(height: Cobalt.space4),
+            BlockSelect<String?>(
+              key: const Key('owner-picker'),
+              value: members.any((m) => m.userId == ownerId) ? ownerId : null,
+              placeholder: t('roadmap.ownerPick'),
+              options: [
+                (value: null, label: t('roadmap.ownerNone')),
+                for (final m in members) (value: m.userId, label: m.username),
+              ],
+              onChanged: (v) => setLocal(() => ownerId = v),
+            ),
+            const SizedBox(height: Cobalt.space4),
+            BlockSelect<String>(
+              value: status,
+              options: [
+                for (final s in const [
+                  'locked',
+                  'pending',
+                  'in_progress',
+                  'done',
+                ])
+                  (value: s, label: t('roadmap.status.$s')),
+              ],
+              onChanged: (v) => setLocal(() => status = v ?? status),
+            ),
+            const SizedBox(height: Cobalt.space4),
+            Row(
+              children: [
+                BlockButton(
+                  label: deadline == null
+                      ? t('roadmap.setDeadline')
+                      : isoDate(deadline!),
+                  icon: Icons.event_outlined,
+                  size: BlockButtonSize.sm,
+                  variant: BlockButtonVariant.secondary,
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: DateTime.now().add(const Duration(days: 7)),
+                      firstDate: DateTime.now().subtract(
+                        const Duration(days: 1),
+                      ),
+                      lastDate: DateTime.now().add(
+                        const Duration(days: 365 * 3),
+                      ),
+                    );
+                    if (picked != null) {
+                      setLocal(
+                        () => deadline = picked.toUtc().toIso8601String(),
+                      );
+                    }
+                  },
+                ),
+                if (deadline != null) ...[
+                  const SizedBox(width: Cobalt.space2),
+                  BlockIconButton(
+                    icon: Icons.event_busy,
+                    tooltip: t('roadmap.clearDeadline'),
+                    onPressed: () => setLocal(() => deadline = ''),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
       ),
+      footer: [
+        BlockButton(
+          label: t('common.cancel'),
+          variant: BlockButtonVariant.secondary,
+          onPressed: () => navigator.pop(false),
+        ),
+        BlockButton(
+          label: t('roadmap.save'),
+          onPressed: () => navigator.pop(true),
+        ),
+      ],
     );
     if (ok == true && context.mounted) {
       final done = await guardWrite(

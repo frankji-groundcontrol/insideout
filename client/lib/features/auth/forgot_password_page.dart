@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/cobalt.dart';
 import 'auth_door.dart';
 
 /// `/forgot-password`: requests the emailed password-reset link.
@@ -58,10 +62,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     l10n.t('forgot.sent'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const SizedBox(height: 20),
-                  TextButton(
+                  const SizedBox(height: Cobalt.space6),
+                  BlockButton(
+                    label: l10n.t('forgot.back'),
+                    expand: true,
                     onPressed: () => context.go('/login'),
-                    child: Text(l10n.t('forgot.back')),
                   ),
                 ],
               )
@@ -69,30 +74,27 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextField(
+                  BlockField(
                     controller: email,
-                    decoration: InputDecoration(
-                      labelText: l10n.t('forgot.email'),
-                    ),
+                    label: l10n.t('forgot.email'),
                     autofillHints: const [AutofillHints.email],
                   ),
                   if (error != null) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                    ),
+                    const SizedBox(height: Cobalt.space3),
+                    BlockBanner(message: error!),
                   ],
-                  const SizedBox(height: 20),
-                  FilledButton(
-                    onPressed: busy ? null : _submit,
-                    child: Text(l10n.t('forgot.submit')),
+                  const SizedBox(height: Cobalt.space6),
+                  BlockButton(
+                    label: l10n.t('forgot.submit'),
+                    expand: true,
+                    busy: busy,
+                    onPressed: _submit,
                   ),
-                  TextButton(
+                  BlockButton(
+                    label: l10n.t('forgot.back'),
+                    variant: BlockButtonVariant.ghost,
+                    expand: true,
                     onPressed: () => context.go('/login'),
-                    child: Text(l10n.t('forgot.back')),
                   ),
                 ],
               ),

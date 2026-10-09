@@ -86,6 +86,29 @@ class Cobalt {
   static const hoverOffset = Offset(2, 2);
   static const activeOffset = Offset(4, 4);
 
+  /// The 4px spacing grid from DESIGN.md (`spacing.unit: 4px`).
+  static const space1 = 4.0;
+  static const space2 = 8.0;
+  static const space3 = 12.0;
+  static const space4 = 16.0;
+  static const space6 = 24.0;
+  static const space8 = 32.0;
+  static const space10 = 40.0;
+
+  /// Breakpoints and the content-column cap for wide viewports (D9).
+  static const bpNarrow = 600.0;
+  static const bpWide = 900.0;
+  static const bpDesk = 1200.0;
+  static const contentMaxWidth = 1120.0;
+
+  /// Measured control heights — fixed outer size, border included, on the
+  /// 4px grid. 44 fits the mandated 17.5 body; 40 is the dense variant.
+  static const controlHeight = 44.0;
+  static const controlHeightDense = 40.0;
+
+  /// The warn channel — amber, widened from the dock warn-dot precedent.
+  static const warnAmber = Color(0xFFFFD166);
+
   /// Web Latin UI face. CJK falls back to [sansCjk] so zh-CN never tofu.
   static const sansWeb = 'Archivo';
   static const sansCjkWeb = 'Noto Sans SC';

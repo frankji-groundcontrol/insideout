@@ -4,7 +4,12 @@ import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/cobalt.dart';
 import 'auth_door.dart';
+import 'auth_sent_panels.dart';
 
 /// Login variants offered alongside email+password: an emailed one-time
 /// link, or an emailed 6-digit code typed in here.
@@ -56,11 +61,12 @@ class _AuthFormState extends State<AuthForm> {
           .api
           .authConfig()
           .then((mode) {
-            if (mounted)
+            if (mounted) {
               setState(
                 () => inviteRequired =
                     mode == 'invitation_only' || mode == 'closed',
               );
+            }
           })
           .catchError((_) {});
     }
@@ -149,165 +155,131 @@ class _AuthFormState extends State<AuthForm> {
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     if (_magic && linkSent) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.t('login.magicSent'),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 20),
-          TextButton(
-            onPressed: _backToPassword,
-            child: Text(l10n.t('login.magicBack')),
-          ),
-        ],
+      return MagicSentPanel(
+        message: l10n.t('login.magicSent'),
+        backLabel: l10n.t('login.magicBack'),
+        onBack: _backToPassword,
       );
     }
     if (_code && codeSent) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            l10n.t('login.codeSent'),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: code,
-            decoration: InputDecoration(labelText: l10n.t('login.codeField')),
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            autofocus: true,
-          ),
-          if (error != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ],
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: busy ? null : _submit,
-            child: Text(l10n.t('login.codeVerify')),
-          ),
-          const SizedBox(height: 4),
-          TextButton(
-            onPressed: busy ? null : _resendCode,
-            child: Text(l10n.t('login.codeResend')),
-          ),
-          TextButton(
-            onPressed: _backToPassword,
-            child: Text(l10n.t('login.magicBack')),
-          ),
-        ],
+      return CodeEntryPanel(
+        message: l10n.t('login.codeSent'),
+        controller: code,
+        codeLabel: l10n.t('login.codeField'),
+        error: error,
+        busy: busy,
+        verifyLabel: l10n.t('login.codeVerify'),
+        resendLabel: l10n.t('login.codeResend'),
+        backLabel: l10n.t('login.magicBack'),
+        onVerify: _submit,
+        onResend: _resendCode,
+        onBack: _backToPassword,
       );
     }
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        TextField(
+        BlockField(
           controller: email,
-          decoration: InputDecoration(
-            labelText: l10n.t(_register ? 'register.email' : 'login.username'),
-          ),
+          label: l10n.t(_register ? 'register.email' : 'login.username'),
           autofillHints: const [AutofillHints.email],
         ),
         if (_register) ...[
-          const SizedBox(height: 12),
-          TextField(
-            controller: username,
-            decoration: InputDecoration(labelText: l10n.t('register.username')),
-          ),
+          const SizedBox(height: Cobalt.space3),
+          BlockField(controller: username, label: l10n.t('register.username')),
           if (inviteRequired) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: invite,
-              decoration: InputDecoration(labelText: l10n.t('register.invite')),
-            ),
+            const SizedBox(height: Cobalt.space3),
+            BlockField(controller: invite, label: l10n.t('register.invite')),
           ],
         ],
         if (!_magic && !_code) ...[
-          const SizedBox(height: 12),
-          TextField(
+          const SizedBox(height: Cobalt.space3),
+          BlockField(
             controller: password,
-            decoration: InputDecoration(
-              labelText: l10n.t(
-                _register ? 'register.password' : 'login.password',
-              ),
-              helperText: _register ? l10n.t('register.passwordHint') : null,
-            ),
-            obscureText: true,
+            label: l10n.t(_register ? 'register.password' : 'login.password'),
+            obscure: true,
+            helper: _register ? l10n.t('register.passwordHint') : null,
           ),
         ],
         if (error != null) ...[
-          const SizedBox(height: 12),
-          Text(
-            error!,
-            style: TextStyle(color: Theme.of(context).colorScheme.error),
-          ),
+          const SizedBox(height: Cobalt.space3),
+          BlockBanner(message: error!),
         ],
-        const SizedBox(height: 20),
-        FilledButton(
-          onPressed: busy ? null : _submit,
-          child: Text(
-            l10n.t(switch (_mode) {
-              _LoginMode.magic => 'login.magicSubmit',
-              _LoginMode.code => 'login.codeSubmit',
-              _ => _register ? 'register.submit' : 'login.loginButton',
-            }),
-          ),
+        const SizedBox(height: Cobalt.space6),
+        BlockButton(
+          label: l10n.t(switch (_mode) {
+            _LoginMode.magic => 'login.magicSubmit',
+            _LoginMode.code => 'login.codeSubmit',
+            _ => _register ? 'register.submit' : 'login.loginButton',
+          }),
+          expand: true,
+          busy: busy,
+          onPressed: _submit,
         ),
         if (_magic || _code) ...[
-          const SizedBox(height: 4),
-          TextButton(
+          const SizedBox(height: Cobalt.space1),
+          BlockButton(
+            label: l10n.t('login.magicBack'),
+            variant: BlockButtonVariant.ghost,
+            expand: true,
             onPressed: _backToPassword,
-            child: Text(l10n.t('login.magicBack')),
           ),
         ] else if (!_register) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: Cobalt.space6),
           _otherWaysDivider(l10n.t('login.otherWays')),
-          const SizedBox(height: 12),
+          const SizedBox(height: Cobalt.space3),
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: BlockButton(
+                  label: l10n.t('login.magicLinkShort'),
+                  variant: BlockButtonVariant.secondary,
+                  expand: true,
                   onPressed: () => setState(() => _mode = _LoginMode.magic),
-                  child: Text(l10n.t('login.magicLinkShort')),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Cobalt.space3),
               Expanded(
-                child: OutlinedButton(
+                child: BlockButton(
+                  label: l10n.t('login.codeLinkShort'),
+                  variant: BlockButtonVariant.secondary,
+                  expand: true,
                   onPressed: () => setState(() => _mode = _LoginMode.code),
-                  child: Text(l10n.t('login.codeLinkShort')),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Cobalt.space1),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              TextButton(
-                onPressed: () => context.go('/forgot-password'),
-                child: Text(l10n.t('login.forgot')),
+              Expanded(
+                child: BlockButton(
+                  label: l10n.t('login.forgot'),
+                  variant: BlockButtonVariant.ghost,
+                  size: BlockButtonSize.sm,
+                  expand: true,
+                  onPressed: () => context.go('/forgot-password'),
+                ),
               ),
-              TextButton(
-                onPressed: widget.onSwitch,
-                child: Text(l10n.t('login.noAccount')),
+              Expanded(
+                child: BlockButton(
+                  label: l10n.t('login.noAccount'),
+                  variant: BlockButtonVariant.ghost,
+                  size: BlockButtonSize.sm,
+                  expand: true,
+                  onPressed: widget.onSwitch,
+                ),
               ),
             ],
           ),
         ],
         if (_register)
-          TextButton(
+          BlockButton(
+            label: l10n.t('register.haveAccount'),
+            variant: BlockButtonVariant.ghost,
+            expand: true,
             onPressed: widget.onSwitch,
-            child: Text(l10n.t('register.haveAccount')),
           ),
       ],
     );
@@ -316,20 +288,31 @@ class _AuthFormState extends State<AuthForm> {
   // A hairline "— More ways to sign in —" divider separating the primary
   // password path from the alternate sign-in buttons.
   Widget _otherWaysDivider(String label) {
-    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    final hairline = Expanded(
+      child: Divider(
+        thickness: Cobalt.borderDivider,
+        height: Cobalt.borderDivider,
+        color: palette.strokeSubtle,
+      ),
+    );
     return Row(
       children: [
-        const Expanded(child: Divider()),
+        hairline,
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: Cobalt.space3),
           child: Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+            style: TextStyle(
+              fontFamily: Cobalt.sans,
+              fontFamilyFallback: Cobalt.sansFallback,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: palette.fgMuted,
             ),
           ),
         ),
-        const Expanded(child: Divider()),
+        hairline,
       ],
     );
   }

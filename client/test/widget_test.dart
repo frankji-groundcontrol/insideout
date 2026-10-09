@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/features/landing/landing_page.dart';
 import 'package:insideout/session/appearance.dart';
+import 'package:insideout/theme/block_button.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
@@ -28,7 +29,7 @@ void main() {
     expect(find.text('Capture the spark'), findsOneWidget);
     expect(find.text('Ready to walk the loop?'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, 'Log in'));
+    await tester.tap(find.widgetWithText(BlockButton, 'Log in'));
     await tester.pump();
     expect(find.byType(TextField), findsNWidgets(2));
     expect(find.text('InsideOut'), findsWidgets);

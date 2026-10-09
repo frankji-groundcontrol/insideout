@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/block_focus.dart';
 import '../theme/cobalt.dart';
 import '../theme/cobalt_theme.dart';
 
@@ -7,6 +8,7 @@ import '../theme/cobalt_theme.dart';
 /// hover shifts [Cobalt.hoverOffset] with the cast shrunk to `castSm`, active
 /// presses the block into the page — [Cobalt.activeOffset], shadow gone —
 /// all over [Cobalt.pressDuration]. Shadows come from `cast`/`castSm`.
+/// Keyboard focus and Enter/Space activation come from [BlockFocus].
 class PressableBlock extends StatefulWidget {
   const PressableBlock({super.key, required this.child, this.onTap});
 
@@ -46,24 +48,28 @@ class _PressableBlockState extends State<PressableBlock> {
         : hovered
         ? castSm(brightness)
         : cast(brightness);
-    return MouseRegion(
-      onEnter: enabled ? (_) => _set(hovered: true) : null,
-      onExit: enabled ? (_) => _set(hovered: false, pressed: false) : null,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        onTapDown: enabled ? (_) => _set(pressed: true) : null,
-        onTapUp: enabled ? (_) => _set(pressed: false) : null,
-        onTapCancel: enabled ? () => _set(pressed: false) : null,
-        child: Semantics(
-          button: true,
-          enabled: enabled,
-          child: AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : Cobalt.pressDuration,
-            transform: Matrix4.translationValues(offset.dx, offset.dy, 0),
-            decoration: BoxDecoration(boxShadow: shadows),
-            child: widget.child,
+    return BlockFocus(
+      enabled: enabled,
+      onActivate: widget.onTap,
+      child: MouseRegion(
+        onEnter: enabled ? (_) => _set(hovered: true) : null,
+        onExit: enabled ? (_) => _set(hovered: false, pressed: false) : null,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          onTapDown: enabled ? (_) => _set(pressed: true) : null,
+          onTapUp: enabled ? (_) => _set(pressed: false) : null,
+          onTapCancel: enabled ? () => _set(pressed: false) : null,
+          child: Semantics(
+            button: true,
+            enabled: enabled,
+            child: AnimatedContainer(
+              duration: MediaQuery.disableAnimationsOf(context)
+                  ? Duration.zero
+                  : Cobalt.pressDuration,
+              transform: Matrix4.translationValues(offset.dx, offset.dy, 0),
+              decoration: BoxDecoration(boxShadow: shadows),
+              child: widget.child,
+            ),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import 'chrome/product_dock.dart';
 import 'session/appearance.dart';
 import 'session/boot.dart';
 import 'session/session.dart';
+import 'theme/block_chrome.dart';
 import 'theme/cobalt.dart';
 import 'theme/cobalt_theme.dart';
 
@@ -77,7 +78,14 @@ class AppScaffold extends StatelessWidget {
                 SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 88, 0),
+                    // Right inset clears the utility block (four 36px
+                    // BlockIconButtons + gaps + border + screen margin).
+                    padding: const EdgeInsets.fromLTRB(
+                      Cobalt.space6,
+                      Cobalt.space4,
+                      192,
+                      0,
+                    ),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -95,48 +103,67 @@ class AppScaffold extends StatelessWidget {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 12, 8),
-                child: Material(
-                  color: palette.surfaceRaised.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(Cobalt.radiusPill),
+                padding: const EdgeInsets.fromLTRB(
+                  Cobalt.space2,
+                  Cobalt.space2,
+                  Cobalt.space3,
+                  Cobalt.space2,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(Cobalt.space1),
+                  decoration: BoxDecoration(
+                    // The 95% raised surface under fgSecondary icons is the
+                    // WCAG pair frozen in cobalt_test.dart ("utility icon
+                    // pill"); BlockIconButton paints both sides of it.
+                    color: palette.surfaceRaised.withValues(alpha: 0.95),
+                    border: Border.all(
+                      color: palette.strokeSubtle,
+                      width: Cobalt.borderContainer,
+                    ),
+                    boxShadow: cast(Theme.of(context).brightness),
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ...?actions,
-                      IconButton(
+                      for (final action in actions ?? const <Widget>[]) ...[
+                        action,
+                        const SizedBox(width: Cobalt.space1),
+                      ],
+                      BlockIconButton(
                         tooltip: appearance.t('lang.switchTo'),
                         onPressed: appearance.toggleLocale,
-                        icon: const Icon(Icons.translate),
+                        icon: Icons.translate,
                       ),
-                      IconButton(
+                      const SizedBox(width: Cobalt.space1),
+                      BlockIconButton(
                         tooltip: appearance.t(
                           appearance.dark
                               ? 'theme.toggleLight'
                               : 'theme.toggleDark',
                         ),
                         onPressed: appearance.toggleTheme,
-                        icon: Icon(
-                          appearance.dark
-                              ? Icons.light_mode_outlined
-                              : Icons.dark_mode_outlined,
-                        ),
+                        icon: appearance.dark
+                            ? Icons.light_mode_outlined
+                            : Icons.dark_mode_outlined,
                       ),
-                      if (signedIn)
-                        IconButton(
+                      if (signedIn) ...[
+                        const SizedBox(width: Cobalt.space1),
+                        BlockIconButton(
                           tooltip: appearance.t('nav.profile'),
                           onPressed: () => context.go('/profile'),
-                          icon: const Icon(Icons.person_outline),
+                          icon: Icons.person_outline,
                         ),
-                      if (signedIn)
-                        IconButton(
+                        const SizedBox(width: Cobalt.space1),
+                        BlockIconButton(
                           tooltip: appearance.t('nav.logout'),
                           onPressed: () async {
                             context.read<LoopFocus>().clear();
                             await session.logout();
                             if (context.mounted) context.go('/');
                           },
-                          icon: const Icon(Icons.logout),
+                          icon: Icons.logout,
                         ),
+                      ],
                     ],
                   ),
                 ),

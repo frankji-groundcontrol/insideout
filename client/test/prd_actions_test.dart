@@ -91,11 +91,11 @@ void main() {
         ),
         GoRoute(
           path: '/projects/:id',
-          builder: (_, __) => const SizedBox.shrink(),
+          builder: (_, _) => const SizedBox.shrink(),
           routes: [
             GoRoute(
               path: 'roadmap',
-              builder: (_, __) => const SizedBox.shrink(),
+              builder: (_, _) => const SizedBox.shrink(),
             ),
           ],
         ),

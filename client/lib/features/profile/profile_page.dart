@@ -5,6 +5,10 @@ import '../../api/errors_l10n.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/cobalt.dart';
 import 'admin_section.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -18,8 +22,9 @@ class _ProfilePageState extends State<ProfilePage> {
   late final TextEditingController username;
   late final TextEditingController bio;
   late final TextEditingController keywords;
-  String? error;
+  Object? error;
   bool busy = false;
+  bool saved = false;
 
   @override
   void initState() {
@@ -38,10 +43,15 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  void _touched() {
+    if (saved) setState(() => saved = false);
+  }
+
   Future<void> _save() async {
     setState(() {
       busy = true;
       error = null;
+      saved = false;
     });
     try {
       final session = context.read<Session>();
@@ -55,8 +65,9 @@ class _ProfilePageState extends State<ProfilePage> {
             .toList(),
       );
       await session.applyUser(updated);
+      if (mounted) setState(() => saved = true);
     } catch (e) {
-      setState(() => error = e.toString());
+      if (mounted) setState(() => error = e);
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -69,44 +80,66 @@ class _ProfilePageState extends State<ProfilePage> {
     return AppScaffold(
       title: l10n.t('profile.title'),
       paintTitle: true,
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 24, 24, 140),
-        children: [
-          Text(user?.email ?? '', style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 16),
-          TextField(
-            controller: username,
-            decoration: InputDecoration(labelText: l10n.t('profile.username')),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: bio,
-            decoration: InputDecoration(
-              labelText: l10n.t('profile.bio'),
-              hintText: l10n.t('profile.bioPlaceholder'),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              Cobalt.space6,
+              Cobalt.space6,
+              Cobalt.space6,
+              140,
             ),
-            maxLines: 3,
+            children: [
+              Text(
+                user?.email ?? '',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: Cobalt.space4),
+              BlockField(
+                controller: username,
+                label: l10n.t('profile.username'),
+                onChanged: (_) => _touched(),
+              ),
+              const SizedBox(height: Cobalt.space3),
+              BlockTextarea(
+                controller: bio,
+                label: l10n.t('profile.bio'),
+                hint: l10n.t('profile.bioPlaceholder'),
+                minLines: 3,
+                onChanged: (_) => _touched(),
+              ),
+              const SizedBox(height: Cobalt.space3),
+              BlockField(
+                controller: keywords,
+                label: l10n.t('profile.keywords'),
+                hint: l10n.t('profile.keywordsPlaceholder'),
+                onChanged: (_) => _touched(),
+              ),
+              if (error != null) ...[
+                const SizedBox(height: Cobalt.space4),
+                BlockBanner(message: localizedError(error!, l10n.t)),
+              ],
+              if (saved && error == null) ...[
+                const SizedBox(height: Cobalt.space4),
+                BlockBanner(
+                  message: l10n.t('profile.saveSuccess'),
+                  tone: BlockTone.success,
+                ),
+              ],
+              const SizedBox(height: Cobalt.space6),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: BlockButton(
+                  label: l10n.t('profile.save'),
+                  busy: busy,
+                  onPressed: _save,
+                ),
+              ),
+              if (user?.isAdmin ?? false) const AdminSection(),
+            ],
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: keywords,
-            decoration: InputDecoration(
-              labelText: l10n.t('profile.keywords'),
-              hintText: l10n.t('profile.keywordsPlaceholder'),
-            ),
-          ),
-          if (error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(localizedError(error!, l10n.t)),
-            ),
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: busy ? null : _save,
-            child: Text(l10n.t('profile.save')),
-          ),
-          if (user?.isAdmin ?? false) const AdminSection(),
-        ],
+        ),
       ),
     );
   }

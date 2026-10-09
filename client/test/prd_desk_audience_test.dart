@@ -7,6 +7,7 @@ import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/prd/prd_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
+import 'package:insideout/theme/block_button.dart';
 import 'package:provider/provider.dart';
 
 class _DraftApi extends ApiClient {
@@ -53,7 +54,7 @@ void main() {
         ),
         GoRoute(
           path: '/prd/:id/view',
-          builder: (_, __) => const Text('audience page'),
+          builder: (_, _) => const Text('audience page'),
         ),
       ],
     );
@@ -75,10 +76,10 @@ void main() {
     await tester.pump();
 
     expect(find.byType(PopupMenuItem<String>), findsNothing);
-    final button = tester.widget<ButtonStyleButton>(
+    final button = tester.widget<BlockButton>(
       find.ancestor(
         of: find.text('Audience view'),
-        matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+        matching: find.byType(BlockButton),
       ),
     );
     expect(button.onPressed, isNotNull);

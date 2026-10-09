@@ -6,8 +6,15 @@ import '../../api/export_format.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/cobalt.dart';
+import '../../theme/field_card.dart';
 import '../../api/download_stub.dart'
     if (dart.library.ui_web) '../../api/download_web.dart';
+
+const _audiences = ['decision', 'management', 'delivery', 'validation'];
 
 class ExportPage extends StatefulWidget {
   const ExportPage({super.key, required this.prdId});
@@ -22,12 +29,14 @@ class _ExportPageState extends State<ExportPage> {
   String format = 'markdown';
   String? audience;
   String? body;
-  String? error;
+  Object? error;
+  bool running = false;
 
   Future<void> _run() async {
     setState(() {
       error = null;
       body = null;
+      running = true;
     });
     try {
       final text = await context.read<Session>().api.exportPrd(
@@ -35,103 +44,149 @@ class _ExportPageState extends State<ExportPage> {
         format,
         audience: audience,
       );
-      setState(() => body = text);
+      if (mounted) setState(() => body = text);
     } catch (e) {
-      setState(() => error = e.toString());
+      // Keep the object: localizedError maps ApiException by status and a
+      // stringified error always falls through to the generic apology.
+      if (mounted) setState(() => error = e);
+    } finally {
+      if (mounted) setState(() => running = false);
     }
   }
+
+  String _formatLabel(TFn t, String value) =>
+      t(value == 'print' ? 'prd.exportPrint' : 'prd.exportMarkdown');
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    final markdown = format == 'markdown';
     return AppScaffold(
       title: l10n.t('prd.exportMarkdown'),
       paintTitle: true,
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
-        children: [
-          SegmentedButton<String>(
-            segments: [
-              for (final option in prdExportFormats)
-                ButtonSegment(
-                  value: option.query,
-                  label: Text(
-                    l10n.t(
-                      option.query == 'print'
-                          ? 'prd.exportPrint'
-                          : 'prd.exportMarkdown',
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              Cobalt.space6,
+              Cobalt.space4,
+              Cobalt.space6,
+              140,
+            ),
+            children: [
+              Wrap(
+                spacing: Cobalt.space2,
+                runSpacing: Cobalt.space2,
+                children: [
+                  for (final option in prdExportFormats)
+                    BlockButton(
+                      label: _formatLabel(l10n.t, option.query),
+                      variant: option.query == format
+                          ? BlockButtonVariant.primary
+                          : BlockButtonVariant.secondary,
+                      onPressed: () => setState(() => format = option.query),
+                    ),
+                ],
+              ),
+              const SizedBox(height: Cobalt.space4),
+              BlockSelect<String>(
+                label: l10n.t('prd.exportAudience'),
+                value: audience ?? '',
+                options: [
+                  (value: '', label: l10n.t('prd.exportFull')),
+                  for (final a in _audiences)
+                    (value: a, label: l10n.t('versions.audience.$a')),
+                ],
+                onChanged: (v) => setState(
+                  () => audience = v == null || v.isEmpty ? null : v,
+                ),
+              ),
+              const SizedBox(height: Cobalt.space4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: BlockButton(
+                  label: l10n.t('common.submit'),
+                  icon: Icons.bolt,
+                  busy: running,
+                  onPressed: running ? null : _run,
+                ),
+              ),
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: Cobalt.space4),
+                  child: BlockBanner(message: localizedError(error!, l10n.t)),
+                ),
+              if (body != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: Cobalt.space6),
+                  child: FieldCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                _formatLabel(l10n.t, format),
+                                style: theme.textTheme.titleSmall,
+                              ),
+                            ),
+                            BlockButton(
+                              label: markdown
+                                  ? l10n.t('common.download')
+                                  : l10n.t('prd.exportPrint'),
+                              icon: markdown
+                                  ? Icons.download
+                                  : Icons.print_outlined,
+                              variant: BlockButtonVariant.secondary,
+                              size: BlockButtonSize.sm,
+                              // The print format is HTML sized for paper;
+                              // opening it in a tab puts the browser's
+                              // print-to-PDF one keystroke away, with a
+                              // download fallback when tabs are blocked.
+                              onPressed: () {
+                                if (markdown) {
+                                  downloadTextFile(
+                                    'prd-${widget.prdId}.md',
+                                    body!,
+                                    mime: 'text/markdown',
+                                  );
+                                } else if (!openTextInNewTab(
+                                  body!,
+                                  mime: 'text/html',
+                                )) {
+                                  downloadTextFile(
+                                    'prd-${widget.prdId}.html',
+                                    body!,
+                                    mime: 'text/html',
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: Cobalt.space3),
+                        Divider(
+                          height: Cobalt.borderDivider,
+                          thickness: Cobalt.borderDivider,
+                          color: palette.strokeSubtle,
+                        ),
+                        const SizedBox(height: Cobalt.space3),
+                        SelectableText(
+                          body!,
+                          maxLines: 8,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
                     ),
                   ),
                 ),
             ],
-            selected: {format},
-            onSelectionChanged: (s) => setState(() => format = s.first),
           ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            initialValue: audience,
-            decoration: InputDecoration(
-              labelText: l10n.t('prd.exportAudience'),
-            ),
-            items: [
-              DropdownMenuItem(
-                value: null,
-                child: Text(l10n.t('prd.exportFull')),
-              ),
-              for (final a in const [
-                'decision',
-                'management',
-                'delivery',
-                'validation',
-              ])
-                DropdownMenuItem(value: a, child: Text(a)),
-            ],
-            onChanged: (v) => setState(() => audience = v),
-          ),
-          const SizedBox(height: 12),
-          FilledButton(onPressed: _run, child: Text(l10n.t('common.save'))),
-          if (error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(localizedError(error!, l10n.t)),
-            ),
-          if (body != null) ...[
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Row(
-                children: [
-                  if (format == 'markdown')
-                    FilledButton.tonal(
-                      onPressed: () => downloadTextFile(
-                        'prd-${widget.prdId}.md',
-                        body!,
-                        mime: 'text/markdown',
-                      ),
-                      child: Text(l10n.t('common.download')),
-                    )
-                  else
-                    FilledButton.tonal(
-                      // The print format is HTML sized for paper; opening it
-                      // in a tab puts the browser's print-to-PDF one keystroke
-                      // away, with a download fallback when tabs are blocked.
-                      onPressed: () {
-                        if (!openTextInNewTab(body!, mime: 'text/html')) {
-                          downloadTextFile(
-                            'prd-${widget.prdId}.html',
-                            body!,
-                            mime: 'text/html',
-                          );
-                        }
-                      },
-                      child: Text(l10n.t('prd.exportPrint')),
-                    ),
-                  const SizedBox(width: 12),
-                  Expanded(child: SelectableText(body!, maxLines: 8)),
-                ],
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

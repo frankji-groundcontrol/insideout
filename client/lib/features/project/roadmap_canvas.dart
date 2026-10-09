@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../theme/cobalt.dart';
+import '../../widgets/pressable_block.dart';
 
 /// Collaborative canvas v1: each root branch renders as a
 /// sibling band — a vertical column of its subtree — laid out
@@ -215,41 +216,40 @@ class RoadmapMinimap extends StatelessWidget {
           for (var i = 0; i < roots.length; i++)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(Cobalt.radiusControl),
+              // The whole column is the pressable block (D7): a decorated
+              // container, so every pixel of the band is tappable — no
+              // Material ripple in the block language.
+              child: PressableBlock(
                 onTap: () => onTapBand(i),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Expanded(
-                      child: Container(
-                        width: 18,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          border: Border.all(
-                            color: theme.colorScheme.outlineVariant,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  padding: const EdgeInsets.fromLTRB(6, 2, 6, 0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          width: 18,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              for (final n in _bandMarks(roots[i]))
+                                _MinimapMark(status: n.status),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(
-                            Cobalt.radiusControl,
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(2),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            for (final n in _bandMarks(roots[i]))
-                              _MinimapMark(status: n.status),
-                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      _clip(roots[i].title),
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 9),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        _clip(roots[i].title),
+                        style: theme.textTheme.bodySmall?.copyWith(fontSize: 9),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

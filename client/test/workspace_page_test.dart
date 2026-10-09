@@ -122,8 +122,9 @@ void main() {
     // The flagged project carries the quiet badge; the fresh one does not.
     expect(find.text('gone quiet'), findsOneWidget);
 
-    // The latest update line: kind label, content, relative time.
-    expect(find.text('Progress'), findsOneWidget);
+    // The latest update line: kind tag (uppercase micro tag), content,
+    // relative time.
+    expect(find.text('PROGRESS'), findsOneWidget);
     expect(find.text('shipped the invitation flow'), findsOneWidget);
     expect(find.text('3d ago'), findsOneWidget);
 

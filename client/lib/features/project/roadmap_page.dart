@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors_l10n.dart';
 import '../../api/client.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
@@ -11,7 +10,11 @@ import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_form.dart';
+import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
+import '../../theme/cobalt_chip.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
 import 'roadmap_canvas.dart';
@@ -160,43 +163,24 @@ class _RoadmapPageState extends State<RoadmapPage> {
   }
 
   Future<void> _addRoot() async {
-    final l10n = context.read<Appearance>();
-    final title = TextEditingController();
-    final ok = await showDialog<bool>(
+    final t = context.read<Appearance>().t;
+    final values = await showBlockForm(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.t('roadmap.addRoot')),
-        content: TextField(
-          controller: title,
-          decoration: InputDecoration(
-            labelText: l10n.t('roadmap.rootPlaceholder'),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text(l10n.t('common.cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.t('roadmap.add')),
-          ),
-        ],
+      title: t('roadmap.addRoot'),
+      confirmLabel: t('roadmap.add'),
+      fields: [BlockFormField(label: t('roadmap.rootPlaceholder'))],
+    );
+    if (values == null || !mounted) return;
+    final title = values.first.trim();
+    if (title.isEmpty) return;
+    final done = await guardWrite(
+      context,
+      () => context.read<Session>().api.createRoadmapNode(
+        widget.projectId,
+        title,
       ),
     );
-    if (ok == true && title.text.trim().isNotEmpty && mounted) {
-      final done = await guardWrite(
-        context,
-        () => context.read<Session>().api.createRoadmapNode(
-          widget.projectId,
-          title.text.trim(),
-        ),
-      );
-      if (done && mounted) await _reload();
-    }
-    // Not disposed: the pop animation keeps the dialog's TextField mounted
-    // past this await, and the guard's SnackBar rebuilds the overlay — a
-    // disposed controller would throw. GC'd once the dialog unmounts.
+    if (done && mounted) await _reload();
   }
 
   @override
@@ -205,24 +189,16 @@ class _RoadmapPageState extends State<RoadmapPage> {
     final theme = Theme.of(context);
     return AppScaffold(
       actions: [
-        SegmentedButton<_RoadmapView>(
-          segments: [
-            ButtonSegment(
-              value: _RoadmapView.progress,
-              label: Text(l10n.t('roadmap.viewProgress')),
-            ),
-            ButtonSegment(
-              value: _RoadmapView.bands,
-              label: Text(l10n.t('roadmap.viewBands')),
-            ),
-            ButtonSegment(
-              value: _RoadmapView.canvas,
-              label: Text(l10n.t('roadmap.viewCanvas')),
-            ),
-          ],
-          selected: {_view},
-          onSelectionChanged: (s) => setState(() => _view = s.first),
-        ),
+        for (final view in _RoadmapView.values)
+          BlockChoice(
+            label: l10n.t(switch (view) {
+              _RoadmapView.progress => 'roadmap.viewProgress',
+              _RoadmapView.bands => 'roadmap.viewBands',
+              _RoadmapView.canvas => 'roadmap.viewCanvas',
+            }),
+            selected: _view == view,
+            onTap: () => setState(() => _view = view),
+          ),
       ],
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,9 +223,10 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     ],
                   ),
                 ),
-                FilledButton(
+                BlockButton(
+                  label: l10n.t('roadmap.newItem'),
+                  icon: Icons.add,
                   onPressed: _addRoot,
-                  child: Text(l10n.t('roadmap.newItem')),
                 ),
               ],
             ),
@@ -258,7 +235,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
               child: Wrap(
-                spacing: 6,
+                spacing: Cobalt.space2,
                 children: [
                   Icon(
                     Icons.groups_2_outlined,
@@ -266,7 +243,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     color: Cobalt.of(context).brand,
                   ),
                   for (final e in _presence)
-                    Chip(label: Text(e.name, style: theme.textTheme.bodySmall)),
+                    ShadeChip(label: e.name, tone: ShadeTone.neutral),
                 ],
               ),
             ),
@@ -277,11 +254,9 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     builder: (context, snap) {
                       final progress = _liveProgress ?? snap.data;
                       if (progress == null) {
-                        return Center(
-                          child: snap.hasError
-                              ? Text(localizedError(snap.error!, l10n.t))
-                              : const CircularProgressIndicator(),
-                        );
+                        return snap.hasError
+                            ? BlockError(error: snap.error, onRetry: _reload)
+                            : const BlockLoading();
                       }
                       return RoadmapProgressView(
                         progress: progress,
@@ -293,14 +268,16 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     future: _future,
                     builder: (context, snap) {
                       if (!snap.hasData) {
-                        return Center(
-                          child: snap.hasError
-                              ? Text(localizedError(snap.error!, l10n.t))
-                              : const CircularProgressIndicator(),
+                        return snap.hasError
+                            ? BlockError(error: snap.error, onRetry: _reload)
+                            : const BlockLoading();
+                      }
+                      if (snap.data!.isEmpty) {
+                        return BlockEmpty(
+                          icon: Icons.account_tree_outlined,
+                          body: l10n.t('roadmap.empty'),
                         );
                       }
-                      if (snap.data!.isEmpty)
-                        return Center(child: Text(l10n.t('roadmap.empty')));
                       if (_view == _RoadmapView.bands) {
                         return RoadmapBands(
                           projectId: widget.projectId,

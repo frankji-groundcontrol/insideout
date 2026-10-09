@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../session/appearance.dart';
+import '../../theme/block_button.dart';
+import '../../theme/block_chrome.dart';
+import '../../theme/block_field.dart';
+import '../../theme/block_modal.dart';
+import '../../theme/cobalt.dart';
 
 const versionAudiences = ['validation', 'decision', 'management', 'delivery'];
 
@@ -13,8 +18,12 @@ class CommitFormResult {
   final String summary;
 }
 
-class VersionsCommitDialog extends StatefulWidget {
-  const VersionsCommitDialog({
+/// The Commit form as a modal **body** on the shared block chrome — it no
+/// longer builds its own dialog shell. [showVersionsCommit] hands it to
+/// `showBlockModal` and reads [VersionsCommitFormState.result] out of the
+/// footer, so the `CommitFormResult` contract is unchanged.
+class VersionsCommitForm extends StatefulWidget {
+  const VersionsCommitForm({
     super.key,
     required this.initialAudience,
     required this.carryCount,
@@ -24,10 +33,10 @@ class VersionsCommitDialog extends StatefulWidget {
   final int carryCount;
 
   @override
-  State<VersionsCommitDialog> createState() => _VersionsCommitDialogState();
+  State<VersionsCommitForm> createState() => VersionsCommitFormState();
 }
 
-class _VersionsCommitDialogState extends State<VersionsCommitDialog> {
+class VersionsCommitFormState extends State<VersionsCommitForm> {
   late final TextEditingController _name;
   late final TextEditingController _summary;
   late String _audience;
@@ -47,75 +56,80 @@ class _VersionsCommitDialogState extends State<VersionsCommitDialog> {
     super.dispose();
   }
 
+  CommitFormResult result() =>
+      CommitFormResult(_name.text.trim(), _audience, _summary.text.trim());
+
   @override
   Widget build(BuildContext context) {
-    final l10n = context.read<Appearance>();
-    return AlertDialog(
-      title: Text(l10n.t('versions.commitTitle')),
-      content: SizedBox(
-        width: 420,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _name,
-                decoration: InputDecoration(
-                  labelText: l10n.t('versions.nameLabel'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                initialValue: _audience,
-                decoration: InputDecoration(
-                  labelText: l10n.t('versions.audienceLabel'),
-                ),
-                items: versionAudiences
-                    .map(
-                      (a) => DropdownMenuItem(
-                        value: a,
-                        child: Text(l10n.t('versions.audience.$a')),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (v) => setState(() => _audience = v ?? _audience),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _summary,
-                decoration: InputDecoration(
-                  labelText: l10n.t('versions.summaryLabel'),
-                ),
-              ),
-              if (widget.carryCount > 0) ...[
-                const SizedBox(height: 12),
-                Text(
-                  l10n.t('versions.carryInfo', {'n': widget.carryCount}),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ],
+    final l10n = context.watch<Appearance>();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BlockField(
+          label: l10n.t('versions.nameLabel'),
+          controller: _name,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: Cobalt.space4),
+        BlockSelect<String>(
+          label: l10n.t('versions.audienceLabel'),
+          value: _audience,
+          options: [
+            for (final a in versionAudiences)
+              (value: a, label: l10n.t('versions.audience.$a')),
+          ],
+          onChanged: (v) => setState(() => _audience = v ?? _audience),
+        ),
+        const SizedBox(height: Cobalt.space4),
+        BlockTextarea(
+          label: l10n.t('versions.summaryLabel'),
+          controller: _summary,
+          minLines: 2,
+          maxLines: 5,
+        ),
+        if (widget.carryCount > 0) ...[
+          const SizedBox(height: Cobalt.space4),
+          BlockBanner(
+            tone: BlockTone.info,
+            message: l10n.t('versions.carryInfo', {'n': widget.carryCount}),
           ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(l10n.t('common.cancel')),
-        ),
-        FilledButton(
-          key: const Key('commit-confirm'),
-          onPressed: () => Navigator.pop(
-            context,
-            CommitFormResult(
-              _name.text.trim(),
-              _audience,
-              _summary.text.trim(),
-            ),
-          ),
-          child: Text(l10n.t('versions.commitNow')),
-        ),
+        ],
       ],
     );
   }
+}
+
+/// Opens the Commit modal on the one chrome and resolves to the form result,
+/// or null when dismissed.
+Future<CommitFormResult?> showVersionsCommit({
+  required BuildContext context,
+  required String initialAudience,
+  required int carryCount,
+}) {
+  final formKey = GlobalKey<VersionsCommitFormState>();
+  final t = context.read<Appearance>().t;
+  final navigator = Navigator.of(context);
+  return showBlockModal<CommitFormResult>(
+    context: context,
+    title: t('versions.commitTitle'),
+    body: VersionsCommitForm(
+      key: formKey,
+      initialAudience: initialAudience,
+      carryCount: carryCount,
+    ),
+    footer: [
+      BlockButton(
+        label: t('common.cancel'),
+        variant: BlockButtonVariant.secondary,
+        onPressed: navigator.pop,
+      ),
+      BlockButton(
+        key: const Key('commit-confirm'),
+        label: t('versions.commitNow'),
+        icon: Icons.verified_outlined,
+        onPressed: () => navigator.pop(formKey.currentState?.result()),
+      ),
+    ],
+  );
 }
