@@ -69,3 +69,5 @@ to any absolute path.
 Open (2026-10-09). Found by the CI run after the three-way host sync
 ([changelog](../changelogs/2026-10-09-host-sync.md)); not fixed there
 because it is a `server/` change outside the sync.
+
+Lesson: [pinning `HOME` isolates a config path on macOS only](../learning/2026-10-09-pinning-home-isolates-config-on-macos-only.md).

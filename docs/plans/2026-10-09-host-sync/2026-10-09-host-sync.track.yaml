@@ -6,9 +6,9 @@ main:
   outcome: GitHub main, MBP2, and MBP point at the same commit with the same tree.
   owner: claude
   status: complete
-  next_evidence: None - the record commit is pushed and fast-forwarded the same way.
+  next_evidence: None for the sync. The BUG-021 test fix is a separate server/ change that waits for the owner's go-ahead.
 side_tracks: []
-updated_at: '2026-10-09T13:40:46Z'
+updated_at: '2026-10-09T14:16:20Z'
 plan:
 - step: Inspect GitHub, MBP2, and MBP
   owner: claude
@@ -35,5 +35,11 @@ plan:
   owner: claude
   status: completed
 - step: Record changelog, Flutter-drift issue, HANDOFF, and board row
+  owner: claude
+  status: completed
+- step: Post-push adversarial pass over the pushed range and both clones
+  owner: claude
+  status: completed
+- step: Follow-up commit 378ee8f (redact two home paths, fix stale plan wording, file BUG-021)
   owner: claude
   status: completed

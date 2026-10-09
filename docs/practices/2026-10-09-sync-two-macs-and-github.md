@@ -35,7 +35,11 @@ published.
    (tags fire the release workflow).
 7. **Fast-forward the other Mac** on a clean tree: `git fetch origin`, then
    `git merge --ff-only origin/main`. If its route to GitHub is flaky, retry
-   with a bounded timeout; fall back to `git push` over SSH into that clone.
+   with a bounded timeout. If it stays down, confirm `git ls-remote origin`
+   shows the SHA, push that SHA over SSH into the clone's tracking ref
+   (`git push <ssh-url> "${SHA}:refs/remotes/origin/main"`), then run
+   `git merge --ff-only origin/main` there. Never push to its checked-out
+   branch.
 8. **Record**: changelog, board row, HANDOFF; push the record commit the same
    way.
 
