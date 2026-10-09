@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <path fill="#1D4ED8" fill-rule="evenodd" d="M300 300 H880 V880 H300 Z M430 430 H750 V750 H430 Z"/>
+  <path fill="#3B5BFF" fill-rule="evenodd" d="M120 120 H700 V700 H120 Z M250 250 H570 V570 H250 Z"/>
+  <rect x="570" y="300" width="130" height="130" fill="#1D4ED8"/>
+</svg>

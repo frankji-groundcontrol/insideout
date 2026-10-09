@@ -1,0 +1,24 @@
+version: 2
+task: Install one chosen app-icon mark
+coordinator: grok
+history_file: 2026-10-06-app-icon.track.history.jsonl
+main:
+  outcome: breakout is the web, iOS, and Android icon.
+  owner: grok
+  status: complete
+  next_evidence: Hosted client rebuild, only if the icon should ship.
+side_tracks: []
+updated_at: '2026-10-06T14:16:59Z'
+plan:
+- step: Draw four transparent cobalt marks
+  owner: grok
+  status: completed
+- step: 'Second round after the marks read as too plain: weave, through, rift, drop'
+  owner: grok
+  status: completed
+- step: User named breakout.svg
+  owner: user
+  status: completed
+- step: Install breakout on web, iOS, and Android
+  owner: grok
+  status: completed

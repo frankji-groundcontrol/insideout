@@ -2,9 +2,11 @@
 
 Railway production serves the **Flutter 3** client under `client/` (see
 [`docs/plans/2026-08-17-flutter-client.md`](../plans/2026-08-17-flutter-client.md)).
-The visual language is **Cobalt** — one hue, rounded cards on a field,
-bottom dock ([lock](../design-system/cobalt/README.md),
-[restyle](../plans/2026-09-18-cobalt-flutter.md)).
+The visual language is **Cobalt-Neo** — one hue, squared blocks on a
+field, bottom dock ([decree](../../DESIGN.md),
+[lock](../design-system/cobalt/README.md),
+[restyle](../plans/2026-09-18-cobalt-flutter.md),
+[block-craft component layer](../changelogs/2026-10-07-frontend-block-craft.md)).
 The Nuxt 4 tree was deleted 2026-08-18
 ([changelog](../changelogs/2026-08-18-delete-nuxt-app.md)).
 
@@ -34,7 +36,9 @@ falls back to `index.html`.
 client/lib/
   main.dart           hydrate session + appearance; path URL strategy
   app.dart            MaterialApp.router + signed-in AppScaffold + dock
-  theme/              Cobalt tokens + ThemeData (light/dark)
+  theme/              Cobalt tokens + ThemeData (light/dark) + the block_*
+                      component primitives (buttons, fields, modal chrome,
+                      banners/loaders, empty/loading/error states)
   chrome/             bottom dock + last-loop focus
   router.dart         current product paths
   session/            Session, Appearance, auth redirect

@@ -1,0 +1,83 @@
+version: 2
+task: Port the reference app's component and interaction layer onto the cobalt tokens
+coordinator: qoder
+history_file: 2026-10-07-frontend-block-craft.track.history.jsonl
+main:
+  outcome: 'Code complete; NOT complete as a plan — verification item 4 (the web walk
+    at 1440x900 and 390x844 in both themes) has never been run and AGENTS.md closes
+    a plan only when every item is resolved. The block primitives (client/lib/theme/block_*.dart:
+    BlockButton/BlockChoice, BlockField/BlockTextarea/BlockSelect, showBlockModal/showBlockConfirm,
+    BlockBanner/BlockIconButton/BlockBadge/BlockTag/BlockIconWell/BlockLoader, BlockEmpty/BlockLoading/BlockError,
+    showBlockForm, BlockFocus/CobaltFocusRing) shipped and every surface was swept
+    onto them — zero raw AlertDialog, bare showDialog, InkWell, floating labelText,
+    or round spinners outside the protected boot gate; D1-D9 resolved; en/zh l10n
+    parity at 366 keys; cobalt_test.dart and the identity exceptions untouched. Wave
+    7 fidelity review scored 7.5/10; its one high finding (no focus ring or keyboard
+    activation) is now FIXED by block_focus.dart, and the medium/low residue stays
+    filed. Two of the five sweep agents failed — wave3:project on a model-service
+    error, wave4:prd at the 150-turn limit — and Wave 6 absorbed both partitions;
+    the tree was verified by grep rather than by trusting the per-agent summaries,
+    which the script mislabeled by indexing a filtered array against the unfiltered
+    surface list. Nothing committed; the slice sits uncommitted alongside the app-icon
+    slice.'
+  owner: block-craft
+  status: in_progress
+  next_evidence: 'Local gate in client/, re-run 2026-10-08 after the focus fix — dart
+    format --output=none --set-exit-if-changed lib test: "Formatted 135 files (0 changed)
+    in 0.30 seconds." exit 0; flutter analyze --no-fatal-infos: "16 issues found." exit
+    0 (0 errors, 0 warnings, 16 pre-existing infos in lib/api and two test files);
+    flutter test: "00:09 +167: All tests passed!" exit 0 (160 -> 167 with block_focus_test.dart)
+    and git diff --stat HEAD -- client/test/cobalt_test.dart empty. WCAG asserted in
+    block_primitives_test.dart and block_focus_test.dart. STILL REQUIRED TO CLOSE: the
+    web walk at 1440x900 and 390x844 in both themes (real Tab order across a signed-in
+    page, the ring on a live canvas, dock clearance, no content behind the dock). Records:
+    docs/changelogs/2026-10-07-frontend-block-craft.md, docs/changelogs/2026-10-08-block-focus-ring.md,
+    docs/design-qa/2026-10-07-block-craft.md, issues 2026-10-08-block-focus-ring-keyboard.md
+    (resolved) / 2026-10-08-block-craft-fidelity-followups.md / 2026-10-08-roadmap-canvas-line-budget.md.'
+side_tracks: []
+updated_at: '2026-10-08T00:00:00Z'
+plan:
+- step: Wave 0 primitive contract (block_button, block_field, block_modal, block_chrome,
+    block_state, field_card fix, cobalt tokens, l10n pre-seed) plus widget tests
+  owner: wave0
+  status: completed
+- step: Wave 1 shell — app.dart utility row and product_dock on the new primitives
+  owner: wave1
+  status: completed
+- step: Wave 2 dashboard and workspace surfaces
+  owner: wave2
+  status: completed
+- step: Wave 3 project and roadmap surfaces — agent died on a model-service error;
+    partition executed by Wave 6, verified by grep
+  owner: wave3
+  status: completed
+- step: Wave 4 PRD, coach, versions, revisions, export, audience — agent hit the 150-turn
+    limit mid-partition; finished by Wave 6, verified by grep (9 files on the primitives,
+    zero raw dialogs)
+  owner: wave4
+  status: completed
+- step: Wave 5 profile, auth door, landing — brand disc and Ink motion preserved
+  owner: wave5
+  status: completed
+- step: Wave 6 verify — analyze, test, format, fix breakage; ran the Wave 3 sweep, l10n
+    and shared-primitive handoffs, and the test split; all three gates green (160 tests)
+  owner: wave6
+  status: completed
+- step: Wave 7 fidelity review against DESIGN.md and the reference app — 7.5/10, findings
+    filed as issues
+  owner: wave7
+  status: completed
+- step: 'Wave 8 closure: DESIGN.md amendments, changelog, design-qa, issues, indexes,
+    HANDOFF, board row'
+  owner: wave8
+  status: completed
+- step: Wave 9 fix Wave 7's high finding — BlockFocus keyboard traversal, Enter/Space
+    activation, cobalt ring painted outside the block bounds; 7 new tests, gates green
+    at 167
+  owner: focus
+  status: completed
+- step: 'Wave 10 the outstanding verification item 4: web walk at 1440x900 and 390x844
+    in both themes — real Tab order on a signed-in page, the ring on a live canvas, dock
+    clearance. Then flip this plan and the board row to Finished.'
+  owner: user
+  status: pending

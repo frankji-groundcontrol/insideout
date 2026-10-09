@@ -89,6 +89,29 @@ records continue the numbering (next: BUG-021).
 
 ## Other open issues
 
+- [2026-10-08 — Block primitives have no focus ring or keyboard activation](2026-10-08-block-focus-ring-keyboard.md)
+  — **resolved 2026-10-08**: `BlockFocus` gives `BlockButton`,
+  `BlockChoice`, `BlockIconButton`, and `PressableBlock` Tab traversal,
+  Enter/Space activation, and a cobalt ring painted outside the block
+  bounds, so the fixed control heights are unchanged
+  ([changelog](../changelogs/2026-10-08-block-focus-ring.md)). 7 new
+  widget tests; 167/167 green.
+- [2026-10-08 — Block-craft fidelity follow-ups (Wave 7 medium/low)](2026-10-08-block-craft-fidelity-followups.md)
+  — four raw M3 popup menus, a flat workspace FAB, the coach panel
+  swallowing `ApiException`s into generic errors, dark cobalt-950 on
+  band/poster slabs, plus six low items; each with a bounded fix.
+- [2026-10-08 — roadmap_canvas.dart over the ~350-line budget](2026-10-08-roadmap-canvas-line-budget.md)
+  — 400 lines (canvas + bands + minimap + dash painter); target split
+  into shell + minimap + painters, landing with the minimap's open
+  fidelity fixes.
+- [2026-10-08 — project_page.dart over the ~350-line budget](2026-10-08-project-page-line-budget.md)
+  — 675 lines (Evidence shell + GitHub card + updates feed + three block
+  modals); target split into shell + three focused files; filed by the
+  block-craft verification wave, which grew it 640→675.
+- [2026-10-08 — l10n en/zh tables over the ~350-line budget](2026-10-08-l10n-tables-line-budget.md)
+  — `en.dart` 414 / `zh.dart` 372 and growing with every string; target
+  namespace files reassembled by spread behind the same `enUS`/`zhCN`
+  barrels.
 - [2026-10-07 — Own-URL fresh-database bootstrap: setup does not check or provision the two roles](2026-10-07-own-url-fresh-db-bootstrap.md)
   — fresh own-URL databases fail mid-migration
   (`insideout_owner` missing, or recursion without BYPASSRLS);
@@ -104,6 +127,9 @@ records continue the numbering (next: BUG-021).
   check-then-choose but unexecuted on real Ubuntu hardware. Resolution:
   the next Ubuntu onboarding runs the skill end-to-end and records it.
 
+- [2026-10-06 — App icon candidates are not installed](2026-10-06-app-icon-not-installed.md)
+  — **resolved 2026-10-06**: `breakout` is the web, iOS, and Android
+  icon in the worktree. Not deployed.
 - [2026-10-06 — W3-N2 minified console errors](2026-10-06-wave3-minified-console.md)
   — three identical uncaught `Error`s in the Wave 3 390px dock tap
   pass; stack is minified (`main.dart.js:85738`); no visible UI

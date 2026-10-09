@@ -12,6 +12,13 @@ light and dark. Not Ink & Seal.
 | [LOCK-commit.jpg](LOCK-commit.jpg) | Commit (C Soft Stack) |
 | [LOCK-roadmap.jpg](LOCK-roadmap.jpg) | Roadmap (B Shade Bands) |
 
+The installed app icon is
+[breakout.svg](icon-candidates/breakout.svg)
+([changelog](../../changelogs/2026-10-06-app-icon-breakout.md)).
+The other candidates stay in
+[icon-candidates/](icon-candidates/). Each pair is an SVG master and a
+transparent PNG.
+
 Language and prompt:
 [`docs/plans/2026-09-18-cobalt-flutter-goal.md`](../../plans/2026-09-18-cobalt-flutter-goal.md).
 QA:

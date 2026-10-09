@@ -15,6 +15,21 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-08 — Block primitives get keyboard focus and the cobalt ring](2026-10-08-block-focus-ring.md)
+  — closes the block-craft review's only high finding: `BlockFocus` gives
+  `BlockButton`, `BlockIconButton`, `PressableBlock` (and so `BlockChoice`,
+  `FieldCard` taps, and the dock) Tab traversal, Enter/Space activation,
+  and a 2px cobalt ring painted outside the block bounds so the measured
+  control heights never move. 7 new widget tests; gates green
+  (analyze 0 errors / 0 warnings, 167 tests, format clean).
+- [2026-10-07 — Frontend block craft: the component layer landed](2026-10-07-frontend-block-craft.md)
+  — the reference's component + interaction layer ported onto the
+  frozen cobalt tokens: `theme/block_*` primitives (measured heights,
+  press choreography, one modal chrome, square loaders, localized
+  states), every surface swept, D1–D9 resolved. Gates green
+  (analyze 0/0, 160 tests, format clean); fidelity review 7.5/10 with
+  the focus-ring/keyboard regression filed high. Uncommitted; web walk
+  still user-owned.
 - [2026-10-07 — Release pipeline: prebuilt binaries + bootstrap one-liner](2026-10-07-release-pipeline.md)
   — `v*` tag → four-target tarballs + checksums + `bootstrap.sh`
   via gh; `curl | bash` installs sha256-verified binaries; all
@@ -62,6 +77,11 @@ code) with relative links.
 - [2026-10-06 — Install calls the hosted API](2026-10-06-install-hosted-default.md)
   — CLI and MCP default to the hosted API; `setup.sh` guides a local
   PostgreSQL server. Not deployed.
+- [2026-10-06 — Breakout is the app icon](2026-10-06-app-icon-breakout.md)
+  — `breakout.svg` rasterized onto web, iOS, and Android icons.
+  Not deployed.
+- [2026-10-06 — App icon candidates](2026-10-06-app-icon-candidates.md)
+  — transparent cobalt marks drawn before the pick.
 - [2026-10-06 — Cobalt-Neo remediation closed](2026-10-06-frontend-cobalt-neo.md)
   — waves 4–7 landed in the worktree (guarded writes, 75s coach idle
   timeout, minimap shape channel, dock and auth geometry tests, CI
