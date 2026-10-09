@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-09 | [A lockfile diff confined to SDK-pinned packages is toolchain drift](2026-10-09-lockfile-diff-in-sdk-pins-is-toolchain-drift.md) | [host sync](../changelogs/2026-10-09-host-sync.md) |
 | 2026-10-08 | [Replacing a platform widget drops the affordances no test asserts](2026-10-08-custom-primitives-drop-unasserted-affordances.md) | [block focus ring](../changelogs/2026-10-08-block-focus-ring.md) |
 | 2026-10-08 | [An agent's self-report is not evidence — of completion, or of status](2026-10-08-agent-self-report-is-not-evidence.md) | [frontend block craft](../plans/2026-10-07-frontend-block-craft/2026-10-07-frontend-block-craft.md) |
 | 2026-10-07 | [A signed-off token layer hides an unported component layer](2026-10-07-token-signoff-hides-unported-component-layer.md) | [frontend block craft](../plans/2026-10-07-frontend-block-craft/2026-10-07-frontend-block-craft.md) |

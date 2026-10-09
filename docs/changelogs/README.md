@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-09 — Three-way sync: GitHub, MBP2, and MBP on one `main`](2026-10-09-host-sync.md)
+  — committed the uncommitted app-icon and block-craft slices as four
+  commits, pushed 13 commits (`9c572ce..8a7e9ab`, fast-forward, no tags),
+  fast-forwarded MBP; held-out tool scratch is listed in a local manifest;
+  commit, tree, and on-disk digest match on all three.
 - [2026-10-08 — Block primitives get keyboard focus and the cobalt ring](2026-10-08-block-focus-ring.md)
   — closes the block-craft review's only high finding: `BlockFocus` gives
   `BlockButton`, `BlockIconButton`, `PressableBlock` (and so `BlockChoice`,

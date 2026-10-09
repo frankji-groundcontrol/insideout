@@ -4,6 +4,7 @@ Repeatable sequences and guardrails distilled from real failures in this repo. E
 
 | Date | Practice |
 |------|----------|
+| 2026-10-09 | [Sync two Macs and GitHub onto one `main`](2026-10-09-sync-two-macs-and-github.md) |
 | 2026-10-07 | [Live TTY walk of `insideout setup` (PTY-driven)](2026-10-07-live-tty-walk-insideout-setup.md) |
 | 2026-10-06 | [Simulate a user across CLI, Web, and MCP](2026-10-06-simulate-a-user-across-surfaces.md) |
 | 2026-07-21 | [Verify database-dependent work against real PostgreSQL](2026-07-21-verify-against-real-database.md) |

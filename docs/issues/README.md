@@ -89,6 +89,10 @@ records continue the numbering (next: BUG-021).
 
 ## Other open issues
 
+- [2026-10-09 — Host setup drift between the two Macs](2026-10-09-host-setup-drift-between-macs.md)
+  — MBP runs Flutter 3.47.0 against the repo's 3.44.x pin, so `pub get`
+  there rewrites `client/pubspec.lock`; git hooks are not enabled on MBP2.
+  Each has a bounded fix.
 - [2026-10-08 — Block primitives have no focus ring or keyboard activation](2026-10-08-block-focus-ring-keyboard.md)
   — **resolved 2026-10-08**: `BlockFocus` gives `BlockButton`,
   `BlockChoice`, `BlockIconButton`, and `PressableBlock` Tab traversal,

@@ -10,8 +10,8 @@ path and current warnings, never history.
 
 ## What to do next
 
-**Frontend block craft: code complete in the worktree, uncommitted, one
-verification item open (2026-10-08).** The component layer now sits on
+**Frontend block craft: code complete and committed on `main`, one
+verification item open (2026-10-09).** The component layer now sits on
 the frozen cobalt tokens — block primitives in
 `client/lib/theme/block_*.dart`, every surface swept onto them, gates
 green (analyze 0 errors / 0 warnings, **167/167** tests, format clean)
@@ -27,7 +27,7 @@ residue stays filed
 **Resume path:** run the outstanding web walk at 1440×900 and 390×844 in
 both themes — real Tab order across a signed-in page, the cobalt ring on
 a live canvas, dock clearance, nothing hidden behind the dock — then flip
-the plan and its board row to Finished and stage/commit the slice.
+the plan and its board row to Finished.
 `client/test/cobalt_test.dart` must stay unmodified; if a frozen token
 assertion fails, the sweep was wrong.
 
@@ -39,13 +39,17 @@ links on its [board](plans/README.md) row. Local run commands:
 
 ## Warnings
 
-- **The worktree mixes two uncommitted slices** on HEAD `a762ca8`
-  (`main`): the block-craft sweep (~60 `client/lib` + `client/test`
-  files, seven new `theme/block_*` primitives, three new test files, and
-  its closure records) and the app-icon slice (icon assets, manifest,
-  design-system records). Plus untracked `.grok/` and `.qoder/` tool
-  scratch. **Do not `git add .`** — stage and checkpoint one task at a
-  time, and do not revert unrelated edits.
+- **`main` is one commit on GitHub, MBP, and MBP2** (synced 2026-10-09,
+  [plan](plans/2026-10-09-host-sync/2026-10-09-host-sync.md)); the
+  block-craft and app-icon slices are committed. Untracked `.grok/` and
+  `.qoder/` are tool scratch and raw agent journals, held out by rule and
+  listed in the local manifest `.git/info/untracked-manifest.tsv`.
+  **Do not `git add .`** — stage and checkpoint one task at a time, and
+  do not revert unrelated edits.
+- **Host drift:** MBP runs Flutter 3.47.0 but the repo pins 3.44.x, so
+  `flutter pub get` there rewrites `client/pubspec.lock`; git hooks are
+  not enabled on MBP2
+  ([issue](issues/2026-10-09-host-setup-drift-between-macs.md)).
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship
   landed changes explicitly: any `server/` change with

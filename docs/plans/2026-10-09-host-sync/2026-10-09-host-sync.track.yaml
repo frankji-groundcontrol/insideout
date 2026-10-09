@@ -1,0 +1,39 @@
+version: 2
+task: Sync GitHub, this Mac, and the second Mac to one main
+coordinator: claude
+history_file: 2026-10-09-host-sync.track.history.jsonl
+main:
+  outcome: GitHub main, MBP2, and MBP point at the same commit with the same tree.
+  owner: claude
+  status: complete
+  next_evidence: None - the record commit is pushed and fast-forwarded the same way.
+side_tracks: []
+updated_at: '2026-10-09T13:40:46Z'
+plan:
+- step: Inspect GitHub, MBP2, and MBP
+  owner: claude
+  status: completed
+- step: Back up the uncommitted work outside the repo
+  owner: claude
+  status: completed
+- step: Read-only audit of privacy, docs, health, and commit grouping
+  owner: claude
+  status: completed
+- step: Redact two doc lines and record held-out files in a local manifest
+  owner: claude
+  status: completed
+- step: Commit in slices (lock, icon, block-craft code, docs)
+  owner: claude
+  status: completed
+- step: Push main to GitHub, fast-forward only
+  owner: claude
+  status: completed
+- step: Fast-forward MBP to the pushed commit
+  owner: claude
+  status: completed
+- step: Verify the three agree and nothing held-out was pushed
+  owner: claude
+  status: completed
+- step: Record changelog, Flutter-drift issue, HANDOFF, and board row
+  owner: claude
+  status: completed
