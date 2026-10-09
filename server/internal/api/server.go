@@ -51,11 +51,11 @@ func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, lo
 		mail:         mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log, cfg.MailDevBody),
 		authThrottle: newAuthThrottle(defaultThrottleConfig(), time.Now),
 	}
-		if st != nil {
-			st.OnRoadmapChange(func(projectID uuid.UUID) {
-				s.progress.Publish(projectID.String())
-			})
-		}
+	if st != nil {
+		st.OnRoadmapChange(func(projectID uuid.UUID) {
+			s.progress.Publish(projectID.String())
+		})
+	}
 	// GitHub App installation tokens for guide loading; nil disables the
 	// token path (public repos still load unauthenticated).
 	if cfg.GithubAppID != "" {

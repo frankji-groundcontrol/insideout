@@ -11,10 +11,10 @@ import (
 
 // Auth-token kinds for emailed one-time links and codes.
 const (
-	AuthTokenMagicLink      = "magic_link"
-	AuthTokenPasswordReset  = "password_reset"
-	AuthTokenLoginCode      = "login_code"
-	LoginCodeMaxAttempts    = 5
+	AuthTokenMagicLink     = "magic_link"
+	AuthTokenPasswordReset = "password_reset"
+	AuthTokenLoginCode     = "login_code"
+	LoginCodeMaxAttempts   = 5
 )
 
 // CreateAuthToken stores an emailed one-time token's hash and supersedes the

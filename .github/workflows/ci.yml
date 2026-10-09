@@ -55,17 +55,23 @@ jobs:
       - name: Apply migrations
         run: go run ./cmd/insideout migrate
       - name: Build and vet
-        run: go build ./... && go vet ./...
+        run: |
+          test -z "$(gofmt -l .)" || { gofmt -l .; echo "::error::gofmt drift"; exit 1; }
+          go build ./... && go vet ./...
       - name: Test (integration suite must run, not skip)
         run: |
           set -o pipefail
           go test ./... -count=1 -v -timeout 20m 2>&1 | tee /tmp/gotest.log
           # TEST-02/TEST-09: a skipped test anywhere — store, api, agent — is
-          # a red build. Every current skip is a DATABASE_URL gate, and the
-          # postgres service above is the point of this job.
-          skiplines=$(grep -c -- '--- SKIP' /tmp/gotest.log || true)
-          if [ "$skiplines" -ne 0 ]; then
-            echo "::error::$skiplines test(s) skipped — DATABASE_URL is not reaching the suite"
+          # a red build: every DATABASE_URL-gated test skips itself when the
+          # variable is unset, and the postgres service above is the point of
+          # this job. The one named exception needs a real terminal, which a
+          # runner does not have (drive it with a pty, see its doc comment).
+          unexpected=$(grep -E -- '--- SKIP: ' /tmp/gotest.log \
+            | grep -v -E -- '--- SKIP: TestReadSecretTerminal ' || true)
+          if [ -n "$unexpected" ]; then
+            echo "::error::unexpected skipped test(s) — DATABASE_URL is not reaching the suite"
+            echo "$unexpected"
             exit 1
           fi
 

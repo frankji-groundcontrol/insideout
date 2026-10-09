@@ -1,0 +1,84 @@
+version: 2
+task: "Close the open gaps"
+coordinator: claude
+history_file: 2026-10-10-close-open-gaps.track.history.jsonl
+main:
+  outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
+  owner: claude
+  status: active
+  next_evidence: "CI green on the pushed CI fixes, then the backend and client waves."
+side_tracks: []
+updated_at: "2026-10-09T23:52:40Z"
+plan:
+- step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
+  owner: claude
+  status: completed
+- step: "Python key-store audit skips on a checkout with no keys"
+  owner: claude
+  status: completed
+- step: "CI skip gate: docker test hermetic, one named TTY exception"
+  owner: claude
+  status: completed
+- step: "gofmt six drifted files and gate it in CI"
+  owner: claude
+  status: completed
+- step: "Enable git hooks on MBP2"
+  owner: claude
+  status: completed
+- step: "Disposable PostgreSQL 18 harness and a green local baseline"
+  owner: claude
+  status: completed
+- step: "Push the CI fixes and get all three CI jobs green"
+  owner: claude
+  status: in_progress
+- step: "MBP housekeeping: upstream for main, repo-local HTTP/1.1"
+  owner: claude
+  status: pending
+- step: "Flutter SDK drift between the Macs: repo-side guard"
+  owner: claude
+  status: pending
+- step: "Backend: split agent/coach.go, refresh sections per tool iteration, push history LIMIT into SQL"
+  owner: claude
+  status: pending
+- step: "Backend: split agent/anthropic.go"
+  owner: claude
+  status: pending
+- step: "Backend: split store/roadmap.go; build-from-PRD conflict pre-check before the LLM call"
+  owner: claude
+  status: pending
+- step: "Backend: split apiclient/apiclient.go"
+  owner: claude
+  status: pending
+- step: "Backend: split cli_setup_local.go; own-URL role probe and provisioning"
+  owner: claude
+  status: pending
+- step: "Backend: CreateRevision lock, ListMembers check, workspace counts, ai_runs index, join rate limit"
+  owner: claude
+  status: pending
+- step: "Env catalog: Go and Python parity test"
+  owner: claude
+  status: pending
+- step: "Client: split api/client.dart and api/models.dart"
+  owner: claude
+  status: pending
+- step: "Client: split project_page and roadmap_canvas; canvas fit, keyboard pan, reduced motion, delete count"
+  owner: claude
+  status: pending
+- step: "Client: popup menu theme, FAB, coach errors, slab surfaces, low fidelity items"
+  owner: claude
+  status: pending
+- step: "Client: split theme block_chrome/block_field and l10n tables"
+  owner: claude
+  status: pending
+- step: "Run the web walk and the symbolized console check on a local stack"
+  owner: claude
+  status: pending
+- step: "Re-triage every issue record; move resolved ones; record owner-only items"
+  owner: claude
+  status: pending
+- step: "Adversarial verification of the whole change set"
+  owner: claude
+  status: pending
+- step: "Push, fast-forward MBP, verify three-way sync, CI green"
+  owner: claude
+  status: pending

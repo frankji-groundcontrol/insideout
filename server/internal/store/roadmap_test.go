@@ -37,16 +37,16 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-		if _, err := st.JoinWorkspace(ctx, member.ID, ws.Code); err != nil {
-			t.Fatalf("member join: %v", err)
-		}
-		// Writing the plan takes a workspace admin (BUG-020). The joined
-		// role is member; promote so the collaborative-write assertions
-		// below still describe two people editing one tree.
-		if err := st.UpdateMemberRole(ctx, admin.ID, ws.ID, member.ID, "admin"); err != nil {
-			t.Fatalf("promote member to admin: %v", err)
-		}
-		proj, err := st.CreateProject(ctx, admin.ID, ws.ID, "Roadmap Project", "")
+	if _, err := st.JoinWorkspace(ctx, member.ID, ws.Code); err != nil {
+		t.Fatalf("member join: %v", err)
+	}
+	// Writing the plan takes a workspace admin (BUG-020). The joined
+	// role is member; promote so the collaborative-write assertions
+	// below still describe two people editing one tree.
+	if err := st.UpdateMemberRole(ctx, admin.ID, ws.ID, member.ID, "admin"); err != nil {
+		t.Fatalf("promote member to admin: %v", err)
+	}
+	proj, err := st.CreateProject(ctx, admin.ID, ws.ID, "Roadmap Project", "")
 	if err != nil {
 		t.Fatalf("create project: %v", err)
 	}
@@ -73,10 +73,10 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create branchA: %v", err)
 	}
-		branchB, err := st.CreateRoadmapNode(ctx, member.ID, pid, &root.ID, "Launch", "")
-		if err != nil {
-			t.Fatalf("create branchB (second admin): %v", err)
-		}
+	branchB, err := st.CreateRoadmapNode(ctx, member.ID, pid, &root.ID, "Launch", "")
+	if err != nil {
+		t.Fatalf("create branchB (second admin): %v", err)
+	}
 	if branchA.Position != 0 || branchB.Position != 1 {
 		t.Fatalf("sibling positions: want 0,1 got %d,%d", branchA.Position, branchB.Position)
 	}
@@ -107,10 +107,10 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 		t.Fatalf("parentage wrong: %+v", idx)
 	}
 
-		// A second admin can update status.
-		if _, err := st.UpdateRoadmapNode(ctx, member.ID, branchA.ID, RoadmapNodeFields{Title: sp("Core MVP"), Description: sp(""), Status: sp("in_progress")}); err != nil {
-			t.Fatalf("second admin UpdateRoadmapNode: %v", err)
-		}
+	// A second admin can update status.
+	if _, err := st.UpdateRoadmapNode(ctx, member.ID, branchA.ID, RoadmapNodeFields{Title: sp("Core MVP"), Description: sp(""), Status: sp("in_progress")}); err != nil {
+		t.Fatalf("second admin UpdateRoadmapNode: %v", err)
+	}
 
 	// Reparent branchB under branchA.
 	moved, err := st.MoveRoadmapNode(ctx, admin.ID, branchB.ID, &branchA.ID, 1)
@@ -386,13 +386,13 @@ func TestRoadmap_Attribution(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-		if _, err := st.JoinWorkspace(ctx, bob.ID, ws.Code); err != nil {
-			t.Fatalf("bob join: %v", err)
-		}
-		if err := st.UpdateMemberRole(ctx, alice.ID, ws.ID, bob.ID, "admin"); err != nil {
-			t.Fatalf("promote bob: %v", err)
-		}
-		proj, err := st.CreateProject(ctx, alice.ID, ws.ID, "Attr", "")
+	if _, err := st.JoinWorkspace(ctx, bob.ID, ws.Code); err != nil {
+		t.Fatalf("bob join: %v", err)
+	}
+	if err := st.UpdateMemberRole(ctx, alice.ID, ws.ID, bob.ID, "admin"); err != nil {
+		t.Fatalf("promote bob: %v", err)
+	}
+	proj, err := st.CreateProject(ctx, alice.ID, ws.ID, "Attr", "")
 	if err != nil {
 		t.Fatalf("create project: %v", err)
 	}

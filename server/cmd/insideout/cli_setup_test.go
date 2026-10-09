@@ -15,12 +15,15 @@ import (
 // agent contract (docs/plans/2026-10-07-setup-tui.md, join phase),
 // and the CLI's credential helpers resolve through clientconfig:
 // env beats the config file, the config file beats the hosted
-// default. HOME is pinned per test so the user's real config never
-// influences a result.
+// default. HOME and XDG_CONFIG_HOME are pinned per test so the user's
+// real config never influences a result, on macOS or Linux.
 
 func writeClientConfig(t *testing.T, cfg clientconfig.Config) {
 	t.Helper()
 	t.Setenv("HOME", t.TempDir())
+	// Linux resolves the config dir from XDG_CONFIG_HOME before HOME (and CI
+	// sets it), so pinning HOME alone leaves every test on one shared file.
+	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_API", "")
 	t.Setenv("INSIDEOUT_TOKEN", "")
 	path, err := clientconfig.DefaultPath()
@@ -64,6 +67,7 @@ func TestClientEnvBeatsConfigFile(t *testing.T) {
 
 func TestClientDefaultsWithoutConfig(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_API", "")
 	t.Setenv("INSIDEOUT_TOKEN", "")
 
@@ -77,6 +81,7 @@ func TestClientDefaultsWithoutConfig(t *testing.T) {
 
 func TestSetupHostedFlag(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_API", "")
 	t.Setenv("INSIDEOUT_TOKEN", "")
 

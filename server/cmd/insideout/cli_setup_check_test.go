@@ -34,6 +34,9 @@ func pinnedNoRepo(t *testing.T) {
 	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", t.TempDir()) // markerless → repo lookup fails
 	t.Setenv("INSIDEOUT_ENV_FILE", filepath.Join(t.TempDir(), "absent.env"))
 	t.Setenv("HOME", t.TempDir())
+	// Linux resolves the config dir from XDG_CONFIG_HOME before HOME (and CI
+	// sets it), so pinning HOME alone leaves every test on one shared file.
+	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_API", "")
 	t.Setenv("INSIDEOUT_TOKEN", "")
 	t.Setenv("GITHUB_TOKEN", "")

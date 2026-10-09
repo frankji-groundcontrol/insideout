@@ -94,64 +94,64 @@ func TestAssembleTree_CycleSafe(t *testing.T) {
 	if root.Title != "Root" {
 		t.Fatalf("want the real root, got %q", root.Title)
 	}
-		// The unreachable cycle must not appear (and must not have looped).
-		if findNode(root, "X") != nil || findNode(root, "Y") != nil {
-			t.Fatalf("unreachable cycle leaked into the tree")
-		}
+	// The unreachable cycle must not appear (and must not have looped).
+	if findNode(root, "X") != nil || findNode(root, "Y") != nil {
+		t.Fatalf("unreachable cycle leaked into the tree")
 	}
+}
 
-	// garbageRoadmapStreamer answers the forced tool call with arguments that
-	// are not JSON, so PlanMVP cannot assemble a tree from them.
-	type garbageRoadmapStreamer struct{}
+// garbageRoadmapStreamer answers the forced tool call with arguments that
+// are not JSON, so PlanMVP cannot assemble a tree from them.
+type garbageRoadmapStreamer struct{}
 
-	func (garbageRoadmapStreamer) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
-		return Turn{}, nil
+func (garbageRoadmapStreamer) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
+	return Turn{}, nil
+}
+
+func (garbageRoadmapStreamer) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
+	return Turn{ToolCall: &ToolCallRequest{Name: submitRoadmapTool.Name, Arguments: "not json {"}}, nil
+}
+
+func (garbageRoadmapStreamer) Model() string { return "stub" }
+
+// An unparseable model response must surface as an error. Falling back to
+// the template planner would discard the PRD sections and hand back the
+// generic three-branch tree (核心功能 / 打磨与验证 / 发布).
+func TestPlanMVP_UnparseableModelResponseErrors(t *testing.T) {
+	p := NewAnthropicRoadmapPlanner(garbageRoadmapStreamer{})
+	sections := map[string]string{"goals": "a specific section the template must not swallow"}
+	root, err := p.PlanMVP(context.Background(), "Specific PRD", sections)
+	if err == nil {
+		t.Fatalf("unparseable model response returned a plan, want an error; got %+v", root)
 	}
-
-	func (garbageRoadmapStreamer) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-		return Turn{ToolCall: &ToolCallRequest{Name: submitRoadmapTool.Name, Arguments: "not json {"}}, nil
+	if root != nil {
+		titles := []string{root.Title}
+		for _, c := range root.Children {
+			titles = append(titles, c.Title)
+		}
+		joined := strings.Join(titles, ",")
+		if strings.Contains(joined, "核心功能") && strings.Contains(joined, "打磨与验证") && strings.Contains(joined, "发布") {
+			t.Fatalf("unparseable response fell back to the generic three-branch template: %s", joined)
+		}
+		t.Fatalf("unparseable response returned a tree alongside the error: %+v", root)
 	}
+}
 
-	func (garbageRoadmapStreamer) Model() string { return "stub" }
-
-	// An unparseable model response must surface as an error. Falling back to
-	// the template planner would discard the PRD sections and hand back the
-	// generic three-branch tree (核心功能 / 打磨与验证 / 发布).
-	func TestPlanMVP_UnparseableModelResponseErrors(t *testing.T) {
-		p := NewAnthropicRoadmapPlanner(garbageRoadmapStreamer{})
-		sections := map[string]string{"goals": "a specific section the template must not swallow"}
-		root, err := p.PlanMVP(context.Background(), "Specific PRD", sections)
-		if err == nil {
-			t.Fatalf("unparseable model response returned a plan, want an error; got %+v", root)
-		}
-		if root != nil {
-			titles := []string{root.Title}
-			for _, c := range root.Children {
-				titles = append(titles, c.Title)
-			}
-			joined := strings.Join(titles, ",")
-			if strings.Contains(joined, "核心功能") && strings.Contains(joined, "打磨与验证") && strings.Contains(joined, "发布") {
-				t.Fatalf("unparseable response fell back to the generic three-branch template: %s", joined)
-			}
-			t.Fatalf("unparseable response returned a tree alongside the error: %+v", root)
-		}
+// The offline planner must build its branches from the PRD section titles
+// it was given, not the fixed 核心功能 / 打磨与验证 / 发布 tree.
+func TestTemplatePlanMVP_BranchesFromSectionTitles(t *testing.T) {
+	p := NewTemplateRoadmapPlanner()
+	sections := map[string]string{
+		"goals":        "ship a measurable first version",
+		"requirements": "one saved path from idea to result",
 	}
-
-	// The offline planner must build its branches from the PRD section titles
-	// it was given, not the fixed 核心功能 / 打磨与验证 / 发布 tree.
-	func TestTemplatePlanMVP_BranchesFromSectionTitles(t *testing.T) {
-		p := NewTemplateRoadmapPlanner()
-		sections := map[string]string{
-			"goals":        "ship a measurable first version",
-			"requirements": "one saved path from idea to result",
-		}
-		root, err := p.PlanMVP(context.Background(), "Workshop tracker", sections)
-		if err != nil {
-			t.Fatalf("PlanMVP: %v", err)
-		}
-		if root == nil || root.Title != "Workshop tracker" {
-			t.Fatalf("root = %+v, want title Workshop tracker", root)
-		}
+	root, err := p.PlanMVP(context.Background(), "Workshop tracker", sections)
+	if err != nil {
+		t.Fatalf("PlanMVP: %v", err)
+	}
+	if root == nil || root.Title != "Workshop tracker" {
+		t.Fatalf("root = %+v, want title Workshop tracker", root)
+	}
 	for _, key := range []string{"goals", "requirements"} {
 		found := false
 		for i := range root.Children {

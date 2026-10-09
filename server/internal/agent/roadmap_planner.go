@@ -12,11 +12,11 @@ import (
 
 // RoadmapPlanner turns a PRD (or a single roadmap node) into a branched
 // roadmap tree — the "build the MVP" bridge from idea to reality. Two
-	// implementations: Anthropic (real LLM via a forced tool call, the same
-	// schema-validated trick the critic uses) and a deterministic template used
-	// only when no provider is configured. A configured planner returns the
-	// model's error instead of substituting that template — the template
-	// discards the PRD sections and would look like a real plan.
+// implementations: Anthropic (real LLM via a forced tool call, the same
+// schema-validated trick the critic uses) and a deterministic template used
+// only when no provider is configured. A configured planner returns the
+// model's error instead of substituting that template — the template
+// discards the PRD sections and would look like a real plan.
 type RoadmapPlanner interface {
 	PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
 	ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
@@ -184,20 +184,20 @@ func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, prdTitle string, 
 规则：一个根节点（交付 MVP 的总目标）；根节点下 3-5 个可以并行推进的工作流（例如：核心功能、打磨与验证、发布）；每个工作流下 2-4 个具体任务。每个节点 title 简洁（12 字以内），description 一句话。不要编造 PRD 里没有的重大方向。只通过 submit_roadmap 工具返回。`
 	user := "PRD 标题：" + prdTitle + "\n\n各章节内容：\n" + formatSectionsForPrompt(sections)
 
-		turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
-		if err != nil {
-			return nil, err
-		}
-		if turn.ToolCall == nil {
-			return nil, fmt.Errorf("agent: roadmap planner returned no tool call")
-		}
-		var payload struct {
-			Nodes []flatNode `json:"nodes"`
-		}
-		if err := json.Unmarshal([]byte(turn.ToolCall.Arguments), &payload); err != nil {
-			return nil, fmt.Errorf("agent: unparseable roadmap: %w", err)
-		}
-		return assembleTree(payload.Nodes, prdTitle)
+	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
+	if err != nil {
+		return nil, err
+	}
+	if turn.ToolCall == nil {
+		return nil, fmt.Errorf("agent: roadmap planner returned no tool call")
+	}
+	var payload struct {
+		Nodes []flatNode `json:"nodes"`
+	}
+	if err := json.Unmarshal([]byte(turn.ToolCall.Arguments), &payload); err != nil {
+		return nil, fmt.Errorf("agent: unparseable roadmap: %w", err)
+	}
+	return assembleTree(payload.Nodes, prdTitle)
 }
 
 func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error) {

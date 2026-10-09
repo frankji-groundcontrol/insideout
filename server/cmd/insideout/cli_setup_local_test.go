@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -178,6 +177,9 @@ func TestLocalNoStartWritesEnvEndToEnd(t *testing.T) {
 	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", repo)
 	t.Setenv("INSIDEOUT_ENV_FILE", scratchEnv)
 	t.Setenv("HOME", t.TempDir())
+	// Linux resolves the config dir from XDG_CONFIG_HOME before HOME (and CI
+	// sets it), so pinning HOME alone leaves every test on one shared file.
+	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_API", "")
 	t.Setenv("INSIDEOUT_TOKEN", "")
 
@@ -204,9 +206,10 @@ func TestLocalNoStartWritesEnvEndToEnd(t *testing.T) {
 }
 
 func TestLocalBundledFullRunFailsCleanlyWithoutDocker(t *testing.T) {
-	if _, err := exec.LookPath("docker"); err == nil {
-		t.Skip("docker present on this host; the missing-docker path is not reachable")
-	}
+	// An empty PATH hides docker whether or not the host has it, so this
+	// branch runs everywhere instead of skipping on a machine (or CI
+	// runner) that ships docker.
+	t.Setenv("PATH", t.TempDir())
 	repo := t.TempDir()
 	os.WriteFile(filepath.Join(repo, "docker-compose.yml"), []byte("services: {}\n"), 0644)
 	os.WriteFile(filepath.Join(repo, ".env.example"), []byte("DATABASE_URL=change_me_db\nINSIDEOUT_JWT_SECRET=change_me_to_a_long_random_string\n"), 0644)
@@ -216,6 +219,7 @@ func TestLocalBundledFullRunFailsCleanlyWithoutDocker(t *testing.T) {
 	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", repo)
 	t.Setenv("INSIDEOUT_ENV_FILE", filepath.Join(t.TempDir(), "scratch.env"))
 	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", "")
 
 	handled, code := runSetupCommand([]string{"--local", "--postgres", "bundled"})
 	if !handled || code != 1 {

@@ -18,7 +18,10 @@ func TestDefaultBaseIsTheHostedAPI(t *testing.T) {
 func TestMCPConfigUsesDefaultBaseWhenEnvUnset(t *testing.T) {
 	script := filepath.Join("..", "..", "..", "scripts", "mcp-config.sh")
 	cmd := exec.Command("bash", script, "-q")
-	cmd.Env = withoutAPIEnv(os.Environ())
+	// An absent config file keeps the result off the machine's real one
+	// (Linux reads $XDG_CONFIG_HOME, macOS ~/Library/Application Support).
+	cmd.Env = append(withoutAPIEnv(os.Environ()),
+		"INSIDEOUT_CONFIG_FILE="+filepath.Join(t.TempDir(), "absent.json"))
 	out, err := cmd.Output()
 	if err != nil {
 		t.Fatalf("mcp-config.sh: %v", err)
