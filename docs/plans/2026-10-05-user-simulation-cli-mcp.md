@@ -65,9 +65,12 @@ for PG18 is reverted and never committed).
 - [x] Parity spot-check table — in the
       [changelog](../changelogs/2026-10-06-user-simulation-three-personas.md).
 - [x] Findings triaged: BUG-017, BUG-018 (raw pressure key on web),
-      BUG-019, BUG-020. All open. BUG-016 was fixed during bootstrap.
+      BUG-019, BUG-020. All four fixed 2026-10-06
+      ([fixes](../changelogs/2026-10-06-simulation-bug-fixes.md)).
+      BUG-016 was fixed during bootstrap.
 - [x] Practice record and changelog, indexes updated.
-- [ ] Commit + push + MBP sync — not done; waiting on an explicit ask.
+- [x] Commit + push + MBP sync — on `main` as `f185e94`; MBP synced
+      2026-10-09 ([sync plan](2026-10-09-host-sync/2026-10-09-host-sync.md)).
 
 ## Decisions
 

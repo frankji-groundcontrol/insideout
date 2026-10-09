@@ -50,6 +50,10 @@ links on its [board](plans/README.md) row. Local run commands:
   `flutter pub get` there rewrites `client/pubspec.lock`; git hooks are
   not enabled on MBP2
   ([issue](issues/2026-10-09-host-setup-drift-between-macs.md)).
+- **CI on `main` is red** in two jobs, neither from the newest slices: the
+  python key-store job was red before the sync, and the Go job fails two
+  config-isolation tests on Linux
+  ([BUG-021](issues/2026-10-09-bug-021-go-tests-share-one-config-file-on-linux.md)).
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship
   landed changes explicitly: any `server/` change with

@@ -29,9 +29,9 @@ binding can shift.
 ## When to apply
 
 Write gate commands cwd-independent from the start: literal command
-names with **absolute paths in the args array** (`go -C
-/Users/frankji/Projects/insideout/server`, `python3
-/Users/frankji/Projects/insideout/scripts/test_env_catalog.py`,
+names with **absolute paths in the args array** (`<repo>` is the
+absolute checkout root: `go -C <repo>/server`, `python3
+<repo>/scripts/test_env_catalog.py`,
 `gofmt -l` with absolute paths, `stat` with an absolute path). When
 a gate fails with "no such file or directory" on files that visibly
 exist, check the cwd theory before hunting code defects — and give

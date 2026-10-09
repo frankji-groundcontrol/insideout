@@ -17,9 +17,11 @@ published.
 2. **Back up uncommitted work outside the repo**: `git diff HEAD --binary`
    plus a tar of the committable untracked files.
 3. **Audit read-only first.** Privacy scan of everything that will be
-   committed (a second reader re-checks each finding), link and index check
-   on new docs, `client/` analyze and tests, `server/` build/vet/test, and a
-   proposed grouping into commits.
+   published: the uncommitted work **and** the added lines of every local
+   commit GitHub lacks (`git diff origin/main..HEAD -U0`); a second reader
+   re-checks each finding. Also a link and index check on new docs,
+   `client/` analyze and tests, `server/` build/vet/test, and a proposed
+   grouping into commits.
 4. **Hold out, never ignore.** Tool scratch and raw agent journals
    (`.grok/`, `.qoder/`) and OS junk stay untracked. Record each file in the
    local manifest `.git/info/untracked-manifest.tsv` (path, size, mtime,
@@ -42,7 +44,10 @@ published.
 For GitHub, MBP2, and MBP compare the commit, `git rev-parse HEAD:` (the
 tree), and a digest of every tracked file as it sits on disk
 (`git ls-files -z | xargs -0 shasum -a 1 | shasum`). Both clones must have no
-tracked changes and `origin/main` equal to GitHub's tip.
+tracked changes and `origin/main` equal to GitHub's tip. Then repeat the
+privacy scan over what was actually pushed (`git diff <old-tip>..HEAD -U0`:
+home paths, tokens, DSNs, signed URLs); it catches what the pre-push scan
+did not cover.
 
 ## Failure signals
 
@@ -55,3 +60,7 @@ tracked changes and `origin/main` equal to GitHub's tip.
   [lesson](../learning/2026-10-09-lockfile-diff-in-sdk-pins-is-toolchain-drift.md).
 - A clone that should be clean after the fast-forward is dirty: a tool wrote
   a tracked file. Diagnose before committing it.
+- CI turns red after a push that carried older unpushed commits: they are
+  being judged for the first time. Compare with the last green run before
+  blaming the newest slice
+  ([BUG-021](../issues/2026-10-09-bug-021-go-tests-share-one-config-file-on-linux.md)).

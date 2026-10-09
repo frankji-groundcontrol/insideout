@@ -7,7 +7,7 @@ evidence get a dated folder. English only.
 
 Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
-records continue the numbering (next: BUG-021).
+records continue the numbering (next: BUG-022).
 
 ## Bug records
 
@@ -82,6 +82,11 @@ records continue the numbering (next: BUG-021).
   — membership alone lets a reader add roadmap nodes and file
   proposals. Fixed 2026-10-06: only the project owner or a workspace
   admin may change the roadmap or file a proposal.
+- [BUG-021 — Go tests pin only `HOME`, so they share one config file on Linux](2026-10-09-bug-021-go-tests-share-one-config-file-on-linux.md)
+  — Linux `os.UserConfigDir()` prefers `XDG_CONFIG_HOME`, which GitHub's
+  runner sets, so two tests read config that earlier tests saved and the
+  CI Go job is red. Open. The python key-store job is red for an older,
+  separate reason (noted in the record).
 
 - [2026-10-06 — roadmap.go over the ~350-line budget](2026-10-06-roadmap-go-line-budget.md)
   — 403 lines after the sibling-shift fix; target split is
@@ -91,8 +96,9 @@ records continue the numbering (next: BUG-021).
 
 - [2026-10-09 — Host setup drift between the two Macs](2026-10-09-host-setup-drift-between-macs.md)
   — MBP runs Flutter 3.47.0 against the repo's 3.44.x pin, so `pub get`
-  there rewrites `client/pubspec.lock`; git hooks are not enabled on MBP2.
-  Each has a bounded fix.
+  there rewrites `client/pubspec.lock`; git hooks are not enabled on MBP2;
+  MBP's HTTP/2 route to GitHub drops and its `main` tracks nothing. Each
+  has a bounded fix.
 - [2026-10-08 — Block primitives have no focus ring or keyboard activation](2026-10-08-block-focus-ring-keyboard.md)
   — **resolved 2026-10-08**: `BlockFocus` gives `BlockButton`,
   `BlockChoice`, `BlockIconButton`, and `PressableBlock` Tab traversal,

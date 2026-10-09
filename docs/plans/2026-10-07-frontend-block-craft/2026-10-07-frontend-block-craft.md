@@ -202,9 +202,9 @@ still unmodified.
 Records: [changelog](../../changelogs/2026-10-07-frontend-block-craft.md),
 [focus-ring changelog](../../changelogs/2026-10-08-block-focus-ring.md),
 and the [design-QA thread](../../design-qa/2026-10-07-block-craft.md);
-DESIGN.md was amended to match what shipped. The whole slice is
-**uncommitted**, and the worktree also carries the app-icon slice —
-stage one task at a time.
+DESIGN.md was amended to match what shipped. The slice is committed on
+`main` as `185ed46` (records in `8a7e9ab`; the app icon is `a4354c3`) and
+synced to GitHub and both Macs (2026-10-09).
 
 **Wave 7's one high finding is fixed (2026-10-08).** The sweep had
 replaced keyboard-focusable Material buttons with mouse-only blocks;
