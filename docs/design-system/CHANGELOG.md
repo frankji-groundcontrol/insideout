@@ -2,7 +2,7 @@
 
 > Tracks the **design system** — token foundation, primitives, icon/identity maps, and these docs — not app features. (The original source plan and companion README predate this repo's current docs layout and were never carried over — see git history if needed.) The live token wiring is described in [`docs/architecture/frontend.md`](../architecture/frontend.md); this file records _what changed and when_.
 
-Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grouped under a version (`## [x.y.z] — YYYY-MM-DD`). Live Flutter tokens are **`1.0.0` Cobalt** — semantic keys renamed from Ink & Seal.
+Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grouped under a version (`## [x.y.z] — YYYY-MM-DD`). Live Flutter tokens are **`1.1.0` Cobalt-Neo** — the `1.0.0` Cobalt keys (renamed from Ink & Seal), all kept, with squared geometry and a block component layer added.
 
 **When to bump (the token contract is the version):**
 
@@ -13,6 +13,69 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Entries are grou
 Every token/primitive entry **must** name the file it lands in (e.g. `client/lib/theme/cobalt.dart`) so the diff is traceable.
 
 ---
+
+## [1.1.0] — 2026-10-08
+
+Minor: **Cobalt-Neo.** The cobalt hue family and the screen layouts stay; the
+geometry is squared (0px corners, 2px borders, hard zero-blur cast shadows, a
+100ms press-the-block motion) and a block component layer is built on the
+tokens. Every `1.0.0` semantic key survives (the radius names are kept, pinned
+to `0`), so this is not a major bump. It landed in three dated passes: tokens
+([2026-10-06](../changelogs/2026-10-06-frontend-cobalt-neo.md)), components
+([2026-10-07](../changelogs/2026-10-07-frontend-block-craft.md)), and keyboard
+focus ([2026-10-08](../changelogs/2026-10-08-block-focus-ring.md)). The law is
+[`DESIGN.md`](../../DESIGN.md); the [lock screens](cobalt/README.md) predate
+this version. Token values stay pinned by
+[`client/test/cobalt_test.dart`](../../client/test/cobalt_test.dart) (frozen
+assertions plus the WCAG contrast script).
+
+### Changed — token values (keys unchanged)
+
+- [`client/lib/theme/cobalt.dart`](../../client/lib/theme/cobalt.dart) —
+  `radiusControl` / `radiusCard` / `radiusHero` / `radiusPill` are `0` (were
+  12 / 20 / 28 / 999). Strokes retuned to clear 3:1 non-text contrast: light
+  `strokeSubtle` `#7B8CE0` and `strokeStrong` `#5A6FE0`, dark `#646A78` and
+  `#788098` (ratios in DESIGN.md). Dark surfaces are a neutral ramp
+  (`surfaceRaised` `#14171D`, `surfaceSunken` `#16181E`); in the dark table
+  `hue950` fills `brandSubtle` and the status-chip backgrounds (the coach
+  column also uses raw `hue950` as its light-theme slab). Light
+  `statusNeutralFg` is `hue700`.
+- [`client/lib/session/appearance.dart`](../../client/lib/session/appearance.dart) —
+  dark is the default theme; a saved explicit choice still wins.
+
+### Added — tokens
+
+- `client/lib/theme/cobalt.dart` — `borderContainer` 2 and `borderDivider` 1;
+  the press motion `pressDuration` 100ms, `hoverOffset` (2,2) and
+  `activeOffset` (4,4); the 4px grid `space1`–`space10`; breakpoints
+  `bpNarrow` / `bpWide` / `bpDesk` 600 / 900 / 1200; `contentMaxWidth` 1120;
+  `controlHeight` 44 and `controlHeightDense` 40; `warnAmber` `#FFD166`, the
+  warning channel only.
+- [`client/lib/theme/cobalt_theme.dart`](../../client/lib/theme/cobalt_theme.dart) —
+  `cast` (offset 4,4) and `castSm` (2,2), zero blur and zero spread, coloured
+  by `castShadowColor` (dark `#05070A`, light black at 15%); the shared
+  `eyebrow(context)`. `ThemeData` now squares every shape, draws containers
+  with 2px borders, and sets elevation to zero.
+
+### Added — primitives
+
+- [`client/lib/widgets/pressable_block.dart`](../../client/lib/widgets/pressable_block.dart) —
+  `PressableBlock`: rest on `cast`, hover to `castSm` shifted (2,2), press
+  flush and shifted (4,4), over `pressDuration`.
+- [`client/lib/theme/cobalt_chip.dart`](../../client/lib/theme/cobalt_chip.dart)
+  and [`field_card.dart`](../../client/lib/theme/field_card.dart) — chips and
+  cards take the 2px container border; the status mark (`ShadeMark`) is a
+  square block, not a dot; `FieldCard` rests on `cast` and presses through
+  `PressableBlock`.
+- `client/lib/theme/block_*.dart` — the component layer: `block_button.dart`
+  (`BlockButton`, `BlockChoice`), `block_field.dart` (`BlockField`,
+  `BlockTextarea`, `BlockSelect`, on `block_field_frame.dart`),
+  `block_modal.dart` (`showBlockModal`, `showBlockConfirm`),
+  `block_chrome.dart` (`BlockBanner`, `BlockBadge`, `BlockTag`,
+  `BlockIconWell`, `BlockLoader`, `BlockTone`), `block_icon_button.dart`
+  (`BlockIconButton`), `block_state.dart` (`BlockEmpty`, `BlockLoading`,
+  `BlockError`), `block_form.dart` (`showBlockForm`), and `block_focus.dart`
+  (`BlockFocus`, the 2px cobalt focus ring with Tab and Enter/Space).
 
 ## [1.0.0] — 2026-09-18
 

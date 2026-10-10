@@ -435,9 +435,13 @@ project updates, and GitHub integration before adding new mechanisms.
 - **Name:** InsideOut.
 - **Voice:** warm, confident, concrete; English and Simplified Chinese are
   first-class product languages.
-- **Visual identity:** the shipped Cobalt design system — lock screens and
-  design tokens in [`docs/design-system/cobalt/`](docs/design-system/cobalt/),
-  bilingual first. The earlier Ink & Seal system (celadon ground, sumi-ink
-  text, a single vermilion accent, Noto Serif SC display, referenced PuHuiTi
-  sans, and deliberate light and dark themes) was superseded by the Cobalt
-  restyle merged 2026-09-18.
+- **Visual identity:** the shipped Cobalt-Neo design system — one cobalt hue
+  on squared blocks, bilingual first; [`DESIGN.md`](DESIGN.md) is the design
+  law. The lock screens in
+  [`docs/design-system/cobalt/`](docs/design-system/cobalt/README.md)
+  (2026-09-18) predate the Neo geometry: they record hue, type, and layout,
+  not corners, borders, or shadows. The earlier Ink & Seal system (celadon
+  ground, sumi-ink text, a single vermilion accent, Noto Serif SC display,
+  referenced PuHuiTi sans, and deliberate light and dark themes) was
+  superseded by the Cobalt restyle merged 2026-09-18, and that restyle's
+  rounded-card geometry by Cobalt-Neo on 2026-10-06.

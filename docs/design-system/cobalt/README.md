@@ -1,7 +1,12 @@
 # Cobalt lock screens
 
-Accepted Flutter visual source (2026-09-18). One hue, cards on a field,
-light and dark. Not Ink & Seal. Design law: [DESIGN.md](../../../DESIGN.md).
+Accepted Flutter visual source (2026-09-18): one hue, rounded cards on a
+field, light and dark. Not Ink & Seal. **These screens predate Cobalt-Neo**
+(2026-10-06), which kept the hue family and the screen layouts named below but
+squared every corner (0px radii, 2px borders, hard cast shadows,
+press-the-block motion): read them for hue, type, and layout, not geometry.
+Design law: [DESIGN.md](../../../DESIGN.md); token record:
+[design-system CHANGELOG](../CHANGELOG.md).
 
 | File | Surface |
 | --- | --- |
