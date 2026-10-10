@@ -190,4 +190,45 @@ void main() {
     );
     expect(_card('keep me'), findsOneWidget);
   });
+
+  // The poster looks like the primary object, so its body does what its
+  // call-to-action does (here: convert, which fails and says so).
+  testWidgets('tapping the poster body runs the same action as its button', (
+    tester,
+  ) async {
+    final api = _FakeApi([
+      _idea('i1', 'Keep me'),
+    ], onConvert: (_) async => throw ApiException('boom', status: 500));
+    await _pump(tester, api);
+
+    await tester.tap(_card('keep me'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Save failed — Server hiccup — try again'),
+      findsOneWidget,
+    );
+    expect(_card('keep me'), findsOneWidget);
+  });
+
+  // The whole-card tap must not swallow the controls inside it.
+  testWidgets('the more-actions menu opens without running the card action', (
+    tester,
+  ) async {
+    var converts = 0;
+    final api = _FakeApi(
+      [_idea('i1', 'Keep me')],
+      onConvert: (_) async {
+        converts++;
+        throw ApiException('boom', status: 500);
+      },
+    );
+    await _pump(tester, api);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Drop'), findsOneWidget);
+    expect(converts, 0);
+  });
 }
