@@ -149,16 +149,40 @@ func (s *Store) UpdateConversationStage(ctx context.Context, actorID, conversati
 	})
 }
 
+// MetaTransform rewrites conversation meta inside the confirmation
+// transaction — the apply half of a pending-confirm pair (the agent package
+// owns the actual transform; store stays free of agent imports).
+type MetaTransform func(meta json.RawMessage) (json.RawMessage, error)
+
 // ConfirmConversationStage writes a stage the coach already proposed. The
 // proposal lives in meta, not in stage, so declining leaves the row as it
-// was. A missing or different proposal is ErrNotFound.
-func (s *Store) ConfirmConversationStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
+// was. A missing or different proposal is ErrNotFound. apply runs on the parked meta inside the same transaction, so the stage advance
+// and everything it ratifies (the parked finding resolutions) commit
+// together or not at all.
+func (s *Store) ConfirmConversationStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string, apply MetaTransform) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		var meta json.RawMessage
+		err := tx.QueryRow(ctx, `
+			SELECT meta FROM insideout.agent_conversations
+			WHERE id = $1 AND user_id = $2 AND meta->>'pendingStage' = $3
+			FOR UPDATE`,
+			conversationID, actorID, stage,
+		).Scan(&meta)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		if err != nil {
+			return err
+		}
+		meta, err = apply(meta)
+		if err != nil {
+			return err
+		}
 		tag, err := tx.Exec(ctx, `
 			UPDATE insideout.agent_conversations
-			SET stage = $3, meta = meta - 'pendingStage'
+			SET stage = $3, meta = $4::jsonb
 			WHERE id = $1 AND user_id = $2 AND meta->>'pendingStage' = $3`,
-			conversationID, actorID, stage,
+			conversationID, actorID, stage, jsonParam(meta),
 		)
 		if err != nil {
 			return err

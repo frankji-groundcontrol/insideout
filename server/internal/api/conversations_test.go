@@ -64,6 +64,10 @@ type stubCoach struct {
 	releaseFrame2 chan struct{}
 }
 
+func (c stubCoach) ConfirmStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
+	return nil
+}
+
 func (c stubCoach) HandleMessage(w http.ResponseWriter, r *http.Request, conversationID, userID, workspaceID, content string) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")

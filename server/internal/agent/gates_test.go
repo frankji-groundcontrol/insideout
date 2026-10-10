@@ -93,7 +93,7 @@ func TestStageGate_ClarifyToDraft_RequiresAttestedFacts(t *testing.T) {
 	if held.Stage != StageClarify {
 		t.Fatalf("stage = %q before confirm, want %q", held.Stage, StageClarify)
 	}
-	if err := st.ConfirmConversationStage(ctx, ex.actorID, ex.conversationID, StageDraft); err != nil {
+	if err := st.ConfirmConversationStage(ctx, ex.actorID, ex.conversationID, StageDraft, ApplyStageConfirmation); err != nil {
 		t.Fatalf("confirm proposed stage: %v", err)
 	}
 	confirmed, err := st.GetConversationForOwner(ctx, ex.conversationID, ex.actorID)

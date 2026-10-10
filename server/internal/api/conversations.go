@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -22,15 +23,27 @@ type conversationView struct {
 	WorkspaceID string `json:"workspaceId"`
 	PrdID       string `json:"prdId"`
 	Stage       string `json:"stage"`
-	Status      string `json:"status"`
-	UpdatedAt   string `json:"updatedAt"`
+	// PendingStage is the proposal waiting for the person's confirmation —
+	// the client renders it as proposed, never as current (USER-01).
+	PendingStage string `json:"pendingStage,omitempty"`
+	Status       string `json:"status"`
+	UpdatedAt    string `json:"updatedAt"`
 }
 
 func conversationResponse(c store.AgentConversation) conversationView {
-	return conversationView{
+	view := conversationView{
 		ID: c.ID.String(), WorkspaceID: c.WorkspaceID.String(), PrdID: c.PrdID.String(),
 		Stage: c.Stage, Status: c.Status, UpdatedAt: c.UpdatedAt.Format(timeLayout),
 	}
+	if len(c.Meta) > 0 {
+		var meta struct {
+			PendingStage string `json:"pendingStage"`
+		}
+		if json.Unmarshal(c.Meta, &meta) == nil {
+			view.PendingStage = meta.PendingStage
+		}
+	}
+	return view
 }
 
 func (s *Server) handleGetConversation(w http.ResponseWriter, r *http.Request) {
@@ -202,7 +215,7 @@ func (s *Server) handleConfirmConversationStage(w http.ResponseWriter, r *http.R
 		httpx.WriteError(w, http.StatusBadRequest, "stage is required", "", nil)
 		return
 	}
-	err := s.store.ConfirmConversationStage(r.Context(), userID, cid, req.Stage)
+	err := s.coach.ConfirmStage(r.Context(), userID, cid, req.Stage)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusConflict, "that stage is not waiting for confirmation", "", nil)
 		return

@@ -21,6 +21,10 @@ import (
 // and so handler tests can stub it.
 type Coach interface {
 	HandleMessage(w http.ResponseWriter, r *http.Request, conversationID, userID, workspaceID, content string)
+	// ConfirmStage ratifies a proposed stage change: it advances the stage
+	// and, in the same transaction, applies whatever pending-confirm work
+	// the coach parked on the conversation (finding resolutions).
+	ConfirmStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error
 }
 
 type Server struct {

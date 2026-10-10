@@ -138,6 +138,10 @@ func (p *countingPlanner) counts() (plans, expands int) {
 
 // gateStub is a Coach that also gates: it answers every Admit as scripted and
 // records what it was asked and what each done was told.
+func (g *gateStub) ConfirmStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
+	return nil
+}
+
 type gateStub struct {
 	allow bool
 
