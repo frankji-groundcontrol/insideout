@@ -271,11 +271,31 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	// Critic streams further SSE to the client — drop it if they're gone.
 	c.maybeRunCritic(ctx, userID, conv.PrdID, conversationID, run.ID, executor.currentStage, finalText, sectionUpdated, waited, sse)
 
-	if executor.currentStage == StageFinalize && strings.Contains(finalText, "NO OPEN QUESTIONS") {
+	if executor.currentStage == StageFinalize && endsWithMarkerLine(finalText) {
 		if err := c.store.CompleteConversation(persistCtx, userID, conversationID); err != nil {
 			c.log.Error("complete conversation", "error", err)
 		}
 	}
 
 	sse.messageEnd(assistantMsg.ID.String(), len([]rune(finalText)))
+}
+
+// finalizeDoneMarker is the exact line a finalize report must END with for
+// the conversation to complete (prompts.go: the model writes it only when no
+// open questions remain, and lists the questions otherwise).
+const finalizeDoneMarker = "NO OPEN QUESTIONS"
+
+// endsWithMarkerLine reports whether text's last non-empty line — the report's
+// actual final line, whitespace-trimmed — equals the finalize marker exactly.
+// The marker QUOTED anywhere inside the report (e.g. an explanation of what a
+// clean report ends with) must not complete a conversation that still lists
+// open questions.
+func endsWithMarkerLine(text string) bool {
+	lines := strings.Split(text, "\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		if line := strings.TrimSpace(lines[i]); line != "" {
+			return line == finalizeDoneMarker
+		}
+	}
+	return false
 }
