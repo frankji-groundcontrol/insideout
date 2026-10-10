@@ -50,6 +50,11 @@ class Appearance extends ChangeNotifier {
 
   ThemeMode get themeMode => dark ? ThemeMode.dark : ThemeMode.light;
 
+  /// What Material's own text (date picker, dialog buttons, tooltips) renders
+  /// in. [locale] holds 'zh-CN' / 'en-US', which is not a parsed [Locale].
+  Locale get materialLocale =>
+      locale == 'zh-CN' ? const Locale('zh', 'CN') : const Locale('en', 'US');
+
   String t(String key, [Map<String, Object?>? args]) =>
       lookup(locale, key, args);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -10,6 +11,8 @@ import 'session/session.dart';
 import 'theme/block_chrome.dart';
 import 'theme/cobalt.dart';
 import 'theme/cobalt_theme.dart';
+
+const _materialLocales = [Locale('zh', 'CN'), Locale('en', 'US')];
 
 class InsideOutApp extends StatelessWidget {
   const InsideOutApp({super.key, required this.router});
@@ -31,6 +34,9 @@ class InsideOutApp extends StatelessWidget {
         theme: light,
         darkTheme: dark,
         themeMode: appearance.themeMode,
+        locale: appearance.materialLocale,
+        supportedLocales: _materialLocales,
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
         home: const BootLoadingPage(),
       );
     }
@@ -39,6 +45,9 @@ class InsideOutApp extends StatelessWidget {
       theme: light,
       darkTheme: dark,
       themeMode: appearance.themeMode,
+      locale: appearance.materialLocale,
+      supportedLocales: _materialLocales,
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       routerConfig: router,
     );
   }
