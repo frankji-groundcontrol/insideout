@@ -92,15 +92,28 @@ it goes.
 Authorship is not membership (SEC-11). The author branches of `ideas_select`,
 `ideas_update` and `prds_insert` also require
 `insideout._is_member(<table>.workspace_id, current_user_id())` (migration
-`20261010120000`), so a member removed from a workspace loses read, edit, drop
-and convert over the ideas they wrote there and cannot insert a PRD into it.
-The Go store checks the same (`requireMember` in `UpdateIdea`, `DropIdea` and
-`ConvertIdea`; the membership predicate of `GetIdeaForMember`). Through
+`20261010120000`), and so do their four siblings `prds_update`,
+`project_updates_update`, `project_updates_delete` and `prd_revisions_insert`
+(migration `20261010130000`, which reaches the workspace through
+`_project_workspace` and `_prd_workspace` where the row has no
+`workspace_id`). A member removed from a workspace therefore loses read, edit,
+drop and convert over the ideas they wrote there, cannot insert a PRD into it,
+and can no longer edit or snapshot their PRDs or edit or delete their project
+updates. The admin branches need no change, since `_is_admin` implies
+membership.
+
+The Go store checks the same: `requireMember` in `UpdateIdea`, `DropIdea` and
+`ConvertIdea` (and the membership predicate of `GetIdeaForMember`), and ahead
+of the author-or-admin rule in `requirePrdAuthorOrAdmin` (so `UpdateSections`
+and `EnsureConversationForPrd`), `UpdatePrdStatus`, `CreateRevision`,
+`CreatePrdCommit`, `UpdateProjectUpdate` and `DeleteProjectUpdate`. Through
 `insideout_app` a removed member therefore gets `ErrNotFound` (RLS hides the
 row, exactly as for a stranger); the Go checks alone answer `ErrForbidden`.
-Both layers are pinned separately by
-`server/internal/store/ideas_exmember_test.go`, the Go layer by running the
-same store on the `BYPASSRLS` owner pool.
+Both layers are pinned separately: the policies, one bare statement at a time
+under the runtime role, by `server/internal/store/ideas_exmember_test.go` and
+`authored_exmember_test.go`; the Go layer, by running the same store on the
+`BYPASSRLS` owner pool, by the `GoLayerDenies` tests in the first and in
+`authored_exmember_golayer_test.go`.
 
 ## Known PostgreSQL/RLS gotchas
 
