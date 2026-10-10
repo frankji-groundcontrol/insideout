@@ -35,7 +35,7 @@ const (
 	// model-authored bloat must not grow without bound.
 	maxTextLen       = 2000
 	maxAssumptions   = 20
-	truncationMarker = "…"
+	truncationMarker = '…'
 )
 
 var factKinds = map[string]bool{
@@ -193,6 +193,19 @@ func formatLedgerForPrompt(lm ledgerMeta) string {
 	return b.String()
 }
 
+// capLedgerText bounds model-authored ledger text at maxTextLen runes,
+// cutting with a marker so a model re-reading the ledger can tell the cut
+// was ours. The quote already has maxQuoteLen; without this a degenerate
+// model could bloat meta and every later system prompt (AIDEV-10).
+func capLedgerText(s string) string {
+	r := []rune(s)
+	if len(r) <= maxTextLen {
+		return s
+	}
+	r[maxTextLen-1] = truncationMarker
+	return string(r[:maxTextLen])
+}
+
 // --- toolExecutor methods: record_fact / mark_assumption ---
 
 func (e *toolExecutor) recordFact(ctx context.Context, argsJSON string) (string, error) {
@@ -244,7 +257,7 @@ func (e *toolExecutor) recordFact(ctx context.Context, argsJSON string) (string,
 	if len([]rune(quote)) > maxQuoteLen {
 		quote = string([]rune(quote)[:maxQuoteLen])
 	}
-	fact := Fact{ID: "f" + uuid.NewString()[:8], Kind: args.Kind, Text: args.Text, Quote: quote, Status: FactStatusAttested}
+	fact := Fact{ID: "f" + uuid.NewString()[:8], Kind: args.Kind, Text: capLedgerText(args.Text), Quote: quote, Status: FactStatusAttested}
 	lm.Facts = append(lm.Facts, fact)
 
 	metaJSON, err := saveLedger(lm, extra)
@@ -276,7 +289,10 @@ func (e *toolExecutor) markAssumption(ctx context.Context, argsJSON string) (str
 		return "", err
 	}
 	lm, extra := loadLedger(conv.Meta)
-	fact := Fact{ID: "a" + uuid.NewString()[:8], Kind: "assumption", Text: args.Text, Status: FactStatusAssumed}
+	if countByKind(lm.Facts, "assumption") >= maxAssumptions {
+		return "", fmt.Errorf("agent: already have %d assumptions, the most important ones — don't add more", maxAssumptions)
+	}
+	fact := Fact{ID: "a" + uuid.NewString()[:8], Kind: "assumption", Text: capLedgerText(args.Text), Status: FactStatusAssumed}
 	lm.Facts = append(lm.Facts, fact)
 
 	metaJSON, err := saveLedger(lm, extra)

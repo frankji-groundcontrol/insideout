@@ -43,8 +43,8 @@ func TestRecordFact_TruncatesOversizedText(t *testing.T) {
 	if got := len([]rune(stored)); got != maxTextLen {
 		t.Fatalf("stored fact text = %d runes, want exactly the %d-rune cap", got, maxTextLen)
 	}
-	if !strings.HasSuffix(stored, truncationMarker) {
-		t.Fatalf("stored fact text must end with the truncation marker %q, got tail %q", truncationMarker, stored[len(stored)-4:])
+	if !strings.HasSuffix(stored, string(truncationMarker)) {
+		t.Fatalf("stored fact text must end with the truncation marker %q, got tail %q", string(truncationMarker), stored[len(stored)-4:])
 	}
 }
 
@@ -70,8 +70,8 @@ func TestMarkAssumption_TruncatesOversizedText(t *testing.T) {
 	if got := len([]rune(stored)); got != maxTextLen {
 		t.Fatalf("stored assumption text = %d runes, want exactly the %d-rune cap", got, maxTextLen)
 	}
-	if !strings.HasSuffix(stored, truncationMarker) {
-		t.Fatalf("stored assumption text must end with the truncation marker %q, got tail %q", truncationMarker, stored[len(stored)-4:])
+	if !strings.HasSuffix(stored, string(truncationMarker)) {
+		t.Fatalf("stored assumption text must end with the truncation marker %q, got tail %q", string(truncationMarker), stored[len(stored)-4:])
 	}
 }
 
