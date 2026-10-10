@@ -267,7 +267,7 @@ class _ShippedPeek extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    const hashes = ['a1b2c3d', 'e4f5g6h', 'i7j8k9l'];
+    const hashes = ['a1b2c3d', 'e4f5a6b', 'c7d8e9f'];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
