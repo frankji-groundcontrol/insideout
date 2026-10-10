@@ -39,8 +39,8 @@ class ShadeChip extends StatelessWidget {
     };
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: compact ? 8 : 12,
-        vertical: compact ? 3 : 5,
+        horizontal: compact ? Cobalt.space2 : Cobalt.space3,
+        vertical: Cobalt.space1,
       ),
       decoration: BoxDecoration(
         color: bg,

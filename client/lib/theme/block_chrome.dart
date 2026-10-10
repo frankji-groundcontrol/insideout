@@ -54,7 +54,7 @@ class BlockBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(
         horizontal: Cobalt.space3,
-        vertical: 10,
+        vertical: Cobalt.space2,
       ),
       decoration: BoxDecoration(
         color: palette.surfaceSunken,

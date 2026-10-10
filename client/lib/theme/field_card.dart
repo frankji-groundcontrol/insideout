@@ -11,7 +11,7 @@ class FieldCard extends StatelessWidget {
     required this.child,
     this.onTap,
     this.color,
-    this.padding = const EdgeInsets.all(24),
+    this.padding = const EdgeInsets.all(Cobalt.space6),
     this.borderColor,
   });
 
