@@ -81,14 +81,13 @@ Mirrors the tracker (`.track.yaml`); the tracker is the source of truth.
       both themes at both widths; BUG-022, 025, 026, 028, 029).
 - [x] Re-triage every issue record; move resolved ones; record owner-only items.
 - [x] Review-register sweep: triage the 187 findings no record traces (107
-      in the two multirole reviews, 80 in the frontend review): 56 fixed
-      before, 15 not a defect, 15 parked features (each cites the record that
-      parks it), 99 bounded defects and 2 owner steps.
-- [ ] Review-register sweep: fix the bounded findings test-first; record
+- [x] Review-register sweep: fix the bounded findings test-first; record
       the rest with a fix prompt or the owner step.
-- [ ] Review-register sweep: disposition ledger, indexed from
-      [`docs/review/`](../../review/README.md).
-- [ ] Adversarial verification of the whole change set.
+- [x] Review-register sweep: disposition ledger, indexed from
+      [`docs/review/`](../../review/README.md) — 187 findings, 0 unresolved.
+- [x] Adversarial verification of the whole change set — every batch
+      had its own verifier; a whole-set review covered the cross-batch
+      seams and tree invariants.
 - [ ] Push, fast-forward MBP, verify three-way sync, CI green.
 
 ## Needs the owner
@@ -115,26 +114,30 @@ Wave 0.12 `app/.env` on MBP2.
 
 ## Status
 
-In flight 2026-10-10. Every item above the sweep has landed and been pushed:
-`origin/main` is `2be918e` and CI on it is green (run 38029745934, all four
-jobs). Final gate on that tip: Go `go test ./... -count=1 -v` on a scratch
-PostgreSQL 18, 580 PASS, 0 FAIL, 1 SKIP (`TestReadSecretTerminal`, needs a
-terminal), with `gofmt`, `go build` and `go vet` clean; Flutter `pub get
---enforce-lockfile`, analyze (0 errors, 0 warnings, 16 baseline infos), `dart
-format` (194 files, 0 changed) and 269 of 269 tests;
-`scripts/check_nginx_reresolve.py` 6 of 6 on nginx 1.27.5.
+Done 2026-10-10, modulo the push/CI/MBP delivery step in flight. The
+review-register sweep finished end to end: all 187 untraced findings are
+dispositioned in the
+[ledger](../../review/2026-10-10-disposition-ledger/README.md) (65 fixed in
+this wave test-first, 15 not a defect re-proved, 15 parked, 3 owner steps,
+the rest already fixed before it), 24 worker batches each passed an
+independent adversarial verifier (red/green reproduced, gates rerun,
+mutations checked), and the whole change set — 86 commits — was fast-forwarded
+onto `main` (`82cf072`). Integration itself cost three conflict resolutions
+(two independently-written duplicate test files deduplicated, the nginx CI
+job carrying both new checks) and two gated fixes (the route-auth scan folds
+const-concatenated patterns; the roadmap node menu split into a part file
+under the new line-budget guard).
 
-The sweep is under way. All 187 findings are triaged and every row validated.
-The sweep's own first findings are already fixed on the integration branch: the
-audience view rendered a blank page against the real server
-([BUG-030](../../issues/2026-10-10-bug-030-audience-view-rendered-a-blank-page.md)),
-a failed coach send lost the typed text, the commit dialog carried another
-audience's open items, and the Ubuntu install job could not fail on a bad
-block. The 99 bounded defects are being fixed test-first in 13 file-disjoint
-batches, each checked by an independent verifier; an independent re-check of
-the 71 fixed and not-a-defect claims runs beside them.
+Final gates on the integrated tree, fresh PostgreSQL 18 with all four sweep
+migrations applied to a clean database: `gofmt`/`go build`/`go vet` clean;
+`go test ./... -count=1` 814 PASS, 0 FAIL, 1 SKIP (`TestReadSecretTerminal`);
+`go test -race` 25 packages, no races; Flutter `pub get --enforce-lockfile`,
+analyze 14 infos (baseline 16), format clean, 421 of 421 tests;
+`check_nginx_reresolve.py`, `check_nginx_headers.py` and
+`check_nginx_webhook_body.py` all pass on the local nginx 1.27.5.
 
-Left: integrating the batches, round 2 (five test and dock items that touch
-their files), the disposition ledger, a second review of the change set, and
-delivery to MBP. MBP is at `8ee97fc`; at the last probe its ssh port timed out
-(a machine-side fault), so the fast-forward waits on it.
+The orchestration froze once mid-wave (the original session died 16:18 local
+with four agent workflows in flight) and was resumed losslessly from the
+on-disk state; the lesson is recorded in
+[learning](../../learning/2026-10-10-resumable-orchestration.md). Left: push,
+CI green on the new tip, and the MBP fast-forward (its ssh answers again).

@@ -11,10 +11,15 @@ path and current warnings, never history.
 ## What to do next
 
 **One thread is in flight (2026-10-10): the review-register sweep** in the
-[close-the-open-gaps plan](plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md),
-which decides what is still true of the 187 review findings no record traces;
-resume from that plan's checklist and tracker. Everything else in the plan
-has landed (CI green on `2be918e`), and what the
+[close-the-open-gaps plan](plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md).
+Its original orchestration froze 16:18 local and was relaunched from ZCode as
+the background workflow `dwfrun-4d0669fe` (24 batches: finish i1/r2g/r2i/r2j/
+r2k, verify the nine unsettled round-1 batches, run r2a–r2f/r2o/r2h/r2l, chain
+r2m after r2j — each worker → verifier → repair). When it settles: integrate
+into the trial tree and run the full gates per the runbook at
+`/tmp/insideout-gap/integrate.md`, finalize the ledger and sweep changelogs,
+land per-task, then the steps below. Everything else in the plan has landed
+(CI green on `2be918e`), and what the
 [issues index](issues/README.md) lists as left is a choice or a secret, not
 unfinished code, and it is the owner's:
 

@@ -1,14 +1,14 @@
 version: 2
 task: "Close the open gaps"
-coordinator: claude
+coordinator: zcode
 history_file: 2026-10-10-close-open-gaps.track.history.jsonl
 main:
   outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
-  owner: claude
+  owner: zcode
   status: active
-  next_evidence: "All 187 findings are triaged: 56 fixed before, 15 not a defect, 15 parked features, 99 bounded defects and 2 owner steps. The bounded defects are being fixed test-first in 13 file-disjoint batches with an independent verifier each, and an independent re-check of the 71 fixed/not-a-defect claims is running. Then round 2 (five test and dock items), integration, the ledger, push, CI and the MBP fast-forward; MBP's ssh port still times out."
+  next_evidence: "Sweep complete 2026-10-10: all 24 batches accepted by independent verifiers (13 round-1 + 11 round-2/resume), integrated onto main (fast-forward to 82cf072) with 3 cross-cluster conflicts resolved and 2 integration fixes gated. Full gates on a fresh PostgreSQL 18: gofmt/build/vet clean, go test 814 PASS / 0 FAIL / 1 named SKIP, go test -race 25 packages clean, Flutter 421/421 (analyze 14 infos < 16 baseline, format clean), all three nginx checks pass. Disposition ledger final: 187 findings, 0 unresolved. Left: push, CI green, MBP fast-forward (reachable at 8ee97fc), records."
 side_tracks: []
-updated_at: "2026-10-10T07:10:46Z"
+updated_at: "2026-10-10T11:30:00Z"
 plan:
 - step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
   owner: claude
@@ -77,17 +77,17 @@ plan:
   owner: claude
   status: completed
 - step: "Review-register sweep: triage the 187 findings no record traces (107 multirole, 80 frontend)"
-  owner: claude
+  owner: zcode
   status: completed
 - step: "Review-register sweep: fix the bounded findings test-first; record the rest"
-  owner: claude
-  status: in_progress
+  owner: zcode
+  status: completed
 - step: "Review-register sweep: disposition ledger indexed from docs/review"
-  owner: claude
-  status: pending
+  owner: zcode
+  status: completed
 - step: "Adversarial verification of the whole change set"
-  owner: claude
-  status: pending
+  owner: zcode
+  status: completed
 - step: "Push, fast-forward MBP, verify three-way sync, CI green"
-  owner: claude
-  status: pending
+  owner: zcode
+  status: in_progress

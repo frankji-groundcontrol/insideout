@@ -10,7 +10,8 @@ prose (they are cross-referenced by number throughout `docs/`); new bug
 records continue the numbering (next: BUG-031).
 
 **State on 2026-10-10:** every record is fixed, superseded or closed with
-evidence, except the two under "Waiting on the owner". The
+evidence, except the two under "Waiting on the owner" and one deferred
+engineering item under Client. The
 [close-open-gaps plan](../plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md)
 worked through all of them. Owner steps that are not issue records (production
 deploys and migrations, purging legacy users, mail and signing credentials,
@@ -177,6 +178,7 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 
 ### Client
 
+- [2026-10-10 — Throttled roadmap copy deferred](2026-10-10-throttled-roadmap-copy-deferred.md) — open, deferred by choice: a 429/503 from roadmap build/expand still shows the generic error snackbar; the fix prompt is in the record.
 - [2026-10-08 — Block-craft fidelity follow-ups](2026-10-08-block-craft-fidelity-followups.md) — every item done or reviewed and kept; the 390px risk was real and is [BUG-025](2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md).
 - [2026-10-08 — Block primitives have no focus ring or keyboard activation](2026-10-08-block-focus-ring-keyboard.md) — resolved 2026-10-08 ([changelog](../changelogs/2026-10-08-block-focus-ring.md)).
 - [2026-10-06 — W3-N2 minified console errors](2026-10-06-wave3-minified-console.md) — closed, not reproducible on a source-mapped release build at 390px.

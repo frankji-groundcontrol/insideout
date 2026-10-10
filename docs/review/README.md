@@ -19,6 +19,13 @@ remediation plan.
 
 ## Records
 
+- [2026-10-10 — Review-register disposition ledger](2026-10-10-disposition-ledger/README.md)
+  — what happened to every finding of the three registers below that no issue
+  record, plan, or changelog traced: 187 findings, each fixed (with the
+  closing commit), re-proved not a defect, parked, or left to the owner;
+  zero unresolved. Companion changelogs:
+  [server](../changelogs/2026-10-10-close-open-gaps/review-sweep-server.md),
+  [client](../changelogs/2026-10-10-close-open-gaps/review-sweep-client.md).
 - [2026-10-04 — Multirole review (whole tree)](2026-10-04-multirole/README.md)
   — main @ 877ad03; 10 reviewers + 5 skeptics + critic; 75 findings
   (12 High confirmed, 2 downgraded, 0 refuted). Verdict: sound engine,
