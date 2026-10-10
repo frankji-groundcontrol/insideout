@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/requests.dart';
 
 void main() {
-  test('workspace update and delete match Nuxt', () {
+  test('workspace update and delete use /workspaces/{id}', () {
     final patch = patchWorkspace(
       'ws1',
       title: 'T',
@@ -18,7 +18,7 @@ void main() {
     expect(del.body, isNull);
   });
 
-  test('member role and remove match Nuxt', () {
+  test('member role and remove use /workspaces/{id}/members/{userId}', () {
     final role = patchMemberRole('ws1', 'u2', 'admin');
     expect(role.method, 'PATCH');
     expect(role.path, '/workspaces/ws1/members/u2');
@@ -28,7 +28,7 @@ void main() {
     expect(remove.path, '/workspaces/ws1/members/u2');
   });
 
-  test('idea patch and delete match Nuxt', () {
+  test('idea patch and delete use /ideas/{id}', () {
     final patch = patchIdea('i1', title: 'Idea', content: 'Body');
     expect(patch.method, 'PATCH');
     expect(patch.path, '/ideas/i1');
@@ -37,7 +37,7 @@ void main() {
     expect(deleteIdea('i1').path, '/ideas/i1');
   });
 
-  test('project patch/delete and update patch/delete match Nuxt', () {
+  test('project and update patch/delete use /projects/{id}, /updates/{id}', () {
     final patch = patchProject(
       'p1',
       title: 'P',
@@ -63,7 +63,7 @@ void main() {
     expect(deleteProjectUpdate('up1').path, '/updates/up1');
   });
 
-  test('roadmap update move delete expand match Nuxt', () {
+  test('roadmap update, move, delete and expand use /roadmap/{id} routes', () {
     final patch = patchRoadmapNode('n1', title: 'N', status: 'done');
     expect(patch.method, 'PATCH');
     expect(patch.path, '/roadmap/n1');
@@ -79,7 +79,7 @@ void main() {
     expect(expandRoadmapNode('n1').body, isNull);
   });
 
-  test('GET idea and conversation match Nuxt', () {
+  test('GET idea and conversation use /ideas/{id}, /conversations/{id}', () {
     expect(getIdea('i1').method, 'GET');
     expect(getIdea('i1').path, '/ideas/i1');
     expect(getIdea('i1').body, isNull);
