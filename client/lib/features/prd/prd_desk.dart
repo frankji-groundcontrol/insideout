@@ -43,6 +43,23 @@ class PrdDeskColumn extends StatelessWidget {
     final theme = Theme.of(context);
     final palette = Cobalt.of(context);
     final status = prd?.status ?? 'draft';
+    // On a phone the heading drops to headlineLarge (a 52px "REQUIREMENTS"
+    // broke mid-word) and the review button goes under the title field
+    // instead of squeezing it to a sliver.
+    final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
+    final titleField = _FlatEditor(
+      controller: titleCtrl,
+      style: theme.textTheme.headlineLarge!,
+      maxLines: 1,
+      onSubmitted: (_) => onSaveTitle(),
+    );
+    final review = BlockButton(
+      label: status == 'draft'
+          ? l10n.t('prd.next.requestReview')
+          : l10n.t('prd.requestReview'),
+      icon: Icons.arrow_forward,
+      onPressed: status == 'draft' ? onRequestReview : null,
+    );
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
@@ -56,30 +73,29 @@ class PrdDeskColumn extends StatelessWidget {
           children: [
             Text(
               l10n.t('prd.pageTitle').toUpperCase(),
-              style: theme.textTheme.displaySmall,
+              style: narrow
+                  ? theme.textTheme.headlineLarge
+                  : theme.textTheme.displaySmall,
             ),
             const SizedBox(height: Cobalt.space6),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _FlatEditor(
-                    controller: titleCtrl,
-                    style: theme.textTheme.headlineLarge!,
-                    maxLines: 1,
-                    onSubmitted: (_) => onSaveTitle(),
-                  ),
-                ),
-                const SizedBox(width: Cobalt.space3),
-                BlockButton(
-                  label: status == 'draft'
-                      ? l10n.t('prd.next.requestReview')
-                      : l10n.t('prd.requestReview'),
-                  icon: Icons.arrow_forward,
-                  onPressed: status == 'draft' ? onRequestReview : null,
-                ),
-              ],
-            ),
+            if (narrow)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  titleField,
+                  const SizedBox(height: Cobalt.space2),
+                  review,
+                ],
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: titleField),
+                  const SizedBox(width: Cobalt.space3),
+                  review,
+                ],
+              ),
             const SizedBox(height: Cobalt.space6),
             Text(
               l10n.t('prd.workingVersion'),
