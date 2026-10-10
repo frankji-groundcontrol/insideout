@@ -14,7 +14,7 @@ The Go server must be reachable. Local default:
 ./scripts/dev.sh -C server go run ./cmd/insideout
 
 cd client
-flutter run -d chrome
+flutter run -d chrome --web-port=5173   # invite and magic links use INSIDEOUT_PUBLIC_URL (default http://localhost:5173)
 flutter run -d ios
 flutter run -d android
 ```

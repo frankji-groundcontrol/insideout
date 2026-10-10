@@ -126,9 +126,16 @@ Quick start below). For self-hosting, see
 ./scripts/env.sh init                    # 交互式生成 .env，绝不打印值
 ./scripts/dev.sh -C server go run ./cmd/insideout migrate   # 应用迁移
 ./scripts/dev.sh -C server go run ./cmd/insideout           # 启动服务
-cd client && flutter run -d chrome       # 前端 / frontend
+cd client && flutter run -d chrome --web-port=5173          # 前端 / frontend
 docker compose up -d                     # 或一键后端栈 / or the backend stack
 ```
+
+前端固定在 5173 端口：服务端按 `INSIDEOUT_PUBLIC_URL`（默认 `http://localhost:5173`）生成邀请、magic link 与重置链接，而 Flutter 默认随机选端口，不固定的话这些链接会指向无人监听的端口。
+
+Port 5173 is pinned because the server builds invite, magic-link and reset
+links from `INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`); Flutter
+otherwise picks a random port, and those links would point at a port
+nothing listens on.
 
 `dev.sh` 是必需的：应用只读进程环境变量，由它先导出 `.env` 并做缺项检查。必填只有 `DATABASE_URL`（任意 PostgreSQL 14+）和 `INSIDEOUT_JWT_SECRET`（≥32 字符）；不设 `INSIDEOUT_LLM_API_KEY` 时教练走离线模板。详见 [docs/SETENV.md](docs/SETENV.md) 与 [docs/usage/local-development.md](docs/usage/local-development.md)。
 

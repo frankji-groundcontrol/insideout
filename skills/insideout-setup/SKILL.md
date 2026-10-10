@@ -116,8 +116,13 @@ human may prefer `signup-mode open` (see installation.md).
 ```bash
 ./scripts/env.sh init         # interactive .env setup; safe to re-run
 ./scripts/env.sh check        # validates; never prints values
-cd client && flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+cd client && flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
+
+Keep `--web-port=5173`: the server builds invite, magic-link and reset
+links from `INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`), and
+`flutter run` otherwise picks a random port, so those links would point
+at a port nothing listens on.
 
 `dev.sh` gates every launch on `env.sh check` — when it refuses, fix
 what the check names, do not bypass it.

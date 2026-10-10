@@ -17,7 +17,9 @@
 # Usage / 用法 (from the repo root / 在仓库根目录执行):
 #   ./scripts/dev.sh -C server go run ./cmd/insideout
 #   ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v
-#   ./scripts/dev.sh -C client flutter run -d chrome
+#   ./scripts/dev.sh -C client flutter run -d chrome --web-port=5173
+#     5173 = INSIDEOUT_PUBLIC_URL's default; invite/magic links point there.
+#     5173 即 INSIDEOUT_PUBLIC_URL 的默认端口；邀请与 magic link 都指向它。
 #
 # It never prints env values; the env.sh preflight fails loudly on missing or
 # invalid required keys (run ./scripts/env.sh init to set them).
