@@ -6,9 +6,9 @@ main:
   outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
   owner: claude
   status: active
-  next_evidence: "CI green on the pushed CI fixes, then the backend and client waves."
+  next_evidence: "CI result for the lockfile guard, then the backend and client waves."
 side_tracks: []
-updated_at: "2026-10-09T23:52:40Z"
+updated_at: "2026-10-10T00:01:30Z"
 plan:
 - step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
   owner: claude
@@ -30,13 +30,13 @@ plan:
   status: completed
 - step: "Push the CI fixes and get all three CI jobs green"
   owner: claude
-  status: in_progress
+  status: completed
 - step: "MBP housekeeping: upstream for main, repo-local HTTP/1.1"
   owner: claude
-  status: pending
+  status: completed
 - step: "Flutter SDK drift between the Macs: repo-side guard"
   owner: claude
-  status: pending
+  status: completed
 - step: "Backend: split agent/coach.go, refresh sections per tool iteration, push history LIMIT into SQL"
   owner: claude
   status: pending

@@ -66,8 +66,12 @@ to any absolute path.
 
 ## Status
 
-Open (2026-10-09). Found by the CI run after the three-way host sync
+**Fixed 2026-10-10** in `8ee97fc`; CI is green on that commit in all three
+jobs ([changelog](../changelogs/2026-10-10-close-open-gaps/ci-and-hosts.md)).
+Found by the CI run after the three-way host sync
 ([changelog](../changelogs/2026-10-09-host-sync.md)); not fixed there
-because it is a `server/` change outside the sync.
+because it is a `server/` change outside the sync. The same commit fixed the
+python key-store audit noted above and a second failure the Go job was hiding
+([learning](../learning/2026-10-10-a-failing-step-hides-the-gate-behind-it.md)).
 
 Lesson: [pinning `HOME` isolates a config path on macOS only](../learning/2026-10-09-pinning-home-isolates-config-on-macos-only.md).

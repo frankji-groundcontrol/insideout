@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-10 | [A failing step hides the gate behind it](2026-10-10-a-failing-step-hides-the-gate-behind-it.md) | [CI and host fixes](../changelogs/2026-10-10-close-open-gaps/ci-and-hosts.md) |
 | 2026-10-09 | [Pinning `HOME` isolates a config path on macOS only](2026-10-09-pinning-home-isolates-config-on-macos-only.md) | [BUG-021](../issues/2026-10-09-bug-021-go-tests-share-one-config-file-on-linux.md) |
 | 2026-10-09 | [A lockfile diff confined to SDK-pinned packages is toolchain drift](2026-10-09-lockfile-diff-in-sdk-pins-is-toolchain-drift.md) | [host sync](../changelogs/2026-10-09-host-sync.md) |
 | 2026-10-08 | [Replacing a platform widget drops the affordances no test asserts](2026-10-08-custom-primitives-drop-unasserted-affordances.md) | [block focus ring](../changelogs/2026-10-08-block-focus-ring.md) |

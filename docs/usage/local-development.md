@@ -155,6 +155,7 @@ on any failed assertion. See
 Frontend (from `client/`):
 
 ```bash
+flutter pub get --enforce-lockfile   # fails on a non-3.44 SDK instead of rewriting pubspec.lock
 flutter analyze --no-fatal-infos
 flutter test
 ```

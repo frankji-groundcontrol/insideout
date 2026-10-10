@@ -4,6 +4,10 @@ Found while syncing GitHub, MBP2, and MBP
 ([changelog](../changelogs/2026-10-09-host-sync.md)). None of these blocks
 work; each makes the next sync noisier.
 
+**Status 2026-10-10:** items 2–4 are fixed and verified. Item 1 is guarded in
+the repo; only MBP's own SDK version is left, and that is the owner's call
+(see its note).
+
 ## 1. MBP runs Flutter 3.47.0; the repo pins 3.44.x
 
 The pin lives in `.github/workflows/ci.yml`, `client/Dockerfile`, and
@@ -23,6 +27,20 @@ move the pin to the newer SDK in CI, the Dockerfile, and the docs together
 and re-resolve the lock once. Verify: `cd client && flutter pub get
 --enforce-lockfile` exits 0 on both Macs and `git status` stays clean.
 
+**Guarded 2026-10-10.** CI and `client/Dockerfile` now run
+`flutter pub get --enforce-lockfile`, so a lock written under another SDK
+fails the build instead of being re-resolved silently. This is safe on the
+pinned SDK: Flutter 3.44.0 (CI, Dockerfile) and 3.44.8 (MBP2) declare the same
+five SDK-pinned packages (`meta` 1.18.0, `vector_math` 2.2.0, `intl` 0.20.2,
+`test_api` 0.7.11, `matcher` 0.12.19; compared from the SDK tags), and the
+command exits 0 on MBP2 with a clean `git status`. On MBP's 3.47.0 the same
+command now stops with an error instead of rewriting the lock, which is the
+signal to use 3.44.x there.
+
+**Left for the owner:** installing Flutter 3.44.x on MBP. That changes the
+global toolchain of a second machine that is currently overloaded (load
+average in the hundreds), and nothing in this repo depends on it now.
+
 ## 2. Git hooks are not enabled on MBP2
 
 `core.hooksPath` is `config/git-hooks` on MBP and unset on MBP2, so the nine
@@ -33,6 +51,8 @@ own commits with the hooks enabled per command instead.
 Fix: `git config core.hooksPath config/git-hooks` once in the MBP2 clone
 (CLAUDE.md, "Recording changes"). Verify: `git config core.hooksPath` prints
 the path, and a source-only commit prints the guardrail warning.
+
+**Fixed 2026-10-10:** `core.hooksPath` is `config/git-hooks` in the MBP2 clone.
 
 ## 3. MBP reaches GitHub over HTTP/2 only intermittently
 
@@ -46,6 +66,11 @@ Failure scenario: a plain `git pull` or `git push` on MBP fails mid-sync.
 Fix: `git config --global http.version HTTP/1.1` on MBP. Verify: five
 consecutive `git ls-remote origin` runs exit 0.
 
+**Fixed 2026-10-10**, scoped to the repo instead of `--global`:
+`git config --local http.version HTTP/1.1` in the MBP clone. Five consecutive
+`git ls-remote origin refs/heads/main` runs returned the right commit in 2–3 s
+each.
+
 ## 4. MBP's `main` has no upstream
 
 `git rev-parse --abbrev-ref @{u}` fails on MBP and `git status -sb` shows no
@@ -55,3 +80,6 @@ directly, so nothing depended on it.
 
 Fix: `git branch --set-upstream-to=origin/main main` on MBP. Verify:
 `git status -sb` prints `## main...origin/main`.
+
+**Fixed 2026-10-10:** `git branch --set-upstream-to=origin/main main` on MBP;
+`git rev-parse --abbrev-ref @{u}` prints `origin/main`.

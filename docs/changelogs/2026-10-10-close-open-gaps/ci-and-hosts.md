@@ -36,6 +36,12 @@ had a format gate.
   checkout holds no keys, as its docstring says.
 - The six files were formatted and CI gained `gofmt -l` in the build step.
 - Git hooks are enabled in the MBP2 clone (`core.hooksPath`).
+- MBP's `main` now tracks `origin/main`, and that clone alone (not `--global`)
+  uses HTTP/1.1 to talk to GitHub.
+- CI and `client/Dockerfile` run `flutter pub get --enforce-lockfile`. A lock
+  written under another SDK (MBP's 3.47.0) now fails the build instead of being
+  re-resolved silently. Flutter 3.44.0 and 3.44.8 declare the same five
+  SDK-pinned packages, so the lock MBP2 produced is valid on CI's 3.44.0.
 
 ## How it was verified
 
@@ -48,7 +54,14 @@ had a format gate.
   two tests (the CI failure, reproduced); with the change the CI commands exit
   0 (`OK`, 33 skipped).
 - macOS cannot reproduce the Linux-only `XDG_CONFIG_HOME` path, so the Go job
-  on GitHub is the verdict for item 1 (see the CI result in the index).
+  on GitHub was the verdict for item 1. **CI result:** the run on `8ee97fc` is
+  green in all three jobs. The two new gates both executed to the end: gofmt
+  inside "Build and vet", and the skip gate inside "Test". That is also the
+  first run where the step behind the old hidden failure got past `go test`.
+- MBP: five consecutive `git ls-remote origin` runs after the repo-local
+  `http.version HTTP/1.1` change returned in 2–3 s each (the HTTP/2 route had
+  been dropping them); `git rev-parse --abbrev-ref @{u}` now prints
+  `origin/main`.
 
 ## Operator notes
 

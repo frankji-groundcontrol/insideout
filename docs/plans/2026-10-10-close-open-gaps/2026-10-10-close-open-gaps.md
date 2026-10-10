@@ -51,9 +51,10 @@ Mirrors the tracker (`.track.yaml`); the tracker is the source of truth.
 - [x] gofmt six drifted files; gate gofmt in CI.
 - [x] Enable git hooks on MBP2.
 - [x] Disposable PostgreSQL 18 harness and a green local baseline.
-- [ ] Push the CI fixes and get all three CI jobs green.
-- [ ] MBP housekeeping: upstream for `main`, repo-local HTTP/1.1.
-- [ ] Flutter SDK drift: a repo-side guard.
+- [x] Push the CI fixes and get all three CI jobs green (`8ee97fc`).
+- [x] MBP housekeeping: upstream for `main`, repo-local HTTP/1.1.
+- [x] Flutter SDK drift: `pub get --enforce-lockfile` in CI and the Dockerfile
+      (confirmed by the next CI run; MBP's own SDK stays with the owner).
 - [ ] Backend: coach split, per-iteration sections, history `LIMIT` in SQL.
 - [ ] Backend: anthropic split.
 - [ ] Backend: store roadmap split; build-from-PRD pre-check.
@@ -84,5 +85,6 @@ Re-checked at the end; an item leaves this list only with evidence.
 
 ## Status
 
-In flight 2026-10-10. Phase 1 (CI) is fixed locally and verified; the push and
-the CI result are next.
+In flight 2026-10-10. Phase 1 is done: CI is green on `8ee97fc`, MBP is on
+`main`'s upstream with HTTP/1.1, and the lockfile guard is in. The backend and
+client waves are next.

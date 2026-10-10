@@ -3,7 +3,7 @@
 FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build
 WORKDIR /src
 COPY pubspec.yaml pubspec.lock ./
-RUN flutter pub get
+RUN flutter pub get --enforce-lockfile
 COPY . .
 # Same-origin /api/v1 via nginx; include any /v1 on the Go side already.
 ARG API_BASE=/api/v1
