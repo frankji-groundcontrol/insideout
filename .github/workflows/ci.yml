@@ -26,6 +26,20 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # A second cluster that never gets the two roles: the roleless setup
+      # scenarios create and drop insideout_owner and insideout_app themselves,
+      # so they cannot share the cluster above.
+      postgres-roleless:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       DATABASE_URL: postgres://insideout_app:ci-app-password@localhost:5432/postgres
       DATABASE_OWNER_URL: postgres://insideout_owner:ci-owner-password@localhost:5432/postgres
@@ -74,6 +88,25 @@ jobs:
             echo "$unexpected"
             exit 1
           fi
+      # The build tag keeps these out of the run above. They drive `setup
+      # --local --postgres own` against a cluster with no roles: provisioning,
+      # the stop paths, and that no password or DSN is printed.
+      - name: Setup scenarios on a cluster with no roles
+        env:
+          INSIDEOUT_ROLELESS_URL: postgres://postgres:postgres@localhost:5433/postgres?sslmode=disable
+        run: go test -tags roleless ./cmd/insideout/ -run Roleless -count=1 -v -timeout 10m
+
+  # BUG-027: the app's nginx must follow its API upstream when DNS changes, and
+  # only a real nginx shows that. The distro package is older than the image's
+  # 1.27 but has every directive client/nginx.conf uses.
+  nginx:
+    name: app nginx (re-resolve)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq nginx
+      - run: python3 -I scripts/check_nginx_reresolve.py
 
   client:
     name: client (flutter)
