@@ -155,6 +155,7 @@ func TestLoadRejectsDevCORSBesideNonLocalPublicURL(t *testing.T) {
 		"http://192.168.1.20:5173",
 		"http://localhost.evil.com",
 		"localhost:5173", // no scheme: not a loopback URL
+		"http://[::1",    // unclosed bracket: url.Parse fails, so not local
 	} {
 		t.Run(publicURL, func(t *testing.T) {
 			t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
