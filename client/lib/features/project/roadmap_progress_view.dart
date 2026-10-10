@@ -5,6 +5,7 @@ import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
+import '../../theme/field_card.dart';
 import 'roadmap_band_scaffold.dart';
 
 /// FEAT-05 — PRODUCT.md's default Progress view, rendered from
@@ -78,7 +79,7 @@ class RoadmapProgressView extends StatelessWidget {
           const SizedBox(height: 16),
           _ProgressBand(
             label: l10n.t('roadmap.needsDeadline'),
-            color: palette.brandSubtle,
+            color: palette.surfaceSunken,
             items: progress.needsDeadline,
           ),
           const SizedBox(height: 16),
@@ -128,12 +129,8 @@ class _ProgressBand extends StatelessWidget {
         for (final item in items)
           SizedBox(
             width: 240,
-            child: Container(
+            child: FieldCard(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: palette.surfaceRaised,
-                borderRadius: BorderRadius.circular(Cobalt.radiusCard),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

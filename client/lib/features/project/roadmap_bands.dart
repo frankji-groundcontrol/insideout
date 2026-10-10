@@ -77,7 +77,7 @@ class RoadmapBands extends StatelessWidget {
         const SizedBox(height: 16),
         _BandRow(
           label: l10n.t('roadmap.bandNext'),
-          color: palette.brandSubtle,
+          color: palette.surfaceSunken,
           nodes: next,
           allNodes: nodes,
           projectId: projectId,
