@@ -51,18 +51,35 @@ func (s *Store) noteRoadmapChange(projectID uuid.UUID) {
 	}
 }
 
+// Connections one replica may take from the shared pooler: appPoolMaxConns
+// for requests plus migratePoolMaxConns for the migrate step (the lock holder,
+// the migration worker and one spare), so replicas x 13 must fit the pooler's
+// per-role limit (docs/usage/deployment.md). Either is overridden by pgx's own
+// pool_max_conns in that DSN. Left at pgx's defaults: MaxConnLifetime 1h,
+// MaxConnIdleTime 30m, HealthCheckPeriod 1m.
+const (
+	appPoolMaxConns     int32 = 10
+	migratePoolMaxConns int32 = 3
+)
+
 func Open(ctx context.Context, databaseURL string) (*Store, error) {
-	p, err := openPool(ctx, databaseURL)
+	p, err := openPool(ctx, databaseURL, appPoolMaxConns)
 	if err != nil {
 		return nil, err
 	}
 	return &Store{Pool: p}, nil
 }
 
-func openPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
+// poolConfig parses databaseURL and applies the pool settings. maxConns is the
+// default size; a pool_max_conns in the DSN overrides it, so an operator can
+// retune a deployment without a new environment variable.
+func poolConfig(databaseURL string, maxConns int32) (*pgxpool.Config, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("store: parse database url: %w", err)
+	}
+	if !strings.Contains(databaseURL, "pool_max_conns") {
+		cfg.MaxConns = maxConns
 	}
 	// PgBouncer/Supavisor in transaction-pooling mode (the ?pgbouncer=true
 	// connection string Supabase issues on port 6543) multiplexes many
@@ -74,6 +91,14 @@ func openPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 	// port 5432) is unaffected either way.
 	if strings.Contains(databaseURL, "pgbouncer=true") {
 		cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	}
+	return cfg, nil
+}
+
+func openPool(ctx context.Context, databaseURL string, maxConns int32) (*pgxpool.Pool, error) {
+	cfg, err := poolConfig(databaseURL, maxConns)
+	if err != nil {
+		return nil, err
 	}
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
@@ -88,7 +113,7 @@ func openPool(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 
 // AttachMigratePool opens a second pool as insideout_owner for DDL.
 func (s *Store) AttachMigratePool(ctx context.Context, ownerURL string) error {
-	p, err := openPool(ctx, ownerURL)
+	p, err := openPool(ctx, ownerURL, migratePoolMaxConns)
 	if err != nil {
 		return fmt.Errorf("store: migrate pool: %w", err)
 	}
