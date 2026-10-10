@@ -133,3 +133,8 @@ func (s *Store) CompleteConversation(ctx context.Context, actorID, conversationI
 		return err
 	})
 }
+
+// EnsureConversationForPrd is a stub until the fix lands.
+func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*AgentConversation, bool, error) {
+	return nil, false, errors.New("not implemented")
+}
