@@ -74,6 +74,25 @@ client sent it.
   stays fixed is nginx's documented behaviour and the HANDOFF history.
 - **Not deployed.** It takes effect on the next `railway up --service app`.
 
+## Known ceilings (independent review, 2026-10-10)
+
+Read from nginx's documented behaviour; not exercised, and not guarded.
+
+- **No nameserver at all.** If `/etc/resolv.conf` has no `nameserver` line, or
+  the image entrypoint is bypassed, `NGINX_LOCAL_RESOLVERS` is empty or unset
+  and nginx refuses to start with a configuration error at the `resolver`
+  line. That is loud at deploy time, and a container with no DNS could not
+  reach its upstream anyway, so the template has no fallback address.
+- **The request URI goes through as sent.** A `proxy_pass` with a variable and
+  no URI part forwards the client's request target unnormalized, which the old
+  literal form cleaned. A caller that sends `/api//v1/x` gets the Go mux's 301
+  to the clean path, and a client that follows it with a GET loses a POST body.
+  The Flutter client sends `/api/v1/...` only.
+- **A path in `NGINX_API_UPSTREAM`.** The variable is `scheme://host:port`.
+  A trailing slash or path would replace every request URI with it, and
+  nothing validates the value; every API call would fail at once, which the
+  first request after a deploy shows.
+
 ## Owner check after the deploy
 
 1. `curl -s -o /dev/null -w '%{http_code}\n' https://<app-domain>/api/v1/me`
@@ -85,4 +104,6 @@ client sent it.
 ## Status
 
 **Fixed in the repository 2026-10-10**; live only after the owner deploys `app`.
-Re-run `scripts/check_nginx_reresolve.py` when the nginx base image is bumped.
+CI runs `scripts/check_nginx_reresolve.py` on every push (job `app nginx
+(re-resolve)`, on the runner's distro nginx); re-run it locally on the image's own
+nginx when the base image is bumped.
