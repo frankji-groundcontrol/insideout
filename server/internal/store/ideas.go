@@ -59,11 +59,16 @@ func (s *Store) CreateIdea(ctx context.Context, actorID, workspaceID uuid.UUID, 
 // default (USER-05; admins can still fetch a specific idea by ID, which
 // matches their drop authority). Dropped ideas are a soft terminal state:
 // the row stays for audit, but the wall is a working surface and stops
-// listing them (USER-09). Requires the caller to have already verified
-// membership.
+// listing them (USER-09). Requires actorID to be a member, re-checked in the
+// same transaction as the read (ARCH-08): a non-member gets ErrForbidden, not
+// an empty list. The API still answers 404 up front via GetMembership.
 func (s *Store) ListIdeas(ctx context.Context, actorID, workspaceID uuid.UUID) ([]Idea, error) {
 	var out []Idea
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
+			return err
+		}
+
 		rows, err := tx.Query(ctx, `
 			SELECT `+ideaColumns+`
 			FROM insideout.ideas

@@ -67,13 +67,17 @@ func (s *Store) CreateProject(ctx context.Context, actorID, workspaceID uuid.UUI
 	return p, nil
 }
 
-// ListProjectsForWorkspace requires actorID to be a member; a non-member
-// gets an empty result via GetMembership check done by the caller (api
-// layer calls GetMembership first and 404s), matching the pattern used
-// for ListMembers.
+// ListProjectsForWorkspace requires actorID to be a member, re-checked in the
+// same transaction as the read (ARCH-08, like ListMembers): a non-member gets
+// ErrForbidden, not an empty board. The API still answers 404 up front via
+// GetMembership.
 func (s *Store) ListProjectsForWorkspace(ctx context.Context, actorID, workspaceID uuid.UUID) ([]ProjectWithLatest, error) {
 	var out []ProjectWithLatest
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
+			return err
+		}
+
 		rows, err := tx.Query(ctx, `
 			SELECT `+qualifyColumns("p", projectColumns)+`,
 			       lu.kind, lu.content, lu.created_at
