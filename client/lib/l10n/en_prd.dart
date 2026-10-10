@@ -46,6 +46,24 @@ const enPrd = <String, String>{
   'versions.notReady':
       'Gaps for this audience — you can still form a version now',
   'versions.empty': 'No committed versions yet — form the first one now.',
+  'versions.gap.validation.background':
+      'the thesis and usable material early readers react to',
+  'versions.gap.validation.users':
+      'concrete people make feedback specific instead of polite',
+  'versions.gap.decision.background':
+      'the why-this, why-now argument a decision maker needs',
+  'versions.gap.decision.goals': 'the investment and return being decided on',
+  'versions.gap.decision.risks': 'the decisions the answer requires now',
+  'versions.gap.management.users': 'persona paths set priorities',
+  'versions.gap.management.goals': 'priorities need stated goals',
+  'versions.gap.management.requirements':
+      'scope and sequence depend on requirements',
+  'versions.gap.management.nonGoals': 'scope is only real against non-goals',
+  'versions.gap.delivery.requirements':
+      'behavior, rules, and acceptance for engineering and QA',
+  'versions.gap.delivery.constraints':
+      'boundaries and dependencies shape the work',
+  'versions.gap.later': 'useful eventually; not required for this audience',
   'versions.revisionN': 'Version {n}',
   'versions.diffTitle':
       'Diff from previous: {a} added, {c} changed, {r} removed',

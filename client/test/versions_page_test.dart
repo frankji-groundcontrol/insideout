@@ -31,16 +31,16 @@ class _FakeApi extends ApiClient {
           {
             'section': 'background',
             'priority': 'must_clarify_now',
-            'reason': 'the why-this argument',
+            'reason': 'the why-this, why-now argument a decision maker needs',
           },
           {
             'section': 'goals',
             'priority': 'should_clarify_this_version',
-            'reason': 'the investment',
+            'reason': 'the investment and return being decided on',
           },
         ],
         'carryIntoCommit': [
-          'background: the why-this argument (carried as open question)',
+          'background: the why-this, why-now argument a decision maker needs (carried as open question)',
         ],
       },
     },
@@ -59,7 +59,7 @@ class _FakeApi extends ApiClient {
             'primaryAudience': 'decision',
             'createdAt': '2026-08-21T00:00:00Z',
             'unresolved': [
-              'background: the why-this argument (carried as open question)',
+              'background: the why-this, why-now argument a decision maker needs (carried as open question)',
             ],
             'diff': {
               'counts': {'added': 8, 'changed': 0, 'removed': 0},
@@ -126,7 +126,7 @@ void main() {
     // Readiness disclosure: chips, gaps with reasons, not-ready wording.
     expect(find.text('Decision'), findsWidgets);
     expect(find.textContaining('Gaps for this audience'), findsOneWidget);
-    expect(find.textContaining('why-this argument'), findsWidgets);
+    expect(find.textContaining('why-this, why-now argument'), findsWidgets);
 
     // Empty version list with the form-now affordance.
     expect(find.textContaining('No committed versions yet'), findsOneWidget);

@@ -8,7 +8,7 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
-/// The commit card lists each audience's gaps as "<section> — <reason>". The
+/// The commit card lists each audience's gaps as `section — reason`. The
 /// reason is the server's English sentence, so the zh card read "背景与问题陈述
 /// — the why-this, why-now argument a decision maker needs". The reasons the
 /// server sends (readiness.go) are a fixed table keyed by audience and
@@ -46,7 +46,7 @@ class _FakeApi extends ApiClient {
           },
           // A pair the client has no translation for keeps the server text.
           {
-            'section': 'risks',
+            'section': 'nonGoals',
             'priority': 'must_clarify_now',
             'reason': 'a brand new server-side reason',
           },
