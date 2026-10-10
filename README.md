@@ -181,6 +181,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 | 想了解 / Want to know | 去看 / Read |
 | --- | --- |
 | 产品定义 / Product definition | [`PRODUCT.md`](PRODUCT.md) |
+| 设计准则 / Design law | [`DESIGN.md`](DESIGN.md) |
 | 文档总地图 / Doc map | [`docs/index.md`](docs/index.md) |
 | CLI / MCP / GitHub 证据环 / CLI, MCP, evidence loop | [`docs/usage/cli-mcp-and-guidance.md`](docs/usage/cli-mcp-and-guidance.md) |
 | 安装 / Installation | [`docs/usage/installation.md`](docs/usage/installation.md) |
@@ -189,6 +190,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 | 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |
 | 架构 / Architecture | [`docs/architecture/index.md`](docs/architecture/index.md) |
 | 变更记录 / Change log | [`docs/changelogs/`](docs/changelogs/README.md) |
+| 许可证 / License | [`LICENSE`](LICENSE) - Mozilla Public License 2.0 |
 
 ## 第三方资源 / Third-party assets
 

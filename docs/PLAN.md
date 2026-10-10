@@ -32,8 +32,12 @@ server/                        # Go backend
 
 client/                        # Flutter 3 frontend (web + iOS + Android)
 └── lib/
-    ├── api/                   # Dio client, models, errors
-    ├── features/              # landing, auth, dashboard, workspace, project, prd
+    ├── main.dart, app.dart    # session hydration; MaterialApp.router + dock
+    ├── router.dart            # current product paths
+    ├── theme/                 # Cobalt tokens + the block_* primitives
+    ├── chrome/                # bottom dock + last-loop focus
+    ├── api/                   # Dio client, models, errors, SSE transport
+    ├── features/              # landing, auth, dashboard, workspace, profile, project, prd
     ├── session/               # Session, Appearance, auth redirect
     └── l10n/                  # zh-CN + en-US
 

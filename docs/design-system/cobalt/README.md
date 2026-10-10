@@ -1,7 +1,7 @@
 # Cobalt lock screens
 
 Accepted Flutter visual source (2026-09-18). One hue, cards on a field,
-light and dark. Not Ink & Seal.
+light and dark. Not Ink & Seal. Design law: [DESIGN.md](../../../DESIGN.md).
 
 | File | Surface |
 | --- | --- |

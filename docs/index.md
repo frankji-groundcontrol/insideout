@@ -9,6 +9,9 @@ keeps its original bilingual text as a historical record).
 - [README.md](../README.md) — product-facing introduction and quick start.
 - [PRODUCT.md](../PRODUCT.md) — canonical target product experience and
   product-language baseline.
+- [DESIGN.md](../DESIGN.md) — the design law: Cobalt-Neo tokens, the block
+  component grammar and motion; the accepted lock screens are in
+  [design-system/cobalt/](design-system/cobalt/README.md).
 - [INIT.md](INIT.md) — compatibility pointer from the former product
   definition to PRODUCT.md and the current architecture.
 - [PLAN.md](PLAN.md) — high-level development overview: architecture table,
