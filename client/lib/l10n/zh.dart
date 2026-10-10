@@ -369,6 +369,7 @@ const zhCN = <String, String>{
   'roadmap.minimap.status.pending': '待办',
   'project.updateKind.agent_checkpoint': '智能体检查点',
   'project.updateKind.agent_proposal': '智能体提案',
+  'roadmap.deleteConfirmMany': '这将删除 {n} 个节点：本节点及其下的所有节点。',
 };
 
 const zhCoachSuggest = <String, List<String>>{

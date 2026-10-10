@@ -6,6 +6,7 @@ import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 import 'roadmap_band_scaffold.dart';
 import 'roadmap_node_card.dart';
+import 'roadmap_tree.dart';
 
 /// Lock B — Now / Next / Later shade bands that still hold item cards.
 class RoadmapBands extends StatelessWidget {
@@ -135,6 +136,7 @@ class _BandRow extends StatelessWidget {
               onReload: onReload,
               compact: true,
               childProgress: RoadmapNodeCard.childDoneShare(allNodes, n),
+              descendants: roadmapDescendantCount(allNodes, n),
             ),
           ),
       ],

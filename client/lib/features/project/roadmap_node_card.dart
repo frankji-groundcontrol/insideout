@@ -23,12 +23,16 @@ class RoadmapNodeCard extends StatelessWidget {
     required this.onReload,
     this.compact = false,
     this.childProgress,
+    this.descendants = 0,
   });
 
   final String projectId;
   final RoadmapNode node;
   final Future<void> Function() onReload;
   final bool compact;
+
+  /// Nodes beneath this one; the server deletes the branch with it.
+  final int descendants;
 
   /// Share of this node's children that are done (0..1), or null for a
   /// leaf — leaves show no bar rather than an invented percentage. Only a
@@ -59,7 +63,12 @@ class RoadmapNodeCard extends StatelessWidget {
                 tone: ShadeChip.fromStatus(node.status),
               ),
               const Spacer(),
-              _NodeMenu(projectId: projectId, node: node, onReload: onReload),
+              _NodeMenu(
+                projectId: projectId,
+                node: node,
+                onReload: onReload,
+                descendants: descendants,
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -114,11 +123,13 @@ class _NodeMenu extends StatelessWidget {
     required this.projectId,
     required this.node,
     required this.onReload,
+    required this.descendants,
   });
 
   final String projectId;
   final RoadmapNode node;
   final Future<void> Function() onReload;
+  final int descendants;
 
   @override
   Widget build(BuildContext context) {
@@ -187,7 +198,9 @@ class _NodeMenu extends StatelessWidget {
       final ok = await showBlockConfirm(
         context: context,
         title: l10n.t('roadmap.delete'),
-        message: l10n.t('roadmap.deleteConfirm'),
+        message: descendants == 0
+            ? l10n.t('roadmap.deleteConfirm')
+            : l10n.t('roadmap.deleteConfirmMany', {'n': descendants + 1}),
         confirmText: l10n.t('common.delete'),
         danger: true,
       );

@@ -20,6 +20,7 @@ import 'roadmap_bands.dart';
 import 'roadmap_canvas.dart';
 import 'roadmap_node_card.dart';
 import 'roadmap_progress_view.dart';
+import 'roadmap_tree.dart';
 
 class RoadmapPage extends StatefulWidget {
   const RoadmapPage({super.key, required this.projectId});
@@ -301,6 +302,10 @@ class _RoadmapPageState extends State<RoadmapPage> {
                                 node: node,
                                 onReload: _reload,
                                 childProgress: RoadmapNodeCard.childDoneShare(
+                                  snap.data!,
+                                  node,
+                                ),
+                                descendants: roadmapDescendantCount(
                                   snap.data!,
                                   node,
                                 ),

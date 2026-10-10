@@ -395,6 +395,8 @@ const enUS = <String, String>{
   'roadmap.minimap.status.pending': 'pending',
   'project.updateKind.agent_checkpoint': 'Agent checkpoint',
   'project.updateKind.agent_proposal': 'Agent proposal',
+  'roadmap.deleteConfirmMany':
+      'This deletes {n} nodes: this one and everything beneath it.',
 };
 
 const enCoachSuggest = <String, List<String>>{
