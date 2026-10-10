@@ -15,6 +15,10 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-10 — Multirole review 3 and the workflow-ready improvement plan](2026-10-10-multirole-review-3.md)
+  — docs-only: the third whole-tree review (83 findings, 17 High, 16
+  skeptic-confirmed) plus a 4-wave, 30-cluster remediation plan executable as
+  dynamic workflows.
 - [2026-10-10 — Close the open gaps](2026-10-10-close-open-gaps/index.md)
 - [2026-10-09 — Three-way sync: GitHub, MBP2, and MBP on one `main`](2026-10-09-host-sync.md)
   — committed the uncommitted app-icon and block-craft slices as four

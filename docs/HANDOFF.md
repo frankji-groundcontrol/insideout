@@ -10,7 +10,16 @@ path and current warnings, never history.
 
 ## What to do next
 
-**No thread is in flight.** The close-the-open-gaps plan finished 2026-10-10:
+**Run wave 1 of the [review-3 remediation plan](review/2026-10-10-multirole-3/40-remediation-plan.md).**
+Review 3 (2026-10-10, `main` @ `754c502`) left 83 findings — 17 High — and a
+workflow-executable plan: 4 waves of file-disjoint red-first clusters with the
+sweep's worker→verifier→repair contract. Wave 1 is 7 clusters covering the
+confirmed Highs (gate integrity, planner fence, email copy, the Go toolchain
+floor — bump `server/Dockerfile` to `golang:1.26-alpine`, do not lower
+go.mod — the native SSE timeout, the idea body, the stage-confirm surface).
+Owner items below are unchanged and now carry register rows.
+
+The close-the-open-gaps plan finished 2026-10-10:
 the review-register sweep landed as `a84feb8` (CI green, run 38047747110,
 5/5 jobs; GitHub, MBP2 and MBP verified on one commit), its
 [disposition ledger](review/2026-10-10-disposition-ledger/README.md) closed

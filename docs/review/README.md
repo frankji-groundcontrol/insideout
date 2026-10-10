@@ -19,6 +19,15 @@ remediation plan.
 
 ## Records
 
+- [2026-10-10 — Multirole review 3 (whole tree)](2026-10-10-multirole-3/README.md)
+  — main @ 754c502, after the close-open-gaps wave; 10 reviewers + 3 skeptic
+  clusters + critic in one dynamic workflow; 83 findings (0 Critical, 17 High —
+  16 confirmed, 0 refuted; buckets FIX 22 / HARDEN 22 / IMPROVE 25 / ADD 8).
+  Verdict: hardened core, nothing shipped — the server image cannot build
+  (go.mod 1.26 vs golang:1.25 base), the stage-confirm door has no caller,
+  the critique gate is model-rewritable, and the email funnel lies about its
+  own TTL. Four workflow-executable waves in
+  [40-remediation-plan.md](2026-10-10-multirole-3/40-remediation-plan.md).
 - [2026-10-10 — Review-register disposition ledger](2026-10-10-disposition-ledger/README.md)
   — what happened to every finding of the three registers below that no issue
   record, plan, or changelog traced: 187 findings, each fixed (with the
