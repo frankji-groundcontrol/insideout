@@ -265,7 +265,8 @@ class _NodeMenu extends StatelessWidget {
             Row(
               children: [
                 BlockButton(
-                  label: deadline == null
+                  // Cleared is '' (the API's remove value), not null.
+                  label: deadline == null || deadline!.isEmpty
                       ? t('roadmap.setDeadline')
                       : isoDate(deadline!),
                   icon: Icons.event_outlined,
