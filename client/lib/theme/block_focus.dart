@@ -16,10 +16,15 @@ class BlockFocus extends StatefulWidget {
     required this.child,
     this.onActivate,
     this.enabled = true,
+    this.ringColor,
   });
 
   final Widget child;
   final VoidCallback? onActivate;
+
+  /// For a block whose surroundings are already `brand` (the dock), where a
+  /// brand ring would vanish; null paints the cobalt `brand` ring.
+  final Color? ringColor;
 
   /// False takes the block out of focus traversal entirely, so a disabled
   /// control is not reachable by Tab.
@@ -56,7 +61,7 @@ class _BlockFocusState extends State<BlockFocus> {
       },
       child: CustomPaint(
         foregroundPainter: _focused && _live
-            ? CobaltFocusRing(Cobalt.of(context).brand)
+            ? CobaltFocusRing(widget.ringColor ?? Cobalt.of(context).brand)
             : null,
         child: widget.child,
       ),

@@ -10,10 +10,23 @@ import '../theme/cobalt_theme.dart';
 /// all over [Cobalt.pressDuration]. Shadows come from `cast`/`castSm`.
 /// Keyboard focus and Enter/Space activation come from [BlockFocus].
 class PressableBlock extends StatefulWidget {
-  const PressableBlock({super.key, required this.child, this.onTap});
+  const PressableBlock({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.ringColor,
+    this.selected,
+  });
 
   final Widget child;
   final VoidCallback? onTap;
+
+  /// See [BlockFocus.ringColor].
+  final Color? ringColor;
+
+  /// Whether assistive tech hears this block as selected. Null, the default,
+  /// says nothing about selection, for blocks that are not one of a set.
+  final bool? selected;
 
   @override
   State<PressableBlock> createState() => _PressableBlockState();
@@ -51,6 +64,7 @@ class _PressableBlockState extends State<PressableBlock> {
     return BlockFocus(
       enabled: enabled,
       onActivate: widget.onTap,
+      ringColor: widget.ringColor,
       child: MouseRegion(
         onEnter: enabled ? (_) => _set(hovered: true) : null,
         onExit: enabled ? (_) => _set(hovered: false, pressed: false) : null,
@@ -62,6 +76,7 @@ class _PressableBlockState extends State<PressableBlock> {
           child: Semantics(
             button: true,
             enabled: enabled,
+            selected: widget.selected,
             child: AnimatedContainer(
               duration: MediaQuery.disableAnimationsOf(context)
                   ? Duration.zero

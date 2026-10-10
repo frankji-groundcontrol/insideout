@@ -238,12 +238,27 @@ class _DockButton extends StatelessWidget {
         child: PressableBlock(
           key: unfinished ? ValueKey('dock-unfinished-${item.name}') : null,
           onTap: onTap,
+          // The dock is brand-filled: a brand ring would vanish on it.
+          ringColor: palette.btnFg,
+          selected: selected,
           child: AnimatedContainer(
             duration: Cobalt.pressDuration,
             padding: const EdgeInsets.symmetric(
               horizontal: Cobalt.space3,
               vertical: Cobalt.space2,
             ),
+            // The 16% wash below is only ~1.4:1 against its neighbours, so
+            // the current item also gets a 2px btnFg edge. It is painted over
+            // the item, not laid out as a border, which would widen all six
+            // and overflow the icon-only dock at 390px.
+            foregroundDecoration: selected
+                ? BoxDecoration(
+                    border: Border.all(
+                      color: palette.btnFg,
+                      width: Cobalt.borderContainer,
+                    ),
+                  )
+                : null,
             decoration: BoxDecoration(
               color: selected
                   ? Color.alphaBlend(

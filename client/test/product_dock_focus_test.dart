@@ -103,7 +103,6 @@ void main() {
     tester,
   ) async {
     final handle = tester.ensureSemantics();
-    addTearDown(handle.dispose);
     await _pump(tester, true);
 
     // The default location is the roadmap route.
@@ -114,5 +113,6 @@ void main() {
         reason: item.name,
       );
     }
+    handle.dispose();
   });
 }
