@@ -436,7 +436,9 @@ also have no implementation: Product Branch / Merge (loop item 7's Merge
 decisions), the Decision Log beyond a Commit's free-text note (loop item 5),
 and scoped feedback invitations for readers outside the Workspace; the full
 per-promise classification is in the
-[promise register](docs/review/2026-10-10-multirole-3/50-promise-register.md).
+[promise register](docs/review/2026-10-10-multirole-3/50-promise-register.md),
+and every unimplemented promise is tracked as a dated issue in the
+[2026-10-11 promise-gap record](docs/issues/2026-10-11-product-promise-gaps.md).
 Delivery should evolve that foundation
 in small vertical slices and reuse its existing PRD revisions, Roadmap tree,
 project updates, and GitHub integration before adding new mechanisms.
