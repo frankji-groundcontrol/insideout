@@ -76,6 +76,10 @@ func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, lo
 	return s
 }
 
+// streamHeartbeat is how often a passive SSE stream (presence, roadmap
+// progress) writes a keep-alive ping. A var only so tests can shorten it.
+var streamHeartbeat = 10 * time.Second
+
 // CloseStreams ends the passive SSE streams (presence, roadmap progress).
 // Register it with http.Server.RegisterOnShutdown: Shutdown never cancels
 // handler contexts, so without it one open tab holds the whole window.

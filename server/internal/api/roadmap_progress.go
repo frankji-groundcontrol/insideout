@@ -66,7 +66,7 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 	}
 	write(view)
 
-	heartbeat := time.NewTicker(10 * time.Second)
+	heartbeat := time.NewTicker(streamHeartbeat)
 	defer heartbeat.Stop()
 	for {
 		select {

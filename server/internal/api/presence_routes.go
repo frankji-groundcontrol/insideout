@@ -109,7 +109,7 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 	s.presence.Touch(pid.String(), client, userID.String(), name)
 	writeSnapshot(s.presence.List(pid.String()))
 
-	heartbeat := time.NewTicker(10 * time.Second)
+	heartbeat := time.NewTicker(streamHeartbeat)
 	defer heartbeat.Stop()
 	for {
 		select {
