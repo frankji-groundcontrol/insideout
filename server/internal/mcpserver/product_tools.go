@@ -196,14 +196,14 @@ func addProductTools(s *server.MCPServer, api string) {
 			strReq("summary", "the proposal"), strOpt("detail", "extra detail")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			detail, _ := req.GetArguments()["detail"].(string)
-			var items []string
+			var items []apiclient.ProposeItem
 			if arr, ok := req.GetArguments()["items"].([]any); ok {
 				for _, v := range arr {
 					if m, ok := v.(map[string]any); ok {
 						title, _ := m["title"].(string)
 						hint, _ := m["parentHint"].(string)
 						if title != "" {
-							items = append(items, title+"@"+hint)
+							items = append(items, apiclient.ProposeItem{Title: title, ParentHint: hint})
 						}
 					}
 				}

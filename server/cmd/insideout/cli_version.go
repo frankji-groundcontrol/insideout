@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
@@ -65,7 +66,12 @@ func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "usage: insideout propose --kind K [--detail D] [--item Title[@Parent]]... <project-id> <summary>")
 			return true, 2
 		}
-		return printJSON(c.AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail, items))
+		proposed := make([]apiclient.ProposeItem, len(items))
+		for i, it := range items {
+			title, hint, _ := strings.Cut(it, "@")
+			proposed[i] = apiclient.ProposeItem{Title: title, ParentHint: hint}
+		}
+		return printJSON(c.AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail, proposed))
 	}
 	if cmd == "view" {
 		fs := flag.NewFlagSet("view", flag.ContinueOnError)

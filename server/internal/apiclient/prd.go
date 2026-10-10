@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 // IdeaCreate captures a new idea (POST /workspaces/{id}/ideas).
@@ -130,16 +129,19 @@ func (c *Client) AgentCheckpoint(projectID, nodeID, summary string) (json.RawMes
 	return out, nil
 }
 
+// ProposeItem is one structured add_node entry of an agent proposal; ParentHint
+// names the parent node by title. Kept as two fields, not a "Title@Parent"
+// string, so a title may contain "@".
+type ProposeItem struct{ Title, ParentHint string }
+
 // AgentPropose records an agent proposal (POST /agent/propose).
-// items: optional structured "Title[@ParentTitle]" entries a human can
-// apply on acceptance.
-func (c *Client) AgentPropose(projectID, kind, summary, detail string, items []string) (json.RawMessage, error) {
+// items: optional structured entries a human can apply on acceptance.
+func (c *Client) AgentPropose(projectID, kind, summary, detail string, items []ProposeItem) (json.RawMessage, error) {
 	body := map[string]any{"projectId": projectID, "kind": kind, "summary": summary, "detail": detail}
 	if len(items) > 0 {
 		arr := make([]map[string]string, 0, len(items))
 		for _, it := range items {
-			title, hint, _ := strings.Cut(it, "@")
-			arr = append(arr, map[string]string{"action": "add_node", "title": title, "parentHint": hint})
+			arr = append(arr, map[string]string{"action": "add_node", "title": it.Title, "parentHint": it.ParentHint})
 		}
 		body["items"] = arr
 	}
