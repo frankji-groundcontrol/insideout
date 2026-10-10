@@ -3,6 +3,7 @@ package agent
 import (
 	"errors"
 	"net/http"
+	"sync"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/google/uuid"
@@ -60,10 +61,9 @@ func (c *Coach) acquire(w http.ResponseWriter) (release func(), waited, ok bool)
 // dispatch permit. It also opens an ai_runs row, the limiter's counting source:
 // without one the call would pass the check yet never count toward it. On
 // refusal the response is already written and ok is false; otherwise the caller
-// must call done once with the call's error (nil on success).
-//
-// ponytail: a caller that panics before done leaks its permit. The planners do
-// not panic; defer done in the caller if that ever changes.
+// calls done with the call's error (nil on success). done is idempotent — the
+// first call wins — so the caller may defer it and still call it on the normal
+// path: a planner that panics past both must not leak its permit.
 func (c *Coach) Admit(w http.ResponseWriter, r *http.Request, workspaceID, userID uuid.UUID, label string) (done func(error), ok bool) {
 	if !c.preflight(w, r, userID) {
 		return nil, false
@@ -79,20 +79,23 @@ func (c *Coach) Admit(w http.ResponseWriter, r *http.Request, workspaceID, userI
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return nil, false
 	}
+	var once sync.Once
 	return func(callErr error) {
-		defer release()
-		ctx, cancel := detachedContext(r.Context())
-		defer cancel()
-		if callErr == nil {
-			_ = c.store.MarkAIRunSucceeded(ctx, userID, run.ID, "")
-			_ = c.store.RecordCircuitResult(ctx, true)
-			return
-		}
-		_ = c.store.MarkAIRunFailed(ctx, userID, run.ID, callErr.Error())
-		// Only a provider-health signal feeds the breaker; a plan the model
-		// botched, or a client that went away, is not provider load.
-		if errors.Is(callErr, ErrProviderRateLimited) || errors.Is(callErr, ErrProviderTransient) || errors.Is(callErr, ErrUpstreamStall) {
-			_ = c.store.RecordCircuitResult(ctx, false)
-		}
+		once.Do(func() {
+			defer release()
+			ctx, cancel := detachedContext(r.Context())
+			defer cancel()
+			if callErr == nil {
+				_ = c.store.MarkAIRunSucceeded(ctx, userID, run.ID, "")
+				_ = c.store.RecordCircuitResult(ctx, true)
+				return
+			}
+			_ = c.store.MarkAIRunFailed(ctx, userID, run.ID, callErr.Error())
+			// Only a provider-health signal feeds the breaker; a plan the model
+			// botched, or a client that went away, is not provider load.
+			if errors.Is(callErr, ErrProviderRateLimited) || errors.Is(callErr, ErrProviderTransient) || errors.Is(callErr, ErrUpstreamStall) {
+				_ = c.store.RecordCircuitResult(ctx, false)
+			}
+		})
 	}, true
 }

@@ -45,6 +45,12 @@ func (s *Server) admitAI(w http.ResponseWriter, r *http.Request, workspaceID, us
 	return func(error) {}, true
 }
 
+// errPlannerUnwound is what done hears when a planner call never returned: a
+// panic in the planner unwinds past the handler's flow, so only the deferred
+// done runs and fails the run with it. It is a bug in our process, not a
+// provider-health signal, so it never feeds the circuit breaker.
+var errPlannerUnwound = errors.New("planner call did not return")
+
 func (s *Server) registerRoadmapAIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/prds/{pid}/build", s.requireAuth(s.handleBuildFromPrd))
 	mux.HandleFunc("POST /api/v1/prds/{pid}/build/confirm", s.requireAuth(s.handleConfirmBuildFromPrd))
@@ -74,8 +80,13 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// The deferred done is the only one that runs when the planner panics
+	// (done is idempotent): the permit comes back and the run fails with
+	// errPlannerUnwound instead of staying "running".
+	planErr := errPlannerUnwound
+	defer func() { done(planErr) }()
 	tree, err := s.planner.PlanMVP(r.Context(), built.prd.Title, built.prd.Sections)
-	done(err)
+	planErr = err
 	if err != nil {
 		s.log.Error("plan mvp", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
@@ -175,7 +186,12 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Same deferred-done shape as the build handler: a panicking planner
+	// still releases the permit and fails the run.
+	expandErr := errPlannerUnwound
+	defer func() { done(expandErr) }()
 	children, err := s.planner.ExpandNode(r.Context(), project.Title, node.Title, node.Description)
+	expandErr = err
 	// A fallback-served expand answers with the planner's built-in template
 	// but still reports the provider error: done must count the failure for
 	// the breaker, and the HTTP answer stays the template.
@@ -183,7 +199,6 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	if errors.As(err, &fromTemplate) {
 		children = fromTemplate.TemplateDraft()
 	}
-	done(err)
 	if err != nil && fromTemplate == nil {
 		s.log.Error("expand node", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
