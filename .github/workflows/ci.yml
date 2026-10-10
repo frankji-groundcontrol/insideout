@@ -110,6 +110,19 @@ jobs:
           INSIDEOUT_ROLELESS_URL: postgres://postgres:postgres@localhost:5433/postgres?sslmode=disable
         run: go test -tags roleless ./cmd/insideout/ -run Roleless -count=1 -v -timeout 10m
 
+  # Review-3 ARCH-01: go.mod's floor moved to 1.26.0 while the Dockerfile
+  # stayed on golang:1.25 and no lane noticed — the image build is the only
+  # place that toolchain mismatch can surface. CI must certify the toolchain
+  # that builds the shipped server image, same principle as the client pin
+  # in the flutter job below.
+  server-image:
+    name: server image (docker build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t insideout-server-ci server/
+
   # BUG-027: the app's nginx must follow its API upstream when DNS changes, and
   # only a real nginx shows that. The distro package is older than the image's
   # 1.27 but has every directive client/nginx.conf uses. SEC-12: the same real
