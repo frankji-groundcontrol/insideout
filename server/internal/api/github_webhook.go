@@ -16,10 +16,14 @@ import (
 	"github.com/google/uuid"
 )
 
+// githubWebhookPath is where GitHub App deliveries arrive; withMaxBody keys
+// the webhook's larger body cap on it.
+const githubWebhookPath = "/api/v1/hooks/github"
+
 func (s *Server) registerGithubWebhookRoute(mux *http.ServeMux) {
 	// No requireAuth: deliveries are authenticated by the HMAC signature,
 	// not by a user session.
-	mux.HandleFunc("POST /api/v1/hooks/github", s.handleGithubWebhook)
+	mux.HandleFunc("POST "+githubWebhookPath, s.handleGithubWebhook)
 }
 
 // handleGithubWebhook accepts GitHub App deliveries
@@ -33,7 +37,9 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusServiceUnavailable, "webhook not configured", "", nil)
 		return
 	}
-	body, err := io.ReadAll(io.LimitReader(r.Body, 8<<20))
+	// withMaxBody (maxWebhookBodyBytes) is the one cap: a longer body fails
+	// this read with 400 instead of being truncated into a bad signature.
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "read body", "", nil)
 		return

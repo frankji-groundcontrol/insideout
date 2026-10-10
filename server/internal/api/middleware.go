@@ -91,13 +91,22 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 // ReadHeaderTimeout/ReadTimeout/IdleTimeout set on the http.Server.
 const maxBodyBytes = 1 << 20 // 1 MiB
 
+// maxWebhookBodyBytes replaces maxBodyBytes on the GitHub webhook route
+// alone: a push delivery lists every commit's files and routinely outgrows
+// 1 MiB, and refusing it as unreadable gets GitHub to disable the hook.
+const maxWebhookBodyBytes = 8 << 20 // 8 MiB
+
 // withMaxBody wraps the request body in an http.MaxBytesReader so an
 // oversized body fails the decode instead of being buffered without bound.
 // ponytail: returns the generic decode 400 rather than a precise 413 —
 // the connection is cut at the cap either way, which is the whole point.
 func (s *Server) withMaxBody(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
+		limit := int64(maxBodyBytes)
+		if r.URL.Path == githubWebhookPath {
+			limit = maxWebhookBodyBytes
+		}
+		r.Body = http.MaxBytesReader(w, r.Body, limit)
 		next.ServeHTTP(w, r)
 	})
 }
