@@ -11,22 +11,36 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
+const _tree = {
+  'title': 'Ship a thing',
+  'children': [
+    {'title': 'Scope'},
+  ],
+};
+
 /// Records the request each tapped action actually sends. The overrides are
-/// the real request builders (`postPrdBuild`, `postPrdStatus`); a button wired
-/// to the wrong function shows up as the wrong method, path, or body.
+/// the real request builders (`postPrdBuild`, `postPrdBuildConfirm`,
+/// `postPrdStatus`); a button wired to the wrong function shows up as the
+/// wrong method, path, or body.
 class _RecordingApi extends ApiClient {
-  _RecordingApi({this.saveError, this.buildError})
-    : super(
-        baseUrl: 'http://127.0.0.1:9/api/v1',
-        readAccess: () async => null,
-        readRefresh: () async => null,
-        writeTokens: (a, r) async {},
-        clearTokens: () async {},
-      );
+  _RecordingApi({
+    this.saveError,
+    this.buildError,
+    List<Object> confirmErrors = const [],
+  }) : _confirmErrors = [...confirmErrors],
+       super(
+         baseUrl: 'http://127.0.0.1:9/api/v1',
+         readAccess: () async => null,
+         readRefresh: () async => null,
+         writeTokens: (a, r) async {},
+         clearTokens: () async {},
+       );
 
   final calls = <ApiCall>[];
   final Object? saveError;
   final Object? buildError;
+  // One entry is thrown per confirm call, oldest first; once empty it succeeds.
+  final List<Object> _confirmErrors;
 
   Prd _prd({String status = 'draft'}) => Prd(
     id: 'prd-1',
@@ -60,6 +74,7 @@ class _RecordingApi extends ApiClient {
     return _prd(status: 'approved');
   }
 
+  // The server's draft: nothing is written, the tree comes back to be sent on.
   @override
   Future<Map<String, dynamic>> buildFromPrd(
     String id, {
@@ -67,56 +82,73 @@ class _RecordingApi extends ApiClient {
   }) async {
     calls.add(postPrdBuild(id, expectedCount: expectedCount));
     if (buildError != null) throw buildError!;
-    return {'projectId': 'proj-1', 'nodeCount': 3};
+    return {'projectId': 'proj-1', 'tree': _tree};
+  }
+
+  @override
+  Future<Map<String, dynamic>> confirmBuildFromPrd(
+    String id,
+    Map<String, dynamic> tree, {
+    int? expectedCount,
+  }) async {
+    calls.add(postPrdBuildConfirm(id, tree, expectedCount: expectedCount));
+    if (_confirmErrors.isNotEmpty) throw _confirmErrors.removeAt(0);
+    return {'projectId': 'proj-1', 'nodeCount': 2};
   }
 }
+
+/// Pumps the PRD page at desktop width in the real providers, with the
+/// roadmap route a build navigates to.
+Future<GoRouter> _pumpPrd(WidgetTester tester, _RecordingApi api) async {
+  final session = Session();
+  session.ready = true;
+  session.api = api;
+  await tester.binding.setSurfaceSize(const Size(1400, 900));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+
+  final router = GoRouter(
+    initialLocation: '/prd/prd-1',
+    routes: [
+      GoRoute(
+        path: '/prd/:id',
+        builder: (_, s) => PrdPage(id: s.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/projects/:id',
+        builder: (_, _) => const SizedBox.shrink(),
+        routes: [
+          GoRoute(path: 'roadmap', builder: (_, _) => const SizedBox.shrink()),
+        ],
+      ),
+    ],
+  );
+  addTearDown(router.dispose);
+
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: session),
+        ChangeNotifierProvider(
+          create: (_) =>
+              Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+        ),
+        ChangeNotifierProvider(create: (_) => LoopFocus()),
+      ],
+      child: MaterialApp.router(routerConfig: router),
+    ),
+  );
+  await tester.pump();
+  return router;
+}
+
+String _path(GoRouter router) => router.routeInformationProvider.value.uri.path;
 
 void main() {
   testWidgets('tapping build and request review sends those requests', (
     tester,
   ) async {
-    final session = Session();
-    session.ready = true;
     final api = _RecordingApi();
-    session.api = api;
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final router = GoRouter(
-      initialLocation: '/prd/prd-1',
-      routes: [
-        GoRoute(
-          path: '/prd/:id',
-          builder: (_, s) => PrdPage(id: s.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/projects/:id',
-          builder: (_, _) => const SizedBox.shrink(),
-          routes: [
-            GoRoute(
-              path: 'roadmap',
-              builder: (_, _) => const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(
-            create: (_) =>
-                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
-          ),
-          ChangeNotifierProvider(create: (_) => LoopFocus()),
-        ],
-        child: MaterialApp.router(routerConfig: router),
-      ),
-    );
-    await tester.pump();
+    final router = await _pumpPrd(tester, api);
 
     expect(find.text('Next: Request review'), findsOneWidget);
     await tester.tap(find.text('Next: Request review'));
@@ -125,18 +157,79 @@ void main() {
     expect(find.text('Draft the roadmap'), findsOneWidget);
     await tester.tap(find.text('Draft the roadmap'));
     await tester.pump();
+    await tester.pump();
 
-    expect(api.calls, hasLength(2));
+    // /build only drafts; the roadmap exists once /build/confirm has run.
+    expect(api.calls, hasLength(3));
     expect(api.calls[0].method, 'POST');
     expect(api.calls[0].path, '/prds/prd-1/status');
     expect(api.calls[0].body, {'status': 'reviewing'});
     expect(api.calls[1].method, 'POST');
     expect(api.calls[1].path, '/prds/prd-1/build');
     expect(api.calls[1].body, isNull);
-    expect(
-      router.routeInformationProvider.value.uri.path,
-      '/projects/proj-1/roadmap',
+    expect(api.calls[2].method, 'POST');
+    expect(api.calls[2].path, '/prds/prd-1/build/confirm');
+    expect(api.calls[2].body, {'tree': _tree});
+    expect(_path(router), '/projects/proj-1/roadmap');
+  });
+
+  testWidgets('building over an existing roadmap asks, then replaces it', (
+    tester,
+  ) async {
+    final api = _RecordingApi(
+      confirmErrors: [
+        ApiException(
+          'replace?',
+          status: 409,
+          code: 'replace_conflict',
+          liveCount: 5,
+        ),
+      ],
     );
+    final router = await _pumpPrd(tester, api);
+
+    await tester.tap(find.text('Next: Request review'));
+    await tester.pump();
+    await tester.tap(find.text('Draft the roadmap'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('with 5 nodes'), findsOneWidget);
+    expect(api.calls, hasLength(3), reason: 'nothing is replaced unasked');
+    expect(_path(router), '/prd/prd-1');
+
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+
+    expect(api.calls, hasLength(4));
+    expect(api.calls[3].path, '/prds/prd-1/build/confirm');
+    expect(api.calls[3].body, {'tree': _tree, 'expectedCount': 5});
+    expect(_path(router), '/projects/proj-1/roadmap');
+  });
+
+  testWidgets('declining the replace keeps the roadmap and the PRD page', (
+    tester,
+  ) async {
+    final api = _RecordingApi(
+      confirmErrors: [
+        ApiException(
+          'replace?',
+          status: 409,
+          code: 'replace_conflict',
+          liveCount: 5,
+        ),
+      ],
+    );
+    final router = await _pumpPrd(tester, api);
+
+    await tester.tap(find.text('Next: Request review'));
+    await tester.pump();
+    await tester.tap(find.text('Draft the roadmap'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(api.calls, hasLength(3), reason: 'no second confirm');
+    expect(_path(router), '/prd/prd-1');
   });
 
   // Register 4.1: a failing build must surface the localized error and
@@ -144,48 +237,8 @@ void main() {
   testWidgets('failing build shows the error SnackBar and stays on the PRD', (
     tester,
   ) async {
-    final session = Session();
-    session.ready = true;
     final api = _RecordingApi(buildError: ApiException('boom', status: 500));
-    session.api = api;
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final router = GoRouter(
-      initialLocation: '/prd/prd-1',
-      routes: [
-        GoRoute(
-          path: '/prd/:id',
-          builder: (_, s) => PrdPage(id: s.pathParameters['id']!),
-        ),
-        GoRoute(
-          path: '/projects/:id',
-          builder: (_, _) => const SizedBox.shrink(),
-          routes: [
-            GoRoute(
-              path: 'roadmap',
-              builder: (_, _) => const SizedBox.shrink(),
-            ),
-          ],
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(
-            create: (_) =>
-                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
-          ),
-          ChangeNotifierProvider(create: (_) => LoopFocus()),
-        ],
-        child: MaterialApp.router(routerConfig: router),
-      ),
-    );
-    await tester.pump();
+    final router = await _pumpPrd(tester, api);
 
     await tester.tap(find.text('Next: Request review'));
     await tester.pump();
@@ -197,7 +250,29 @@ void main() {
       find.text('Save failed — Server hiccup — try again'),
       findsOneWidget,
     );
-    expect(router.routeInformationProvider.value.uri.path, '/prd/prd-1');
+    expect(_path(router), '/prd/prd-1');
+    expect(api.calls.any((c) => c.path.endsWith('/confirm')), isFalse);
+  });
+
+  testWidgets('failing confirm shows the error SnackBar and stays on the PRD', (
+    tester,
+  ) async {
+    final api = _RecordingApi(
+      confirmErrors: [ApiException('boom', status: 500)],
+    );
+    final router = await _pumpPrd(tester, api);
+
+    await tester.tap(find.text('Next: Request review'));
+    await tester.pump();
+    await tester.tap(find.text('Draft the roadmap'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(
+      find.text('Save failed — Server hiccup — try again'),
+      findsOneWidget,
+    );
+    expect(_path(router), '/prd/prd-1');
   });
 
   // Register 4.1: a failing save must surface the localized error and keep
@@ -205,38 +280,8 @@ void main() {
   testWidgets('failing save shows the error SnackBar and keeps the input', (
     tester,
   ) async {
-    final session = Session();
-    session.ready = true;
     final api = _RecordingApi(saveError: ApiException('boom', status: 500));
-    session.api = api;
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    final router = GoRouter(
-      initialLocation: '/prd/prd-1',
-      routes: [
-        GoRoute(
-          path: '/prd/:id',
-          builder: (_, s) => PrdPage(id: s.pathParameters['id']!),
-        ),
-      ],
-    );
-    addTearDown(router.dispose);
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(
-            create: (_) =>
-                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
-          ),
-          ChangeNotifierProvider(create: (_) => LoopFocus()),
-        ],
-        child: MaterialApp.router(routerConfig: router),
-      ),
-    );
-    await tester.pump();
+    await _pumpPrd(tester, api);
 
     await tester.enterText(find.byType(TextField).first, 'Ship it now');
     await tester.tap(find.text('Save'));
