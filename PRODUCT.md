@@ -431,7 +431,13 @@ GitHub-sync implementation remains the running foundation. It does **not** yet
 implement this whole target experience. In particular, the running v1 authority
 model is still workspace-scoped — the author submits and resubmits, and a
 Workspace admin approves or rejects — while the per-Project roles described
-above are the target, not the current behavior. Delivery should evolve that foundation
+above are the target, not the current behavior. Three more promised loop items
+also have no implementation: Product Branch / Merge (loop item 7's Merge
+decisions), the Decision Log beyond a Commit's free-text note (loop item 5),
+and scoped feedback invitations for readers outside the Workspace; the full
+per-promise classification is in the
+[promise register](docs/review/2026-10-10-multirole-3/50-promise-register.md).
+Delivery should evolve that foundation
 in small vertical slices and reuse its existing PRD revisions, Roadmap tree,
 project updates, and GitHub integration before adding new mechanisms.
 
