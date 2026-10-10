@@ -1,8 +1,10 @@
 package api
 
 import (
+	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
@@ -66,4 +68,51 @@ func TestProjectQuietFlaggedThresholdBoundary(t *testing.T) {
 	if !projectQuietFlagged(p, now) {
 		t.Fatal("14 days + 1s old must be flagged")
 	}
+}
+
+// FS-09: the board list sent every project's whole latest note (bounded only
+// by maxUpdateContentRunes, 5000 runes) while a card shows one ellipsized
+// line. The board response now carries a short preview; the full text stays
+// in the updates feed.
+func TestProjectResponseBoardNotePreview(t *testing.T) {
+	preview := func(content string) string {
+		got := projectResponse(store.ProjectWithLatest{LatestUpdateContent: &content}).LatestUpdateContent
+		if got == nil {
+			t.Fatal("a present note must keep a preview")
+		}
+		return *got
+	}
+
+	t.Run("a long multibyte note is cut at a rune boundary", func(t *testing.T) {
+		got := preview(strings.Repeat("世", maxUpdateContentRunes))
+		if !utf8.ValidString(got) {
+			t.Fatalf("preview is not valid UTF-8: %q", got)
+		}
+		if n := utf8.RuneCountInString(got); n > 201 {
+			t.Fatalf("preview has %d runes, want at most 201 (200 + ellipsis)", n)
+		}
+		if want := strings.Repeat("世", 200) + "…"; got != want {
+			t.Fatalf("preview = %q, want the first 200 runes plus an ellipsis", got)
+		}
+	})
+
+	t.Run("one rune over the preview is cut, exactly at it is not", func(t *testing.T) {
+		exact := strings.Repeat("a", 200)
+		if got := preview(exact); got != exact {
+			t.Fatalf("a 200-rune note must pass unchanged, got %q", got)
+		}
+		if got := preview(exact + "a"); got != exact+"…" {
+			t.Fatalf("a 201-rune note must be cut to 200 + ellipsis, got %q", got)
+		}
+	})
+
+	t.Run("a short note passes through and nil stays nil", func(t *testing.T) {
+		short := "shipped the invitation flow"
+		if got := preview(short); got != short {
+			t.Fatalf("a short note must pass unchanged, got %q", got)
+		}
+		if got := projectResponse(store.ProjectWithLatest{}).LatestUpdateContent; got != nil {
+			t.Fatalf("a missing note must stay nil, got %q", *got)
+		}
+	})
 }
