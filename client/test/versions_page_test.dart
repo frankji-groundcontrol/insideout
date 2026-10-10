@@ -24,8 +24,18 @@ class _FakeApi extends ApiClient {
   final committedSummaries = <String>[];
   final bool failCommit;
 
+  /// Thrown by both reads while set; clear it to let a Retry succeed.
+  Object? readError;
+  var listCalls = 0;
+
   @override
-  Future<PrdReadiness> prdReadiness(String id) async => PrdReadiness.fromJson({
+  Future<PrdReadiness> prdReadiness(String id) async {
+    final failure = readError;
+    if (failure != null) throw failure;
+    return _readiness;
+  }
+
+  PrdReadiness get _readiness => PrdReadiness.fromJson({
     'audiences': {
       'decision': {
         'ready': false,
@@ -49,7 +59,14 @@ class _FakeApi extends ApiClient {
   });
 
   @override
-  Future<List<PrdCommit>> listPrdCommits(String id) async => committedNames
+  Future<List<PrdCommit>> listPrdCommits(String id) async {
+    listCalls++;
+    final failure = readError;
+    if (failure != null) throw failure;
+    return _commits;
+  }
+
+  List<PrdCommit> get _commits => committedNames
       .asMap()
       .map(
         (i, n) => MapEntry(
@@ -99,6 +116,28 @@ class _FakeApi extends ApiClient {
       },
     });
   }
+}
+
+Future<void> _pumpVersions(WidgetTester tester, _FakeApi api) async {
+  final session = Session();
+  session.ready = true;
+  session.api = api;
+  await tester.binding.setSurfaceSize(const Size(1400, 900));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: session),
+        ChangeNotifierProvider(
+          create: (_) =>
+              Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+        ),
+        ChangeNotifierProvider(create: (_) => LoopFocus()),
+      ],
+      child: const MaterialApp(home: VersionsPage(prdId: 'p1')),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -237,4 +276,27 @@ void main() {
       expect(find.textContaining('No committed versions yet'), findsOneWidget);
     },
   );
+
+  testWidgets('a failed load shows the localized error, never the exception', (
+    tester,
+  ) async {
+    final fake = _FakeApi()..readError = ApiException('boom', status: 500);
+    await _pumpVersions(tester, fake);
+
+    expect(find.text('Something went wrong'), findsOneWidget);
+    expect(find.text('Server hiccup — try again'), findsOneWidget);
+    expect(find.textContaining('boom'), findsNothing);
+  });
+
+  testWidgets('Retry after a failed load reloads the versions', (tester) async {
+    final fake = _FakeApi()..readError = ApiException('boom', status: 500);
+    await _pumpVersions(tester, fake);
+
+    fake.readError = null;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('No committed versions yet'), findsOneWidget);
+    expect(fake.listCalls, 2);
+  });
 }

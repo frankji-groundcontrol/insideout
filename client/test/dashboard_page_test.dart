@@ -11,7 +11,8 @@ import 'package:provider/provider.dart';
 
 // Register 4.1 coverage: a failing create or join must surface the
 // localized error instead of failing silently, and leave the board
-// untouched; a successful one reloads.
+// untouched; a successful one reloads. A failing load shows the localized
+// error and its Retry reloads the board, never the raw exception text.
 class _FakeApi extends ApiClient {
   _FakeApi(this.workspaces, {this.onCreate, this.onJoin})
     : super(
@@ -26,8 +27,17 @@ class _FakeApi extends ApiClient {
   void Function(String title)? onCreate;
   void Function(String code)? onJoin;
 
+  /// Thrown by [listWorkspaces] while set; clear it to let a Retry succeed.
+  Object? listError;
+  var listCalls = 0;
+
   @override
-  Future<List<Workspace>> listWorkspaces() async => workspaces;
+  Future<List<Workspace>> listWorkspaces() async {
+    listCalls++;
+    final failure = listError;
+    if (failure != null) throw failure;
+    return workspaces;
+  }
 
   @override
   Future<Workspace> createWorkspace(String title, String description) async {
@@ -59,6 +69,17 @@ class _FakeApi extends ApiClient {
     });
   }
 }
+
+Workspace _workspace(String id, String title) => Workspace.fromJson({
+  'id': id,
+  'title': title,
+  'description': '',
+  'code': 'C$id',
+  'status': 'active',
+  'memberCount': 1,
+  'myRole': 'admin',
+  'createdAt': '2026-10-06T00:00:00Z',
+});
 
 Future<void> _pump(WidgetTester tester, _FakeApi api) async {
   final session = Session();
@@ -183,20 +204,10 @@ void main() {
   testWidgets('a user who already has a workspace can still create another', (
     tester,
   ) async {
-    Workspace ws(String id, String title) => Workspace.fromJson({
-      'id': id,
-      'title': title,
-      'description': '',
-      'code': 'C$id',
-      'status': 'active',
-      'memberCount': 1,
-      'myRole': 'admin',
-      'createdAt': '2026-10-06T00:00:00Z',
-    });
-    final workspaces = [ws('w1', 'First WS')];
+    final workspaces = [_workspace('w1', 'First WS')];
     final api = _FakeApi(
       workspaces,
-      onCreate: (title) => workspaces.add(ws('w2', title)),
+      onCreate: (title) => workspaces.add(_workspace('w2', title)),
     );
     await _pump(tester, api);
 
@@ -209,5 +220,31 @@ void main() {
 
     expect(find.text('Second WS'), findsOneWidget);
     expect(find.text('First WS'), findsOneWidget);
+  });
+
+  testWidgets('a failed load shows the localized error, never the exception', (
+    tester,
+  ) async {
+    final api = _FakeApi(const [])
+      ..listError = ApiException('boom', status: 500);
+    await _pump(tester, api);
+
+    expect(find.text('Something went wrong'), findsOneWidget);
+    expect(find.text('Server hiccup — try again'), findsOneWidget);
+    expect(find.textContaining('boom'), findsNothing);
+  });
+
+  testWidgets('Retry after a failed load reloads the board', (tester) async {
+    final api = _FakeApi([_workspace('w1', 'First WS')])
+      ..listError = ApiException('boom', status: 500);
+    await _pump(tester, api);
+    expect(find.text('First WS'), findsNothing);
+
+    api.listError = null;
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('First WS'), findsOneWidget);
+    expect(api.listCalls, 2);
   });
 }
