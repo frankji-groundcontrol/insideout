@@ -185,6 +185,12 @@ else
   password=${password:-insideout_app_dev_password}
   set_env DATABASE_URL "postgres://insideout_app:${password}@127.0.0.1:${port}/insideout?sslmode=disable"
   echo "==> Wrote DATABASE_URL for bundled Postgres on 127.0.0.1:${port}"
+  # insideout_app cannot apply migrations: pair it with the owner role the
+  # postgres image's init script creates (same host, port and database).
+  owner_password=$(read_env POSTGRES_OWNER_PASSWORD || true)
+  owner_password=${owner_password:-insideout_owner_dev_password}
+  set_env DATABASE_OWNER_URL "postgres://insideout_owner:${owner_password}@127.0.0.1:${port}/insideout?sslmode=disable"
+  echo "==> Wrote DATABASE_OWNER_URL for bundled Postgres"
 fi
 
 if [ "$no_start" -eq 1 ]; then

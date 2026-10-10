@@ -210,6 +210,46 @@ func TestLocalNoStartWritesEnvEndToEnd(t *testing.T) {
 	}
 }
 
+// The bundled database runs as insideout_app, which cannot apply migrations
+// (SECURITY DEFINER objects must be owned by insideout_owner), so setup has to
+// leave the owner DSN beside the app one. Without it the first migration — in
+// setup itself, in `insideout migrate`, and in the server's startup — stops
+// with "connected as insideout_app; use DATABASE_OWNER_URL".
+func TestLocalBundledNoStartWritesTheOwnerDSN(t *testing.T) {
+	repo := t.TempDir()
+	for _, name := range []string{"docker-compose.yml", ".env.example"} {
+		if err := os.WriteFile(filepath.Join(repo, name), []byte("# stub\nDATABASE_URL=change_me_db\nINSIDEOUT_JWT_SECRET=change_me_to_a_long_random_string\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.MkdirAll(filepath.Join(repo, "server"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	os.WriteFile(filepath.Join(repo, "server", "go.mod"), []byte("module stub\n"), 0644)
+
+	scratchEnv := filepath.Join(t.TempDir(), "scratch.env")
+	seed := "POSTGRES_PORT=5443\nPOSTGRES_APP_PASSWORD=app-pw\nPOSTGRES_OWNER_PASSWORD=owner-pw\n"
+	if err := os.WriteFile(scratchEnv, []byte(seed), 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", repo)
+	t.Setenv("INSIDEOUT_ENV_FILE", scratchEnv)
+	t.Setenv("HOME", t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", "")
+
+	handled, code := runSetupCommand([]string{"--local", "--postgres", "bundled", "--no-start"})
+	if !handled || code != 0 {
+		t.Fatalf("setup --local --postgres bundled --no-start = (%v, %d), want (true, 0)", handled, code)
+	}
+	vals := readEnvValues(scratchEnv)
+	if want := "postgres://insideout_app:app-pw@127.0.0.1:5443/insideout?sslmode=disable"; vals["DATABASE_URL"] != want {
+		t.Errorf("DATABASE_URL = %q, want %q", vals["DATABASE_URL"], want)
+	}
+	if want := "postgres://insideout_owner:owner-pw@127.0.0.1:5443/insideout?sslmode=disable"; vals["DATABASE_OWNER_URL"] != want {
+		t.Errorf("DATABASE_OWNER_URL = %q, want %q", vals["DATABASE_OWNER_URL"], want)
+	}
+}
+
 func TestLocalBundledFullRunFailsCleanlyWithoutDocker(t *testing.T) {
 	// An empty PATH hides docker whether or not the host has it, so this
 	// branch runs everywhere instead of skipping on a machine (or CI
