@@ -116,16 +116,3 @@ func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUI
 	}
 	return out, nil
 }
-
-// userTexts extracts just the user's own turns — record_fact's quote
-// grounding check only trusts what the user actually typed, not the
-// assistant's own words.
-func userTexts(history []Message) []string {
-	var out []string
-	for _, m := range history {
-		if m.Role == RoleUser {
-			out = append(out, m.Content)
-		}
-	}
-	return out
-}

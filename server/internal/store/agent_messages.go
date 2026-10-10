@@ -128,6 +128,39 @@ func (s *Store) ListRecentChatMessages(ctx context.Context, actorID, conversatio
 	return out, nil
 }
 
+// ListUserMessageTexts returns what the user typed in a conversation: every
+// turn, oldest first. It is what record_fact grounds a quote against, so it is
+// deliberately not the replay window of ListRecentChatMessages, which drops old
+// turns to keep the model's context small.
+func (s *Store) ListUserMessageTexts(ctx context.Context, actorID, conversationID uuid.UUID) ([]string, error) {
+	var out []string
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, `
+			SELECT content
+			FROM insideout.agent_messages
+			WHERE conversation_id = $1 AND role = 'user'
+			ORDER BY created_at ASC`, conversationID,
+		)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var text string
+			if err := rows.Scan(&text); err != nil {
+				return err
+			}
+			out = append(out, text)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // --- ai_runs: one row per user message sent to the agent, and the
 // counting source for the rate limiter. ---
 

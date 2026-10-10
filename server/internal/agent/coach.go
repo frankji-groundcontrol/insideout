@@ -218,7 +218,6 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 
 	executor := &toolExecutor{
 		store: c.store, actorID: userID, prdID: conv.PrdID, conversationID: conversationID, currentStage: conv.Stage,
-		userMessages: userTexts(history),
 		onSectionWrite: func(section string) {
 			sectionUpdated = true
 			if err := sse.prdUpdated(section); err != nil && sseErr == nil {

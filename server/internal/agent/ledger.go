@@ -202,8 +202,19 @@ func (e *toolExecutor) recordFact(ctx context.Context, argsJSON string) (string,
 	if strings.TrimSpace(args.Text) == "" || strings.TrimSpace(args.Quote) == "" {
 		return "", fmt.Errorf("agent: record_fact requires both text and quote")
 	}
+	// Ground against everything the user said in this conversation, not the
+	// replay window. userMessages is an explicit override; when nil the
+	// conversation's own user turns are read, each matched on its own (one big
+	// haystack would inflate the bigram overlap).
+	userMessages := e.userMessages
+	if userMessages == nil {
+		var err error
+		if userMessages, err = e.store.ListUserMessageTexts(ctx, e.actorID, e.conversationID); err != nil {
+			return "", err
+		}
+	}
 	grounded := false
-	for _, msg := range e.userMessages {
+	for _, msg := range userMessages {
 		if quoteIsGrounded(args.Quote, msg) {
 			grounded = true
 			break

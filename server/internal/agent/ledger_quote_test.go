@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -100,5 +101,29 @@ func TestHandleMessage_RecordFactGroundsAQuoteFromBeyondTheReplayWindow(t *testi
 			}
 		}
 		t.Fatalf("ledger = %+v after the model quoted the user's first turn, want the fact recorded; the model was told %q", lm.Facts, toolResult)
+	}
+}
+
+// Each user turn is matched on its own. Joined into one haystack, the 70%
+// bigram overlap would let a quote stitched from two different turns pass: a
+// "verbatim" quote the user never said.
+func TestRecordFact_DoesNotStitchAQuoteFromSeveralTurns(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	_, ex := seedConversation(t, st)
+	turnA, turnB := "aaaa bbbb cccc", "dddd eeee ffff"
+	stitched := "aaaa bbbb dddd eeee"
+	if quoteIsGrounded(stitched, turnA) || quoteIsGrounded(stitched, turnB) || !quoteIsGrounded(stitched, turnA+" "+turnB) {
+		t.Fatal("fixture premise broken: the stitched quote must ground in the joined turns only, in neither alone")
+	}
+	for _, text := range []string{turnA, turnB} {
+		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(RoleUser), text, nil, nil, nil); err != nil {
+			t.Fatalf("insert user turn: %v", err)
+		}
+	}
+
+	args, _ := json.Marshal(map[string]string{"kind": "problem", "text": "stitched", "quote": stitched})
+	if _, err := ex.recordFact(ctx, string(args)); err == nil || !strings.Contains(err.Error(), "was not found") {
+		t.Fatalf("record_fact with a quote stitched from two turns = %v, want it refused", err)
 	}
 }
