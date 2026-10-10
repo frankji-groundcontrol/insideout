@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
+import '../../theme/block_action_card.dart';
 import '../../theme/block_button.dart';
-import '../../theme/block_chrome.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
@@ -221,13 +221,13 @@ class _WorkspaceColumn extends StatelessWidget {
       children: [
         // Create and join stay reachable once a workspace exists; the empty
         // state's buttons are gone by then.
-        _ActionCard(
+        BlockActionCard(
           icon: Icons.add,
           label: l10n.t('workspace.createTitle'),
           onTap: onCreate,
         ),
         const SizedBox(height: Cobalt.space3),
-        _ActionCard(
+        BlockActionCard(
           icon: Icons.group_add_outlined,
           label: l10n.t('workspace.joinTitle'),
           onTap: onJoin,
@@ -265,37 +265,6 @@ class _WorkspaceColumn extends StatelessWidget {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// A one-line action row above the workspace cards: icon well, title, chevron.
-class _ActionCard extends StatelessWidget {
-  const _ActionCard({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final palette = Cobalt.of(context);
-    return FieldCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(Cobalt.space4),
-      child: Row(
-        children: [
-          BlockIconWell(icon: icon, size: 40, iconSize: 20),
-          const SizedBox(width: Cobalt.space3),
-          Expanded(child: Text(label, style: theme.textTheme.titleMedium)),
-          Icon(Icons.chevron_right, color: palette.fgMuted),
-        ],
-      ),
     );
   }
 }

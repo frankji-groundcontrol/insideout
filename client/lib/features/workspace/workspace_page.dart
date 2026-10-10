@@ -9,6 +9,7 @@ import '../../chrome/loop_focus.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
+import '../../theme/block_action_card.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/block_form.dart';
@@ -194,15 +195,13 @@ class _WorkspacePageState extends State<WorkspacePage> {
           children: [
             _inviteCard(context, data.ws),
             const SizedBox(height: Cobalt.space3),
-            _navCard(
-              context,
+            BlockActionCard(
               icon: Icons.lightbulb_outline,
               label: l10n.t('workspace.ideas'),
               onTap: () => context.go('/workspace/${widget.id}/ideas'),
             ),
             const SizedBox(height: Cobalt.space3),
-            _navCard(
-              context,
+            BlockActionCard(
               icon: Icons.settings_outlined,
               label: l10n.t('workspace.settings'),
               onTap: () => context.go('/workspace/${widget.id}/settings'),
@@ -309,28 +308,6 @@ class _WorkspacePageState extends State<WorkspacePage> {
             tooltip: l10n.t('common.copy'),
             onPressed: () => Clipboard.setData(ClipboardData(text: ws.code)),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _navCard(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final palette = Cobalt.of(context);
-    return FieldCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(Cobalt.space4),
-      child: Row(
-        children: [
-          BlockIconWell(icon: icon, size: 40, iconSize: 20),
-          const SizedBox(width: Cobalt.space3),
-          Expanded(child: Text(label, style: theme.textTheme.titleMedium)),
-          Icon(Icons.chevron_right, color: palette.fgMuted),
         ],
       ),
     );
