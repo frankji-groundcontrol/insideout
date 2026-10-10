@@ -185,12 +185,15 @@ The app's nginx proxy (Python 3 and any nginx binary; nothing is installed):
 
 ```bash
 python3 scripts/check_nginx_reresolve.py [--nginx /path/to/nginx]   # follows the API upstream when DNS changes
+python3 scripts/check_nginx_headers.py [--nginx /path/to/nginx]     # sends the security headers
 ```
 
-It renders `client/nginx.conf` as the image entrypoint does and runs it beside a
-stub DNS server and two upstreams, so it takes about 30 seconds. Re-run it when
-the nginx base image is bumped
+Both render `client/nginx.conf` as the image entrypoint does. The first runs it
+beside a stub DNS server and two upstreams, so it takes about 30 seconds;
+re-run it when the nginx base image is bumped
 ([BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)).
+The second serves a stub page and reads the response headers, so it takes a
+second; run it after any change to the headers or the CSP.
 On a Mac whose CommandLineTools SDK the linker rejects, a source build of nginx
 needs `SDKROOT` pointed at the Xcode SDK; the Homebrew `nginx` formula avoids it.
 
