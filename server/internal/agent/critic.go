@@ -321,6 +321,9 @@ func parseCriticFindings(argsJSON string, sections map[string]string) ([]CriticF
 		if f.Issue == "" || (f.Severity != "blocking" && f.Severity != "major" && f.Severity != "minor") {
 			continue
 		}
+		if !isPrdSection(f.Section) {
+			continue // section key outside the canonical eight — drop, don't fail the batch
+		}
 		if f.Kind != "defect" && f.Kind != "omission" {
 			continue
 		}

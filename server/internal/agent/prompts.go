@@ -3,6 +3,7 @@ package agent
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/readiness"
@@ -144,15 +145,27 @@ var rankedCritiqueLine = regexp.MustCompile(
 	`^\s*\d+\.\s*\[(blocking|major|minor)\]\s*([A-Za-z]+)\s*[—–-]\s*(.+?)\s*$`,
 )
 
+// isPrdSection reports whether key is one of the 8 canonical PRD section
+// keys — a finding against anything else points the round-2 critic and
+// the panel at a section that doesn't exist, so both parsers drop it
+// (the same drop-don't-fail policy used for bad severity/kind).
+func isPrdSection(key string) bool {
+	return slices.Contains(store.PrdSectionKeys, key)
+}
+
 // parseRankedCritique turns the coach's severity-ranked overview into the
 // findings the panel renders. Items stay in the order written (most severe
-// first); a line that doesn't match the ranked format is skipped.
+// first); a line that doesn't match the ranked format, or names a section
+// outside the canonical eight, is skipped.
 func parseRankedCritique(reply string) []CriticFinding {
 	var out []CriticFinding
 	for _, line := range strings.Split(reply, "\n") {
 		m := rankedCritiqueLine.FindStringSubmatch(strings.TrimSpace(line))
 		if m == nil {
 			continue
+		}
+		if !isPrdSection(m[2]) {
+			continue // unknown section key — drop, don't fail the batch
 		}
 		issue, suggestion := m[3], ""
 		if i := strings.Index(issue, "建议："); i >= 0 {
