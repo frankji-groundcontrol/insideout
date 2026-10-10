@@ -1,6 +1,10 @@
 package agent
 
 import (
+	"context"
+	"errors"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -65,5 +69,32 @@ func TestParseResponsesStreamToolCall(t *testing.T) {
 	}
 	if turn.ToolCall.Arguments != `{"x":1}` {
 		t.Fatalf("args=%q", turn.ToolCall.Arguments)
+	}
+}
+
+// AIDEV-05 / AIDEV-18: a Responses-API provider's HTTP failure used to be
+// reported as "agent: anthropic returned ..." — a misleading on-call signal
+// in the logs and in ai_runs.error_message. The classification (a config
+// error, never retried) is right; only the provider named in the text was not.
+func TestResponsesStreamer_HTTPErrorNamesTheResponsesProvider(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"error":{"type":"invalid_api_key","message":"bad key"}}`))
+	}))
+	defer srv.Close()
+
+	s, err := NewResponsesStreamer(srv.URL, "test-token", "gpt-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = s.StreamChat(context.Background(), "sys", []Message{{Role: RoleUser, Content: "hi"}}, nil, nil)
+	if !errors.Is(err, ErrProviderConfig) {
+		t.Fatalf("err = %v, want wrapping ErrProviderConfig", err)
+	}
+	if strings.Contains(err.Error(), "anthropic") {
+		t.Fatalf("err = %q blames anthropic for a Responses-API failure", err)
+	}
+	if want := "agent: openai-compatible responses returned 401 Unauthorized: invalid_api_key: bad key"; !strings.Contains(err.Error(), want) {
+		t.Fatalf("err = %q, want it to contain %q", err, want)
 	}
 }

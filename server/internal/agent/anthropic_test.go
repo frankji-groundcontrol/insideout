@@ -139,3 +139,22 @@ func TestAnthropic_ForcingToolRejectsEmptyMessages(t *testing.T) {
 		t.Fatalf("want named empty-messages error, got %v", err)
 	}
 }
+
+// The classifier is shared with the Responses streamer, so the provider it
+// names is a parameter; the Anthropic streamer must keep naming itself.
+func TestAnthropicStreamer_HTTPErrorNamesAnthropic(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(`{"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}}`))
+	}))
+	defer srv.Close()
+
+	a := newTestStreamer(srv.URL, time.Second)
+	_, err := a.StreamChat(context.Background(), "sys", []Message{{Role: RoleUser, Content: "hi"}}, nil, nil)
+	if !errors.Is(err, ErrProviderConfig) {
+		t.Fatalf("err = %v, want wrapping ErrProviderConfig", err)
+	}
+	if want := "agent: anthropic returned 401 Unauthorized: authentication_error: invalid x-api-key"; !strings.Contains(err.Error(), want) {
+		t.Fatalf("err = %q, want it to contain %q", err, want)
+	}
+}
