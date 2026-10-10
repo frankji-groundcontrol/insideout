@@ -17,6 +17,10 @@ FROM nginxinc/nginx-unprivileged:1.27-alpine
 # container start; the baked NGINX_API_UPSTREAM default keeps Railway
 # working, and docker-compose overrides it with the `server` service.
 ENV NGINX_API_UPSTREAM=http://server.railway.internal:8080
+# The entrypoint then exports NGINX_LOCAL_RESOLVERS (the nameservers in
+# /etc/resolv.conf) for nginx.conf's `resolver`, so the API upstream is looked
+# up per request and follows a redeployed `server` (BUG-027).
+ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY --from=build /src/build/web /usr/share/nginx/html
 USER 101
