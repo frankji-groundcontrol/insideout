@@ -124,7 +124,10 @@ class _MinimapMark extends StatelessWidget {
     final cobalt = Cobalt.of(context);
     final Widget mark;
     switch (status) {
+      // A validated leaf reads as finished in the coarse shape — the
+      // human confirm that distinguishes it lives on the card, not here.
       case 'done':
+      case 'validated':
         mark = Container(
           width: double.infinity,
           height: 4,
@@ -181,6 +184,7 @@ class _MinimapMark extends StatelessWidget {
   String _label(BuildContext context) {
     final state = switch (status) {
       'done' || 'in_progress' || 'locked' => status,
+      'validated' => 'done',
       _ => 'pending',
     };
     final key = 'roadmap.minimap.status.$state';

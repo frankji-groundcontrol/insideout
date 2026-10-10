@@ -63,7 +63,11 @@ class _ValidationApi extends ApiClient {
   static const reason68 = '7-day retention rose from 40% to 68%';
 }
 
-Future<void> _pumpCard(WidgetTester tester, ApiClient api, RoadmapNode node) async {
+Future<void> _pumpCard(
+  WidgetTester tester,
+  ApiClient api,
+  RoadmapNode node,
+) async {
   final session = Session()
     ..ready = true
     ..api = api;
@@ -72,12 +76,19 @@ Future<void> _pumpCard(WidgetTester tester, ApiClient api, RoadmapNode node) asy
       providers: [
         ChangeNotifierProvider.value(value: session),
         ChangeNotifierProvider(
-          create: (_) => Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          create: (_) =>
+              Appearance(store: MemorySettingsStore(), locale: 'en-US'),
         ),
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: SingleChildScrollView(child: RoadmapNodeCard(projectId: 'p1', node: node, onReload: () async {})),
+          body: SingleChildScrollView(
+            child: RoadmapNodeCard(
+              projectId: 'p1',
+              node: node,
+              onReload: () async {},
+            ),
+          ),
         ),
       ),
     ),
@@ -108,7 +119,10 @@ void main() {
     await tester.pumpAndSettle();
 
     final fields = find.byType(TextField);
-    await tester.enterText(fields.at(0), '4 of 5 pilot users finished the tour');
+    await tester.enterText(
+      fields.at(0),
+      '4 of 5 pilot users finished the tour',
+    );
     await tester.enterText(fields.at(1), 'pilot check-in thread');
     await tester.enterText(fields.at(2), '2026-10-02');
     await tester.tap(find.text('Record'));

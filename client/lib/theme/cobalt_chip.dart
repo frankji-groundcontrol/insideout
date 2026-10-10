@@ -20,6 +20,9 @@ class ShadeChip extends StatelessWidget {
   static ShadeTone fromStatus(String status) {
     return switch (status) {
       'done' => ShadeTone.done,
+      // A validated leaf is finished work with a human confirm — the
+      // same success shade, one label further.
+      'validated' => ShadeTone.done,
       'in_progress' => ShadeTone.progress,
       'locked' => ShadeTone.locked,
       _ => ShadeTone.pending,
@@ -73,6 +76,7 @@ class ShadeMark extends StatelessWidget {
     final palette = Cobalt.of(context);
     final color = switch (status) {
       'done' => palette.statusSuccessFg,
+      'validated' => palette.statusSuccessFg,
       'in_progress' => palette.brand,
       'locked' => palette.statusNeutralFg,
       _ => palette.strokeStrong,

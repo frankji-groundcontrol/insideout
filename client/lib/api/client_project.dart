@@ -172,6 +172,35 @@ mixin _ProjectVerbs on _ApiCore {
         .toList();
   }
 
+  /// Records one human-entered validation observation on a leaf: what
+  /// was observed, its source, and the date it was seen (FEAT-04).
+  Future<void> addValidationObservation(
+    String nodeId, {
+    required String detail,
+    String source = '',
+    required DateTime observedAt,
+  }) async {
+    final res = await _dio.post(
+      '/roadmap/$nodeId/evidence',
+      data: {
+        'detail': detail,
+        'sourceUrl': source,
+        'observedAt': observedAt.toIso8601String().substring(0, 10),
+      },
+    );
+    await _parse(res, (d) => d);
+  }
+
+  /// The human confirm into 'validated': a done node plus the reason it
+  /// counts as validated. The plain status PATCH cannot make this move.
+  Future<RoadmapNode> validateRoadmapNode(String nodeId, String reason) async {
+    final res = await _dio.post(
+      '/roadmap/$nodeId/validate',
+      data: {'reason': reason},
+    );
+    return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
+  }
+
   Future<RoadmapProgress> roadmapProgress(String projectId) async {
     final res = await _dio.get('/projects/$projectId/roadmap/progress');
     return _parse(

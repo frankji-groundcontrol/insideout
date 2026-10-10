@@ -14,6 +14,7 @@ class RoadmapNode {
     this.acceptance = '',
     this.ownerId,
     this.ownerName = '',
+    this.validationReason = '',
   });
 
   final String id;
@@ -34,6 +35,10 @@ class RoadmapNode {
   final String? ownerId;
   final String ownerName;
 
+  /// Why a validated node counts as validated ('' when unset) — the
+  /// human confirm's own words.
+  final String validationReason;
+
   factory RoadmapNode.fromJson(Map<String, dynamic> j) => RoadmapNode(
     id: j['id'] as String,
     projectId: j['projectId'] as String,
@@ -49,6 +54,7 @@ class RoadmapNode {
     acceptance: (j['acceptance'] as String?) ?? '',
     ownerId: j['ownerId'] as String?,
     ownerName: (j['ownerName'] as String?) ?? '',
+    validationReason: (j['validationReason'] as String?) ?? '',
   );
 }
 

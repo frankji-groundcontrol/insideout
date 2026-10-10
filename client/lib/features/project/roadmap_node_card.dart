@@ -104,6 +104,17 @@ class RoadmapNodeCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ),
+          // The milestone stays readable while it is the live status; the
+          // row keeps the reason after a reopen too (it is history), but
+          // the card speaks only for the current state.
+          if (node.status == 'validated' && node.validationReason.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${l10n.t('roadmap.validatedBecause')}: ${node.validationReason}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
           if (childProgress != null) ...[
             const SizedBox(height: 12),
             ClipRRect(
