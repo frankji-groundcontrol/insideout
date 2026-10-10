@@ -9,11 +9,13 @@ import 'package:provider/provider.dart';
 
 /// Pumps a signed-in shell with the dock on [initialLocation]. The session
 /// remembers nothing by default; tests pass a seeded [LoopFocus] to model
-/// warm (pages loaded ids) or cold (fresh dashboard) states.
+/// warm (pages loaded ids) or cold (fresh dashboard) states. [theme] defaults
+/// to Material's; pass a `cobaltTheme` to see the dock in either palette.
 Future<void> pumpDock(
   WidgetTester tester, {
   required LoopFocus focus,
   String initialLocation = '/projects/proj-1/roadmap',
+  ThemeData? theme,
 }) async {
   final session = Session();
   session.ready = true;
@@ -59,7 +61,7 @@ Future<void> pumpDock(
         ),
         ChangeNotifierProvider.value(value: focus),
       ],
-      child: MaterialApp.router(routerConfig: router),
+      child: MaterialApp.router(theme: theme, routerConfig: router),
     ),
   );
   await tester.pump();
