@@ -1,5 +1,11 @@
 # 2026-10-04 — `server/internal/agent/anthropic.go` over the ~350-line budget
 
+> **Resolved 2026-10-10.** `anthropic.go` is 235 lines and the stream parser is `anthropic_parse.go` (186);
+> the parser tests moved with it (`anthropic_parse_test.go`, 221). A pure move
+> (`da75ef5`, `77be96e`); see [backend splits](../changelogs/2026-10-10-close-open-gaps/backend-splits.md).
+>
+> The original record follows, unedited.
+
 `anthropic.go` is 408 lines and mixes three responsibilities: the wire
 types (request/message/tool/error structs), the request path
 (`StreamChat`, `StreamChatForcingTool`, `doStreamChat` — HTTP, headers,

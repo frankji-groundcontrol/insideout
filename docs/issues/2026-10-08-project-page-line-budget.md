@@ -1,5 +1,14 @@
 # 2026-10-08 — `client/lib/features/project/project_page.dart` over the ~350-line budget
 
+> **Resolved 2026-10-10.** `project_page.dart` is 297 lines; the GitHub card, updates feed, modals and
+> the done-with-evidence block are `project_github_card.dart` (85),
+> `project_updates_feed.dart` (180), `project_dialogs.dart` (144) and
+> `project_leaf_evidence.dart` (68) (`78bf90a`). `project_flows_test.dart`
+> (`d2321aa`) pins every Evidence write flow and passes unchanged before and after
+> the split. See [client file splits](../changelogs/2026-10-10-close-open-gaps/client-file-splits.md).
+>
+> The original record follows, unedited.
+
 `project_page.dart` is 675 lines: the Evidence page shell (load/reload,
 dock evidence-pulse flash, header field), the GitHub sync card, the
 updates feed (agent-proposal Accept/Reject loop plus the note edit/delete

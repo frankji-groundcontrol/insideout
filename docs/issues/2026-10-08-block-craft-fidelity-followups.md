@@ -1,5 +1,20 @@
 # 2026-10-08 — Block-craft fidelity follow-ups (Wave 7 medium and low findings)
 
+> **Resolved 2026-10-10.** Every item is done or was reviewed and kept. Popup menus: one
+> `popupMenuTheme` (`fd7e59e`). Quick-capture FAB: a cast-and-press block with a
+> name (`9cf00cb`). Coach errors map by status and code (`c2fd281`, and
+> `0fd2547` for a failure landing after the panel is gone). Cobalt-950 slabs:
+> bands and the progress band (`de817fe`), idea poster and version peeks
+> (`47f9734`). Low items: progress cards (`de817fe`); update kinds and ages
+> (`ad7a688`, `c435fd8`); minimap marks and the 12px floor (`53e509d`); square
+> pull-to-refresh (`f2a77e4`) and date picker (`ff34e00`); the cleared-deadline
+> label (`44e7003`). The 390px crowding risk was real: the web walk found the
+> roadmap header and the PRD page broken at that width and both are fixed (BUG-025).
+> See [client fidelity fixes](../changelogs/2026-10-10-close-open-gaps/client-fidelity-fixes.md) and
+> [web walk](../changelogs/2026-10-10-close-open-gaps/web-walk-and-phone-layouts.md).
+>
+> The original record follows, unedited.
+
 The Wave 7 fidelity review of the
 [block-craft plan](../plans/2026-10-07-frontend-block-craft/2026-10-07-frontend-block-craft.md)
 scored the component pass 7.5/10. The high finding (focus ring /

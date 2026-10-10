@@ -1,5 +1,12 @@
 # 2026-10-04 — `client/lib/api/models.dart` over the ~350-line budget
 
+> **Resolved 2026-10-10.** `client/lib/api/models.dart` is a 4-line barrel over four domain files:
+> `models_session.dart` (91), `models_project.dart` (123), `models_roadmap.dart`
+> (138), `models_prd.dart` (222). The file had grown to 577 lines before the split
+> (`2bb07f8`); see [client file splits](../changelogs/2026-10-10-close-open-gaps/client-file-splits.md).
+>
+> The original record follows, unedited.
+
 `models.dart` is 478 lines holding every API model as hand-written
 `fromJson`/constructor pairs: session/user, workspace, project, idea,
 PRD (revisions/commits/readiness), roadmap (nodes/progress), presence,

@@ -1,5 +1,14 @@
 # BUG-013 — GitHub-sync repo link is a relative URL
 
+> **Not applicable 2026-10-10.** The component this record is about,
+> `app/src/components/project/GithubSync.vue`, went with the Nuxt app. Its
+> Flutter successor (`client/lib/features/project/project_github_card.dart`)
+> shows the repo in an editable field and renders no outbound link; the client
+> has no `url_launcher` dependency, so there is no anchor that could resolve
+> against the app origin. Reopen as a new record if the card ever links out.
+>
+> The original record follows, unedited.
+
 Date: 2026-07-25. Status: open (deferred). Severity: low (cosmetic, but breaks
 the one link the card shows). Component: `app/src/components/project/GithubSync.vue`.
 

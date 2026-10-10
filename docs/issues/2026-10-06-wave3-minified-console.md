@@ -1,5 +1,17 @@
 # 2026-10-06 — W3-N2 minified console errors
 
+> **Closed, not reproducible 2026-10-10.** A release web build with source maps (`flutter build web --release
+> --source-maps`) was run against a local API and driven in a real browser at
+> 390x844 through the dock tap matrix (Capture, Ideas, Roadmap, Evidence from the
+> workspace, Commit and Version from the PRD) and the page walks. The console held
+> no `Error`, exception or uncaught rejection, only the headless renderer's
+> CPU-only warning and Flutter's bootstrap debug lines. The build the errors came
+> from no longer exists: the dock was rewritten the same week, and the roadmap,
+> PRD and project pages have since been rebuilt. Reopen with a symbolized stack if
+> it appears again. See [web walk](../changelogs/2026-10-10-close-open-gaps/web-walk-and-phone-layouts.md).
+>
+> The original record follows, unedited.
+
 During the Wave 3 narrow dock tap pass (390×844), the browser console
 showed three identical uncaught `Error`s. The stack is minified
 (`main.dart.js:85738`). No visible UI failure was recorded.

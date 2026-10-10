@@ -1,5 +1,12 @@
 # Canvas fit-to-view zooms wide roadmaps out too small
 
+> **Not applicable 2026-10-10.** The Flutter canvas (`roadmap_canvas.dart`) lays the tree out in scrollable
+> bands at natural size and has no fit-to-view zoom, so there is no scale to
+> clamp. `usePanZoom.fitTo`, which this record describes, went with the Nuxt app.
+> Reopen as a new record if a zoomable canvas is ever built.
+>
+> The original record follows, unedited.
+
 **Date:** 2026-07-26
 **Status:** open — enhancement, not a defect. Recorded from the picky frontend
 audit; no correctness or accessibility impact (zoom controls + Fit button let a

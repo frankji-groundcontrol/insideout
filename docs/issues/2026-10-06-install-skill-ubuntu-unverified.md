@@ -1,5 +1,17 @@
 # 2026-10-06 — Install skill's Ubuntu path has never run on real Ubuntu
 
+> **Resolved 2026-10-10.** `.github/workflows/ubuntu-install.yml` runs the skill's own Ubuntu command
+> blocks on an `ubuntu-24.04` VM (extracted from `references/modules.md`, so the
+> doc cannot drift from what CI proves) and found two real defects, both fixed: a
+> stale `go` could win over the freshly installed one (`0606bdb`), and the
+> workflow itself asserted the wrong `install.sh` branch (`41a5eac`). Not run on
+> the VM, deliberately: installing Docker (the runner ships its own), installing
+> Flutter (the job checks the pinned archive URL), and `setup --local`
+> (covered by the setup walks). The first physical-hardware run is still welcome
+> but is no longer the only evidence. See [CI gaps](../changelogs/2026-10-10-close-open-gaps/env-ci-and-skill.md).
+>
+> The original record follows, unedited.
+
 ## Problem
 
 [`skills/insideout-setup/`](../../skills/insideout-setup/SKILL.md) was

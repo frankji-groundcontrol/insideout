@@ -1,5 +1,13 @@
 # 2026-10-08 — `client/lib/l10n/{en,zh}.dart` over the ~350-line budget
 
+> **Resolved 2026-10-10.** `en.dart` (34 lines) and `zh.dart` (18) now spread four namespace files each
+> (`en_shell`, `en_account`, `en_workspace`, `en_prd` and their zh twins, 65 to
+> 153 lines each) behind the same `enUS` / `zhCN` barrels. A sorted JSON dump of
+> all four maps was byte-identical before and after (`f0ab43c`); `l10n_test.dart`
+> was not touched. See [client file splits](../changelogs/2026-10-10-close-open-gaps/client-file-splits.md).
+>
+> The original record follows, unedited.
+
 `en.dart` is 414 lines and `zh.dart` 372: one flat `const` key→string
 table each (`enUS`, `zhCN`) plus the coach-suggestion lists. They were
 398/357 at HEAD and grew through the block-craft waves (Wave 0 l10n

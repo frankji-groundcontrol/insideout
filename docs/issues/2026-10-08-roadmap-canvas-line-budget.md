@@ -1,5 +1,13 @@
 # 2026-10-08 — `client/lib/features/project/roadmap_canvas.dart` over the ~350-line budget
 
+> **Resolved 2026-10-10.** `roadmap_canvas.dart` is 200 lines; the minimap is `roadmap_minimap.dart` (184)
+> and the dash painter `roadmap_painters.dart` (48). The split was a pure move
+> (`a2dfa9d`); the minimap's open fidelity fixes landed on top of it (`53e509d`:
+> localized marks, labels lifted to the 12px floor). See
+> [client file splits](../changelogs/2026-10-10-close-open-gaps/client-file-splits.md).
+>
+> The original record follows, unedited.
+
 `roadmap_canvas.dart` is 400 lines: the pan/zoom canvas shell, band
 layout, the pointer-only minimap, and the dash painter in one file. The
 oversize predates the

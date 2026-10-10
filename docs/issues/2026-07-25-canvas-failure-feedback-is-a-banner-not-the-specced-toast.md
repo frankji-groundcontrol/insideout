@@ -1,5 +1,14 @@
 # 2026-07-25 — Canvas failure feedback shipped as a banner, not the specced toast
 
+> **Superseded 2026-10-10.** The intent is met in the Flutter client, which replaced the Vue canvas. Every
+> roadmap mutation goes through `guardWrite`, which shows the localized error in a
+> SnackBar and leaves the page as it was (`roadmap_page.dart`,
+> `roadmap_node_card.dart`), and a delete states how many nodes it takes with it
+> (`e8a06ff`, `roadmap_delete_blast_radius_test.dart`). Neither the banner nor the
+> `useToast` composable exists any more.
+>
+> The original record follows, unedited.
+
 **Status:** open, deferred split from collab Workstream A3. The corrective note
 below also amends the T4 line in the
 [collab plan](../plans/2026-07-24-roadmap-canvas-collab.md).

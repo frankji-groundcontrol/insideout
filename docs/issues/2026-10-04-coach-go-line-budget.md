@@ -1,5 +1,12 @@
 # 2026-10-04 — `server/internal/agent/coach.go` over the ~350-line budget
 
+> **Resolved 2026-10-10.** `server/internal/agent/coach.go` is 349 lines and the provider/tool loop is
+> `coach_loop.go` (131), a pure move checked at its own commit (`8ef010a`); see
+> [backend splits](../changelogs/2026-10-10-close-open-gaps/backend-splits.md). The coach defects fixed on top of the
+> split are in [backend fixes](../changelogs/2026-10-10-close-open-gaps/backend-fixes.md).
+>
+> The original record follows, unedited.
+
 `coach.go` is 467 lines and mixes three responsibilities: the Coach
 constructor/limits (env-driven concurrency, detached contexts), the
 HTTP-facing turn orchestration (`HandleMessage` — validation, SSE setup,

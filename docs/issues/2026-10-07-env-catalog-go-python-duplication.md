@@ -1,5 +1,17 @@
 # 2026-10-07 — Env-catalog truth will be duplicated once the Go setup TUI lands
 
+> **Resolved 2026-10-10.** Decision: option (b), keep both readers and make drift fail CI.
+> `server/internal/setup/catalog/parity_test.go` feeds one skeleton and one live
+> `.env` through both the Go catalog and `scripts/env_catalog.py` and diffs the
+> results (`55a355c`); it runs in the existing `server (go + postgres)` job and
+> fails, rather than skips, without `python3`. The same pass found that the CI step
+> for the Python batteries had been running only the first of them
+> (`b492843`). The decision is recorded in
+> [usage/environment.md](../usage/environment.md). See
+> [CI gaps](../changelogs/2026-10-10-close-open-gaps/env-ci-and-skill.md).
+>
+> The original record follows, unedited.
+
 ## Problem
 
 The [setup TUI plan](../plans/2026-10-07-setup-tui.md) (revised

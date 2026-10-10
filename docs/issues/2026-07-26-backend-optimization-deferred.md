@@ -1,5 +1,17 @@
 # Backend optimization review — deferred findings
 
+> **Resolved 2026-10-10.** Every item that was still open is closed. Login and register throttling:
+> 2026-10-04. Argon2 timing on an unknown email: `3b31b77`. The `loadHistory`
+> over-fetch: `b0ea010`. The `ai_runs` reaper index: `22905dd` (measured: 16-20 ms
+> Seq Scan to 0.06-0.08 ms Index Scan). The join-endpoint rate limit: closed by
+> entropy rather than throttling, since the only credential on that endpoint is
+> now a 128-bit code and `84a3865` rotates every leftover 6-digit one. The
+> `ListWorkspacesForUser` correlated count was measured, not shipped: 6.3% faster
+> in the measured scenario, inside noise, for an authorization-shaped query. See
+> [backend fixes](../changelogs/2026-10-10-close-open-gaps/backend-fixes.md).
+>
+> The original record follows, unedited.
+
 **Date:** 2026-07-26
 **Status:** partially resolved. Six items below were fixed at root cause in the
 [2026-07-27 hardening pass](../changelogs/2026-07-27-security-hardening-pass.md)

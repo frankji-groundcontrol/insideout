@@ -1,5 +1,18 @@
 # 2026-07-23 — Backend pre-commit review: deferred findings
 
+> **Resolved 2026-10-10.** Every confirmed item is fixed. Earlier passes fixed the conversation-lock
+> race (`dispatch.go` now holds the registry lock across the check and the
+> TryLock), the unbounded request body (`withMaxBody`, 1 MiB), the non-atomic
+> GitHub sync (one transaction, 2026-07-27) and the unchecked SSE index
+> assertions (comma-ok in `anthropic_parse.go`). This burn-down fixed the rest,
+> each test-first on real PostgreSQL: the lost assistant reply (`3832ca4`),
+> per-iteration section refresh (`a20df30`), the `CreateRevision` race with a
+> per-PRD advisory lock (`071e767`, and `0107b29` for commits) and the
+> `ListMembers` check (`3d37822`, `aca242c`). See
+> [backend fixes](../changelogs/2026-10-10-close-open-gaps/backend-fixes.md).
+>
+> The original record follows, unedited.
+
 An adversarial security + correctness review (5 package reviewers + per-finding
 adversarial verification, workflow `backend-precommit-review`) swept the Go
 backend before its first public commit. **No push-blockers**: no secret leaks,

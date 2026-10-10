@@ -1,5 +1,16 @@
 # 2026-07-26 — Roadmap canvas: adversarial-verify follow-ups (Workstream D)
 
+> **Superseded 2026-10-10.** These findings are about the Nuxt-era `RoadmapCanvas.vue`, which is gone. The
+> two open items have Flutter equivalents, both now done and pinned by tests: the
+> focused band scrolls with ArrowUp/ArrowDown (`bb12aa1`,
+> `roadmap_canvas_keyboard_test.dart`), and the two project animations that
+> ignored the OS reduce-motion setting (the Evidence flash and the minimap jump)
+> now honor it (`8865ce5`, `project_reduced_motion_test.dart`). The popover
+> stacking defect was fixed in Vue; Flutter menus are overlay routes with no
+> sibling z-order to lose.
+>
+> The original record follows, unedited.
+
 Findings from the adversarial-verify workflow run for collab
 [T9 / Workstream D](../changelogs/2026-07-26-roadmap-canvas-workstream-d.md)
 (6 dimensions → per-finding refutation → synthesis; 3 confirmed, 1 refuted).

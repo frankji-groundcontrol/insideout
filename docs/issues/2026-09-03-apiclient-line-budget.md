@@ -1,5 +1,11 @@
 # 2026-09-03 — apiclient.go over the ~350-line modular-file budget
 
+> **Resolved 2026-10-10.** `server/internal/apiclient/apiclient.go` is 169 lines; the roadmap verbs are
+> `roadmap.go` (184) and the PRD verbs `prd.go` (163). A pure move (`e456024`);
+> see [backend splits](../changelogs/2026-10-10-close-open-gaps/backend-splits.md).
+>
+> The original record follows, unedited.
+
 `server/internal/apiclient/apiclient.go` is ~478 lines and mixes three
 responsibilities: transport (`do`, `get`, `requestJSON`, `getBytes`,
 token handling), roadmap/GitHub verbs, and PRD/version/agent-vocabulary

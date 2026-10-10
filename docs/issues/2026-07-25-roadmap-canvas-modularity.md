@@ -1,5 +1,12 @@
 # RoadmapCanvas.vue is a chunky mixed-responsibility file
 
+> **Superseded 2026-10-10.** The file this record is about, `app/src/components/roadmap/RoadmapCanvas.vue`,
+> no longer exists: the Nuxt app was deleted in the Flutter rewrite and no `.vue`
+> file is tracked. The Flutter canvas had the same problem and was split on its
+> own record ([roadmap_canvas.dart line budget](2026-10-08-roadmap-canvas-line-budget.md)).
+>
+> The original record follows, unedited.
+
 **Date:** 2026-07-25
 **File:** `app/src/components/roadmap/RoadmapCanvas.vue` (~407 lines)
 **Status:** open — deferred split; behavior is correct and tested.

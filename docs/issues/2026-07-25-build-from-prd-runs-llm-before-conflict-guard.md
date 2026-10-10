@@ -1,5 +1,19 @@
 # 2026-07-25 — Build-from-PRD runs the LLM before the live-count conflict guard
 
+> **Closed, superseded by the draft/confirm split 2026-10-10.** `POST /prds/{id}/build` now only drafts: it never touches the roadmap, so it
+> never meets the conflict guard. The write, the guard and the 409
+> (`replace_conflict`) are on `POST /prds/{id}/build/confirm`, and the client asks
+> before replacing, using the draft as the review step. The pre-check proposed
+> below was written and then dropped on purpose: the draft call no longer carries
+> the live count, so a check there could not tell a first call from a confirmed
+> retry, and the CLI (`build` then `build-confirm -expected-count N`) and the MCP
+> `build` tool, which draft first and pass the count only to confirm, would be refused a
+> draft over any populated roadmap. The one remaining cost is a draft the user
+> declines to apply. The Flutter button had never reached the confirm call at all;
+> that bug is [BUG-022](2026-10-10-bug-022-build-mvp-wrote-nothing.md).
+>
+> The original record follows, unedited.
+
 **Status:** open, deferred. Not a data-corruption bug — a wasted-cost /
 latency wart. The in-transaction advisory-locked guard remains the correctness
 authority (see decision D8 in the

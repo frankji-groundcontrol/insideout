@@ -6,6 +6,13 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-10 | [A restyle leaves its strings behind; make a red prove what it claims](2026-10-10-a-restyle-leaves-its-strings-behind.md) | [BUG-026](../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md) |
+| 2026-10-10 | [A fake copies the page's misreading of the contract](2026-10-10-a-fake-copies-the-pages-misreading.md) | [BUG-022](../issues/2026-10-10-bug-022-build-mvp-wrote-nothing.md) |
+| 2026-10-10 | [Test the width you ship for, and assert rectangles](2026-10-10-test-the-width-you-ship-for.md) | [BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md) |
+| 2026-10-10 | [A path nobody can run hides a missing write](2026-10-10-a-path-nobody-can-run-hides-a-missing-write.md) | [setup roles and the bundled owner DSN](../changelogs/2026-10-10-close-open-gaps/setup-roles-and-bundled-owner.md) |
+| 2026-10-10 | [Measure a deferred optimization before shipping it](2026-10-10-measure-before-rewriting-a-query.md) | [backend fixes](../changelogs/2026-10-10-close-open-gaps/backend-fixes.md) |
+| 2026-10-10 | [Run a setup doc on its own platform in CI](2026-10-10-run-a-doc-on-its-platform-in-ci.md) | [CI gaps and the Ubuntu install skill](../changelogs/2026-10-10-close-open-gaps/env-ci-and-skill.md) |
+| 2026-10-10 | [Script-style tests are silently skipped by `unittest`](2026-10-10-script-style-tests-are-skipped-by-unittest.md) | [CI gaps and the Ubuntu install skill](../changelogs/2026-10-10-close-open-gaps/env-ci-and-skill.md) |
 | 2026-10-10 | [A failing step hides the gate behind it](2026-10-10-a-failing-step-hides-the-gate-behind-it.md) | [CI and host fixes](../changelogs/2026-10-10-close-open-gaps/ci-and-hosts.md) |
 | 2026-10-09 | [Pinning `HOME` isolates a config path on macOS only](2026-10-09-pinning-home-isolates-config-on-macos-only.md) | [BUG-021](../issues/2026-10-09-bug-021-go-tests-share-one-config-file-on-linux.md) |
 | 2026-10-09 | [A lockfile diff confined to SDK-pinned packages is toolchain drift](2026-10-09-lockfile-diff-in-sdk-pins-is-toolchain-drift.md) | [host sync](../changelogs/2026-10-09-host-sync.md) |

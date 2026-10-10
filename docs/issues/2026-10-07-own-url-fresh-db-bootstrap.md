@@ -1,5 +1,18 @@
 # 2026-10-07 — Own-URL fresh-database bootstrap: setup does not check or provision the two roles
 
+> **Resolved 2026-10-10.** `insideout setup --local --postgres own` probes the two roles before it
+> migrates. Both present: it migrates as before. Both missing and the connecting
+> role can plausibly create them: it offers to (a prompt at a terminal,
+> `--create-roles` otherwise), generates the passwords into `.env` without printing
+> them, and rewrites the DSNs. Anything else stops before any migration and prints
+> the SQL. A second class, found while testing this, is also handled: roles that
+> exist but a database `insideout_owner` can neither own nor create in
+> (`65b0824`). Limits, and the verification on a roleless cluster and a real
+> terminal, are in
+> [setup roles](../changelogs/2026-10-10-close-open-gaps/setup-roles-and-bundled-owner.md).
+>
+> The original record follows, unedited.
+
 ## Problem
 
 `insideout setup --local --postgres own` (and `setup.sh` before it)

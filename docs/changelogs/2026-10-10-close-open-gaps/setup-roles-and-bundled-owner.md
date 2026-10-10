@@ -31,6 +31,29 @@ SQLSTATE `42501` rolls it back whole. The booted server now also receives
 Files: `server/cmd/insideout/cli_setup_roles.go` (new), plus the
 `--create-roles` flag in `cli_setup.go`.
 
+## Own-URL path: a database the roles cannot use stops setup before it migrates
+
+With both roles already on the cluster (a first database was set up earlier),
+setup went straight to the migration, which died on a second database
+`insideout_owner` could neither own nor create in: "permission denied for
+database", with no hint. It is the same defect class as the fresh-database
+bootstrap. Setup now probes three more catalog facts on the connection it was
+given (who owns the database, whether the `insideout` schema exists, whether
+`insideout_owner` may CREATE in the database) and, with both roles present,
+stops before any migration when the schema is missing and the owner cannot
+create it. It prints the per-database SQL (`ALTER DATABASE ... OWNER`, `GRANT
+CONNECT`, the `public` schema REVOKEs) and the shared-instance alternative
+(pre-create the schema), and changes nothing. `--create-roles` consents to
+creating roles, not to handing over a database, so it does not change this.
+
+Ownership alone is deliberately not the test. The migration's only
+database-level need is CREATE for the `insideout` schema, and only while the
+schema is missing, so a database someone else owns still migrates once an
+admin pre-created the schema or granted CREATE (the shared-instance layout in
+[database-and-rls](../../architecture/database-and-rls.md)). Stopping on "owner
+is not `insideout_owner`" would break those layouts; the must-not-stop
+scenarios fail under that variant. Test `d582924`, fix `65b0824`.
+
 ## Bundled path: the owner DSN was never written
 
 `insideout setup --local --postgres bundled` and `scripts/setup.sh --local
@@ -71,6 +94,15 @@ the same way.
   database is real PostgreSQL 18): the binary built before the fix stops at
   `connected as "insideout_app"; use DATABASE_OWNER_URL`; the binary built
   after it writes both DSNs, applies the pending migrations and exits 0.
+- **Not-ready databases** (private scratch cluster, build tag `roleless`):
+  a database made by a superuser, one made by another role, and connecting as
+  `insideout_owner` itself all stop before migrating, name the owner, print the
+  SQL and change nothing (also with `--create-roles`); the printed statements
+  then really fix it. Must-not-stop guards: a second database owned by
+  `insideout_owner`, and the shared-instance layouts (schema pre-created by an
+  admin; CREATE granted to `insideout_owner`). Red on `d582924`: the stop
+  scenarios failed (setup died mid-migration and printed no SQL); the three
+  guards passed.
 - `go test ./... -count=1 -v`: 566 PASS, 0 FAIL, 1 SKIP
   (`TestReadSecretTerminal`) against the scratch database.
 
