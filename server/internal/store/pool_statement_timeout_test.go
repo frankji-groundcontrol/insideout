@@ -28,3 +28,28 @@ func TestOpen_StatementTimeoutCutsLongQueries(t *testing.T) {
 		t.Fatalf("pg_sleep error = %v, want query_canceled (SQLSTATE 57014) from a server-side statement timeout", err)
 	}
 }
+
+// The default is armed on the app pool config (fast, no dial) and an
+// operator's own statement_timeout in the DSN still wins — the same
+// retune-without-redeploy affordance as pool_max_conns.
+func TestBoundStatements_ArmsTheDefault(t *testing.T) {
+	cfg, err := poolConfig(poolTestDSN, 10)
+	if err != nil {
+		t.Fatalf("poolConfig: %v", err)
+	}
+	boundStatements(cfg)
+	if got := cfg.ConnConfig.RuntimeParams["statement_timeout"]; got != "15000" {
+		t.Errorf("statement_timeout runtime param = %q, want 15000 (15s)", got)
+	}
+}
+
+func TestBoundStatements_ADSNTimeoutWins(t *testing.T) {
+	cfg, err := poolConfig(poolTestDSN+"?statement_timeout=2s", 10)
+	if err != nil {
+		t.Fatalf("poolConfig: %v", err)
+	}
+	boundStatements(cfg)
+	if got := cfg.ConnConfig.RuntimeParams["statement_timeout"]; got != "2s" {
+		t.Errorf("statement_timeout runtime param = %q, want the DSN's 2s to win over the default", got)
+	}
+}

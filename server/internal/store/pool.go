@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -62,12 +63,36 @@ const (
 	migratePoolMaxConns int32 = 3
 )
 
+// appStatementTimeout bounds every statement the request pool sends,
+// server-side, so a hung or lock-waiting query (a failover, or one stuck
+// transaction holding the circuit-breaker row) releases its handler
+// goroutine and pool connection instead of pinning them past the 20s
+// shutdown drain. 15s sits above the agent's 10s persist timeout and below
+// that drain; a statement_timeout in the DSN overrides it, and the
+// migrate/owner pool stays unbounded because DDL and index builds may
+// legitimately run long.
+const appStatementTimeout = 15 * time.Second
+
 func Open(ctx context.Context, databaseURL string) (*Store, error) {
-	p, err := openPool(ctx, databaseURL, appPoolMaxConns)
+	cfg, err := poolConfig(databaseURL, appPoolMaxConns)
+	if err != nil {
+		return nil, err
+	}
+	boundStatements(cfg)
+	p, err := connectPool(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
 	return &Store{Pool: p}, nil
+}
+
+// boundStatements arms the default statement timeout on an app pool
+// config unless the operator already set one in the DSN (pgx parks
+// unrecognized DSN parameters in RuntimeParams, so the check covers both).
+func boundStatements(cfg *pgxpool.Config) {
+	if _, ok := cfg.ConnConfig.RuntimeParams["statement_timeout"]; !ok {
+		cfg.ConnConfig.RuntimeParams["statement_timeout"] = fmt.Sprintf("%d", appStatementTimeout.Milliseconds())
+	}
 }
 
 // poolConfig parses databaseURL and applies the pool settings. maxConns is the
@@ -100,6 +125,10 @@ func openPool(ctx context.Context, databaseURL string, maxConns int32) (*pgxpool
 	if err != nil {
 		return nil, err
 	}
+	return connectPool(ctx, cfg)
+}
+
+func connectPool(ctx context.Context, cfg *pgxpool.Config) (*pgxpool.Pool, error) {
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("store: open pool: %w", err)
