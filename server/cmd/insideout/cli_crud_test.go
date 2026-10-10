@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -30,5 +31,26 @@ func TestJoinCommand(t *testing.T) {
 	}
 	if gotBody != `{"code":"ABC123"}` {
 		t.Errorf("body = %q, want %q", gotBody, `{"code":"ABC123"}`)
+	}
+}
+
+// AIDEV-10: `idea delete` told the user a dropped idea "keeps" showing in the
+// list with status "dropped"; the list has hidden dropped ideas since USER-09.
+func TestIdeaDeleteSaysDroppedIdeasLeaveTheList(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	t.Cleanup(srv.Close)
+	t.Setenv("INSIDEOUT_API", srv.URL)
+	t.Setenv("INSIDEOUT_TOKEN", "tok")
+
+	var handled bool
+	var code int
+	out := captureStdout(t, func() { handled, code = runClientCommand([]string{"idea", "delete", "i1"}) })
+	if !handled || code != 0 {
+		t.Fatalf("idea delete = (handled=%v, code=%d), want (true, 0)", handled, code)
+	}
+	if !strings.HasPrefix(out, "dropped") || strings.Contains(out, "keeps it") {
+		t.Errorf("idea delete printed %q, want a dropped notice that does not claim the idea stays listed", out)
 	}
 }

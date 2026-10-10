@@ -1,6 +1,7 @@
 package mcpserver
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -117,5 +118,46 @@ func TestBuildPassesExpectedCount(t *testing.T) {
 	}
 	if n, ok := body["expectedCount"].(float64); !ok || n != 5 {
 		t.Errorf("body expectedCount = %v, want 5 (body %q)", body["expectedCount"], gotBody)
+	}
+}
+
+// toolDescriptions asks the real MCP handler for tools/list and returns each
+// tool's description as a client receives it on the wire.
+func toolDescriptions(t *testing.T) map[string]string {
+	t.Helper()
+	msg := Build("http://unused.test").HandleMessage(context.Background(),
+		json.RawMessage(`{"jsonrpc":"2.0","id":1,"method":"tools/list"}`))
+	raw, err := json.Marshal(msg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out struct {
+		Result struct {
+			Tools []struct {
+				Name        string `json:"name"`
+				Description string `json:"description"`
+			} `json:"tools"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(raw, &out); err != nil {
+		t.Fatalf("tools/list answer %s: %v", raw, err)
+	}
+	desc := map[string]string{}
+	for _, tool := range out.Result.Tools {
+		desc[tool.Name] = tool.Description
+	}
+	return desc
+}
+
+// AIDEV-10: ideas became author-private (2026-10-04) and dropped ideas stopped
+// being listed (USER-09), but the descriptions an agent reads from tools/list
+// still promised a workspace-wide inbox that keeps dropped ideas around.
+func TestIdeaToolDescriptionsMatchAuthorPrivateIdeas(t *testing.T) {
+	desc := toolDescriptions(t)
+	if d := desc["idea_list"]; strings.Contains(d, "workspace's idea inbox") || !strings.Contains(d, "your own") {
+		t.Errorf("idea_list = %q, want it to say it lists the caller's own ideas, not a workspace-wide inbox", d)
+	}
+	if d := desc["idea_delete"]; d == "" || strings.Contains(d, "stays in idea_list") {
+		t.Errorf("idea_delete = %q, but a dropped idea is no longer returned by idea_list", d)
 	}
 }
