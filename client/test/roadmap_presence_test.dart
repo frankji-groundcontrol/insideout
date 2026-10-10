@@ -171,10 +171,12 @@ void main() {
       expect(pointer, findsOneWidget);
       expect(tester.getTopLeft(pointer) - first, const Offset(100, 50));
 
-      // The page's own cursor events come back over the stream: no pointer.
+      // The page renders every cursor the stream delivers: the server
+      // (presence_routes.go) already skips the viewer's own pointer, so a
+      // self-shaped session reaching the page is a server bug worth seeing.
       fake.onCursor!(fake.clientId!, 'me', 5, 5);
       await tester.pump();
-      expect(pointer, findsOneWidget);
+      expect(pointer, findsNWidgets(2));
 
       // The member leaves: their pointer goes with their presence chip.
       fake.onChange!([]);
