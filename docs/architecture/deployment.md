@@ -25,6 +25,11 @@
   (`http://server:8080` in compose), resolved per request through the
   container's nameservers
   ([BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)).
+  GitHub webhook deliveries POST to `/api/v1/hooks/github` through this
+  nginx too, and their exact-match location sets `client_max_body_size 8m`
+  because the proxy's cap must stay at or above the server's
+  `maxWebhookBodyBytes` (8 MiB) — nginx's 1 MiB default would answer 413
+  before the server saw the delivery.
   The same Dockerfile is Railway's
   production `app` service (upstream default baked as
   `http://server.railway.internal:8080`).
