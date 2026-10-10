@@ -1,6 +1,7 @@
 package api
 
 import (
+	"maps"
 	"net"
 	"net/http"
 	"strings"
@@ -37,6 +38,12 @@ func newSendCooldown(window time.Duration) *sendCooldown {
 	}
 }
 
+// cooldownMaxEntries bounds map growth; past it, the next allow sweeps the
+// keys already outside the window. Live keys are never dropped (they are
+// the gate), so the maps pass the cap only while that many keys are
+// genuinely inside one window: 10k sends a minute is far beyond plausible.
+const cooldownMaxEntries = 10_000
+
 // allow reports whether a send to email from ip may proceed now, stamping
 // both keys when it does. A key never used — or last sent outside the
 // window — reads as the zero time and is long expired.
@@ -44,6 +51,9 @@ func (c *sendCooldown) allow(email, ip string) bool {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	now := c.now()
+	if len(c.emails) > cooldownMaxEntries || len(c.ips) > cooldownMaxEntries {
+		c.sweepLocked(now)
+	}
 	if now.Sub(c.emails[email]) < c.window {
 		return false
 	}
@@ -53,6 +63,14 @@ func (c *sendCooldown) allow(email, ip string) bool {
 	c.emails[email] = now
 	c.ips[ip] = now
 	return true
+}
+
+// sweepLocked drops every key that already reads as expired, so it cannot
+// change what allow reports.
+func (c *sendCooldown) sweepLocked(now time.Time) {
+	expired := func(_ string, t time.Time) bool { return now.Sub(t) >= c.window }
+	maps.DeleteFunc(c.emails, expired)
+	maps.DeleteFunc(c.ips, expired)
 }
 
 // cooldownClientIP identifies the requesting client for the resend gate.
