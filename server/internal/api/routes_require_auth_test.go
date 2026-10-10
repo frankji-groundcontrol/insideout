@@ -50,6 +50,25 @@ func registeredRoutes(t *testing.T) []string {
 		if err != nil {
 			t.Fatalf("parse %s: %v", f, err)
 		}
+		// Package-level string consts, so a pattern spelled
+		// "POST " + githubWebhookPath folds to one literal instead of
+		// escaping the scan.
+		consts := map[string]string{}
+		for _, decl := range src.Decls {
+			gen, ok := decl.(*ast.GenDecl)
+			if !ok || gen.Tok != token.CONST {
+				continue
+			}
+			for _, spec := range gen.Specs {
+				vs, ok := spec.(*ast.ValueSpec)
+				if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 {
+					continue
+				}
+				if lit, ok := vs.Values[0].(*ast.BasicLit); ok && lit.Kind == token.STRING {
+					consts[vs.Names[0].Name], _ = strconv.Unquote(lit.Value)
+				}
+			}
+		}
 		ast.Inspect(src, func(n ast.Node) bool {
 			call, ok := n.(*ast.CallExpr)
 			if !ok || len(call.Args) == 0 {
@@ -59,17 +78,45 @@ func registeredRoutes(t *testing.T) []string {
 			if !ok || (sel.Sel.Name != "HandleFunc" && sel.Sel.Name != "Handle") {
 				return true
 			}
-			lit, ok := call.Args[0].(*ast.BasicLit)
-			if !ok || lit.Kind != token.STRING {
-				t.Errorf("%s: %s takes a pattern that is not a string literal, so this test cannot check the route", fset.Position(call.Pos()), sel.Sel.Name)
+			pattern, ok := foldPattern(call.Args[0], consts)
+			if !ok {
+				t.Errorf("%s: %s takes a pattern that is not a string literal or const concatenation, so this test cannot check the route", fset.Position(call.Pos()), sel.Sel.Name)
 				return true
 			}
-			pattern, _ := strconv.Unquote(lit.Value)
 			routes = append(routes, pattern)
 			return true
 		})
 	}
 	return routes
+}
+
+// foldPattern resolves a pattern expression: a string literal, a package
+// string const, or "+"-concatenations of the two.
+func foldPattern(expr ast.Expr, consts map[string]string) (string, bool) {
+	switch e := expr.(type) {
+	case *ast.BasicLit:
+		if e.Kind != token.STRING {
+			return "", false
+		}
+		v, _ := strconv.Unquote(e.Value)
+		return v, true
+	case *ast.Ident:
+		if v, ok := consts[e.Name]; ok {
+			return v, true
+		}
+		return "", false
+	case *ast.BinaryExpr:
+		if e.Op != token.ADD {
+			return "", false
+		}
+		l, lok := foldPattern(e.X, consts)
+		r, rok := foldPattern(e.Y, consts)
+		if !lok || !rok {
+			return "", false
+		}
+		return l + r, true
+	}
+	return "", false
 }
 
 func TestEveryRouteRequiresAuthUnlessPublic(t *testing.T) {

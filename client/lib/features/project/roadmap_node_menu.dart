@@ -1,0 +1,234 @@
+part of 'roadmap_node_card.dart';
+
+class _NodeMenu extends StatelessWidget {
+  const _NodeMenu({
+    required this.projectId,
+    required this.node,
+    required this.onReload,
+    required this.descendants,
+  });
+
+  final String projectId;
+  final RoadmapNode node;
+  final Future<void> Function() onReload;
+  final int descendants;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.watch<Appearance>();
+    return PopupMenuButton<String>(
+      onSelected: (value) => _act(context, value),
+      itemBuilder: (_) => [
+        PopupMenuItem(value: 'edit', child: Text(l10n.t('roadmap.edit'))),
+        PopupMenuItem(value: 'child', child: Text(l10n.t('roadmap.addChild'))),
+        PopupMenuItem(value: 'up', child: Text(l10n.t('roadmap.moveUp'))),
+        PopupMenuItem(value: 'down', child: Text(l10n.t('roadmap.moveDown'))),
+        PopupMenuItem(value: 'expand', child: Text(l10n.t('roadmap.expandAI'))),
+        PopupMenuItem(value: 'delete', child: Text(l10n.t('roadmap.delete'))),
+      ],
+    );
+  }
+
+  Future<void> _act(BuildContext context, String value) async {
+    final api = context.read<Session>().api;
+    final l10n = context.read<Appearance>();
+    if (value == 'edit') {
+      await _edit(context, l10n);
+    } else if (value == 'child') {
+      final t = l10n.t;
+      final values = await showBlockForm(
+        context: context,
+        title: t('roadmap.addChild'),
+        confirmLabel: t('roadmap.add'),
+        fields: [
+          BlockFormField(label: t('roadmap.childPlaceholder'), required: true),
+        ],
+      );
+      if (values == null || !context.mounted) return;
+      final title = values.first.trim();
+      if (title.isEmpty) return;
+      final done = await guardWrite(
+        context,
+        () => api.createRoadmapNode(projectId, title, parentId: node.id),
+      );
+      if (done && context.mounted) await onReload();
+    } else if (value == 'up') {
+      final done = await guardWrite(
+        context,
+        () => api.moveRoadmapNode(
+          node.id,
+          parentId: node.parentId,
+          position: node.position == 0 ? 0 : node.position - 1,
+        ),
+      );
+      if (done && context.mounted) await onReload();
+    } else if (value == 'down') {
+      final done = await guardWrite(
+        context,
+        () => api.moveRoadmapNode(
+          node.id,
+          parentId: node.parentId,
+          position: node.position + 1,
+        ),
+      );
+      if (done && context.mounted) await onReload();
+    } else if (value == 'expand') {
+      final done = await guardWrite(
+        context,
+        () => api.expandRoadmapNode(node.id),
+      );
+      if (done && context.mounted) await onReload();
+    } else if (value == 'delete') {
+      final ok = await showBlockConfirm(
+        context: context,
+        title: l10n.t('roadmap.delete'),
+        message: descendants == 0
+            ? l10n.t('roadmap.deleteConfirm')
+            : l10n.t('roadmap.deleteConfirmMany', {'n': descendants + 1}),
+        confirmText: l10n.t('common.delete'),
+        danger: true,
+      );
+      if (!ok || !context.mounted) return;
+      final done = await guardWrite(
+        context,
+        () => api.deleteRoadmapNode(node.id),
+      );
+      if (done && context.mounted) await onReload();
+    }
+  }
+
+  Future<void> _edit(BuildContext context, Appearance l10n) async {
+    final api = context.read<Session>().api;
+    final t = l10n.t;
+    final navigator = Navigator.of(context);
+    final title = TextEditingController(text: node.title);
+    final desc = TextEditingController(text: node.description);
+    final acceptance = TextEditingController(text: node.acceptance);
+    var status = node.status;
+    String? deadline = node.deadline;
+    String? ownerId = node.ownerId;
+    List<WorkspaceMember> members = const [];
+    try {
+      final project = await api.getProject(projectId);
+      final wsId = project['workspaceId'] as String?;
+      if (wsId != null) members = await api.listMembers(wsId);
+    } on Exception {
+      // Owner picker stays empty; the rest of the edit still works.
+    }
+    if (!context.mounted) return;
+    final ok = await showBlockModal<bool>(
+      context: context,
+      title: t('roadmap.edit'),
+      body: StatefulBuilder(
+        builder: (ctx, setLocal) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            BlockField(controller: title, label: t('roadmap.rootPlaceholder')),
+            const SizedBox(height: Cobalt.space4),
+            BlockField(controller: desc, label: t('roadmap.descPlaceholder')),
+            const SizedBox(height: Cobalt.space4),
+            BlockField(
+              key: const Key('acceptance-field'),
+              controller: acceptance,
+              label: t('roadmap.acceptanceHint'),
+            ),
+            const SizedBox(height: Cobalt.space4),
+            BlockSelect<String?>(
+              key: const Key('owner-picker'),
+              value: members.any((m) => m.userId == ownerId) ? ownerId : null,
+              placeholder: t('roadmap.ownerPick'),
+              options: [
+                (value: null, label: t('roadmap.ownerNone')),
+                for (final m in members) (value: m.userId, label: m.username),
+              ],
+              onChanged: (v) => setLocal(() => ownerId = v),
+            ),
+            const SizedBox(height: Cobalt.space4),
+            BlockSelect<String>(
+              value: status,
+              options: [
+                for (final s in const [
+                  'locked',
+                  'pending',
+                  'in_progress',
+                  'done',
+                ])
+                  (value: s, label: t('roadmap.status.$s')),
+              ],
+              onChanged: (v) => setLocal(() => status = v ?? status),
+            ),
+            const SizedBox(height: Cobalt.space4),
+            Row(
+              children: [
+                BlockButton(
+                  // Cleared is '' (the API's remove value), not null.
+                  label: deadline == null || deadline!.isEmpty
+                      ? t('roadmap.setDeadline')
+                      : isoDate(deadline!),
+                  icon: Icons.event_outlined,
+                  size: BlockButtonSize.sm,
+                  variant: BlockButtonVariant.secondary,
+                  onPressed: () async {
+                    final picked = await showDatePicker(
+                      context: ctx,
+                      initialDate: DateTime.now().add(const Duration(days: 7)),
+                      firstDate: DateTime.now().subtract(
+                        const Duration(days: 1),
+                      ),
+                      lastDate: DateTime.now().add(
+                        const Duration(days: 365 * 3),
+                      ),
+                    );
+                    if (picked != null) {
+                      setLocal(
+                        () => deadline = picked.toUtc().toIso8601String(),
+                      );
+                    }
+                  },
+                ),
+                if (deadline != null) ...[
+                  const SizedBox(width: Cobalt.space2),
+                  BlockIconButton(
+                    icon: Icons.event_busy,
+                    tooltip: t('roadmap.clearDeadline'),
+                    onPressed: () => setLocal(() => deadline = ''),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+      footer: [
+        BlockButton(
+          label: t('common.cancel'),
+          variant: BlockButtonVariant.secondary,
+          onPressed: () => navigator.pop(false),
+        ),
+        BlockButton(
+          label: t('roadmap.save'),
+          onPressed: () => navigator.pop(true),
+        ),
+      ],
+    );
+    if (ok == true && context.mounted) {
+      final done = await guardWrite(
+        context,
+        () => api.updateRoadmapNode(
+          node.id,
+          title: title.text.trim(),
+          description: desc.text,
+          status: status,
+          deadline: deadline == '' ? '' : deadline,
+          acceptance: acceptance.text.trim(),
+          ownerId: ownerId ?? '',
+        ),
+      );
+      if (done && context.mounted) await onReload();
+    }
+    // Not disposed: the pop animation keeps the dialog's TextFields mounted
+    // past this await, and the guard's SnackBar rebuilds the overlay — a
+    // disposed controller would throw. GC'd once the dialog unmounts.
+  }
+}
