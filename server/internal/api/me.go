@@ -68,6 +68,10 @@ func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "username is required (max 60 characters)", "", nil)
 		return
 	}
+	if req.AvatarURL != nil && !validStoredURL(*req.AvatarURL) {
+		httpx.WriteError(w, http.StatusBadRequest, "avatarUrl must be an https URL (max 2048 characters)", "", nil)
+		return
+	}
 	if req.Keywords == nil {
 		req.Keywords = []string{}
 	}

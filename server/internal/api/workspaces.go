@@ -173,6 +173,10 @@ func (s *Server) handleUpdateWorkspace(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}
+	if req.CoverURL != nil && !validStoredURL(*req.CoverURL) {
+		httpx.WriteError(w, http.StatusBadRequest, "coverUrl must be an https URL (max 2048 characters)", "", nil)
+		return
+	}
 
 	_, err := s.store.UpdateWorkspace(r.Context(), userID, wsID, req.Title, req.Description, req.CoverURL)
 	if errors.Is(err, store.ErrNotFound) {
