@@ -161,3 +161,47 @@ func TestIdeaToolDescriptionsMatchAuthorPrivateIdeas(t *testing.T) {
 		t.Errorf("idea_delete = %q, but a dropped idea is no longer returned by idea_list", d)
 	}
 }
+
+// AIDEV-17: propose flattened each structured item to "title@hint" and the API
+// client cut it at the first "@" again, so the title "Notify @team" under the
+// parent "Launch" arrived as the title "Notify " and the hint "team@Launch".
+// The title-only and empty-title items guard the rest of the handler.
+func TestProposeKeepsAtSignInItemTitle(t *testing.T) {
+	var gotPath, gotBody string
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		raw, _ := io.ReadAll(r.Body)
+		gotBody = string(raw)
+		w.Write([]byte(`{"id":"u1","recorded":true}`))
+	}))
+	t.Cleanup(api.Close)
+
+	res := drive(t, api.URL, []string{
+		toolCall(1, "propose", `{"project_id":"p1","kind":"structure","summary":"s","items":[{"title":"Notify @team","parentHint":"Launch"},{"title":"Plain"},{"parentHint":"orphan"}]}`),
+	})
+	if res[1].Result.IsError {
+		t.Fatalf("propose failed: %+v", res[1])
+	}
+	if gotPath != "/agent/propose" {
+		t.Errorf("path = %q, want /agent/propose", gotPath)
+	}
+	var body struct {
+		Items []struct {
+			Action     string `json:"action"`
+			Title      string `json:"title"`
+			ParentHint string `json:"parentHint"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal([]byte(gotBody), &body); err != nil {
+		t.Fatalf("body %q: %v", gotBody, err)
+	}
+	if len(body.Items) != 2 {
+		t.Fatalf("items = %+v, want the two titled items (the empty title is skipped); body %q", body.Items, gotBody)
+	}
+	if got := body.Items[0]; got.Action != "add_node" || got.Title != "Notify @team" || got.ParentHint != "Launch" {
+		t.Errorf("items[0] = %+v, want add_node %q under %q", got, "Notify @team", "Launch")
+	}
+	if got := body.Items[1]; got.Title != "Plain" || got.ParentHint != "" {
+		t.Errorf("items[1] = %+v, want %q with no parent hint", got, "Plain")
+	}
+}
