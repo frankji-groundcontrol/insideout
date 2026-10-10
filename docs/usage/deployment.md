@@ -26,6 +26,10 @@ The bundled `postgres` service is the self-hosted default. When
 `DATABASE_URL` points at an external instance instead, simply don't start it
 (`docker compose up -d server client`). Both app containers run
 unprivileged and self-report health (`/insideout health`; nginx `/healthz`).
+Memory is capped with `mem_limit` at **512m** for `server` and **128m** for
+`client` (`postgres` is uncapped). These are starting values that have not been
+measured: after a local `docker compose up -d`, compare `docker stats` against
+them and adjust.
 
 ## Environment (compose reads `.env`)
 
