@@ -178,7 +178,7 @@ class _ProgressBand extends StatelessWidget {
                                 item.pressure == 'overdue' ||
                                     item.pressure == 'high_risk'
                                 ? palette.fgDanger
-                                : palette.brand,
+                                : palette.fgBrand,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
