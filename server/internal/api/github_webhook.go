@@ -93,36 +93,7 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 	if len(targets) == 0 {
 		return 0
 	}
-	var ev struct {
-		Installation struct {
-			ID int64 `json:"id"`
-		} `json:"installation"`
-		Ref     string `json:"ref"` // push: refs/heads/x
-		Commits []struct {
-			Added    []string `json:"added"`
-			Modified []string `json:"modified"`
-			Removed  []string `json:"removed"`
-			SHA      string   `json:"id"`
-			Message  string   `json:"message"`
-		} `json:"commits"`
-		PullRequest struct {
-			Head struct {
-				Ref string `json:"ref"`
-			} `json:"head"`
-			Labels []struct {
-				Name string `json:"name"`
-			} `json:"labels"`
-			HTMLURL  string `json:"html_url"`
-			Title    string `json:"title"`
-			Merged   bool   `json:"merged"`
-			MergedAt string `json:"merged_at"`
-		} `json:"pull_request"`
-		Deployment struct {
-			Ref         string `json:"ref"`
-			Environment string `json:"environment"`
-			SHA         string `json:"sha"`
-		} `json:"deployment"`
-	}
+	var ev webhookEvent
 	if err := json.Unmarshal(body, &ev); err != nil {
 		return 0
 	}
@@ -135,70 +106,13 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 			token = t
 		}
 	}
-	owner, repo, _ := strings.Cut(repoName, "/")
-	branch := strings.TrimPrefix(ev.Ref, "refs/heads/")
-	kind, detail, labels, paths, source := "activity", "", []string(nil), []string(nil), ""
-	if event == "push" {
-		if branch == "" {
-			return 0
-		}
-		for _, c := range ev.Commits {
-			paths = append(paths, c.Added...)
-			paths = append(paths, c.Modified...)
-			paths = append(paths, c.Removed...)
-		}
-		if len(paths) > 200 {
-			paths = paths[:200]
-		}
-		if len(ev.Commits) > 0 {
-			c := ev.Commits[len(ev.Commits)-1]
-			sha := c.SHA
-			if len(sha) > 7 {
-				sha = sha[:7]
-			}
-			detail = fmt.Sprintf("push %s: %s", sha, firstLine(c.Message))
-			source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, c.SHA)
-		} else {
-			detail = "push to " + branch
-		}
-	} else if event == "deployment" {
-		// CC-01 (review 2): PRODUCT.md and the generated guide both promise
-		// "a deployment may show release" — map it into the same evidence
-		// pipeline with the release kind. GitHub fires `deployment` at
-		// creation; success/failure refinement belongs to a later
-		// deployment_status slice.
-		branch = strings.TrimPrefix(ev.Deployment.Ref, "refs/heads/")
-		kind = "release"
-		env := ev.Deployment.Environment
-		if env == "" {
-			env = "unknown environment"
-		}
-		if ev.Deployment.SHA != "" {
-			sha := ev.Deployment.SHA
-			if len(sha) > 7 {
-				sha = sha[:7]
-			}
-			detail = fmt.Sprintf("deploy %s @ %s", env, sha)
-			source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, ev.Deployment.SHA)
-		} else {
-			detail = fmt.Sprintf("deploy %s", env)
-		}
-	} else { // pull_request
-		branch = ev.PullRequest.Head.Ref
-		for _, l := range ev.PullRequest.Labels {
-			labels = append(labels, l.Name)
-		}
-		switch {
-		case ev.PullRequest.Merged:
-			kind = "implementation"
-		default:
-			kind = "review"
-		}
-		detail = fmt.Sprintf("PR %s", firstLine(ev.PullRequest.Title))
-		source = ev.PullRequest.HTMLURL
+	plan, ok := planGuideEvidence(event, &ev, repoName)
+	if !ok {
+		return 0
 	}
+	owner, repo, _ := strings.Cut(repoName, "/")
 
-	raw, err := github.FetchGuideFile(ctx, token, owner, repo, branch)
+	raw, err := github.FetchGuideFile(ctx, token, owner, repo, plan.branch)
 	if err != nil {
 		if !errors.Is(err, github.ErrGuideNotFound) {
 			s.log.Warn("webhook: guide fetch", "repo", repoName, "error", err)
@@ -223,12 +137,12 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 	}
 	added := 0
 	for _, po := range targets {
-		for _, id := range guide.Match(nodes, branch, labels, paths, leafFn(po)) {
+		for _, id := range guide.Match(nodes, plan.branch, plan.labels, plan.paths, leafFn(po)) {
 			nodeID, err := uuid.Parse(id)
 			if err != nil {
 				continue
 			}
-			if err := s.store.AddRoadmapEvidence(ctx, po.OwnerID, nodeID, kind, detail, source); err != nil {
+			if err := s.store.AddRoadmapEvidence(ctx, po.OwnerID, nodeID, plan.kind, plan.detail, plan.source); err != nil {
 				s.log.Warn("webhook: evidence", "node", id, "error", err)
 				continue
 			}
@@ -236,16 +150,6 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 		}
 	}
 	return added
-}
-
-func firstLine(s string) string {
-	if i := strings.IndexByte(s, '\n'); i >= 0 {
-		return s[:i]
-	}
-	if len(s) > 120 {
-		return s[:120]
-	}
-	return s
 }
 
 // syncGithubProject is the per-project sync core shared by the
