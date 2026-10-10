@@ -35,7 +35,7 @@ ApiException toApiError(int? status, Map<String, dynamic> body) {
   );
 }
 
-/// Codes Nuxt treats as a Coach send backoff (countdown, composer locked).
+/// Codes that put a Coach send on backoff (countdown, composer locked).
 bool isCoachBackoff(ApiException e) {
   return e.code == 'APP_THROTTLE' ||
       e.code == 'CIRCUIT_OPEN' ||
