@@ -1,0 +1,79 @@
+name: smoke
+
+# TEST-10: the live five-surface check (server/scripts/smoke.sh: coach SSE, AI
+# roadmap, GitHub sync, project updates, cross-tenant authz) ran nowhere on a
+# schedule. It runs nightly and on demand, never on a pull request: it boots a
+# server and reaches GitHub's public API once. Scheduled runs use the default
+# branch; a red one is a real signal (GitHub 429/404/502 is tolerated by S3).
+
+on:
+  schedule:
+    - cron: "23 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    name: live smoke (go + postgres)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18.6 # same pin as ci.yml
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://insideout_app:ci-app-password@localhost:5432/postgres
+      DATABASE_OWNER_URL: postgres://insideout_owner:ci-owner-password@localhost:5432/postgres
+      INSIDEOUT_JWT_SECRET: ci-only-secret-not-used-anywhere-else-32
+      # smoke.sh leaves INSIDEOUT_LLM_API_KEY empty, so the coach and planner
+      # are the offline templates. It keeps the server's boot log here.
+      SMOKE_SERVER_LOG: /tmp/smoke-server.log
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      # Same two-role setup as the server job in ci.yml. Throwaway passwords;
+      # this database lives only for this run.
+      - name: Create the two database roles
+        run: |
+          psql postgres://postgres:postgres@localhost:5432/postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE insideout_owner LOGIN NOSUPERUSER BYPASSRLS PASSWORD 'ci-owner-password';
+          CREATE ROLE insideout_app LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD 'ci-app-password';
+          ALTER DATABASE postgres OWNER TO insideout_owner;
+          GRANT CONNECT ON DATABASE postgres TO insideout_app;
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          REVOKE ALL ON SCHEMA public FROM insideout_app;
+          SQL
+      - name: Apply migrations
+        working-directory: server
+        run: go run ./cmd/insideout migrate
+      # A fresh database is invitation-only and smoke.sh registers its own
+      # users, so open signup on this throwaway one.
+      - name: Open signup on the throwaway database
+        run: |
+          psql "$DATABASE_OWNER_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO insideout.settings (key, value) VALUES ('signup_mode', '"open"')
+          ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now();
+          SQL
+      - name: Smoke
+        run: ./server/scripts/smoke.sh
+      - name: Keep the server log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-server-log
+          path: /tmp/smoke-server.log
+          if-no-files-found: ignore
+          retention-days: 7
