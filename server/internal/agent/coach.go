@@ -252,8 +252,9 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 
 	finalText, loopErr := c.runLoop(turnCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, history, executor, onDelta)
 	// One auto-tighten attempt on a context-length failure: rebuild with a much
-	// smaller window, same stage/prd (the ledger, once H2 lands, rides along
-	// inside systemPrompt). Only retry when NOTHING has reached the client yet
+	// smaller window, same stage/prd (the ledger rides along inside
+	// systemPrompt, rebuilt from the conversation on each provider call). Only
+	// retry when NOTHING has reached the client yet
 	// (streamed.Len()==0 — onDelta writes to `streamed` and flushes the SSE
 	// delta in lockstep, so this is exactly "the bubble is still empty").
 	// If deltas already flushed, retrying would append a second, different
