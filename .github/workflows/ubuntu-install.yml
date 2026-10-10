@@ -1,0 +1,91 @@
+name: ubuntu install skill
+
+# Runs the install skill's own Ubuntu commands (skills/insideout-setup) on a
+# real Ubuntu 24.04 VM, so the skill is proven on the platform it names and
+# cannot drift from what runs. Docker and Flutter are only checked for
+# availability: the runner ships Docker CE (installing docker.io beside it
+# would break the daemon) and the Flutter archive is ~700 MB.
+# Record: docs/issues/2026-10-06-install-skill-ubuntu-unverified.md
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - skills/insideout-setup/**
+      - scripts/install.sh
+      - scripts/default-api.sh
+      - scripts/tests/skill_blocks.py
+      - .github/workflows/ubuntu-install.yml
+  pull_request:
+    paths:
+      - skills/insideout-setup/**
+      - scripts/install.sh
+      - scripts/default-api.sh
+      - scripts/tests/skill_blocks.py
+      - .github/workflows/ubuntu-install.yml
+  workflow_dispatch:
+
+concurrency:
+  group: ubuntu-install-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ubuntu:
+    name: install skill (ubuntu 24.04)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Step 0, platform
+        run: |
+          . /etc/os-release
+          echo "$PRETTY_NAME $(uname -m)"
+          test "$ID" = ubuntu
+
+      - name: Module 1, base tools (the skill's Ubuntu block)
+        run: |
+          bash -euo pipefail -c "$(python3 -I scripts/tests/skill_blocks.py 1)"
+          git --version && curl --version | head -1 && jq --version && python3 --version && openssl version
+
+      # A clean PATH, so a Go already on the runner cannot satisfy the verify
+      # step: it must be the tarball the skill installs.
+      - name: Module 3, Go 1.25+ (the skill's Ubuntu block)
+        run: |
+          env -i HOME="$HOME" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+            bash -euo pipefail -c "$(python3 -I scripts/tests/skill_blocks.py 3)
+          go version | tee /dev/stderr | grep -E 'go1\.(2[5-9]|[3-9][0-9])'"
+          echo /usr/local/go/bin >> "$GITHUB_PATH"
+
+      - name: Module 4, the Docker packages the skill names exist on 24.04
+        run: |
+          sudo apt-get update -qq
+          for p in docker.io docker-compose-v2; do
+            apt-cache policy "$p" | grep -E '^ +Candidate: [0-9]' \
+              || { echo "::error::$p has no candidate on this Ubuntu"; exit 1; }
+          done
+
+      - name: Module 5, PostgreSQL (the skill's Ubuntu block)
+        run: |
+          bash -euo pipefail -c "$(python3 -I scripts/tests/skill_blocks.py 5)"
+          psql --version
+          pg_lsclusters
+          pg_lsclusters | grep -q online
+
+      # Keep the version in lockstep with the Flutter pin in ci.yml.
+      - name: Module 6, the pinned Flutter archive the skill names exists
+        run: |
+          curl -fsIL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.0-stable.tar.xz" | head -1
+
+      - name: Step 3A, install.sh builds both binaries and puts them on PATH
+        run: |
+          SHELL=/bin/bash ./scripts/install.sh
+          grep -q 'added by insideout installer' "$HOME/.bashrc"
+          export PATH="$HOME/.local/bin:$PATH"
+          test -x "$HOME/.local/bin/insideout-mcp"
+          insideout setup --hosted </dev/null
+          # A closed port proves the Linux binary runs and reaches its HTTP
+          # client without calling the hosted API from CI.
+          out=$(INSIDEOUT_API=http://127.0.0.1:9 insideout whoami 2>&1 || true)
+          echo "$out"
+          echo "$out" | grep -q 'connection refused'
