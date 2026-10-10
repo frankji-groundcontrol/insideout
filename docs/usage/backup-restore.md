@@ -20,9 +20,14 @@ the `insideout` schema. Two layers of protection:
 ## Taking a dump
 
 ```sh
-DATABASE_URL=<app-role DSN> ./scripts/backup-db.sh            # → backups/insideout-<stamp>.sql
-DATABASE_URL=<app-role DSN> ./scripts/backup-db.sh /secure/dir # elsewhere
+DATABASE_OWNER_URL=<owner-role DSN> ./scripts/backup-db.sh            # → backups/insideout-<stamp>.sql
+DATABASE_OWNER_URL=<owner-role DSN> ./scripts/backup-db.sh /secure/dir # elsewhere
 ```
+
+It needs the **owner** DSN. The app role is an RLS subject, so `pg_dump`
+against it stops at the first policy-protected table ("query would be
+affected by row-level security policy"); the owner role bypasses RLS and
+exists for schema-level work like this.
 
 The script never prints the DSN. Dump files contain user data: keep them
 on the operator's disk, never in the repository (`backups/` is ignored).
@@ -48,3 +53,10 @@ The runbook was walked end-to-end on a disposable compose stack
 scratch database, `migrate` as a no-op, and the store suite green against
 the restored target. Record the date of the next walk here when the
 runbook changes.
+
+Second walk, 2026-10-10 (PostgreSQL 18, scratch cluster, bare target
+database): dump with the owner DSN (244 KB), restore with the `psql` line
+above, `migrate` a no-op, 23 tables, and the store and api suites green
+against the restored database with no skips. The same walk showed the
+earlier "Taking a dump" block was wrong — it named the app-role DSN, which
+`pg_dump` rejects — and the block now names `DATABASE_OWNER_URL`.
