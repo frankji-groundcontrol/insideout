@@ -117,8 +117,9 @@ Two cookie-related knobs on the server:
 ## Run exactly one server replica
 
 The Go `server` keeps some state in its own process memory, so it is built
-for one replica. Two replicas behind one URL do not fail loudly; they quietly
-loosen what that state enforces:
+for one replica. Two replicas behind one URL quietly loosen what that state
+enforces — the second one now says so at startup, but neither stops serving
+(see the singleton guard below):
 
 - **Auth throttle** ([`api/auth_throttle.go`](../../server/internal/api/auth_throttle.go)):
   the failed-login lockout and the send and volume caps are counted per
@@ -145,6 +146,20 @@ on Railway or run `docker compose up --scale server=N`. The `app` (nginx)
 service holds no such state and can scale. The way up, from the code notes,
 is `pg_advisory_lock` on the conversation id, a database-backed permit
 counter, and a shared store for the throttle, cooldown and presence state.
+
+A runtime guard makes a stray second replica loud instead of silent
+(`api/single_replica.go`, review-3 SEC-03/REL-05): at startup the server
+logs its single-replica contract once, then holds the
+`insideout:singleton` Postgres advisory lock on a hijacked connection for
+the life of the process, and any process that finds the lock already held
+logs `singleton guard: another api server process already holds the
+singleton lock …` at ERROR on its first moments of life. The guard is
+advisory — it never blocks boot, serving, or `/healthz` — so alert on that
+ERROR line (or grep the logs when scaling) rather than waiting for a health
+signal, and note the held connection sits outside the request pool: each
+replica opens one extra database connection on top of the budget above.
+Redis- or table-backed registries remain out of scope; the counters move to
+Postgres only if a second replica ever becomes a real requirement.
 
 ## Railway (current public deploy)
 
