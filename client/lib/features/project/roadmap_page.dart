@@ -109,7 +109,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
         setState(() => _presence = entries);
       },
       onCursor: (sessionId, name, x, y) {
-        if (!mounted || sessionId == _clientId) return;
+        if (!mounted) return;
         setState(
           () => _cursors[sessionId] = CursorDot(
             sessionId: sessionId,
