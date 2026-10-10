@@ -68,15 +68,17 @@ All clusters are red-test-first unless marked *(shell)*.
 | `w2-url-schemes` | SEC-07 | `server/internal/api/me.go`, workspaces/projects handlers, tests | Red test: `avatarUrl`/`coverUrl` accepting `javascript:` or non-http(s) schemes is rejected 400; allow only `https:` (and `http:` in dev) at the validation seam |
 | `w2-mail-signal` | ARCH-03 | `server/internal/api/admin.go`, admin tests | Admin test-send probe: POST a typed recipient → Send → surface the provider status/error; record the last Send error where an operator sees it (`insideout setup --check` reads it). Builds on `w1-email-copy`'s landing |
 | `w2-throttle-caveat` | SEC-03, REL-05 | `server/internal/api/auth_throttle.go`, deployment docs | Bounded: a startup log + docs paragraph stating the single-replica contract (throttle/cooldown/SSE registries are per-process), and a runtime guard that warns loudly if a second process is detected (advisory heartbeat row). Redis-backed registry is explicitly out of scope — issue if ever multi-replica |
+| `w2-mcp-parity` | AIDEV-04 | `server/internal/mcpserver/product_tools.go`, tests | Declare the `unresolved` argument the commit handler already parses (sections_json-style string option if the lib lacks arrays) — red test: the advertised schema names it and a schema-abiding client can pass it |
+| `w2-ledger-caps` | AIDEV-10 | `server/internal/agent/ledger.go`, tests | Rune-cap fact/assumption text and section markdown (maxQuoteLen pattern) and cap assumptions per conversation — red test: oversized model-authored strings are truncated and the count cap rejects beyond it |
 
 ## Wave 3 — IMPROVE (docs truth + mechanical cleanups)
 
 | Cluster | Findings | Files owned | Brief |
 |---|---|---|---|
-| `w3-docs-truth` | PM-02, PM-03, ARCH-04, ARCH-05, FEAT-08, USER-05, COMP-02, COMP-04 *(shell/docs)* | `README.md`, `client/README.md`, `docs/plans/README.md`, `docs/architecture/backend.md`, `docs/usage/cli-mcp-and-guidance.md`, `docs/HANDOFF.md`, `PRODUCT.md` (one sentence), `server/cmd/insideout/main.go` (doc comment only) | One docs pass with shell checks: client README says "serves a release, currently behind main"; close the stale Android In-flight board row; refresh backend.md's layout tree (both binaries, all 20 internal packages) and main.go's CLI pointer; tool count 50→52 or de-numberize pointing at `tools/list`; README install one-liner demoted under the release conditional; PRODUCT.md:420 re-scoped to "eight keys remain the storage scaffold"; HANDOFF records lead-15's verified state (COMP-04) |
+| `w3-docs-truth` | PM-02, PM-03, ARCH-04, ARCH-05, FEAT-08, USER-05, COMP-02, COMP-04 *(shell/docs)* | `README.md`, `client/README.md`, `docs/plans/README.md`, `docs/architecture/backend.md`, `docs/usage/cli-mcp-and-guidance.md`, `docs/HANDOFF.md`, `PRODUCT.md` (one sentence), `server/cmd/insideout/main.go` (doc comment only) | One docs pass with shell checks: client README says "serves a release, currently behind main"; close the stale Android In-flight board row; refresh backend.md's layout tree (both binaries, all 20 internal packages) and main.go's CLI pointer; tool count 50→52 or de-numberize pointing at `tools/list`; README install one-liner demoted under the release conditional; PRODUCT.md:420 re-scoped to "eight keys remain the storage scaffold"; HANDOFF records lead-15's verified state (COMP-04); backup-restore.md gains the unscheduled-manual-script honesty paragraph (REL-04) |
 | `w3-env-catalog` | FULL-07 | `.env.example`, env-catalog test | Red test: every compose-interpolated `INSIDEOUT_*` var appears in the skeleton (currently fails on `INSIDEOUT_GH_PRIVATE_KEY_FILE`); add the commented skeleton line |
 | `w3-client-polish-a` | FULL-04, CQ-01, CQ-06, USER-09 | `client/lib/chrome/product_dock.dart`, `loop_focus.dart`, `features/auth/auth_door.dart`, `features/workspace/workspace_page.dart`, `features/dashboard/dashboard_page.dart`, tests | Ideas pulse for Capture on the ideas wall; Version/Commit dead-tap resolved (pulse or disabled on `/prd/:id/versions`); the 31 raw numeric SizedBox gaps in auth_door become tokens; the duplicated chevron tile collapses to one widget; the zero-workspace Capture button routes to idea capture with workspace creation implied, not a form wall |
-| `w3-client-polish-b` | FULL-05, USER-07 | `client/lib/features/prd/export_page.dart`, `coach_column.dart`, `lib/l10n/en_prd.dart`, `zh_prd.dart` (this cluster owns the prd l10n tables in this wave) | Neutral "Export" page title + desk-menu string in both locales; the coach masthead strapline stops leaking design-spec language ("Large pull-quotes") for user-facing copy |
+| `w3-client-polish-b` | FULL-05, USER-07, USER-06 | `client/lib/features/prd/export_page.dart`, `coach_column.dart`, `lib/l10n/l10n.dart`, `lib/l10n/en_prd.dart`, `zh_prd.dart` (this cluster owns the prd l10n tables in this wave) | Neutral "Export" page title + desk-menu string in both locales; the coach masthead strapline stops leaking design-spec language ("Large pull-quotes") for user-facing copy; first-visit locale honors the browser language before the stored choice (USER-06) |
 | `w3-prompts-contract` | AIDEV-08, AIDEV-12 | `server/internal/agent/prompts.go`, `critic.go` (parser sites), `prompts_test.go` | Rewrite clarify discipline to PRODUCT.md's adaptive contract (grouping allowed, one-at-a-time only when branching, no fixed count/rotation, four-way continue/validate/pause/abandon recommendation clause); both findings parsers validate section keys against `store.PrdSectionKeys` and drop mismatches |
 | `w3-test-hygiene` | TEST-04, TEST-06, TEST-07, CQ-05 | `client/test/feature_wiring_test.dart`, `server/internal/agent/breaker_pins_test.go`, new server line-budget test, `server/internal/setup/envwrite/envwrite.go` | Pin the client's called API paths against the server's registered routes (the drift contract TEST-04 wants, bounded to path sets); make breaker pins stop leaning on another package's test internals (own fixtures); add the server-side ~350-line budget test mirroring `line_budget_test.dart` (max file today: 344 — pin under 400 to start); delete dead exported `ClearVar` with its parity test adjusted |
 
@@ -111,12 +113,20 @@ roadmap dependency rebaselining beyond an issue row, and any PRODUCT.md slice
 beyond the validation evidence wedge — the convergent recommendation of three
 roles is to ship and deploy what exists before building the next layer.
 
+## Coverage note
+
+All 83 register rows are dispositioned by this plan: 77 executed across the waves above
+(including AIDEV-04, AIDEV-10, REL-04, USER-06, folded in after a coordinator coverage
+audit on execution day), 6 owner-blocked (below), and 3 satisfied by the report itself
+(COMP-03 score recalibration, COMP-05 bucket statement + this plan's verify contract,
+COMP-06 the 379/379 correction — all in the review README).
+
 ## Sequencing note
 
 Waves are sequential (wave N+1 rebases on wave N's integrated main); clusters
 inside a wave are parallel and file-disjoint by construction — the only
 shared-file pairs across the whole plan (`admin.go`, `critic.go`, `ci.yml`,
 `prd_page.dart`, l10n tables) never co-occur inside one wave. Expected
-totals: wave 1 ≈ 7 clusters / ~14 commits, wave 2 ≈ 9 / ~18, wave 3 ≈ 6 /
+totals: wave 1 ≈ 7 clusters / ~14 commits, wave 2 ≈ 11 / ~20, wave 3 ≈ 6 /
 ~12, wave 4 ≈ 8 / ~16 — comfortably inside one workflow run per wave at the
 sweep's observed pace.
