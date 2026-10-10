@@ -116,15 +116,21 @@ type responsesRequest struct {
 	Tools        []map[string]any `json:"tools,omitempty"`
 	ToolChoice   any              `json:"tool_choice,omitempty"`
 	Stream       bool             `json:"stream"`
+	// MaxOutputTokens caps the answer's length — without it a Responses
+	// endpoint defaults to the model's own (for reasoning models very
+	// large) ceiling, and hitting our cap is what makes the final status
+	// "incomplete", which parseResponsesStream maps to Turn.Truncated (F13).
+	MaxOutputTokens int `json:"max_output_tokens,omitempty"`
 }
 
 func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []Message, tools []Tool, forceTool string, onDelta func(string)) (Turn, error) {
 	reqBody := responsesRequest{
-		Model:        s.model,
-		Instructions: system,
-		Input:        toResponsesInput(msgs),
-		Tools:        toResponsesTools(tools),
-		Stream:       true,
+		Model:           s.model,
+		Instructions:    system,
+		Input:           toResponsesInput(msgs),
+		Tools:           toResponsesTools(tools),
+		Stream:          true,
+		MaxOutputTokens: 4096, // matches the Anthropic streamer's maxTokens (anthropic.go)
 	}
 	if forceTool != "" {
 		reqBody.ToolChoice = map[string]any{"type": "function", "name": forceTool}
