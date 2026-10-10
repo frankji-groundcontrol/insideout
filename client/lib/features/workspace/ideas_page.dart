@@ -87,7 +87,7 @@ class _IdeasPageState extends State<IdeasPage> {
       () =>
           context.read<Session>().api.createIdea(widget.workspaceId, title, ''),
     );
-    if (!ok) return;
+    if (!ok || !mounted) return;
     _capture.clear();
     await _reload();
   }
@@ -108,7 +108,7 @@ class _IdeasPageState extends State<IdeasPage> {
       context,
       () => context.read<Session>().api.dropIdea(idea.id),
     );
-    if (done) await _reload();
+    if (done && mounted) await _reload();
   }
 
   Future<void> _edit(Idea idea) async {
@@ -135,7 +135,7 @@ class _IdeasPageState extends State<IdeasPage> {
         content: values[1],
       ),
     );
-    if (done) await _reload();
+    if (done && mounted) await _reload();
   }
 
   @override

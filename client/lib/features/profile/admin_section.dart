@@ -128,7 +128,7 @@ class _AdminSectionState extends State<AdminSection> {
       confirmText: l10n.t('admin.revoke'),
       danger: true,
     );
-    if (!ok) return;
+    if (!ok || !mounted) return;
     setState(() => busy = true);
     try {
       await api.revokeInvitation(inv['id'].toString());
