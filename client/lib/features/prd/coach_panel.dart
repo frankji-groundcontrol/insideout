@@ -83,7 +83,10 @@ class _CoachPanelState extends State<CoachPanel> {
         conv.id,
         text,
         CoachHandlers(
-          onDelta: (chunk) => setState(() => stream += chunk),
+          onDelta: (chunk) {
+            if (!mounted) return;
+            setState(() => stream += chunk);
+          },
           onPrdUpdated: (_) => widget.onPrdUpdated(),
           onStageChanged: widget.onStageChanged,
           onFactRecorded: (fact) {
