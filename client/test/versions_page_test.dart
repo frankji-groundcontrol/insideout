@@ -20,6 +20,7 @@ class _FakeApi extends ApiClient {
       );
 
   final committedNames = <String>[];
+  final committedNotes = <String>[];
   final bool failCommit;
 
   @override
@@ -82,6 +83,7 @@ class _FakeApi extends ApiClient {
   }) async {
     if (failCommit) throw ApiException('boom', status: 500);
     committedNames.insert(0, name);
+    committedNotes.insert(0, note);
     return PrdCommit.fromJson({
       'id': 'c${committedNames.length}',
       'revision': 2,
@@ -144,6 +146,48 @@ void main() {
       find.text('First web version'),
       findsWidgets,
     ); // list entry + detail headline
+  });
+
+  testWidgets('the commit dialog sends the decision note with the version', (
+    tester,
+  ) async {
+    final session = Session();
+    session.ready = true;
+    final fake = _FakeApi();
+    session.api = fake;
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: VersionsPage(prdId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('commit-now')));
+    await tester.pumpAndSettle();
+    expect(find.text('Decision note (optional)'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'Pricing review');
+    await tester.enterText(
+      find.byKey(const Key('commit-note')),
+      'Per-seat pricing; usage-based is the alternative not taken',
+    );
+    await tester.tap(find.byKey(const Key('commit-confirm')));
+    await tester.pumpAndSettle();
+
+    expect(fake.committedNames, ['Pricing review']);
+    expect(fake.committedNotes, [
+      'Per-seat pricing; usage-based is the alternative not taken',
+    ]);
   });
 
   testWidgets(

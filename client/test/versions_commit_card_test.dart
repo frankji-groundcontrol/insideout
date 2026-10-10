@@ -8,15 +8,16 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
-/// A committed version records the open items it carried (PRODUCT.md,
-/// "Commit"), and the first versions page listed them under the commit. The
-/// Cobalt restyle dropped the list and left its heading string unused, so after
-/// committing nobody could see what had been carried. The server stores each
-/// carried gap as `<section>: <reason> (carried as open question)` in English,
-/// so the card shows those like the gaps they came from and anything a caller
-/// named as stored.
+/// What a committed version's card shows. PRODUCT.md says a Commit records its
+/// name, audience, change summary, unresolved validation items and a Diff, and
+/// that a Decision Log goes with it. The first versions page listed the carried
+/// items, one line per changed section and the decision note; the Cobalt
+/// restyle kept only the diff counts and left the other strings unused. The
+/// server stores each carried gap in English as a section, a colon, the reason
+/// and "(carried as open question)", so the card shows those like the gaps
+/// they came from and anything a caller named as stored.
 class _FakeApi extends ApiClient {
-  _FakeApi(this.unresolved)
+  _FakeApi(this.commit)
     : super(
         baseUrl: 'http://127.0.0.1:9/api/v1',
         readAccess: () async => null,
@@ -25,7 +26,8 @@ class _FakeApi extends ApiClient {
         clearTokens: () async {},
       );
 
-  final List<String> unresolved;
+  /// Fields of the one commit, laid over a bare "Board review" commit.
+  final Map<String, Object?> commit;
 
   @override
   Future<PrdReadiness> prdReadiness(String id) async => PrdReadiness.fromJson({
@@ -46,11 +48,11 @@ class _FakeApi extends ApiClient {
       'name': 'Board review',
       'primaryAudience': 'decision',
       'createdAt': '2026-10-05T00:00:00Z',
-      'unresolved': unresolved,
       'diff': {
-        'counts': {'added': 1, 'changed': 0, 'removed': 0},
+        'counts': {'added': 1, 'changed': 1, 'removed': 0},
         'sections': {},
       },
+      ...commit,
     }),
   ];
 }
@@ -59,15 +61,27 @@ const _carried =
     'background: the why-this, why-now argument a decision maker needs '
     '(carried as open question)';
 const _named = 'ask legal about the data retention clause';
+const _note = 'Go B2B first; the consumer plan is the alternative not taken';
+const _sections = {
+  'diff': {
+    'counts': {'added': 1, 'changed': 1, 'removed': 0},
+    // The server records only the sections that differ, each as
+    // `{change: ...}` plus a byte count (prdcommit.Diff).
+    'sections': {
+      'background': {'change': 'changed', 'bytes_delta': 120},
+      'goals': {'change': 'added', 'bytes': 300},
+    },
+  },
+};
 
 Future<void> _pump(
   WidgetTester tester,
   String locale,
-  List<String> unresolved,
+  Map<String, Object?> commit,
 ) async {
   final session = Session()
     ..ready = true
-    ..api = _FakeApi(unresolved);
+    ..api = _FakeApi(commit);
   await tester.binding.setSurfaceSize(const Size(1400, 900));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -84,13 +98,17 @@ Future<void> _pump(
     ),
   );
   await tester.pumpAndSettle();
+  // The commit loaded, so a failure below means "not shown", not a page error.
+  expect(find.text('Board review'), findsWidgets);
 }
 
 void main() {
   testWidgets('the commit card lists the open items the version carried', (
     tester,
   ) async {
-    await _pump(tester, 'en-US', const [_carried, _named]);
+    await _pump(tester, 'en-US', {
+      'unresolved': [_carried, _named],
+    });
 
     expect(find.text('Carried open items'), findsOneWidget);
     expect(
@@ -108,7 +126,9 @@ void main() {
   testWidgets('the zh commit card shows carried gaps in Chinese', (
     tester,
   ) async {
-    await _pump(tester, 'zh-CN', const [_carried, _named]);
+    await _pump(tester, 'zh-CN', {
+      'unresolved': [_carried, _named],
+    });
 
     expect(find.text('携带的未决事项'), findsOneWidget);
     expect(find.textContaining('决策者需要'), findsOneWidget);
@@ -117,12 +137,39 @@ void main() {
     expect(find.textContaining(_named), findsOneWidget);
   });
 
-  testWidgets('a commit that carried nothing has no open-items heading', (
+  testWidgets('the commit card names each changed section and the decision', (
     tester,
   ) async {
-    await _pump(tester, 'en-US', const []);
+    await _pump(tester, 'en-US', {..._sections, 'decisionNote': _note});
 
-    expect(find.text('Board review'), findsWidgets);
+    expect(
+      find.text('· Background & Problem Statement — changed'),
+      findsOneWidget,
+    );
+    expect(find.text('· Goals & Success Metrics — added'), findsOneWidget);
+    expect(find.text('Decision note'), findsOneWidget);
+    expect(find.text(_note), findsOneWidget);
+  });
+
+  testWidgets('the zh commit card names the sections and the note in Chinese', (
+    tester,
+  ) async {
+    await _pump(tester, 'zh-CN', {..._sections, 'decisionNote': _note});
+
+    expect(find.text('· 背景与问题陈述 — 修改'), findsOneWidget);
+    expect(find.text('· 目标与成功指标 — 新增'), findsOneWidget);
+    expect(find.text('决策备注'), findsOneWidget);
+    expect(find.text(_note), findsOneWidget);
+  });
+
+  testWidgets('a commit that recorded none of these shows none of them', (
+    tester,
+  ) async {
+    await _pump(tester, 'en-US', const {});
+
     expect(find.text('Carried open items'), findsNothing);
+    expect(find.text('Decision note'), findsNothing);
+    expect(find.textContaining(' — changed'), findsNothing);
+    expect(find.textContaining(' — added'), findsNothing);
   });
 }
