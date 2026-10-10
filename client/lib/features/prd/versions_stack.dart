@@ -142,7 +142,7 @@ class _PeekCard extends StatelessWidget {
             ),
           ),
           FieldCard(
-            color: palette.brandSubtle,
+            color: palette.surfaceSunken,
             padding: const EdgeInsets.symmetric(vertical: Cobalt.space4),
             child: const SizedBox(
               height: Cobalt.space2,

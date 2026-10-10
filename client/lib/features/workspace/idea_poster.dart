@@ -9,7 +9,8 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 
-/// One idea on the wall: poster block on a brand-tinted gradient. The
+/// One idea on the wall: poster block on a raised-to-sunken gradient (cobalt-950
+/// is reserved for status chips, so no slab is tinted with it). The
 /// bottom-right disc is the brand mark — a protected identity exception
 /// (DESIGN.md), so it stays circular.
 class IdeaPoster extends StatelessWidget {
@@ -41,7 +42,7 @@ class IdeaPoster extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [palette.surfaceRaised, palette.brandSubtle],
+            colors: [palette.surfaceRaised, palette.surfaceSunken],
           ),
         ),
         child: Stack(
