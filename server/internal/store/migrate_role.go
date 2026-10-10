@@ -48,6 +48,28 @@ func (s *Store) beginMigrateTx(ctx context.Context) (pgx.Tx, error) {
 	return tx, nil
 }
 
+// lockMigrations serializes Migrate across processes: a second booter waits
+// here, then reads an applied list that already holds the first one's work.
+// The lock is transaction-scoped (a session lock would leak through a
+// transaction-mode pooler) and its holder transaction stays open for the whole
+// run, so the per-file transactions need a second connection of the migrate
+// pool.
+func (s *Store) lockMigrations(ctx context.Context) (unlock func(), err error) {
+	if n := s.migrator().Config().MaxConns; n < 2 {
+		return nil, fmt.Errorf("pool_max_conns is %d, need at least 2: one connection holds the lock while the migrations use another", n)
+	}
+	tx, err := s.migrator().Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	unlock = func() { tx.Rollback(context.WithoutCancel(ctx)) }
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('insideout:migrate'))`); err != nil {
+		unlock()
+		return nil, err
+	}
+	return unlock, nil
+}
+
 func (s *Store) migrateExec(ctx context.Context, sql string, args ...any) error {
 	tx, err := s.beginMigrateTx(ctx)
 	if err != nil {

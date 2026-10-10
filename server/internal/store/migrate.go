@@ -13,6 +13,14 @@ import (
 // missing) and applies any embedded .sql file not yet recorded, in
 // filename order, each inside its own transaction.
 func (s *Store) Migrate(ctx context.Context) ([]string, error) {
+	// One migrator at a time: a booting replica and `insideout migrate` must not
+	// race on non-idempotent DDL (REL-14).
+	unlock, err := s.lockMigrations(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("migrate: lock: %w", err)
+	}
+	defer unlock()
+
 	// CREATE SCHEMA requires CREATE privilege on the *database*, not just
 	// on the schema itself — even a redundant IF NOT EXISTS attempt fails
 	// with "permission denied for database" for a role that's merely the

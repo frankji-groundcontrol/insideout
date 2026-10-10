@@ -3,8 +3,11 @@ package store
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // REL-14: two processes booting into a database with pending migrations (a
@@ -55,5 +58,38 @@ func TestMigrate_WaitsForTheMigrationLock(t *testing.T) {
 		}
 	case <-time.After(15 * time.Second):
 		t.Fatal("Migrate still blocked 15s after the lock was released")
+	}
+
+	// And it lets go again when it returns, or the next boot would wait forever.
+	again, cancelAgain := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelAgain()
+	if _, err := st.Migrate(again); err != nil {
+		t.Fatalf("second Migrate, run after the first returned: %v", err)
+	}
+}
+
+// The lock holder keeps one connection of the migrate pool while the migrations
+// run on another, so a pool capped at one would deadlock at boot. It has to
+// fail with a message instead. No database needed: the pool never dials.
+func TestLockMigrations_NeedsASecondConnection(t *testing.T) {
+	cfg, err := pgxpool.ParseConfig("postgres://app:placeholder@db.invalid:5432/insideout")
+	if err != nil {
+		t.Fatalf("parse config: %v", err)
+	}
+	cfg.MaxConns = 1
+	pool, err := pgxpool.NewWithConfig(context.Background(), cfg)
+	if err != nil {
+		t.Fatalf("new pool: %v", err)
+	}
+	defer pool.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) // bounds a regression that tries to dial
+	defer cancel()
+	unlock, err := (&Store{Pool: pool}).lockMigrations(ctx)
+	if err == nil || !strings.Contains(err.Error(), "pool_max_conns") {
+		t.Fatalf("lockMigrations on a one-connection pool: want a pool_max_conns error, got err=%v", err)
+	}
+	if unlock != nil {
+		t.Error("lockMigrations returned an unlock func together with an error")
 	}
 }
