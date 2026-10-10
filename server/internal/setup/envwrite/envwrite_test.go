@@ -113,12 +113,6 @@ func TestSetVarTargetsTheLastOccurrence(t *testing.T) {
 	if got := read(t, env); got != want {
 		t.Errorf("file = %q, want %q (last occurrence wins)", got, want)
 	}
-	if err := ClearVar(env, "K"); err != nil {
-		t.Fatalf("ClearVar: %v", err)
-	}
-	if got, want := read(t, env), "K=first\n# note\n#K=\n"; got != want {
-		t.Errorf("after ClearVar file = %q, want %q (clear also targets the last)", got, want)
-	}
 }
 
 func TestSetVarPrefersALiveLineOverLaterCommentedOnes(t *testing.T) {
@@ -201,46 +195,6 @@ func TestSetVarLeavesNoTempFileBehind(t *testing.T) {
 		if strings.HasSuffix(e.Name(), ".tmp") {
 			t.Errorf("temp file left behind: %s", e.Name())
 		}
-	}
-}
-
-func TestClearVarCommentsOutNotDeletes(t *testing.T) {
-	dir := t.TempDir()
-	env := filepath.Join(dir, ".env")
-	write(t, env, "A=1\nGITHUB_TOKEN=ghp_x\nC=3\n")
-	if err := ClearVar(env, "GITHUB_TOKEN"); err != nil {
-		t.Fatalf("ClearVar: %v", err)
-	}
-	if got, want := read(t, env), "A=1\n#GITHUB_TOKEN=\nC=3\n"; got != want {
-		t.Errorf("file = %q, want %q", got, want)
-	}
-	if _, set := valueOf(t, env, "GITHUB_TOKEN"); set {
-		t.Error("cleared key must no longer parse as set")
-	}
-	// Clearing an already-commented line rewrites the last commented match.
-	if err := ClearVar(env, "GITHUB_TOKEN"); err != nil {
-		t.Fatalf("ClearVar again: %v", err)
-	}
-	if got, want := read(t, env), "A=1\n#GITHUB_TOKEN=\nC=3\n"; got != want {
-		t.Errorf("clearing a cleared key changed the file: %q", got)
-	}
-}
-
-func TestClearVarIsNoOpWithoutTheKeyOrFile(t *testing.T) {
-	dir := t.TempDir()
-	env := filepath.Join(dir, ".env")
-	if err := ClearVar(env, "K"); err != nil {
-		t.Errorf("ClearVar on a missing file: %v", err)
-	}
-	if _, err := os.Stat(env); !os.IsNotExist(err) {
-		t.Errorf("ClearVar must not create a file, stat err = %v", err)
-	}
-	write(t, env, "A=1\n")
-	if err := ClearVar(env, "ABSENT"); err != nil {
-		t.Fatalf("ClearVar: %v", err)
-	}
-	if got := read(t, env); got != "A=1\n" {
-		t.Errorf("ClearVar of an absent key changed the file: %q", got)
 	}
 }
 

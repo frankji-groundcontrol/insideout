@@ -1,7 +1,7 @@
 // Package envwrite ports the .env write path of scripts/env-write.sh's
-// apply_changes and env_catalog.py's set_var/clear_var: replace only the
-// effective line of a key, keep every other byte, quote values so the file's
-// own readers parse them back, and never leave .env observable at a wider
+// apply_changes and env_catalog.py's set_var: replace only the effective
+// line of a key, keep every other byte, quote values so the file's own
+// readers parse them back, and never leave .env observable at a wider
 // mode than 0600. Paths are explicit parameters — the INSIDEOUT_ENV_FILE
 // override is the caller's concern.
 package envwrite
@@ -57,25 +57,6 @@ func SetVar(envPath, name, value string) error {
 		data = append(data, '\n')
 	}
 	return writeFile(envPath, data)
-}
-
-// ClearVar comments the key out (`#NAME=`), so nothing is set and the line
-// keeps its place — python clear_var's exact behavior. It deliberately does
-// not restore the skeleton's default text; .env.example remains where that is
-// recorded. A missing file or an absent key is a no-op.
-func ClearVar(envPath, name string) error {
-	data, err := os.ReadFile(envPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-	start, end, found := lastMatch(data, name)
-	if !found {
-		return nil
-	}
-	return writeFile(envPath, replaceLine(data, start, end, "#"+name+"="))
 }
 
 // lastMatch locates the LAST line assigning name, as python _last_match does:
