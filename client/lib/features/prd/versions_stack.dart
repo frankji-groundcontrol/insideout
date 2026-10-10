@@ -10,6 +10,7 @@ import '../../theme/cobalt.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/pressable_block.dart';
 import 'audience_selector.dart';
+import 'versions_commit_details.dart';
 import 'versions_commit_dialog.dart' show versionAudiences;
 import 'versions_gap_text.dart';
 
@@ -250,41 +251,7 @@ class _FrontCard extends StatelessWidget {
                         ),
                       ),
                   ],
-                  if (commit != null) ...[
-                    const SizedBox(height: Cobalt.space3),
-                    BlockTag(label: l10n.t('versions.details')),
-                    const SizedBox(height: Cobalt.space2),
-                    if (commit!.changeSummary.isNotEmpty)
-                      Text(
-                        commit!.changeSummary,
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    Text(
-                      l10n.t('versions.diffTitle', {
-                        'a': commit!.diffCounts['added'] ?? 0,
-                        'c': commit!.diffCounts['changed'] ?? 0,
-                        'r': commit!.diffCounts['removed'] ?? 0,
-                      }),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    if (commit!.unresolved.isNotEmpty) ...[
-                      const SizedBox(height: Cobalt.space3),
-                      Text(
-                        l10n.t('versions.unresolvedTitle'),
-                        style: theme.textTheme.titleSmall,
-                      ),
-                      for (final item in commit!.unresolved)
-                        Padding(
-                          padding: const EdgeInsets.only(top: Cobalt.space1),
-                          child: Text(
-                            '· ${carriedItem(l10n, commit!.primaryAudience, item)}',
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                    ],
-                  ],
+                  if (commit != null) CommitDetails(commit: commit!),
                 ],
               ),
             ),
