@@ -15,6 +15,15 @@ const enPrd = <String, String>{
   'prd.sections.requirements': 'Functional Requirements',
   'prd.sections.constraints': 'Constraints & Dependencies',
   'prd.sections.risks': 'Risks & Open Questions',
+  'prd.sectionHint.background': 'What problem is this solving, and why now?',
+  'prd.sectionHint.users': 'Who is this for? Name a real person or segment.',
+  'prd.sectionHint.goals': 'What should change, and how will you measure it?',
+  'prd.sectionHint.nonGoals': 'What are you deliberately not doing?',
+  'prd.sectionHint.stories': 'Walk through one scenario, start to finish.',
+  'prd.sectionHint.requirements': 'What must it do? One behavior per line.',
+  'prd.sectionHint.constraints':
+      'What limits the work: time, budget, tech, dependencies?',
+  'prd.sectionHint.risks': 'What could go wrong, and what is still unanswered?',
   'prd.exportMarkdown': 'Download Markdown',
   'prd.buildMVP': 'Draft the roadmap',
   'prd.buildReplaceConfirm':

@@ -169,6 +169,7 @@ class PrdDeskColumn extends StatelessWidget {
                       _FlatEditor(
                         controller: sectionCtrls[key],
                         style: theme.textTheme.bodyLarge!,
+                        hint: l10n.t('prd.sectionHint.$key'),
                         minLines: 3,
                         maxLines: null,
                       ),
@@ -196,6 +197,7 @@ class _FlatEditor extends StatefulWidget {
   const _FlatEditor({
     required this.controller,
     required this.style,
+    this.hint,
     this.minLines = 1,
     this.maxLines = 1,
     this.onSubmitted,
@@ -203,6 +205,10 @@ class _FlatEditor extends StatefulWidget {
 
   final TextEditingController? controller;
   final TextStyle style;
+
+  /// What belongs in the field, shown while it is empty; the muted style
+  /// comes from the theme's input decoration.
+  final String? hint;
   final int minLines;
   final int? maxLines;
   final ValueChanged<String>? onSubmitted;
@@ -253,7 +259,8 @@ class _FlatEditorState extends State<_FlatEditor> {
         maxLines: widget.maxLines,
         style: widget.style.copyWith(color: palette.fgPrimary),
         onSubmitted: widget.onSubmitted,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
+          hintText: widget.hint,
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
