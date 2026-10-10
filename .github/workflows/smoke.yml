@@ -53,9 +53,17 @@ jobs:
       DATABASE_URL: postgres://insideout_app:ci-app-password@localhost:5432/postgres
       DATABASE_OWNER_URL: postgres://insideout_owner:ci-owner-password@localhost:5432/postgres
       INSIDEOUT_JWT_SECRET: ci-only-secret-not-used-anywhere-else-32
-      # smoke.sh leaves INSIDEOUT_LLM_API_KEY empty, so the coach and planner
-      # are the offline templates. It keeps the server's boot log here.
+      # smoke.sh clears INSIDEOUT_LLM_API_KEY per-command on the server it
+      # boots, so the five surfaces keep the offline template coach/planner;
+      # the provider legs use the real keys when they are configured as repo
+      # secrets and print a skip line otherwise (TEST-05) — a missing secret
+      # is never a failure. SMOKE_MAIL_TO is the Resend-verified sink address
+      # the mail probe sends to (the default sender delivers to nothing
+      # else). It keeps the server's boot log here.
       SMOKE_SERVER_LOG: /tmp/smoke-server.log
+      INSIDEOUT_LLM_API_KEY: ${{ secrets.INSIDEOUT_LLM_API_KEY }}
+      INSIDEOUT_MAIL_API_KEY: ${{ secrets.INSIDEOUT_MAIL_API_KEY }}
+      SMOKE_MAIL_TO: ${{ secrets.SMOKE_MAIL_TO }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
