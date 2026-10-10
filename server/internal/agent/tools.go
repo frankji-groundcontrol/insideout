@@ -74,7 +74,7 @@ func coachTools() []Tool {
 		},
 		{
 			Name:        "resolve_finding",
-			Description: "Mark a critic finding resolved (you fixed it) or overridden (the user decided to keep it as-is). Call this once the user has responded to a finding you presented.",
+			Description: "Mark a critic finding resolved (you fixed it) or overridden (the user decided to keep it as-is). Call this once the user has responded to a finding you presented. The status change takes effect when the user confirms the stage change.",
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -289,8 +289,8 @@ func (e *toolExecutor) checkStageGate(ctx context.Context, next string) error {
 		if cs.RoundCount == 0 && cs.Skipped == "" {
 			return fmt.Errorf("agent: cannot finalize yet — no critic pass has run against this PRD")
 		}
-		if hasOpenBlockingFindings(loadCriticFindings(extra)) {
-			return fmt.Errorf("agent: cannot finalize yet — there are unresolved blocking findings; call resolve_finding on each first")
+		if hasUnresolvedBlockingFindings(loadCriticFindings(extra), loadPendingFindingResolutions(extra)) {
+			return fmt.Errorf("agent: cannot finalize yet — there are unresolved blocking findings; call resolve_finding on each first (it takes effect when the user confirms the stage)")
 		}
 	}
 	return nil
