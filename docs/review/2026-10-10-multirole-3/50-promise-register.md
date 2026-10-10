@@ -140,12 +140,12 @@ out of the walked range except the one row the review confirmed broken.
 | 2. prioritized, explained, adaptive coaching; form-now with explicit gaps (PRODUCT.md:364-366) | **IMPLEMENTED** | prompts are zh-only (row PRODUCT.md:441-442) |
 | 3. editable product argument with prioritized concrete personas (PRODUCT.md:366-368) | **PARTIAL** | personas are free text (row PRODUCT.md:121-134) |
 | 4. choose an audience; view one fact core through the projection (PRODUCT.md:368-369) | **IMPLEMENTED** | — |
-| 5. immutable Commit with Diff, summary, open validation items, Decision Log (PRODUCT.md:369-371) | **PARTIAL** | Decision Log is a free-text note only (row PRODUCT.md:218-221) |
-| 6. Roadmap baseline: Now / justified Next / evidenced Done, dependencies, one human owner, deadlines (PRODUCT.md:371-373) | **PARTIAL** | dependency edges DOCS-ONLY (row PRODUCT.md:301-303) |
+| 5. immutable Commit with Diff, summary, open validation items, Decision Log (PRODUCT.md:369-370) | **PARTIAL** | Decision Log is a free-text note only (row PRODUCT.md:218-221) |
+| 6. Roadmap baseline: Now / justified Next / evidenced Done, dependencies, one human owner, deadlines (PRODUCT.md:371-372) | **PARTIAL** | dependency edges DOCS-ONLY (row PRODUCT.md:301-303) |
 | 7. Decision Owner and Driver separated; baselines and Merges human-confirmed (PRODUCT.md:373-374) | **DOCS-ONLY** | per-Project roles and Product Branch/Merge (rows PRODUCT.md:230-241, 207-208) |
-| 8. Git required at Focus; matched evidence without claiming unproven user value (PRODUCT.md:375-378) | **PARTIAL** | the requirement gate is DOCS-ONLY (row PRODUCT.md:247-249) |
+| 8. Git required at Focus; matched evidence without claiming unproven user value (PRODUCT.md:375-377) | **PARTIAL** | the requirement gate is DOCS-ONLY (row PRODUCT.md:247-249) |
 | 9. Web and one Agent interface share Focus-scoped Roadmap context (PRODUCT.md:378-379) | **PARTIAL** | agent context yes; human Focus surface no (row PRODUCT.md:247-249) |
-| 10. implemented / released / validated distinguished; next version without erasing history (PRODUCT.md:379-381) | **DOCS-ONLY** | no validated state or validation evidence (rows PRODUCT.md:348, 320-321) |
+| 10. implemented / released / validated distinguished; next version without erasing history (PRODUCT.md:379-380) | **DOCS-ONLY** | no validated state or validation evidence (rows PRODUCT.md:348, 320-321) |
 
 ## Reconciling the five gap-lists
 
