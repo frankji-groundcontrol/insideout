@@ -22,6 +22,13 @@ whether the behaviour can be observed at all, and if not, rename the check to
 what it really proves (here: a chunked response still goes through the variable
 `proxy_pass` chunk by chunk) and say in the record what it does not guard.
 
+Mutate only committed code. Restoring a mutation with `git checkout <file>`
+also throws away any uncommitted edit in that file: during the review-register
+work a restore reverted a half-finished fix, and the next "green" run proved
+nothing. Commit the fix first, mutate, watch the test fail, restore with
+`git checkout`, and run the suite once more on the clean tree. When the file
+holds other uncommitted work, mutate a throwaway worktree of the commit instead.
+
 The same pass found that the other two mutations (no `resolver`, no `Host`
 header) were caught, which is what makes the first result believable.
 

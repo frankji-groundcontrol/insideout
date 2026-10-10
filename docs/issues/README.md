@@ -7,7 +7,7 @@ evidence get a dated folder. English only.
 
 Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
-records continue the numbering (next: BUG-030).
+records continue the numbering (next: BUG-031).
 
 **State on 2026-10-10:** every record is fixed, superseded or closed with
 evidence, except the two under "Waiting on the owner". The
@@ -140,6 +140,11 @@ backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md
 - [BUG-029 — the Versions eyebrow counted revisions, not commits](2026-10-10-bug-029-versions-eyebrow-counted-revisions.md)
   — "Commit 3 of 2": the line used the pinned PRD revision as the position.
   **Fixed 2026-10-10**.
+- [BUG-030 — the audience view rendered a blank page against the real server](2026-10-10-bug-030-audience-view-rendered-a-blank-page.md)
+  — the page cast the server's ordered list of section picks to a map and threw
+  while building, and every section card refetched the whole PRD; the tests'
+  fixtures had been written to match the page, not the wire. **Fixed
+  2026-10-10**, with a server-side pin of the shape.
 
 ## Other records
 

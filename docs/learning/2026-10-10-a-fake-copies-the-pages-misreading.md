@@ -12,6 +12,12 @@ page author's picture of the contract, written once and used on both sides of
 the test. The client had no request builder for `/build/confirm` at all, and
 no test was able to notice.
 
+The same week the audience view turned out to render a blank page against the
+real server ([BUG-030](../issues/2026-10-10-bug-030-audience-view-rendered-a-blank-page.md)):
+the server sends `projection.sections` as an ordered list of `{section, why}`,
+the page and its fixtures both read a map, and its tests were green for seven
+weeks.
+
 ## Lesson
 
 A hand-written fake of an endpoint is only as right as the reading of the
@@ -24,6 +30,10 @@ the test checks the reader's consistency, not the server's behavior.
 - A flow whose job is to write needs one live call before it is called done:
   run it against the real server and look at the rows (or the screen the user
   lands on). Here, one tap in a browser would have shown the empty roadmap.
+- Pin the wire shape a client depends on in a server test (a real-database
+  API test that decodes the response into the type the client expects), and
+  copy the client's fixtures from that test. BUG-030 got
+  `TestPrdViewSendsSectionsAsOrderedPicks` and a fixture comment that points at it.
 - When a server verb is split or retargeted, grep the clients for the old verb
   in the same change. The CLI and the MCP tools were updated in the split; the
   Flutter client was not, and nothing connected the two.

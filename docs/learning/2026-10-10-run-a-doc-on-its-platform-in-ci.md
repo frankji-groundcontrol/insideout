@@ -15,6 +15,14 @@ in the doc and one in the test:
    skips that edit when `~/.local/bin` is already on `PATH`, which the runner's
    is. The branch a fresh user hits (clean `PATH`) was the one not exercised.
 
+A later independent review found that the workflow could not fail on the thing
+it extracts. It ran each block as `bash -c "$(helper N)"`: when the helper
+fails (a renamed heading in the skill), `$(...)` yields an empty string, bash
+runs an empty script and exits 0, and two modules were checked only by tools
+the runner already had. A Flutter archive check that piped `curl` into `head`
+passed on a 404 for the same reason (no `pipefail` in the default step shell).
+Fixed in `b25bce1`.
+
 ## Lesson
 
 Extract the commands from the document instead of retyping them in the
@@ -23,6 +31,11 @@ environment (`env -i` plus the minimal `PATH`): CI runners carry tools and
 `PATH` entries a real new machine does not, and they silently take the "already
 done" branch. Verify the *claim* the doc makes ("a new shell finds the
 binaries"), not only that the commands exit 0.
+
+Capture the extracted text in a variable before running it
+(`blocks=$(helper N)` stops the step when the helper fails; `bash -c "$(helper N)"`
+does not), and never put a pipe after a command whose failure must fail the step
+unless the shell has `pipefail`.
 
 ## When to apply
 
