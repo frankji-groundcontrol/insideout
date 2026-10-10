@@ -85,6 +85,64 @@ void main() {
     final nowLabel = tester.getTopLeft(find.text('NOW'));
     expect(title.dy, isNot(closeTo(nowLabel.dy, 80)));
   });
+
+  // The fallback is what the Bands tab shows whenever it has no live reading
+  // (after any card write, or while the stream is down). The server keeps Now
+  // to in-progress work and lists done work apart, so finished work must not
+  // sit under the same Now label.
+  testWidgets('without a progress reading, done work is not filed under Now', (
+    tester,
+  ) async {
+    final done = RoadmapNode(
+      id: 'n1',
+      projectId: 'p1',
+      title: 'Shipped importer',
+      description: '',
+      status: 'done',
+      position: 0,
+    );
+    final working = RoadmapNode(
+      id: 'n2',
+      projectId: 'p1',
+      title: 'Docs pass',
+      description: '',
+      status: 'in_progress',
+      position: 1,
+    );
+    final session = Session();
+    session.ready = true;
+    session.api = _FakeApi();
+
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
+        ],
+        child: MaterialApp(
+          theme: cobaltTheme(Cobalt.light, brightness: Brightness.light),
+          home: Scaffold(
+            body: RoadmapBands(
+              projectId: 'p1',
+              nodes: [done, working],
+              onReload: _noopReload,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    double dy(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(dy('Shipped importer'), greaterThan(dy('LATER')));
+    expect(dy('Docs pass'), lessThan(dy('NEXT')));
+  });
 }
 
 Future<void> _noopReload() async {}
