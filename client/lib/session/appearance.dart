@@ -63,7 +63,13 @@ class Appearance extends ChangeNotifier {
   Future<void> hydrate() async {
     final savedLocale = await _store.read(localeKey);
     final savedTheme = await _store.read(themeKey);
-    if (savedLocale == 'en-US' || savedLocale == 'zh-CN') locale = savedLocale!;
+    if (savedLocale == 'en-US' || savedLocale == 'zh-CN') {
+      locale = savedLocale!;
+    } else {
+      // First visit: honor the browser's language; once a choice is
+      // stored the branch above keeps it authoritative.
+      locale = seedLocale(WidgetsBinding.instance.platformDispatcher.locales);
+    }
     if (savedTheme == 'dark') dark = true;
     if (savedTheme == 'light') dark = false;
     notifyListeners();

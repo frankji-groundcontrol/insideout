@@ -1,7 +1,18 @@
+import 'dart:ui' show Locale;
+
 import 'en.dart';
 import 'zh.dart';
 
 const defaultLocale = 'zh-CN';
+
+/// First-run locale when nothing is stored yet: the browser's preferred
+/// languages win (en* -> en-US), and zh-CN stays the tiebreak.
+String seedLocale(List<Locale> preferred) {
+  for (final locale in preferred) {
+    if (locale.languageCode.toLowerCase().startsWith('en')) return 'en-US';
+  }
+  return defaultLocale;
+}
 
 String lookup(String locale, String key, [Map<String, Object?>? args]) {
   final catalog = locale == 'en-US' ? enUS : zhCN;
