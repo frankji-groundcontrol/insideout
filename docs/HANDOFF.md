@@ -10,19 +10,15 @@ path and current warnings, never history.
 
 ## What to do next
 
-**The review-register sweep is finished on the worktree** (2026-10-10): 24
-verified batches fast-forwarded onto `main` at `82cf072`, all gates green
-(Go 814 PASS / 1 named SKIP plus a clean `-race` run, Flutter 421/421,
-three nginx checks), the
+**No thread is in flight.** The close-the-open-gaps plan finished 2026-10-10:
+the review-register sweep landed as `a84feb8` (CI green, run 38047747110,
+5/5 jobs; GitHub, MBP2 and MBP verified on one commit), its
 [disposition ledger](review/2026-10-10-disposition-ledger/README.md) closed
-with 187 findings and 0 unresolved, and the records written
+at 187 findings and 0 unresolved
 ([server](changelogs/2026-10-10-close-open-gaps/review-sweep-server.md),
-[client](changelogs/2026-10-10-close-open-gaps/review-sweep-client.md)).
-The remaining delivery step — push, CI green, the MBP fast-forward and the
-three-way check — is the last open item of the
-[close-the-open-gaps plan](plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md).
-After that, what the [issues index](issues/README.md) lists as left is a
-choice or a secret, not unfinished code, and it is the owner's:
+[client](changelogs/2026-10-10-close-open-gaps/review-sweep-client.md)
+halves). What the [issues index](issues/README.md) lists as left is a choice
+or a secret, not unfinished code, and it is the owner's:
 
 1. **Ship.** Nothing from 2026-10-08 on is deployed: the hosted web bundle and
    server predate the block-craft slices and this wave. `railway up --service

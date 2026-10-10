@@ -88,7 +88,9 @@ Mirrors the tracker (`.track.yaml`); the tracker is the source of truth.
 - [x] Adversarial verification of the whole change set — every batch
       had its own verifier; a whole-set review covered the cross-batch
       seams and tree invariants.
-- [ ] Push, fast-forward MBP, verify three-way sync, CI green.
+- [x] Push, fast-forward MBP, verify three-way sync, CI green
+      (`a84feb8`, run 38047747110 all green; GitHub, MBP2 and MBP on one
+      commit with identical trees).
 
 ## Needs the owner
 
@@ -139,5 +141,11 @@ analyze 14 infos (baseline 16), format clean, 421 of 421 tests;
 The orchestration froze once mid-wave (the original session died 16:18 local
 with four agent workflows in flight) and was resumed losslessly from the
 on-disk state; the lesson is recorded in
-[learning](../../learning/2026-10-10-resumable-orchestration.md). Left: push,
-CI green on the new tip, and the MBP fast-forward (its ssh answers again).
+[learning](../../learning/2026-10-10-resumable-orchestration.md).
+
+Delivered: pushed as `a84feb8` (89 commits over `2be918e`), CI green on the
+new tip (run 38047747110, 5 of 5 jobs including the Go `-race` lane the sweep
+itself added), and the MBP fast-forward done — GitHub, MBP2 and MBP verified
+on one commit with identical trees. The whole-change-set adversarial review
+(cross-batch seams, tree invariants, five re-proven red/fix pairs) returned
+clean with zero findings. The plan is closed; what remains is the owner's.
