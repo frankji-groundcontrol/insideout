@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,6 +13,10 @@ import (
 	"strings"
 	"time"
 )
+
+// responsesProvider names this API in error text, so a log line or
+// ai_runs.error_message blames the upstream that answered.
+const responsesProvider = "openai-compatible responses"
 
 // ResponsesStreamer talks to an OpenAI-compatible Responses API at
 // {base}/responses. The operator includes any /v1 on the base URL.
@@ -151,7 +156,7 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return Turn{}, providerHTTPError("openai-compatible responses", resp)
+		return Turn{}, providerHTTPError(responsesProvider, resp)
 	}
 
 	idle := s.idleTimeout
@@ -267,7 +272,7 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		case "error":
 			msg, _ := ev["message"].(string)
 			code, _ := ev["code"].(string)
-			return Turn{}, classifyInStreamError(code, msg)
+			return Turn{}, classifyResponsesStreamError(code, msg)
 		case "response.completed":
 			if resp, ok := ev["response"].(map[string]any); ok {
 				if u, ok := resp["usage"].(map[string]any); ok {
@@ -298,4 +303,22 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		return Turn{}, fmt.Errorf("%w: empty text response", ErrContentRefusal)
 	}
 	return Turn{Text: text.String(), Usage: usage, Truncated: truncated}, nil
+}
+
+// classifyResponsesStreamError maps an in-stream "error" event's code onto the
+// sentinels classifyInStreamError uses for Anthropic's vocabulary, so retry and
+// the circuit breaker treat a Responses provider like an Anthropic one. Only
+// the load codes are mapped: auth, model and context failures are normally
+// refused with an HTTP status before the stream opens (providerHTTPError), and
+// any other code stays unclassified.
+func classifyResponsesStreamError(code, msg string) error {
+	full := fmt.Sprintf("agent: %s stream error %s: %s", responsesProvider, code, msg)
+	switch code {
+	case "rate_limit_exceeded":
+		return &rateLimitError{msg: full} // no Retry-After in-stream; retryStreamChat caps its own wait
+	case "server_error":
+		return fmt.Errorf("%w: %s", ErrProviderTransient, full)
+	default:
+		return errors.New(full)
+	}
 }

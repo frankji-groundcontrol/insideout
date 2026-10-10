@@ -149,7 +149,8 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 // provider error identically to an HTTP-level one — instead of collapsing
 // every in-stream error into a single opaque message that loses the type
 // (F17). There's no retry here: the returned sentinel flows back through
-// streamChat, whose single built-in retry already honors it.
+// streamChat, whose single built-in retry already honors it. The codes are
+// Anthropic's; the Responses streamer has its own classifier in responses.go.
 func classifyInStreamError(errType, msg string) error {
 	full := fmt.Sprintf("agent: anthropic stream error %s: %s", errType, msg)
 	switch {
