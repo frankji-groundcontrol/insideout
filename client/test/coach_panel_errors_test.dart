@@ -68,6 +68,32 @@ class _LateFailingApi extends ApiClient {
   }
 }
 
+// Keeps the handlers the panel registered and holds the send open, so a stream
+// event can be delivered after the panel has left the screen.
+class _HoldingApi extends ApiClient {
+  _HoldingApi()
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
+
+  final gate = Completer<void>();
+  CoachHandlers? handlers;
+
+  @override
+  Future<void> sendCoach(
+    String conversationId,
+    String content,
+    CoachHandlers handlers,
+  ) async {
+    this.handlers = handlers;
+    await gate.future;
+  }
+}
+
 typedef _Case = ({
   String name,
   ApiException failure,
@@ -204,6 +230,31 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  // The delta callback was the one stream callback without a mounted guard: a
+  // chunk landing after the member left the PRD set state on a disposed State.
+  // Every callback must be a quiet no-op once the panel is gone.
+  testWidgets('a stream event that lands after the panel is gone is dropped', (
+    tester,
+  ) async {
+    final api = _HoldingApi();
+    await _pumpCoach(tester, api, 'en-US');
+
+    await tester.enterText(find.byType(TextField), 'hello');
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
+    await tester.pumpWidget(const SizedBox.shrink());
+
+    final h = api.handlers!;
+    expect(() => h.onDelta!('late'), returnsNormally);
+    expect(() => h.onCriticFindings!(const []), returnsNormally);
+    expect(() => h.onFactRecorded!({'text': 'late'}), returnsNormally);
+    expect(() => h.onStageChanged!('finalize'), returnsNormally);
+
+    api.gate.complete();
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
 
   for (final locale in const ['en-US', 'zh-CN']) {
     String t(String key, [Map<String, Object?>? args]) =>
