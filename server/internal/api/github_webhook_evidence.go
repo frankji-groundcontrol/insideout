@@ -103,6 +103,31 @@ func planGuideEvidence(event string, ev *webhookEvent, repoName string) (guideEv
 		} else {
 			p.detail = fmt.Sprintf("deploy %s", env)
 		}
+	} else if event == "deployment_status" {
+		// FEAT-07 (the deferred CC-01 slice): GitHub reports a deployment's
+		// outcome only in this later delivery. A failure appends its own
+		// activity row — PRODUCT.md: "failed deployments append evidence;
+		// they do not erase history" — so the release row from creation is
+		// never rewritten, and (node, kind, detail) dedupe makes GitHub's
+		// redeliveries free. Any other state refines nothing.
+		if state := ev.DeploymentStatus.State; state != "failure" && state != "error" {
+			return guideEvidence{}, false
+		}
+		p.branch = strings.TrimPrefix(ev.Deployment.Ref, "refs/heads/")
+		env := ev.Deployment.Environment
+		if env == "" {
+			env = "unknown environment"
+		}
+		if ev.Deployment.SHA != "" {
+			sha := ev.Deployment.SHA
+			if len(sha) > 7 {
+				sha = sha[:7]
+			}
+			p.detail = fmt.Sprintf("deploy failed: %s @ %s", env, sha)
+			p.source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, ev.Deployment.SHA)
+		} else {
+			p.detail = fmt.Sprintf("deploy failed: %s", env)
+		}
 	} else { // pull_request
 		p.branch = ev.PullRequest.Head.Ref
 		for _, l := range ev.PullRequest.Labels {

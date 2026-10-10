@@ -28,10 +28,10 @@ func (s *Server) registerGithubWebhookRoute(mux *http.ServeMux) {
 
 // handleGithubWebhook accepts GitHub App deliveries
 // (POST /api/v1/hooks/github). Signature first,
-// always; events other than push/pull_request are acknowledged and
-// ignored. push/pull_request resolve the repo's projects and re-run the
-// normal per-project sync as each project owner, so every write stays
-// inside RLS.
+// always; events other than push/pull_request/deployment/deployment_status
+// are acknowledged and ignored. Those four resolve the repo's projects and
+// re-run the normal per-project sync as each project owner, so every write
+// stays inside RLS.
 func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 	if s.cfg.GithubWebhookSecret == "" {
 		httpx.WriteError(w, http.StatusServiceUnavailable, "webhook not configured", "", nil)
@@ -53,7 +53,7 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 	switch event {
 	case "ping":
 		httpx.WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "event": event})
-	case "push", "pull_request", "deployment":
+	case "push", "pull_request", "deployment", "deployment_status":
 		name, err := github.WebhookRepository(body)
 		if err != nil {
 			httpx.WriteError(w, http.StatusBadRequest, "unparseable repository", "", nil)
