@@ -13,6 +13,10 @@ const _prdNextStatuses = <String, Set<String>>{
   'rejected': {'draft'},
 };
 
+/// Only a workspace admin approves or rejects (store/prds.go UpdatePrdStatus);
+/// draft and reviewing are the author's moves.
+const _adminOnly = {'approved', 'rejected'};
+
 class DeskActions extends StatelessWidget {
   const DeskActions({
     super.key,
@@ -22,10 +26,14 @@ class DeskActions extends StatelessWidget {
     required this.onSnapshot,
     required this.onBuild,
     required this.onStatus,
+    this.canDecide = true,
   });
 
   final String prdId;
   final String? status;
+
+  /// False for a viewer known not to be a workspace admin.
+  final bool canDecide;
   final VoidCallback onSave;
   final VoidCallback onSnapshot;
   final VoidCallback onBuild;
@@ -110,7 +118,9 @@ class DeskActions extends StatelessWidget {
             ])
               PopupMenuItem<String>(
                 value: s,
-                enabled: _prdNextStatuses[status]?.contains(s) ?? false,
+                enabled:
+                    (_prdNextStatuses[status]?.contains(s) ?? false) &&
+                    (canDecide || !_adminOnly.contains(s)),
                 child: Text(
                   '${s == status ? '■ ' : ''}${l10n.t('prd.status.$s')}',
                   style: menuStyle,

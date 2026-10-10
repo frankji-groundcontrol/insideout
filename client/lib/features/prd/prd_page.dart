@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/client.dart';
 import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
@@ -29,6 +32,8 @@ class PrdPage extends StatefulWidget {
 class _PrdPageState extends State<PrdPage> {
   Prd? prd;
   Conversation? conversation;
+  // The viewer's role in the PRD's workspace; null until it is known.
+  String? myRole;
   List<ChatMessage> messages = [];
   Object? error;
   bool loading = true;
@@ -81,6 +86,8 @@ class _PrdPageState extends State<PrdPage> {
         error = null;
         loading = false;
       });
+      // After the page is up: it never waits on the role.
+      unawaited(_loadRole(api, loaded.workspaceId));
     } catch (e) {
       // Keep the object, not its toString: localizedError maps ApiException
       // by status and a stringified error always falls through to generic.
@@ -90,6 +97,15 @@ class _PrdPageState extends State<PrdPage> {
         loading = false;
       });
     }
+  }
+
+  // Fails open: with the role unknown the status menu keeps offering every
+  // legal move, and the server still answers 403 where it must.
+  Future<void> _loadRole(ApiClient api, String workspaceId) async {
+    try {
+      final role = (await api.getWorkspace(workspaceId)).myRole;
+      if (mounted) setState(() => myRole = role);
+    } catch (_) {}
   }
 
   Future<void> _save({bool titleOnly = false}) async {
@@ -261,6 +277,7 @@ class _PrdPageState extends State<PrdPage> {
       onRequestReview: _requestReview,
       onSnapshot: _snapshot,
       onBuild: _build,
+      canDecide: myRole == null || myRole == 'admin',
       onStatus: (status) async {
         await guardWrite(context, () async {
           final updated = await context.read<Session>().api.updatePrdStatus(

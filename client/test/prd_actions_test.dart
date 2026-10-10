@@ -58,6 +58,19 @@ class _RecordingApi extends ApiClient {
   @override
   Future<Conversation?> conversationForPrd(String prdId) async => null;
 
+  // The page looks up the viewer's role; keep it off the network.
+  @override
+  Future<Workspace> getWorkspace(String id) async => Workspace.fromJson({
+    'id': id,
+    'title': 'Board Test WS',
+    'description': '',
+    'code': 'CODE12',
+    'status': 'active',
+    'memberCount': 2,
+    'myRole': 'admin',
+    'createdAt': '2026-01-01T00:00:00Z',
+  });
+
   @override
   Future<Prd> updatePrd(
     String id, {

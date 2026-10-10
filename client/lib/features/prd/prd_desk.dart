@@ -24,6 +24,7 @@ class PrdDeskColumn extends StatelessWidget {
     required this.onSnapshot,
     required this.onBuild,
     required this.onStatus,
+    this.canDecide = true,
     this.embedded = false,
   });
 
@@ -41,6 +42,10 @@ class PrdDeskColumn extends StatelessWidget {
   final VoidCallback onSnapshot;
   final VoidCallback onBuild;
   final ValueChanged<String> onStatus;
+
+  /// False when the viewer is known not to be a workspace admin: the status
+  /// menu then withholds Approved and Rejected, which the server would refuse.
+  final bool canDecide;
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +145,7 @@ class PrdDeskColumn extends StatelessWidget {
               onSnapshot: onSnapshot,
               onBuild: onBuild,
               onStatus: onStatus,
+              canDecide: canDecide,
             ),
             const SizedBox(height: Cobalt.space6),
             for (final key in prdSectionKeys)
