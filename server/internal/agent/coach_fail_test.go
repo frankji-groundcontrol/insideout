@@ -1,9 +1,14 @@
 package agent
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -101,5 +106,42 @@ func TestLoadHistory_StoreFailureIsLoopInternal(t *testing.T) {
 	_, err := c.loadHistory(gone, ex.actorID, ex.conversationID, historyLimit)
 	if !errors.Is(err, ErrLoopInternal) || !errors.Is(err, context.Canceled) {
 		t.Fatalf("loadHistory on a canceled request = %v, want both ErrLoopInternal and context.Canceled in the chain", err)
+	}
+}
+
+// The client of a turn that hit the cap gets the same generic error as any
+// internal failure, never the loop's own wording; the operator gets the full
+// text in the log and in ai_runs.error_message.
+func TestHandleMessage_IterationCapEndsInAGenericInternalError(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	userID, ex := seedConversation(t, st)
+	conv, err := st.GetConversationForOwner(ctx, ex.conversationID, ex.actorID)
+	if err != nil {
+		t.Fatalf("get conversation: %v", err)
+	}
+	streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
+		return Turn{ToolCall: &ToolCallRequest{ID: "call", Name: "get_prd", Arguments: "{}"}}, nil
+	}}
+	var logs bytes.Buffer
+	c := New(st, streamer, slog.New(slog.NewTextHandler(&logs, nil)))
+
+	rec := httptest.NewRecorder()
+	c.HandleMessage(rec, httptest.NewRequest(http.MethodPost, "/", nil),
+		ex.conversationID.String(), userID, conv.WorkspaceID.String(), "hi")
+
+	body := rec.Body.String()
+	if !strings.Contains(body, `"error":"internal error"`) || strings.Contains(body, "tool iterations") {
+		t.Fatalf("want the generic internal error on the wire, without the loop's wording:\n%s", body)
+	}
+	if !strings.Contains(logs.String(), "level=ERROR") || !strings.Contains(logs.String(), "exceeded max tool iterations") {
+		t.Fatalf("the cap failure was not logged at Error level; log:\n%s", logs.String())
+	}
+	var status, runError string
+	if err := st.Pool.QueryRow(ctx, `SELECT status, error_message FROM insideout.ai_runs WHERE conversation_id = $1`, ex.conversationID).Scan(&status, &runError); err != nil {
+		t.Fatalf("read the run: %v", err)
+	}
+	if status != "failed" || !strings.Contains(runError, "exceeded max tool iterations") {
+		t.Fatalf("run = %s / %q, want failed with the cap message", status, runError)
 	}
 }

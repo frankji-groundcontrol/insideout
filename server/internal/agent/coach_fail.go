@@ -15,12 +15,13 @@ var ErrLoopInternal = errors.New("agent: internal loop failure")
 // countsAgainstCircuit reports whether a failed turn says something about the
 // provider's health. The breaker is one global row, so only such failures may
 // feed it: a config problem, a refused answer, an oversized context or a client
-// that went away are not provider load. Anything unclassified (a transport
+// that went away, or our own loop failing are not provider load. Anything unclassified (a transport
 // error, an unexpected status) still counts.
 func countsAgainstCircuit(err error) bool {
 	switch {
-	case errors.Is(err, ErrContextLength), errors.Is(err, ErrProviderConfig),
-		errors.Is(err, ErrContentRefusal), errors.Is(err, context.Canceled):
+	case errors.Is(err, ErrLoopInternal), errors.Is(err, ErrContextLength),
+		errors.Is(err, ErrProviderConfig), errors.Is(err, ErrContentRefusal),
+		errors.Is(err, context.Canceled):
 		return false
 	}
 	return true
@@ -65,6 +66,8 @@ func (c *Coach) failTurn(ctx context.Context, userID uuid.UUID, runID uuid.UUID,
 	case errors.Is(loopErr, context.Canceled):
 		// Client disconnected. No circuit result — routine, not provider health.
 	default:
+		// Unclassified errors and ErrLoopInternal: logged at Error, nothing
+		// specific for the client.
 		c.log.Error("agent loop", "error", loopErr)
 		sse.errorEvent("internal error", "")
 	}

@@ -54,7 +54,7 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 
 		conv, err := c.store.GetConversationForOwner(ctx, executor.conversationID, actorID)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("%w: %w", ErrLoopInternal, err)
 		}
 		lm, extra := loadLedger(conv.Meta)
 		findingsText := formatFindingsForPrompt(loadCriticFindings(extra))
@@ -99,7 +99,7 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 			Message{Role: RoleTool, Content: result, ToolCallID: turn.ToolCall.ID},
 		)
 	}
-	return "", fmt.Errorf("agent: exceeded max tool iterations (%d)", maxToolIterations)
+	return "", fmt.Errorf("%w: exceeded max tool iterations (%d)", ErrLoopInternal, maxToolIterations)
 }
 
 func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUID, limit int) ([]Message, error) {
@@ -107,7 +107,7 @@ func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUI
 	// tool results and tool-call-only turns) and keeps the newest limit.
 	recent, err := c.store.ListRecentChatMessages(ctx, userID, conversationID, limit)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %w", ErrLoopInternal, err)
 	}
 
 	var out []Message
