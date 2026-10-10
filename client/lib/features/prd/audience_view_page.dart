@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
-import '../../theme/block_chrome.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/field_card.dart';
@@ -36,7 +34,7 @@ class AudienceViewPage extends StatefulWidget {
 }
 
 class _AudienceViewPageState extends State<AudienceViewPage> {
-  late Future<Map<String, dynamic>> _future;
+  late Future<(Map<String, dynamic>, Prd)> _future;
   late String audience;
 
   @override
@@ -46,8 +44,14 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
     _load();
   }
 
+  // The view carries the reading order and whys; the section text is the PRD's
+  // own, fetched once here for every card instead of once per card.
   void _load() {
-    _future = context.read<Session>().api.prdView(widget.prdId, audience);
+    final api = context.read<Session>().api;
+    _future = (
+      api.prdView(widget.prdId, audience),
+      api.getPrd(widget.prdId),
+    ).wait;
   }
 
   @override
@@ -56,7 +60,7 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
     return AppScaffold(
       title: l10n.t('view.title'),
       paintTitle: true,
-      body: FutureBuilder<Map<String, dynamic>>(
+      body: FutureBuilder<(Map<String, dynamic>, Prd)>(
         future: _future,
         builder: (context, snap) {
           if (snap.hasError) {
@@ -66,9 +70,11 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
             );
           }
           if (!snap.hasData) return const BlockLoading();
+          final (view, prd) = snap.data!;
           return _Projection(
             prdId: widget.prdId,
-            data: snap.data!,
+            data: view,
+            prd: prd,
             audience: audience,
             onAudience: (a) => setState(() {
               audience = a;
@@ -85,12 +91,14 @@ class _Projection extends StatelessWidget {
   const _Projection({
     required this.prdId,
     required this.data,
+    required this.prd,
     required this.audience,
     required this.onAudience,
   });
 
   final String prdId;
   final Map<String, dynamic> data;
+  final Prd prd;
   final String audience;
   final ValueChanged<String> onAudience;
 
@@ -192,8 +200,7 @@ class _Projection extends StatelessWidget {
                       ),
                       const SizedBox(height: Cobalt.space3),
                       _SectionBody(
-                        prdId: prdId,
-                        sectionKey: pick['section'] as String,
+                        content: prd.sections[pick['section']] ?? '',
                       ),
                     ],
                   ),
@@ -284,50 +291,22 @@ class _GapRow extends StatelessWidget {
   }
 }
 
-/// Fetches and renders one section's live content from the PRD itself,
-/// so the projection always shows the working version's truth.
-class _SectionBody extends StatefulWidget {
-  const _SectionBody({required this.prdId, required this.sectionKey});
+/// One section's live content from the PRD itself, so the projection always
+/// shows the working version's truth.
+class _SectionBody extends StatelessWidget {
+  const _SectionBody({required this.content});
 
-  final String prdId;
-  final String sectionKey;
-
-  @override
-  State<_SectionBody> createState() => _SectionBodyState();
-}
-
-class _SectionBodyState extends State<_SectionBody> {
-  late Future<Prd> _future;
-
-  @override
-  void initState() {
-    super.initState();
-    _future = context.read<Session>().api.getPrd(widget.prdId);
-  }
+  final String content;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return FutureBuilder<Prd>(
-      future: _future,
-      builder: (context, snap) {
-        if (snap.hasError) {
-          return BlockBanner(
-            message: localizedError(snap.error!, context.read<Appearance>().t),
-          );
-        }
-        if (!snap.hasData) {
-          return const BlockLoader(size: Cobalt.space4);
-        }
-        final content = snap.data!.sections[widget.sectionKey] ?? '';
-        if (content.trim().isEmpty) {
-          return Text(
-            context.read<Appearance>().t('view.carriedOpen'),
-            style: theme.textTheme.bodySmall,
-          );
-        }
-        return Text(content, style: theme.textTheme.bodyMedium);
-      },
-    );
+    if (content.trim().isEmpty) {
+      return Text(
+        context.read<Appearance>().t('view.carriedOpen'),
+        style: theme.textTheme.bodySmall,
+      );
+    }
+    return Text(content, style: theme.textTheme.bodyMedium);
   }
 }
