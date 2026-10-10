@@ -148,7 +148,12 @@ mixin _ProjectVerbs on _ApiCore {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<void> cursor(String projectId, double x, double y) async {
+  Future<void> cursor(
+    String projectId,
+    double x,
+    double y, {
+    String clientId = '',
+  }) async {
     await _dio.post('/projects/$projectId/cursor', data: {'x': x, 'y': y});
   }
 
