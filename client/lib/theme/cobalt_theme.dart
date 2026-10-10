@@ -74,6 +74,12 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
     scaffoldBackgroundColor: c.surfaceBase,
     canvasColor: c.surfaceBase,
     shadowColor: castColor,
+    // The block grammar presses, it does not ripple. Material menus, pickers
+    // and dropdowns that survive still read their ink from the theme, so one
+    // switch here covers every one of them without per-site wrappers.
+    splashFactory: NoSplash.splashFactory,
+    splashColor: Colors.transparent,
+    highlightColor: Colors.transparent,
     fontFamily: Cobalt.sans,
     textTheme: text,
     primaryTextTheme: text,
@@ -101,6 +107,21 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
       shape: shapeCard.copyWith(
         side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
       ),
+    ),
+    // Stock M3 menus are 4px-rounded with a blurred elevation shadow. This is
+    // the block menu every PopupMenuButton adopts with no per-site styling.
+    popupMenuTheme: PopupMenuThemeData(
+      color: c.surfaceRaised,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      shape: shapeControl.copyWith(
+        side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
+      ),
+    ),
+    // A PopupMenuButton without a child triggers through a stock IconButton,
+    // whose M3 hover/press highlight is a stadium — squared like every corner.
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(shape: shapeControl),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

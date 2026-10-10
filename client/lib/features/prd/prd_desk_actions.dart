@@ -64,80 +64,59 @@ class DeskActions extends StatelessWidget {
           icon: Icons.groups_outlined,
           onPressed: () => context.go('/prd/$prdId/view'),
         ),
-        Theme(
-          // PopupMenuButton wraps its `child` in Material's InkWell; the block
-          // grammar has no ripple, so the splash factory is switched off here.
-          data: Theme.of(context).copyWith(
-            splashFactory: NoSplash.splashFactory,
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-          ),
-          child: PopupMenuButton<String>(
-            tooltip: l10n.t('common.moreActions'),
-            color: palette.surfaceRaised,
-            elevation: 0,
-            surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(Cobalt.radiusControl),
-              side: BorderSide(
+        // The menu surface (square, 2px border, no elevation, no ripple) comes
+        // from the theme's popupMenuTheme; only the trigger face is local.
+        PopupMenuButton<String>(
+          tooltip: l10n.t('common.moreActions'),
+          child: Container(
+            padding: const EdgeInsets.all(Cobalt.space2),
+            decoration: BoxDecoration(
+              color: palette.surfaceRaised,
+              border: Border.all(
                 color: palette.strokeSubtle,
                 width: Cobalt.borderContainer,
               ),
             ),
-            child: Container(
-              padding: const EdgeInsets.all(Cobalt.space2),
-              decoration: BoxDecoration(
-                color: palette.surfaceRaised,
-                border: Border.all(
-                  color: palette.strokeSubtle,
-                  width: Cobalt.borderContainer,
-                ),
-              ),
-              child: Icon(
-                Icons.more_vert,
-                size: 16,
-                color: palette.fgSecondary,
-              ),
-            ),
-            onSelected: (value) {
-              switch (value) {
-                case 'revisions':
-                  context.go('/prd/$prdId/revisions');
-                case 'versions':
-                  context.go('/prd/$prdId/versions');
-                case 'view':
-                  context.go('/prd/$prdId/view');
-                case 'export':
-                  context.go('/prd/$prdId/export');
-                case 'snapshot':
-                  onSnapshot();
-                case 'draft' || 'reviewing' || 'approved' || 'rejected':
-                  onStatus(value);
-              }
-            },
-            itemBuilder: (_) => [
-              _menuItem('revisions', l10n.t('prd.revisionHistory'), menuStyle),
-              _menuItem('versions', l10n.t('versions.entry'), menuStyle),
-              _menuItem('view', l10n.t('view.entry'), menuStyle),
-              _menuItem('export', l10n.t('prd.exportMarkdown'), menuStyle),
-              _menuItem('snapshot', l10n.t('prd.snapshotRevision'), menuStyle),
-              const PopupMenuDivider(),
-              for (final s in const [
-                'draft',
-                'reviewing',
-                'approved',
-                'rejected',
-              ])
-                PopupMenuItem<String>(
-                  value: s,
-                  enabled: _prdNextStatuses[status]?.contains(s) ?? false,
-                  child: Text(
-                    '${s == status ? '■ ' : ''}${l10n.t('prd.status.$s')}',
-                    style: menuStyle,
-                  ),
-                ),
-            ],
+            child: Icon(Icons.more_vert, size: 16, color: palette.fgSecondary),
           ),
+          onSelected: (value) {
+            switch (value) {
+              case 'revisions':
+                context.go('/prd/$prdId/revisions');
+              case 'versions':
+                context.go('/prd/$prdId/versions');
+              case 'view':
+                context.go('/prd/$prdId/view');
+              case 'export':
+                context.go('/prd/$prdId/export');
+              case 'snapshot':
+                onSnapshot();
+              case 'draft' || 'reviewing' || 'approved' || 'rejected':
+                onStatus(value);
+            }
+          },
+          itemBuilder: (_) => [
+            _menuItem('revisions', l10n.t('prd.revisionHistory'), menuStyle),
+            _menuItem('versions', l10n.t('versions.entry'), menuStyle),
+            _menuItem('view', l10n.t('view.entry'), menuStyle),
+            _menuItem('export', l10n.t('prd.exportMarkdown'), menuStyle),
+            _menuItem('snapshot', l10n.t('prd.snapshotRevision'), menuStyle),
+            const PopupMenuDivider(),
+            for (final s in const [
+              'draft',
+              'reviewing',
+              'approved',
+              'rejected',
+            ])
+              PopupMenuItem<String>(
+                value: s,
+                enabled: _prdNextStatuses[status]?.contains(s) ?? false,
+                child: Text(
+                  '${s == status ? '■ ' : ''}${l10n.t('prd.status.$s')}',
+                  style: menuStyle,
+                ),
+              ),
+          ],
         ),
       ],
     );
