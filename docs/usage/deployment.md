@@ -177,6 +177,19 @@ On `app`:
   within seconds and `app` does not need a restart
   ([BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md);
   an `app` image built before that fix resolves only at start and does).
+- The same nginx sends the app's security headers on every response, error
+  pages included: `nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`, a
+  Content-Security-Policy, and HSTS when the edge marks the request https
+  (`X-Forwarded-Proto`; nginx itself only sees http behind the edge). The
+  CSP allows exactly what the Flutter web build loads from elsewhere:
+  CanvasKit's script and wasm from the gstatic CDN, the engine's fallback
+  fonts, and the Google Fonts stylesheet `index.html` links. When a Flutter
+  upgrade or a new `index.html` link makes the browser console report a CSP
+  violation, loosen only that directive in
+  [`client/nginx.conf`](../../client/nginx.conf) and run
+  `python3 scripts/check_nginx_headers.py`
+  ([local-development.md](local-development.md#testing)). The headers reach
+  the hosted app with the next `railway up --service app`.
 
 LLM vars are set on `server`. Empty `INSIDEOUT_LLM_API_KEY` still selects
 the offline template coach.
