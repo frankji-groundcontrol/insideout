@@ -4,11 +4,12 @@
 //	insideout migrate     apply pending SQL migrations and exit
 //	insideout seed        create demo data for local development
 //	insideout health      container HEALTHCHECK: probe /healthz over loopback
-//	insideout login       product CLI: exchange credentials for a token
-//	insideout whoami      product CLI: GET /me
-//	insideout workspaces  product CLI: GET /workspaces
-//	insideout projects    product CLI: GET /workspaces/{id}/projects
-//	insideout prd         product CLI: GET /prds/{id}
+//	insideout promote-admin  grant admin to one account (owner pool)
+//
+// The product CLI verbs (login, ideas, prd, roadmap, setup, …) dispatch
+// from runClientCommand in cli.go before any server env or DB is touched;
+// cli.go's switch is the verb inventory — verbs enumerated here went stale
+// (review-3 ARCH-04), so this comment deliberately does not list them.
 package main
 
 import (

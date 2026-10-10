@@ -9,16 +9,33 @@ Go 1.26+, stdlib `net/http` (1.22+ method-pattern routing, no web framework),
 
 ```
 server/
-  cmd/insideout/       main.go (serve/migrate subcommands), seed.go (dev seed data)
+  cmd/insideout/       main.go (serve/migrate/seed/promote-admin), cli*.go
+                       (product CLI + setup TUI, dispatched from cli.go
+                       before any server env or DB), seed.go (dev seed data)
+  cmd/insideout-mcp/   the stdio MCP server binary — same /api/v1 contract
   db/                  embed.go (go:embed migrations), migrations/*.sql
   internal/
+    agent/             PRD Coach: prompts, tools, SSE, the Anthropic client
+    agentcontext/      the compact, focus-scoped context agent-context briefs from
+    api/               HTTP routes, middleware, per-domain handlers
+    apiclient/         the shared HTTP client every non-web surface speaks
+    audienceview/      audience projections of one PRD
+    auth/              password hashing, JWT, refresh-token helpers
+    clientconfig/      single source for CLI credentials: env overrides the 0600 config
     config/            environment parsing and fail-fast validation
+    export/            on-demand PRD markdown/HTML rendering
+    github/            linked-repo commit fetch feeding project progress
+    guide/             the repo-side matching guide (insideout.yaml) generator
+    httpx/             JSON request/response helpers, the error contract
+    mail/              transactional email through the Resend HTTP API
+    mcpserver/         the MCP surface: one tool per CLI verb
+    presence/          in-memory who-is-here registry behind live canvas presence
+    progresshub/       in-memory fan-out for the live roadmap progress view
+    prdcommit/         the human-only Commit that pins a PRD version
+    readiness/         per-audience gap disclosure for a working PRD
+    roadmaptime/       the time-first deadline and pressure rules
+    setup/             the guided-setup flow engine behind `insideout setup`
     store/             all pgx queries; one file per domain resource
-    auth/               password hashing, JWT, refresh-token helpers
-    httpx/              JSON request/response helpers, the error contract
-    api/                HTTP routes, middleware, per-domain handlers
-    agent/              PRD Coach: prompts, tools, SSE, the Anthropic client
-    export/             on-demand PRD markdown/HTML rendering
 ```
 
 ## Request flow
