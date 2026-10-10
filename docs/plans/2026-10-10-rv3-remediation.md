@@ -10,9 +10,11 @@ and on to the next wave.
 
 ## Checklist
 
-- [ ] Wave 1 — 7 clusters (AIDEV-01/02/07, FULL-01/06/08, TEST-02, ARCH-01/02,
-      REL-01, USER-01, FEAT-02): workflow submitted, all clusters accepted,
-      integrated, gates green.
+- [x] Wave 1 — 7 clusters (AIDEV-01/02/07, FULL-01/06/08, TEST-02, ARCH-01/02,
+      REL-01, USER-01, FEAT-02): all verifier-accepted round 1 (27 commits),
+      cherry-picked, plus 2 integrator seam commits (pendingStage on the GET,
+      confirm applies parked resolutions); server suite green (one allowed
+      skip), client 427 green, analyze 14; pushed f822873.
 - [ ] Wave 2 — 9 clusters (AIDEV-03/06, CQ-04, AIDEV-05/11, CQ-07, USER-08,
       SEC-02/06, FEAT-07, REL-02/03, SEC-08, FULL-02, CQ-03, USER-03, PM-04,
       SEC-07, ARCH-03, SEC-03, REL-05).
@@ -27,8 +29,8 @@ and on to the next wave.
 
 ## Status
 
-In flight 2026-10-10. Wave 1 workflow `dwfrun-d0f647b2` running over base
-`5c8f54f`: worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
+In flight 2026-10-10. Wave 2 workflow `dwfrun-7dba5513` running over base
+`f822873` (wave 1 integrated): worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
 `rv3/w1-*`, briefs/reports under `/tmp/insideout-gap/rv3/work/`, per-cluster
 databases on the disposable cluster (`rv3w1*`). Owner-blocked rows are out of
 scope by design and stay in [HANDOFF](../HANDOFF.md).
