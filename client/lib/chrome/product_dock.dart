@@ -162,6 +162,15 @@ class ProductDock extends StatelessWidget {
     return match?.group(1);
   }
 
+  /// The PRD the current route is already on (desk, versions, revisions,
+  /// view, export), so a deep link or refresh works before any page has
+  /// seeded LoopFocus with the id.
+  static String? _prdOnRoute(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    final match = RegExp(r'^/prd/([^/]+)').firstMatch(path);
+    return match?.group(1);
+  }
+
   static _DockTarget _target(BuildContext context, DockItem item) {
     final focus = context.read<LoopFocus>();
     final location = GoRouterState.of(context).uri.path;
@@ -170,6 +179,7 @@ class ProductDock extends StatelessWidget {
         _projectOnRoute(context) ??
         (workspace != null ? focus.projectFor(workspace) : null) ??
         focus.projectId;
+    final prd = _prdOnRoute(context) ?? focus.prdId;
     return switch (item) {
       DockItem.capture || DockItem.ideas => (
         path: workspace != null ? '/workspace/$workspace/ideas' : null,
@@ -178,7 +188,7 @@ class ProductDock extends StatelessWidget {
       // Version rides to the versions route; from the PRD desk the old
       // /prd/<id> target was a self-navigation dead click.
       DockItem.version || DockItem.commit => (
-        path: focus.prdId != null ? '/prd/${focus.prdId}/versions' : null,
+        path: prd != null ? '/prd/$prd/versions' : null,
         pulse: false,
       ),
       DockItem.roadmap => (
