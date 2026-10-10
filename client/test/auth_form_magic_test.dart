@@ -6,12 +6,15 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
+import '_auth_test_helpers.dart';
+
 void main() {
   testWidgets('login form switches to magic-link mode and back', (
     tester,
   ) async {
     final session = Session();
     session.ready = true;
+    session.api = QuietAuthApi();
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -57,6 +60,7 @@ void main() {
   testWidgets('login form switches to code mode and back', (tester) async {
     final session = Session();
     session.ready = true;
+    session.api = QuietAuthApi();
     await tester.pumpWidget(
       MultiProvider(
         providers: [

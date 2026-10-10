@@ -94,6 +94,16 @@ mixin _AuthVerbs on _ApiCore {
     return data['signupMode'] as String? ?? 'invitation_only';
   }
 
+  /// Whether this server delivers email. False (mail dev mode) means sign-in
+  /// links, codes and reset mails are only written to the server log. A server
+  /// that omits the flag reads as true: assume mail works, never hide on a
+  /// guess.
+  Future<bool> authMailEnabled() async {
+    final res = await _dio.get('/auth/config');
+    final data = await _parse(res, (d) => d as Map<String, dynamic>);
+    return data['mailEnabled'] as bool? ?? true;
+  }
+
   /// Admin: mint an email-bound invitation. Returns the one-time code and
   /// signup URL (the only place the code ever appears).
   Future<Map<String, dynamic>> createInvitation(String email) async {

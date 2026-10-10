@@ -11,6 +11,7 @@ import '../../theme/block_field.dart';
 import '../../theme/cobalt.dart';
 import 'auth_door.dart';
 import 'auth_sent_panels.dart';
+import 'mail_off_notice.dart';
 
 /// Login variants offered alongside email+password: an emailed one-time
 /// link, or an emailed 6-digit code typed in here.
@@ -46,6 +47,7 @@ class _AuthFormState extends State<AuthForm> {
   bool linkSent = false;
   bool codeSent = false;
   bool inviteRequired = false;
+  bool mailOff = false;
   _LoginMode _mode = _LoginMode.password;
 
   @override
@@ -70,6 +72,10 @@ class _AuthFormState extends State<AuthForm> {
             }
           })
           .catchError((_) {});
+    } else {
+      mailIsOff(context).then((off) {
+        if (mounted && off) setState(() => mailOff = true);
+      });
     }
   }
 
@@ -234,6 +240,10 @@ class _AuthFormState extends State<AuthForm> {
           ),
         ] else if (!_register) ...[
           const SizedBox(height: Cobalt.space6),
+          if (mailOff) ...[
+            const MailOffNotice(),
+            const SizedBox(height: Cobalt.space3),
+          ],
           _otherWaysDivider(l10n.t('login.otherWays')),
           const SizedBox(height: Cobalt.space3),
           Row(

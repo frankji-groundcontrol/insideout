@@ -27,6 +27,7 @@ class _MailApi extends ApiClient {
   /// true: mail is delivered; false: dev mode; null: the config call fails.
   final bool? mail;
 
+  @override
   Future<bool> authMailEnabled() async {
     final delivered = mail;
     if (delivered == null) throw ApiException('boom', status: 500);

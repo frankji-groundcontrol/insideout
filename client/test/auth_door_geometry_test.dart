@@ -8,6 +8,8 @@ import 'package:insideout/theme/cobalt.dart';
 import 'package:insideout/theme/cobalt_theme.dart';
 import 'package:provider/provider.dart';
 
+import '_auth_test_helpers.dart';
+
 void main() {
   for (final dark in const [false, true]) {
     testWidgets(
@@ -15,7 +17,9 @@ void main() {
       (tester) async {
         await tester.binding.setSurfaceSize(const Size(1440, 900));
         addTearDown(() => tester.binding.setSurfaceSize(null));
-        final session = Session()..ready = true;
+        final session = Session()
+          ..ready = true
+          ..api = QuietAuthApi();
         await tester.pumpWidget(
           MultiProvider(
             providers: [

@@ -6,10 +6,13 @@ import 'package:insideout/theme/block_button.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
+import '_auth_test_helpers.dart';
+
 void main() {
   testWidgets('landing offers register when signed out', (tester) async {
     final session = Session();
     session.ready = true;
+    session.api = QuietAuthApi();
     await tester.binding.setSurfaceSize(const Size(1200, 5000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(

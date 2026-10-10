@@ -9,6 +9,7 @@ import '../../theme/block_chrome.dart';
 import '../../theme/block_field.dart';
 import '../../theme/cobalt.dart';
 import 'auth_door.dart';
+import 'mail_off_notice.dart';
 
 /// `/forgot-password`: requests the emailed password-reset link.
 class ForgotPasswordPage extends StatefulWidget {
@@ -23,6 +24,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   String? error;
   bool busy = false;
   bool sent = false;
+  bool mailOff = false;
+
+  @override
+  void initState() {
+    super.initState();
+    mailIsOff(context).then((off) {
+      if (mounted && off) setState(() => mailOff = true);
+    });
+  }
 
   @override
   void dispose() {
@@ -74,6 +84,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (mailOff) ...[
+                    const MailOffNotice(),
+                    const SizedBox(height: Cobalt.space3),
+                  ],
                   BlockField(
                     controller: email,
                     label: l10n.t('forgot.email'),
