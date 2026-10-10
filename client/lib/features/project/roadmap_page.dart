@@ -44,13 +44,18 @@ class _RoadmapPageState extends State<RoadmapPage> {
   List<PresenceEntry> _presence = [];
   final Map<String, CursorDot> _cursors = {};
   DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
-  Timer? _retryTimer;
+  final _retryTimers = <Timer>{};
   late final String _clientId = DateTime.now().microsecondsSinceEpoch
       .toRadixString(36);
 
   Future<void> _backoff(Duration d) {
     final done = Completer<void>();
-    _retryTimer = Timer(d, done.complete);
+    late final Timer t;
+    t = Timer(d, () {
+      _retryTimers.remove(t);
+      done.complete();
+    });
+    _retryTimers.add(t);
     return done.future;
   }
 
@@ -65,19 +70,17 @@ class _RoadmapPageState extends State<RoadmapPage> {
         .catchError((_) {});
   }
 
-  Future<void> _progressLoop(ApiClient api) async {
+  /// Runs [session] again each time it ends, until the page goes away: wait
+  /// 500ms, doubling to 5s, between runs; 401/403/404 are final.
+  Future<void> _retrying(Future<void> Function() session) async {
     var backoff = const Duration(milliseconds: 500);
     while (mounted) {
-      var fatal = false;
       try {
-        await api.progressStream(widget.projectId, (progress) {
-          if (!mounted) return;
-          setState(() => _liveProgress = progress);
-        });
+        await session();
       } on ApiException catch (e) {
-        fatal = e.status == 401 || e.status == 403 || e.status == 404;
+        if (e.status == 401 || e.status == 403 || e.status == 404) return;
       } catch (_) {}
-      if (fatal || !mounted) return;
+      if (!mounted) return;
       await _backoff(backoff);
       backoff = backoff * 2 > const Duration(seconds: 5)
           ? const Duration(seconds: 5)
@@ -85,46 +88,42 @@ class _RoadmapPageState extends State<RoadmapPage> {
     }
   }
 
-  Future<void> _presenceLoop(ApiClient api) async {
-    var backoff = const Duration(milliseconds: 500);
-    while (mounted) {
-      var fatal = false;
-      try {
-        await api.presenceStream(
-          widget.projectId,
-          _clientId,
-          (entries) {
-            if (!mounted) return;
-            final live = entries.map((e) => e.sessionId).toSet();
-            _cursors.removeWhere((id, _) => !live.contains(id));
-            setState(() => _presence = entries);
-          },
-          onCursor: (sessionId, name, x, y) {
-            if (!mounted || sessionId == _clientId) return;
-            setState(
-              () => _cursors[sessionId] = CursorDot(
-                sessionId: sessionId,
-                name: name,
-                x: x,
-                y: y,
-              ),
-            );
-          },
+  Future<void> _progressLoop(ApiClient api) => _retrying(
+    () => api.progressStream(widget.projectId, (progress) {
+      if (!mounted) return;
+      setState(() => _liveProgress = progress);
+    }),
+  );
+
+  Future<void> _presenceLoop(ApiClient api) => _retrying(
+    () => api.presenceStream(
+      widget.projectId,
+      _clientId,
+      (entries) {
+        if (!mounted) return;
+        final live = entries.map((e) => e.sessionId).toSet();
+        _cursors.removeWhere((id, _) => !live.contains(id));
+        setState(() => _presence = entries);
+      },
+      onCursor: (sessionId, name, x, y) {
+        if (!mounted || sessionId == _clientId) return;
+        setState(
+          () => _cursors[sessionId] = CursorDot(
+            sessionId: sessionId,
+            name: name,
+            x: x,
+            y: y,
+          ),
         );
-      } on ApiException catch (e) {
-        fatal = e.status == 401 || e.status == 403 || e.status == 404;
-      } catch (_) {}
-      if (fatal || !mounted) return;
-      await _backoff(backoff);
-      backoff = backoff * 2 > const Duration(seconds: 5)
-          ? const Duration(seconds: 5)
-          : backoff * 2;
-    }
-  }
+      },
+    ),
+  );
 
   @override
   void dispose() {
-    _retryTimer?.cancel();
+    for (final t in _retryTimers) {
+      t.cancel();
+    }
     _canvasController.dispose();
     super.dispose();
   }
