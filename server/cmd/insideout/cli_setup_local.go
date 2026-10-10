@@ -25,9 +25,11 @@ import (
 
 // runLocalSetup executes the local branch. postgres is "bundled" or
 // "own"; noStart mirrors scripts/setup.sh's --no-start (write .env
-// only). It speaks only through the returned exit code and
-// stderr/stdout lines that carry no secret values.
-func runLocalSetup(postgres string, noStart bool) (bool, int) {
+// only); createRoles lets the own-URL path create missing database
+// roles without asking (the agent path, where stdin is the DSN). It
+// speaks only through the returned exit code and stderr/stdout lines
+// that carry no secret values.
+func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "setup: %v (local mode needs the checkout: docker-compose.yml, .env.example, migrations)\n", err)
@@ -124,7 +126,17 @@ func runLocalSetup(postgres string, noStart bool) (bool, int) {
 		fmt.Fprintf(os.Stderr, "setup: open store: %v\n", err)
 		return true, 1
 	}
-	if ownerURL := vals["DATABASE_OWNER_URL"]; ownerURL != "" {
+	ownerURL := vals["DATABASE_OWNER_URL"]
+	if postgres == "own" {
+		// A fresh own-URL database lacks the two roles the migrations
+		// need; find out now, not mid-migration.
+		var ok bool
+		if ownerURL, ok = ensureRoles(ctx, st.Pool, dsn, envPath, ownerURL, createRoles); !ok {
+			st.Close()
+			return true, 1
+		}
+	}
+	if ownerURL != "" {
 		if err := st.AttachMigratePool(ctx, ownerURL); err != nil {
 			st.Close()
 			fmt.Fprintf(os.Stderr, "setup: owner migrate pool: %v\n", err)

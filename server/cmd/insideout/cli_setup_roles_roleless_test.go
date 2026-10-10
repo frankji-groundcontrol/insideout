@@ -227,3 +227,37 @@ func TestRolelessPartialRolesStopBeforeMigrating(t *testing.T) {
 		t.Error("setup changed the database although one role already existed")
 	}
 }
+
+// The probe against a real catalog for each kind of connecting role: which
+// ones may attempt provisioning (canTry) is the only thing that varies. The
+// catalog check itself is shared with TestProbeRolesReadsTheCatalog, which
+// runs it on DATABASE_URL.
+func TestRolelessProbeMatchesCatalog(t *testing.T) {
+	c := newRolelessCluster(t)
+	ctx := context.Background()
+	got, err := probeRoles(ctx, c.admin, ownerRole, appRole)
+	if want := (rolesProbe{canTry: true, database: "postgres"}); err != nil || got != want {
+		t.Fatalf("superuser on a roleless cluster: probeRoles = %+v, %v; want %+v", got, err, want)
+	}
+	checkProbeRoles(t, c.admin)
+	for _, tt := range []struct {
+		attrs  string
+		canTry bool
+	}{
+		{"", false},
+		{"CREATEROLE", false},
+		{"CREATEROLE BYPASSRLS", true},
+	} {
+		name, pw := c.newLoginRole(t, tt.attrs)
+		pool, err := pgxpool.New(ctx, c.dsn("postgres", name, pw))
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(pool.Close)
+		got, err := probeRoles(ctx, pool, ownerRole, appRole)
+		if err != nil || got.canTry != tt.canTry || got.owner || got.app {
+			t.Errorf("role with %q: probeRoles = %+v, %v; want canTry=%v and no roles found", tt.attrs, got, err, tt.canTry)
+		}
+		checkProbeRoles(t, pool)
+	}
+}

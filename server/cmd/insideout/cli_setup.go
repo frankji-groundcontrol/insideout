@@ -131,18 +131,19 @@ func runSetupCommand(rest []string) (bool, int) {
 	local := fs.Bool("local", false, "run a server on this machine (PostgreSQL)")
 	postgres := fs.String("postgres", "", "bundled|own — required with --local")
 	noStart := fs.Bool("no-start", false, "with --local --postgres bundled: prepare only, do not start")
+	createRoles := fs.Bool("create-roles", false, "with --local --postgres own: create the insideout_owner/insideout_app roles if missing, without asking")
 	check := fs.Bool("check", false, "re-run the health probes against the current config")
 	llm := fs.Bool("llm", false, "with --check: also make one live LLM request")
 	if err := fs.Parse(rest); err != nil {
 		return true, 2
 	}
 	if fs.NArg() > 0 {
-		fmt.Fprintf(os.Stderr, "usage: insideout setup [--hosted | --local --postgres bundled|own [--no-start] | --check [--llm]]\n")
+		fmt.Fprintf(os.Stderr, "usage: insideout setup [--hosted | --local --postgres bundled|own [--no-start] [--create-roles] | --check [--llm]]\n")
 		return true, 2
 	}
 	if *check {
-		if *hosted || *local || *postgres != "" || *noStart {
-			fmt.Fprintln(os.Stderr, "setup: --check cannot be combined with --hosted/--local/--postgres/--no-start")
+		if *hosted || *local || *postgres != "" || *noStart || *createRoles {
+			fmt.Fprintln(os.Stderr, "setup: --check cannot be combined with --hosted/--local/--postgres/--no-start/--create-roles")
 			return true, 2
 		}
 		return runHealthCheck(*llm)
@@ -157,8 +158,8 @@ func runSetupCommand(rest []string) (bool, int) {
 	}
 	switch {
 	case *hosted:
-		if *postgres != "" || *noStart {
-			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start belong to --local")
+		if *postgres != "" || *noStart || *createRoles {
+			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start/--create-roles belong to --local")
 			return true, 2
 		}
 		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", clientAPIBase())
@@ -172,12 +173,16 @@ func runSetupCommand(rest []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "setup: --local needs --postgres bundled|own")
 			return true, 2
 		}
+		if *createRoles && (*postgres != "own" || *noStart) {
+			fmt.Fprintln(os.Stderr, "setup: --create-roles belongs to --local --postgres own (without --no-start, which never touches the database)")
+			return true, 2
+		}
 		// Slice 2: the full local assembly (env write, Postgres,
 		// pgx probe, in-process migrate, boot offer, summary gate).
-		return runLocalSetup(*postgres, *noStart)
+		return runLocalSetup(*postgres, *noStart, *createRoles)
 	default:
-		if *postgres != "" || *noStart {
-			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start belong to --local")
+		if *postgres != "" || *noStart || *createRoles {
+			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start/--create-roles belong to --local")
 			return true, 2
 		}
 		return runInteractiveSetup()
@@ -192,7 +197,7 @@ func runInteractiveSetup() (bool, int) {
 		Persister:      setupPersister{path: mustConfigPath()},
 		DefaultBaseURL: defaultAPIBase,
 		LocalSetup: func(ctx context.Context, postgres string) error {
-			_, code := runLocalSetup(postgres, false)
+			_, code := runLocalSetup(postgres, false, false)
 			if code == 0 {
 				return nil
 			}

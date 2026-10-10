@@ -90,10 +90,13 @@ func generateJWTSecret() (string, error) {
 // childEnv returns an environ for the server child: the current
 // environment with the setup-written values overriding, plus
 // INSIDEOUT_COOKIE_SECURE=0 because a local server serves plain http
-// (the value .env.example documents for exactly this case).
+// (the value .env.example documents for exactly this case). The owner
+// DSN rides along because the server migrates at startup and, with the
+// roles split, only insideout_owner may.
 func childEnv(environ []string, vals map[string]string) []string {
 	override := map[string]string{
 		"DATABASE_URL":            vals["DATABASE_URL"],
+		"DATABASE_OWNER_URL":      vals["DATABASE_OWNER_URL"],
 		"INSIDEOUT_JWT_SECRET":    vals["INSIDEOUT_JWT_SECRET"],
 		"INSIDEOUT_COOKIE_SECURE": "0",
 	}

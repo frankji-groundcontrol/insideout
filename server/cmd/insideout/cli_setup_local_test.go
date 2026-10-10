@@ -49,11 +49,13 @@ func TestJWTNeedsRotation(t *testing.T) {
 func TestChildEnvInjectsWrittenValues(t *testing.T) {
 	vals := map[string]string{
 		"DATABASE_URL":         "postgres://scratch",
+		"DATABASE_OWNER_URL":   "postgres://owner-scratch",
 		"INSIDEOUT_JWT_SECRET": strings.Repeat("k", 64),
 	}
 	env := childEnv([]string{
 		"PATH=/bin",
 		"DATABASE_URL=postgres://old",
+		"DATABASE_OWNER_URL=postgres://old-owner",
 		"INSIDEOUT_COOKIE_SECURE=1",
 	}, vals)
 	seen := map[string]string{}
@@ -63,6 +65,9 @@ func TestChildEnvInjectsWrittenValues(t *testing.T) {
 	}
 	if seen["DATABASE_URL"] != "postgres://scratch" {
 		t.Errorf("DATABASE_URL = %q, want the setup-written value", seen["DATABASE_URL"])
+	}
+	if seen["DATABASE_OWNER_URL"] != "postgres://owner-scratch" {
+		t.Errorf("DATABASE_OWNER_URL = %q, want the setup-written value (the server migrates at startup as the owner)", seen["DATABASE_OWNER_URL"])
 	}
 	if seen["INSIDEOUT_JWT_SECRET"] != vals["INSIDEOUT_JWT_SECRET"] {
 		t.Errorf("INSIDEOUT_JWT_SECRET not injected")
