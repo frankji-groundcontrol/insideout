@@ -8,6 +8,9 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
+// The payloads below copy the wire shape the server sends (pinned by
+// TestPrdViewSendsSectionsAsOrderedPicks in server/internal/api): the
+// projection's sections are an ordered LIST of {section, why}, not a map.
 class _FakeApi extends ApiClient {
   _FakeApi(this.payload, {this.prd})
     : super(
@@ -51,10 +54,10 @@ void main() {
           'audience': 'decision',
           'title': 'Decision view',
           'purpose': 'why, why now, investment and return',
-          'sections': {
-            'background': 'the why-this argument',
-            'goals': 'the investment being decided on',
-          },
+          'sections': [
+            {'section': 'background', 'why': 'the why-this argument'},
+            {'section': 'goals', 'why': 'the investment being decided on'},
+          ],
         },
         'readiness': {
           'ready': false,
@@ -125,7 +128,7 @@ void main() {
         'projection': {
           'audience': 'decision',
           'purpose': 'why now',
-          'sections': const <String, String>{},
+          'sections': const <Map<String, String>>[],
         },
         'readiness': {
           'gaps': [
