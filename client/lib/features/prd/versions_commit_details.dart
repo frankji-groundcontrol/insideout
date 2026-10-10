@@ -8,8 +8,9 @@ import '../../theme/cobalt.dart';
 import 'versions_gap_text.dart';
 
 /// What a committed version records beyond its name: the change summary, the
-/// diff against the previous commit, and the open items it carried
-/// (PRODUCT.md, "Commit").
+/// diff against the previous commit (counts, then one line per changed
+/// section), the open items it carried and the decision note (PRODUCT.md,
+/// "Commit" and "Decision Log").
 class CommitDetails extends StatelessWidget {
   const CommitDetails({super.key, required this.commit});
 
@@ -19,6 +20,10 @@ class CommitDetails extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
+    Widget line(String text) => Padding(
+      padding: const EdgeInsets.only(top: Cobalt.space1),
+      child: Text(text, style: theme.textTheme.bodySmall),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -41,6 +46,11 @@ class CommitDetails extends StatelessWidget {
           }),
           style: theme.textTheme.bodySmall,
         ),
+        for (final e in commit.diffSections.entries)
+          line(
+            '· ${l10n.t('prd.sections.${e.key}')} — '
+            '${l10n.t('versions.diff.${e.value}')}',
+          ),
         if (commit.unresolved.isNotEmpty) ...[
           const SizedBox(height: Cobalt.space3),
           Text(
@@ -48,13 +58,12 @@ class CommitDetails extends StatelessWidget {
             style: theme.textTheme.titleSmall,
           ),
           for (final item in commit.unresolved)
-            Padding(
-              padding: const EdgeInsets.only(top: Cobalt.space1),
-              child: Text(
-                '· ${carriedItem(l10n, commit.primaryAudience, item)}',
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
+            line('· ${carriedItem(l10n, commit.primaryAudience, item)}'),
+        ],
+        if (commit.decisionNote.isNotEmpty) ...[
+          const SizedBox(height: Cobalt.space3),
+          Text(l10n.t('versions.noteTitle'), style: theme.textTheme.titleSmall),
+          line(commit.decisionNote),
         ],
       ],
     );

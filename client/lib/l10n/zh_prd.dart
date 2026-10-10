@@ -40,6 +40,7 @@ const zhPrd = <String, String>{
   'versions.audience.management': '管理',
   'versions.audience.delivery': '交付',
   'versions.summaryLabel': '变更摘要（可选）',
+  'versions.noteLabel': '决策备注（可选）',
   'versions.carryInfo': '将携带 {n} 项未决事项 —— 现在成版，缺口保持可见。',
   'versions.ready': '对该读者已就绪',
   'versions.notReady': '该读者存在缺口 —— 仍可现在成版',

@@ -11,11 +11,12 @@ import '../../theme/cobalt.dart';
 const versionAudiences = ['validation', 'decision', 'management', 'delivery'];
 
 class CommitFormResult {
-  CommitFormResult(this.name, this.audience, this.summary);
+  CommitFormResult(this.name, this.audience, this.summary, this.note);
 
   final String name;
   final String audience;
   final String summary;
+  final String note;
 }
 
 /// The Commit form as a modal **body** on the shared block chrome — it no
@@ -39,6 +40,7 @@ class VersionsCommitForm extends StatefulWidget {
 class VersionsCommitFormState extends State<VersionsCommitForm> {
   late final TextEditingController _name;
   late final TextEditingController _summary;
+  late final TextEditingController _note;
   late String _audience;
 
   @override
@@ -46,6 +48,7 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
     super.initState();
     _name = TextEditingController();
     _summary = TextEditingController();
+    _note = TextEditingController();
     _audience = widget.initialAudience;
   }
 
@@ -53,11 +56,16 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
   void dispose() {
     _name.dispose();
     _summary.dispose();
+    _note.dispose();
     super.dispose();
   }
 
-  CommitFormResult result() =>
-      CommitFormResult(_name.text.trim(), _audience, _summary.text.trim());
+  CommitFormResult result() => CommitFormResult(
+    _name.text.trim(),
+    _audience,
+    _summary.text.trim(),
+    _note.text.trim(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +93,14 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
         BlockTextarea(
           label: l10n.t('versions.summaryLabel'),
           controller: _summary,
+          minLines: 2,
+          maxLines: 5,
+        ),
+        const SizedBox(height: Cobalt.space4),
+        BlockTextarea(
+          key: const Key('commit-note'),
+          label: l10n.t('versions.noteLabel'),
+          controller: _note,
           minLines: 2,
           maxLines: 5,
         ),

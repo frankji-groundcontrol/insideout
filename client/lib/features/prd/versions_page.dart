@@ -73,6 +73,7 @@ class _VersionsPageState extends State<VersionsPage> {
         audience: result.audience,
         summary: result.summary,
         unresolved: carry,
+        note: result.note,
       ),
     );
     if (done && mounted) setState(_reload);

@@ -42,6 +42,7 @@ const enPrd = <String, String>{
   'versions.audience.management': 'Management',
   'versions.audience.delivery': 'Delivery',
   'versions.summaryLabel': 'Change summary (optional)',
+  'versions.noteLabel': 'Decision note (optional)',
   'versions.carryInfo':
       '{n} open item(s) will be carried as unresolved — forming a version now keeps gaps visible.',
   'versions.ready': 'Ready for this audience',
