@@ -109,7 +109,7 @@ func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.
 }
 
 // UpdateProjectUpdate requires actorID to be the update's author or a
-// workspace admin.
+// workspace admin, and still a member of the project's workspace (SEC-11).
 func (s *Store) UpdateProjectUpdate(ctx context.Context, actorID, updateID uuid.UUID, content string) (*ProjectUpdate, error) {
 	var u ProjectUpdate
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -127,14 +127,12 @@ func (s *Store) UpdateProjectUpdate(ctx context.Context, actorID, updateID uuid.
 			return err
 		}
 
-		if authorID != actorID {
-			role, err := requireMember(ctx, tx, workspaceID, actorID)
-			if err != nil {
-				return err
-			}
-			if role != "admin" {
-				return ErrForbidden
-			}
+		role, err := requireMember(ctx, tx, workspaceID, actorID)
+		if err != nil {
+			return err
+		}
+		if authorID != actorID && role != "admin" {
+			return ErrForbidden
 		}
 
 		err = tx.QueryRow(ctx, `
@@ -159,7 +157,7 @@ func (s *Store) UpdateProjectUpdate(ctx context.Context, actorID, updateID uuid.
 }
 
 // DeleteProjectUpdate requires actorID to be the update's author or a
-// workspace admin.
+// workspace admin, and still a member of the project's workspace (SEC-11).
 func (s *Store) DeleteProjectUpdate(ctx context.Context, actorID, updateID uuid.UUID) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		var authorID, workspaceID uuid.UUID
@@ -176,14 +174,12 @@ func (s *Store) DeleteProjectUpdate(ctx context.Context, actorID, updateID uuid.
 			return err
 		}
 
-		if authorID != actorID {
-			role, err := requireMember(ctx, tx, workspaceID, actorID)
-			if err != nil {
-				return err
-			}
-			if role != "admin" {
-				return ErrForbidden
-			}
+		role, err := requireMember(ctx, tx, workspaceID, actorID)
+		if err != nil {
+			return err
+		}
+		if authorID != actorID && role != "admin" {
+			return ErrForbidden
 		}
 
 		_, err = tx.Exec(ctx, `DELETE FROM insideout.project_updates WHERE id = $1`, updateID)

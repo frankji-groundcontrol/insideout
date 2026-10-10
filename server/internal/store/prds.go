@@ -103,9 +103,10 @@ func (s *Store) GetPrdForMember(ctx context.Context, prdID, viewerID uuid.UUID) 
 }
 
 // UpdateSections requires actorID to be the PRD's author or a workspace
-// admin. Only keys present in patch are changed; unknown keys are the
-// caller's responsibility to validate against PrdSectionKeys before
-// calling (kept here so store stays a thin, honest persistence layer).
+// admin, and still a member of it. Only keys present in patch are
+// changed; unknown keys are the caller's responsibility to validate
+// against PrdSectionKeys before calling (kept here so store stays a
+// thin, honest persistence layer).
 //
 // title is optional (nil leaves the stored title untouched via COALESCE).
 // A section-only edit must never rewrite the title: resending a stale
@@ -161,21 +162,19 @@ func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, ti
 }
 
 // requirePrdAuthorOrAdmin locks and returns the PRD row if actorID is its
-// author or the workspace's admin; must run inside an open transaction.
+// author or the workspace's admin and still a member of the workspace (SEC-11:
+// authorship outlives membership); must run inside an open transaction.
 func requirePrdAuthorOrAdmin(ctx context.Context, tx pgx.Tx, prdID, actorID uuid.UUID) (*Prd, error) {
 	row := tx.QueryRow(ctx, `SELECT `+prdColumns+` FROM insideout.prds WHERE id = $1`, prdID)
 	prd, err := scanPrd(row)
 	if err != nil {
 		return nil, err
 	}
-	if prd.AuthorID == actorID {
-		return prd, nil
-	}
 	role, err := requireMember(ctx, tx, prd.WorkspaceID, actorID)
 	if err != nil {
 		return nil, err
 	}
-	if role != "admin" {
+	if prd.AuthorID != actorID && role != "admin" {
 		return nil, ErrForbidden
 	}
 	return prd, nil
@@ -192,6 +191,7 @@ var prdTransitions = map[string][]string{
 // (draft->reviewing->approved/rejected, rejected->draft) and its
 // authorization split: the author submits and resubmits; only a
 // workspace admin approves or rejects (never the author acting alone).
+// Either way the actor must still be a member (SEC-11).
 func (s *Store) UpdatePrdStatus(ctx context.Context, actorID, prdID uuid.UUID, newStatus string) (*Prd, error) {
 	var updated *Prd
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -212,19 +212,17 @@ func (s *Store) UpdatePrdStatus(ctx context.Context, actorID, prdID uuid.UUID, n
 			return ErrValidation
 		}
 
+		role, err := requireMember(ctx, tx, prd.WorkspaceID, actorID)
+		if err != nil {
+			return err
+		}
 		authorOnly := newStatus == "reviewing" || newStatus == "draft"
 		if authorOnly {
 			if prd.AuthorID != actorID {
 				return ErrForbidden
 			}
-		} else {
-			role, err := requireMember(ctx, tx, prd.WorkspaceID, actorID)
-			if err != nil {
-				return err
-			}
-			if role != "admin" {
-				return ErrForbidden
-			}
+		} else if role != "admin" {
+			return ErrForbidden
 		}
 
 		updatedRow := tx.QueryRow(ctx, `

@@ -49,15 +49,13 @@ func (s *Store) CreatePrdCommit(ctx context.Context, actorID, prdID uuid.UUID, n
 		).Scan(&workspaceID, &authorID, &current, &sections); err != nil {
 			return err
 		}
-		if authorID != actorID {
-			var admin bool
-			if err := tx.QueryRow(ctx,
-				`SELECT insideout._is_admin($1, $2)`, workspaceID, actorID).Scan(&admin); err != nil {
-				return err
-			}
-			if !admin {
-				return ErrForbidden
-			}
+		// The Driver or an admin, and either way still a member (SEC-11).
+		role, err := requireMember(ctx, tx, workspaceID, actorID)
+		if err != nil {
+			return err
+		}
+		if authorID != actorID && role != "admin" {
+			return ErrForbidden
 		}
 
 		// The previous commit's frozen sections, for the diff.

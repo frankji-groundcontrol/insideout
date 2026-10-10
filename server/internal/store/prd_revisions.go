@@ -38,7 +38,8 @@ func lockPrdRevisions(ctx context.Context, tx pgx.Tx, prdID uuid.UUID) error {
 // for document_revisions — see docs/plans/2026-07-20-go-rewrite/01-database.md §5).
 // Concurrent snapshots of one PRD queue behind an advisory lock, not a row
 // lock (FOR UPDATE) — see the comment on requireCreatorOrAdmin in
-// workspaces.go for why. Requires actorID to be the PRD's author.
+// workspaces.go for why. Requires actorID to be the PRD's author and still a
+// member of its workspace (SEC-11).
 func (s *Store) CreateRevision(ctx context.Context, actorID, prdID uuid.UUID, note *string) (*PrdRevision, error) {
 	var rev PrdRevision
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -46,17 +47,20 @@ func (s *Store) CreateRevision(ctx context.Context, actorID, prdID uuid.UUID, no
 			return err
 		}
 
-		var authorID uuid.UUID
+		var authorID, workspaceID uuid.UUID
 		var sections map[string]string
 		var currentRevision int
 		err := tx.QueryRow(ctx, `
-			SELECT author_id, sections, current_revision
+			SELECT author_id, workspace_id, sections, current_revision
 			FROM insideout.prds WHERE id = $1`, prdID,
-		).Scan(&authorID, &sections, &currentRevision)
+		).Scan(&authorID, &workspaceID, &sections, &currentRevision)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNotFound
 		}
 		if err != nil {
+			return err
+		}
+		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
 			return err
 		}
 		if authorID != actorID {
