@@ -155,7 +155,7 @@ func invitationEmail(link string, ttl time.Duration) (subject, text, html string
 	intro := "You are invited to InsideOut. Open this link to create your account (the invitation works once and expires " + humanTTL(ttl) + "):"
 	return "Your InsideOut invitation",
 		intro + "\n\n" + link + "\n\nIf you weren't expecting this, you can ignore this email.",
-		simpleEmailHTML("Your invitation", intro, link, int(ttl.Hours()))
+		simpleEmailHTML("Your invitation", intro, link, linkExpiryPhrase(ttl))
 }
 
 func (s *Server) handleListInvitations(w http.ResponseWriter, r *http.Request) {
