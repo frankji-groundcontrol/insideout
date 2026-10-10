@@ -112,7 +112,8 @@ jobs:
 
   # BUG-027: the app's nginx must follow its API upstream when DNS changes, and
   # only a real nginx shows that. The distro package is older than the image's
-  # 1.27 but has every directive client/nginx.conf uses.
+  # 1.27 but has every directive client/nginx.conf uses. SEC-12: the same real
+  # nginx is the only way to see the security headers it sends.
   nginx:
     name: app nginx (re-resolve)
     runs-on: ubuntu-latest
@@ -124,6 +125,7 @@ jobs:
           python-version: "3.12"
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq nginx
       - run: python3 -I scripts/check_nginx_reresolve.py
+      - run: python3 -I scripts/check_nginx_headers.py
 
   client:
     name: client (flutter)
