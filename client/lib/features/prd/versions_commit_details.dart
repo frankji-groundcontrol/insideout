@@ -7,10 +7,11 @@ import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
 import 'versions_gap_text.dart';
 
-/// What a committed version records beyond its name: the change summary, the
-/// diff against the previous commit (counts, then one line per changed
-/// section), the open items it carried and the decision note (PRODUCT.md,
-/// "Commit" and "Decision Log").
+/// What a committed version records beyond its name: the change summary and the
+/// decision note (what and why), the diff against the previous commit (counts,
+/// then one line per changed section), and the open items it carried
+/// (PRODUCT.md, "Commit" and "Decision Log"). The card is a fixed height and
+/// scrolls, so the short human text comes first and the long lists last.
 class CommitDetails extends StatelessWidget {
   const CommitDetails({super.key, required this.commit});
 
@@ -38,6 +39,12 @@ class CommitDetails extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.bodyLarge,
           ),
+        if (commit.decisionNote.isNotEmpty) ...[
+          const SizedBox(height: Cobalt.space3),
+          Text(l10n.t('versions.noteTitle'), style: theme.textTheme.titleSmall),
+          line(commit.decisionNote),
+        ],
+        const SizedBox(height: Cobalt.space3),
         Text(
           l10n.t('versions.diffTitle', {
             'a': commit.diffCounts['added'] ?? 0,
@@ -59,11 +66,6 @@ class CommitDetails extends StatelessWidget {
           ),
           for (final item in commit.unresolved)
             line('· ${carriedItem(l10n, commit.primaryAudience, item)}'),
-        ],
-        if (commit.decisionNote.isNotEmpty) ...[
-          const SizedBox(height: Cobalt.space3),
-          Text(l10n.t('versions.noteTitle'), style: theme.textTheme.titleSmall),
-          line(commit.decisionNote),
         ],
       ],
     );
