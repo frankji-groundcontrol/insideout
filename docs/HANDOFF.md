@@ -10,26 +10,27 @@ path and current warnings, never history.
 
 ## What to do next
 
-**One thread is in flight (2026-10-10): the review-register sweep** in the
+**The review-register sweep is finished on the worktree** (2026-10-10): 24
+verified batches fast-forwarded onto `main` at `82cf072`, all gates green
+(Go 814 PASS / 1 named SKIP plus a clean `-race` run, Flutter 421/421,
+three nginx checks), the
+[disposition ledger](review/2026-10-10-disposition-ledger/README.md) closed
+with 187 findings and 0 unresolved, and the records written
+([server](changelogs/2026-10-10-close-open-gaps/review-sweep-server.md),
+[client](changelogs/2026-10-10-close-open-gaps/review-sweep-client.md)).
+The remaining delivery step — push, CI green, the MBP fast-forward and the
+three-way check — is the last open item of the
 [close-the-open-gaps plan](plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md).
-Its original orchestration froze 16:18 local and was relaunched from ZCode as
-the background workflow `dwfrun-4d0669fe` (24 batches: finish i1/r2g/r2i/r2j/
-r2k, verify the nine unsettled round-1 batches, run r2a–r2f/r2o/r2h/r2l, chain
-r2m after r2j — each worker → verifier → repair). When it settles: integrate
-into the trial tree and run the full gates per the runbook at
-`/tmp/insideout-gap/integrate.md`, finalize the ledger and sweep changelogs,
-land per-task, then the steps below. Everything else in the plan has landed
-(CI green on `2be918e`), and what the
-[issues index](issues/README.md) lists as left is a choice or a secret, not
-unfinished code, and it is the owner's:
+After that, what the [issues index](issues/README.md) lists as left is a
+choice or a secret, not unfinished code, and it is the owner's:
 
 1. **Ship.** Nothing from 2026-10-08 on is deployed: the hosted web bundle and
    server predate the block-craft slices and this wave. `railway up --service
-   server` applies two migrations on start (`20261010100000_ai_runs_reaper_index`
-   and `20261010110000_rotate_short_invite_codes`; the second replaces
-   workspace invite codes shorter than 32 characters, so an outstanding short
-   code stops working and admins read the new one in the workspace). Then
-   `railway up --service app`, the two requests in
+   server` applies four migrations on start (`20261010100000`,
+   `20261010110000`, `20261010120000`, `20261010130000`; the invite-code
+   rotation replaces workspace invite codes shorter than 32 characters, so an
+   outstanding short code stops working and admins read the new one in the
+   workspace). Then `railway up --service app`, the two requests in
    [BUG-027](issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md#owner-check-after-the-deploy),
    and a signed-in page load.
 2. **Destructive or secret steps:** purging the 582 legacy users;
