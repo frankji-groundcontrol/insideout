@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
+import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/project/project_page.dart';
@@ -10,17 +11,21 @@ import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
 class _BoardApi extends ApiClient {
-  _BoardApi({this.nodes = const [], this.evidence = const []})
-    : super(
-        baseUrl: 'http://127.0.0.1:9/api/v1',
-        readAccess: () async => null,
-        readRefresh: () async => null,
-        writeTokens: (a, r) async {},
-        clearTokens: () async {},
-      );
+  _BoardApi({
+    this.nodes = const [],
+    this.evidence = const [],
+    this.listRoadmapError = false,
+  }) : super(
+         baseUrl: 'http://127.0.0.1:9/api/v1',
+         readAccess: () async => null,
+         readRefresh: () async => null,
+         writeTokens: (a, r) async {},
+         clearTokens: () async {},
+       );
 
   final List<RoadmapNode> nodes;
   final List<Map<String, dynamic>> evidence;
+  final bool listRoadmapError;
 
   @override
   Future<Workspace> getWorkspace(String id) async => Workspace(
@@ -72,7 +77,10 @@ class _BoardApi extends ApiClient {
   };
 
   @override
-  Future<List<RoadmapNode>> listRoadmap(String projectId) async => nodes;
+  Future<List<RoadmapNode>> listRoadmap(String projectId) async {
+    if (listRoadmapError) throw ApiException('boom', status: 500);
+    return nodes;
+  }
 
   @override
   Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async =>
@@ -152,5 +160,56 @@ void main() {
     expect(find.text('Done, with its evidence'), findsOneWidget);
     expect(find.text('Wire the flow'), findsOneWidget);
     expect(find.textContaining('merged #12 — healthz wiring'), findsOneWidget);
+  });
+
+  testWidgets('a failed evidence load says so instead of showing nothing', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      ProjectPage(id: 'p1'),
+      _BoardApi(listRoadmapError: true),
+    );
+    // Localized, not the raw server text.
+    expect(find.textContaining('Server hiccup'), findsOneWidget);
+    expect(find.textContaining('boom'), findsNothing);
+  });
+
+  testWidgets('finished work past the cap is counted, not silently dropped', (
+    tester,
+  ) async {
+    RoadmapNode leaf(int i) => RoadmapNode(
+      id: 'leaf$i',
+      projectId: 'p1',
+      parentId: 'root',
+      title: 'Finished step $i',
+      description: '',
+      status: 'done',
+      position: i,
+    );
+    await _pump(
+      tester,
+      ProjectPage(id: 'p1'),
+      _BoardApi(
+        nodes: [
+          RoadmapNode(
+            id: 'root',
+            projectId: 'p1',
+            parentId: null,
+            title: 'Milestone',
+            description: '',
+            status: 'in_progress',
+            position: 0,
+          ),
+          for (var i = 1; i <= 7; i++) leaf(i),
+        ],
+        evidence: [
+          {'kind': 'commit', 'detail': 'merged', 'sourceUrl': ''},
+        ],
+      ),
+    );
+    // Each leaf costs a request, so five are listed; the other two are said.
+    expect(find.textContaining('Finished step'), findsNWidgets(5));
+    expect(find.text('Finished work not shown here: 2 more'), findsOneWidget);
   });
 }
