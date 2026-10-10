@@ -1,6 +1,6 @@
 # Backend
 
-Go 1.25+, stdlib `net/http` (1.22+ method-pattern routing, no web framework),
+Go 1.26+, stdlib `net/http` (1.22+ method-pattern routing, no web framework),
 [`pgx/v5`](https://github.com/jackc/pgx) (no ORM), `golang-jwt/jwt/v5`,
 `golang.org/x/crypto` (argon2id + bcrypt), `log/slog`. Module:
 `github.com/frankji-groundcontrol/insideout/server`.

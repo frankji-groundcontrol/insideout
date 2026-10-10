@@ -30,7 +30,7 @@ until then use the checkout paths below.
 
 ## Hosted service
 
-From a checkout of this repository (Go 1.25+, see `server/go.mod`):
+From a checkout of this repository (Go 1.26+, see `server/go.mod`):
 
 ```bash
 ./scripts/install.sh

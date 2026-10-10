@@ -19,7 +19,7 @@ mkdir -p "$install_dir"
 install_dir=$(cd "$install_dir" && pwd)
 
 if ! command -v go >/dev/null 2>&1; then
-  echo "error: Go toolchain not found on PATH — install Go 1.25+ and re-run." >&2
+  echo "error: Go toolchain not found on PATH — install Go 1.26+ and re-run." >&2
   exit 1
 fi
 

@@ -9,8 +9,9 @@ already passes. Every module must end green before the next one.
 
 Versions that matter (this repo's own pins — do not guess):
 
-- **Go**: minimum 1.25 (`server/go.mod` says `go 1.25.0`; newer 1.2x
-  patch releases are fine).
+- **Go**: read the floor from `server/go.mod` at install time (its `go`
+  directive is the minimum; newer releases are fine). Never assume a
+  version — the directive moves.
 - **Flutter**: 3.44.x — CI and `client/Dockerfile` pin **3.44.0**.
 - **PostgreSQL**: 14+ for a server you bring yourself; the bundled
   Docker path runs the `postgres:18` image.
@@ -58,10 +59,11 @@ silicon) — without it `brew` is not found in new shells.
 
 Verify: `brew --version`.
 
-## 3. Go 1.25+
+## 3. Go
 
 Needed by: A, B, C — both binaries (`insideout`, `insideout-mcp`) are
-built from `server/` with it.
+built from `server/` with it. The minimum is the `go` directive in
+`server/go.mod` — read it now and use it below; do not assume a version.
 
 **macOS**
 
@@ -71,12 +73,12 @@ brew install go
 
 **Ubuntu**
 
-`apt`'s `golang-go` is frequently older than 1.25 (1.22 on 24.04 LTS).
-Check it, and only use apt when it is new enough; otherwise install
-the official tarball:
+`apt`'s `golang-go` is frequently older than the `go.mod` floor (1.22
+on 24.04 LTS). Check it, and only use apt when it is new enough;
+otherwise install the official tarball:
 
 ```bash
-apt policy golang-go         # use apt only if it offers ≥ 1.25
+apt policy golang-go         # use apt only if it offers >= the go.mod floor
 GO_VERSION=1.27.1            # use the newest stable from https://go.dev/dl
 case "$(uname -m)" in
   x86_64) GO_ARCH=amd64 ;;
@@ -94,7 +96,8 @@ The directory goes **first** on `PATH`: an older `go` already on the machine
 the verify step below would print the stale version. The Ubuntu CI job caught
 exactly that.
 
-Verify: `go version` — must print `go1.25` or newer. (On macOS a
+Verify: `go version` — must print the `go` directive from
+`server/go.mod` or newer. (On macOS a
 stale `go` from an old install wins the PATH conflict silently; the
 verify step is not optional.)
 

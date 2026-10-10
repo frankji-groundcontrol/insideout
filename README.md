@@ -53,9 +53,9 @@ curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/do
 
 ### CLI 与 MCP（从源码构建 / from source）
 
-在一份仓库检出里执行（需要 Go 1.25+）：
+在一份仓库检出里执行（需要 Go 1.26+）：
 
-From a checkout of this repository (needs Go 1.25+):
+From a checkout of this repository (needs Go 1.26+):
 
 ```bash
 ./scripts/install.sh
