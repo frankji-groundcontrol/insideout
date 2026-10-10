@@ -80,8 +80,10 @@ Mirrors the tracker (`.track.yaml`); the tracker is the source of truth.
 - [x] Web walk and symbolized console check on a local stack (two passes,
       both themes at both widths; BUG-022, 025, 026, 028, 029).
 - [x] Re-triage every issue record; move resolved ones; record owner-only items.
-- [ ] Review-register sweep: triage the 187 findings no record traces (107
-      in the two multirole reviews, 80 in the frontend review).
+- [x] Review-register sweep: triage the 187 findings no record traces (107
+      in the two multirole reviews, 80 in the frontend review): 56 fixed
+      before, 15 not a defect, 15 parked features (each cites the record that
+      parks it), 99 bounded defects and 2 owner steps.
 - [ ] Review-register sweep: fix the bounded findings test-first; record
       the rest with a fix prompt or the owner step.
 - [ ] Review-register sweep: disposition ledger, indexed from
@@ -122,6 +124,17 @@ terminal), with `gofmt`, `go build` and `go vet` clean; Flutter `pub get
 format` (194 files, 0 changed) and 269 of 269 tests;
 `scripts/check_nginx_reresolve.py` 6 of 6 on nginx 1.27.5.
 
-Left: the review-register sweep, two independent reviews of the change set, and
+The sweep is under way. All 187 findings are triaged and every row validated.
+The sweep's own first findings are already fixed on the integration branch: the
+audience view rendered a blank page against the real server
+([BUG-030](../../issues/2026-10-10-bug-030-audience-view-rendered-a-blank-page.md)),
+a failed coach send lost the typed text, the commit dialog carried another
+audience's open items, and the Ubuntu install job could not fail on a bad
+block. The 99 bounded defects are being fixed test-first in 13 file-disjoint
+batches, each checked by an independent verifier; an independent re-check of
+the 71 fixed and not-a-defect claims runs beside them.
+
+Left: integrating the batches, round 2 (five test and dock items that touch
+their files), the disposition ledger, a second review of the change set, and
 delivery to MBP. MBP is at `8ee97fc`; at the last probe its ssh port timed out
 (a machine-side fault), so the fast-forward waits on it.

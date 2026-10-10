@@ -6,9 +6,9 @@ main:
   outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
   owner: claude
   status: active
-  next_evidence: "CI is green on 2be918e (4 of 4 jobs). Next: the review-register sweep (triage, bounded fixes, ledger), the two independent reviews, then the MBP fast-forward (ssh to MBP times out) and a final CI run."
+  next_evidence: "All 187 findings are triaged: 56 fixed before, 15 not a defect, 15 parked features, 99 bounded defects and 2 owner steps. The bounded defects are being fixed test-first in 13 file-disjoint batches with an independent verifier each, and an independent re-check of the 71 fixed/not-a-defect claims is running. Then round 2 (five test and dock items), integration, the ledger, push, CI and the MBP fast-forward; MBP's ssh port still times out."
 side_tracks: []
-updated_at: "2026-10-10T06:16:09Z"
+updated_at: "2026-10-10T07:10:46Z"
 plan:
 - step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
   owner: claude
@@ -78,10 +78,10 @@ plan:
   status: completed
 - step: "Review-register sweep: triage the 187 findings no record traces (107 multirole, 80 frontend)"
   owner: claude
-  status: in_progress
+  status: completed
 - step: "Review-register sweep: fix the bounded findings test-first; record the rest"
   owner: claude
-  status: pending
+  status: in_progress
 - step: "Review-register sweep: disposition ledger indexed from docs/review"
   owner: claude
   status: pending
