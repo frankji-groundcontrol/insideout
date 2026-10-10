@@ -249,8 +249,13 @@ A disabled block is not wrapped, so it leaves focus traversal.
 
 Cobalt-shade blocks for lifecycle: 0 radius, 2px border. Chip text is
 cobalt-700 on cobalt-50 in light (5.99:1 — DESIGN.md is the authority for
-chip text; code aligns to it). Status marks are square blocks, never dots.
-Not chops.
+chip text; code aligns to it). The light danger chip (overdue, rejected,
+gone quiet) sits on cobalt-200, where cobalt-700 text would be 4.49:1, so
+its label is ink (13.03:1): still in-palette, no new hue. Dark chips keep
+cobalt-200 on cobalt-950 (9.18:1); done and danger share it there by the
+one-hue decree, so the label, not a second colour, says which is which.
+Every chip label owes 4.5:1 and `client/test/cobalt_test.dart` pins each
+tone in both themes. Status marks are square blocks, never dots. Not chops.
 
 ### Cards
 
