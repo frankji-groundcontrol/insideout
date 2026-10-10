@@ -87,13 +87,20 @@ class _ExportPageState extends State<ExportPage> {
                       variant: option.query == format
                           ? BlockButtonVariant.primary
                           : BlockButtonVariant.secondary,
-                      onPressed: () => setState(() => format = option.query),
+                      onPressed: () => setState(() {
+                        format = option.query;
+                        // The server 400s an audience projection in any
+                        // format but markdown, so a pick made earlier must
+                        // not ride along into Print.
+                        if (format != 'markdown') audience = null;
+                      }),
                     ),
                 ],
               ),
               const SizedBox(height: Cobalt.space4),
               BlockSelect<String>(
                 label: l10n.t('prd.exportAudience'),
+                enabled: markdown,
                 value: audience ?? '',
                 options: [
                   (value: '', label: l10n.t('prd.exportFull')),
