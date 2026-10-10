@@ -60,8 +60,13 @@ func (s *Store) migrateExec(ctx context.Context, sql string, args ...any) error 
 	return tx.Commit(ctx)
 }
 
-func (s *Store) migrateQueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+// migrateBootstrapQueryRow is unguarded by design: read-only probes before the
+// insideout schema exists. Anything that writes goes through beginMigrateTx /
+// migrateExec, which hold the insideout_owner role guard.
+func (s *Store) migrateBootstrapQueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
 	return s.migrator().QueryRow(ctx, sql, args...)
 }
 
+// migratePoolOrMain is the owner pool (the main pool when none is attached),
+// unguarded on purpose: the applied-migrations read and SetSystemRole use it.
 func (s *Store) migratePoolOrMain() *pgxpool.Pool { return s.migrator() }

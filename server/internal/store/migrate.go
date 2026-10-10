@@ -23,7 +23,7 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 	// instance target (insideout_app owns the whole database) hits that
 	// path on its first-ever run.
 	var schemaExists bool
-	if err := s.migrateQueryRow(ctx,
+	if err := s.migrateBootstrapQueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'insideout')`,
 	).Scan(&schemaExists); err != nil {
 		return nil, fmt.Errorf("migrate: check schema: %w", err)
