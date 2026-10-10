@@ -6,9 +6,9 @@ main:
   outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
   owner: claude
   status: active
-  next_evidence: "CI result for the lockfile guard, then the backend and client waves."
+  next_evidence: "Merged and verified: Go splits, coach/store/auth fixes, reaper index (measured 17ms->0.07ms), code rotation migration, Flutter api/models/theme/test splits (167 tests). Waiting on setup, parity, client-project, client-workspace/prd workers."
 side_tracks: []
-updated_at: "2026-10-10T00:01:30Z"
+updated_at: "2026-10-10T05:54:34Z"
 plan:
 - step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
   owner: claude
@@ -39,43 +39,43 @@ plan:
   status: completed
 - step: "Backend: split agent/coach.go, refresh sections per tool iteration, push history LIMIT into SQL"
   owner: claude
-  status: pending
+  status: completed
 - step: "Backend: split agent/anthropic.go"
   owner: claude
-  status: pending
-- step: "Backend: split store/roadmap.go; build-from-PRD conflict pre-check before the LLM call"
+  status: completed
+- step: "Backend: split store/roadmap.go; build pre-check decided (dropped: draft/confirm already guards, CLI/MCP would regress)"
   owner: claude
-  status: pending
+  status: completed
 - step: "Backend: split apiclient/apiclient.go"
   owner: claude
-  status: pending
+  status: completed
 - step: "Backend: split cli_setup_local.go; own-URL role probe and provisioning"
   owner: claude
-  status: pending
+  status: completed
 - step: "Backend: CreateRevision lock, ListMembers check, workspace counts, ai_runs index, join rate limit"
   owner: claude
-  status: pending
+  status: completed
 - step: "Env catalog: Go and Python parity test"
   owner: claude
-  status: pending
+  status: completed
 - step: "Client: split api/client.dart and api/models.dart"
   owner: claude
-  status: pending
+  status: completed
 - step: "Client: split project_page and roadmap_canvas; canvas fit, keyboard pan, reduced motion, delete count"
   owner: claude
-  status: pending
+  status: completed
 - step: "Client: popup menu theme, FAB, coach errors, slab surfaces, low fidelity items"
   owner: claude
-  status: pending
+  status: completed
 - step: "Client: split theme block_chrome/block_field and l10n tables"
   owner: claude
-  status: pending
+  status: completed
 - step: "Run the web walk and the symbolized console check on a local stack"
   owner: claude
-  status: pending
+  status: completed
 - step: "Re-triage every issue record; move resolved ones; record owner-only items"
   owner: claude
-  status: pending
+  status: completed
 - step: "Adversarial verification of the whole change set"
   owner: claude
   status: pending

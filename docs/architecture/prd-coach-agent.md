@@ -7,8 +7,8 @@ calls and streaming replies over Server-Sent Events.
 ## Provider
 
 `internal/agent/anthropic.go` talks directly to the Anthropic Messages API
-over stdlib `net/http`, with a hand-rolled SSE parser — no LLM framework
-dependency. This replaced an earlier `langchaingo`-based implementation; see
+over stdlib `net/http`, with a hand-rolled SSE parser in `anthropic_parse.go` —
+no LLM framework dependency. This replaced an earlier `langchaingo`-based implementation; see
 [BUG-009](../issues/2026-07-21-bug-009-langchaingo-removed.md) for why (the library is
 unmaintained, and it silently dropped real answers behind extended-thinking
 content blocks). The provider is hidden behind one interface,
@@ -31,8 +31,8 @@ JSON to `{base}/responses`. The operator includes any `/v1` on
 ### Anthropic wire format
 
 `anthropic.go` builds the request JSON (`model`, `max_tokens`, `system` as a
-top-level field, `tools`, `messages`) and parses the streaming response
-event-by-event: `message_start` → `content_block_start` (`text` / `tool_use`
+top-level field, `tools`, `messages`) and `anthropic_parse.go` parses the
+streaming response event-by-event: `message_start` → `content_block_start` (`text` / `tool_use`
 / `thinking`) → `content_block_delta` (`text_delta` / `input_json_delta` /
 `thinking_delta` / `signature_delta`) → `content_block_stop` →
 `message_delta` → `message_stop`. Content blocks are accumulated **by
@@ -73,7 +73,7 @@ store: `get_prd()`, `update_prd_section(section, markdown)` (validated
 against the 8 fixed section keys, emits a `prd_updated` SSE event), and
 `advance_stage(next)` (validated against the legal transition order). Only
 one tool call per assistant turn is ever surfaced (`parseAnthropicStream` in
-`anthropic.go` returns on the first tool_use content block it finds) — the
+`anthropic_parse.go` returns on the first tool_use content block it finds) — the
 coach's own prompting discipline never asks for more than one anyway.
 
 ## Streaming contract
@@ -99,7 +99,9 @@ Full history is stored server-side in `agent_messages` (not client-side
 `localStorage`) and is retrievable via `GET
 /api/v1/conversations/{id}/messages` — verified end-to-end with a real
 coaching exchange (a real streamed reply, then confirmed the exchange is
-persisted and returned by that endpoint).
+persisted and returned by that endpoint). A turn does not replay all of it:
+`coach_loop.go` (the provider/tool loop; `coach.go` owns the turn lifecycle)
+loads only the newest messages, and the store applies that limit in SQL.
 
 An SSE-specific bug worth knowing about if a new streaming endpoint is ever
 added: response-writer-wrapping middleware must explicitly forward

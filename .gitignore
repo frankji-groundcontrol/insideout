@@ -173,3 +173,6 @@ backups/
 
 # Host credential values: tracked YAML metadata only, never the .key files.
 .secrets/
+
+# macOS Finder metadata
+.DS_Store

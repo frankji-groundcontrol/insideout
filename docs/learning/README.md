@@ -6,6 +6,8 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-10 | [A VM test cannot show what the web's key map does](2026-10-10-vm-tests-do-not-run-the-web-key-map.md) | [BUG-028](../issues/2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md) |
+| 2026-10-10 | [A check that still passes when you break the thing guards nothing](2026-10-10-a-check-that-passes-under-its-mutation-guards-nothing.md) | [BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md) |
 | 2026-10-10 | [A restyle leaves its strings behind; make a red prove what it claims](2026-10-10-a-restyle-leaves-its-strings-behind.md) | [BUG-026](../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md) |
 | 2026-10-10 | [A fake copies the page's misreading of the contract](2026-10-10-a-fake-copies-the-pages-misreading.md) | [BUG-022](../issues/2026-10-10-bug-022-build-mvp-wrote-nothing.md) |
 | 2026-10-10 | [Test the width you ship for, and assert rectangles](2026-10-10-test-the-width-you-ship-for.md) | [BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md) |

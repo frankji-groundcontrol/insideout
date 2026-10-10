@@ -160,6 +160,19 @@ flutter analyze --no-fatal-infos
 flutter test
 ```
 
+The app's nginx proxy (Python 3 and any nginx binary; nothing is installed):
+
+```bash
+python3 scripts/check_nginx_reresolve.py [--nginx /path/to/nginx]   # follows the API upstream when DNS changes
+```
+
+It renders `client/nginx.conf` as the image entrypoint does and runs it beside a
+stub DNS server and two upstreams, so it takes about 30 seconds. Re-run it when
+the nginx base image is bumped
+([BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)).
+On a Mac whose CommandLineTools SDK the linker rejects, a source build of nginx
+needs `SDKROOT` pointed at the Xcode SDK; the Homebrew `nginx` formula avoids it.
+
 Credential + env script suites (Python; the same two batteries CI runs
 in its env-suites job — from `scripts/`):
 

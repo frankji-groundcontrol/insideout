@@ -187,13 +187,18 @@ naturally lands it; new features; new brand hues.
 
 ## Status
 
-**In flight — code complete, one verification item open** 2026-10-08.
-Not marked Finished: AGENTS.md closes a plan only when every item is
-resolved, and verification item **4 (the web walk at 1440×900 and
-390×844, both themes) has never been run**. It needs a live
-server/browser and stays user-owned. Items 1–3 and 5 are green.
+**Finished** 2026-10-10. The plan sat at "In flight — code complete"
+from 2026-10-08 because verification item **4 (the web walk at 1440×900
+and 390×844, both themes)** had never been run. It was run on
+2026-10-10 in two passes against a release web build and a real server:
+both widths in both themes, with the keyboard and the pressed state
+driven by hand. The defects it found (BUG-022, BUG-025, BUG-026,
+BUG-028, BUG-029) were all fixed test-first
+([phone layouts and Build MVP](../../changelogs/2026-10-10-close-open-gaps/web-walk-and-phone-layouts.md),
+[themes, keyboard and two more](../../changelogs/2026-10-10-close-open-gaps/web-walk-keyboard-and-themes.md)).
+Items 1–3 and 5 were green on 2026-10-08.
 
-Current gate, re-run after the focus fix below:
+Gate on 2026-10-08, re-run after the focus fix below:
 `dart format` 135 files / 0 changed, exit 0; `flutter analyze
 --no-fatal-infos` 16 issues, **0 errors / 0 warnings**, exit 0;
 `flutter test` **167/167** passed, exit 0; `client/test/cobalt_test.dart`
@@ -281,9 +286,10 @@ earlier.
   `test/cobalt_test.dart` unmodified and green (items 1–2).
 - `dart format --output=none --set-exit-if-changed lib test` —
   `Formatted 133 files (0 changed) in 0.29 seconds.`, exit 0 (item 3).
-- Item 4 (web walk at 1440×900 and 390×844, both themes) — **not run**;
-  the review wave was read-only and the workflow had no browser. Open,
-  user-owned, together with the 390px utility-cluster crowding check.
+- Item 4 (web walk at 1440×900 and 390×844, both themes) — **not run on
+  2026-10-08** (the review wave was read-only and the workflow had no
+  browser); **run 2026-10-10**, including the 390px utility-cluster
+  crowding check (see Status).
 - Item 5 (WCAG) — asserted in `test/block_primitives_test.dart`
   ("every block tone clears 3:1 accent and 4.5:1 ink"), green.
 

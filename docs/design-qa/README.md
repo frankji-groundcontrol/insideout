@@ -24,7 +24,8 @@ English only.
 - [2026-10-07 — Block craft against the reference app](2026-10-07-block-craft.md)
   — "optimize the frontend against the design language of the reference
   reimbursement app, keeping the cobalt blue hue family"; component layer
-  ported, fidelity review 7.5/10, focus-ring gap filed.
+  ported, fidelity review 7.5/10, focus-ring gap filed. Every finding closed
+  by 2026-10-10, including the 390px web walk ([BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
 - [2026-10-06 — App icon candidates](2026-10-06-app-icon.md)
   — user named `breakout.svg`; that mark is the installed icon.
 - [2026-09-18 — Cobalt Flutter against a real API](2026-09-18-cobalt-backend-walk.md)

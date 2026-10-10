@@ -20,8 +20,8 @@ Hand-written Dart HTTP client (Dio), Bearer access tokens,
 
 Hosted web is built with `--dart-define=API_BASE=/api/v1`. nginx on the
 Railway `app` service serves the static Flutter bundle and proxies
-`/api/` to `http://server.railway.internal:8080/api/` (buffering off for
-Coach SSE). Native and `flutter run` use the public Go URL
+`/api/` to `$NGINX_API_UPSTREAM` (default `http://server.railway.internal:8080`,
+looked up per request; buffering off for Coach SSE). Native and `flutter run` use the public Go URL
 (`https://server-production-9c338.up.railway.app/api/v1`). Login and
 register still set httpOnly cookies (unused by Flutter web) and also
 return top-level `accessToken` / `refreshToken`.
@@ -36,17 +36,37 @@ falls back to `index.html`.
 client/lib/
   main.dart           hydrate session + appearance; path URL strategy
   app.dart            MaterialApp.router + signed-in AppScaffold + dock
-  theme/              Cobalt tokens + ThemeData (light/dark) + the block_*
-                      component primitives (buttons, fields, modal chrome,
-                      banners/loaders, empty/loading/error states)
+  theme/              Cobalt tokens + ThemeData (light/dark); the block_*
+                      primitives, one concern per file (button, field, modal,
+                      focus ring, chrome: banners/loaders/tags, states)
   chrome/             bottom dock + last-loop focus
   router.dart         current product paths
   session/            Session, Appearance, auth redirect
-  api/                Dio client, models, request builders, errors
-  features/           landing, auth (AuthDoor), dashboard, workspace, project,
-                      roadmap, prd, profile
-  l10n/               zh-CN + en-US
+  api/                client.dart is a library over per-resource part files
+                      (core, auth, workspace, project, prd, stream); models.dart
+                      is a barrel over models_{session,project,roadmap,prd};
+                      request builders, errors, SSE transport
+  features/           landing, auth (AuthDoor), dashboard, workspace, profile;
+                      project (project page and the roadmap: page, header,
+                      bands, canvas, minimap, progress view); prd (desk, coach,
+                      versions stack + commit details, revisions, export)
+  l10n/               zh-CN + en-US; en.dart and zh.dart spread four namespace
+                      files each (shell, workspace, account, prd)
 ```
+
+Below `Cobalt.bpNarrow` (600 px) pages change layout instead of shrinking: the
+roadmap, workspace, ideas, home and revisions views stack, and the PRD page
+embeds the desk column (`PrdDeskColumn(embedded: true)`, shrink-wrapped with no
+scroll of its own) so the page scrolls as one
+([BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
+`client/test/l10n_unread_keys_test.dart` fails when a locale key has no reader in
+`lib/`, so a restyle cannot leave dead strings behind
+([BUG-026](../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md)).
+
+The custom blocks take keyboard focus and activate through `BlockFocus`, which
+binds both `ActivateIntent` and `ButtonActivateIntent`: on the web Enter is the
+second, and a control that handled only the first ignored Enter in a browser
+([BUG-028](../issues/2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md)).
 
 ### Coach chat
 

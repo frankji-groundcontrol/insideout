@@ -18,6 +18,11 @@ errors / 0 warnings (16 pre-existing infos), **167/167** tests, format
 clean, `cobalt_test.dart` untouched
 ([changelog](../changelogs/2026-10-08-block-focus-ring.md)).
 
+**Correction 2026-10-10.** Enter activated the blocks on the VM and desktop but
+not in a browser, where Enter is `ButtonActivateIntent` and `BlockFocus` bound
+only `ActivateIntent`; fixed in
+[BUG-028](2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md).
+
 The original finding, kept below as filed.
 
 ---

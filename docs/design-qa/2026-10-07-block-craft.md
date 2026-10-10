@@ -56,18 +56,28 @@ all filed as issues:
 - **Keyboard users regressed** — the custom blocks have no focus ring and
   no Tab activation yet, where the Material buttons they replaced did
   ([issue](../issues/2026-10-08-block-focus-ring-keyboard.md)). This is
-  the one high finding.
+  the one high finding. **Closed 2026-10-08**: `BlockFocus` gives the
+  blocks Tab traversal, Enter/Space activation and a cobalt ring
+  ([changelog](../changelogs/2026-10-08-block-focus-ring.md)); Enter in a
+  browser followed on 2026-10-10
+  ([BUG-028](../issues/2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md)).
 - Four overflow menus still open stock Material (rounded, blurred,
   ripple) popups; the workspace quick-capture FAB neither casts nor
   presses; coach API failures still collapse to the generic error
   string; dark-mode cobalt-950 bands are larger slabs than the decree
   intends — with six low findings beside them
   ([follow-ups](../issues/2026-10-08-block-craft-fidelity-followups.md)).
+  **Closed 2026-10-10**: every item is done or was reviewed and kept; the
+  record has the commits.
 - The boot splash keeps its round spinner (plan-protected first-frame
   gate) and pull-to-refresh shows Material's round indicator — visible
-  exceptions to "loaders are square blocks".
+  exceptions to "loaders are square blocks". Pull-to-refresh has been square
+  since 2026-10-10 (`f2a77e4`); the boot splash keeps its round spinner on
+  purpose.
 - The 390px web walk was not run; the roadmap utility cluster may crowd
-  at that width.
+  at that width. **Run 2026-10-10**: it did, and the walk found five real
+  defects at 390px and 1440px, all fixed
+  ([BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
 
 Files touched: `client/lib/theme/block_*.dart` (new), `cobalt.dart`,
 `cobalt_theme.dart`, `field_card.dart`, and ~40 files under

@@ -40,7 +40,9 @@ the default already in effect. Only `DATABASE_URL` and `INSIDEOUT_JWT_SECRET`
 are uncommented, because only those two make the server refuse to boot. The
 "Required" column below restates that, and
 [`scripts/test_env_catalog.py`](../../scripts/test_env_catalog.py) asserts the
-two agree. `./scripts/env.sh edit` shows every variable's live state; the
+two agree, and `server/internal/setup/catalog/parity_test.go` feeds the same
+skeleton and a live `.env` through both the Go catalog and `scripts/env_catalog.py`
+and fails CI if they differ. `./scripts/env.sh edit` shows every variable's live state; the
 hands-on walkthrough is [SETENV.md](../SETENV.md).
 
 **Naming convention:** ecosystem variables keep their conventional names

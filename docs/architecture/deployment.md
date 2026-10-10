@@ -22,7 +22,10 @@
   `ghcr.io/cirruslabs/flutter:3.44.0` → `nginxinc/nginx-unprivileged:1.27-alpine`)
   with [`client/nginx.conf`](../../client/nginx.conf) rendered from a
   template at container start, proxying `/api/` to `$NGINX_API_UPSTREAM`
-  (`http://server:8080` in compose). The same Dockerfile is Railway's
+  (`http://server:8080` in compose), resolved per request through the
+  container's nameservers
+  ([BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)).
+  The same Dockerfile is Railway's
   production `app` service (upstream default baked as
   `http://server.railway.internal:8080`).
 

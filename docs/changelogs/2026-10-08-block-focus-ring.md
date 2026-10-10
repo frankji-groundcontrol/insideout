@@ -20,7 +20,9 @@ recorded in the
 **New — `client/lib/theme/block_focus.dart`.** `BlockFocus` wraps a block
 in `FocusableActionDetector` with an `ActivateIntent` action, so Tab
 reaches it and Enter or Space fires the callback through the platform's
-default shortcuts rather than a hand-rolled key handler.
+default shortcuts rather than a hand-rolled key handler. (On the web Enter
+is a different intent and did nothing until 2026-10-10:
+[BUG-028](../issues/2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md).)
 
 The ring is `CobaltFocusRing`, a `CustomPainter` used as a **foreground
 painter**: it draws a 2px `brand` rect inflated `gap + borderContainer/2`

@@ -109,12 +109,16 @@ insideout setup --local --postgres own       # paste a DATABASE_URL (hidden)
 insideout setup --local --postgres bundled --no-start   # write .env only
 ```
 
-One precondition the own-URL path does not handle yet: a **fresh**
-database needs the two NOSUPERUSER roles provisioned first
-(`insideout_owner` with BYPASSRLS owning the database, `insideout_app`
-with CONNECT) exactly as `docker/postgres-init/001-create-app-role.sh`
-does for the bundled path
-([issue](../issues/2026-10-07-own-url-fresh-db-bootstrap.md)).
+A **fresh** database needs the two NOSUPERUSER roles that
+`docker/postgres-init/001-create-app-role.sh` creates for the bundled path
+(`insideout_owner` with BYPASSRLS owning the database, `insideout_app` with
+CONNECT). The own-URL path asks PostgreSQL before it migrates: with both roles
+present it migrates; with both missing and a connecting role that can create
+them it offers to (a prompt at a terminal, `--create-roles` otherwise),
+generates the passwords into `.env` without printing them and rewrites the
+DSNs; in every other case it stops before any migration and prints the SQL to
+run ([issue](../issues/2026-10-07-own-url-fresh-db-bootstrap.md),
+[changelog](../changelogs/2026-10-10-close-open-gaps/setup-roles-and-bundled-owner.md)).
 
 The installed CLI keeps calling the hosted API until you opt into
 this server:
@@ -174,8 +178,9 @@ Do not print secret values, tokens, or database URLs.
    - Bundled: `insideout setup --local --postgres bundled`
    - Existing URL: `insideout setup --local --postgres own` with the
      URL on stdin.
-   - A fresh own-URL database needs the two roles provisioned first
-     (see the note above).
+   - A fresh own-URL database needs the two roles; add `--create-roles`
+     when the DSN's role may create them (stdin carries the DSN, so
+     setup cannot prompt), or run the SQL it prints.
 4. After a local server exists, set
    `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI still calls
    the hosted API.

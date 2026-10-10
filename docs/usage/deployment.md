@@ -153,7 +153,12 @@ On `app`:
   template at container start and proxies `/api/` to
   `$NGINX_API_UPSTREAM` (Dockerfile-baked default
   `http://server.railway.internal:8080`, buffering off; compose overrides
-  it to `http://server:8080`).
+  it to `http://server:8080`). The value is `scheme://host:port` with no
+  path. nginx looks it up on every request through the container's own
+  nameservers (answers cached 10 s), so a redeployed `server` is picked up
+  within seconds and `app` does not need a restart
+  ([BUG-027](../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md);
+  an `app` image built before that fix resolves only at start and does).
 
 LLM vars are set on `server`. Empty `INSIDEOUT_LLM_API_KEY` still selects
 the offline template coach.

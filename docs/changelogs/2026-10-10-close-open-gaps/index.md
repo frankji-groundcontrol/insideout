@@ -16,6 +16,8 @@ an operator needs to do.
 | Client fidelity fixes | [client-fidelity-fixes.md](client-fidelity-fixes.md) | landed |
 | Web walk and phone layouts | [web-walk-and-phone-layouts.md](web-walk-and-phone-layouts.md) | landed |
 | The commit card shows what a version recorded | [commit-card-details.md](commit-card-details.md) | landed |
+| Web walk, second pass: both themes, the keyboard, two more defects | [web-walk-keyboard-and-themes.md](web-walk-keyboard-and-themes.md) | landed |
+| The app's nginx follows its API upstream | [nginx-upstream-resolution.md](nginx-upstream-resolution.md) | landed; live after an `app` deploy |
 
 Nothing here is deployed. The hosted bundle and server still predate the
 2026-10-08 slices; shipping stays an explicit owner step
