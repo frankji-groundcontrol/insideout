@@ -108,17 +108,15 @@ void main() {
     });
   });
 
-  test('PRD status and build-from-PRD first call vs confirm', () {
+  test('PRD status and build-from-PRD draft', () {
     final status = postPrdStatus('prd1', 'approved');
     expect(status.method, 'POST');
     expect(status.path, '/prds/prd1/status');
     expect(status.body, {'status': 'approved'});
-    final first = postPrdBuild('prd1');
-    expect(first.method, 'POST');
-    expect(first.path, '/prds/prd1/build');
-    expect(first.body, isNull);
-    final confirm = postPrdBuild('prd1', expectedCount: 4);
-    expect(confirm.body, {'expectedCount': 4});
+    final draft = postPrdBuild('prd1');
+    expect(draft.method, 'POST');
+    expect(draft.path, '/prds/prd1/build');
+    expect(draft.body, isNull);
   });
 
   test('build-from-PRD confirm sends the drafted tree', () {

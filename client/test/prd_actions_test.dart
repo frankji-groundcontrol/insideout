@@ -76,11 +76,8 @@ class _RecordingApi extends ApiClient {
 
   // The server's draft: nothing is written, the tree comes back to be sent on.
   @override
-  Future<Map<String, dynamic>> buildFromPrd(
-    String id, {
-    int? expectedCount,
-  }) async {
-    calls.add(postPrdBuild(id, expectedCount: expectedCount));
+  Future<Map<String, dynamic>> buildFromPrd(String id) async {
+    calls.add(postPrdBuild(id));
     if (buildError != null) throw buildError!;
     return {'projectId': 'proj-1', 'tree': _tree};
   }

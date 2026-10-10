@@ -8,7 +8,8 @@ import '../session/appearance.dart';
 /// in a button handler let the exception skip the reload and show nothing.
 /// Run [write] inside this guard instead: on failure it shows a localized
 /// error SnackBar and returns false so callers keep their input; on success
-/// it returns true so callers reload. Modeled on ProjectPage._decide.
+/// it returns true so callers reload. Modeled on the updates feed's
+/// `_decide` (project_updates_feed.dart).
 Future<bool> guardWrite(
   BuildContext context,
   Future<void> Function() write,

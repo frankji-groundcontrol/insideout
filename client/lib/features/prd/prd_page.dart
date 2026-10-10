@@ -143,33 +143,33 @@ class _PrdPageState extends State<PrdPage> {
   Future<void> _build() async {
     final api = context.read<Session>().api;
     final t = context.read<Appearance>().t;
-    // The replace-conflict retry is part of the write; anything else the
-    // server rejects surfaces through the guard's SnackBar.
+    // The server drafts on /build and writes only on /build/confirm, so the
+    // draft goes straight to confirm; the replace prompt is the review step.
+    // Anything else the server rejects surfaces through the guard's SnackBar.
     await guardWrite(context, () async {
+      final draft = await api.buildFromPrd(widget.id);
+      final tree = Map<String, dynamic>.from(draft['tree'] as Map);
+      Map<String, dynamic> result;
       try {
-        final result = await api.buildFromPrd(widget.id);
-        if (mounted) _goProject(result);
+        result = await api.confirmBuildFromPrd(widget.id, tree);
       } on ApiException catch (e) {
-        if (e.code == 'replace_conflict' && e.liveCount != null) {
-          if (!mounted) return;
-          final ok = await showBlockConfirm(
-            context: context,
-            title: t('prd.buildMVP'),
-            message: t('prd.buildReplaceConfirm', {'count': e.liveCount}),
-            confirmText: t('common.confirm'),
-            danger: true,
-          );
-          if (ok && mounted) {
-            final result = await api.buildFromPrd(
-              widget.id,
-              expectedCount: e.liveCount,
-            );
-            if (mounted) _goProject(result);
-          }
-        } else {
-          rethrow;
-        }
+        if (e.code != 'replace_conflict' || e.liveCount == null) rethrow;
+        if (!mounted) return;
+        final ok = await showBlockConfirm(
+          context: context,
+          title: t('prd.buildMVP'),
+          message: t('prd.buildReplaceConfirm', {'count': e.liveCount}),
+          confirmText: t('common.confirm'),
+          danger: true,
+        );
+        if (!ok || !mounted) return;
+        result = await api.confirmBuildFromPrd(
+          widget.id,
+          tree,
+          expectedCount: e.liveCount,
+        );
       }
+      if (mounted) _goProject(result);
     });
   }
 

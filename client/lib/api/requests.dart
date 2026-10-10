@@ -121,14 +121,9 @@ ApiCall postPrdStatus(String id, String status) {
   return ApiCall('POST', '/prds/$id/status', {'status': status});
 }
 
-/// First build omits the body; a confirm retry sends `{expectedCount}`.
-ApiCall postPrdBuild(String id, {int? expectedCount}) {
-  return ApiCall(
-    'POST',
-    '/prds/$id/build',
-    expectedCount == null ? null : {'expectedCount': expectedCount},
-  );
-}
+/// Drafts a branched roadmap from the PRD. Nothing is written: the response
+/// is `{projectId, tree}`, to be sent on through [postPrdBuildConfirm].
+ApiCall postPrdBuild(String id) => ApiCall('POST', '/prds/$id/build');
 
 /// Writes a drafted [tree] (`/build` only drafts). When the project already
 /// has roadmap nodes the server answers 409 `replace_conflict` with
@@ -140,6 +135,6 @@ ApiCall postPrdBuildConfirm(
 }) {
   return ApiCall('POST', '/prds/$id/build/confirm', {
     'tree': tree,
-    if (expectedCount != null) 'expectedCount': expectedCount,
+    'expectedCount': ?expectedCount,
   });
 }

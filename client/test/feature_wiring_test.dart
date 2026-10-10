@@ -51,6 +51,7 @@ void main() {
       expect(roadmap.contains('parentId: node.id'), isTrue);
       expect(prd.contains('updatePrdStatus'), isTrue);
       expect(prd.contains('buildFromPrd'), isTrue);
+      expect(prd.contains('confirmBuildFromPrd'), isTrue);
       expect(prd.contains('expectedCount'), isTrue);
       expect(prd.contains('onPrdUpdated'), isTrue);
       expect(prd.contains('onStageChanged'), isTrue);
@@ -62,7 +63,8 @@ void main() {
       expect(client.contains('coachSseOpen'), isTrue);
       expect(client.contains('readCoachSse'), isTrue);
       expect(client.contains('kIsWeb'), isTrue);
-      expect(client.contains('req.postPrdBuild'), isTrue);
+      expect(client.contains('req.postPrdBuild('), isTrue);
+      expect(client.contains('req.postPrdBuildConfirm'), isTrue);
       expect(client.contains('req.getIdea'), isTrue);
       expect(client.contains('req.getConversation'), isTrue);
       expect(client.contains('req.postPrdRevision'), isTrue);

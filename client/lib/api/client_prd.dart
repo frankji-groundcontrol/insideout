@@ -113,11 +113,10 @@ mixin _PrdVerbs on _ApiCore {
     return _parse(res, (d) => Prd.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<Map<String, dynamic>> buildFromPrd(
-    String id, {
-    int? expectedCount,
-  }) async {
-    final res = await _exec(req.postPrdBuild(id, expectedCount: expectedCount));
+  /// Drafts the roadmap: `{projectId, tree}`. Nothing is written until
+  /// [confirmBuildFromPrd].
+  Future<Map<String, dynamic>> buildFromPrd(String id) async {
+    final res = await _exec(req.postPrdBuild(id));
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
