@@ -21,6 +21,18 @@ type PrdRevision struct {
 	CreatedAt time.Time
 }
 
+// lockPrdRevisions queues every writer of one PRD's revision numbers behind a
+// per-PRD advisory lock held to the end of the transaction. Without it,
+// concurrent writers all read the same current_revision, all compute +1, and
+// the losers trip UNIQUE(prd_id, revision) — a spurious 409 — or, when one
+// holds the PRD row and another holds the pending insert, deadlock. Every
+// writer takes this lock before anything else. The key is namespaced: roadmap
+// builds lock the bare hashtext(prdID), and the two must not block each other.
+func lockPrdRevisions(ctx context.Context, tx pgx.Tx, prdID uuid.UUID) error {
+	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, "prd_revision:"+prdID.String())
+	return err
+}
+
 // CreateRevision snapshots the PRD's current sections as the next
 // revision number (the same MAX+1 pattern the old complete_node RPC used
 // for document_revisions — see docs/plans/2026-07-20-go-rewrite/01-database.md §5).
@@ -30,11 +42,7 @@ type PrdRevision struct {
 func (s *Store) CreateRevision(ctx context.Context, actorID, prdID uuid.UUID, note *string) (*PrdRevision, error) {
 	var rev PrdRevision
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		// Without this, concurrent snapshots all read the same current_revision,
-		// all compute +1, and the losers trip UNIQUE(prd_id, revision) — a
-		// spurious 409. The key is namespaced: roadmap builds lock the bare
-		// hashtext(prdID), and the two must not block each other.
-		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, "prd_revision:"+prdID.String()); err != nil {
+		if err := lockPrdRevisions(ctx, tx, prdID); err != nil {
 			return err
 		}
 
@@ -67,11 +75,10 @@ func (s *Store) CreateRevision(ctx context.Context, actorID, prdID uuid.UUID, no
 			RETURNING id, prd_id, revision, sections, created_by, note, created_at`,
 			prdID, nextRevision, string(sectionsJSON), actorID, note,
 		).Scan(&rev.ID, &rev.PrdID, &rev.Revision, &rev.Sections, &rev.CreatedBy, &rev.Note, &rev.CreatedAt)
-		// The lock above queues CreateRevision callers, so they no longer collide
-		// here. It stays as a backstop for any other writer of prd_revisions that
-		// doesn't take the lock (CreatePrdCommit locks the PRD row instead): map
-		// the (prd_id, revision) unique violation (23505) to ErrConflict so the
-		// API answers 409 "try again" instead of an opaque 500 (F14).
+		// The lock above queues revision writers, so they no longer collide here.
+		// It stays as a backstop for any writer that skips the lock: map the
+		// (prd_id, revision) unique violation (23505) to ErrConflict so the API
+		// answers 409 "try again" instead of an opaque 500 (F14).
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			return ErrConflict

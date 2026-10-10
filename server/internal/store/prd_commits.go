@@ -34,6 +34,11 @@ type PrdCommit struct {
 func (s *Store) CreatePrdCommit(ctx context.Context, actorID, prdID uuid.UUID, name, audience, summary string, unresolved json.RawMessage, decisionNote string) (*PrdCommit, error) {
 	var out *PrdCommit
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		// Before the row lock below, so a commit and a snapshot never take the
+		// two locks in opposite orders.
+		if err := lockPrdRevisions(ctx, tx, prdID); err != nil {
+			return err
+		}
 		var workspaceID uuid.UUID
 		var authorID uuid.UUID
 		var current int
