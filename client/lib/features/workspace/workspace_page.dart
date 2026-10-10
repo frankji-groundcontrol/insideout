@@ -295,6 +295,11 @@ class _WorkspacePageState extends State<WorkspacePage> {
                   l10n.t('workspace.inviteCode', {'code': ws.code}),
                   style: theme.textTheme.titleMedium,
                 ),
+                const SizedBox(height: Cobalt.space2),
+                Text(
+                  l10n.t('workspace.inviteAccountHint'),
+                  style: theme.textTheme.bodySmall,
+                ),
               ],
             ),
           ),

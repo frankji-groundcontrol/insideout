@@ -20,6 +20,8 @@ const zhWorkspace = <String, String>{
   'workspace.settings': '设置',
   'workspace.settingsTitle': '工作区设置',
   'workspace.inviteHint': '把这个邀请码分享给队友：',
+  'workspace.inviteAccountHint':
+      '队友需要先有 InsideOut 账号。若注册仅限邀请，管理员可在「个人资料 > 管理」中创建站点邀请。',
   'workspace.membersTitle': '成员',
   'workspace.role.admin': '管理员',
   'workspace.role.member': '成员',

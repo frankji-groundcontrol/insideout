@@ -21,6 +21,8 @@ const enWorkspace = <String, String>{
   'workspace.settings': 'Settings',
   'workspace.settingsTitle': 'Workspace settings',
   'workspace.inviteHint': 'Share this invite code with teammates:',
+  'workspace.inviteAccountHint':
+      'Teammates need an InsideOut account first. If sign-up is invitation-only, an admin can create a site invitation under Profile > Admin.',
   'workspace.membersTitle': 'Members',
   'workspace.role.admin': 'Admin',
   'workspace.role.member': 'Member',
