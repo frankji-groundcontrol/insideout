@@ -47,6 +47,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Tokenized audience-share link](2026-10-11-tokenized-audience-share-link.md)
   — audience views are auth-only app routes; the only export is a manual
   markdown/print download.
+- [Persona grounding labels](2026-10-11-persona-grounding-labels.md)
+  — personas are a free-text section; no core/key/later priority and no
+  grounded/synthesized/assumed label anywhere.
 
 ## Bug records
 
