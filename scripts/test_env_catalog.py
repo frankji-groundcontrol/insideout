@@ -228,6 +228,25 @@ def t_repo_skeleton_declares_nothing_dead():
     check(f"every declared variable has a consumer (orphans: {dead})", not dead)
 
 
+def t_repo_skeleton_covers_every_compose_interpolation():
+    """Every ${INSIDEOUT_*} compose interpolates must have a skeleton line.
+
+    The reverse of the dead-variable lint: compose is a CONSUMER whose names
+    the catalog must already know. The catalog learns a variable exists only
+    from the skeleton, so an interpolated-but-undeclared name never reaches
+    `env.sh edit --list` and an operator wiring that lane must hand-edit .env
+    outside the tooling. Declared-but-not-interpolated is fine — compose
+    hardcodes some values (INSIDEOUT_ADDR) instead of interpolating them.
+    """
+    interpolated = sorted(set(re.findall(
+        r"\$\{(INSIDEOUT_[A-Z0-9_]+)[:}]",
+        (REPO / "docker-compose.yml").read_text())))
+    declared = {n for n, _, _, _ in cat.parse_skeleton(REPO / ".env.example")}
+    missing = sorted(set(interpolated) - declared)
+    check(f"compose-interpolated vars all in skeleton (missing: {missing})",
+          not missing)
+
+
 def t_repo_skeleton_has_no_inline_comment_after_a_value():
     """An inline `# …` makes the example value un-comparable to a live one.
 
