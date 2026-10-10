@@ -15,7 +15,7 @@ and on to the next wave.
       cherry-picked, plus 2 integrator seam commits (pendingStage on the GET,
       confirm applies parked resolutions); server suite green (one allowed
       skip), client 427 green, analyze 14; pushed f822873.
-- [ ] Wave 2 — 9 clusters (AIDEV-03/06, CQ-04, AIDEV-05/11, CQ-07, USER-08,
+- [x] Wave 2 — 11 clusters (AIDEV-03/06, CQ-04, AIDEV-05/11, CQ-07, USER-08,
       SEC-02/06, FEAT-07, REL-02/03, SEC-08, FULL-02, CQ-03, USER-03, PM-04,
       SEC-07, ARCH-03, SEC-03, REL-05).
 - [ ] Wave 3 — 6 clusters (docs truth, env catalog, client polish ×2, prompts
@@ -25,12 +25,13 @@ and on to the next wave.
       surface, gap issues).
 - [ ] Whole-change adversarial review + full gates on the integrated tree.
 - [ ] Records: register dispositions per finding, changelog folder, board,
-      HANDOFF; push, CI green, MBP synced.
+      HANDOFF; push, CI green, MBP synced.): all verifier-accepted round 1 — 38 commits cherry-picked; the integrator closed the
+      reported NOT_DONEs (CQ-03 shared snapshot flow, USER-08 localized marker; CQ-04
+      parked by the brief's pure-move gate); server + client gates green; in bce47c4.
 
 ## Status
 
-In flight 2026-10-10. Wave 2 workflow `dwfrun-7dba5513` running over base
-`f822873` (wave 1 integrated): worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
+In flight 2026-10-11. Wave 3 workflow running over base `bce47c4` (waves 1-2 integrated): worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
 `rv3/w1-*`, briefs/reports under `/tmp/insideout-gap/rv3/work/`, per-cluster
 databases on the disposable cluster (`rv3w1*`). Owner-blocked rows are out of
 scope by design and stay in [HANDOFF](../HANDOFF.md).
