@@ -2,12 +2,15 @@ part of 'client.dart';
 
 /// Server-sent-event verbs: Coach replies, canvas presence, roadmap progress.
 mixin _StreamVerbs on _ApiCore {
+  /// Sends [content] and applies the reply's frames to [handlers]. A turn
+  /// holds a model call open for as long as it runs, so completing [stop]
+  /// aborts the connection and ends the call.
   Future<void> sendCoach(
     String conversationId,
     String content,
     CoachHandlers handlers, {
     Future<void>? stop,
-  }) async {
+  }) => _untilStopped(stop, (cancel) async {
     final token = await _readAccess();
     final open = coachSseOpen(
       baseUrl: baseUrl,
@@ -33,6 +36,7 @@ mixin _StreamVerbs on _ApiCore {
             o.headers,
             method: o.method,
             body: o.body,
+            stop: stop,
           );
         },
         _refreshSingleFlight,
@@ -46,6 +50,7 @@ mixin _StreamVerbs on _ApiCore {
           responseType: ResponseType.stream,
           headers: open.headers,
         ),
+        cancelToken: cancel,
       );
       if (res.statusCode != null && res.statusCode! >= 400) {
         throw ApiException('coach failed', status: res.statusCode);
@@ -53,7 +58,7 @@ mixin _StreamVerbs on _ApiCore {
       chunks = res.data!.stream;
     }
     await readCoachSse(chunks, handlers, idleTimeout: coachSseIdleTimeout);
-  }
+  });
 
   /// Runs [session] with a token that completing [stop] trips. A stop is the
   /// caller leaving, so whatever the abort raises (dio's cancel, a closed

@@ -50,9 +50,14 @@ class _CoachPanelState extends State<CoachPanel> {
   int retry = 0;
   Timer? retryTimer;
   List<Map<String, dynamic>> findings = const [];
+  // Completes when the panel is gone, so a turn still streaming has its
+  // connection (and the model call behind it) closed with it. Folding the
+  // panel shut is not leaving it: that reply keeps coming.
+  final gone = Completer<void>();
 
   @override
   void dispose() {
+    gone.complete();
     retryTimer?.cancel();
     draft.dispose();
     super.dispose();
@@ -118,6 +123,7 @@ class _CoachPanelState extends State<CoachPanel> {
             setState(() => findings = next);
           },
         ),
+        stop: gone.future,
       );
       delivered = true;
     } on ApiException catch (e) {
