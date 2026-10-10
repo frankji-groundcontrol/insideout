@@ -101,7 +101,8 @@ class _Projection extends StatelessWidget {
     final palette = Cobalt.of(context);
     final title = data['title'] as String? ?? '';
     final proj = data['projection'] as Map<String, dynamic>;
-    final sections = proj['sections'] as Map<String, dynamic>;
+    // The server sends the reading order as a list of {section, why}.
+    final picks = (proj['sections'] as List).cast<Map<String, dynamic>>();
     final readiness = data['readiness'] as Map<String, dynamic>;
     final gaps = (readiness['gaps'] as List? ?? const []);
     final blocking = [
@@ -167,7 +168,7 @@ class _Projection extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: Cobalt.space6),
-            for (final key in sections.keys)
+            for (final pick in picks)
               Padding(
                 padding: const EdgeInsets.only(bottom: Cobalt.space4),
                 child: FieldCard(
@@ -175,12 +176,12 @@ class _Projection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        l10n.t('prd.sections.$key'),
+                        l10n.t('prd.sections.${pick['section']}'),
                         style: theme.textTheme.titleLarge,
                       ),
                       const SizedBox(height: Cobalt.space2),
                       Text(
-                        '${l10n.t('view.whyYouRead')}: ${sections[key]}',
+                        '${l10n.t('view.whyYouRead')}: ${pick['why']}',
                         style: theme.textTheme.bodySmall,
                       ),
                       const SizedBox(height: Cobalt.space3),
@@ -190,7 +191,10 @@ class _Projection extends StatelessWidget {
                         color: palette.strokeSubtle,
                       ),
                       const SizedBox(height: Cobalt.space3),
-                      _SectionBody(prdId: prdId, sectionKey: key),
+                      _SectionBody(
+                        prdId: prdId,
+                        sectionKey: pick['section'] as String,
+                      ),
                     ],
                   ),
                 ),
