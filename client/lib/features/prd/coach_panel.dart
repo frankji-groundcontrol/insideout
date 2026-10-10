@@ -58,6 +58,9 @@ class _CoachPanelState extends State<CoachPanel> {
   int retry = 0;
   Timer? retryTimer;
   List<Map<String, dynamic>> findings = const [];
+  // The turn's message_start reported the template (offline) streamer; each
+  // turn re-reports, so a later real streamer clears it again.
+  bool coachOffline = false;
   // Completes when the panel is gone, so a turn still streaming has its
   // connection (and the model call behind it) closed with it. Folding the
   // panel shut is not leaving it: that reply keeps coming.
@@ -102,6 +105,9 @@ class _CoachPanelState extends State<CoachPanel> {
         conv.id,
         text,
         CoachHandlers(
+          onMessageStart: (offline) {
+            if (mounted) setState(() => coachOffline = offline);
+          },
           onDelta: (chunk) {
             if (!mounted) return;
             setState(() => stream += chunk);
@@ -193,6 +199,16 @@ class _CoachPanelState extends State<CoachPanel> {
               showStage: widget.conversation != null,
               onClose: () => setState(() => open = false),
             ),
+            // The stream disclosed the offline streamer: say so before the
+            // member mistakes canned echoes for coaching.
+            if (coachOffline)
+              Padding(
+                padding: const EdgeInsets.only(bottom: Cobalt.space3),
+                child: BlockBanner(
+                  message: l10n.t('coach.offline'),
+                  tone: BlockTone.info,
+                ),
+              ),
             // The proposal rides under the masthead: the header keeps the
             // confirmed stage, this row hands the member the decision.
             if (widget.conversation?.pendingStage != null &&

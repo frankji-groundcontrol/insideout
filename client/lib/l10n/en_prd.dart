@@ -91,6 +91,8 @@ const enPrd = <String, String>{
   'coach.rateLimited': 'Rate limited. Retry in {seconds}s...',
   'coach.serviceUnavailable':
       'AI service temporarily unavailable. Retry in {seconds}s...',
+  'coach.offline':
+      'AI coaching is offline on this server. Replies are echoes, not AI answers.',
   'coach.stage.clarify': 'Clarifying',
   'coach.stage.draft': 'Drafting',
   'coach.stage.critique': 'Reviewing',

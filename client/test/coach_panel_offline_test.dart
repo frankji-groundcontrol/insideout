@@ -102,8 +102,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text(badge), findsOneWidget);
-      // The echo itself still streams as the turn's reply.
-      expect(find.text('we are two people'), findsOneWidget);
+      // The echo itself still streams as the turn's reply (CoachQuote
+      // decorates it with curly quotes).
+      expect(find.textContaining('we are two people'), findsOneWidget);
     });
   }
 }

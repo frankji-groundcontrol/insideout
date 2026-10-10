@@ -45,6 +45,7 @@ SseParseResult parseSseBuffer(String buffer) {
 
 class CoachHandlers {
   const CoachHandlers({
+    this.onMessageStart,
     this.onDelta,
     this.onPrdUpdated,
     this.onStageChanged,
@@ -52,6 +53,10 @@ class CoachHandlers {
     this.onCriticFindings,
   });
 
+  /// The turn's opening frame: {id, model, offline}. offline marks the
+  /// template streamer (no AI credentials), so the panel can disclose that
+  /// the reply is canned rather than coached.
+  final void Function(bool offline)? onMessageStart;
   final void Function(String text)? onDelta;
   final void Function(String section)? onPrdUpdated;
   final void Function(String stage)? onStageChanged;
@@ -134,8 +139,8 @@ const Duration coachSseIdleTimeout = Duration(seconds: 75);
 /// Reads Coach SSE chunks, including multibyte splits, and applies frames.
 ///
 /// With [idleTimeout] set, every complete frame — heartbeats and
-/// message_start/message_end included, which never reach the panel —
-/// proves the connection is alive and restarts the idle timer. When the
+/// message_end included, which carry no panel-facing payload — proves the
+/// connection is alive and restarts the idle timer. When the
 /// timer expires the future throws [TimeoutException] and the chunk
 /// subscription is cancelled on the next frame, so a timed-out
 /// connection is closed instead of lingering server-side.
@@ -219,7 +224,11 @@ void _releaseCoachSubscription(StreamSubscription<SseFrame> sub) {
 void applyCoachFrame(SseFrame frame, CoachHandlers handlers) {
   if (frame.data.isEmpty) return;
   final parsed = jsonDecode(frame.data);
-  if (frame.event == 'delta' && parsed is Map && parsed['text'] is String) {
+  if (frame.event == 'message_start' && parsed is Map) {
+    handlers.onMessageStart?.call(parsed['offline'] == true);
+  } else if (frame.event == 'delta' &&
+      parsed is Map &&
+      parsed['text'] is String) {
     handlers.onDelta?.call(parsed['text'] as String);
   } else if (frame.event == 'prd_updated' &&
       parsed is Map &&
