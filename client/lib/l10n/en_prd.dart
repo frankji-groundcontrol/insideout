@@ -27,12 +27,10 @@ const enPrd = <String, String>{
   'prd.snapshotLabel': 'Snapshot',
   'prd.emptyRevisions': 'No snapshots yet. Save one from the PRD editor.',
   'prd.backToPrd': 'Back to PRD',
-  'prd.notFound': 'PRD not found',
   'prd.revisionNote': 'Optional note',
   'versions.entry': 'Versions',
   'prd.exportAudience': 'Audience view (optional)',
   'prd.exportFull': 'Full document',
-  'versions.title': 'Product versions',
   'versions.commitTitle': 'Commit this version',
   'versions.commitNow': 'Commit version',
   'versions.nameLabel': 'Version name',
@@ -67,7 +65,6 @@ const enPrd = <String, String>{
   'versions.gap.delivery.constraints':
       'boundaries and dependencies shape the work',
   'versions.gap.later': 'useful eventually; not required for this audience',
-  'versions.revisionN': 'Version {n}',
   'versions.diffTitle':
       'Diff from previous: {a} added, {c} changed, {r} removed',
   'versions.diff.added': 'added',
@@ -86,7 +83,6 @@ const enPrd = <String, String>{
   'coach.stage.draft': 'Drafting',
   'coach.stage.critique': 'Reviewing',
   'coach.stage.finalize': 'Finalizing',
-  'coach.facts.title': 'Recorded facts',
   'coach.openCoach': 'Open the coach',
   'coach.closeCoach': 'Close the coach',
   'coach.suggestTitle': 'Try asking',
@@ -98,6 +94,5 @@ const enPrd = <String, String>{
   'prd.next.requestReview': 'Next: Request review',
   'coach.pullQuotes': 'Large pull-quotes',
   'versions.stackEyebrow': 'Commit {n} of {total}',
-  'versions.related': 'Related',
   'versions.details': 'Details',
 };
