@@ -1,0 +1,33 @@
+version: 2
+task: "Execute the review-3 remediation plan (waves 1-4)"
+coordinator: zcode
+history_file: 2026-10-10-rv3-remediation.track.history.jsonl
+main:
+  outcome: "All 83 register rows dispositioned: 73 closed by code across four verifier-accepted waves (32 clusters, every one accepted round 1), 3 satisfied by the report, 1 parked, 6 owner-blocked. Whole-change adversarial review accepted; gates green on a fresh database; CI 7/7 on the final push; GitHub, MBP2, MBP on one commit."
+  owner: zcode
+  status: completed
+  next_evidence: "main at 44d5f7c (waves 5c8f54f..4464330 + records commit); CI 38077200779 green 7/7 incl. the new upgrade-replay and docker-build lanes; dispositions in review/2026-10-10-disposition-ledger/04-multirole-3.md; tree fe3bb135 and digest identical on all three clones. What remains is the owner's (deploy, keys, first v* tag) per HANDOFF."
+side_tracks: []
+updated_at: "2026-10-11T04:20:00Z"
+plan:
+- step: "Wave 1 — 7 clusters (Highs: gate integrity, planner fence, email copy, Go floor via golang:1.26-alpine, SSE timeout, idea body, stage-confirm) — all accepted round 1, 27 commits, pushed f822873"
+  owner: zcode
+  status: completed
+- step: "Wave 2 — 11 clusters (turn bounds, mail signal, provider, mcp, throttle, urls, github, honest degradation, ledger caps) — 38 commits; integrator closed CQ-03 + USER-08, CQ-04 parked by its pure-move gate; pushed bce47c4"
+  owner: zcode
+  status: completed
+- step: "Wave 3 — 6 clusters (docs truth, env catalog, client polish, prompts contract, test hygiene) — 31 commits; integrator closed TEST-06 (circuit row-id migration; its CREATE OR REPLACE overload bug caught pre-push)"
+  owner: zcode
+  status: completed
+- step: "Wave 4 — 8 clusters (locale threading, validation slice, promise register, gap issues, upgrade lane, hosted smoke, contribution surface, attestation honesty) — 41 commits; PRODUCT.md conflict merged"
+  owner: zcode
+  status: completed
+- step: "Full gates on a FRESH database (rv3final): 7 migrations apply together, server 26 pkgs / 1 allowed skip, client 456, analyze 14, format clean"
+  owner: zcode
+  status: completed
+- step: "Whole-change adversarial review: seams compose, 5 red/fix pairs re-proved, invariants hold — verdict accept, no blocking items"
+  owner: zcode
+  status: completed
+- step: "Records: disposition ledger 04-multirole-3 (83 rows, 0 unresolved), changelog folder 2026-10-11-rv3-remediation, plan Delivered, board Finished, HANDOFF = owner steps, learning record; push 44d5f7c, CI green, MBP + MBP2 synced"
+  owner: zcode
+  status: completed
