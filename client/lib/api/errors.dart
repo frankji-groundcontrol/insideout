@@ -42,6 +42,11 @@ bool isCoachBackoff(ApiException e) {
       e.code == 'ANTHROPIC_RATE_LIMIT';
 }
 
+/// A Coach backoff because the AI service is down or saturated (circuit open,
+/// queue busy), not because the caller was rate limited. Read from the code,
+/// never from the English message.
+bool isCoachUnavailable(ApiException e) => e.code == 'CIRCUIT_OPEN';
+
 int coachRetrySeconds(ApiException e) {
   if (e.retryAfterSeconds != null) return e.retryAfterSeconds!;
   return e.code == 'APP_THROTTLE' ? 60 : 30;

@@ -102,7 +102,9 @@ class _CoachPanelState extends State<CoachPanel> {
         ),
       );
     } on ApiException catch (e) {
-      setState(() => error = e.message);
+      // Keep the object, not its message: localizedError maps its status and
+      // code, and the countdown copy below reads the same fields.
+      setState(() => error = e);
       if (isCoachBackoff(e)) _startRetry(coachRetrySeconds(e));
     } catch (e) {
       // Keep the object, not its toString: TimeoutException from the
@@ -237,7 +239,7 @@ class _CoachPanelState extends State<CoachPanel> {
                 ),
                 child: CoachNotice(
                   message: l10n.t(
-                    err is String && err.contains('unavailable')
+                    err is ApiException && isCoachUnavailable(err)
                         ? 'coach.serviceUnavailable'
                         : 'coach.rateLimited',
                     {'seconds': retry},
