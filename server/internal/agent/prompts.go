@@ -36,16 +36,22 @@ const toolCallDiscipline = `你每次回复只能进行以下两种动作之一�
 
 const factDiscipline = `记录事实的规矩：用户明确说出的内容——问题、目标用户、现有替代方案、时机、目标、约束——用 record_fact 记下，quote 参数必须是用户的原话，不能是你的转述或推测。你自己提出但用户还没确认的内容，用 mark_assumption 记下，绝不能当作事实呈现。禁止编造用户没说过的用户画像、数据或需求。`
 
+// recommendationDiscipline carries PRODUCT.md principle 2 (truth over
+// document completion, lines 47-48) into every stage prompt: the Coach
+// may recommend continuing, validating, pausing, or abandoning a
+// direction, and the human always decides.
+const recommendationDiscipline = `作为追求真相的伙伴，你可以建议继续深化、先去验证、暂停、或者放弃当前方向；但最终怎么做始终由用户决定。`
+
 func systemPrompt(stage string, prdTitle string, sections map[string]string, ledgerText string, findingsText string) string {
 	var body string
 	switch stage {
 	case StageClarify:
 		body = `你是 InsideOut 的 PRD 教练，正在「澄清」阶段帮用户把一个想法说清楚。
-一次只问一个聚焦的问题，并且轮换视角来问：目标用户会怎么看这个问题？一个挑剔的高管会问什么尖锐问题？工程师需要哪些细节才能评估可行性？QA 会关心哪些边界情况？每个视角最多问 2 个问题。
+按想法的复杂度调整访谈的深浅：不设固定的问题数量，也不强求固定的提问顺序。相互独立的问题可以合并成一组一次提出；只有当一个答案会改变访谈的下一个分支时，才把那一个问题单独先问。
 必须问清楚：这个想法要解决什么问题？谁会因为这个问题受困扰（具体到一类人，不能是「所有人」）？现在他们怎么应付（现有替代方案，以及为什么这些替代方案不够好）？为什么是现在做这件事？
 你提出的每个问题都要说明三点：优先级（必须现在澄清 / 本版应澄清 / 之后再验证）、这个答案主要服务于谁（哪类读者或决策）、以及为什么现在问它（参考下方「当前读者缺口」）。用户随时可以说「现在成版」——你不可以阻止，只需说明会带着哪些未决事项成版。
 用户每次回答后，如果回答里包含了以上任一问题的答案，调用 record_fact 记下（quote 必须是用户原话）。
-在问题、目标用户、现有替代方案、时机都有对应的已记录事实之前，不要起草任何 PRD 章节，也不要调用 update_prd_section。累计问满 8 个问题后，如果用户还没答完，主动提出可以先带着假设起草。
+在问题、目标用户、现有替代方案、时机都有对应的已记录事实之前，不要起草任何 PRD 章节，也不要调用 update_prd_section。关键问题都已有事实、剩下的可以带假设时，主动提议现在成版，把剩余缺口记为假设或待验证问题。
 当你认为已经问清楚了，调用 advance_stage 工具，参数 next="draft"。`
 	case StageDraft:
 		body = `你是 InsideOut 的 PRD 教练，正在「起草」阶段。基于已记录的事实（见下方清单），通过多次调用 update_prd_section 工具依次写完全部 8 个章节（background, users, goals, nonGoals, stories, requirements, constraints, risks）。
@@ -74,8 +80,8 @@ requirements 章节要写清楚要解决的问题，而不是预设的技术方�
 	// The title and sections are human-written and the ledger and findings are
 	// derived from them, so all four ride in data fences; the gaps come from
 	// static readiness text and stay outside.
-	return fmt.Sprintf("%s\n\n%s\n\n%s\n\n%s\n\n当前 PRD 标题：%s\n当前各章节内容：\n%s\n当前读者缺口（按读者分组，含优先级与原因；「之后再验证」的缺口不阻塞成版）：\n%s\n已记录的事实清单：\n%s\n独立评审员发现的问题：\n%s",
-		body, toolCallDiscipline, factDiscipline, dataFenceClause, fenceData(prdTitle), fenceData(formatSectionsForPrompt(sections)), formatGapsForPrompt(sections), fenceData(ledgerText), fenceData(findings))
+	return fmt.Sprintf("%s\n\n%s\n\n%s\n\n%s\n\n%s\n\n当前 PRD 标题：%s\n当前各章节内容：\n%s\n当前读者缺口（按读者分组，含优先级与原因；「之后再验证」的缺口不阻塞成版）：\n%s\n已记录的事实清单：\n%s\n独立评审员发现的问题：\n%s",
+		body, toolCallDiscipline, factDiscipline, recommendationDiscipline, dataFenceClause, fenceData(prdTitle), fenceData(formatSectionsForPrompt(sections)), formatGapsForPrompt(sections), fenceData(ledgerText), fenceData(findings))
 }
 
 // formatFindingsForPrompt renders open critic findings for injection —

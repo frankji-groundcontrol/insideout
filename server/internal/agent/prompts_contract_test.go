@@ -18,20 +18,20 @@ import (
 func TestSystemPromptClarifyFollowsCoachingContract(t *testing.T) {
 	prompt := systemPrompt(StageClarify, "Contract", map[string]string{}, "", "")
 	for _, want := range []string{
-		"相互独立的问题可以合并成一组一次提出",         // grouping allowed (PRODUCT.md:99)
-		"只有当一个答案会改变访谈的下一个分支",         // one-at-a-time only when it branches (PRODUCT.md:100)
-		"主动提议现在成版",                        // form a version once critical questions are answered (PRODUCT.md:102)
+		"相互独立的问题可以合并成一组一次提出",      // grouping allowed (PRODUCT.md:99)
+		"只有当一个答案会改变访谈的下一个分支",      // one-at-a-time only when it branches (PRODUCT.md:100)
+		"主动提议现在成版",                // form a version once critical questions are answered (PRODUCT.md:102)
 		"建议继续深化、先去验证、暂停、或者放弃当前方向", // four-way recommendation (PRODUCT.md:47)
-		"由用户决定",                             // the human-decides rider (PRODUCT.md:48)
+		"由用户决定", // the human-decides rider (PRODUCT.md:48)
 	} {
 		if !strings.Contains(prompt, want) {
 			t.Errorf("clarify prompt missing %q — PRODUCT.md's coaching contract", want)
 		}
 	}
 	for _, retired := range []string{
-		"轮换视角",     // fixed perspective rotation
+		"轮换视角",    // fixed perspective rotation
 		"每个视角最多问", // per-perspective caps
-		"8 个问题",    // fixed question tally
+		"8 个问题",   // fixed question tally
 	} {
 		if strings.Contains(prompt, retired) {
 			t.Errorf("clarify prompt still hardcodes the retired discipline %q", retired)
