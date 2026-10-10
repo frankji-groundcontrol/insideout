@@ -44,6 +44,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Scoped external feedback invitations](2026-10-11-scoped-feedback-invitations.md)
   — the only promise with a privacy boundary; no feedback route exists,
   the only invitations grant workspace membership.
+- [Tokenized audience-share link](2026-10-11-tokenized-audience-share-link.md)
+  — audience views are auth-only app routes; the only export is a manual
+  markdown/print download.
 
 ## Bug records
 
