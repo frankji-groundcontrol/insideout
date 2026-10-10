@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../session/appearance.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
@@ -219,6 +221,91 @@ class _CoachComposerState extends State<CoachComposer> {
           onPressed: widget.onSend,
         ),
       ],
+    );
+  }
+}
+
+/// Masthead of the Coach column: the title, the pull-quote strapline, the
+/// stage once a conversation exists, and the block that folds the column away.
+class CoachHeader extends StatelessWidget {
+  const CoachHeader({
+    super.key,
+    required this.stage,
+    required this.showStage,
+    required this.onClose,
+  });
+
+  final String stage;
+  final bool showStage;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = Cobalt.of(context);
+    final l10n = context.watch<Appearance>();
+    final ink = coachInk(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Cobalt.space6,
+        64,
+        Cobalt.space4,
+        Cobalt.space2,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.t('coach.title').toUpperCase(),
+                  style: cobaltSerif(
+                    palette,
+                    size: 32,
+                    color: ink,
+                    weight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: Cobalt.space2),
+                Text(
+                  l10n.t('coach.pullQuotes'),
+                  style: cobaltSerif(
+                    palette,
+                    size: 12,
+                    color: ink.withValues(alpha: 0.7),
+                    weight: FontWeight.w400,
+                  ),
+                ),
+                if (showStage) ...[
+                  const SizedBox(height: Cobalt.space2),
+                  Text(
+                    l10n.t('coach.stage.$stage'),
+                    style: cobaltSerif(
+                      palette,
+                      size: 14,
+                      color: ink,
+                      weight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                Container(
+                  width: Cobalt.space10,
+                  height: Cobalt.space1,
+                  margin: const EdgeInsets.only(top: Cobalt.space3),
+                  color: Cobalt.hue500,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: Cobalt.space2),
+          BlockIconButton(
+            icon: Icons.close,
+            tooltip: l10n.t('coach.closeCoach'),
+            onPressed: onClose,
+          ),
+        ],
+      ),
     );
   }
 }

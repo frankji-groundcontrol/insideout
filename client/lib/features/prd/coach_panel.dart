@@ -159,7 +159,11 @@ class _CoachPanelState extends State<CoachPanel> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _header(context, palette, l10n, stage, ink),
+            CoachHeader(
+              stage: stage,
+              showStage: widget.conversation != null,
+              onClose: () => setState(() => open = false),
+            ),
             if (widget.conversation == null)
               Padding(
                 padding: const EdgeInsets.all(Cobalt.space6),
@@ -276,78 +280,6 @@ class _CoachPanelState extends State<CoachPanel> {
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _header(
-    BuildContext context,
-    Cobalt palette,
-    Appearance l10n,
-    String stage,
-    Color ink,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        Cobalt.space6,
-        64,
-        Cobalt.space4,
-        Cobalt.space2,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.t('coach.title').toUpperCase(),
-                  style: cobaltSerif(
-                    palette,
-                    size: 32,
-                    color: ink,
-                    weight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: Cobalt.space2),
-                Text(
-                  l10n.t('coach.pullQuotes'),
-                  style: cobaltSerif(
-                    palette,
-                    size: 12,
-                    color: ink.withValues(alpha: 0.7),
-                    weight: FontWeight.w400,
-                  ),
-                ),
-                if (widget.conversation != null) ...[
-                  const SizedBox(height: Cobalt.space2),
-                  Text(
-                    l10n.t('coach.stage.$stage'),
-                    style: cobaltSerif(
-                      palette,
-                      size: 14,
-                      color: ink,
-                      weight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-                Container(
-                  width: Cobalt.space10,
-                  height: Cobalt.space1,
-                  margin: const EdgeInsets.only(top: Cobalt.space3),
-                  color: Cobalt.hue500,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: Cobalt.space2),
-          BlockIconButton(
-            icon: Icons.close,
-            tooltip: l10n.t('coach.closeCoach'),
-            onPressed: () => setState(() => open = false),
-          ),
-        ],
       ),
     );
   }
