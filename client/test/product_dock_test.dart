@@ -181,4 +181,26 @@ void main() {
       expect(focus.evidencePulse, 1);
     },
   );
+
+  testWidgets(
+    'a deep-linked PRD route enables Version and Commit without a seeded focus',
+    (tester) async {
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      // A refresh or deep link lands on /prd/<id> before any page has
+      // seeded LoopFocus; the dock must still read the PRD id from the
+      // route, not leave the highlighted Version item inert.
+      final focus = LoopFocus();
+      await pumpDock(tester, focus: focus, initialLocation: '/prd/prd-1');
+
+      expect(find.text('Version prd-1'), findsOneWidget);
+      expect(disabledButtons(), findsNWidgets(4));
+
+      await tester.tap(find.text('Version'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Commit prd-1'), findsOneWidget);
+    },
+  );
 }
