@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'cobalt.dart';
 
 /// Keyboard focus and Enter/Space activation for the custom blocks, painting
-/// the cobalt ring DESIGN.md mandates under Components → Buttons.
+/// the cobalt ring DESIGN.md mandates under Components → Buttons. Space is
+/// ActivateIntent on every platform; Enter is ActivateIntent except on the web,
+/// where it is ButtonActivateIntent, so both are bound.
 ///
 /// The ring is drawn by a foreground painter outside the child's bounds rather
 /// than by an outer border, so wrapping a block never changes its measured
@@ -32,17 +34,24 @@ class _BlockFocusState extends State<BlockFocus> {
 
   bool get _live => widget.enabled && widget.onActivate != null;
 
+  Object? _activate(Intent _) {
+    widget.onActivate?.call();
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FocusableActionDetector(
       enabled: _live,
       onShowFocusHighlight: (show) => setState(() => _focused = show),
       actions: <Type, Action<Intent>>{
-        ActivateIntent: CallbackAction<ActivateIntent>(
-          onInvoke: (_) {
-            widget.onActivate?.call();
-            return null;
-          },
+        ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: _activate),
+        // On the web the default shortcuts send Enter as this intent, not
+        // ActivateIntent ("enter activates buttons, but not other controls"),
+        // so a block that listened only for ActivateIntent ignored Enter in a
+        // browser while the VM tests, where Enter is ActivateIntent, passed.
+        ButtonActivateIntent: CallbackAction<ButtonActivateIntent>(
+          onInvoke: _activate,
         ),
       },
       child: CustomPaint(
