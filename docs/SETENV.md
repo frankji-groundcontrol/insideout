@@ -193,6 +193,12 @@ Per-key detail: [usage/keys/llm/llm-api-key.md](usage/keys/llm/llm-api-key.md).
   same-origin via nginx; local Flutter web needs
   `INSIDEOUT_CORS_ORIGINS=localhost`. Only the exact value `1` turns
   permissive CORS on.
+- `INSIDEOUT_MAIL_API_KEY` — leave it empty for **mail dev mode**: the server
+  delivers no email, it only logs sign-in links, sign-in codes and
+  password-reset mails (`mail dev mode — not sent`), and the sign-in screens
+  say so. `scripts/dev.sh` sets `INSIDEOUT_MAIL_DEV_BODY=1` for the server so
+  the log line carries the link or code itself. Both rows are in the Go backend
+  table of [usage/environment.md](usage/environment.md#go-backend).
 - `INSIDEOUT_ADDR` and the two TTLs rarely need changing.
 
 ## Step 5 — Only if you run docker compose
