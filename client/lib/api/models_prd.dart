@@ -79,6 +79,7 @@ class Conversation {
     required this.prdId,
     required this.stage,
     required this.status,
+    this.pendingStage,
   });
 
   final String id;
@@ -86,11 +87,32 @@ class Conversation {
   final String stage;
   final String status;
 
+  /// The coach's stage proposal, parked by the server until the member
+  /// confirms it (POST /conversations/{id}/stage). It only reaches the
+  /// client while the conversation view carries it.
+  final String? pendingStage;
+
+  /// A proposal clear is not a proposal keep: [pendingStage] takes a
+  /// sentinel so `copyWith(pendingStage: null)` really clears it.
+  static const _unset = Object();
+
+  Conversation copyWith({String? stage, Object? pendingStage = _unset}) =>
+      Conversation(
+        id: id,
+        prdId: prdId,
+        stage: stage ?? this.stage,
+        status: status,
+        pendingStage: pendingStage == _unset
+            ? this.pendingStage
+            : pendingStage as String?,
+      );
+
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(
     id: j['id'] as String,
     prdId: j['prdId'] as String,
     stage: j['stage'] as String,
     status: j['status'] as String,
+    pendingStage: j['pendingStage'] as String?,
   );
 }
 

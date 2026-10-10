@@ -99,6 +99,16 @@ mixin _PrdVerbs on _ApiCore {
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
   }
 
+  /// Confirms the coach's proposed stage; the answer is the conversation
+  /// with the stage written and the proposal cleared.
+  Future<Conversation> confirmConversationStage(
+    String conversationId,
+    String stage,
+  ) async {
+    final res = await _exec(req.postConversationStage(conversationId, stage));
+    return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
+  }
+
   Future<Conversation> getConversation(String id) async {
     final res = await _exec(req.getConversation(id));
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));

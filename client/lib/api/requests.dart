@@ -128,6 +128,12 @@ ApiCall postPrdStatus(String id, String status) {
 ApiCall postPrdConversation(String id) =>
     ApiCall('POST', '/prds/$id/conversation');
 
+/// Confirms the stage the coach proposed (it waits in conversation meta,
+/// not in the stage column): the server writes it and clears the proposal.
+/// Declining never calls this — the row simply keeps the old stage.
+ApiCall postConversationStage(String id, String stage) =>
+    ApiCall('POST', '/conversations/$id/stage', {'stage': stage});
+
 /// Drafts a branched roadmap from the PRD. Nothing is written: the response
 /// is `{projectId, tree}`, to be sent on through [postPrdBuildConfirm].
 ApiCall postPrdBuild(String id) => ApiCall('POST', '/prds/$id/build');

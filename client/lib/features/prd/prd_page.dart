@@ -224,6 +224,29 @@ class _PrdPageState extends State<PrdPage> {
     });
   }
 
+  // The server writes the stage only on confirm (POST /conversations/{id}
+  // /stage); its answer is the conversation with the proposal cleared.
+  Future<void> _confirmStage() async {
+    final conv = conversation;
+    final pending = conv?.pendingStage;
+    if (conv == null || pending == null) return;
+    await guardWrite(context, () async {
+      final confirmed = await context
+          .read<Session>()
+          .api
+          .confirmConversationStage(conv.id, pending);
+      if (mounted) setState(() => conversation = confirmed);
+    });
+  }
+
+  // Decline stays local — the endpoint expresses confirm only — so the
+  // confirmed stage stands and the coach may propose again later.
+  void _declineStage() {
+    final conv = conversation;
+    if (conv == null) return;
+    setState(() => conversation = conv.copyWith(pendingStage: null));
+  }
+
   Future<void> _requestReview() async {
     await guardWrite(context, () async {
       final updated = await context.read<Session>().api.updatePrdStatus(
@@ -280,15 +303,12 @@ class _PrdPageState extends State<PrdPage> {
         if (!mounted) return;
         final convNow = conversation;
         if (convNow == null) return;
-        setState(() {
-          conversation = Conversation(
-            id: convNow.id,
-            prdId: convNow.prdId,
-            stage: stage,
-            status: convNow.status,
-          );
-        });
+        // The frame carries a proposal, not a done deal: the confirmed
+        // stage moves only on confirm, so a refresh cannot revert it.
+        setState(() => conversation = convNow.copyWith(pendingStage: stage));
       },
+      onConfirmStage: _confirmStage,
+      onDeclineStage: _declineStage,
     );
   }
 

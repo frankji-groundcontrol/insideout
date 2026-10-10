@@ -41,6 +41,24 @@ class _StageApi extends ApiClient {
   Future<Conversation?> conversationForPrd(String prdId) async =>
       Conversation(id: 'c1', prdId: prdId, stage: 'clarify', status: 'active');
 
+  /// The (conversationId, stage) pairs confirm posted, server-style: the
+  /// stage column moves and the proposal is gone.
+  final confirmedStages = <(String, String)>[];
+
+  @override
+  Future<Conversation> confirmConversationStage(
+    String conversationId,
+    String stage,
+  ) async {
+    confirmedStages.add((conversationId, stage));
+    return Conversation(
+      id: conversationId,
+      prdId: 'prd-1',
+      stage: stage,
+      status: 'active',
+    );
+  }
+
   @override
   Future<List<ChatMessage>> listMessages(String conversationId) async =>
       const [];
@@ -134,13 +152,15 @@ void main() {
   testWidgets('confirm posts the proposed stage and refreshes state', (
     tester,
   ) async {
-    await _pumpPage(tester);
+    final api = await _pumpPage(tester);
     _stageCallback(tester)('draft');
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('coach-stage-confirm')));
     await tester.pumpAndSettle();
 
+    // The one and only POST named the conversation and the proposal.
+    expect(api.confirmedStages, [('c1', 'draft')]);
     // The stage the server returns is now the current one.
     expect(find.text('Clarifying'), findsNothing);
     expect(find.text('Drafting'), findsOneWidget);
@@ -151,13 +171,15 @@ void main() {
   testWidgets('decline keeps the confirmed stage and clears the proposal', (
     tester,
   ) async {
-    await _pumpPage(tester);
+    final api = await _pumpPage(tester);
     _stageCallback(tester)('draft');
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('coach-stage-decline')));
     await tester.pump();
 
+    // Declining is local: the endpoint expresses confirm only.
+    expect(api.confirmedStages, isEmpty);
     expect(find.byKey(const Key('coach-stage-confirm')), findsNothing);
     expect(find.text('Clarifying'), findsOneWidget);
     expect(find.text('Proposed: Drafting'), findsNothing);

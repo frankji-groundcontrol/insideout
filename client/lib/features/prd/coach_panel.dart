@@ -15,6 +15,7 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
 import 'coach_finding.dart';
+import 'coach_stage_proposal.dart';
 import 'coach_start.dart';
 
 class CoachPanel extends StatefulWidget {
@@ -26,6 +27,8 @@ class CoachPanel extends StatefulWidget {
     required this.onPrdUpdated,
     required this.onStageChanged,
     this.onStart,
+    this.onConfirmStage,
+    this.onDeclineStage,
   });
 
   final String prdId;
@@ -36,6 +39,11 @@ class CoachPanel extends StatefulWidget {
 
   /// Starts the viewer's own conversation; null when they may not.
   final Future<void> Function()? onStart;
+
+  /// Confirm / decline the coach's pending stage proposal; the page owns
+  /// the conversation state both move.
+  final Future<void> Function()? onConfirmStage;
+  final VoidCallback? onDeclineStage;
 
   @override
   State<CoachPanel> createState() => _CoachPanelState();
@@ -185,6 +193,18 @@ class _CoachPanelState extends State<CoachPanel> {
               showStage: widget.conversation != null,
               onClose: () => setState(() => open = false),
             ),
+            // The proposal rides under the masthead: the header keeps the
+            // confirmed stage, this row hands the member the decision.
+            if (widget.conversation?.pendingStage != null &&
+                widget.onConfirmStage != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: Cobalt.space3),
+                child: CoachStageProposal(
+                  proposed: widget.conversation!.pendingStage!,
+                  onConfirm: widget.onConfirmStage!,
+                  onDecline: widget.onDeclineStage ?? () {},
+                ),
+              ),
             if (widget.conversation == null)
               CoachStart(
                 message: l10n.t('coach.noConversation'),
