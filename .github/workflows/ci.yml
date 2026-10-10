@@ -164,6 +164,12 @@ jobs:
           fi
       - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter test
+      # TEST-11: behavior-test the web-only conditional imports in the
+      # browser — the VM suite above cannot load them (its collector drops
+      # @TestOn('browser') suites, so that run stays unchanged) and the
+      # build below only compiles them. The lane needs the runner image's
+      # preinstalled Chrome.
+      - run: flutter test --platform chrome test/web
       # The web target is the production surface, and VM tests can't see
       # web-only conditional imports (they broke exactly this way once).
       - run: flutter build web --release --dart-define=API_BASE=/api/v1
