@@ -56,6 +56,8 @@ const enWorkspace = <String, String>{
   'roadmap.title': 'Roadmap',
   'roadmap.empty':
       'No roadmap yet. Add a top-level goal and branch it into parallel tracks.',
+  'roadmap.noneScheduled':
+      'Nothing is scheduled yet. Give an item a deadline and it appears here; all items are in Bands and Canvas.',
   'roadmap.rootPlaceholder': 'A top-level goal (e.g. Ship the MVP)',
   'roadmap.addRoot': 'Add goal',
   'roadmap.addChild': 'Add sub-task',

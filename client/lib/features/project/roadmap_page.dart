@@ -243,9 +243,22 @@ class _RoadmapPageState extends State<RoadmapPage> {
                             ? BlockError(error: snap.error, onRetry: _reload)
                             : const BlockLoading();
                       }
-                      return RoadmapProgressView(
-                        progress: progress,
-                        emptyLabel: l10n.t('roadmap.empty'),
+                      // Progress lists only dated work, so an empty one does
+                      // not mean there are no goals.
+                      return FutureBuilder(
+                        future: _future,
+                        builder: (context, nodes) => RoadmapProgressView(
+                          progress: progress,
+                          // Blank until the goals are known, so the wrong
+                          // sentence never flashes.
+                          emptyLabel: nodes.hasData
+                              ? l10n.t(
+                                  nodes.data!.isEmpty
+                                      ? 'roadmap.empty'
+                                      : 'roadmap.noneScheduled',
+                                )
+                              : '',
+                        ),
                       );
                     },
                   )

@@ -53,6 +53,7 @@ const zhWorkspace = <String, String>{
   'project.statusLabel': '状态',
   'roadmap.title': '路线图',
   'roadmap.empty': '还没有路线图。先加一个顶层目标，再拆成可并行的分支。',
+  'roadmap.noneScheduled': '还没有排期的事项。给条目设个截止日期，它就会出现在这里；所有条目都在色带和画布视图里。',
   'roadmap.rootPlaceholder': '一个顶层目标（例如：交付 MVP）',
   'roadmap.addRoot': '添加目标',
   'roadmap.addChild': '添加子任务',
