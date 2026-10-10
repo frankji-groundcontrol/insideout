@@ -49,6 +49,12 @@ mixin _StreamVerbs on _ApiCore {
         options: Options(
           responseType: ResponseType.stream,
           headers: open.headers,
+          // The body trickles for the whole model turn, and dio enforces
+          // the shared 30s receiveTimeout between chunks — tighter than the
+          // server's 90s provider silence and readCoachSse's 75s idle
+          // timer. Turn it off for this request alone (zero = no limit) so
+          // the idle timer governs silence; every other request keeps 30s.
+          receiveTimeout: Duration.zero,
         ),
         cancelToken: cancel,
       );
