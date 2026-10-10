@@ -120,7 +120,9 @@ func addProductTools(s *server.MCPServer, api string) {
 	addTextTool("commit", "Human Commit: freeze the working PRD as an immutable version (name, audience, summary, unresolved items, diff)",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strReq("name", "version name"),
 			strReq("audience", "decision|management|delivery|validation"),
-			strOpt("summary", "change summary"), strOpt("note", "decision log note")},
+			strOpt("summary", "change summary"), strOpt("note", "decision log note"),
+			mcp.WithArray("unresolved", mcp.Description("carried open item (repeatable)"),
+				mcp.Items(map[string]any{"type": "string"}))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			var unresolved []string
 			if arr, ok := req.GetArguments()["unresolved"].([]any); ok {
