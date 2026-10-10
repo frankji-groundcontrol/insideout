@@ -28,7 +28,7 @@ projects, capturing ideas, and refining them into PRDs with an agent coach.
 ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v   # real-DB integration tests (exports .env)
 ./scripts/dev.sh -C server go run ./cmd/insideout migrate                   # apply SQL migrations
 ./scripts/dev.sh -C server go run ./cmd/insideout seed                      # dev demo data
-./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+./scripts/dev.sh -C client flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 (cd client && flutter analyze --no-fatal-infos && flutter test)            # frontend checks
 docker compose build
 ```
