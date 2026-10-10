@@ -275,6 +275,9 @@ class _PrdPageState extends State<PrdPage> {
         setState(() => prd = fresh);
       },
       onStageChanged: (stage) {
+        // A stage frame can land after the member left the PRD; the page
+        // is gone, so there is nothing to move.
+        if (!mounted) return;
         final convNow = conversation;
         if (convNow == null) return;
         setState(() {
