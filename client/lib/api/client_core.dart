@@ -86,6 +86,12 @@ abstract class _ApiCore {
   final TokenClearer _clearTokens;
   late final Dio _dio;
 
+  /// Tests swap in a recording adapter to assert the merged per-request
+  /// options (the coach stream's receiveTimeout override) without live
+  /// sockets.
+  @visibleForTesting
+  Dio get dioForTests => _dio;
+
   Future<T> _parse<T>(Response res, T Function(dynamic) map) async {
     if (res.statusCode != null && res.statusCode! >= 400) {
       final body = res.data is Map<String, dynamic>
