@@ -21,6 +21,7 @@ class _FakeApi extends ApiClient {
 
   final committedNames = <String>[];
   final committedNotes = <String>[];
+  final committedSummaries = <String>[];
   final bool failCommit;
 
   @override
@@ -84,6 +85,7 @@ class _FakeApi extends ApiClient {
     if (failCommit) throw ApiException('boom', status: 500);
     committedNames.insert(0, name);
     committedNotes.insert(0, note);
+    committedSummaries.insert(0, summary);
     return PrdCommit.fromJson({
       'id': 'c${committedNames.length}',
       'revision': 2,
@@ -178,6 +180,10 @@ void main() {
     expect(find.text('Decision note (optional)'), findsOneWidget);
     await tester.enterText(find.byType(TextField).first, 'Pricing review');
     await tester.enterText(
+      find.byType(TextField).at(1),
+      'Rewrote the pricing section',
+    );
+    await tester.enterText(
       find.byKey(const Key('commit-note')),
       'Per-seat pricing; usage-based is the alternative not taken',
     );
@@ -185,6 +191,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(fake.committedNames, ['Pricing review']);
+    expect(fake.committedSummaries, ['Rewrote the pricing section']);
     expect(fake.committedNotes, [
       'Per-seat pricing; usage-based is the alternative not taken',
     ]);

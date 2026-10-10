@@ -162,6 +162,28 @@ void main() {
     expect(find.text(_note), findsOneWidget);
   });
 
+  testWidgets('the decision note sits right under the summary, above the diff', (
+    tester,
+  ) async {
+    // The card is a fixed height and scrolls: on the real build at 1440x900 the
+    // note landed below eight section lines, out of sight.
+    await _pump(tester, 'en-US', {
+      ..._sections,
+      'changeSummary': 'Revised the background and the goals',
+      'decisionNote': _note,
+    });
+
+    double top(String text) => tester.getTopLeft(find.text(text)).dy;
+    expect(
+      top('Revised the background and the goals'),
+      lessThan(top('Decision note')),
+    );
+    expect(
+      top(_note),
+      lessThan(top('· Background & Problem Statement — changed')),
+    );
+  });
+
   testWidgets('a commit that recorded none of these shows none of them', (
     tester,
   ) async {
