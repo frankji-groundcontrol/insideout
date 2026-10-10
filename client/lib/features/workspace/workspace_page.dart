@@ -18,6 +18,7 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
+import 'block_refresh.dart';
 import 'board_project_card.dart';
 import 'quick_capture_fab.dart';
 
@@ -163,7 +164,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
               ? snap.hasError
                     ? BlockError(error: snap.error, onRetry: _reload)
                     : const BlockLoading()
-              : RefreshIndicator(
+              : BlockRefresh(
+                  label: l10n.t('common.refresh'),
                   onRefresh: _reload,
                   child: _board(context, snap.data!),
                 ),
