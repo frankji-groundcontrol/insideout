@@ -27,7 +27,7 @@ func (s *Server) registerGithubWebhookRoute(mux *http.ServeMux) {
 }
 
 // handleGithubWebhook accepts GitHub App deliveries
-// (https://insideout.yalotein.net/api/v1/hooks/github). Signature first,
+// (POST /api/v1/hooks/github). Signature first,
 // always; events other than push/pull_request are acknowledged and
 // ignored. push/pull_request resolve the repo's projects and re-run the
 // normal per-project sync as each project owner, so every write stays
