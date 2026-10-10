@@ -173,6 +173,22 @@ func assertUniformOK(t *testing.T, w *httptest.ResponseRecorder) {
 	}
 }
 
+// TestSendCooldownIsServerScoped pins the gate's lifetime to its Server, like
+// authThrottle: a send one Server recorded must not suppress the first send
+// on another (a process-wide gate makes every Server, and so every test,
+// share one window). The servers have a nil store, so a request that clears
+// the gate dies in the user lookup and withRecover answers 500, while a
+// blocked one gets the uniform 200: the status tells them apart without a DB.
+func TestSendCooldownIsServerScoped(t *testing.T) {
+	const email, ip = "scoped@test.local", "192.0.2.77"
+	for _, name := range []string{"first", "second"} {
+		w := postAuthSend(newValidationServer(), "/api/v1/auth/magic-link", email, ip)
+		if w.Code != http.StatusInternalServerError {
+			t.Fatalf("%s server: status = %d, want 500 (a fresh Server's first send must clear its own gate and reach the lookup; 200 means another Server's window blocked it)", name, w.Code)
+		}
+	}
+}
+
 // TestEmailAuthCooldownEndToEnd exercises the real handler stack — store,
 // token minting, and the dev-mode mail sender (counted via its log line)
 // — behind the cooldown gate. It needs a real Postgres like every other
