@@ -130,9 +130,22 @@ jobs:
       # --enforce-lockfile: fail on a lock written under another SDK instead of
       # silently re-resolving it (3.47 and 3.44 pin different SDK packages).
       - run: flutter pub get --enforce-lockfile
-      # Infos are the accepted baseline (see docs/plans board); warnings
-      # and errors stay fatal.
-      - run: flutter analyze --no-fatal-infos
+      # Infos are the accepted baseline (see docs/plans board) but the count
+      # only goes down: warnings and errors stay fatal in the analyzer itself,
+      # and this step fails once the infos pass INFO_BASELINE (TEST-14). Lower
+      # the number whenever infos are fixed; never raise it.
+      - name: Analyze (info count may not grow)
+        shell: bash # pipefail on, so an analyzer failure is not hidden by tee
+        env:
+          INFO_BASELINE: "16"
+        run: |
+          flutter analyze --no-fatal-infos | tee /tmp/analyze.log
+          infos=$(grep -c -E '^ +info • ' /tmp/analyze.log || true)
+          echo "analyzer infos: $infos (baseline $INFO_BASELINE)"
+          if [ "$infos" -gt "$INFO_BASELINE" ]; then
+            echo "::error::flutter analyze reports $infos infos, past the baseline of $INFO_BASELINE; fix the new ones"
+            exit 1
+          fi
       - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter test
       # The web target is the production surface, and VM tests can't see
