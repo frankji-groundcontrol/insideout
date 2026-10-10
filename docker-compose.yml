@@ -43,6 +43,8 @@ services:
       context: ./server
     container_name: insideout_server
     restart: unless-stopped
+    # Starting value, not measured: check it against `docker stats` (REL-20).
+    mem_limit: 512m
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,6 +117,8 @@ services:
       context: ./client
     container_name: insideout_client
     restart: unless-stopped
+    # Starting value, not measured: check it against `docker stats` (REL-20).
+    mem_limit: 128m
     depends_on:
       server:
         condition: service_healthy
