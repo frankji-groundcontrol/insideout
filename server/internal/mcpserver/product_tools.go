@@ -233,7 +233,7 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, _ mcp.CallToolRequest) (string, error) {
 			return call(c.ListInvitations())
 		})
-	addTextTool("idea_list", "List a workspace's idea inbox with full content",
+	addTextTool("idea_list", "List your own ideas in a workspace, with full content (ideas are private to their author; dropped ideas are not listed)",
 		[]mcp.ToolOption{strReq("workspace_id", "workspace id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.Ideas(reqStr(req, "workspace_id")))
@@ -244,7 +244,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			content, _ := req.GetArguments()["content"].(string)
 			return call(c.UpdateIdea(reqStr(req, "idea_id"), reqStr(req, "title"), content))
 		})
-	addTextTool("idea_delete", "Drop an idea (soft: it stays in idea_list with status \"dropped\"; filter client-side)",
+	addTextTool("idea_delete", "Drop an idea (soft: the row is kept for audit but idea_list no longer returns it)",
 		[]mcp.ToolOption{strReq("idea_id", "idea id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			if err := c.DeleteIdea(reqStr(req, "idea_id")); err != nil {

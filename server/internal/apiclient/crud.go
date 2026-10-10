@@ -12,7 +12,8 @@ import (
 // evidence, and workspace/project bootstrapping. Reads return raw JSON
 // so surfaces cannot drift from the API's truth.
 
-// Ideas lists a workspace's idea inbox (full content included).
+// Ideas lists the caller's own ideas in a workspace, full content included
+// (ideas are private to their author).
 func (c *Client) Ideas(workspaceID string) (json.RawMessage, error) {
 	return c.getRaw("/workspaces/" + workspaceID + "/ideas")
 }
@@ -26,9 +27,8 @@ func (c *Client) UpdateIdea(id, title, content string) (json.RawMessage, error) 
 	})
 }
 
-// DeleteIdea drops an idea — a soft delete: the row stays in the inbox
-// with status "dropped" (ListIdeas returns every status; filter
-// client-side).
+// DeleteIdea drops an idea — a soft delete: the row is kept for audit, but
+// Ideas no longer returns it.
 func (c *Client) DeleteIdea(id string) error {
 	var discard json.RawMessage
 	return c.do(http.MethodDelete, "/ideas/"+id, nil, &discard)

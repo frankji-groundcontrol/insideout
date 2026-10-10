@@ -64,7 +64,7 @@ func runCrudCommand(cmd string, args []string, api string) (bool, int) {
 			fmt.Fprintln(os.Stderr, err)
 			return true, 1
 		}
-		fmt.Println("dropped (soft — idea_list keeps it with status \"dropped\")")
+		fmt.Println("dropped (soft — it no longer appears in your ideas list)")
 		return true, 0
 	case "prd update":
 		if !need(1, "insideout prd update [--title T] [--section key=value]… [--status S] <id>") {
