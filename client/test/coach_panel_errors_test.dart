@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
@@ -34,6 +36,36 @@ class _FailingApi extends ApiClient {
     String content,
     CoachHandlers handlers,
   ) async => throw failure;
+}
+
+// Fails only once the test says so, so the failure can land after the panel
+// has left the screen.
+class _LateFailingApi extends ApiClient {
+  _LateFailingApi()
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
+
+  final gate = Completer<void>();
+
+  @override
+  Future<void> sendCoach(
+    String conversationId,
+    String content,
+    CoachHandlers handlers,
+  ) async {
+    await gate.future;
+    throw ApiException(
+      'Rate limit exceeded',
+      status: 429,
+      code: 'APP_THROTTLE',
+      retryAfterSeconds: 12,
+    );
+  }
 }
 
 typedef _Case = ({
@@ -150,6 +182,29 @@ Future<void> _pumpCoach(
 }
 
 void main() {
+  // The ApiException branch set state and started the countdown timer without
+  // asking whether the panel was still mounted: leaving the PRD while a send
+  // was in flight, then a backoff failure, threw on a disposed State and left a
+  // periodic timer running.
+  testWidgets(
+    'a backoff failure that lands after the panel is gone is dropped',
+    (tester) async {
+      final api = _LateFailingApi();
+      await _pumpCoach(tester, api, 'en-US');
+
+      await tester.enterText(find.byType(TextField), 'hello');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox.shrink());
+
+      api.gate.complete();
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final locale in const ['en-US', 'zh-CN']) {
     String t(String key, [Map<String, Object?>? args]) =>
         lookup(locale, key, args);

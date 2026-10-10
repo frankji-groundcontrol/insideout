@@ -102,6 +102,8 @@ class _CoachPanelState extends State<CoachPanel> {
         ),
       );
     } on ApiException catch (e) {
+      // The panel may have left the screen while the send was in flight.
+      if (!mounted) return;
       // Keep the object, not its message: localizedError maps its status and
       // code, and the countdown copy below reads the same fields.
       setState(() => error = e);
