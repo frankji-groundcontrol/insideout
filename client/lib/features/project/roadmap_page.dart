@@ -281,11 +281,22 @@ class _RoadmapPageState extends State<RoadmapPage> {
                         );
                       }
                       if (_view == _RoadmapView.bands) {
-                        return RoadmapBands(
-                          projectId: widget.projectId,
-                          nodes: snap.data!,
-                          onReload: _reload,
-                          progress: _liveProgress,
+                        // The reading the Progress tab shows, so a reload or
+                        // a quiet stream cannot make the two disagree.
+                        return FutureBuilder(
+                          future: _progressFuture,
+                          builder: (context, ps) {
+                            final progress = _liveProgress ?? ps.data;
+                            if (progress == null && !ps.hasError) {
+                              return const BlockLoading();
+                            }
+                            return RoadmapBands(
+                              projectId: widget.projectId,
+                              nodes: snap.data!,
+                              onReload: _reload,
+                              progress: progress,
+                            );
+                          },
                         );
                       }
                       return Column(
