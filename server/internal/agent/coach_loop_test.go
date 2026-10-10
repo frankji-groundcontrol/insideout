@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"slices"
 	"strings"
 	"testing"
 
@@ -111,6 +112,64 @@ func TestRunLoop_KeepsSnapshotWhenPrdRefreshFails(t *testing.T) {
 	for i, s := range systems {
 		if !strings.Contains(s, snapshot["background"]) {
 			t.Fatalf("prompt %d dropped the pre-turn snapshot after the refresh failed", i+1)
+		}
+	}
+}
+
+// loadHistory replays only what the user typed and what the assistant said as
+// text, newest `limit` of them, oldest first. Tool results and tool-call-only
+// assistant rows (empty content) never reach the model's context. The
+// expectations are spelled out so this holds across how the rows are fetched.
+func TestLoadHistory_KeepsUserAndAssistantTextTailedToTheLimit(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	_, ex := seedConversation(t, st)
+
+	calls := json.RawMessage(`[{"id":"c1","name":"get_prd","arguments":"{}"}]`)
+	callID := "c1"
+	for _, m := range []struct {
+		role, content string
+		toolCalls     json.RawMessage
+		toolCallID    *string
+	}{
+		{"user", "u1", nil, nil},
+		{"assistant", "a1", nil, nil},
+		{"assistant", "", calls, nil}, // a tool-call-only turn
+		{"tool", "t1", nil, &callID},
+		{"assistant", "a2", nil, nil},
+		{"user", "u2", nil, nil},
+		{"assistant", "", calls, nil},
+		{"tool", "t2", nil, &callID},
+		{"assistant", "a3", nil, nil},
+		{"user", "u3", nil, nil},
+		{"assistant", "", nil, nil}, // the placeholder of a reply still streaming
+	} {
+		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, m.role, m.content, m.toolCalls, m.toolCallID, nil); err != nil {
+			t.Fatalf("insert %s %q: %v", m.role, m.content, err)
+		}
+	}
+
+	c := New(st, fakeStreamer{}, discardLog())
+	all := []string{"user:u1", "assistant:a1", "assistant:a2", "user:u2", "assistant:a3", "user:u3"}
+	for _, tc := range []struct {
+		limit int
+		want  []string
+	}{
+		{1, all[5:]},
+		{3, all[3:]},
+		{len(all), all},
+		{100, all},
+	} {
+		got, err := c.loadHistory(ctx, ex.actorID, ex.conversationID, tc.limit)
+		if err != nil {
+			t.Fatalf("limit %d: %v", tc.limit, err)
+		}
+		var rendered []string
+		for _, m := range got {
+			rendered = append(rendered, string(m.Role)+":"+m.Content)
+		}
+		if !slices.Equal(rendered, tc.want) {
+			t.Fatalf("limit %d: history = %v, want %v", tc.limit, rendered, tc.want)
 		}
 	}
 }
