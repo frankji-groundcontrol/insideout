@@ -11,14 +11,13 @@ import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
-import '../../theme/block_button.dart';
-import '../../theme/block_field.dart';
 import '../../theme/block_modal.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../widgets/guarded_action.dart';
 import 'coach_panel.dart';
 import 'prd_desk.dart';
+import 'snapshot_flow.dart';
 
 class PrdPage extends StatefulWidget {
   const PrdPage({super.key, required this.id});
@@ -125,39 +124,7 @@ class _PrdPageState extends State<PrdPage> {
     });
   }
 
-  Future<void> _snapshot() async {
-    final note = TextEditingController();
-    final t = context.read<Appearance>().t;
-    final navigator = Navigator.of(context);
-    final ok = await showBlockModal<bool>(
-      context: context,
-      title: t('prd.snapshotRevision'),
-      body: BlockField(label: t('prd.revisionNote'), controller: note),
-      footer: [
-        BlockButton(
-          label: t('common.cancel'),
-          variant: BlockButtonVariant.secondary,
-          onPressed: () => navigator.pop(false),
-        ),
-        BlockButton(
-          label: t('common.save'),
-          onPressed: () => navigator.pop(true),
-        ),
-      ],
-    );
-    if (ok == true && mounted) {
-      await guardWrite(
-        context,
-        () => context.read<Session>().api.createRevision(
-          widget.id,
-          note: note.text.trim().isEmpty ? null : note.text.trim(),
-        ),
-      );
-    }
-    // Not disposed: the pop animation keeps the modal's field mounted past
-    // this await, and the guard's SnackBar rebuilds the overlay — a disposed
-    // controller would throw. GC'd once the modal unmounts.
-  }
+  Future<void> _snapshot() => showSnapshotRevision(context, prdId: widget.id);
 
   Future<void> _build() async {
     final api = context.read<Session>().api;

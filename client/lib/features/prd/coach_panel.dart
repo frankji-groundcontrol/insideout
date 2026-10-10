@@ -50,6 +50,16 @@ class CoachPanel extends StatefulWidget {
 }
 
 class _CoachPanelState extends State<CoachPanel> {
+  /// The server persists a stable "[interrupted]" token on cut-off turns
+  /// (agent/coach.go); it is presentation, so it renders in the reader's
+  /// locale instead of verbatim English (USER-08).
+  String _displayText(String content) {
+    const marker = "\n\n[interrupted]";
+    if (!content.endsWith(marker)) return content;
+    return "${content.substring(0, content.length - marker.length)}"
+        "${context.read<Appearance>().t('coach.interruptedSuffix')}";
+  }
+
   final draft = TextEditingController();
   String stream = '';
   Object? error;
@@ -269,7 +279,10 @@ class _CoachPanelState extends State<CoachPanel> {
                   ),
                   children: [
                     ...widget.messages.map(
-                      (m) => CoachQuote(text: m.content, role: m.role),
+                      (m) => CoachQuote(
+                        text: _displayText(m.content),
+                        role: m.role,
+                      ),
                     ),
                     if (stream.isNotEmpty)
                       CoachQuote(text: stream, role: 'assistant'),

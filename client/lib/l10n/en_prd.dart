@@ -87,6 +87,7 @@ const enPrd = <String, String>{
   'coach.title': 'PRD Coach',
   'coach.placeholder': 'Type your reply...',
   'coach.send': 'Send',
+  'coach.interruptedSuffix': ' — interrupted',
   'coach.thinking': 'Thinking...',
   'coach.rateLimited': 'Rate limited. Retry in {seconds}s...',
   'coach.serviceUnavailable':

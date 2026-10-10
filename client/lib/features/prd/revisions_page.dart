@@ -7,12 +7,10 @@ import '../../app.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
-import '../../theme/block_field.dart';
-import '../../theme/block_modal.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
-import '../../widgets/guarded_action.dart';
 import 'revisions_table.dart';
+import 'snapshot_flow.dart';
 
 class RevisionsPage extends StatefulWidget {
   const RevisionsPage({super.key, required this.prdId});
@@ -37,39 +35,11 @@ class _RevisionsPageState extends State<RevisionsPage> {
     _future = context.read<Session>().api.listRevisions(widget.prdId);
   }
 
-  Future<void> _snapshot() async {
-    final note = TextEditingController();
-    final t = context.read<Appearance>().t;
-    final navigator = Navigator.of(context);
-    final ok = await showBlockModal<bool>(
-      context: context,
-      title: t('prd.snapshotRevision'),
-      body: BlockField(label: t('prd.revisionNote'), controller: note),
-      footer: [
-        BlockButton(
-          label: t('common.cancel'),
-          variant: BlockButtonVariant.secondary,
-          onPressed: () => navigator.pop(false),
-        ),
-        BlockButton(
-          label: t('common.save'),
-          onPressed: () => navigator.pop(true),
-        ),
-      ],
-    );
-    if (ok != true || !mounted) return;
-    final done = await guardWrite(
-      context,
-      () => context.read<Session>().api.createRevision(
-        widget.prdId,
-        note: note.text.trim().isEmpty ? null : note.text.trim(),
-      ),
-    );
-    if (done && mounted) setState(_reload);
-    // The controller is not disposed: the pop animation keeps the modal's
-    // field mounted past this await, and the guard's SnackBar rebuilds the
-    // overlay — a disposed controller would throw. GC'd on unmount.
-  }
+  Future<void> _snapshot() => showSnapshotRevision(
+    context,
+    prdId: widget.prdId,
+    onCreated: () => setState(_reload),
+  );
 
   @override
   Widget build(BuildContext context) {

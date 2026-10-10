@@ -75,6 +75,7 @@ const zhPrd = <String, String>{
   'coach.title': 'PRD 教练',
   'coach.placeholder': '输入你的回复...',
   'coach.send': '发送',
+  'coach.interruptedSuffix': '——已中断',
   'coach.thinking': '思考中...',
   'coach.rateLimited': '请求过于频繁，{seconds} 秒后重试...',
   'coach.serviceUnavailable': 'AI 服务暂时不可用，{seconds} 秒后重试...',
