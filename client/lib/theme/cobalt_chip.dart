@@ -35,7 +35,7 @@ class ShadeChip extends StatelessWidget {
       ShadeTone.locked => (palette.statusNeutralBg, palette.statusNeutralFg),
       ShadeTone.pending => (palette.statusNeutralBg, palette.statusNeutralFg),
       ShadeTone.neutral => (palette.statusNeutralBg, palette.statusNeutralFg),
-      ShadeTone.danger => (palette.statusWarnBg, palette.fgDanger),
+      ShadeTone.danger => (palette.statusWarnBg, palette.statusWarnFg),
     };
     return Container(
       padding: EdgeInsets.symmetric(

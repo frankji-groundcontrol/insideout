@@ -158,7 +158,9 @@ class Cobalt {
     statusInfoBg: hue50,
     statusInfoFg: hue700,
     statusWarnBg: hue200,
-    statusWarnFg: hue700,
+    // Ink, not hue700: cobalt-700 on cobalt-200 is 4.49:1, under the 4.5:1
+    // text bar for the 12px danger chip label (ink is 13.03:1).
+    statusWarnFg: lightInk,
     statusSuccessBg: hue50,
     statusSuccessFg: hue700,
   );
