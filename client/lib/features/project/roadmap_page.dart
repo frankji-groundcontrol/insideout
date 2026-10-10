@@ -45,6 +45,9 @@ class _RoadmapPageState extends State<RoadmapPage> {
   final Map<String, CursorDot> _cursors = {};
   DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
   final _retryTimers = <Timer>{};
+
+  /// Completed on dispose: the live streams close their connections with it.
+  final _stop = Completer<void>();
   late final String _clientId = DateTime.now().microsecondsSinceEpoch
       .toRadixString(36);
 
@@ -92,7 +95,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
     () => api.progressStream(widget.projectId, (progress) {
       if (!mounted) return;
       setState(() => _liveProgress = progress);
-    }),
+    }, stop: _stop.future),
   );
 
   Future<void> _presenceLoop(ApiClient api) => _retrying(
@@ -116,11 +119,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
           ),
         );
       },
+      stop: _stop.future,
     ),
   );
 
   @override
   void dispose() {
+    _stop.complete();
     for (final t in _retryTimers) {
       t.cancel();
     }

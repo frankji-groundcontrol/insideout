@@ -18,11 +18,17 @@ Future<SseAttempt> fetchSseAttempt(
   Map<String, String> headers, {
   String method = 'GET',
   String? body,
+  Future<void>? stop,
 }) async {
+  final abort = web.AbortController();
+  // Completing [stop] closes the connection and rejects the pending read; the
+  // caller that asked for the stop treats that as the stream ending.
+  stop?.then((_) => abort.abort());
   final init = web.RequestInit(
     method: method,
     headers: headers.jsify() as JSObject,
     body: body?.toJS,
+    signal: abort.signal,
   );
   final res = await web.window.fetch(url.toJS, init).toDart;
   final responseBody = res.body;
@@ -51,12 +57,14 @@ Stream<Uint8List> fetchSseStream(
   Map<String, String> headers, {
   String method = 'GET',
   String? body,
+  Future<void>? stop,
 }) async* {
   final attempt = await fetchSseAttempt(
     url,
     headers,
     method: method,
     body: body,
+    stop: stop,
   );
   if (attempt.status >= 400) {
     throw ApiException('stream failed', status: attempt.status);

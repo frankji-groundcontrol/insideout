@@ -54,17 +54,36 @@ mixin _StreamVerbs on _ApiCore {
     await readCoachSse(chunks, handlers, idleTimeout: coachSseIdleTimeout);
   }
 
+  /// Runs [session] with a token that completing [stop] trips. A stop is the
+  /// caller leaving, so whatever the abort raises (dio's cancel, a closed
+  /// socket, a rejected fetch) ends the call normally instead of failing it.
+  Future<void> _untilStopped(
+    Future<void>? stop,
+    Future<void> Function(CancelToken cancel) session,
+  ) async {
+    final cancel = CancelToken();
+    var stopped = false;
+    stop?.then((_) {
+      stopped = true;
+      cancel.cancel();
+    });
+    try {
+      await session(cancel);
+    } catch (_) {
+      if (!stopped) rethrow;
+    }
+  }
+
   /// Subscribes to the project's live presence (canvas who-is-here).
-  /// Every snapshot replace-calls [onChange]; the stream ends when the
-  /// caller cancels the dio request (dio has no per-request cancel
-  /// here, so the page closes by letting it die with dispose).
+  /// Every snapshot replace-calls [onChange]; completing [stop] aborts the
+  /// connection and ends the call.
   Future<void> presenceStream(
     String projectId,
     String clientId,
     void onChange(List<PresenceEntry> entries), {
     void Function(String sessionId, String name, double x, double y)? onCursor,
     Future<void>? stop,
-  }) async {
+  }) => _untilStopped(stop, (cancel) async {
     final token = await _readAccess();
     final headers = {
       if (token != null) 'Authorization': 'Bearer $token',
@@ -75,12 +94,14 @@ mixin _StreamVerbs on _ApiCore {
       chunks = fetchSseStream(
         '$baseUrl/projects/$projectId/presence/stream?client=${Uri.encodeQueryComponent(clientId)}',
         headers,
+        stop: stop,
       );
     } else {
       final res = await _dio.get<ResponseBody>(
         '/projects/$projectId/presence/stream',
         queryParameters: {'client': clientId},
         options: Options(responseType: ResponseType.stream, headers: headers),
+        cancelToken: cancel,
       );
       if (res.statusCode != null && res.statusCode! >= 400) {
         throw ApiException('presence failed', status: res.statusCode);
@@ -111,15 +132,16 @@ mixin _StreamVerbs on _ApiCore {
         }
       }
     }
-  }
+  });
 
   /// Subscribes to live progress snapshots. Every `progress` frame
-  /// replace-calls [onProgress]; the stream ends when the page disposes.
+  /// replace-calls [onProgress]; completing [stop] aborts the connection and
+  /// ends the call.
   Future<void> progressStream(
     String projectId,
     void Function(RoadmapProgress progress) onProgress, {
     Future<void>? stop,
-  }) async {
+  }) => _untilStopped(stop, (cancel) async {
     final token = await _readAccess();
     final headers = {
       if (token != null) 'Authorization': 'Bearer $token',
@@ -130,11 +152,13 @@ mixin _StreamVerbs on _ApiCore {
       chunks = fetchSseStream(
         '$baseUrl/projects/$projectId/roadmap/progress/stream',
         headers,
+        stop: stop,
       );
     } else {
       final res = await _dio.get<ResponseBody>(
         '/projects/$projectId/roadmap/progress/stream',
         options: Options(responseType: ResponseType.stream, headers: headers),
+        cancelToken: cancel,
       );
       if (res.statusCode != null && res.statusCode! >= 400) {
         throw ApiException('progress stream failed', status: res.statusCode);
@@ -142,5 +166,5 @@ mixin _StreamVerbs on _ApiCore {
       chunks = res.data!.stream;
     }
     await readProgressSse(chunks, onProgress);
-  }
+  });
 }

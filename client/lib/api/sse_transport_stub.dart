@@ -7,6 +7,7 @@ Future<SseAttempt> fetchSseAttempt(
   Map<String, String> headers, {
   String method = 'GET',
   String? body,
+  Future<void>? stop,
 }) => throw UnsupportedError('fetch-based SSE is web-only');
 
 Stream<Uint8List> fetchSseStream(
@@ -14,4 +15,5 @@ Stream<Uint8List> fetchSseStream(
   Map<String, String> headers, {
   String method = 'GET',
   String? body,
+  Future<void>? stop,
 }) => throw UnsupportedError('fetch-based SSE is web-only');
