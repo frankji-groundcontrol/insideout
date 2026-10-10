@@ -118,14 +118,16 @@ func TestCriticState_RoundTrip(t *testing.T) {
 // forcingStub records what runCritic hands the streamer and answers with one
 // valid report_findings call.
 type forcingStub struct {
-	sawMsgs []Message
+	sawMsgs   []Message
+	sawSystem string
 }
 
 func (f *forcingStub) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
 	return Turn{}, nil
 }
 
-func (f *forcingStub) StreamChatForcingTool(_ context.Context, _ string, msgs []Message, tool Tool, _ func(string)) (Turn, error) {
+func (f *forcingStub) StreamChatForcingTool(_ context.Context, system string, msgs []Message, tool Tool, _ func(string)) (Turn, error) {
+	f.sawSystem = system
 	f.sawMsgs = msgs
 	args, _ := json.Marshal(map[string]any{"findings": []any{
 		map[string]any{"section": "goals", "severity": "minor", "kind": "omission", "issue": "goal is not measurable"},
