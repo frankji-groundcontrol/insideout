@@ -148,13 +148,19 @@ mixin _ProjectVerbs on _ApiCore {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
+  /// The server keys a cursor by [clientId], as it keys the presence stream
+  /// opened with the same id: send that one, or the two never meet.
   Future<void> cursor(
     String projectId,
     double x,
     double y, {
-    String clientId = '',
+    required String clientId,
   }) async {
-    await _dio.post('/projects/$projectId/cursor', data: {'x': x, 'y': y});
+    await _dio.post(
+      '/projects/$projectId/cursor',
+      queryParameters: {'client': clientId},
+      data: {'x': x, 'y': y},
+    );
   }
 
   /// A node's delivery evidence, newest first (kind/detail/sourceUrl).

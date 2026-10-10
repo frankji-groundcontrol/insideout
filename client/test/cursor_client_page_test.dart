@@ -74,7 +74,7 @@ class _CursorApi extends ApiClient {
     String projectId,
     double x,
     double y, {
-    String clientId = '',
+    required String clientId,
   }) async {
     cursorClients.add(clientId);
   }

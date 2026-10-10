@@ -69,7 +69,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
     context
         .read<Session>()
         .api
-        .cursor(widget.projectId, x, y)
+        .cursor(widget.projectId, x, y, clientId: _clientId)
         .catchError((_) {});
   }
 
