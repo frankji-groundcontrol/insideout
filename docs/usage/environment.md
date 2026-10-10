@@ -102,7 +102,7 @@ themselves when it is unset.
 | `INSIDEOUT_MAIL_API_KEY` | no | — | Resend API key for transactional email (magic-link login, password reset). **Empty = mail dev mode**: recipient and subject are logged, not sent — message bodies (magic links) appear only with `INSIDEOUT_MAIL_DEV_BODY=1`. Setting a key requires `INSIDEOUT_PUBLIC_URL` (fail-fast otherwise, so emailed links never point at the localhost default). |
 | `INSIDEOUT_MAIL_DEV_BODY` | no | off | Dev mode only: exactly `1` includes full message bodies in the not-sent mail log (`scripts/dev.sh` sets it locally). Never set on a deployed host. |
 | `INSIDEOUT_MAIL_FROM` | no | `InsideOut <onboarding@resend.dev>` | From address for auth email; must be a Resend-verified sender. The default is Resend's sandbox address, which only delivers to the Resend account's own email. |
-| `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed magic/reset link. Set to the hosted domain in production. |
+| `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed invite/magic/reset link. Set to the hosted domain in production. Locally, run the web dev server on this port (`flutter run --web-port=5173`) or set this to the port in use. |
 | `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). |
 
 ### AI provider
@@ -156,7 +156,7 @@ Flutter does not read the root `.env`. Hosted web bakes
 and nginx proxies `/api/` to the Go server. Locally:
 
 ```bash
-cd client && flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+cd client && flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
 
 ## Database setups
