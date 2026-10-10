@@ -65,6 +65,11 @@ func (rec *statusRecorder) Flush() {
 	}
 }
 
+// Unwrap lets http.NewResponseController reach the connection behind the
+// recorder (SetWriteDeadline, Flush); without it every handler wrapped by
+// withLogging or the auth throttle gets ErrNotSupported.
+func (rec *statusRecorder) Unwrap() http.ResponseWriter { return rec.ResponseWriter }
+
 func (s *Server) withLogging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
