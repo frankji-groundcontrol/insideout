@@ -7,6 +7,9 @@
 # docs/changelogs/ entry. One source of truth with the Claude Stop hook: both
 # call scripts/check-docs-recorded.sh. Fires for Claude, Codex, and humans since
 # all commit through git. Bypass a single commit: git commit --no-verify
+#
+# Also warns, never blocks, when a tracked file carries the production host or
+# the dogfood address (scripts/check-redaction.sh); CI is what blocks on that.
 set -u
 
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
@@ -14,4 +17,7 @@ script="$root/scripts/check-docs-recorded.sh"
 [ -f "$script" ] || exit 0
 
 sh "$script" --staged
+# SEC-14: advisory like the check above; a failing guard must not block a commit.
+redaction="$root/scripts/check-redaction.sh"
+[ -f "$redaction" ] && { sh "$redaction" || true; }
 exit 0

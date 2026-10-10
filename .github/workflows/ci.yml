@@ -220,3 +220,7 @@ jobs:
           python3 test_env_catalog.py
           python3 test_env_writes.py
           python3 -m unittest discover -s tests/keys -t . -p "test_*.py" -v
+      # SEC-14: blocks here; the pre-commit hook only warns. The script finds
+      # the repo root itself, so the job's scripts/ working directory is fine.
+      - name: redaction guard
+        run: sh check-redaction.sh
