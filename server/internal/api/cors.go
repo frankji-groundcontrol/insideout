@@ -56,10 +56,12 @@ func splitCORSOrigins(raw string) []string {
 
 func (s *Server) withAllowlistCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Allowed or not, the answer depends on Origin, so a cache must key
+		// on it. Add, not Set: another layer's Vary field survives.
+		w.Header().Add("Vary", "Origin")
 		origin := r.Header.Get("Origin")
 		if originAllowed(origin, s.cfg.CORSOrigins) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Vary", "Origin")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, PUT, DELETE, OPTIONS")
 			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")

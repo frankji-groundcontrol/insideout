@@ -125,6 +125,7 @@ func (s *Server) withRecover(next http.Handler) http.Handler {
 // API directly with curl/tests without going through the Nuxt proxy.
 func (s *Server) withDevCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Vary", "Origin") // the allow-origin below reflects it
 		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
