@@ -18,8 +18,12 @@ and on to the next wave.
 - [x] Wave 2 — 11 clusters (AIDEV-03/06, CQ-04, AIDEV-05/11, CQ-07, USER-08,
       SEC-02/06, FEAT-07, REL-02/03, SEC-08, FULL-02, CQ-03, USER-03, PM-04,
       SEC-07, ARCH-03, SEC-03, REL-05).
-- [ ] Wave 3 — 6 clusters (docs truth, env catalog, client polish ×2, prompts
-      contract, test hygiene).
+- [x] Wave 3 — 6 clusters (docs truth, env catalog, client polish x2, prompts
+      contract, test hygiene): all verifier-accepted round 1 — 31 commits
+      cherry-picked; TEST-06 closed by the integrator (parameterized circuit
+      functions, migration 20261011100000 — its overload bug was caught and fixed
+      on the integration DB before any push); server 26 pkgs green (one allowed
+      skip), client 449 green, analyze 14.
 - [ ] Wave 4 — 8 clusters (promise register, locale threading, upgrade lane,
       hosted smoke, attestation honesty, validation slice, contribution
       surface, gap issues).
@@ -31,7 +35,7 @@ and on to the next wave.
 
 ## Status
 
-In flight 2026-10-11. Wave 3 workflow running over base `bce47c4` (waves 1-2 integrated): worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
+In flight 2026-10-11. Wave 4 workflow running over base `2c5631b` (waves 1-3 integrated): worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
 `rv3/w1-*`, briefs/reports under `/tmp/insideout-gap/rv3/work/`, per-cluster
 databases on the disposable cluster (`rv3w1*`). Owner-blocked rows are out of
 scope by design and stay in [HANDOFF](../HANDOFF.md).
