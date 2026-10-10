@@ -179,7 +179,13 @@ Frontend (from `client/`):
 flutter pub get --enforce-lockfile   # fails on a non-3.44 SDK instead of rewriting pubspec.lock
 flutter analyze --no-fatal-infos
 flutter test
+flutter test --platform chrome test/web   # the web-only transports, in a browser
 ```
+
+The plain `flutter test` run stays on the VM: its collector drops the
+`@TestOn('browser')` suites in `test/web/`, which only the Chrome lane
+above compiles and runs (the fetch/ReadableStream SSE loop and the
+anchor-click download path).
 
 The app's nginx proxy (Python 3 and any nginx binary; nothing is installed):
 
