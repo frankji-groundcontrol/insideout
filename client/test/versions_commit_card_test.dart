@@ -15,9 +15,10 @@ import 'package:provider/provider.dart';
 /// restyle kept only the diff counts and left the other strings unused. The
 /// server stores each carried gap in English as a section, a colon, the reason
 /// and "(carried as open question)", so the card shows those like the gaps
-/// they came from and anything a caller named as stored.
+/// they came from and anything a caller named as stored. The eyebrow above the
+/// stack says which commit is in front, as a position in the list.
 class _FakeApi extends ApiClient {
-  _FakeApi(this.commit)
+  _FakeApi(this.commit, this.older)
     : super(
         baseUrl: 'http://127.0.0.1:9/api/v1',
         readAccess: () async => null,
@@ -26,8 +27,11 @@ class _FakeApi extends ApiClient {
         clearTokens: () async {},
       );
 
-  /// Fields of the one commit, laid over a bare "Board review" commit.
+  /// Fields of the newest commit, laid over a bare "Board review" commit.
   final Map<String, Object?> commit;
+
+  /// Older commits, newest first, each laid over the same bare commit.
+  final List<Map<String, Object?>> older;
 
   @override
   Future<PrdReadiness> prdReadiness(String id) async => PrdReadiness.fromJson({
@@ -42,18 +46,19 @@ class _FakeApi extends ApiClient {
 
   @override
   Future<List<PrdCommit>> listPrdCommits(String id) async => [
-    PrdCommit.fromJson({
-      'id': 'c1',
-      'revision': 3,
-      'name': 'Board review',
-      'primaryAudience': 'decision',
-      'createdAt': '2026-10-05T00:00:00Z',
-      'diff': {
-        'counts': {'added': 1, 'changed': 1, 'removed': 0},
-        'sections': {},
-      },
-      ...commit,
-    }),
+    for (final fields in [commit, ...older])
+      PrdCommit.fromJson({
+        'id': 'c1',
+        'revision': 3,
+        'name': 'Board review',
+        'primaryAudience': 'decision',
+        'createdAt': '2026-10-05T00:00:00Z',
+        'diff': {
+          'counts': {'added': 1, 'changed': 1, 'removed': 0},
+          'sections': {},
+        },
+        ...fields,
+      }),
   ];
 }
 
@@ -77,11 +82,12 @@ const _sections = {
 Future<void> _pump(
   WidgetTester tester,
   String locale,
-  Map<String, Object?> commit,
-) async {
+  Map<String, Object?> commit, [
+  List<Map<String, Object?>> older = const [],
+]) async {
   final session = Session()
     ..ready = true
-    ..api = _FakeApi(commit);
+    ..api = _FakeApi(commit, older);
   await tester.binding.setSurfaceSize(const Size(1400, 900));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(
@@ -103,6 +109,27 @@ Future<void> _pump(
 }
 
 void main() {
+  testWidgets('the eyebrow counts commits, not the revisions they pin', (
+    tester,
+  ) async {
+    // Every edit is a revision, so commits pin numbers with gaps: this one
+    // pins revision 5 but is the second of two commits, not the fifth.
+    await _pump(
+      tester,
+      'en-US',
+      {'revision': 5},
+      [
+        {'id': 'c0', 'revision': 2, 'name': 'First cut'},
+      ],
+    );
+    expect(find.text('First cut'), findsOneWidget);
+    expect(find.text('Commit 2 of 2'), findsOneWidget);
+
+    await tester.tap(find.text('First cut'));
+    await tester.pumpAndSettle();
+    expect(find.text('Commit 1 of 2'), findsOneWidget);
+  });
+
   testWidgets('the commit card lists the open items the version carried', (
     tester,
   ) async {
