@@ -62,8 +62,10 @@ Join an existing workspace with `workspace_join` / `insideout join
 1. **Bootstrap** (only if nothing exists): `workspaces create --title T`
    → `projects create <ws-id> --title T` → `roadmap_add` for the first
    nodes. Otherwise start from `workspaces` → `projects <ws-id>`.
-2. **Triage the inbox**: `ideas <ws-id>` → `idea_update` to sharpen,
-   `idea_delete` to drop (soft — it stays in `ideas` with status `dropped`; filter client-side), `idea_convert` to open a PRD from an idea.
+2. **Triage your inbox**: `ideas <ws-id>` (your own ideas; they are private
+   to their author) → `idea_update` to sharpen, `idea_delete` to drop (soft —
+   the row is kept for audit but `ideas` no longer lists it), `idea_convert`
+   to open a PRD from an idea.
 3. **Author the PRD directly**: `prd <id>` to read, `prd update <id>
    --section goals=…` to edit. Section keys: background, users, goals,
    nonGoals, stories, requirements, constraints, risks. `snapshot`
