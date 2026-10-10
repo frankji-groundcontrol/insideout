@@ -89,7 +89,8 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 	})
 }
 
-// maxBodyBytes caps every request body. All payloads here are JSON text
+// maxBodyBytes caps every request body except the GitHub webhook route,
+// which gets maxWebhookBodyBytes instead. All payloads here are JSON text
 // (auth, ideas, PRD sections, coach messages); 1 MiB is generous for any
 // real request and stops an unauthenticated client from parking a
 // slow-drip multi-GB body on an open connection. Complements the
@@ -97,7 +98,7 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 const maxBodyBytes = 1 << 20 // 1 MiB
 
 // maxWebhookBodyBytes replaces maxBodyBytes on the GitHub webhook route
-// alone: a push delivery lists every commit's files and routinely outgrows
+// alone: a push delivery lists every commit's files and can outgrow
 // 1 MiB, and refusing it as unreadable gets GitHub to disable the hook.
 const maxWebhookBodyBytes = 8 << 20 // 8 MiB
 

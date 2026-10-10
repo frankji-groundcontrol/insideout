@@ -26,7 +26,10 @@ server/
 `cmd/insideout/main.go` wires `config.Load()` → `store.Open(DATABASE_URL)` →
 `api.NewServer(...).Handler()`. The middleware chain (`internal/api/server.go`,
 `middleware.go`) is: `withRequestID` (installs a mutable per-request
-`userHolder`, see `context.go`) → `withLogging` → `withRecover` → the
+`userHolder`, see `context.go`) → `withLogging` → `withRecover` →
+`withMaxBody` (caps request bodies at 1 MiB everywhere except the GitHub
+webhook route, which gets 8 MiB — a push delivery listing every commit's
+files can outgrow 1 MiB) → the
 `net/http` mux → route-level `requireAuth` where needed.
 
 Authentication is httpOnly-cookie based: a short-lived JWT access token plus a
@@ -102,7 +105,9 @@ paragraph-wrapped HTML on demand — no object storage, no background jobs.
 `INSIDEOUT_ACCESS_TTL`/`INSIDEOUT_REFRESH_TTL`, `INSIDEOUT_LLM_BASE_URL`,
 `INSIDEOUT_LLM_API_KEY`, `INSIDEOUT_LLM_MODEL`, `INSIDEOUT_LLM_SCHEMA`,
 `INSIDEOUT_COOKIE_SECURE`,
-`INSIDEOUT_DEV_CORS`. Missing `INSIDEOUT_LLM_API_KEY` is not an error — the PRD
+`INSIDEOUT_DEV_CORS` — fail-fast unless `INSIDEOUT_PUBLIC_URL` is a localhost
+or loopback origin, because the dev middleware reflects any Origin with
+credentials. Missing `INSIDEOUT_LLM_API_KEY` is not an error — the PRD
 Coach falls back to an offline template reply (`internal/agent/template.go`),
 which doubles as local dev mode. See [usage](../usage/local-development.md)
 for the full environment variable reference.

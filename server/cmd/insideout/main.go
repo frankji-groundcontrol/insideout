@@ -162,10 +162,11 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 		Addr:              cfg.Addr,
 		Handler:           srv.Handler(),
 		ReadHeaderTimeout: 5 * time.Second,
-		// ReadTimeout bounds a slow-drip body (pairs with the 1 MiB
-		// body cap in api/middleware.go); IdleTimeout reaps keep-alive
-		// connections. No WriteTimeout: it would cap the whole response and
-		// cut the SSE streams, which arm a deadline per write instead
+		// ReadTimeout bounds a slow-drip body (pairs with the body caps in
+		// api/middleware.go: 1 MiB everywhere, 8 MiB on the GitHub webhook
+		// route); IdleTimeout reaps keep-alive connections. No
+		// WriteTimeout: it would cap the whole response and cut the SSE
+		// streams, which arm a deadline per write instead
 		// (httpx.ArmWriteDeadline).
 		ReadTimeout: 15 * time.Second,
 		IdleTimeout: 60 * time.Second,

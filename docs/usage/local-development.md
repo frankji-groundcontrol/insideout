@@ -46,10 +46,11 @@ values):
 ```
 
 The server builds invite, magic-link and reset links from
-`INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`; `scripts/dev.sh`
-logs them in dev), so the web dev server must run on that port (`flutter run`
-picks a random one unless `--web-port` pins it) or `INSIDEOUT_PUBLIC_URL`
-must be set to the port in use.
+`INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`; in dev the server
+logs them — `scripts/dev.sh` sets `INSIDEOUT_MAIL_DEV_BODY=1` for it, see
+[Mail dev mode](#mail-dev-mode)), so the web dev server must run on that
+port (`flutter run` picks a random one unless `--web-port` pins it) or
+`INSIDEOUT_PUBLIC_URL` must be set to the port in use.
 
 The full variable reference — every variable grouped by consumer, with
 required/default/meaning, the `.env`→process bridges, database setups,
