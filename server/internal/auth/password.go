@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
+	"sync"
 
 	"golang.org/x/crypto/argon2"
 	"golang.org/x/crypto/bcrypt"
@@ -40,6 +41,22 @@ func HashPassword(password string) (string, error) {
 		base64.RawStdEncoding.EncodeToString(salt),
 		base64.RawStdEncoding.EncodeToString(hash),
 	), nil
+}
+
+// dummyHash is a throwaway hash with the production parameters, built on first
+// use so it always tracks the constants above. That first use costs two
+// argon2 runs instead of one.
+var dummyHash = sync.OnceValue(func() string {
+	h, _ := HashPassword("insideout-timing-equalizer") // fails only if crypto/rand does; "" then makes VerifyPassword return at once
+	return h
+})
+
+// VerifyDummyPassword spends the cost of one password verification and
+// discards the outcome. Login calls it for an unknown email so that path takes
+// as long as a wrong password on a real account; without it the missing
+// argon2 work shows from the response time alone which emails have accounts.
+func VerifyDummyPassword(password string) {
+	_, _ = VerifyPassword(dummyHash(), password)
 }
 
 // IsBcryptHash reports whether encoded is a bcrypt hash (Supabase Auth's

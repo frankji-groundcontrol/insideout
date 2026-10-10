@@ -147,6 +147,9 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.store.GetUserByEmail(r.Context(), email)
 	if errors.Is(err, store.ErrNotFound) {
+		// Same argon2 cost as a wrong password on a real account, so the
+		// response time doesn't reveal which emails exist.
+		auth.VerifyDummyPassword(req.Password)
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid email or password", "", nil)
 		return
 	}
