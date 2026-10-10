@@ -7,6 +7,10 @@ Color castShadowColor(Brightness brightness) => brightness == Brightness.dark
     ? const Color(0xFF05070A)
     : const Color(0x26000000);
 
+/// Modal barrier — black at 70%, the one dim shared by every dialog and the
+/// auth door so all overlays read as the same chrome.
+const modalBarrier = Color(0xB3000000);
+
 /// Cobalt-Neo cast shadow — hard 4×4 offset, zero blur, zero spread.
 List<BoxShadow> cast(Brightness brightness) => <BoxShadow>[
   BoxShadow(

@@ -19,7 +19,7 @@ Future<T?> showBlockModal<T>({
 }) {
   return showDialog<T>(
     context: context,
-    barrierColor: const Color(0xB3000000),
+    barrierColor: modalBarrier,
     barrierDismissible: barrierDismissible,
     builder: (ctx) {
       final palette = Cobalt.of(ctx);

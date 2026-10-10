@@ -25,9 +25,6 @@ class AuthDoor extends StatelessWidget {
   static const cardKey = Key('auth-door-card');
   static const wordmarkKey = Key('auth-door-wordmark');
 
-  /// Shared with `showBlockModal` so the prompt reads as the same chrome.
-  static const barrierColor = Color(0xB3000000);
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -45,7 +42,9 @@ class AuthDoor extends StatelessWidget {
               Positioned.fill(
                 child: GestureDetector(
                   onTap: onClose,
-                  child: const ColoredBox(color: barrierColor),
+                  // modalBarrier from cobalt_theme — the same dim every
+                  // showBlockModal dialog sits on.
+                  child: const ColoredBox(color: modalBarrier),
                 ),
               ),
               SafeArea(
