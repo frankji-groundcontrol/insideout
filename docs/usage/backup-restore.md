@@ -17,6 +17,19 @@ the `insideout` schema. Two layers of protection:
    plain-SQL dump of the `insideout` schema that restores on any Postgres
    with the two roles present.
 
+Honest state: nothing schedules the dump — no cron entry, no CI job, the
+repo carries neither — and the Supabase toggle above is unconfirmed, so
+recovery today rests on the operator remembering three duties:
+
+- run the dump on a cadence you choose, at minimum after every migration
+  lands on the hosted database (the last verified dump and drill are the
+  2026-10-10 walk below);
+- confirm once, in the Supabase dashboard, that automated backups and
+  point-in-time restore are enabled for the project — until then treat
+  the portable dump as the only protection;
+- re-walk the restore drill below whenever this runbook changes, and
+  record the walk's date there.
+
 ## Taking a dump
 
 ```sh
