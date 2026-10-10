@@ -144,7 +144,7 @@ func (f *forcingStub) Model() string { return "stub" }
 // critic must carry a real user message, like the roadmap planner does.
 func TestRunCritic_SendsNonEmptyUserMessage(t *testing.T) {
 	stub := &forcingStub{}
-	findings, _, ok := runCritic(context.Background(), stub, "Workshop ideas", sectionsFixture(), ledgerMeta{}, nil)
+	findings, _, ok := runCritic(context.Background(), stub, localeZH, "Workshop ideas", sectionsFixture(), ledgerMeta{}, nil)
 	if !ok {
 		t.Fatal("runCritic should succeed against a cooperative stub")
 	}

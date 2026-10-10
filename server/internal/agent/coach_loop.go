@@ -59,7 +59,7 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 		lm, extra := loadLedger(conv.Meta)
 		findingsText := formatFindingsForPrompt(loadCriticFindings(extra))
 		started := time.Now()
-		turn, err := c.streamer.StreamChat(ctx, systemPrompt(stage, prdTitle, sections, formatLedgerForPrompt(lm), findingsText), msgs, coachTools(), onDelta)
+		turn, err := c.streamer.StreamChat(ctx, systemPrompt(conv.Locale, stage, prdTitle, sections, formatLedgerForPrompt(lm), findingsText), msgs, coachTools(), onDelta)
 		c.recordTelemetry(ctx, runID, "coach", started, turn.Usage, err)
 		if err != nil {
 			return "", err

@@ -17,7 +17,7 @@ import (
 // principle 2 (lines 47-48) licenses the four-way recommendation with a
 // human-decides rider.
 func TestSystemPromptClarifyFollowsCoachingContract(t *testing.T) {
-	prompt := systemPrompt(StageClarify, "Contract", map[string]string{}, "", "")
+	prompt := systemPrompt(localeZH, StageClarify, "Contract", map[string]string{}, "", "")
 	for _, want := range []string{
 		"相互独立的问题可以合并成一组一次提出",      // grouping allowed (PRODUCT.md:99)
 		"只有当一个答案会改变访谈的下一个分支",      // one-at-a-time only when it branches (PRODUCT.md:100)
@@ -46,7 +46,7 @@ func TestSystemPromptClarifyFollowsCoachingContract(t *testing.T) {
 func TestSystemPromptEveryStageCarriesRecommendationAuthority(t *testing.T) {
 	const clause = "建议继续深化、先去验证、暂停、或者放弃当前方向"
 	for _, stage := range stageOrder {
-		if prompt := systemPrompt(stage, "R", map[string]string{}, "", ""); !strings.Contains(prompt, clause) {
+		if prompt := systemPrompt(localeZH, stage, "R", map[string]string{}, "", ""); !strings.Contains(prompt, clause) {
 			t.Errorf("%s-stage prompt must carry the four-way recommendation clause", stage)
 		}
 	}

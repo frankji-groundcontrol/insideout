@@ -65,7 +65,7 @@ func (c *Coach) maybeRunCritic(ctx context.Context, actorID, prdID, conversation
 		}
 	}
 	started := time.Now()
-	findings, usage, ok := runCritic(ctx, c.streamer, prd.Title, prd.Sections, lm, focus)
+	findings, usage, ok := runCritic(ctx, c.streamer, conv.Locale, prd.Title, prd.Sections, lm, focus)
 	var callErr error
 	if !ok {
 		callErr = fmt.Errorf("critic output failure")
@@ -254,17 +254,27 @@ const criticSystemPromptTemplate = `你是一位严格的 PRD 评审员，正在
 
 // runCritic makes one fresh-context critic call (no chat history — only
 // the PRD and the ledger, per plan §4.4) and returns verified findings.
-// Output-shape failures (unparseable/empty) get one re-prompt retry with
-// the error appended; a second failure returns ok=false so the caller
-// can degrade to single-context critique rather than fail the turn.
-func runCritic(ctx context.Context, streamer ChatStreamer, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage Usage, ok bool) {
+// The prompt language follows the conversation's locale (zh prompts here,
+// en variants in prompts_en.go). Output-shape failures (unparseable/empty)
+// get one re-prompt retry with the error appended; a second failure
+// returns ok=false so the caller can degrade to single-context critique
+// rather than fail the turn.
+func runCritic(ctx context.Context, streamer ChatStreamer, locale, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage Usage, ok bool) {
+	tmpl, focusPrefix, userDirective, retryFormat := criticSystemPromptTemplate,
+		"本轮只需重新评审以下此前被标记过的章节：",
+		"请按系统提示中的标准独立评审这份 PRD，并通过 report_findings 工具报告全部发现。",
+		"上一次调用失败：%s。请重新输出，严格符合 report_findings 的参数格式。"
+	if locale == localeEN {
+		tmpl, focusPrefix, userDirective, retryFormat = criticSystemPromptTemplateEN,
+			criticFocusPrefixEN, criticUserDirectiveEN, criticRetryPrefixFormat
+	}
 	focus := ""
 	if len(focusSections) > 0 {
 		// The names come from stored findings whose section is model output, so
 		// they ride in a fence like the rest of the PRD-derived text.
-		focus = "\n\n本轮只需重新评审以下此前被标记过的章节：" + fenceData(strings.Join(focusSections, ", "))
+		focus = "\n\n" + focusPrefix + fenceData(strings.Join(focusSections, ", "))
 	}
-	system := fmt.Sprintf(criticSystemPromptTemplate, focus, dataFenceClause,
+	system := fmt.Sprintf(tmpl, focus, dataFenceClause,
 		fenceData(prdTitle), fenceData(formatSectionsForPrompt(sections)), fenceData(formatLedgerForPrompt(lm)))
 	tool := reportFindingsTool()
 
@@ -272,12 +282,12 @@ func runCritic(ctx context.Context, streamer ChatStreamer, prdTitle string, sect
 	for attempt := 0; attempt < 2; attempt++ {
 		sys := system
 		if lastErr != nil {
-			sys += fmt.Sprintf("\n\n上一次调用失败：%s。请重新输出，严格符合 report_findings 的参数格式。", lastErr.Error())
+			sys += fmt.Sprintf("\n\n"+retryFormat, lastErr.Error())
 		}
 		// AIDEV-09: the Messages API rejects an empty "messages" array with
 		// a 400 on every call — the PRD itself rides in the system prompt,
 		// so this turn only needs to direct the forced tool call.
-		user := "请按系统提示中的标准独立评审这份 PRD，并通过 report_findings 工具报告全部发现。"
+		user := userDirective
 		turn, err := streamer.StreamChatForcingTool(ctx, sys, []Message{{Role: RoleUser, Content: user}}, tool, nil)
 		usage = turn.Usage
 		if err != nil {

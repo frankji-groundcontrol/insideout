@@ -20,6 +20,16 @@ const (
 	StageFinalize = "finalize"
 )
 
+// The two locales a conversation can coach in, as stored on
+// agent_conversations (store.NormalizeLocale canonicalizes). Anything but
+// 'en' — zh included — keeps the Chinese prompts, the long-standing
+// behavior for conversations created before the locale column existed.
+// FEAT-01 (review 3): PRODUCT.md's first-class product languages.
+const (
+	localeEN = "en"
+	localeZH = "zh"
+)
+
 var stageOrder = []string{StageClarify, StageDraft, StageCritique, StageFinalize}
 
 // nextStage returns the only stage `from` may advance to, or "" if there
@@ -43,7 +53,14 @@ const factDiscipline = `记录事实的规矩：用户明确说出的内容—�
 // direction, and the human always decides.
 const recommendationDiscipline = `作为追求真相的伙伴，你可以建议继续深化、先去验证、暂停、或者放弃当前方向；但最终怎么做始终由用户决定。`
 
-func systemPrompt(stage string, prdTitle string, sections map[string]string, ledgerText string, findingsText string) string {
+// systemPrompt assembles the coach's system prompt in the conversation's
+// locale: 'en' renders the English variants (prompts_en.go), anything else
+// the Chinese ones below — the zh default is the back-compat behavior for
+// conversations created before the locale column existed.
+func systemPrompt(locale string, stage string, prdTitle string, sections map[string]string, ledgerText string, findingsText string) string {
+	if locale == localeEN {
+		return systemPromptEN(stage, prdTitle, sections, ledgerText, findingsText)
+	}
 	var body string
 	switch stage {
 	case StageClarify:
@@ -168,9 +185,14 @@ func parseRankedCritique(reply string) []CriticFinding {
 			continue // unknown section key — drop, don't fail the batch
 		}
 		issue, suggestion := m[3], ""
-		if i := strings.Index(issue, "建议："); i >= 0 {
-			suggestion = strings.TrimSpace(issue[i+len("建议："):])
-			issue = strings.TrimSpace(issue[:i])
+		// Both markers are accepted: the zh prompt's 「建议：」 and the en
+		// prompt's "Suggestion:" (prompts_en.go) — the parser is locale-blind.
+		for _, marker := range []string{"建议：", "Suggestion:"} {
+			if i := strings.Index(issue, marker); i >= 0 {
+				suggestion = strings.TrimSpace(issue[i+len(marker):])
+				issue = strings.TrimSpace(issue[:i])
+				break
+			}
 		}
 		out = append(out, CriticFinding{
 			ID:         "c" + uuid.NewString()[:8],

@@ -22,7 +22,7 @@ func TestNextStage_LegalTransitionOrder(t *testing.T) {
 }
 
 func TestSystemPrompt_IncludesStageAndPrdContext(t *testing.T) {
-	prompt := systemPrompt(StageDraft, "My PRD", map[string]string{"background": "some content"}, "- [problem/attested] users can't find X（原话：找不到）", "")
+	prompt := systemPrompt(localeZH, StageDraft, "My PRD", map[string]string{"background": "some content"}, "- [problem/attested] users can't find X（原话：找不到）", "")
 	if prompt == "" {
 		t.Fatal("systemPrompt returned empty string")
 	}
@@ -38,7 +38,7 @@ func TestSystemPrompt_IncludesStageAndPrdContext(t *testing.T) {
 }
 
 func TestSystemPromptWeavesReadinessGaps(t *testing.T) {
-	prompt := systemPrompt(StageClarify, "Gaps", map[string]string{}, "", "")
+	prompt := systemPrompt(localeZH, StageClarify, "Gaps", map[string]string{}, "", "")
 	for _, want := range []string{
 		"当前读者缺口",
 		"must_clarify_now",
@@ -57,7 +57,7 @@ func TestSystemPromptCompletePrDHasNoBlockingGaps(t *testing.T) {
 	for _, k := range store.PrdSectionKeys {
 		full[k] = "written"
 	}
-	prompt := systemPrompt(StageDraft, "Full", full, "", "")
+	prompt := systemPrompt(localeZH, StageDraft, "Full", full, "", "")
 	if !strings.Contains(prompt, "无阻塞性缺口") {
 		t.Errorf("complete PRD should show no blocking gaps; got:\n%.300s", prompt)
 	}
@@ -67,7 +67,7 @@ func TestSystemPromptCompletePrDHasNoBlockingGaps(t *testing.T) {
 }
 
 func TestSystemPromptCritiqueAsksForRankedList(t *testing.T) {
-	prompt := systemPrompt(StageCritique, "Ranked", map[string]string{}, "", "")
+	prompt := systemPrompt(localeZH, StageCritique, "Ranked", map[string]string{}, "", "")
 	for _, want := range []string{"按严重程度从高到低", "[blocking]", "编号列表"} {
 		if !strings.Contains(prompt, want) {
 			t.Errorf("critique prompt should ask for a ranked list, missing %q", want)
