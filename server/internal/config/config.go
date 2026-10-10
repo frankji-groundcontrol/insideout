@@ -29,7 +29,8 @@ type Config struct {
 	// CORSOrigins is an exact Origin allow-list for Flutter web (and any
 	// other browser client that is not same-origin). The token "localhost"
 	// matches http(s) localhost / 127.0.0.1 with any port. Empty means no
-	// allow-list CORS (Nuxt same-origin needs none).
+	// allow-list CORS (Flutter web behind the nginx /api/ proxy is
+	// same-origin and needs none).
 	CORSOrigins []string
 	// CookieSecure controls the Secure attribute on auth cookies. Defaults
 	// to true; set INSIDEOUT_COOKIE_SECURE=0 for plain-http local dev

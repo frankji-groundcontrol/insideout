@@ -60,9 +60,9 @@ func bearerOrCookie(r *http.Request) string {
 	return ""
 }
 
-// refreshTokenFromRequest prefers the httpOnly refresh cookie (Nuxt) and
-// otherwise reads {"refreshToken":"..."} so Flutter can refresh without
-// cookies. Cookie wins when both are present.
+// refreshTokenFromRequest prefers the httpOnly refresh cookie (browser
+// clients) and otherwise reads {"refreshToken":"..."} so Flutter can refresh
+// without cookies. Cookie wins when both are present.
 func refreshTokenFromRequest(r *http.Request) (string, error) {
 	if c, err := r.Cookie(refreshCookieName); err == nil && c.Value != "" {
 		return c.Value, nil

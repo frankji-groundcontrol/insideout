@@ -131,7 +131,7 @@ func (s *Server) withRecover(next http.Handler) http.Handler {
 }
 
 // withDevCORS is only mounted when INSIDEOUT_DEV_CORS=1, for hitting the
-// API directly with curl/tests without going through the Nuxt proxy.
+// API directly with curl/tests without going through the nginx proxy.
 func (s *Server) withDevCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Vary", "Origin") // the allow-origin below reflects it

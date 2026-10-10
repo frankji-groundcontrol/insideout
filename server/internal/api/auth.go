@@ -252,8 +252,8 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 }
 
 // sessionView is the login/register body: the existing user fields stay
-// top-level so Nuxt can keep assigning the JSON to UserProfile, plus the
-// tokens Flutter needs when it cannot store httpOnly cookies.
+// top-level so existing clients keep decoding the body as a user profile,
+// plus the tokens Flutter needs when it cannot store httpOnly cookies.
 type sessionView struct {
 	userView
 	AccessToken  string `json:"accessToken"`
