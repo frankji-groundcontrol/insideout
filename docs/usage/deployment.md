@@ -68,6 +68,14 @@ hand or wiping the volume.
 Migrations are embedded in the server binary and applied automatically on
 startup; no separate migration step is needed in the compose flow.
 
+Concurrent boots serialize: `Migrate` first takes a transaction-scoped Postgres
+advisory lock, so a second replica (or a manual `insideout migrate` during a
+deploy) waits for the first to finish and then finds nothing left to apply,
+instead of racing on the same DDL and exiting. The lock holder keeps one
+connection while the migrations run on another, so the migrate connection needs
+`pool_max_conns` of at least 2 (the default); a lower value fails at boot with a
+message.
+
 ## Build and run
 
 ```bash
