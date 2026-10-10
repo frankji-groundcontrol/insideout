@@ -43,17 +43,23 @@ jobs:
           echo "$PRETTY_NAME $(uname -m)"
           test "$ID" = ubuntu
 
+      # Each block is captured into a variable first. Inside "$(...)" in the -c
+      # argument a failing helper (a renamed heading in modules.md) hands bash
+      # an empty script, which exits 0, and the step would pass without ever
+      # running the skill.
       - name: Module 1, base tools (the skill's Ubuntu block)
         run: |
-          bash -euo pipefail -c "$(python3 -I scripts/tests/skill_blocks.py 1)"
+          blocks=$(python3 -I scripts/tests/skill_blocks.py 1)
+          bash -euo pipefail -c "$blocks"
           git --version && curl --version | head -1 && jq --version && python3 --version && openssl version
 
       # A clean PATH, so a Go already on the runner cannot satisfy the verify
       # step: it must be the tarball the skill installs.
       - name: Module 3, Go 1.25+ (the skill's Ubuntu block)
         run: |
+          blocks=$(python3 -I scripts/tests/skill_blocks.py 3)
           env -i HOME="$HOME" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-            bash -euo pipefail -c "$(python3 -I scripts/tests/skill_blocks.py 3)
+            bash -euo pipefail -c "$blocks
           go version | tee /dev/stderr | grep -E 'go1\.(2[5-9]|[3-9][0-9])'"
           echo /usr/local/go/bin >> "$GITHUB_PATH"
 
@@ -67,15 +73,18 @@ jobs:
 
       - name: Module 5, PostgreSQL (the skill's Ubuntu block)
         run: |
-          bash -euo pipefail -c "$(python3 -I scripts/tests/skill_blocks.py 5)"
+          blocks=$(python3 -I scripts/tests/skill_blocks.py 5)
+          bash -euo pipefail -c "$blocks"
           psql --version
           pg_lsclusters
           pg_lsclusters | grep -q online
 
       # Keep the version in lockstep with the Flutter pin in ci.yml.
+      # No pipe after curl: the default step shell is "bash -e" without
+      # pipefail, so a 404 in front of "| head" would still pass.
       - name: Module 6, the pinned Flutter archive the skill names exists
         run: |
-          curl -fsIL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.0-stable.tar.xz" | head -1
+          curl -fsSIL -o /dev/null -w 'HTTP %{http_code}\n' "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.0-stable.tar.xz"
 
       # A clean PATH again: the runner already has ~/.local/bin on it, which
       # would send install.sh down its "already on PATH" branch and skip the
