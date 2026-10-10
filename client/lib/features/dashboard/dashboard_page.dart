@@ -37,7 +37,9 @@ class _DashboardPageState extends State<DashboardPage> {
     });
   }
 
-  Future<void> _create() async {
+  /// Creates a workspace and returns its id, or null when the form was
+  /// cancelled or the write failed — the caller decides where to land.
+  Future<String?> _create() async {
     final t = context.read<Appearance>().t;
     final values = await showBlockForm(
       context: context,
@@ -51,12 +53,15 @@ class _DashboardPageState extends State<DashboardPage> {
       ],
     );
     final title = values?.first.trim() ?? '';
-    if (title.isEmpty || !mounted) return;
-    final done = await guardWrite(
-      context,
-      () => context.read<Session>().api.createWorkspace(title, ''),
-    );
-    if (done && mounted) await _reload();
+    if (title.isEmpty || !mounted) return null;
+    String? createdId;
+    final done = await guardWrite(context, () async {
+      final ws = await context.read<Session>().api.createWorkspace(title, '');
+      createdId = ws.id;
+    });
+    if (!done || !mounted) return null;
+    await _reload();
+    return createdId;
   }
 
   Future<void> _join() async {
@@ -86,9 +91,15 @@ class _DashboardPageState extends State<DashboardPage> {
     context.go('/workspace/${w.id}');
   }
 
-  void _capture(List<Workspace> list) {
+  Future<void> _capture(List<Workspace> list) async {
     if (list.isEmpty) {
-      _create();
+      // USER-09: with no workspace yet, the capture CTA implies creating
+      // one — then completes the promise by landing on its ideas wall
+      // instead of stranding the user back on the dashboard.
+      final id = await _create();
+      if (id == null || !mounted) return;
+      context.read<LoopFocus>().rememberWorkspace(id);
+      context.go('/workspace/$id/ideas');
       return;
     }
     context.read<LoopFocus>().rememberWorkspace(list.first.id);
