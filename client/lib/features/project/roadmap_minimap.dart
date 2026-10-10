@@ -76,10 +76,15 @@ class RoadmapMinimap extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          Text(
-                            _clip(roots[i].title),
-                            style: theme.textTheme.bodySmall,
-                            overflow: TextOverflow.ellipsis,
+                          // The visible label clips to the column width; the
+                          // tooltip is where the full title survives.
+                          Tooltip(
+                            message: roots[i].title,
+                            child: Text(
+                              _clip(roots[i].title),
+                              style: theme.textTheme.bodySmall,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ),

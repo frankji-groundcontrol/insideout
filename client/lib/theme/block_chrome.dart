@@ -116,7 +116,7 @@ class BlockBadge extends StatelessWidget {
   }
 }
 
-/// Uppercase micro tag (D8) — 10/w700, letterSpacing 1.0, 1px border.
+/// Uppercase micro tag (D8) — 12/w700, letterSpacing 1.0, 1px border.
 class BlockTag extends StatelessWidget {
   const BlockTag({super.key, required this.label, this.color});
 
@@ -136,7 +136,7 @@ class BlockTag extends StatelessWidget {
         style: TextStyle(
           fontFamily: Cobalt.sans,
           fontFamilyFallback: Cobalt.sansFallback,
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.0,
           color: tone,
