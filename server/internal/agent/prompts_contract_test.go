@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -48,5 +49,43 @@ func TestSystemPromptEveryStageCarriesRecommendationAuthority(t *testing.T) {
 		if prompt := systemPrompt(stage, "R", map[string]string{}, "", ""); !strings.Contains(prompt, clause) {
 			t.Errorf("%s-stage prompt must carry the four-way recommendation clause", stage)
 		}
+	}
+}
+
+// AIDEV-12: a ranked line whose section token is not one of the 8
+// canonical PRD section keys must be dropped — a stored "roadmap" finding
+// would point the round-2 critic and the panel at a section that doesn't
+// exist. Drop, don't fail the batch (the established policy for bad
+// severity/kind).
+func TestParseRankedCritique_DropsUnknownSection(t *testing.T) {
+	reply := strings.Join([]string{
+		"1. [blocking] roadmap — 目标不可衡量。",
+		"2. [major] goals — 目标用户写成了「所有人」。",
+	}, "\n")
+
+	got := parseRankedCritique(reply)
+	if len(got) != 1 {
+		t.Fatalf("got %d findings, want 1 (the roadmap one dropped): %+v", len(got), got)
+	}
+	if got[0].Section != "goals" {
+		t.Fatalf("surviving finding should be the goals one, got %+v", got[0])
+	}
+}
+
+// AIDEV-12, second parser: report_findings entries with a section key
+// outside store.PrdSectionKeys are dropped the same way.
+func TestParseCriticFindings_DropsUnknownSection(t *testing.T) {
+	args, _ := json.Marshal(map[string]any{
+		"findings": []map[string]any{
+			{"section": "roadmap", "severity": "blocking", "kind": "omission", "issue": "no such section"},
+			{"section": "risks", "severity": "minor", "kind": "omission", "issue": "a real section"},
+		},
+	})
+	out, err := parseCriticFindings(string(args), sectionsFixture())
+	if err != nil {
+		t.Fatalf("parseCriticFindings: %v", err)
+	}
+	if len(out) != 1 || out[0].Section != "risks" {
+		t.Fatalf("unknown-section finding should be dropped, got %+v", out)
 	}
 }
