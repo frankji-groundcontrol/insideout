@@ -59,6 +59,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Roadmap dependency edges](2026-10-11-roadmap-dependency-edges.md)
   — nodes carry parent links, deadlines and owners but no depends_on edge,
   so no blocked path and no time-Diff rebaseline.
+- [Focus surface](2026-10-11-focus-surface.md) — focus is an agent-context
+  input only; no user focus pointer, no team-Now aggregation beyond
+  per-node status and canvas presence.
 
 ## Bug records
 
