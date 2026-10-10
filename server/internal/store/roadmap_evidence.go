@@ -9,7 +9,8 @@ import (
 )
 
 // RoadmapEvidence is one matched delivery-evidence row on a leaf node
-// (commits, PRs, deployments — PRODUCT.md: evidence, never outcomes).
+// (commits, PRs, deployments — PRODUCT.md: evidence, never outcomes) or
+// one human-entered validation observation (kind 'validation').
 type RoadmapEvidence struct {
 	ID        uuid.UUID `json:"id"`
 	NodeID    uuid.UUID `json:"nodeId"`
@@ -17,6 +18,9 @@ type RoadmapEvidence struct {
 	Detail    string    `json:"detail"`
 	SourceURL string    `json:"sourceUrl"`
 	CreatedAt time.Time `json:"createdAt"`
+	// ObservedAt: the date the human saw a validation observation
+	// (nil on the machine-appended kinds, which carry only CreatedAt).
+	ObservedAt *time.Time `json:"observedAt,omitempty"`
 }
 
 // AddRoadmapEvidence appends one evidence row as actorID (the webhook
@@ -59,7 +63,7 @@ func (s *Store) ListRoadmapEvidence(ctx context.Context, actorID, nodeID uuid.UU
 	var out []RoadmapEvidence
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
-			SELECT id, node_id, kind, detail, source_url, created_at
+			SELECT id, node_id, kind, detail, source_url, created_at, observed_at
 			FROM insideout.roadmap_evidence WHERE node_id = $1
 			ORDER BY created_at DESC, id LIMIT 200`, nodeID)
 		if err != nil {
@@ -68,7 +72,7 @@ func (s *Store) ListRoadmapEvidence(ctx context.Context, actorID, nodeID uuid.UU
 		defer rows.Close()
 		for rows.Next() {
 			var e RoadmapEvidence
-			if err := rows.Scan(&e.ID, &e.NodeID, &e.Kind, &e.Detail, &e.SourceURL, &e.CreatedAt); err != nil {
+			if err := rows.Scan(&e.ID, &e.NodeID, &e.Kind, &e.Detail, &e.SourceURL, &e.CreatedAt, &e.ObservedAt); err != nil {
 				return err
 			}
 			out = append(out, e)

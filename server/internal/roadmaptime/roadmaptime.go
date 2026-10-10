@@ -93,7 +93,9 @@ func Assemble(nodes []Node, now time.Time) Progress {
 			if n.Deadline != nil {
 				pending = append(pending, n)
 			}
-		case "done":
+		case "done", "validated":
+			// A validated leaf is a finished leaf plus its human confirm;
+			// Done lists both or finished work would vanish on validate.
 			p.DoneCount++
 			p.DoneItems = append(p.DoneItems, item(n, now))
 		}

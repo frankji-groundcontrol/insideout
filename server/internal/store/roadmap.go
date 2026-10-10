@@ -36,6 +36,12 @@ type RoadmapNode struct {
 	Acceptance string
 	OwnerID    *uuid.UUID
 	OwnerName  string
+	// The validation milestone (FEAT-04): set only by the human confirm
+	// in ValidateRoadmapNode, kept on reopen — the reason a finished node
+	// counts as validated, and who said so.
+	ValidationReason string
+	ValidatedBy      *uuid.UUID
+	ValidatedAt      *time.Time
 	// Display names resolved by ListRoadmap's LEFT JOIN (never stored on the
 	// row). Single-node reads leave them nil; the canvas re-lists after every
 	// mutation, so it always sees the joined names.
@@ -65,11 +71,11 @@ type RoadmapNodeFields struct {
 	ClearOwner bool
 }
 
-const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by, acceptance, owner_user_id`
+const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by, acceptance, owner_user_id, validation_reason, validated_by, validated_at`
 
 func scanRoadmapNode(row pgx.Row) (*RoadmapNode, error) {
 	var n RoadmapNode
-	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID)
+	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -188,7 +194,7 @@ func (s *Store) ListRoadmap(ctx context.Context, actorID, projectID uuid.UUID) (
 
 		for rows.Next() {
 			var n RoadmapNode
-			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.CreatorName, &n.EditorName, &n.OwnerName); err != nil {
+			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CreatorName, &n.EditorName, &n.OwnerName); err != nil {
 				return err
 			}
 			out = append(out, n)
@@ -203,12 +209,15 @@ func (s *Store) ListRoadmap(ctx context.Context, actorID, projectID uuid.UUID) (
 
 // legalStatusTransitions is the node status machine: the documented flow a
 // leaf may walk. Unchanged status is always allowed; anything else must be
-// listed here or the update is refused.
+// listed here or the update is refused. 'validated' is deliberately absent
+// as a target: entering it takes the human confirm in ValidateRoadmapNode
+// (with a reason); leaving it reopens the node like done.
 var legalStatusTransitions = map[string][]string{
 	"locked":      {"pending"},
 	"pending":     {"in_progress", "locked"},
 	"in_progress": {"done", "pending"},
 	"done":        {"in_progress"},
+	"validated":   {"in_progress"},
 }
 
 func statusTransitionAllowed(from, to string) bool {
