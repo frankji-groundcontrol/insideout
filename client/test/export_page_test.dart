@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/errors.dart';
@@ -84,6 +85,28 @@ Future<void> _chooseFormat(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
 }
 
+/// The only small button on the page: the Download / Print action on the
+/// preview card.
+Finder _cardAction() => find.byWidgetPredicate(
+  (w) => w is BlockButton && w.size == BlockButtonSize.sm,
+);
+
+/// Records what the page puts on the clipboard.
+List<String> _captureClipboard(WidgetTester tester) {
+  final copied = <String>[];
+  final messenger = tester.binding.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+    if (call.method == 'Clipboard.setData') {
+      copied.add((call.arguments as Map)['text'] as String);
+    }
+    return null;
+  });
+  addTearDown(
+    () => messenger.setMockMethodCallHandler(SystemChannels.platform, null),
+  );
+  return copied;
+}
+
 void main() {
   testWidgets('Print after picking an audience exports the full document', (
     tester,
@@ -167,4 +190,43 @@ void main() {
       expect(find.text('# Plan'), findsOneWidget);
     });
   }
+
+  // flutter test runs off the web, so download_stub.dart is the helper in play:
+  // downloadTextFile and openTextInNewTab both report false, as on iOS/Android.
+  testWidgets('Download copies the markdown where no file can be saved', (
+    tester,
+  ) async {
+    final copied = _captureClipboard(tester);
+    await _pumpExport(tester);
+    await tester.tap(_runButton());
+    await tester.pumpAndSettle();
+
+    await tester.tap(_cardAction());
+    await tester.pumpAndSettle();
+
+    expect(copied, ['# Plan']);
+    expect(
+      find.text('Copied to the clipboard — paste it into a file'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Print copies the HTML where no tab and no file are possible', (
+    tester,
+  ) async {
+    final copied = _captureClipboard(tester);
+    await _pumpExport(tester);
+    await _chooseFormat(tester, 'Print / Save as PDF');
+    await tester.tap(_runButton());
+    await tester.pumpAndSettle();
+
+    await tester.tap(_cardAction());
+    await tester.pumpAndSettle();
+
+    expect(copied, ['<h1>Plan</h1>']);
+    expect(
+      find.text('Copied to the clipboard — paste it into a file'),
+      findsOneWidget,
+    );
+  });
 }
