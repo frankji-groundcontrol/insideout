@@ -35,6 +35,11 @@ String localizedError(Object error, TFn t) {
     }
     return t('error.generic');
   }
+  // validateStatus (<500) makes dio throw for every 5xx, so a server fault
+  // reaches here as a DioException; it must not read as a dead connection.
+  if (error is DioException && (error.response?.statusCode ?? 0) >= 500) {
+    return t('error.server');
+  }
   if (error is DioException || error is TimeoutException) {
     return t('error.network');
   }
