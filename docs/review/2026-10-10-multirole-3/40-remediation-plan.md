@@ -1,5 +1,11 @@
 # 40 · Remediation plan — workflow-executable
 
+> **Executed 2026-10-11** — all four waves delivered (`5c8f54f..4464330`),
+> every cluster verifier-accepted round 1; outcomes per row live in the
+> [disposition ledger](../2026-10-10-disposition-ledger/04-multirole-3.md),
+> changes in the [changelog](../../changelogs/2026-10-11-rv3-remediation/index.md).
+> The text below is the plan as executed, unchanged.
+
 This plan turns the review-3 register into four waves of file-disjoint
 clusters, each executable by the worker → adversarial-verifier → repair loop
 that carried the close-open-gaps sweep (24 batches, 86 commits, zero

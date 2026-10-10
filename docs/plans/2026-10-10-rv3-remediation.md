@@ -17,25 +17,38 @@ and on to the next wave.
       skip), client 427 green, analyze 14; pushed f822873.
 - [x] Wave 2 — 11 clusters (AIDEV-03/06, CQ-04, AIDEV-05/11, CQ-07, USER-08,
       SEC-02/06, FEAT-07, REL-02/03, SEC-08, FULL-02, CQ-03, USER-03, PM-04,
-      SEC-07, ARCH-03, SEC-03, REL-05).
+      SEC-07, ARCH-03, SEC-03, REL-05): all verifier-accepted round 1 — 38
+      commits cherry-picked; the integrator closed the reported NOT_DONEs
+      (CQ-03 shared snapshot flow, USER-08 localized marker; CQ-04 parked by
+      the brief's pure-move gate); server + client gates green; in bce47c4.
 - [x] Wave 3 — 6 clusters (docs truth, env catalog, client polish x2, prompts
       contract, test hygiene): all verifier-accepted round 1 — 31 commits
       cherry-picked; TEST-06 closed by the integrator (parameterized circuit
       functions, migration 20261011100000 — its overload bug was caught and fixed
       on the integration DB before any push); server 26 pkgs green (one allowed
       skip), client 449 green, analyze 14.
-- [ ] Wave 4 — 8 clusters (promise register, locale threading, upgrade lane,
+- [x] Wave 4 — 8 clusters (promise register, locale threading, upgrade lane,
       hosted smoke, attestation honesty, validation slice, contribution
-      surface, gap issues).
-- [ ] Whole-change adversarial review + full gates on the integrated tree.
-- [ ] Records: register dispositions per finding, changelog folder, board,
-      HANDOFF; push, CI green, MBP synced.): all verifier-accepted round 1 — 38 commits cherry-picked; the integrator closed the
-      reported NOT_DONEs (CQ-03 shared snapshot flow, USER-08 localized marker; CQ-04
-      parked by the brief's pure-move gate); server + client gates green; in bce47c4.
+      surface, gap issues): all verifier-accepted round 1 — 41 commits
+      cherry-picked (PRODUCT.md conflict resolved by merging both links);
+      full gates on a FRESH database (rv3final): all 7 migrations apply
+      together, server 26 pkgs green (one allowed skip), client 456 green,
+      analyze 14, format clean.
+- [x] Whole-change adversarial review + full gates on the integrated tree —
+      verdict **accept**, no blocking items; five red/fix pairs re-proved in
+      detached worktrees; full gates green on fresh DB rv3final (all 7
+      migrations together, server 26 pkgs / 1 allowed skip, client 456,
+      analyze 14, format clean); privacy scan over the 150-commit diff clean.
+- [x] Records: register dispositions per finding, changelog folder, board,
+      HANDOFF; push, CI green, MBP synced.
 
 ## Status
 
-In flight 2026-10-11. Wave 4 workflow running over base `2c5631b` (waves 1-3 integrated): worktrees under `/tmp/insideout-gap/rv3-w1-*`, branches
-`rv3/w1-*`, briefs/reports under `/tmp/insideout-gap/rv3/work/`, per-cluster
-databases on the disposable cluster (`rv3w1*`). Owner-blocked rows are out of
-scope by design and stay in [HANDOFF](../HANDOFF.md).
+**Delivered 2026-10-11.** All four waves integrated on `main` through
+`4464330` (150 commits since `5c8f54f`); the whole-change adversarial review
+accepted with no blocking items. Dispositions live in the
+[ledger](../review/2026-10-10-disposition-ledger/04-multirole-3.md) (83 rows:
+73 closed by code, 3 satisfied by the report, 1 parked, 6 owner-blocked).
+What remains is the owner's — deploy, mail/LLM keys, the first `v*` tag —
+enumerated in [HANDOFF](../HANDOFF.md) and the
+[promise register](../review/2026-10-10-multirole-3/50-promise-register.md).

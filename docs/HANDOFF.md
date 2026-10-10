@@ -10,14 +10,15 @@ path and current warnings, never history.
 
 ## What to do next
 
-**Run wave 1 of the [review-3 remediation plan](review/2026-10-10-multirole-3/40-remediation-plan.md).**
-Review 3 (2026-10-10, `main` @ `754c502`) left 83 findings — 17 High — and a
-workflow-executable plan: 4 waves of file-disjoint red-first clusters with the
-sweep's worker→verifier→repair contract. Wave 1 is 7 clusters covering the
-confirmed Highs (gate integrity, planner fence, email copy, the Go toolchain
-floor — bump `server/Dockerfile` to `golang:1.26-alpine`, do not lower
-go.mod — the native SSE timeout, the idea body, the stage-confirm surface).
-Owner items below are unchanged and now carry register rows.
+**The review-3 remediation is finished; the owner steps below are all that
+remain.** Review 3 (83 findings, 17 High) was executed as four verified waves
+through `4464330` (150 commits): every cluster worked red-test-first in its
+own worktree and passed an independent adversarial verifier; the
+[disposition ledger](review/2026-10-10-disposition-ledger/04-multirole-3.md)
+closes 73 of 83 rows by code, 3 by the report itself, parks 1 (CQ-04), and
+leaves 6 owner-blocked. The [changelog](changelogs/2026-10-11-rv3-remediation/index.md)
+has the wave detail and migration notes. Engineering work is done; resume
+only for a new finding or an owner request.
 
 The close-the-open-gaps plan finished 2026-10-10:
 the review-register sweep landed as `a84feb8` (CI green, run 38047747110,
@@ -30,12 +31,18 @@ halves). What the [issues index](issues/README.md) lists as left is a choice
 or a secret, not unfinished code, and it is the owner's:
 
 1. **Ship.** Nothing from 2026-10-08 on is deployed: the hosted web bundle and
-   server predate the block-craft slices and this wave. `railway up --service
-   server` applies four migrations on start (`20261010100000`,
-   `20261010110000`, `20261010120000`, `20261010130000`; the invite-code
+   server predate the block-craft slices and the remediation waves. `railway
+   up --service server` applies **seven** migrations on start — the four
+   `20261010*` files (`20261010100000`–`20261010130000`; the invite-code
    rotation replaces workspace invite codes shorter than 32 characters, so an
    outstanding short code stops working and admins read the new one in the
-   workspace). Then `railway up --service app`, the two requests in
+   workspace) plus `20261011100000_circuit_breaker_row_id` (drops and
+   recreates the two circuit functions with a row-id parameter),
+   `20261011110000_conversation_locale` and
+   `20261011140000_roadmap_validation` (both additive). All seven apply
+   together on a fresh clone of the migrated base, and CI's upgrade-replay
+   lane rehearses them on production-shaped old data. Then `railway up
+   --service app`, the two requests in
    [BUG-027](issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md#owner-check-after-the-deploy),
    and a signed-in page load.
 2. **Destructive or secret steps:** purging the 582 legacy users;

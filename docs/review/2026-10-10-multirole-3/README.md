@@ -88,6 +88,11 @@ throughout; no `.env` content was read.
 
 ## Reading order
 
+0. **Outcome:** the plan was executed 2026-10-11 — four verified waves
+   (`5c8f54f..4464330`) close 73 of 83 rows by code; every row's disposition
+   is in the [ledger](../2026-10-10-disposition-ledger/04-multirole-3.md)
+   and the changes in the
+   [changelog](../../changelogs/2026-10-11-rv3-remediation/index.md).
 1. [00-executive-summary.md](00-executive-summary.md) — top ten, effort by bucket
 2. [01-findings-register.md](01-findings-register.md) — every finding, verdict-joined
 3. [50-promise-register.md](50-promise-register.md) — every PRODUCT.md promise stamped IMPLEMENTED/PARTIAL/DEAD/DOCS-ONLY (lead 14, run in remediation wave 4)

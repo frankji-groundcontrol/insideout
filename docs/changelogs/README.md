@@ -15,6 +15,12 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-11 — Review-3 remediation: four verified waves](2026-10-11-rv3-remediation/index.md)
+  — executed the 83-finding register as 32 red-first clusters in four
+  dynamic-workflow waves, every one adversarially verified before cherry-pick
+  onto `main` (`5c8f54f..4464330`); three migrations, the locale-threaded
+  coach, the validation leg, CI upgrade-replay and docker-build lanes;
+  dispositions in the [ledger](../review/2026-10-10-disposition-ledger/04-multirole-3.md).
 - [2026-10-10 — Multirole review 3 and the workflow-ready improvement plan](2026-10-10-multirole-review-3.md)
   — docs-only: the third whole-tree review (83 findings, 17 High, 16
   skeptic-confirmed) plus a 4-wave, 30-cluster remediation plan executable as
