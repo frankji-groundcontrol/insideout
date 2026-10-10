@@ -4,7 +4,8 @@ Eleven files were over the ~350-line budget in CLAUDE.md: ten in `client/` and
 one Go test. Each is now split along a responsibility seam with no behavior
 change. Line counts are the base commit (`8ee97fc`) against the tree now, so
 the "after" column includes the fidelity fixes that landed on top of the
-splits ([client-fidelity-fixes.md](client-fidelity-fixes.md)).
+splits ([client-fidelity-fixes.md](client-fidelity-fixes.md)); the l10n tables
+are after the removal of 31 unused keys.
 
 | File | Before | After | New file(s) |
 | --- | --- | --- | --- |
@@ -14,8 +15,8 @@ splits ([client-fidelity-fixes.md](client-fidelity-fixes.md)).
 | `client/lib/theme/block_field.dart` | 357 | 226 | `block_field_frame.dart` (134) |
 | `client/lib/features/project/project_page.dart` | 675 | 297 | `project_dialogs.dart` (144), `project_github_card.dart` (85), `project_updates_feed.dart` (180), `project_leaf_evidence.dart` (68) |
 | `client/lib/features/project/roadmap_canvas.dart` | 400 | 200 | `roadmap_minimap.dart` (184), `roadmap_painters.dart` (48) |
-| `client/lib/l10n/en.dart` | 414 | 34 | `en_shell.dart` (68), `en_account.dart` (110), `en_workspace.dart` (153), `en_prd.dart` (102) |
-| `client/lib/l10n/zh.dart` | 372 | 18 | `zh_shell.dart` (65), `zh_account.dart` (98), `zh_workspace.dart` (145), `zh_prd.dart` (90) |
+| `client/lib/l10n/en.dart` | 414 | 34 | `en_shell.dart` (58), `en_account.dart` (106), `en_workspace.dart` (141), `en_prd.dart` (98) |
+| `client/lib/l10n/zh.dart` | 372 | 18 | `zh_shell.dart` (55), `zh_account.dart` (94), `zh_workspace.dart` (133), `zh_prd.dart` (86) |
 | `client/test/product_dock_test.dart` | 472 | 184 | `product_dock_visual_test.dart` (226), `_dock_test_helpers.dart` (73) |
 | `client/test/block_primitives_test.dart` | 574 | 211 | `block_button_test.dart` (156), `block_field_test.dart` (104), `block_modal_test.dart` (111), `_block_test_helpers.dart` (19) |
 | `server/internal/api/auth_throttle_test.go` | 363 | 314 | `auth_client_ip_test.go` (56) |
