@@ -141,7 +141,7 @@ void main() {
             {
               'section': 'goals',
               'priority': 'should_clarify_this_version',
-              'reason': 'the investment being decided on',
+              'reason': 'the investment and return being decided on',
             },
             {
               'section': 'stories',
@@ -151,7 +151,7 @@ void main() {
             {
               'section': 'background',
               'priority': 'must_clarify_now',
-              'reason': 'the why-this argument',
+              'reason': 'the why-this, why-now argument a decision maker needs',
             },
           ],
         },
@@ -176,11 +176,11 @@ void main() {
 
       expect(tester.takeException(), isNull);
       final blocking = tester.getTopLeft(
-        find.textContaining('the why-this argument'),
+        find.textContaining('the why-this, why-now argument'),
       );
       final laterHeading = tester.getTopLeft(find.text('Later'));
       final should = tester.getTopLeft(
-        find.textContaining('the investment being decided on'),
+        find.textContaining('the investment and return being decided on'),
       );
       final validate = tester.getTopLeft(
         find.textContaining('useful eventually'),

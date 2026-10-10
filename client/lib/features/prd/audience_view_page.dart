@@ -12,6 +12,7 @@ import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/field_card.dart';
 import 'audience_selector.dart';
+import 'versions_gap_text.dart';
 
 const _audiences = ['decision', 'management', 'delivery', 'validation'];
 
@@ -221,7 +222,8 @@ class _Projection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: Cobalt.space3),
-              for (final g in blocking) _GapRow(gap: g, blocking: true),
+              for (final g in blocking)
+                _GapRow(gap: g, blocking: true, audience: audience),
               if (later.isNotEmpty) ...[
                 const SizedBox(height: Cobalt.space4),
                 Text(
@@ -231,7 +233,8 @@ class _Projection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Cobalt.space2),
-                for (final g in later) _GapRow(gap: g, blocking: false),
+                for (final g in later)
+                  _GapRow(gap: g, blocking: false, audience: audience),
               ],
             ],
             const SizedBox(height: Cobalt.space6),
@@ -254,16 +257,32 @@ class _Projection extends StatelessWidget {
 /// One readiness gap: a square mark (never a dot) plus the localized section
 /// name and the reason. The raw priority enum never reaches the page.
 class _GapRow extends StatelessWidget {
-  const _GapRow({required this.gap, required this.blocking});
+  const _GapRow({
+    required this.gap,
+    required this.blocking,
+    required this.audience,
+  });
 
   final Map<dynamic, dynamic> gap;
   final bool blocking;
+  final String audience;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     final palette = Cobalt.of(context);
+    // The reason arrives as the server's fixed English sentence; gapReason
+    // carries it into the reader's language, unknown pairs keep it as is.
+    final reason = gapReason(
+      l10n,
+      audience,
+      ReadinessGap(
+        section: gap['section']?.toString() ?? '',
+        priority: gap['priority']?.toString() ?? '',
+        reason: gap['reason']?.toString() ?? '',
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: Cobalt.space2),
       child: Row(
@@ -278,7 +297,7 @@ class _GapRow extends StatelessWidget {
           const SizedBox(width: Cobalt.space2),
           Expanded(
             child: Text(
-              '${l10n.t('prd.sections.${gap['section']}')} — ${gap['reason']}',
+              '${l10n.t('prd.sections.${gap['section']}')} — $reason',
               style: theme.textTheme.bodyMedium,
             ),
           ),
