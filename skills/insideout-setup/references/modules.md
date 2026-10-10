@@ -85,9 +85,14 @@ case "$(uname -m)" in
 esac
 curl -L -o /tmp/go.tgz "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
 sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go.tgz
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc    # or ~/.profile / ~/.zshrc
-export PATH=$PATH:/usr/local/go/bin
+echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc    # or ~/.profile / ~/.zshrc
+export PATH=/usr/local/go/bin:$PATH
 ```
+
+The directory goes **first** on `PATH`: an older `go` already on the machine
+(the apt `golang-go` 1.22, a preinstalled toolchain) would otherwise win and
+the verify step below would print the stale version. The Ubuntu CI job caught
+exactly that.
 
 Verify: `go version` — must print `go1.25` or newer. (On macOS a
 stale `go` from an old install wins the PATH conflict silently; the
