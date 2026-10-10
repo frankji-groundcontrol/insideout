@@ -42,6 +42,16 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 	for i := 0; i < maxToolIterations; i++ {
 		_ = c.store.TouchAIRun(ctx, actorID, runID)
 
+		// The previous iteration may have rewritten sections, so prompt from
+		// the PRD as it is now, not the pre-turn snapshot (this also freshens
+		// the auto-tighten retry). A failed read keeps the last snapshot: a
+		// slightly stale prompt beats failing the turn.
+		if prd, err := c.store.GetPrdForMember(ctx, executor.prdID, executor.actorID); err != nil {
+			c.log.Error("refresh prd sections for the prompt", "error", err)
+		} else {
+			sections = prd.Sections
+		}
+
 		conv, err := c.store.GetConversationForOwner(ctx, executor.conversationID, actorID)
 		if err != nil {
 			return "", err
