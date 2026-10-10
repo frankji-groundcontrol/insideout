@@ -145,7 +145,13 @@ On `server`:
 - `DATABASE_URL` — session-mode pooler DSN as `insideout_app.<project-ref>`
   on port **5432** (`sslmode=require`, no `pgbouncer=true`). Set with
   `railway variable set DATABASE_URL --stdin --service server`. Do not
-  use the dashboard `postgres.` user.
+  use the dashboard `postgres.` user. Pool budget: each replica opens at most
+  **10** connections for requests, plus **3** for the migrate step when
+  `DATABASE_OWNER_URL` is set (13 in all), so replicas x 13 must fit the
+  pooler's per-role connection limit. Override either number with pgx's own
+  `pool_max_conns` query parameter in the DSN concerned (no environment
+  variable; keep the migrate one at 2 or more). Connection lifetime (1h), idle
+  time (30m) and health-check period (1m) stay at pgx's defaults.
 - `INSIDEOUT_JWT_SECRET` — at least 32 characters; generate with
   `openssl rand -base64 48` and pipe into `railway variable set
   INSIDEOUT_JWT_SECRET --stdin --service server` (never print the value)
