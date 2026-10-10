@@ -28,8 +28,11 @@ func (c *Coach) failTurn(ctx context.Context, userID uuid.UUID, runID uuid.UUID,
 	case errors.Is(loopErr, ErrContextLength):
 		sse.errorEvent("conversation too long — snapshot and start a fresh session", "CONTEXT_LENGTH")
 	case errors.Is(loopErr, ErrProviderConfig):
+		// The provider's own text (up to 4 KiB of its response body) stays in
+		// the log and ai_runs; the wire carries a fixed message like every
+		// other failure class.
 		c.log.Error("agent loop: provider configuration error", "error", loopErr)
-		sse.errorEvent(loopErr.Error(), "PROVIDER_CONFIG")
+		sse.errorEvent("AI provider is misconfigured - contact the operator", "PROVIDER_CONFIG")
 	case errors.Is(loopErr, ErrContentRefusal):
 		sse.errorEvent("the model declined to respond", "CONTENT_REFUSAL")
 	case errors.Is(loopErr, ErrUpstreamStall):
