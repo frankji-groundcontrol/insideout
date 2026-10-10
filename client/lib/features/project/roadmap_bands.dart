@@ -24,7 +24,7 @@ class RoadmapBands extends StatelessWidget {
 
   /// The server's progress reading. When present it decides Now and Next, so
   /// this view agrees with the Progress tab; without it the status sort below
-  /// stands.
+  /// stands, which like the server keeps Now to in-progress work.
   final RoadmapProgress? progress;
 
   List<RoadmapNode> _band(String Function(RoadmapNode n) bucket, String name) {
@@ -40,7 +40,7 @@ class RoadmapBands extends StatelessWidget {
 
   static String bucket(RoadmapNode n) {
     return switch (n.status) {
-      'in_progress' || 'done' => 'now',
+      'in_progress' => 'now',
       'pending' => 'next',
       _ => 'later',
     };
