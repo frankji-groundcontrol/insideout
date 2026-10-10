@@ -64,6 +64,10 @@ func runSeed(ctx context.Context, log *slog.Logger, st *store.Store) {
 		os.Exit(1)
 	}
 
+	// The demo login is a public dev constant, documented in
+	// docs/usage/local-development.md, so logging it is deliberate. That is
+	// also why seed is dev-only: never point it at a shared or production
+	// database.
 	log.Info("seed: done",
 		"email", seedEmail, "password", seedPassword,
 		"workspace_code", ws.Code, "project_id", project.ID.String(),
