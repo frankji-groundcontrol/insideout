@@ -10,9 +10,15 @@
 # Rerun-safe: every entity is named with a per-run suffix, so re-runs never
 # collide with prior rows. Exits non-zero on the first failed assertion count.
 #
+# Needs the server's env (DATABASE_URL, INSIDEOUT_JWT_SECRET; a repo-root .env
+# is loaded when there is one, CI exports them itself) and signup mode "open",
+# because it registers its own users. Exit 2 means that precondition is unmet.
+# It also reaches GitHub's public API once (S3); a 429/404/502 there passes.
+#
 # Usage:
 #   cd server && ./scripts/smoke.sh            # boots its own server
 #   SMOKE_BASE=http://127.0.0.1:54321 ./scripts/smoke.sh   # use a running one
+#   SMOKE_SERVER_LOG=/path/server.log ./scripts/smoke.sh   # keep the boot log
 #
 # ponytail: one bash script + curl + jq is the smallest live check that fails
 # loudly if any surface breaks; upgrade to a Go httptest harness only if this
@@ -23,7 +29,8 @@ cd "$(dirname "$0")/.." # run from server/
 REPO_ROOT="$(cd .. && pwd)"
 
 # ---- load env without ever printing it (sanctioned pattern) -----------------
-set -a; source "$REPO_ROOT/.env"; set +a
+# A checkout without a .env (CI) supplies the variables itself.
+if [ -f "$REPO_ROOT/.env" ]; then set -a; source "$REPO_ROOT/.env"; set +a; fi
 
 PORT="${SMOKE_PORT:-$(( (RANDOM % 20000) + 40000 ))}"
 BASE="${SMOKE_BASE:-http://127.0.0.1:$PORT}"
@@ -31,6 +38,7 @@ RUN="$RANDOM$(date +%s)"
 TMP="$(mktemp -d)"
 JAR="$TMP/u1.jar"; JAR2="$TMP/u2.jar"; NOJAR="$TMP/none.jar"
 SSEOUT="$TMP/sse.txt"; BODYF="$TMP/body"
+SERVER_LOG="${SMOKE_SERVER_LOG:-$TMP/server.log}"
 : > "$NOJAR"
 
 PASS=0; FAIL=0
@@ -52,14 +60,14 @@ if [ -z "${SMOKE_BASE:-}" ]; then
   # deterministic (no live LLM needed). Pass SMOKE_BASE to test a real-key server.
   export INSIDEOUT_ADDR=":$PORT" INSIDEOUT_COOKIE_SECURE=0 INSIDEOUT_LLM_API_KEY=
   go build -o "$TMP/insideout" ./cmd/insideout
-  "$TMP/insideout" >"$TMP/server.log" 2>&1 &
+  "$TMP/insideout" >"$SERVER_LOG" 2>&1 &
   SRV_PID=$!
   for _ in $(seq 1 60); do
     if curl -fsS "$BASE/healthz" >/dev/null 2>&1; then break; fi
     sleep 0.5
   done
 fi
-curl -fsS "$BASE/healthz" >/dev/null || { echo "server not healthy at $BASE"; [ -f "$TMP/server.log" ] && tail -20 "$TMP/server.log"; exit 1; }
+curl -fsS "$BASE/healthz" >/dev/null || { echo "server not healthy at $BASE"; [ -f "$SERVER_LOG" ] && tail -20 "$SERVER_LOG"; exit 1; }
 
 # ---- helpers ----------------------------------------------------------------
 # call METHOD PATH [JSONDATA] [JARFILE]  -> sets CODE and BODY globals
@@ -86,6 +94,16 @@ expect_nonempty() { # expect_field_nonempty JQPATH LABEL
   local got; got="$(jget "$1")"
   [ -n "$got" ] && pass "$2" || fail "$2 (field $1 empty)"
 }
+
+# A fresh database is invitation-only and answers 403 to a bare register, so
+# say so up front instead of failing every later step.
+call GET /api/v1/auth/config "" "$NOJAR"
+MODE="$(jget .signupMode)"
+if [ "$MODE" != "open" ]; then
+  echo "smoke registers its own users, so signup must be open; this server reports signupMode='${MODE:-unknown}' (HTTP ${CODE})." >&2
+  echo "Open it first (insideout signup-mode open) and put it back afterwards." >&2
+  exit 2
+fi
 
 echo
 echo "=== S0: health + auth ==="
@@ -124,16 +142,26 @@ call GET "/api/v1/conversations/$CONV/messages" "" "$JAR"
 expect_code 200 "list conversation messages 200"
 
 echo
-echo "=== S2: AI roadmap (build / expand / CRUD) ==="
+echo "=== S2: AI roadmap (draft / confirm / expand / CRUD) ==="
+# Build and expand are two steps: the first answers 200 with a draft and writes
+# nothing; the second (.../confirm) writes what the caller sends back.
 call POST "/api/v1/prds/$PRD/build" "" "$JAR"
-expect_code 201 "build roadmap from PRD 201"; BPROJ="$(jget .projectId)"; NNODES="$(jget .nodeCount)"
-[ -n "$NNODES" ] && [ "$NNODES" != "0" ] && pass "build produced $NNODES nodes" || fail "build nodeCount empty/zero"
+expect_code 200 "draft roadmap from PRD 200"; BPROJ="$(jget .projectId)"
+TREE="$(printf '%s' "$BODY" | jq -c '.tree // empty' 2>/dev/null || true)"
+[ -n "$BPROJ" ] && [ -n "$TREE" ] && pass "draft carries a project and a tree" || fail "draft missing projectId or tree"
+call POST "/api/v1/prds/$PRD/build/confirm" "{\"tree\":${TREE:-null}}" "$JAR"
+expect_code 201 "confirm drafted roadmap 201"; NNODES="$(jget .nodeCount)"
+[ -n "$NNODES" ] && [ "$NNODES" != "0" ] && pass "build produced $NNODES nodes" || fail "confirm nodeCount empty/zero"
 call GET "/api/v1/projects/$BPROJ/roadmap" "" "$JAR"
 expect_code 200 "list roadmap 200"
 NODE="$(jget '.[0].id')"
 [ -n "$NODE" ] && pass "roadmap has a node to expand" || fail "no roadmap node found"
 call POST "/api/v1/roadmap/$NODE/expand" "" "$JAR"
-expect_code 201 "expand roadmap node 201"
+expect_code 200 "draft subtasks for the node 200"
+CHILDREN="$(printf '%s' "$BODY" | jq -c '.children // empty' 2>/dev/null || true)"
+[ -n "$CHILDREN" ] && [ "$CHILDREN" != "[]" ] && pass "expand drafted subtasks" || fail "expand drafted no children"
+call POST "/api/v1/roadmap/$NODE/expand/confirm" "{\"children\":${CHILDREN:-[]}}" "$JAR"
+expect_code 201 "confirm drafted subtasks 201"
 call POST "/api/v1/projects/$BPROJ/roadmap" "{\"title\":\"Manual node $RUN\"}" "$JAR"
 expect_code 201 "create roadmap node 201"; MNODE="$(jget .id)"
 call PATCH "/api/v1/roadmap/$MNODE" "{\"status\":\"in_progress\"}" "$JAR"
@@ -197,5 +225,5 @@ call GET "/api/v1/projects/$PROJ" "" "$NOJAR"; expect_code 401 "unauthenticated 
 
 echo
 printf '=== RESULT: %d passed, %d failed ===\n' "$PASS" "$FAIL"
-[ "$FAIL" -eq 0 ] || { [ -f "$TMP/server.log" ] && { echo "--- server log tail ---"; tail -30 "$TMP/server.log"; }; exit 1; }
+[ "$FAIL" -eq 0 ] || { [ -f "$SERVER_LOG" ] && { echo "--- server log tail ---"; tail -30 "$SERVER_LOG"; }; exit 1; }
 echo "ALL SURFACES GREEN"
