@@ -129,50 +129,71 @@ func TestEnsureConversationForPrd_AnotherAdminGetsTheirOwn(t *testing.T) {
 // all miss and each insert their own row (the table has no unique key on
 // prd_id+user_id): a double tap or two tabs would leave the member with
 // several conversations and the panel resuming an arbitrary one.
+//
+// The window between that SELECT and the INSERT is a fraction of a
+// millisecond, so one burst only sometimes lands inside it. Repeat the burst
+// with a fresh admin each time until a missing lock cannot hide.
 func TestEnsureConversationForPrd_ConcurrentCallsLeaveOneRow(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 	c := mkCoachPrd(t, st)
-	admin := c.joinAs(t, st, "admin")
 
-	const callers = 8
-	var wg sync.WaitGroup
-	start := make(chan struct{}) // release all at once so the check→insert windows overlap
-	ids := make([]uuid.UUID, callers)
-	made := make([]bool, callers)
-	errs := make([]error, callers)
-	for i := 0; i < callers; i++ {
-		wg.Add(1)
-		go func(i int) {
-			defer wg.Done()
-			<-start
-			conv, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID)
-			errs[i], made[i] = err, created
-			if conv != nil {
-				ids[i] = conv.ID
+	const callers, rounds = 8, 30
+	// Connections open lazily, and a cold pool makes the callers queue behind
+	// connection setup: the first finishes before the rest are even connected,
+	// which hides the race. Open them all first.
+	var release []func()
+	for i := 0; i < min(callers, int(st.Pool.Config().MaxConns)); i++ {
+		conn, err := st.Pool.Acquire(ctx)
+		if err != nil {
+			t.Fatalf("warm the pool: %v", err)
+		}
+		release = append(release, conn.Release)
+	}
+	for _, r := range release {
+		r()
+	}
+
+	for round := 0; round < rounds; round++ {
+		admin := c.joinAs(t, st, "admin")
+		var wg sync.WaitGroup
+		start := make(chan struct{}) // release all at once so the check-insert windows overlap
+		ids := make([]uuid.UUID, callers)
+		made := make([]bool, callers)
+		errs := make([]error, callers)
+		for i := 0; i < callers; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				<-start
+				conv, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID)
+				errs[i], made[i] = err, created
+				if conv != nil {
+					ids[i] = conv.ID
+				}
+			}(i)
+		}
+		close(start)
+		wg.Wait()
+
+		creators := 0
+		for i := 0; i < callers; i++ {
+			if errs[i] != nil {
+				t.Fatalf("round %d caller %d: %v", round, i, errs[i])
 			}
-		}(i)
-	}
-	close(start)
-	wg.Wait()
-
-	creators := 0
-	for i := 0; i < callers; i++ {
-		if errs[i] != nil {
-			t.Fatalf("caller %d: %v", i, errs[i])
+			if ids[i] != ids[0] {
+				t.Fatalf("round %d: caller %d got conversation %s, caller 0 got %s: want one shared row", round, i, ids[i], ids[0])
+			}
+			if made[i] {
+				creators++
+			}
 		}
-		if ids[i] != ids[0] {
-			t.Fatalf("caller %d got conversation %s, caller 0 got %s: want one shared row", i, ids[i], ids[0])
+		if creators != 1 {
+			t.Fatalf("round %d: %d callers report created=true, want exactly 1", round, creators)
 		}
-		if made[i] {
-			creators++
+		if n := countConversations(t, st, c.prd.ID, admin.ID); n != 1 {
+			t.Fatalf("round %d: admin has %d conversations after %d concurrent starts, want 1", round, n, callers)
 		}
-	}
-	if creators != 1 {
-		t.Fatalf("%d callers report created=true, want exactly 1", creators)
-	}
-	if n := countConversations(t, st, c.prd.ID, admin.ID); n != 1 {
-		t.Fatalf("admin has %d conversations after %d concurrent starts, want 1", n, callers)
 	}
 }
 
