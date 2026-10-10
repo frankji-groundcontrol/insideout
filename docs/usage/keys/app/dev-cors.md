@@ -28,7 +28,10 @@ blank). Live with `1`: any origin gets `Access-Control-Allow-Origin:
 ## 5. How it is used
 
 Read once at boot (`DevPermissiveCORS`); never enable on a deployed
-instance — it defeats the origin allowlist.
+instance — it defeats the origin allowlist. The server refuses to start
+with `1` unless `INSIDEOUT_PUBLIC_URL` is localhost, 127.0.0.1 or ::1;
+for a LAN address list the browser origin in `INSIDEOUT_CORS_ORIGINS`
+instead.
 
 ## 6. Installation guide
 
