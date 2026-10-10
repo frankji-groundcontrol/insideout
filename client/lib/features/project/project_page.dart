@@ -106,8 +106,14 @@ class _ProjectPageState extends State<ProjectPage> {
   Future<LeafEvidence> _loadLeafEvidence() async {
     final api = context.read<Session>().api;
     final nodes = await api.listRoadmap(widget.id);
+    // A validated leaf is finished work plus its confirm — its evidence
+    // (the observation that justified validation) stays listed.
     final done = nodes
-        .where((n) => n.parentId != null && n.status == 'done')
+        .where(
+          (n) =>
+              n.parentId != null &&
+              (n.status == 'done' || n.status == 'validated'),
+        )
         .toList();
     final leaves = await Future.wait(
       done.take(_leafEvidenceCap).map((n) async {

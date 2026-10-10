@@ -250,7 +250,9 @@ void main() {
     // The observation recorded on the leaf stays visible after the leaf
     // validates — the evidence is the loop's record, not done-only.
     expect(find.text('Tour'), findsOneWidget);
-    expect(find.textContaining('4 of 5 pilot users finished the tour'),
-        findsOneWidget);
+    expect(
+      find.textContaining('4 of 5 pilot users finished the tour'),
+      findsOneWidget,
+    );
   });
 }
