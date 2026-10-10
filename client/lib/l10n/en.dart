@@ -393,6 +393,8 @@ const enUS = <String, String>{
   'roadmap.minimap.status.in_progress': 'in progress',
   'roadmap.minimap.status.locked': 'locked',
   'roadmap.minimap.status.pending': 'pending',
+  'project.updateKind.agent_checkpoint': 'Agent checkpoint',
+  'project.updateKind.agent_proposal': 'Agent proposal',
 };
 
 const enCoachSuggest = <String, List<String>>{

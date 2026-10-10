@@ -367,6 +367,8 @@ const zhCN = <String, String>{
   'roadmap.minimap.status.in_progress': '进行中',
   'roadmap.minimap.status.locked': '锁定',
   'roadmap.minimap.status.pending': '待办',
+  'project.updateKind.agent_checkpoint': '智能体检查点',
+  'project.updateKind.agent_proposal': '智能体提案',
 };
 
 const zhCoachSuggest = <String, List<String>>{

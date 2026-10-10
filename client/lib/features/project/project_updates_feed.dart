@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../api/client.dart';
 import '../../api/models.dart';
+import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
@@ -87,10 +88,16 @@ class ProjectUpdatesFeed extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ShadeChip(label: u.kind, tone: ShadeTone.neutral),
+                ShadeChip(
+                  label: l10n.t('project.updateKind.${u.kind}'),
+                  tone: ShadeTone.neutral,
+                ),
                 const SizedBox(height: 8),
                 Text(u.content, style: theme.textTheme.titleMedium),
-                Text(u.createdAt, style: theme.textTheme.bodySmall),
+                Text(
+                  timeAgo(u.createdAt, l10n.t),
+                  style: theme.textTheme.bodySmall,
+                ),
                 Align(
                   alignment: Alignment.centerRight,
                   // FEAT-03: an agent proposal is decided, not
