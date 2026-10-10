@@ -3,6 +3,7 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -106,6 +107,12 @@ func Load() (*Config, error) {
 	if c.MailAPIKey != "" && os.Getenv("INSIDEOUT_PUBLIC_URL") == "" {
 		return nil, fmt.Errorf("config: INSIDEOUT_PUBLIC_URL is required when INSIDEOUT_MAIL_API_KEY is set — emailed magic-link and reset links would otherwise point at the localhost default %q", c.PublicURL)
 	}
+	// The dev middleware reflects any Origin with credentials: a copied dev
+	// .env must not boot it on a hosted deployment. LAN dev uses
+	// INSIDEOUT_CORS_ORIGINS instead.
+	if c.DevPermissiveCORS && !loopbackURL(c.PublicURL) {
+		return nil, fmt.Errorf("config: INSIDEOUT_DEV_CORS=1 reflects any Origin with credentials, so it is only allowed with a localhost INSIDEOUT_PUBLIC_URL, got %q — list the browser origin in INSIDEOUT_CORS_ORIGINS instead", c.PublicURL)
+	}
 	switch c.AISchema {
 	case "messages", "responses":
 	default:
@@ -113,6 +120,20 @@ func Load() (*Config, error) {
 	}
 
 	return c, nil
+}
+
+// loopbackURL reports whether raw names this machine: localhost, 127.0.0.1
+// or ::1. A value that does not parse to one of them is not local.
+func loopbackURL(raw string) bool {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return false
+	}
+	switch strings.ToLower(u.Hostname()) {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	}
+	return false
 }
 
 func getenv(key, fallback string) string {
