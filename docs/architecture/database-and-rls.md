@@ -76,6 +76,19 @@ so the one-time "look up a workspace I'm not a member of yet, by the code I
 was given" read can pass RLS without a blanket bypass (see the
 `workspaces_select` policy).
 
+Authorship is not membership (SEC-11). The author branches of `ideas_select`,
+`ideas_update` and `prds_insert` also require
+`insideout._is_member(<table>.workspace_id, current_user_id())` (migration
+`20261010120000`), so a member removed from a workspace loses read, edit, drop
+and convert over the ideas they wrote there and cannot insert a PRD into it.
+The Go store checks the same (`requireMember` in `UpdateIdea`, `DropIdea` and
+`ConvertIdea`; the membership predicate of `GetIdeaForMember`). Through
+`insideout_app` a removed member therefore gets `ErrNotFound` (RLS hides the
+row, exactly as for a stranger); the Go checks alone answer `ErrForbidden`.
+Both layers are pinned separately by
+`server/internal/store/ideas_exmember_test.go`, the Go layer by running the
+same store on the `BYPASSRLS` owner pool.
+
 ## Known PostgreSQL/RLS gotchas
 
 Found only by running real migrations and real queries against a live
