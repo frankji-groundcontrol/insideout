@@ -5,7 +5,7 @@ the same day.
 
 ## Dogfood
 
-- Durable account `dogfood@insideout.yalotein.net` (credentials in the
+- Durable account `<dogfood-account>` (credentials in the
   local untracked `~/.zcode-tracks/insideout-dogfood-credentials.txt`).
 - Real workspace → idea → PRD ("InsideOut 自举") → agent `build` →
   project `d8d6ab41-8048-49ba-ab2e-72b3ed43341f`, repo-bound to
