@@ -90,12 +90,14 @@ class _CoachPanelState extends State<CoachPanel> {
           onPrdUpdated: (_) => widget.onPrdUpdated(),
           onStageChanged: widget.onStageChanged,
           onFactRecorded: (fact) {
-            if (!mounted) return;
+            // The payload is {id, kind, text, status}: show the text alone.
+            final text = fact['text'];
+            if (!mounted || text is! String || text.isEmpty) return;
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   context.read<Appearance>().t('coach.factRecorded', {
-                    'fact': fact,
+                    'fact': text,
                   }),
                 ),
               ),
