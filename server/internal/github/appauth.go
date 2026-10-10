@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -155,14 +156,18 @@ func FetchGuideFile(ctx context.Context, token, owner, repo, ref string) ([]byte
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("github: guide fetch: %s", resp.Status)
 	}
-	buf := new(bytes.Buffer)
-	if _, err := buf.ReadFrom(resp.Body); err != nil {
+	// Read at most cap+1 bytes so an oversized guide is detected while it
+	// streams and the rest of the body is never buffered (SEC-02, same
+	// class as maxCommitPageBytes F19).
+	const maxGuideFileBytes = 1 << 20
+	buf, err := io.ReadAll(io.LimitReader(resp.Body, maxGuideFileBytes+1))
+	if err != nil {
 		return nil, err
 	}
-	if buf.Len() > 1<<20 {
+	if len(buf) > maxGuideFileBytes {
 		return nil, fmt.Errorf("github: guide too large")
 	}
-	return buf.Bytes(), nil
+	return buf, nil
 }
 
 // ErrGuideNotFound means the repo has no insideout.yaml (yet).
