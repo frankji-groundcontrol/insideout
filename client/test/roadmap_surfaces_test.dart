@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/models.dart';
@@ -115,4 +117,55 @@ void main() {
       );
     }
   });
+
+  // The 'normal'/'near' pressure label is 12px bold — normal text, so it owes
+  // 4.5:1 on the raised card. hue500 measures 3.53:1 in dark; the dark
+  // brand-text token (fgBrand, cobalt-200) is the one that clears the bar.
+  testWidgets('Progress view: pressure label clears 4.5:1 on the dark card', (
+    tester,
+  ) async {
+    final near = ProgressItem(
+      id: 'a',
+      title: 'Wire the flow',
+      status: 'in_progress',
+      pressure: 'near',
+    );
+    await _pump(
+      tester,
+      RoadmapProgressView(
+        progress: RoadmapProgress(
+          now: [near],
+          needsDeadline: [],
+          next: [],
+          doneCount: 0,
+        ),
+        emptyLabel: 'empty',
+      ),
+      Brightness.dark,
+    );
+
+    final label = tester.widget<Text>(find.text('near'));
+    final ink = label.style!.color!;
+    expect(
+      _contrast(ink, Cobalt.dark.surfaceRaised),
+      greaterThanOrEqualTo(4.5),
+      reason:
+          'pressure ink ${ink.toARGB32()} on raised '
+          '${Cobalt.dark.surfaceRaised.toARGB32()}',
+    );
+  });
+}
+
+double _channel(double v) =>
+    v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+
+double _luminance(Color c) =>
+    0.2126 * _channel(c.r) + 0.7152 * _channel(c.g) + 0.0722 * _channel(c.b);
+
+double _contrast(Color a, Color b) {
+  final la = _luminance(a);
+  final lb = _luminance(b);
+  final hi = math.max(la, lb);
+  final lo = math.min(la, lb);
+  return (hi + 0.05) / (lo + 0.05);
 }
