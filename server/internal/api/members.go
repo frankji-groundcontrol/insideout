@@ -32,6 +32,11 @@ func (s *Server) handleListMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	members, err := s.store.ListMembers(r.Context(), userID, wsID)
+	if errors.Is(err, store.ErrForbidden) {
+		// Removed from the workspace between the check above and this read.
+		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
+		return
+	}
 	if err != nil {
 		s.log.Error("list members", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
