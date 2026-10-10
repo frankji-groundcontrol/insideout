@@ -145,3 +145,60 @@ func TestLoadMailDevBodyParsesOne(t *testing.T) {
 		t.Fatal(`MailDevBody should be true with INSIDEOUT_MAIL_DEV_BODY=1`)
 	}
 }
+
+// INSIDEOUT_DEV_CORS=1 mounts a middleware that reflects any Origin with
+// credentials, so Load refuses it unless the app's public origin is local —
+// otherwise one copied dev .env hands a hosted deployment to any website.
+func TestLoadRejectsDevCORSBesideNonLocalPublicURL(t *testing.T) {
+	for _, publicURL := range []string{
+		"https://app.example.com",
+		"http://192.168.1.20:5173",
+		"http://localhost.evil.com",
+		"localhost:5173", // no scheme: not a loopback URL
+	} {
+		t.Run(publicURL, func(t *testing.T) {
+			t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+			t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+			t.Setenv("INSIDEOUT_DEV_CORS", "1")
+			t.Setenv("INSIDEOUT_PUBLIC_URL", publicURL)
+			_, err := Load()
+			if err == nil {
+				t.Fatal("expected INSIDEOUT_DEV_CORS=1 beside a non-local INSIDEOUT_PUBLIC_URL to fail")
+			}
+			if !strings.Contains(err.Error(), "INSIDEOUT_DEV_CORS") {
+				t.Fatalf("error should name INSIDEOUT_DEV_CORS, got: %v", err)
+			}
+		})
+	}
+}
+
+func TestLoadAcceptsDevCORSBesideLocalPublicURL(t *testing.T) {
+	cases := []struct {
+		name      string
+		devCORS   string
+		publicURL string // "" = unset, which takes the localhost default
+		want      bool   // DevPermissiveCORS
+	}{
+		{"unset takes the localhost default", "1", "", true},
+		{"localhost", "1", "http://localhost:5173", true},
+		{"loopback v4", "1", "http://127.0.0.1:5173", true},
+		{"loopback v6", "1", "http://[::1]:5173", true},
+		{"host names are case-insensitive", "1", "http://LocalHost:5173", true},
+		{"flag off beside a hosted origin", "", "https://app.example.com", false},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+			t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+			t.Setenv("INSIDEOUT_DEV_CORS", tc.devCORS)
+			t.Setenv("INSIDEOUT_PUBLIC_URL", tc.publicURL)
+			cfg, err := Load()
+			if err != nil {
+				t.Fatalf("Load: %v", err)
+			}
+			if cfg.DevPermissiveCORS != tc.want {
+				t.Fatalf("DevPermissiveCORS = %v, want %v", cfg.DevPermissiveCORS, tc.want)
+			}
+		})
+	}
+}
