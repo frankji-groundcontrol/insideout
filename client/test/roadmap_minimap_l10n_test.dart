@@ -73,6 +73,24 @@ void main() {
     expect(_fontSize(tester, titles), greaterThanOrEqualTo(12));
   });
 
+  testWidgets(
+    'a band title longer than six characters keeps a full-title tooltip',
+    (tester) async {
+      await _pump(
+        tester,
+        RoadmapMinimap(
+          nodes: [_node('Discovery', null, 'pending', 0)],
+          onTapBand: (_) {},
+        ),
+        'en-US',
+      );
+
+      // The visible label is clipped to six characters; the tooltip is the
+      // only place the full title survives.
+      expect(find.byTooltip('Discovery'), findsOneWidget);
+    },
+  );
+
   testWidgets('a collaborator cursor label stays on the 12px floor', (
     tester,
   ) async {
