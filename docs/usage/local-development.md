@@ -66,6 +66,18 @@ end-to-end (stages, tools, SSE) with canned replies — no network, no cost.
 This is the recommended default for local dev (see the recipes in
 [environment.md](environment.md)).
 
+### Mail dev mode
+
+If `INSIDEOUT_MAIL_API_KEY` is unset, the server delivers no email: sign-in
+links, sign-in codes and password-reset mails are only written to the server
+log (`mail dev mode — not sent`). The sign-in screens still offer them, with a
+notice that mail is not configured on this server. To follow a link or code
+locally, read it from that log: `scripts/dev.sh` turns on
+`INSIDEOUT_MAIL_DEV_BODY` for the server, which adds the message body to the
+log line. Both variables are in the Go backend table of
+[environment.md](environment.md#go-backend) (`INSIDEOUT_MAIL_API_KEY` and
+`INSIDEOUT_MAIL_DEV_BODY` rows).
+
 ## Database setup
 
 Two provisioning models, same migrations:
