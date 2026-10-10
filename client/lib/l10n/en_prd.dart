@@ -41,6 +41,7 @@ const enPrd = <String, String>{
   'prd.exportAudience': 'Audience view (optional)',
   'prd.exportFull': 'Full document',
   'prd.exportRun': 'Generate preview',
+  'prd.exportCopied': 'Copied to the clipboard — paste it into a file',
   'versions.commitTitle': 'Commit this version',
   'versions.commitNow': 'Commit version',
   'versions.nameLabel': 'Version name',

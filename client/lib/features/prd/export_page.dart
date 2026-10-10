@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/errors_l10n.dart';
@@ -52,6 +53,17 @@ class _ExportPageState extends State<ExportPage> {
     } finally {
       if (mounted) setState(() => running = false);
     }
+  }
+
+  /// downloadTextFile is false wherever a file cannot be saved (every build
+  /// but the web one); copying keeps the button from doing nothing.
+  Future<void> _saveOrCopy(String filename, String mime) async {
+    final text = body!;
+    if (downloadTextFile(filename, text, mime: mime)) return;
+    final messenger = ScaffoldMessenger.of(context);
+    final copied = context.read<Appearance>().t('prd.exportCopied');
+    await Clipboard.setData(ClipboardData(text: text));
+    messenger.showSnackBar(SnackBar(content: Text(copied)));
   }
 
   String _formatLabel(TFn t, String value) =>
@@ -156,19 +168,17 @@ class _ExportPageState extends State<ExportPage> {
                               // download fallback when tabs are blocked.
                               onPressed: () {
                                 if (markdown) {
-                                  downloadTextFile(
+                                  _saveOrCopy(
                                     'prd-${widget.prdId}.md',
-                                    body!,
-                                    mime: 'text/markdown',
+                                    'text/markdown',
                                   );
                                 } else if (!openTextInNewTab(
                                   body!,
                                   mime: 'text/html',
                                 )) {
-                                  downloadTextFile(
+                                  _saveOrCopy(
                                     'prd-${widget.prdId}.html',
-                                    body!,
-                                    mime: 'text/html',
+                                    'text/html',
                                   );
                                 }
                               },
