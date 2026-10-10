@@ -148,3 +148,12 @@ class BlockError extends StatelessWidget {
     );
   }
 }
+
+/// The one read gate: a FutureBuilder's not-ready branch. Pages route
+/// their snapshot through this instead of hand-rolling the error/loading
+/// split, so a new page cannot leak the raw exception or drop the error
+/// half (USER-07, USER-11, r3/cq-async-branch-copypaste).
+Widget readGate(AsyncSnapshot<Object?> snap, VoidCallback onRetry) =>
+    snap.hasError
+    ? BlockError(error: snap.error, onRetry: onRetry)
+    : const BlockLoading();

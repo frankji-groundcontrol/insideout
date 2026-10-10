@@ -92,10 +92,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: FutureBuilder<List<Workspace>>(
         future: _future,
         builder: (context, snap) {
-          if (snap.hasError) {
-            return BlockError(error: snap.error, onRetry: _reload);
-          }
-          if (!snap.hasData) return const BlockLoading();
+          if (!snap.hasData) return readGate(snap, _reload);
           final list = snap.data!;
           return HomeField(
             workspaces: list,

@@ -113,9 +113,7 @@ class _SettingsPageState extends State<SettingsPage> {
           title: l10n.t('workspace.settingsTitle'),
           paintTitle: true,
           body: !snap.hasData
-              ? snap.hasError
-                    ? BlockError(error: snap.error, onRetry: _reload)
-                    : const BlockLoading()
+              ? readGate(snap, _reload)
               : Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(

@@ -161,9 +161,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
             onPressed: _createProject,
           ),
           body: !snap.hasData
-              ? snap.hasError
-                    ? BlockError(error: snap.error, onRetry: _reload)
-                    : const BlockLoading()
+              ? readGate(snap, _reload)
               : BlockRefresh(
                   label: l10n.t('common.refresh'),
                   onRefresh: _reload,

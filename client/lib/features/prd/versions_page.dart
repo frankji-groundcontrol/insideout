@@ -86,13 +86,9 @@ class _VersionsPageState extends State<VersionsPage> {
       body: FutureBuilder<List<Object>>(
         future: _both,
         builder: (context, snap) {
-          if (snap.hasError) {
-            return BlockError(
-              error: snap.error,
-              onRetry: () => setState(_reload),
-            );
+          if (!snap.hasData) {
+            return readGate(snap, () => setState(_reload));
           }
-          if (!snap.hasData) return const BlockLoading();
           final readiness = snap.data![0] as PrdReadiness;
           final commits = snap.data![1] as List<PrdCommit>;
           final selected = commits.cast<PrdCommit?>().firstWhere(

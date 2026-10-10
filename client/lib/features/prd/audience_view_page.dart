@@ -64,13 +64,9 @@ class _AudienceViewPageState extends State<AudienceViewPage> {
       body: FutureBuilder<(Map<String, dynamic>, Prd)>(
         future: _future,
         builder: (context, snap) {
-          if (snap.hasError) {
-            return BlockError(
-              error: snap.error,
-              onRetry: () => setState(_load),
-            );
+          if (!snap.hasData) {
+            return readGate(snap, () => setState(_load));
           }
-          if (!snap.hasData) return const BlockLoading();
           final (view, prd) = snap.data!;
           return _Projection(
             prdId: widget.prdId,

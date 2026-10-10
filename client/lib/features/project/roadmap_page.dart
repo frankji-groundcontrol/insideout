@@ -243,9 +243,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     builder: (context, snap) {
                       final progress = _liveProgress ?? snap.data;
                       if (progress == null) {
-                        return snap.hasError
-                            ? BlockError(error: snap.error, onRetry: _reload)
-                            : const BlockLoading();
+                        return readGate(snap, _reload);
                       }
                       // Progress lists only dated work, so an empty one does
                       // not mean there are no goals.
@@ -270,9 +268,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     future: _future,
                     builder: (context, snap) {
                       if (!snap.hasData) {
-                        return snap.hasError
-                            ? BlockError(error: snap.error, onRetry: _reload)
-                            : const BlockLoading();
+                        return readGate(snap, _reload);
                       }
                       if (snap.data!.isEmpty) {
                         return BlockEmpty(

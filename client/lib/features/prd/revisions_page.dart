@@ -80,13 +80,9 @@ class _RevisionsPageState extends State<RevisionsPage> {
       body: FutureBuilder<List<PrdRevision>>(
         future: _future,
         builder: (context, snap) {
-          if (snap.hasError) {
-            return BlockError(
-              error: snap.error,
-              onRetry: () => setState(_reload),
-            );
+          if (!snap.hasData) {
+            return readGate(snap, () => setState(_reload));
           }
-          if (!snap.hasData) return const BlockLoading();
           final revisions = snap.data!;
           if (revisions.isEmpty) {
             return BlockEmpty(
