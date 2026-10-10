@@ -117,17 +117,3 @@ func (s *Store) UpdateProfile(ctx context.Context, id uuid.UUID, username, bio s
 	}
 	return u, nil
 }
-
-// SharesWorkspaceWith reports whether the two users are both members of at
-// least one common workspace — used by the users-read authorization rule.
-func (s *Store) SharesWorkspaceWith(ctx context.Context, viewerID, targetID uuid.UUID) (bool, error) {
-	var exists bool
-	err := s.Pool.QueryRow(ctx, `
-		SELECT EXISTS (
-			SELECT 1 FROM insideout.workspace_memberships m1
-			JOIN insideout.workspace_memberships m2 ON m1.workspace_id = m2.workspace_id
-			WHERE m1.user_id = $1 AND m2.user_id = $2
-		)`, viewerID, targetID,
-	).Scan(&exists)
-	return exists, err
-}
