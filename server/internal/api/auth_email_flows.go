@@ -340,7 +340,7 @@ func simpleEmailHTML(heading, intro, link, expires string) string {
 <html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1a1a1a;">
 <h2 style="margin-bottom:4px;">%s</h2>
 <p>%s</p>
-<p><a href="%s" style="display:inline-block;padding:12px 24px;background:#1f6f54;color:#ffffff;text-decoration:none;border-radius:8px;">Continue</a></p>
+<p><a href="%s" style="display:inline-block;padding:12px 24px;background:#3B5BFF;color:#ffffff;text-decoration:none;border-radius:0px;">Continue</a></p>
 <p style="color:#666666;font-size:13px;">This link works once and expires in %s. If you didn't request it, you can ignore this email.</p>
 </body></html>`, heading, intro, link, expires)
 }
