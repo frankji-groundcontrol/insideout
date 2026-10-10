@@ -42,8 +42,14 @@ values):
 ```bash
 ./scripts/dev.sh -C server go run ./cmd/insideout                              # dev server
 ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v      # integration tests
-./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+./scripts/dev.sh -C client flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
+
+The server builds invite, magic-link and reset links from
+`INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`; `scripts/dev.sh`
+logs them in dev), so the web dev server must run on that port (`flutter run`
+picks a random one unless `--web-port` pins it) or `INSIDEOUT_PUBLIC_URL`
+must be set to the port in use.
 
 The full variable reference — every variable grouped by consumer, with
 required/default/meaning, the `.env`→process bridges, database setups,
@@ -118,10 +124,10 @@ Remember `INSIDEOUT_COOKIE_SECURE=0` when serving over plain http locally.
 Frontend (from `client/`):
 
 ```bash
-flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
+flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http://127.0.0.1:8080/api/v1
 ```
 
-Or `./scripts/dev.sh -C client flutter run -d chrome --dart-define=API_BASE=http://127.0.0.1:8080/api/v1`.
+Or `./scripts/dev.sh -C client flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http://127.0.0.1:8080/api/v1`.
 For browser dev against the local server, `scripts/dev.sh` exports
 `INSIDEOUT_CORS_ORIGINS=localhost` when unset, so Flutter web on any
 localhost port passes CORS without extra config.
