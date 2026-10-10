@@ -265,9 +265,11 @@ neutral raised `#14171D` (dark).
 ### Navigation
 
 Bottom dock for signed-in product surfaces: a 0-radius block with a 2px ink
-border and `cast` shadow. Every dock item is a `PressableBlock`. An
-unfinished item carries an amber `#FFD166` square at its top-right corner.
-No Linear-style left rail at any breakpoint.
+border and `cast` shadow. Every dock item is a `PressableBlock`. The current
+item is outlined 2px in `btnFg` and announced as selected, and the dock's
+focus ring is `btnFg` too: the dock is filled with `brand`, where the usual
+brand ring would vanish. An unfinished item carries an amber `#FFD166` square
+at its top-right corner. No Linear-style left rail at any breakpoint.
 
 ### Identity exception
 
