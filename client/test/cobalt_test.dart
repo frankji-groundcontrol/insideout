@@ -70,6 +70,16 @@ void main() {
     },
   );
 
+  test('spacing decree: the named space tokens are the 4px grid', () {
+    expect(Cobalt.space1, 4.0);
+    expect(Cobalt.space2, 8.0);
+    expect(Cobalt.space3, 12.0);
+    expect(Cobalt.space4, 16.0);
+    expect(Cobalt.space6, 24.0);
+    expect(Cobalt.space8, 32.0);
+    expect(Cobalt.space10, 40.0);
+  });
+
   test('cast shadows: hard offsets, zero blur and spread, per-theme ink', () {
     expect(castShadowColor(Brightness.dark), const Color(0xFF05070A));
     expect(castShadowColor(Brightness.light), const Color(0x26000000));
