@@ -1,0 +1,48 @@
+# Live values for skeleton.example. Synthetic: nothing here is a real credential.
+# Comment lines, blank lines and lines without an equals sign are skipped.
+
+JUST_A_WORD
+
+# Statuses: missing (REQ_EMPTY is absent), default, placeholder, set, unset.
+REQ_VALUE=from-skeleton
+REQ_PLACEHOLDER=postgres://insideout_app:change_me@your-remote-host:5432/x
+OPT_EMPTY=mine
+OPT_DEFAULT=15m
+OPT_INDENTED=CHANGE_ME_upper
+lower_case_name=mine
+HELP_FIRST=
+
+# export prefix, inline comment, glued hash, a quoted value, a quoted example.
+export HELP_SECOND=2
+INLINE=5442   # host side
+HASH_GLUED=p@ss#word
+QUOTED="two words"
+QUOTED_INLINE="keeps # inside"  # trailing
+WITH_EQUALS=a=b=c
+
+# Secrets carry synthetic values; the later of two assignments wins.
+SECRET_PLAIN=s3cret-fixture
+MONKEY_PATCH=1
+CREDENTIAL_PATH=first
+CREDENTIAL_PATH=second
+KEYBOARD_LAYOUT='dvorak'
+  PASSWORD_HINT=indented
+Mixed_PassWD_File="  spaced  "
+SECRETARY_NAME=""
+DATABASE_OWNER_URL=postgres://owner:pw@10.0.0.1:5432/db
+INSIDEOUT_LLM_BASE_URL=https://api.example.test/v1
+DUP_NAME=live
+
+# Spaces around the equals sign are tolerated; a commented assignment is not
+# an assignment.
+OFFLINE_MODE = spaced
+#PUBLIC_URL=http://elsewhere.example.test
+
+# Not dotenv assignments: a dashed name, a leading digit, a name with a space.
+BAD-NAME=ignored
+1BAD=ignored
+SPACED NAME=ignored
+
+# Variables the skeleton never declared: env_catalog.build lists them, Go does not.
+ENV_ONLY=1
+export ENV_ONLY_EXPORTED=2

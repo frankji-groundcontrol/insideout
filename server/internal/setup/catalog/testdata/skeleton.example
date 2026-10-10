@@ -1,0 +1,66 @@
+# Fixture skeleton for parity_test.go: one block per rule both readers must
+# agree on. A blank line clears the help buffer, so this prose attaches to
+# nothing; the live values that go with it are in live.dotenv.
+
+# Help for a required variable, then three requireds of different shapes.
+REQ_EMPTY=
+REQ_VALUE=from-skeleton
+REQ_PLACEHOLDER=postgres://insideout_app:change_me@your-remote-host:5432/x
+
+# Optional: a commented assignment, in each spelling of the comment marker.
+#OPT_EMPTY=
+#OPT_DEFAULT=15m
+# OPT_SPACED=spaced-comment-form
+#   OPT_INDENTED=value after indent
+#lower_case_name=kept
+
+# Help attaches to the first key under it only: HELP_SECOND gets none.
+# second line of that help
+#HELP_FIRST=1
+#HELP_SECOND=2
+
+# stale help, wiped by the blank line below
+
+#HELP_CLEARED=3
+
+# help survives a line that is neither a comment nor an assignment
+this stray line is ignored
+export EXPORTED_IN_SKELETON=ignored
+#HELP_SURVIVES=4
+
+# Prose, not declarations: a doubled hash, spaces around the equals sign,
+# a leading digit and a dashed name.
+##DOUBLE_HASH=ignored
+# SPACED_EQ = ignored
+#9LEADING_DIGIT=ignored
+#DASHED-NAME=ignored
+
+# Values: an inline comment is cut, a hash glued to the value is kept, quotes
+# stay on the example, an equals sign inside the value is kept.
+#INLINE=5442   # host side
+#HASH_GLUED=p@ss#word
+#QUOTED="two words"
+#QUOTED_INLINE="keeps # inside"  # trailing
+#WITH_EQUALS=a=b=c
+
+# The same name declared twice: both readers list both lines in file order.
+#DUP_NAME=optional-first
+DUP_NAME=required-second
+
+# Secret by name: the match is a case-insensitive substring, no word boundary.
+#SECRET_PLAIN=
+#MONKEY_PATCH=
+#KEYBOARD_LAYOUT=us
+#lower_token=
+#Mixed_PassWD_File=
+#CREDENTIAL_PATH=
+#SECRETARY_NAME=
+#PASSWORD_HINT=
+# Secret by an explicit list, matched exactly: a lookalike is not secret.
+#DATABASE_OWNER_URL=
+#INSIDEOUT_LLM_BASE_URL=https://api.example.test/v1
+#DATABASE_URL_REPLICA=
+#database_url=
+# Not secret: no marker anywhere in the name.
+#PUBLIC_URL=http://localhost:5173
+#OFFLINE_MODE=
