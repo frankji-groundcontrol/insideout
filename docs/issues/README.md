@@ -50,6 +50,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Persona grounding labels](2026-10-11-persona-grounding-labels.md)
   — personas are a free-text section; no core/key/later priority and no
   grounded/synthesized/assumed label anywhere.
+- [Facts trust layer](2026-10-11-facts-trust-layer.md) — facts are recorded
+  agent-side only (ledger.go); no route or client surface to confirm,
+  correct or remove them.
 
 ## Bug records
 
