@@ -147,4 +147,24 @@ void main() {
     expect(api.calls, [('markdown', 'delivery')]);
     expect(find.byType(BlockBanner), findsNothing);
   });
+
+  for (final (locale, label, retired) in [
+    ('en-US', 'Generate preview', 'Submit'),
+    ('zh-CN', '生成预览', '提交'),
+  ]) {
+    testWidgets('the primary action is named for what it does ($locale)', (
+      tester,
+    ) async {
+      final api = await _pumpExport(tester, locale: locale);
+
+      // The button only fetches the export and previews it. "Submit" is the
+      // generic form verb, and 提交 is this product's word for Commit.
+      expect(find.text(retired), findsNothing);
+      await tester.tap(find.widgetWithText(BlockButton, label));
+      await tester.pumpAndSettle();
+
+      expect(api.calls, [('markdown', null)]);
+      expect(find.text('# Plan'), findsOneWidget);
+    });
+  }
 }
