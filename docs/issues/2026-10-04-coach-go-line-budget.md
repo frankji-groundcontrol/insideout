@@ -1,9 +1,12 @@
 # 2026-10-04 — `server/internal/agent/coach.go` over the ~350-line budget
 
-> **Resolved 2026-10-10.** `server/internal/agent/coach.go` is 349 lines and the provider/tool loop is
-> `coach_loop.go` (131), a pure move checked at its own commit (`8ef010a`); see
+> **Resolved 2026-10-10.** `server/internal/agent/coach.go` is 281 lines and the loop mechanics live next door:
+> `coach_loop.go` (118, `runLoop`/`loadHistory`) and `coach_fail.go` (74, `failTurn`), pure moves checked at their
+> own commits (`8ef010a`, `6725655`); see
 > [backend splits](../changelogs/2026-10-10-close-open-gaps/backend-splits.md). The coach defects fixed on top of the
-> split are in [backend fixes](../changelogs/2026-10-10-close-open-gaps/backend-fixes.md).
+> split are in [backend fixes](../changelogs/2026-10-10-close-open-gaps/backend-fixes.md). `userTexts` was deleted
+> (`2f9c3e9`) when record_fact quote grounding began reading the conversation's stored turns instead of the replay
+> window, and `aiConcurrencyLimits`/`detachedContext` stayed in `coach.go`.
 >
 > The original record follows, unedited.
 
