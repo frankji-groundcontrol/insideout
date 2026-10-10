@@ -168,7 +168,15 @@ func providerHTTPError(provider string, resp *http.Response) error {
 	case resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusUnauthorized ||
 		resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusNotFound:
 		return fmt.Errorf("%w: %s", ErrProviderConfig, full)
+	case resp.StatusCode == http.StatusPaymentRequired || resp.StatusCode == http.StatusRequestTimeout ||
+		resp.StatusCode == http.StatusRequestEntityTooLarge || resp.StatusCode == http.StatusUnprocessableEntity:
+		// AIDEV-03: the residual 4xx band is a billing/payload problem (402 =
+		// quota or credit exhausted), not provider load — classifying it keeps
+		// five of them from opening the global breaker for every user.
+		return fmt.Errorf("%w: %s", ErrProviderConfig, full)
 	default:
+		// Anything still unmapped is a truly-unknown transport-level reply:
+		// keep it unsentineled so it still counts against the breaker.
 		return errors.New(full)
 	}
 }

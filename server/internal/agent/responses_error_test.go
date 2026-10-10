@@ -17,7 +17,8 @@ func responsesErrorStream(code, msg string) string {
 // rate limit or a server error was neither retried nor counted as a provider
 // failure, and the text blamed anthropic. They must classify like their
 // Anthropic counterparts (rate_limit_error, api_error) and name the provider
-// that answered; a code nobody mapped stays unclassified.
+// that answered; a code nobody mapped is a configuration problem, not load
+// (AIDEV-03) — it classifies as ErrProviderConfig so it stays off the breaker.
 func TestParseResponsesStream_ErrorEventTaxonomy(t *testing.T) {
 	sentinels := []error{ErrProviderRateLimited, ErrProviderTransient, ErrContextLength, ErrProviderConfig}
 	cases := []struct {
@@ -26,7 +27,7 @@ func TestParseResponsesStream_ErrorEventTaxonomy(t *testing.T) {
 	}{
 		{"rate_limit_exceeded", ErrProviderRateLimited},
 		{"server_error", ErrProviderTransient},
-		{"weird_new_code", nil},
+		{"weird_new_code", ErrProviderConfig},
 	}
 	for _, tc := range cases {
 		t.Run(tc.code, func(t *testing.T) {
