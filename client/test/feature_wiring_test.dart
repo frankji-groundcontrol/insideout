@@ -19,7 +19,8 @@ void main() {
       final project = read('lib/features/project/project_page.dart');
       final roadmap =
           read('lib/features/project/roadmap_page.dart') +
-          read('lib/features/project/roadmap_node_card.dart');
+          read('lib/features/project/roadmap_node_card.dart') +
+          read('lib/features/project/roadmap_node_menu.dart');
       final prd =
           read('lib/features/prd/prd_page.dart') +
           read('lib/features/prd/coach_panel.dart');
