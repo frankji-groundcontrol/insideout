@@ -75,9 +75,11 @@ Future<void> _pumpCoach(
 void main() {
   // The panel interpolated the whole payload Map, so the snackbar read
   // "Fact: {id: f1, kind: constraint, text: ..., status: proposed}".
+  // The label says "recorded" (AIDEV-09): the model records the fact; no
+  // human attested it.
   for (final (locale, shown) in const [
-    ('en-US', 'Fact: Solo founders only'),
-    ('zh-CN', '事实：Solo founders only'),
+    ('en-US', 'Recorded fact: Solo founders only'),
+    ('zh-CN', '已记录事实：Solo founders only'),
   ]) {
     testWidgets('a recorded fact shows its text, not the raw payload ($locale)', (
       tester,
