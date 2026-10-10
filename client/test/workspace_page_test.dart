@@ -158,7 +158,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byType(FloatingActionButton));
+    await tester.tap(find.byTooltip('New project'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Failing Project');
     await tester.tap(find.text('Create'));
@@ -227,7 +227,7 @@ void main() {
         matching: find.byType(FieldCard),
       ),
     );
-    final fabRect = tester.getRect(find.byType(FloatingActionButton));
+    final fabRect = tester.getRect(find.byTooltip('New project'));
     expect(
       cardRect.bottom,
       lessThanOrEqualTo(fabRect.top),

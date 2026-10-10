@@ -19,15 +19,18 @@ import '../../theme/cobalt_theme.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 import 'board_project_card.dart';
+import 'quick_capture_fab.dart';
 
 // N1: the square quick-capture FAB floats over the dock's top-right corner.
 // The body extends behind the dock (AppScaffold extendBody), so reserve the
 // whole FAB zone as scrollable inset — dock + FAB + the scaffold's FAB
 // margin + a breathing gap — or the last project card's date row slides
 // under the button.
-const double _fabSize = 56;
 const double _bottomInset =
-    ProductDock.height + _fabSize + kFloatingActionButtonMargin + Cobalt.space4;
+    ProductDock.height +
+    quickCaptureSize +
+    kFloatingActionButtonMargin +
+    Cobalt.space4;
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key, required this.id});
@@ -152,9 +155,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
         return AppScaffold(
           title: title,
           paintTitle: true,
-          fab: FloatingActionButton(
+          fab: QuickCaptureFab(
+            label: l10n.t('project.newProject'),
             onPressed: _createProject,
-            child: const Icon(Icons.add),
           ),
           body: !snap.hasData
               ? snap.hasError
