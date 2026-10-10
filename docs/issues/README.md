@@ -16,6 +16,9 @@ engineering item under Client. The
 worked through all of them. Owner steps that are not issue records (production
 deploys and migrations, purging legacy users, mail and signing credentials,
 backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md).
+2026-10-11: the parked PRODUCT.md slices opened as records under
+"Open product slices" below — open by design, they track promises the
+running system does not implement yet.
 
 ## Waiting on the owner
 
@@ -28,6 +31,16 @@ backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md
   2026-10-10**; the Flutter 3.47.0-vs-3.44.x lock drift is guarded by
   `pub get --enforce-lockfile` in CI and the Dockerfile. Open only for the
   owner: installing 3.44.x on MBP.
+
+## Open product slices (2026-10-11)
+
+PRODUCT.md promises with no end-to-end implementation, one dated record per
+slice with a bounded fix prompt; the enumeration and recommended slice order
+is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.md).
+
+- [Product Branch, Merge and the Decision Log](2026-10-11-product-branch-merge-decision-log.md)
+  — no branch machinery anywhere; the Decision Log is a free-text Commit
+  note plus proposal decisions.
 
 ## Bug records
 
