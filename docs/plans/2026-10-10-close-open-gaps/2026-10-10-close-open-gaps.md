@@ -37,6 +37,16 @@ can close it. CI on `main` is green. GitHub, MBP2, and MBP end on one commit.
   before and after.
 - **Workers own disjoint files** and commit in their own worktrees; records
   (changelog, issue index, board, HANDOFF) are written once, centrally.
+- **Review-register sweep.** Three whole-tree reviews filed findings that no
+  issue, plan, or changelog names by ID: 35 + 72 in the two multirole reviews
+  (an ID in no record outside the review folders), and 80 Medium/Low in the
+  frontend review (named neither in its own remediation plan, which was
+  executed as a plan, nor anywhere else). Read-only agents decide, per
+  finding, what is true at `HEAD`: fixed (with the closing line), parked
+  feature, bounded defect, owner step, or not a defect. Every "open" claim and
+  a sample of the "fixed" claims are checked against the code before anything
+  is recorded, and each bounded defect is fixed test-first like the rest of
+  this plan.
 - **No deploys and no destructive data operations** unless the owner says so.
 
 ## Checklist
@@ -70,6 +80,12 @@ Mirrors the tracker (`.track.yaml`); the tracker is the source of truth.
 - [x] Web walk and symbolized console check on a local stack (two passes,
       both themes at both widths; BUG-022, 025, 026, 028, 029).
 - [x] Re-triage every issue record; move resolved ones; record owner-only items.
+- [ ] Review-register sweep: triage the 187 findings no record traces (107
+      in the two multirole reviews, 80 in the frontend review).
+- [ ] Review-register sweep: fix the bounded findings test-first; record
+      the rest with a fix prompt or the owner step.
+- [ ] Review-register sweep: disposition ledger, indexed from
+      [`docs/review/`](../../review/README.md).
 - [ ] Adversarial verification of the whole change set.
 - [ ] Push, fast-forward MBP, verify three-way sync, CI green.
 
@@ -97,12 +113,15 @@ Wave 0.12 `app/.env` on MBP2.
 
 ## Status
 
-In flight 2026-10-10. Every item above has landed on `main`'s local history
-(a fix lands behind its red test commit). Final gate on the
-tip: Go `go test ./... -count=1 -v` on a scratch PostgreSQL 18, 580 PASS,
-0 FAIL, 1 SKIP (`TestReadSecretTerminal`, needs a terminal), with `gofmt`,
-`go build` and `go vet` clean; Flutter `pub get --enforce-lockfile`, analyze
-(0 errors, 0 warnings, 16 baseline infos), `dart format` (194 files, 0
-changed) and 269 of 269 tests; `scripts/check_nginx_reresolve.py` 6 of 6 on
-nginx 1.27.5. What is left is delivery: push, CI on the pushed commit, and the
-MBP fast-forward.
+In flight 2026-10-10. Every item above the sweep has landed and been pushed:
+`origin/main` is `2be918e` and CI on it is green (run 38029745934, all four
+jobs). Final gate on that tip: Go `go test ./... -count=1 -v` on a scratch
+PostgreSQL 18, 580 PASS, 0 FAIL, 1 SKIP (`TestReadSecretTerminal`, needs a
+terminal), with `gofmt`, `go build` and `go vet` clean; Flutter `pub get
+--enforce-lockfile`, analyze (0 errors, 0 warnings, 16 baseline infos), `dart
+format` (194 files, 0 changed) and 269 of 269 tests;
+`scripts/check_nginx_reresolve.py` 6 of 6 on nginx 1.27.5.
+
+Left: the review-register sweep, two independent reviews of the change set, and
+delivery to MBP. MBP is at `8ee97fc`; at the last probe its ssh port timed out
+(a machine-side fault), so the fast-forward waits on it.

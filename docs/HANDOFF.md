@@ -10,11 +10,13 @@ path and current warnings, never history.
 
 ## What to do next
 
-**Nothing is in flight in the repository (2026-10-10).** The
-[close-the-open-gaps plan](plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md)
-worked through every issue record and board item, and the
-[issues index](issues/README.md) lists what is left. What remains is a choice
-or a secret, not unfinished code, and it is the owner's:
+**One thread is in flight (2026-10-10): the review-register sweep** in the
+[close-the-open-gaps plan](plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md),
+which decides what is still true of the 187 review findings no record traces;
+resume from that plan's checklist and tracker. Everything else in the plan
+has landed (CI green on `2be918e`), and what the
+[issues index](issues/README.md) lists as left is a choice or a secret, not
+unfinished code, and it is the owner's:
 
 1. **Ship.** Nothing from 2026-10-08 on is deployed: the hosted web bundle and
    server predate the block-craft slices and this wave. `railway up --service

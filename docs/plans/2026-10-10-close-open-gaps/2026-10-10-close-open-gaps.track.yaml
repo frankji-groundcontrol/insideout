@@ -6,9 +6,9 @@ main:
   outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
   owner: claude
   status: active
-  next_evidence: "Merged and verified: Go splits, coach/store/auth fixes, reaper index (measured 17ms->0.07ms), code rotation migration, Flutter api/models/theme/test splits (167 tests). Waiting on setup, parity, client-project, client-workspace/prd workers."
+  next_evidence: "CI is green on 2be918e (4 of 4 jobs). Next: the review-register sweep (triage, bounded fixes, ledger), the two independent reviews, then the MBP fast-forward (ssh to MBP times out) and a final CI run."
 side_tracks: []
-updated_at: "2026-10-10T05:54:34Z"
+updated_at: "2026-10-10T06:16:09Z"
 plan:
 - step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
   owner: claude
@@ -76,6 +76,15 @@ plan:
 - step: "Re-triage every issue record; move resolved ones; record owner-only items"
   owner: claude
   status: completed
+- step: "Review-register sweep: triage the 187 findings no record traces (107 multirole, 80 frontend)"
+  owner: claude
+  status: in_progress
+- step: "Review-register sweep: fix the bounded findings test-first; record the rest"
+  owner: claude
+  status: pending
+- step: "Review-register sweep: disposition ledger indexed from docs/review"
+  owner: claude
+  status: pending
 - step: "Adversarial verification of the whole change set"
   owner: claude
   status: pending
