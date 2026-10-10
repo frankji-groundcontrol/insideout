@@ -15,6 +15,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -112,9 +113,10 @@ func runMigrate(ctx context.Context, log *slog.Logger, st *store.Store) {
 	log.Info("migrate: applied", "files", applied)
 }
 
-// shutdownDrain is how long in-flight requests get after shutdown starts
-// before they are cut. Scaffolding so the shutdown test compiles: nothing
-// reads it yet.
+// shutdownDrain is how long in-flight requests (coach turns) get to finish
+// once shutdown starts, before their contexts are cancelled. The coach bounds
+// its terminal writes at 10s (agent persistTimeout), so 20s + 10s fills the
+// 30s Shutdown window. A var only so the shutdown test can shorten it.
 var shutdownDrain = 20 * time.Second
 
 func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *config.Config) {
@@ -149,6 +151,13 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 
 	srv := api.NewServer(st, tokens, cfg, log, coach, planner)
 
+	// Every request context derives from baseCtx, so cancelling it after the
+	// drain sends an in-flight coach turn down its context.Canceled path: the
+	// streamed text is kept and the run is marked failed, instead of both
+	// dying with the process.
+	baseCtx, cancelBase := context.WithCancel(context.Background())
+	defer cancelBase()
+
 	httpServer := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           srv.Handler(),
@@ -159,10 +168,15 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 		// open indefinitely.
 		ReadTimeout: 15 * time.Second,
 		IdleTimeout: 60 * time.Second,
+		BaseContext: func(net.Listener) context.Context { return baseCtx },
 	}
-	// Shutdown never cancels handler contexts, so without this every open
-	// canvas or progress tab would hold the whole shutdown window.
-	httpServer.RegisterOnShutdown(srv.CloseStreams)
+	// Shutdown never cancels handler contexts: end the passive streams at
+	// once (an open canvas or progress tab would hold the whole window), and
+	// cut whatever is still in flight after the drain.
+	httpServer.RegisterOnShutdown(func() {
+		srv.CloseStreams()
+		time.AfterFunc(shutdownDrain, cancelBase)
+	})
 
 	go runReaper(ctx, log, st)
 
