@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/theme/cobalt.dart';
+import 'package:insideout/theme/cobalt_chip.dart';
 import 'package:insideout/theme/cobalt_theme.dart';
 
 void main() {
@@ -151,6 +152,45 @@ void main() {
       greaterThanOrEqualTo(4.5),
     );
   });
+
+  // The chip label is 12px w600, i.e. normal text: every tone owes 4.5:1. The
+  // light danger chip (cobalt-700 on cobalt-200) measured 4.49 and nothing
+  // pinned it, because the test above only reads the neutral pair.
+  testWidgets(
+    'every chip tone: the label clears 4.5:1 on its fill in both themes',
+    (tester) async {
+      for (final (palette, brightness) in [
+        (Cobalt.light, Brightness.light),
+        (Cobalt.dark, Brightness.dark),
+      ]) {
+        for (final tone in ShadeTone.values) {
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: cobaltTheme(palette, brightness: brightness),
+              home: Scaffold(
+                body: Center(
+                  child: ShadeChip(label: 'x', tone: tone),
+                ),
+              ),
+            ),
+          );
+          final chip = tester.widget<Container>(
+            find.descendant(
+              of: find.byType(ShadeChip),
+              matching: find.byType(Container),
+            ),
+          );
+          final fill = (chip.decoration! as BoxDecoration).color!;
+          final label = tester.widget<Text>(find.text('x')).style!.color!;
+          expect(
+            _contrast(label, fill),
+            greaterThanOrEqualTo(4.5),
+            reason: '${tone.name} chip in ${brightness.name}',
+          );
+        }
+      }
+    },
+  );
 
   test(
     'theme wiring: squared shapes, container borders, flat surfaces, 100ms press motion',
