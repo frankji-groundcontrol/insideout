@@ -34,7 +34,11 @@ class IdeaPoster extends StatelessWidget {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     final palette = Cobalt.of(context);
+    // The whole poster does what its button does; the button and the menu
+    // keep their own taps, which win over this one.
+    final primary = idea.prdId == null ? onConvert : onOpenPrd;
     return FieldCard(
+      onTap: primary,
       padding: EdgeInsets.zero,
       child: Container(
         constraints: const BoxConstraints(minHeight: 240),
@@ -125,7 +129,7 @@ class IdeaPoster extends StatelessWidget {
                           ? BlockButtonVariant.primary
                           : BlockButtonVariant.secondary,
                       trailingIcon: Icons.arrow_forward,
-                      onPressed: idea.prdId == null ? onConvert : onOpenPrd,
+                      onPressed: primary,
                     ),
                   ),
                 ],
