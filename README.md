@@ -39,18 +39,13 @@ Three surfaces, one `/api/v1` contract:
 
 ## 安装 / Install
 
-### CLI 与 MCP（预编译二进制 / prebuilt binaries）
+### 网页端 / Web
 
-首个 `v*` 版本发布后，无需检出仓库与 Go 工具链，一条命令装好经
-sha256 校验的两个二进制（macOS/Ubuntu，amd64/arm64）：
+打开你的部署地址即可（注册默认**仅限邀请**，见下方快速上手）。自托管见 [docs/usage/deployment.md](docs/usage/deployment.md)。
 
-Once a `v*` release is tagged, one command installs both binaries,
-sha256-verified, with no checkout and no Go toolchain
-(macOS/Ubuntu, amd64/arm64):
-
-```bash
-curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
-```
+Open your deployment's URL (signup is **invitation-only** by default — see
+Quick start below). For self-hosting, see
+[docs/usage/deployment.md](docs/usage/deployment.md).
 
 ### CLI 与 MCP（从源码构建 / from source）
 
@@ -111,13 +106,20 @@ across Claude Code, Cursor, and anything speaking the standard
 ./scripts/mcp-config.sh -q >> some.json  # 只输出 JSON / JSON only
 ```
 
-### 网页端 / Web
+### CLI 与 MCP（预编译二进制 / prebuilt binaries）
 
-打开你的部署地址即可（注册默认**仅限邀请**，见下方快速上手）。自托管见 [docs/usage/deployment.md](docs/usage/deployment.md)。
+首个 `v*` 版本发布后，无需检出仓库与 Go 工具链，一条命令装好经
+sha256 校验的两个二进制（macOS/Ubuntu，amd64/arm64）。今天还没有任何
+`v*` 标签——首个标签发布前，这条命令 404；在那之前请用上面的从源码路径。
 
-Open your deployment's URL (signup is **invitation-only** by default — see
-Quick start below). For self-hosting, see
-[docs/usage/deployment.md](docs/usage/deployment.md).
+Once a `v*` release is tagged, one command installs both binaries,
+sha256-verified, with no checkout and no Go toolchain
+(macOS/Ubuntu, amd64/arm64). No `v*` tag exists yet — until the first
+release this URL 404s; use the from-source path above until then.
+
+```bash
+curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
+```
 
 ### 本地开发 / Local development
 
