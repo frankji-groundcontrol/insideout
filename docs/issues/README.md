@@ -53,6 +53,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Facts trust layer](2026-10-11-facts-trust-layer.md) — facts are recorded
   agent-side only (ledger.go); no route or client surface to confirm,
   correct or remove them.
+- [Roadmap lenses](2026-10-11-roadmap-lenses.md) — the roadmap offers
+  progress/bands/canvas only; the five lenses of PRODUCT.md:277-285 are
+  docs-only.
 
 ## Bug records
 
