@@ -48,6 +48,9 @@ type Server struct {
 	// handler contexts.
 	streamsCtx    context.Context
 	cancelStreams context.CancelFunc
+	// authCooldown spaces the emailed auth sends (magic link, password
+	// reset, login code) per email and per IP; see auth_cooldown.go.
+	authCooldown *sendCooldown
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
@@ -58,6 +61,7 @@ func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, lo
 		progress:     progresshub.New(),
 		mail:         mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log, cfg.MailDevBody),
 		authThrottle: newAuthThrottle(defaultThrottleConfig(), time.Now),
+		authCooldown: newSendCooldown(authResendCooldown),
 	}
 	if st != nil {
 		st.OnRoadmapChange(func(projectID uuid.UUID) {

@@ -25,15 +25,6 @@ func (c *fakeClock) now() time.Time          { return c.t }
 func (c *fakeClock) advance(d time.Duration) { c.t = c.t.Add(d) }
 func newFakeClock() *fakeClock               { return &fakeClock{t: time.Date(2026, 10, 4, 12, 0, 0, 0, time.UTC)} }
 
-// swapCooldown installs cd as the package-level gate for the duration of
-// one test (or subtest), restoring the original on cleanup.
-func swapCooldown(t *testing.T, cd *sendCooldown) {
-	t.Helper()
-	orig := authSendCooldown
-	authSendCooldown = cd
-	t.Cleanup(func() { authSendCooldown = orig })
-}
-
 func TestSendCooldownBlocksRepeatForSameEmail(t *testing.T) {
 	cd := newSendCooldown(authResendCooldown)
 	if !cd.allow("a@x.co", "1.1.1.1") {
@@ -117,7 +108,6 @@ func TestSendCooldownEndpointsReturnUniform200(t *testing.T) {
 	for _, ep := range endpoints {
 		t.Run(ep.path, func(t *testing.T) {
 			cd := newSendCooldown(authResendCooldown)
-			swapCooldown(t, cd)
 			// Prime: stand in for the first request's send so the HTTP
 			// request below lands inside the window. httptest requests
 			// carry RemoteAddr 192.0.2.1:1234, which cooldownClientIP
@@ -127,6 +117,7 @@ func TestSendCooldownEndpointsReturnUniform200(t *testing.T) {
 			var mailLog bytes.Buffer
 			s := NewServer(nil, nil, &config.Config{},
 				slog.New(slog.NewTextHandler(&mailLog, nil)), nil, nil)
+			s.authCooldown = cd
 
 			w := postJSON(s, ep.path, `{"email":"`+ep.email+`"}`)
 			if w.Code != http.StatusOK {
@@ -200,10 +191,10 @@ func TestInjectedCooldownsStayWithTheirServer(t *testing.T) {
 	gateA := newSendCooldown(authResendCooldown)
 	gateB := newSendCooldown(authResendCooldown)
 
-	swapCooldown(t, gateA)
 	a := newValidationServer()
-	swapCooldown(t, gateB) // the other test's setup, running alongside
-	b := newValidationServer()
+	a.authCooldown = gateA
+	b := newValidationServer() // the other test's setup, running alongside
+	b.authCooldown = gateB
 
 	gateA.allow(email, ip) // only A's window has a send in it
 
@@ -250,7 +241,7 @@ func TestEmailAuthCooldownEndToEnd(t *testing.T) {
 	clock := newFakeClock()
 	cd := newSendCooldown(authResendCooldown)
 	cd.now = clock.now
-	swapCooldown(t, cd)
+	s.authCooldown = cd
 
 	const ipA, ipB, ipC = "192.0.2.1", "198.51.100.7", "203.0.113.9"
 

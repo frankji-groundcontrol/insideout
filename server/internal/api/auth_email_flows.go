@@ -32,7 +32,7 @@ func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	if !authSendCooldown.allow(email, cooldownClientIP(r)) {
+	if !s.authCooldown.allow(email, cooldownClientIP(r)) {
 		// Cooldown hit: same uniform 200 as every other outcome, so the
 		// gate never leaks whether the account exists or a mail went out.
 		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
@@ -109,7 +109,7 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !authSendCooldown.allow(email, cooldownClientIP(r)) {
+	if !s.authCooldown.allow(email, cooldownClientIP(r)) {
 		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}
@@ -197,7 +197,7 @@ func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) 
 	if !ok {
 		return
 	}
-	if !authSendCooldown.allow(email, cooldownClientIP(r)) {
+	if !s.authCooldown.allow(email, cooldownClientIP(r)) {
 		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 		return
 	}

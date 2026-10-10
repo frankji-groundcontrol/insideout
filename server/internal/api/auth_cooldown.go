@@ -15,11 +15,6 @@ import (
 // 200 either way.
 const authResendCooldown = 60 * time.Second
 
-// authSendCooldown gates all three email-auth send endpoints. It lives at
-// package level rather than on Server so the cooldown state survives
-// Server rebuilds; tests swap it for a tracker with an injected clock.
-var authSendCooldown = newSendCooldown(authResendCooldown)
-
 // sendCooldown is a fixed-window resend gate keyed twice: per email and
 // per client IP. A send proceeds only when BOTH keys have been quiet for
 // the whole window, and the window anchors at the last actual send — a
