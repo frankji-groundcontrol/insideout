@@ -116,6 +116,9 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 		case <-r.Context().Done():
 			s.presence.Leave(pid.String(), client)
 			return
+		case <-s.streamsCtx.Done():
+			s.presence.Leave(pid.String(), client)
+			return
 		case entries, okCh := <-updates:
 			if !okCh {
 				return

@@ -72,6 +72,8 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 		select {
 		case <-r.Context().Done():
 			return
+		case <-s.streamsCtx.Done():
+			return
 		case _, okCh := <-updates:
 			if !okCh {
 				return

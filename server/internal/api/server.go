@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -42,10 +43,17 @@ type Server struct {
 	// authThrottle limits brute-force and email-bomb volume on the auth
 	// endpoints (per email+IP and per IP); see auth_throttle.go.
 	authThrottle *authThrottle
+	// streamsCtx ends when shutdown starts (CloseStreams). The passive SSE
+	// streams select on it because http.Server.Shutdown never cancels
+	// handler contexts.
+	streamsCtx    context.Context
+	cancelStreams context.CancelFunc
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {
+	streamsCtx, cancelStreams := context.WithCancel(context.Background())
 	s := &Server{store: st, tokens: tokens, cfg: cfg, log: log, coach: coach, planner: planner,
+		streamsCtx: streamsCtx, cancelStreams: cancelStreams,
 		presence:     presence.New(30*time.Second, nil),
 		progress:     progresshub.New(),
 		mail:         mail.NewSender(cfg.MailAPIKey, cfg.MailFrom, log, cfg.MailDevBody),
@@ -68,9 +76,10 @@ func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, lo
 	return s
 }
 
-// CloseStreams is the shutdown hook for the passive SSE streams.
-// Scaffolding so the shutdown test compiles: it does nothing yet.
-func (s *Server) CloseStreams() {}
+// CloseStreams ends the passive SSE streams (presence, roadmap progress).
+// Register it with http.Server.RegisterOnShutdown: Shutdown never cancels
+// handler contexts, so without it one open tab holds the whole window.
+func (s *Server) CloseStreams() { s.cancelStreams() }
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()

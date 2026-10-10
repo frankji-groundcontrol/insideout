@@ -155,6 +155,9 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 		ReadTimeout: 15 * time.Second,
 		IdleTimeout: 60 * time.Second,
 	}
+	// Shutdown never cancels handler contexts, so without this every open
+	// canvas or progress tab would hold the whole shutdown window.
+	httpServer.RegisterOnShutdown(srv.CloseStreams)
 
 	go runReaper(ctx, log, st)
 
