@@ -39,7 +39,12 @@ var loginCodePattern = regexp.MustCompile(`^\d{6}$`)
 // invitation code field should be shown. The signup mode is deployment
 // policy, not a secret.
 func (s *Server) handleAuthConfig(w http.ResponseWriter, r *http.Request) {
-	httpx.WriteJSON(w, http.StatusOK, map[string]string{"signupMode": s.store.SignupMode(r.Context())})
+	// mailEnabled lets the sign-in forms say so when mail is in dev mode
+	// (messages are logged, never delivered); it is not the key itself.
+	httpx.WriteJSON(w, http.StatusOK, map[string]any{
+		"signupMode":  s.store.SignupMode(r.Context()),
+		"mailEnabled": s.mail.Enabled(),
+	})
 }
 
 var emailPattern = regexp.MustCompile(`^[^\s@]+@[^\s@]+\.[^\s@]+$`)
