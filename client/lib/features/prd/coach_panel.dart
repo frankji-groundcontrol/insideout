@@ -14,6 +14,7 @@ import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
+import 'coach_finding.dart';
 
 class CoachPanel extends StatefulWidget {
   const CoachPanel({
@@ -88,7 +89,11 @@ class _CoachPanelState extends State<CoachPanel> {
             setState(() => stream += chunk);
           },
           onPrdUpdated: (_) => widget.onPrdUpdated(),
-          onStageChanged: widget.onStageChanged,
+          onStageChanged: (stage) {
+            // Findings belong to the stage they were raised in.
+            if (mounted) setState(() => findings = const []);
+            widget.onStageChanged(stage);
+          },
           onFactRecorded: (fact) {
             // The payload is {id, kind, text, status}: show the text alone.
             final text = fact['text'];
@@ -225,11 +230,7 @@ class _CoachPanelState extends State<CoachPanel> {
                     if (stream.isNotEmpty)
                       CoachQuote(text: stream, role: 'assistant'),
                     for (final finding in findings)
-                      if (finding['issue'] is String)
-                        CoachQuote(
-                          text: finding['issue'] as String,
-                          role: 'critic',
-                        ),
+                      CoachFinding(finding: finding),
                   ],
                 ),
               ),

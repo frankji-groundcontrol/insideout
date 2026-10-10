@@ -22,10 +22,18 @@ Color coachInk(BuildContext context) =>
 
 /// Large pull-quote — the Coach's signed-off voice. Serif, 26, w600, 1.35.
 class CoachQuote extends StatelessWidget {
-  const CoachQuote({super.key, required this.text, required this.role});
+  const CoachQuote({
+    super.key,
+    required this.text,
+    required this.role,
+    this.note,
+  });
 
   final String text;
   final String role;
+
+  /// A smaller line under the role, e.g. a critic finding's suggestion.
+  final String? note;
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +64,18 @@ class CoachQuote extends StatelessWidget {
               weight: FontWeight.w600,
             ),
           ),
+          if (note != null) ...[
+            const SizedBox(height: Cobalt.space2),
+            Text(
+              note!,
+              style: cobaltSerif(
+                palette,
+                size: 14,
+                color: ink.withValues(alpha: 0.85),
+                weight: FontWeight.w400,
+              ),
+            ),
+          ],
         ],
       ),
     );
