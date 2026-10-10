@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:insideout/api/client.dart';
 import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/errors_l10n.dart';
 
@@ -50,5 +52,57 @@ void main() {
       'error.network',
     );
     expect(key(StateError('untouched')), 'error.generic');
+  });
+
+  // validateStatus (<500) makes dio throw a badResponse DioException for every
+  // 5xx, so a 502/503 on an ordinary call reached the mapper as a transport
+  // failure and read "Network problem" instead of "Server hiccup".
+  test('a 5xx response reads as a server fault, not a network one', () {
+    DioException badResponse(int status) => DioException(
+      requestOptions: RequestOptions(),
+      type: DioExceptionType.badResponse,
+      response: Response(requestOptions: RequestOptions(), statusCode: status),
+    );
+
+    expect(key(badResponse(503)), 'error.server');
+    expect(key(badResponse(502)), 'error.server');
+    // Only 5xx is a server fault: a response-less DioException is still the
+    // network.
+    expect(
+      key(
+        DioException(
+          requestOptions: RequestOptions(),
+          type: DioExceptionType.connectionError,
+        ),
+      ),
+      'error.network',
+    );
+  });
+
+  // The same fault off the wire: the real client against a loopback 503.
+  test('a real 503 through the client reads as a server fault', () async {
+    final http = await HttpServer.bind('127.0.0.1', 0);
+    addTearDown(() => http.close(force: true));
+    http.listen((req) async {
+      req.response.statusCode = 503;
+      await req.response.close();
+    });
+    final client = ApiClient(
+      baseUrl: 'http://127.0.0.1:${http.port}/api/v1',
+      readAccess: () async => null,
+      readRefresh: () async => null,
+      writeTokens: (a, r) async {},
+      clearTokens: () async {},
+    );
+
+    Object? failure;
+    try {
+      await client.me();
+    } catch (e) {
+      failure = e;
+    }
+
+    expect(failure, isNotNull);
+    expect(key(failure!), 'error.server');
   });
 }
