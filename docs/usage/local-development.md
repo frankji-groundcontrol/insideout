@@ -90,11 +90,14 @@ Then, from the repo root (the wrapper exports `.env` first):
 
 ```bash
 ./scripts/dev.sh -C server go run ./cmd/insideout migrate   # apply embedded SQL migrations (server/db/migrations/) and exit
-./scripts/dev.sh -C server go run ./cmd/insideout seed      # optional: demo user, workspace, project, idea, PRD
+./scripts/dev.sh -C server go run ./cmd/insideout seed      # optional: demo user, workspace, project, idea, PRD (safe to rerun)
 ```
 
 `seed` logs the demo login on completion: `demo@insideout.local` /
 `demo12345` (hashed through the same argon2id path the server uses).
+It is safe to rerun: when the demo user already has the "InsideOut Demo
+Team" workspace it logs `seed: already seeded` and creates nothing. It is
+dev-only, so never point it at a shared or production database.
 Migrations also run automatically on server startup, so `migrate` is mainly
 for CI or checking a fresh database.
 
