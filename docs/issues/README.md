@@ -41,6 +41,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Product Branch, Merge and the Decision Log](2026-10-11-product-branch-merge-decision-log.md)
   — no branch machinery anywhere; the Decision Log is a free-text Commit
   note plus proposal decisions.
+- [Scoped external feedback invitations](2026-10-11-scoped-feedback-invitations.md)
+  — the only promise with a privacy boundary; no feedback route exists,
+  the only invitations grant workspace membership.
 
 ## Bug records
 
