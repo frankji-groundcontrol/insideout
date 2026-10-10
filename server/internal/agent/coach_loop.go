@@ -103,23 +103,16 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 }
 
 func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUID, limit int) ([]Message, error) {
-	all, err := c.store.ListAgentMessages(ctx, userID, conversationID)
+	// The store filters to user turns and assistant text replies (dropping
+	// tool results and tool-call-only turns) and keeps the newest limit.
+	recent, err := c.store.ListRecentChatMessages(ctx, userID, conversationID, limit)
 	if err != nil {
 		return nil, err
 	}
 
 	var out []Message
-	for _, m := range all {
-		if m.Role != string(RoleUser) && m.Role != string(RoleAssistant) {
-			continue
-		}
-		if m.Role == string(RoleAssistant) && m.Content == "" {
-			continue // a tool-call-only turn, not a final text reply / 仅工具调用轮次，非最终文本回复
-		}
+	for _, m := range recent {
 		out = append(out, Message{Role: Role(m.Role), Content: m.Content})
-	}
-	if len(out) > limit {
-		out = out[len(out)-limit:]
 	}
 	return out, nil
 }

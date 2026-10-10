@@ -88,6 +88,46 @@ func (s *Store) ListAgentMessages(ctx context.Context, actorID, conversationID u
 	return out, nil
 }
 
+// ListRecentChatMessages returns the newest limit user turns and assistant
+// text replies of a conversation, oldest first: what the coach replays as
+// model context. Tool results and assistant rows that only carry a tool call
+// (empty content) are left out. The filter and the LIMIT run in SQL so a long
+// conversation is never loaded whole just to keep its tail.
+func (s *Store) ListRecentChatMessages(ctx context.Context, actorID, conversationID uuid.UUID, limit int) ([]AgentMessage, error) {
+	var out []AgentMessage
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		rows, err := tx.Query(ctx, `
+			SELECT id, conversation_id, role, content, tool_calls, tool_call_id, tokens, created_at
+			FROM (
+				SELECT id, conversation_id, role, content, tool_calls, tool_call_id, tokens, created_at
+				FROM insideout.agent_messages
+				WHERE conversation_id = $1
+				  AND (role = 'user' OR (role = 'assistant' AND content <> ''))
+				ORDER BY created_at DESC
+				LIMIT $2
+			) recent
+			ORDER BY created_at ASC`, conversationID, limit,
+		)
+		if err != nil {
+			return err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var m AgentMessage
+			if err := rows.Scan(&m.ID, &m.ConversationID, &m.Role, &m.Content, &m.ToolCalls, &m.ToolCallID, &m.Tokens, &m.CreatedAt); err != nil {
+				return err
+			}
+			out = append(out, m)
+		}
+		return rows.Err()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // --- ai_runs: one row per user message sent to the agent, and the
 // counting source for the rate limiter. ---
 
