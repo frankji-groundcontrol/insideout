@@ -225,7 +225,8 @@ void main() {
     await tester.tap(find.text('Start coaching'));
     await tester.pumpAndSettle();
 
-    expect(find.text('We are two people'), findsOneWidget);
+    // CoachQuote draws a message between typographic quotes.
+    expect(find.text('“We are two people”'), findsOneWidget);
   });
 
   testWidgets(
