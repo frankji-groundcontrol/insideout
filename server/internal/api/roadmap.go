@@ -23,6 +23,8 @@ func (s *Server) registerRoadmapRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap/progress", s.requireAuth(s.handleRoadmapProgress))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap/progress/stream", s.requireAuth(s.handleRoadmapProgressStream))
 	mux.HandleFunc("GET /api/v1/roadmap/{nid}/evidence", s.requireAuth(s.handleListEvidence))
+	mux.HandleFunc("POST /api/v1/roadmap/{nid}/evidence", s.requireAuth(s.handleAddObservation))
+	mux.HandleFunc("POST /api/v1/roadmap/{nid}/validate", s.requireAuth(s.handleValidateNode))
 }
 
 type roadmapNodeView struct {
@@ -42,6 +44,9 @@ type roadmapNodeView struct {
 	Acceptance string  `json:"acceptance"`
 	OwnerID    *string `json:"ownerId,omitempty"`
 	OwnerName  string  `json:"ownerName,omitempty"`
+	// The reason a validated node counts as validated ('' when unset) —
+	// the human confirm's own words (FEAT-04).
+	ValidationReason string `json:"validationReason"`
 	// B3 attribution (D10): display names, not ids — the card shows the last
 	// editor's initial plus a "created by X · edited by Y" tooltip. Omitted when
 	// unknown (pre-migration rows, or a removed author → ON DELETE SET NULL).
@@ -72,10 +77,14 @@ func roadmapNodeResponse(n store.RoadmapNode) roadmapNodeView {
 		v.OwnerID = &id
 	}
 	v.OwnerName = n.OwnerName
+	v.ValidationReason = n.ValidationReason
 	return v
 }
 
-var validRoadmapStatuses = map[string]bool{"locked": true, "pending": true, "in_progress": true, "done": true}
+// validRoadmapStatuses admits 'validated' so an already-validated node's
+// fields stay editable, but the store refuses every transition INTO it —
+// that move belongs to the confirm endpoint with its reason.
+var validRoadmapStatuses = map[string]bool{"locked": true, "pending": true, "in_progress": true, "done": true, "validated": true}
 
 func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
