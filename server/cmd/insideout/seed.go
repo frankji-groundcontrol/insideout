@@ -15,6 +15,7 @@ const (
 	seedEmail    = "demo@insideout.local"
 	seedPassword = "demo12345"
 	seedUsername = "Demo"
+	seedTeam     = "InsideOut Demo Team"
 )
 
 func runSeed(ctx context.Context, log *slog.Logger, st *store.Store) {
@@ -44,7 +45,20 @@ func seedDemo(ctx context.Context, log *slog.Logger, st *store.Store, email stri
 		return false, fmt.Errorf("create/get demo user: %w", err)
 	}
 
-	ws, err := st.CreateWorkspace(ctx, user.ID, "InsideOut Demo Team", "Seed workspace for local development")
+	// Only the join code is unique, not the title, so without this check
+	// every run adds another demo workspace, project, idea and PRD.
+	existing, err := st.ListWorkspacesForUser(ctx, user.ID)
+	if err != nil {
+		return false, fmt.Errorf("list workspaces: %w", err)
+	}
+	for _, w := range existing {
+		if w.Title == seedTeam {
+			log.Info("seed: already seeded")
+			return false, nil
+		}
+	}
+
+	ws, err := st.CreateWorkspace(ctx, user.ID, seedTeam, "Seed workspace for local development")
 	if err != nil {
 		return false, fmt.Errorf("create workspace: %w", err)
 	}
