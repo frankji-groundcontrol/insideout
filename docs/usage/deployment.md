@@ -114,6 +114,38 @@ Two cookie-related knobs on the server:
 - `INSIDEOUT_DEV_CORS=1` enables permissive CORS for development only; never
   set it in production.
 
+## Run exactly one server replica
+
+The Go `server` keeps some state in its own process memory, so it is built
+for one replica. Two replicas behind one URL do not fail loudly; they quietly
+loosen what that state enforces:
+
+- **Auth throttle** ([`api/auth_throttle.go`](../../server/internal/api/auth_throttle.go)):
+  the failed-login lockout and the send and volume caps are counted per
+  replica, so every limit multiplies by the replica count.
+- **Email resend cooldown** ([`api/auth_cooldown.go`](../../server/internal/api/auth_cooldown.go)):
+  the 60-second window restarts on each replica, so a retry that lands on the
+  other replica goes straight through.
+- **Conversation turn lock and provider permits**
+  ([`agent/dispatch.go`](../../server/internal/agent/dispatch.go)): one turn per
+  conversation is enforced per replica, so two replicas can run two turns on
+  the same conversation, and the cap on concurrent provider calls multiplies.
+- **Presence and roadmap progress**
+  ([`presence/presence.go`](../../server/internal/presence/presence.go),
+  [`progresshub/hub.go`](../../server/internal/progresshub/hub.go)): a viewer
+  only sees collaborators and live progress published on the replica their
+  connection reached.
+
+Already safe across replicas, because they live in Postgres: the per-user AI
+rate limit (`ai_check_rate_limit`, serialised with `pg_advisory_xact_lock`)
+and the AI circuit breaker (the `ai_circuit_breaker` row).
+
+So leave the `server` service at one replica: do not raise the replica count
+on Railway or run `docker compose up --scale server=N`. The `app` (nginx)
+service holds no such state and can scale. The way up, from the code notes,
+is `pg_advisory_lock` on the conversation id, a database-backed permit
+counter, and a shared store for the throttle, cooldown and presence state.
+
 ## Railway (current public deploy)
 
 The first hosted instance lives on Railway in project `insideout`
