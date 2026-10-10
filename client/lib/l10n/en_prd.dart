@@ -117,7 +117,8 @@ const enPrd = <String, String>{
   'prd.workingVersion': 'Working version',
   'prd.requestReview': 'Request review',
   'prd.next.requestReview': 'Next: Request review',
-  'coach.pullQuotes': 'Large pull-quotes',
+  'coach.pullQuotes':
+      'From fuzzy idea to solid PRD, one conversation at a time.',
   'versions.stackEyebrow': 'Commit {n} of {total}',
   'versions.details': 'Details',
 };

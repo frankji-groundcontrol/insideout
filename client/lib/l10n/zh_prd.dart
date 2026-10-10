@@ -103,7 +103,7 @@ const zhPrd = <String, String>{
   'prd.workingVersion': '工作版本',
   'prd.requestReview': '请求审阅',
   'prd.next.requestReview': '下一步：请求审阅',
-  'coach.pullQuotes': '大段引语',
+  'coach.pullQuotes': '陪你把模糊的想法，聊成扎实的 PRD。',
   'versions.stackEyebrow': '第 {n} 次提交，共 {total} 次',
   'versions.details': '细节',
 };
