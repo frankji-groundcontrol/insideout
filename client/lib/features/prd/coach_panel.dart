@@ -74,7 +74,10 @@ class _CoachPanelState extends State<CoachPanel> {
       stream = '';
       error = null;
     });
-    draft.clear();
+    // A suggestion chip is not the member's text: leave the composer alone.
+    final fromDraft = preset == null;
+    if (fromDraft) draft.clear();
+    var delivered = false;
     try {
       await context.read<Session>().api.sendCoach(
         conv.id,
@@ -101,19 +104,23 @@ class _CoachPanelState extends State<CoachPanel> {
           },
         ),
       );
+      delivered = true;
     } on ApiException catch (e) {
       // The panel may have left the screen while the send was in flight.
       if (!mounted) return;
-      // Keep the object, not its message: localizedError maps its status and
-      // code, and the countdown copy below reads the same fields.
+      // Both branches keep the object, not its text: localizedError maps its
+      // status or type, and the countdown copy reads the same fields.
       setState(() => error = e);
       if (isCoachBackoff(e)) _startRetry(coachRetrySeconds(e));
     } catch (e) {
-      // Keep the object, not its toString: TimeoutException from the
-      // stream's idle timeout maps to error.network in localizedError.
+      // The stream's idle TimeoutException maps to error.network.
       if (mounted) setState(() => error = e);
     } finally {
-      if (mounted) setState(() => sending = false);
+      if (mounted) {
+        // A failed send gives the text back, unless they have typed since.
+        if (fromDraft && !delivered && draft.text.isEmpty) draft.text = text;
+        setState(() => sending = false);
+      }
     }
   }
 
