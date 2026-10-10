@@ -121,6 +121,13 @@ ApiCall postPrdStatus(String id, String status) {
   return ApiCall('POST', '/prds/$id/status', {'status': status});
 }
 
+/// Starts the caller's own coach conversation on the PRD, or returns the one
+/// they already have: 201 when new, 200 when resumed. Conversations are
+/// owner-only, so `GET /prds/{id}/conversation` finds nothing for a teammate
+/// who has not started one.
+ApiCall postPrdConversation(String id) =>
+    ApiCall('POST', '/prds/$id/conversation');
+
 /// Drafts a branched roadmap from the PRD. Nothing is written: the response
 /// is `{projectId, tree}`, to be sent on through [postPrdBuildConfirm].
 ApiCall postPrdBuild(String id) => ApiCall('POST', '/prds/$id/build');

@@ -93,6 +93,12 @@ mixin _PrdVerbs on _ApiCore {
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
   }
 
+  /// The caller's coach conversation on the PRD, started if they have none.
+  Future<Conversation> startPrdConversation(String prdId) async {
+    final res = await _exec(req.postPrdConversation(prdId));
+    return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
+  }
+
   Future<Conversation> getConversation(String id) async {
     final res = await _exec(req.getConversation(id));
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
