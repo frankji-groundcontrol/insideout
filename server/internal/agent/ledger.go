@@ -28,6 +28,14 @@ const (
 
 	maxFactsPerKind = 20
 	maxQuoteLen     = 300
+
+	// Output bounds for the coach's own ledger strings (AIDEV-10), the
+	// same discipline the roadmap planner applies to its titles: text is
+	// persisted in meta and re-injected into every later system prompt, so
+	// model-authored bloat must not grow without bound.
+	maxTextLen       = 2000
+	maxAssumptions   = 20
+	truncationMarker = "…"
 )
 
 var factKinds = map[string]bool{
