@@ -216,11 +216,25 @@ func (s *Store) TouchAIRun(ctx context.Context, actorID, runID uuid.UUID) error 
 	})
 }
 
+// retentionWindow is how long rows stay queryable before the reaper's
+// purge deletes them: ai_runs (carrying raw prompt/response text, and
+// cascading their ai_run_events telemetry) created before the window, and
+// sessions, auth_tokens and invitations that expired before it. 30 days
+// is a conservative default — no retention policy is documented anywhere.
+// Operator note: the purge is permanent and archives nothing first; raise
+// this constant to keep data longer.
+const retentionWindow = 30 * 24 * time.Hour
+
 // ReapStaleAIRuns marks any run stuck in pending/running with no
-// heartbeat for staleAfter as failed. Runs with no authenticated actor
-// (a background ticker, not a request) — the ai_runs RLS policy treats
-// an unset app.user_id as this trusted system context, same pattern as
-// the users table (see 20260721160000_ai_runs_reaper_system_context.sql).
+// heartbeat for staleAfter as failed, then purges rows past
+// retentionWindow — without the purge the append-mostly tables grow
+// forever (REL-03). Deleting runs older than the window cannot touch
+// rate limiting, which counts created_at over the last hour at most.
+// Runs with no authenticated actor (a background ticker, not a request)
+// — the ai_runs RLS policy treats an unset app.user_id as this trusted
+// system context, same pattern as the users table (see
+// 20260721160000_ai_runs_reaper_system_context.sql); sessions,
+// auth_tokens and invitations sit outside RLS entirely.
 // Returns the number of runs reaped.
 func (s *Store) ReapStaleAIRuns(ctx context.Context, staleAfter time.Duration) (int, error) {
 	tag, err := s.Pool.Exec(ctx, `
@@ -232,7 +246,29 @@ func (s *Store) ReapStaleAIRuns(ctx context.Context, staleAfter time.Duration) (
 	if err != nil {
 		return 0, err
 	}
+	if err := s.purgePastRetention(ctx); err != nil {
+		return 0, err
+	}
 	return int(tag.RowsAffected()), nil
+}
+
+// purgePastRetention deletes what the stale flip leaves behind: old
+// ai_runs (their ON DELETE CASCADE clears ai_run_events) and auth rows
+// that expired long ago — the live counterparts (recent runs, unexpired
+// sessions/tokens/invitations) never match the predicates.
+func (s *Store) purgePastRetention(ctx context.Context) error {
+	purges := []string{
+		`DELETE FROM insideout.ai_runs WHERE created_at < now() - make_interval(secs => $1)`,
+		`DELETE FROM insideout.sessions WHERE expires_at < now() - make_interval(secs => $1)`,
+		`DELETE FROM insideout.auth_tokens WHERE expires_at < now() - make_interval(secs => $1)`,
+		`DELETE FROM insideout.invitations WHERE expires_at < now() - make_interval(secs => $1)`,
+	}
+	for _, q := range purges {
+		if _, err := s.Pool.Exec(ctx, q, retentionWindow.Seconds()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // InsertAIRunEvent writes to ai_run_events, pure system telemetry with no
