@@ -61,6 +61,7 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 		if err != nil {
 			return
 		}
+		httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 		fmt.Fprintf(w, "event: progress\ndata: %s\n\n", raw)
 		flusher.Flush()
 	}
@@ -85,6 +86,7 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 			}
 			write(next)
 		case <-heartbeat.C:
+			httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 			fmt.Fprint(w, ": ping\n\n")
 			flusher.Flush()
 		}

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 )
 
 // sseWriter frames Server-Sent Events per
@@ -38,6 +40,9 @@ func (s *sseWriter) event(name string, data any) error {
 	if err != nil {
 		b = []byte(`{}`)
 	}
+	// A turn can idle for minutes between events, so each write gets its own
+	// deadline; one armed at the start would expire before the next event.
+	httpx.ArmWriteDeadline(s.w, httpx.SSEWriteTimeout)
 	if _, err := fmt.Fprintf(s.w, "event: %s\ndata: %s\n\n", name, b); err != nil {
 		return err
 	}

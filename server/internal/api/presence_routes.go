@@ -100,6 +100,7 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 	defer cancelCursors()
 	writeSnapshot := func(entries []presence.Entry) {
 		raw, _ := json.Marshal(entries)
+		httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 		fmt.Fprintf(w, "event: presence\ndata: %s\n\n", raw)
 		flusher.Flush()
 	}
@@ -129,12 +130,14 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if raw, err := json.Marshal(ev); err == nil {
+				httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 				fmt.Fprintf(w, "event: cursor\ndata: %s\n\n", raw)
 				flusher.Flush()
 			}
 		case <-heartbeat.C:
 			// The ping doubles as this session's heartbeat refresh.
 			s.presence.Touch(pid.String(), client, userID.String(), name)
+			httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 			fmt.Fprint(w, ": ping\n\n")
 			flusher.Flush()
 		}
