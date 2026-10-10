@@ -160,8 +160,9 @@ void main() {
         Future<SseAttempt> open() async {
           final i = n++;
           log.add('open-$i');
-          if (i == 0)
+          if (i == 0) {
             return const SseAttempt(status: 401, chunks: Stream.empty());
+          }
           return SseAttempt(
             status: 200,
             chunks: Stream.value(utf8.encode('data: frame-ok\n\n')),

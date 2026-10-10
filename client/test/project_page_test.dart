@@ -101,7 +101,7 @@ Map<String, dynamic> _update(
       : 'shipped the flow',
   'createdAt': '2026-10-01T00:00:00Z',
   'authorId': 'agent',
-  if (items != null) 'items': items,
+  'items': ?items,
 };
 
 Future<LoopFocus> _pump(WidgetTester tester, _FakeApi api) async {
