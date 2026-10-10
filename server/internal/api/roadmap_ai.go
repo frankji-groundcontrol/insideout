@@ -13,9 +13,11 @@ import (
 
 // RoadmapPlanner is the subset of the agent planner the API layer needs,
 // kept as an interface so api has no LLM dependency (mirrors the Coach seam).
+// The locale ('en'/'zh') is the coaching conversation's stored language —
+// the planner drafts its roadmap in it.
 type RoadmapPlanner interface {
-	PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
-	ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
+	PlanMVP(ctx context.Context, locale, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
+	ExpandNode(ctx context.Context, locale, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
 }
 
 // AIGate is the optional gate in front of an LLM call. The real coach
@@ -51,6 +53,17 @@ func (s *Server) admitAI(w http.ResponseWriter, r *http.Request, workspaceID, us
 // provider-health signal, so it never feeds the circuit breaker.
 var errPlannerUnwound = errors.New("planner call did not return")
 
+// conversationLocale is the language the caller coaches this PRD in: the
+// locale their own conversation on it was created with. No conversation
+// (nobody coached it yet) stays zh, the prompts' long-standing language.
+func (s *Server) conversationLocale(ctx context.Context, userID, prdID uuid.UUID) string {
+	conv, err := s.store.GetLatestConversationForPrd(ctx, prdID, userID)
+	if err != nil || conv.Locale == "" {
+		return store.LocaleZH
+	}
+	return conv.Locale
+}
+
 func (s *Server) registerRoadmapAIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/prds/{pid}/build", s.requireAuth(s.handleBuildFromPrd))
 	mux.HandleFunc("POST /api/v1/prds/{pid}/build/confirm", s.requireAuth(s.handleConfirmBuildFromPrd))
@@ -85,7 +98,7 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	// errPlannerUnwound instead of staying "running".
 	planErr := errPlannerUnwound
 	defer func() { done(planErr) }()
-	tree, err := s.planner.PlanMVP(r.Context(), built.prd.Title, built.prd.Sections)
+	tree, err := s.planner.PlanMVP(r.Context(), s.conversationLocale(r.Context(), userID, prdID), built.prd.Title, built.prd.Sections)
 	planErr = err
 	if err != nil {
 		s.log.Error("plan mvp", "error", err)
@@ -190,7 +203,15 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	// still releases the permit and fails the run.
 	expandErr := errPlannerUnwound
 	defer func() { done(expandErr) }()
-	children, err := s.planner.ExpandNode(r.Context(), project.Title, node.Title, node.Description)
+	// A node's language follows the PRD its project was built from: the
+	// conversation that coached that PRD chose it. A project with no PRD
+	// behind it (never built) has no conversation, so zh — the planner's
+	// long-standing only language.
+	locale := store.LocaleZH
+	if prdID, err := s.store.PrdIDForProject(r.Context(), userID, project.ID); err == nil {
+		locale = s.conversationLocale(r.Context(), userID, prdID)
+	}
+	children, err := s.planner.ExpandNode(r.Context(), locale, project.Title, node.Title, node.Description)
 	expandErr = err
 	// A fallback-served expand answers with the planner's built-in template
 	// but still reports the provider error: done must count the failure for

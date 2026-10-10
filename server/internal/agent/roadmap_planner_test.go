@@ -120,7 +120,7 @@ func (garbageRoadmapStreamer) Model() string { return "stub" }
 func TestPlanMVP_UnparseableModelResponseErrors(t *testing.T) {
 	p := NewAnthropicRoadmapPlanner(garbageRoadmapStreamer{})
 	sections := map[string]string{"goals": "a specific section the template must not swallow"}
-	root, err := p.PlanMVP(context.Background(), "Specific PRD", sections)
+	root, err := p.PlanMVP(context.Background(), localeZH, "Specific PRD", sections)
 	if err == nil {
 		t.Fatalf("unparseable model response returned a plan, want an error; got %+v", root)
 	}
@@ -145,7 +145,7 @@ func TestTemplatePlanMVP_BranchesFromSectionTitles(t *testing.T) {
 		"goals":        "ship a measurable first version",
 		"requirements": "one saved path from idea to result",
 	}
-	root, err := p.PlanMVP(context.Background(), "Workshop tracker", sections)
+	root, err := p.PlanMVP(context.Background(), localeZH, "Workshop tracker", sections)
 	if err != nil {
 		t.Fatalf("PlanMVP: %v", err)
 	}

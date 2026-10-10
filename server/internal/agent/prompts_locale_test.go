@@ -224,3 +224,36 @@ func firstChars(s string, n int) string {
 	}
 	return s[:n] + "…"
 }
+
+// The planner drafts in the conversation's language too: the en prompts
+// mirror the zh ones (roadmap_planner.go), fence clause included.
+func TestPlannerPrompts_SelectTheConversationsLanguage(t *testing.T) {
+	const enMarker, zhMarker = "You are InsideOut's product-delivery coach", "你是 InsideOut 的产品落地教练"
+
+	stub := &forcingStub{}
+	_, _ = NewAnthropicRoadmapPlanner(stub).PlanMVP(context.Background(), localeEN, "T", sectionsFixture())
+	if !strings.Contains(stub.sawSystem, enMarker) || strings.Contains(stub.sawSystem, zhMarker) {
+		t.Fatalf("en PlanMVP system prompt is not the English one:\n%s", firstChars(stub.sawSystem, 200))
+	}
+	if !strings.Contains(stub.sawSystem, dataFenceClause) {
+		t.Error("en PlanMVP prompt lost the language-independent fence clause")
+	}
+
+	stub = &forcingStub{}
+	_, _ = NewAnthropicRoadmapPlanner(stub).PlanMVP(context.Background(), localeZH, "T", sectionsFixture())
+	if !strings.Contains(stub.sawSystem, zhMarker) {
+		t.Fatal("zh PlanMVP system prompt lost the Chinese body")
+	}
+
+	stub = &forcingStub{}
+	_, _ = NewAnthropicRoadmapPlanner(stub).ExpandNode(context.Background(), localeEN, "P", "N", "D")
+	if !strings.Contains(stub.sawSystem, enMarker) || strings.Contains(stub.sawSystem, zhMarker) {
+		t.Fatalf("en ExpandNode system prompt is not the English one:\n%s", firstChars(stub.sawSystem, 200))
+	}
+
+	stub = &forcingStub{}
+	_, _ = NewAnthropicRoadmapPlanner(stub).ExpandNode(context.Background(), localeZH, "P", "N", "D")
+	if !strings.Contains(stub.sawSystem, zhMarker) {
+		t.Fatal("zh ExpandNode system prompt lost the Chinese body")
+	}
+}

@@ -18,8 +18,10 @@ import (
 // model's error instead of substituting that template — the template
 // discards the PRD sections and would look like a real plan.
 type RoadmapPlanner interface {
-	PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
-	ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
+	// The locale ('en'/'zh') selects the prompt language — the coaching
+	// conversation's stored choice (PRODUCT.md's first-class languages).
+	PlanMVP(ctx context.Context, locale, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
+	ExpandNode(ctx context.Context, locale, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
 }
 
 // --- shared payload shapes (flat list is far easier to validate than a
@@ -170,6 +172,15 @@ func assembleTree(nodes []flatNode, rootTitle string) (*store.RoadmapPlanNode, e
 
 // --- Anthropic implementation ---
 
+// The zh planner prompts (the en mirrors live in prompts_en.go).
+const (
+	plannerPlanMVPPromptZH = `你是 InsideOut 的产品落地教练。根据用户给出的 PRD（标题和各章节），把这个产品拆成一棵可执行的 MVP 路线图树。
+规则：一个根节点（交付 MVP 的总目标）；根节点下 3-5 个可以并行推进的工作流（例如：核心功能、打磨与验证、发布）；每个工作流下 2-4 个具体任务。每个节点 title 简洁（12 字以内），description 一句话。不要编造 PRD 里没有的重大方向。只通过 submit_roadmap 工具返回。`
+
+	plannerExpandPromptZH = `你是 InsideOut 的产品落地教练。用户要把路线图里的一个节点进一步拆解成可以直接执行的子任务。
+给出 3-6 个子任务：title 简洁（12 字以内）、动词开头、可独立执行；description 一句话说明产出。只通过 submit_subtasks 工具返回。`
+)
+
 type anthropicRoadmapPlanner struct {
 	streamer ChatStreamer
 	fallback RoadmapPlanner
@@ -179,10 +190,13 @@ func NewAnthropicRoadmapPlanner(streamer ChatStreamer) RoadmapPlanner {
 	return &anthropicRoadmapPlanner{streamer: streamer, fallback: NewTemplateRoadmapPlanner()}
 }
 
-func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
-	system := `你是 InsideOut 的产品落地教练。根据用户给出的 PRD（标题和各章节），把这个产品拆成一棵可执行的 MVP 路线图树。
-规则：一个根节点（交付 MVP 的总目标）；根节点下 3-5 个可以并行推进的工作流（例如：核心功能、打磨与验证、发布）；每个工作流下 2-4 个具体任务。每个节点 title 简洁（12 字以内），description 一句话。不要编造 PRD 里没有的重大方向。只通过 submit_roadmap 工具返回。` + "\n\n" + dataFenceClause
+func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, locale, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
+	system := plannerPlanMVPPromptZH + "\n\n" + dataFenceClause
 	user := "PRD 标题：" + fenceData(prdTitle) + "\n\n各章节内容：\n" + fenceData(formatSectionsForPrompt(sections))
+	if locale == localeEN {
+		system = plannerPlanMVPPromptEN + "\n\n" + dataFenceClause
+		user = "PRD title: " + fenceData(prdTitle) + "\n\nSection contents:\n" + fenceData(formatSectionsForPrompt(sections))
+	}
 
 	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
 	if err != nil {
@@ -200,21 +214,24 @@ func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, prdTitle string, 
 	return assembleTree(payload.Nodes, prdTitle)
 }
 
-func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error) {
-	system := `你是 InsideOut 的产品落地教练。用户要把路线图里的一个节点进一步拆解成可以直接执行的子任务。
-给出 3-6 个子任务：title 简洁（12 字以内）、动词开头、可独立执行；description 一句话说明产出。只通过 submit_subtasks 工具返回。` + "\n\n" + dataFenceClause
+func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, locale, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error) {
+	system := plannerExpandPromptZH + "\n\n" + dataFenceClause
 	user := fmt.Sprintf("项目：%s\n要拆解的节点：%s\n节点说明：%s", fenceData(projectTitle), fenceData(nodeTitle), fenceData(nodeDesc))
+	if locale == localeEN {
+		system = plannerExpandPromptEN + "\n\n" + dataFenceClause
+		user = fmt.Sprintf("Project: %s\nNode to break down: %s\nNode description: %s", fenceData(projectTitle), fenceData(nodeTitle), fenceData(nodeDesc))
+	}
 
 	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitSubtasksTool, nil)
 	if err != nil {
 		// Serve the template, but carry the provider error back: a fallback
 		// that reports success would keep the caller's circuit breaker
 		// healthy through a provider outage.
-		draft, _ := p.fallback.ExpandNode(ctx, projectTitle, nodeTitle, nodeDesc)
+		draft, _ := p.fallback.ExpandNode(ctx, locale, projectTitle, nodeTitle, nodeDesc)
 		return draft, &templateExpandError{err: err, draft: draft}
 	}
 	if turn.ToolCall == nil {
-		return p.fallback.ExpandNode(ctx, projectTitle, nodeTitle, nodeDesc)
+		return p.fallback.ExpandNode(ctx, locale, projectTitle, nodeTitle, nodeDesc)
 	}
 	var payload struct {
 		Subtasks []struct {
@@ -223,7 +240,7 @@ func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, 
 		} `json:"subtasks"`
 	}
 	if json.Unmarshal([]byte(turn.ToolCall.Arguments), &payload) != nil || len(payload.Subtasks) == 0 {
-		return p.fallback.ExpandNode(ctx, projectTitle, nodeTitle, nodeDesc)
+		return p.fallback.ExpandNode(ctx, locale, projectTitle, nodeTitle, nodeDesc)
 	}
 	// Cap the model's output the same way PlanMVP caps a full outline
 	// (assembleTree's maxNodes): a runaway expansion can't flood a single node
@@ -244,7 +261,7 @@ func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, 
 		out = append(out, store.RoadmapPlanNode{Title: s.Title, Description: s.Description})
 	}
 	if len(out) == 0 {
-		return p.fallback.ExpandNode(ctx, projectTitle, nodeTitle, nodeDesc)
+		return p.fallback.ExpandNode(ctx, locale, projectTitle, nodeTitle, nodeDesc)
 	}
 	return out, nil
 }
@@ -272,7 +289,10 @@ type templateRoadmapPlanner struct{}
 
 func NewTemplateRoadmapPlanner() RoadmapPlanner { return &templateRoadmapPlanner{} }
 
-func (templateRoadmapPlanner) PlanMVP(_ context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
+// The template planners ignore the locale: they are the offline fallback
+// whose fixed shapes never consult a model, so they answer the same in
+// both languages (the LLM prompts are what the locale selects).
+func (templateRoadmapPlanner) PlanMVP(_ context.Context, _ string, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
 	root := &store.RoadmapPlanNode{Title: prdTitle, Description: "交付第一个可用版本"}
 	seen := make(map[string]bool, len(sections))
 	// Each branch is titled "key — first clause of the body" so an offline
@@ -312,7 +332,7 @@ func (templateRoadmapPlanner) PlanMVP(_ context.Context, prdTitle string, sectio
 	return root, nil
 }
 
-func (templateRoadmapPlanner) ExpandNode(_ context.Context, _, _, _ string) ([]store.RoadmapPlanNode, error) {
+func (templateRoadmapPlanner) ExpandNode(_ context.Context, _, _, _, _ string) ([]store.RoadmapPlanNode, error) {
 	return []store.RoadmapPlanNode{
 		{Title: "明确验收标准", Description: "写清楚怎样算完成"},
 		{Title: "拆出第一步并实现", Description: "最小可验证的一步"},

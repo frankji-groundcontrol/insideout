@@ -180,6 +180,24 @@ func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (
 	return n, nil
 }
 
+// PrdIDForProject returns the PRD a project was built from (prds.project_id),
+// or ErrNotFound for a project with no PRD — the expand path's bridge back
+// to the coaching conversation whose locale governs the planner's language.
+func (s *Store) PrdIDForProject(ctx context.Context, actorID, projectID uuid.UUID) (uuid.UUID, error) {
+	var prdID uuid.UUID
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		err := tx.QueryRow(ctx, `SELECT id FROM insideout.prds WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1`, projectID).Scan(&prdID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
+	})
+	if err != nil {
+		return uuid.Nil, err
+	}
+	return prdID, nil
+}
+
 // EnsureProjectForPrd returns the project a PRD builds into, creating and
 // linking one (titled from the PRD) on first use. This is the PRD → reality
 // bridge: an approved/refined PRD becomes a project with a buildable roadmap.

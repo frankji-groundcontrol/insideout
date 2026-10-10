@@ -94,3 +94,13 @@ const (
 	criticUserDirectiveEN   = "Independently review this PRD against the criteria in the system prompt, and report all findings through the report_findings tool."
 	criticRetryPrefixFormat = "The previous call failed: %s. Please output again, strictly matching report_findings' parameter format."
 )
+
+// The roadmap planner's prompts, English mirrors of plannerPlanMVPPromptZH
+// and plannerExpandPromptZH (roadmap_planner.go).
+const (
+	plannerPlanMVPPromptEN = `You are InsideOut's product-delivery coach. From the PRD the user provides (title and sections), break the product down into an executable MVP roadmap tree.
+Rules: one root node (the overall goal of delivering the MVP); 3-5 workstreams under the root that can advance in parallel (for example: core functionality, polish and validation, release); 2-4 concrete tasks under each workstream. Each node's title is short (12 characters or fewer), its description one sentence. Do not invent major directions the PRD does not contain. Return only through the submit_roadmap tool.`
+
+	plannerExpandPromptEN = `You are InsideOut's product-delivery coach. The user wants one roadmap node broken down further into subtasks that can be executed directly.
+Give 3-6 subtasks: a short title (12 characters or fewer) starting with a verb, independently executable; a one-sentence description of the deliverable. Return only through the submit_subtasks tool.`
+)

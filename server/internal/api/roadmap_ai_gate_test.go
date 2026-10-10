@@ -116,14 +116,14 @@ type countingPlanner struct {
 	err            error
 }
 
-func (p *countingPlanner) PlanMVP(context.Context, string, map[string]string) (*store.RoadmapPlanNode, error) {
+func (p *countingPlanner) PlanMVP(context.Context, string, string, map[string]string) (*store.RoadmapPlanNode, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.plans++
 	return &store.RoadmapPlanNode{Title: "root"}, p.err
 }
 
-func (p *countingPlanner) ExpandNode(context.Context, string, string, string) ([]store.RoadmapPlanNode, error) {
+func (p *countingPlanner) ExpandNode(context.Context, string, string, string, string) ([]store.RoadmapPlanNode, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	p.expands++

@@ -17,12 +17,12 @@ import (
 
 type panickingPlanner struct{ calls int }
 
-func (p *panickingPlanner) PlanMVP(context.Context, string, map[string]string) (*store.RoadmapPlanNode, error) {
+func (p *panickingPlanner) PlanMVP(context.Context, string, string, map[string]string) (*store.RoadmapPlanNode, error) {
 	p.calls++
 	panic("planner bug")
 }
 
-func (p *panickingPlanner) ExpandNode(context.Context, string, string, string) ([]store.RoadmapPlanNode, error) {
+func (p *panickingPlanner) ExpandNode(context.Context, string, string, string, string) ([]store.RoadmapPlanNode, error) {
 	p.calls++
 	panic("planner bug")
 }
