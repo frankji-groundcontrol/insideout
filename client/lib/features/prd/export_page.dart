@@ -106,6 +106,10 @@ class _ExportPageState extends State<ExportPage> {
                         // format but markdown, so a pick made earlier must
                         // not ride along into Print.
                         if (format != 'markdown') audience = null;
+                        // A preview (or error) belongs to the option that
+                        // produced it; Print must not show markdown's.
+                        body = null;
+                        error = null;
                       }),
                     ),
                 ],
@@ -120,9 +124,13 @@ class _ExportPageState extends State<ExportPage> {
                   for (final a in _audiences)
                     (value: a, label: l10n.t('versions.audience.$a')),
                 ],
-                onChanged: (v) => setState(
-                  () => audience = v == null || v.isEmpty ? null : v,
-                ),
+                onChanged: (v) => setState(() {
+                  audience = v == null || v.isEmpty ? null : v;
+                  // Same as the format switch: the preview on screen belongs
+                  // to the previous audience, not the one just picked.
+                  body = null;
+                  error = null;
+                }),
               ),
               const SizedBox(height: Cobalt.space4),
               Align(
