@@ -20,7 +20,6 @@ import 'idea_poster.dart';
 /// The wall keeps breathing room under the top-right utility block and above
 /// the dock (AppScaffold extendBody — the body scrolls behind it).
 const double _topInset = 56;
-const double _bottomInset = ProductDock.height + Cobalt.space10 + Cobalt.space4;
 
 /// The capture bar reads as one instrument: capped narrower than the content
 /// column so the eye lands mid-page.
@@ -219,7 +218,12 @@ class _IdeasWall extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
         child: ListView(
-          padding: EdgeInsets.fromLTRB(hPad, _topInset, hPad, _bottomInset),
+          padding: EdgeInsets.fromLTRB(
+            hPad,
+            _topInset,
+            hPad,
+            ProductDock.clearance,
+          ),
           children: [
             Text(
               l10n.t('idea.wallTitle').toUpperCase(),

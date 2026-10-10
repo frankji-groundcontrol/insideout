@@ -23,7 +23,6 @@ import 'project_updates_feed.dart';
 /// Clears the top-right utility block on the field; the body extends behind
 /// the dock (AppScaffold extendBody).
 const double _topInset = 64;
-const double _bottomInset = ProductDock.height + Cobalt.space10 + Cobalt.space4;
 
 class ProjectPage extends StatefulWidget {
   const ProjectPage({super.key, required this.id});
@@ -155,7 +154,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         28,
                         _topInset,
                         28,
-                        _bottomInset,
+                        ProductDock.clearance,
                       ),
                       children: [
                         // The dock's Evidence pulse flashes this header — a

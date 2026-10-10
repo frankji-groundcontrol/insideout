@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/product_dock.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_button.dart';
@@ -34,7 +35,7 @@ class RevisionsTable extends StatelessWidget {
             Cobalt.space6,
             Cobalt.space4,
             Cobalt.space6,
-            140,
+            ProductDock.clearance,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

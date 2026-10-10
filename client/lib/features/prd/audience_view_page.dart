@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
 import '../../app.dart';
+import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
@@ -131,7 +132,7 @@ class _Projection extends StatelessWidget {
             Cobalt.space6,
             Cobalt.space4,
             Cobalt.space6,
-            140,
+            ProductDock.clearance,
           ),
           children: [
             AudienceSelector(

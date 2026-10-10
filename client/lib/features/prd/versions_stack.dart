@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_chrome.dart';
@@ -56,7 +57,7 @@ class VersionsStack extends StatelessWidget {
             Cobalt.space6,
             56,
             Cobalt.space6,
-            140,
+            ProductDock.clearance,
           ),
           children: [
             if (readiness != null)

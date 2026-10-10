@@ -34,7 +34,8 @@ void main() {
     expect(
       hits,
       isEmpty,
-      reason: 'Dock clearance spelled outside ProductDock.clearance:\n'
+      reason:
+          'Dock clearance spelled outside ProductDock.clearance:\n'
           '${hits.join('\n')}',
     );
   });

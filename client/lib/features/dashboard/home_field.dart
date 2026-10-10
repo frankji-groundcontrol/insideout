@@ -19,9 +19,6 @@ const double _numeralSize = 120;
 /// Clears the top-right utility block on the field.
 const double _topInset = 72;
 
-/// The body extends behind the dock (AppScaffold extendBody).
-const double _bottomInset = ProductDock.height + Cobalt.space10 + Cobalt.space4;
-
 /// The Home field: loop eyebrow + capture CTA over an index block and the
 /// workspace column, centered in a [Cobalt.contentMaxWidth] column (D9).
 class HomeField extends StatelessWidget {
@@ -74,7 +71,12 @@ class HomeField extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
         child: ListView(
-          padding: EdgeInsets.fromLTRB(hPad, _topInset, hPad, _bottomInset),
+          padding: EdgeInsets.fromLTRB(
+            hPad,
+            _topInset,
+            hPad,
+            ProductDock.clearance,
+          ),
           children: [
             if (stacked)
               Column(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/product_dock.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
@@ -34,7 +35,7 @@ class RoadmapProgressView extends StatelessWidget {
         progress.needsDeadline.isEmpty &&
         progress.doneCount == 0;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 140),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, ProductDock.clearance),
       children: [
         if (empty)
           Center(child: Text(emptyLabel, style: theme.textTheme.bodyLarge))

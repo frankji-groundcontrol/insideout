@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../api/errors_l10n.dart';
 import '../../app.dart';
+import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
@@ -88,7 +89,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Cobalt.space6,
               Cobalt.space6,
               Cobalt.space6,
-              140,
+              ProductDock.clearance,
             ),
             children: [
               Text(

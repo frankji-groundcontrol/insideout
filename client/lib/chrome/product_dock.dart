@@ -27,6 +27,10 @@ class ProductDock extends StatelessWidget {
 
   static const height = 88.0;
 
+  /// Room a scrolling body leaves below its content so the last row clears
+  /// the floating dock. Pages pad with this instead of guessing the sum.
+  static const clearance = height + Cobalt.space10 + Cobalt.space4;
+
   /// The labeled dock needs about this much width under worst-case label
   /// metrics (the en "Unfinished: Commit" swap); below it items show icons
   /// only so the body can never blow out a narrow surface (W3-N1).

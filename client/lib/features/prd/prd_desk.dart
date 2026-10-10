@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/product_dock.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_button.dart';
@@ -80,7 +81,7 @@ class PrdDeskColumn extends StatelessWidget {
             Cobalt.space6,
             64,
             Cobalt.space6,
-            embedded ? Cobalt.space4 : 140,
+            embedded ? Cobalt.space4 : ProductDock.clearance,
           ),
           children: [
             Text(

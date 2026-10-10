@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 import 'roadmap_band_scaffold.dart';
@@ -64,7 +65,7 @@ class RoadmapBands extends StatelessWidget {
         : (nodes.where((n) => !placed.contains(n.id)).toList()
             ..sort((a, b) => a.position.compareTo(b.position)));
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 140),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, ProductDock.clearance),
       children: [
         _BandRow(
           label: l10n.t('roadmap.bandNow'),

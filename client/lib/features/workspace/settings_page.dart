@@ -21,7 +21,6 @@ import '../../widgets/guarded_action.dart';
 /// A settings form reads as a document, not a dashboard — the column stays
 /// narrower than the content cap.
 const double _formColumnWidth = 640;
-const double _bottomInset = ProductDock.height + Cobalt.space10 + Cobalt.space4;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required this.workspaceId});
@@ -127,7 +126,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         Cobalt.space4,
                         Cobalt.space4,
                         Cobalt.space4,
-                        _bottomInset,
+                        ProductDock.clearance,
                       ),
                       children: [
                         BlockField(
