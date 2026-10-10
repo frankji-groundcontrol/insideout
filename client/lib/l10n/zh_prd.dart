@@ -37,6 +37,7 @@ const zhPrd = <String, String>{
   'versions.entry': '版本',
   'prd.exportAudience': '读者视图（可选）',
   'prd.exportFull': '完整文档',
+  'prd.exportRun': '生成预览',
   'versions.commitTitle': '提交此版本',
   'versions.commitNow': '提交版本',
   'versions.nameLabel': '版本名称',

@@ -40,6 +40,7 @@ const enPrd = <String, String>{
   'versions.entry': 'Versions',
   'prd.exportAudience': 'Audience view (optional)',
   'prd.exportFull': 'Full document',
+  'prd.exportRun': 'Generate preview',
   'versions.commitTitle': 'Commit this version',
   'versions.commitNow': 'Commit version',
   'versions.nameLabel': 'Version name',

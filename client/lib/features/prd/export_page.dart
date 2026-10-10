@@ -115,7 +115,7 @@ class _ExportPageState extends State<ExportPage> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: BlockButton(
-                  label: l10n.t('common.submit'),
+                  label: l10n.t('prd.exportRun'),
                   icon: Icons.bolt,
                   busy: running,
                   onPressed: running ? null : _run,

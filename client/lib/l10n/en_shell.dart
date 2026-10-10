@@ -10,7 +10,6 @@ const enShell = <String, String>{
   'common.confirm': 'Confirm',
   'common.copy': 'Copy',
   'common.retry': 'Retry',
-  'common.submit': 'Submit',
   'common.refresh': 'Refresh',
   'common.confirmTitle': 'Are you sure?',
   'common.moreActions': 'More',

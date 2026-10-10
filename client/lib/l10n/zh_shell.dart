@@ -10,7 +10,6 @@ const zhShell = <String, String>{
   'common.confirm': '确认',
   'common.copy': '复制',
   'common.retry': '重试',
-  'common.submit': '提交',
   'common.refresh': '刷新',
   'common.confirmTitle': '确认继续吗？',
   'common.moreActions': '更多',
