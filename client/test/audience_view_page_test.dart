@@ -23,23 +23,26 @@ class _FakeApi extends ApiClient {
 
   final Map<String, dynamic> payload;
   final Prd? prd;
+  int getPrdCalls = 0;
 
   @override
   Future<Map<String, dynamic>> prdView(String id, String audience) async =>
       payload;
 
   @override
-  Future<Prd> getPrd(String id) async =>
-      prd ??
-      Prd(
-        id: id,
-        workspaceId: 'ws1',
-        title: '',
-        sections: const {},
-        status: 'draft',
-        currentRevision: 1,
-        updatedAt: '2026-08-22T00:00:00Z',
-      );
+  Future<Prd> getPrd(String id) async {
+    getPrdCalls++;
+    return prd ??
+        Prd(
+          id: id,
+          workspaceId: 'ws1',
+          title: '',
+          sections: const {},
+          status: 'draft',
+          currentRevision: 1,
+          updatedAt: '2026-08-22T00:00:00Z',
+        );
+  }
 }
 
 void main() {
@@ -115,6 +118,9 @@ void main() {
       find.textContaining('the decisions the answer requires now'),
       findsOneWidget,
     );
+    // The view response carries only the whys; the section text is the PRD's,
+    // and one fetch of it feeds every card, not one per card.
+    expect((session.api as _FakeApi).getPrdCalls, 1);
   });
 
   testWidgets(
