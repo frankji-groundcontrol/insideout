@@ -6,8 +6,8 @@ import 'package:flutter_test/flutter_test.dart';
 // over source files, cheap to extend when wiring a new verb, but they
 // prove presence, not behavior. Behavioral coverage lives in the widget
 // and request tests (`versions_page_test`, `workspace_page_test`,
-// `roadmap_page_test`, `requests_test`); extend those, not this, when a
-// feature matters.
+// `settings_page_test`, `ideas_edit_test`, `roadmap_page_test`,
+// `requests_test`); extend those, not this, when a feature matters.
 void main() {
   test(
     'lint backstop: screens reference the mutation and SSE verbs they should',
@@ -31,13 +31,11 @@ void main() {
           read('lib/api/client_workspace.dart') +
           read('lib/api/sse.dart');
 
-      expect(settings.contains('updateWorkspace'), isTrue);
+      // updateWorkspace / updateMemberRole / removeMember / updateIdea are
+      // behaviorally covered (settings_page_test, workspace_page_test,
+      // ideas_edit_test), so they are no longer grepped here.
       expect(settings.contains('deleteWorkspace'), isTrue);
-      expect(settings.contains('updateMemberRole'), isTrue);
-      expect(settings.contains('removeMember'), isTrue);
-      expect(workspace.contains('updateWorkspace'), isTrue);
       expect(workspace.contains('deleteWorkspace'), isTrue);
-      expect(ideas.contains('updateIdea'), isTrue);
       expect(ideas.contains('dropIdea'), isTrue);
       expect(ideas.contains('listProjects'), isTrue);
       expect(project.contains('updateProject'), isTrue);
