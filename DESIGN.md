@@ -131,7 +131,8 @@ The signed-off token table and its verification record live in
 - Dark surfaces are a **neutral ramp** (raised `#14171D`, sunken `#16181E`);
   cobalt-950 is demoted to `brandSubtle` and dark status-chip backgrounds —
   never a page surface.
-- Body **17.5**. Titles **26+**. Display **48–58**. Meta **12**.
+- Body **17.5**. Titles **26+**. Display **48–58** (Home numeral **120**,
+  Ideas wall up to 320). Meta **12**.
 - Ideas wall display `clamp(64px, 10vw, 320px)` on wide web.
 - UI sans: Archivo (Latin) + Noto Sans SC (CJK). zh-CN is the default locale.
 - Dark is the default theme; a saved explicit choice still wins.
@@ -183,7 +184,11 @@ Web loads faces from `client/web/index.html` and gates the first frame in
 
 ### Hierarchy
 
-- **Display** (700, 48–58, Ideas wall up to 320): page names and the Home numeral.
+- **Display** (700, 48–58; Home numeral 120; Ideas wall up to 320): page names
+  and the Home numeral. The numeral is a named exception to the band, like the
+  Ideas wall: the giant index figure of the Home lock
+  ([`LOCK-home-light.jpg`](docs/design-system/cobalt/LOCK-home-light.jpg)),
+  an index mark beside the chapter title rather than a heading.
 - **Title** (700, 26+): card and section headings.
 - **Body** (400, 17.5): reading text.
 - **Meta** (600, 12): chips, eyebrows, dock labels.
