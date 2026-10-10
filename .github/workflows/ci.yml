@@ -15,8 +15,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     services:
+      # TEST-17: the minor is pinned so a Postgres release cannot change this
+      # job under us; bump it on purpose. docker-compose.yml stays on the
+      # floating postgres:18, the self-hosted default.
       postgres:
-        image: postgres:18
+        image: postgres:18.6
         env:
           POSTGRES_PASSWORD: postgres
         ports:
@@ -30,7 +33,7 @@ jobs:
       # scenarios create and drop insideout_owner and insideout_app themselves,
       # so they cannot share the cluster above.
       postgres-roleless:
-        image: postgres:18
+        image: postgres:18.6
         env:
           POSTGRES_PASSWORD: postgres
         ports:
@@ -91,6 +94,14 @@ jobs:
             echo "$unexpected"
             exit 1
           fi
+      # TEST-17: the -v log is the evidence for a red run or a skip-gate trip.
+      - name: Keep the test log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gotest-log
+          path: /tmp/gotest.log
+          retention-days: 7
       # The build tag keeps these out of the run above. They drive `setup
       # --local --postgres own` against a cluster with no roles: provisioning,
       # the stop paths, and that no password or DSN is printed.
@@ -108,6 +119,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq nginx
       - run: python3 -I scripts/check_nginx_reresolve.py
 
@@ -191,6 +205,11 @@ jobs:
         working-directory: scripts
     steps:
       - uses: actions/checkout@v4
+      # TEST-17: a pinned interpreter instead of whatever python3 the runner
+      # image ships (the scripts target 3.9 or newer).
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - name: env batteries + key suites
         run: |
           # The two env batteries are plain-assert scripts that exit at import
