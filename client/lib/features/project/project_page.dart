@@ -36,8 +36,7 @@ class ProjectPage extends StatefulWidget {
 
 class _ProjectPageState extends State<ProjectPage> {
   late Future<Map<String, dynamic>> _future;
-  late Future<List<({String title, List<Map<String, dynamic>> rows})>>
-  _leafEvidence;
+  late Future<LeafEvidence> _leafEvidence;
   final repo = TextEditingController();
   final _scroll = ScrollController();
   Timer? _flashTimer;
@@ -56,7 +55,7 @@ class _ProjectPageState extends State<ProjectPage> {
     _lastPulse = _focus.evidencePulse;
     _focus.addListener(_onEvidencePulse);
     _future = _load();
-    _leafEvidence = _loadLeafEvidence();
+    _leafEvidence = _loadLeafEvidence()..ignore();
   }
 
   @override
@@ -96,33 +95,34 @@ class _ProjectPageState extends State<ProjectPage> {
     return data;
   }
 
-  /// Evidence rows for the done leaves (cap 5), so the Evidence screen
-  /// shows what finished work actually produced.
-  Future<List<({String title, List<Map<String, dynamic>> rows})>>
-  _loadLeafEvidence() async {
+  /// The only per-node evidence route is one request per leaf, so the section
+  /// lists this many finished leaves and says how many it left out.
+  static const _leafEvidenceCap = 5;
+
+  /// Evidence rows for the finished leaves, so the Evidence screen shows what
+  /// finished work actually produced. A failure is left to reach the
+  /// section's FutureBuilder, which says so instead of showing nothing. Callers
+  /// `ignore()` the future: that builder only mounts once the project itself
+  /// has loaded, and an error landing earlier would escape as unhandled.
+  Future<LeafEvidence> _loadLeafEvidence() async {
     final api = context.read<Session>().api;
-    try {
-      final nodes = await api.listRoadmap(widget.id);
-      final done = nodes
-          .where((n) => n.parentId != null && n.status == 'done')
-          .take(5)
-          .toList();
-      final leaves = await Future.wait(
-        done.map((n) async {
-          final rows = await api.listNodeEvidence(n.id);
-          return (title: n.title, rows: rows);
-        }),
-      );
-      return leaves;
-    } on Exception {
-      return const [];
-    }
+    final nodes = await api.listRoadmap(widget.id);
+    final done = nodes
+        .where((n) => n.parentId != null && n.status == 'done')
+        .toList();
+    final leaves = await Future.wait(
+      done.take(_leafEvidenceCap).map((n) async {
+        final rows = await api.listNodeEvidence(n.id);
+        return (title: n.title, rows: rows);
+      }),
+    );
+    return (leaves: leaves, more: done.length - leaves.length);
   }
 
   Future<void> _reload() async {
     setState(() {
       _future = _load();
-      _leafEvidence = _loadLeafEvidence();
+      _leafEvidence = _loadLeafEvidence()..ignore();
     });
   }
 

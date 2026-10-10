@@ -66,6 +66,7 @@ const enWorkspace = <String, String>{
   'workspace.nowDone': 'Now {now} · Done {done}',
   'evidence.doneTitle': 'Done, with its evidence',
   'evidence.noRows': 'No evidence recorded yet',
+  'evidence.more': 'Finished work not shown here: {n} more',
   'roadmap.acceptanceHint': 'Done when (acceptance)',
   'roadmap.owner': 'Owner',
   'roadmap.ownerPick': 'Pick the one owner',

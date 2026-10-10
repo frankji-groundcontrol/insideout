@@ -62,6 +62,7 @@ const zhWorkspace = <String, String>{
   'workspace.nowDone': '进行中 {now} · 已完成 {done}',
   'evidence.doneTitle': '已完成，及其证据',
   'evidence.noRows': '尚未记录证据',
+  'evidence.more': '另有 {n} 项已完成工作未在此列出',
   'roadmap.acceptanceHint': '完成标准（什么算做完）',
   'roadmap.owner': '负责人',
   'roadmap.ownerPick': '选择唯一负责人',
