@@ -73,7 +73,7 @@ views (PRODUCT.md principle 3).
 
 ## GitHub evidence loop
 
-- Webhook `POST /api/v1/hooks/github` (`insideout.yalotein.net`):
+- Webhook `POST /api/v1/hooks/github` (`<prod-domain>`):
   HMAC-SHA256 verification against `INSIDEOUT_GH_WEBHOOK_SECRET`
   (constant time; unset → 503). `push`/`pull_request` deliveries
   resolve the repo's projects via the SECURITY DEFINER helper
