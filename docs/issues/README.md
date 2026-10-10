@@ -56,6 +56,9 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Roadmap lenses](2026-10-11-roadmap-lenses.md) — the roadmap offers
   progress/bands/canvas only; the five lenses of PRODUCT.md:277-285 are
   docs-only.
+- [Roadmap dependency edges](2026-10-11-roadmap-dependency-edges.md)
+  — nodes carry parent links, deadlines and owners but no depends_on edge,
+  so no blocked path and no time-Diff rebaseline.
 
 ## Bug records
 
