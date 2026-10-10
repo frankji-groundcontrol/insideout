@@ -129,3 +129,17 @@ ApiCall postPrdBuild(String id, {int? expectedCount}) {
     expectedCount == null ? null : {'expectedCount': expectedCount},
   );
 }
+
+/// Writes a drafted [tree] (`/build` only drafts). When the project already
+/// has roadmap nodes the server answers 409 `replace_conflict` with
+/// `liveCount`; send that back as [expectedCount] to replace them.
+ApiCall postPrdBuildConfirm(
+  String id,
+  Map<String, dynamic> tree, {
+  int? expectedCount,
+}) {
+  return ApiCall('POST', '/prds/$id/build/confirm', {
+    'tree': tree,
+    if (expectedCount != null) 'expectedCount': expectedCount,
+  });
+}

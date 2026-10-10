@@ -121,6 +121,18 @@ mixin _PrdVerbs on _ApiCore {
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
+  /// Persists a drafted [tree]: `{projectId, nodeCount}`.
+  Future<Map<String, dynamic>> confirmBuildFromPrd(
+    String id,
+    Map<String, dynamic> tree, {
+    int? expectedCount,
+  }) async {
+    final res = await _exec(
+      req.postPrdBuildConfirm(id, tree, expectedCount: expectedCount),
+    );
+    return _parse(res, (d) => d as Map<String, dynamic>);
+  }
+
   Future<Map<String, dynamic>> prdView(String id, String audience) async {
     final res = await _dio.get(
       '/prds/$id/view',

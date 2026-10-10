@@ -120,4 +120,19 @@ void main() {
     final confirm = postPrdBuild('prd1', expectedCount: 4);
     expect(confirm.body, {'expectedCount': 4});
   });
+
+  test('build-from-PRD confirm sends the drafted tree', () {
+    const tree = {
+      'title': 'MVP',
+      'children': [
+        {'title': 'Scope'},
+      ],
+    };
+    final first = postPrdBuildConfirm('prd1', tree);
+    expect(first.method, 'POST');
+    expect(first.path, '/prds/prd1/build/confirm');
+    expect(first.body, {'tree': tree});
+    final replace = postPrdBuildConfirm('prd1', tree, expectedCount: 4);
+    expect(replace.body, {'tree': tree, 'expectedCount': 4});
+  });
 }
