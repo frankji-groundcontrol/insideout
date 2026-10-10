@@ -189,6 +189,32 @@ func TestSendCooldownIsServerScoped(t *testing.T) {
 	}
 }
 
+// TestInjectedCooldownsStayWithTheirServer covers the test seam: tests give
+// the server they build a fake-clock gate, and two such tests alive at once
+// (t.Parallel) must each answer to their own gate. A swapped package global
+// cannot: the second injection replaces the first, so the first test's
+// primed window silently stops blocking and nothing but "no test is
+// parallel" keeps that from showing.
+func TestInjectedCooldownsStayWithTheirServer(t *testing.T) {
+	const email, ip = "injected@test.local", "192.0.2.88"
+	gateA := newSendCooldown(authResendCooldown)
+	gateB := newSendCooldown(authResendCooldown)
+
+	swapCooldown(t, gateA)
+	a := newValidationServer()
+	swapCooldown(t, gateB) // the other test's setup, running alongside
+	b := newValidationServer()
+
+	gateA.allow(email, ip) // only A's window has a send in it
+
+	if w := postAuthSend(a, "/api/v1/auth/magic-link", email, ip); w.Code != http.StatusOK {
+		t.Fatalf("server a: status = %d, want 200 (its own primed gate must block it, not the gate b installed)", w.Code)
+	}
+	if w := postAuthSend(b, "/api/v1/auth/magic-link", email, ip); w.Code != http.StatusInternalServerError {
+		t.Fatalf("server b: status = %d, want 500 (a's window must not block b, whose gate has no send in it)", w.Code)
+	}
+}
+
 // TestEmailAuthCooldownEndToEnd exercises the real handler stack — store,
 // token minting, and the dev-mode mail sender (counted via its log line)
 // — behind the cooldown gate. It needs a real Postgres like every other
