@@ -62,6 +62,8 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Focus surface](2026-10-11-focus-surface.md) — focus is an agent-context
   input only; no user focus pointer, no team-Now aggregation beyond
   per-node status and canvas presence.
+- [Working-version autosave](2026-10-11-prd-autosave.md) — saves are manual
+  guardWrite actions; no autosave or debounce anywhere in the client.
 
 ## Bug records
 
