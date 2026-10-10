@@ -68,6 +68,10 @@ func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, lo
 	return s
 }
 
+// CloseStreams is the shutdown hook for the passive SSE streams.
+// Scaffolding so the shutdown test compiles: it does nothing yet.
+func (s *Server) CloseStreams() {}
+
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	s.registerAuthRoutes(mux)
