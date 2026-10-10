@@ -33,6 +33,11 @@ Ports (host side, all overridable): postgres `POSTGRES_PORT` (default 5442),
 server `SERVER_PORT` (default 8080), client `CLIENT_PORT` (default 5173,
 matching the default `INSIDEOUT_PUBLIC_URL`).
 
+Run exactly one `server` replica: its auth throttle, resend cooldown,
+conversation locks, provider permits and presence state live in process
+memory and degrade silently across replicas
+([operator note](../usage/deployment.md#run-exactly-one-server-replica)).
+
 ## Database provisioning models
 
 The same migration files support two targets without modification (see
