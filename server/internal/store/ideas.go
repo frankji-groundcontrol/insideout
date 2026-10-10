@@ -191,7 +191,9 @@ func (s *Store) DropIdea(ctx context.Context, actorID, ideaID uuid.UUID) error {
 
 // ConvertIdea creates a PRD (with the fixed 8 empty sections) and its
 // coaching conversation from an idea, atomically, and marks the idea
-// 'converted'. Requires actorID to be the idea's author and still a member of
+// 'converted'. The conversation's first user message carries the idea body
+// verbatim, so it survives as coaching context (PRODUCT.md canonical
+// journey). Requires actorID to be the idea's author and still a member of
 // its workspace (SEC-11): the PRD it mints is visible to that workspace.
 func (s *Store) ConvertIdea(ctx context.Context, actorID, ideaID uuid.UUID) (*Prd, *AgentConversation, error) {
 	var prd *Prd
@@ -240,6 +242,17 @@ func (s *Store) ConvertIdea(ctx context.Context, actorID, ideaID uuid.UUID) (*Pr
 		conv, err = insertAgentConversation(ctx, tx, idea.WorkspaceID, actorID, prd.ID)
 		if err != nil {
 			return err
+		}
+
+		// The title rides on the PRD; the body reaches the coach only as the
+		// conversation's first user message, verbatim, so the opening question
+		// builds on what the user already wrote instead of re-asking it
+		// (PRODUCT.md canonical journey). An idea captured with no body has
+		// nothing to preserve — skip the empty turn.
+		if idea.Content != "" {
+			if err := insertFirstUserMessage(ctx, tx, conv.ID, idea.Content); err != nil {
+				return err
+			}
 		}
 
 		_, err = tx.Exec(ctx, `UPDATE insideout.ideas SET prd_id = $2 WHERE id = $1`, ideaID, prd.ID)

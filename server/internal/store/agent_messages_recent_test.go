@@ -36,7 +36,9 @@ func TestListRecentChatMessages_MatchesGoSideFilterAndTrim(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-	idea, err := st.CreateIdea(ctx, user.ID, ws.ID, "Idea", "content")
+	// Bodyless idea: ConvertIdea seeds the body as the conversation's
+	// first message, and this test must own every row it counts.
+	idea, err := st.CreateIdea(ctx, user.ID, ws.ID, "Idea", "")
 	if err != nil {
 		t.Fatalf("create idea: %v", err)
 	}

@@ -45,6 +45,20 @@ func insertAgentConversation(ctx context.Context, tx pgx.Tx, workspaceID, userID
 	return scanAgentConversation(row)
 }
 
+// insertFirstUserMessage seeds a new conversation with the idea body the
+// coach needs as context (PRODUCT.md: conversion "preserves the original
+// title and body as coaching context"). It must be called with an open
+// transaction, straight after insertAgentConversation, so the body stays
+// the conversation's first message.
+func insertFirstUserMessage(ctx context.Context, tx pgx.Tx, conversationID uuid.UUID, content string) error {
+	_, err := tx.Exec(ctx, `
+		INSERT INTO insideout.agent_messages (conversation_id, role, content)
+		VALUES ($1, 'user', $2)`,
+		conversationID, content,
+	)
+	return err
+}
+
 // GetConversationForOwner returns the conversation only if it belongs to
 // userID — conversations are strictly owner-only (read and write), per
 // docs/plans/2026-07-20-go-rewrite/01-database.md §5. userID doubles as

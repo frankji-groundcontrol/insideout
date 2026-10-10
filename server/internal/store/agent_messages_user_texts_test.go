@@ -19,7 +19,9 @@ func TestListUserMessageTexts_ReturnsEveryUserTurnOldestFirst(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-	idea, err := st.CreateIdea(ctx, user.ID, ws.ID, "Idea", "content")
+	// Bodyless idea: ConvertIdea seeds the body as the conversation's
+	// first user turn, and this test must own every turn it asserts.
+	idea, err := st.CreateIdea(ctx, user.ID, ws.ID, "Idea", "")
 	if err != nil {
 		t.Fatalf("create idea: %v", err)
 	}

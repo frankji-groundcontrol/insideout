@@ -231,7 +231,9 @@ func TestAuthz_ConversationsAreOwnerOnly(t *testing.T) {
 		t.Fatalf("join: %v", err)
 	}
 
-	idea, err := st.CreateIdea(ctx, author.ID, ws.ID, "Idea", "content")
+	// Bodyless idea: ConvertIdea seeds the body as the conversation's
+	// first message, and this test must own the rows it counts.
+	idea, err := st.CreateIdea(ctx, author.ID, ws.ID, "Idea", "")
 	if err != nil {
 		t.Fatalf("create idea: %v", err)
 	}
