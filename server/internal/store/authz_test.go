@@ -99,14 +99,10 @@ func TestAuthz_WorkspaceMembershipLifecycle(t *testing.T) {
 		t.Fatalf("admin UpdateMemberRole: %v", err)
 	}
 
-	// Deny: a stranger still can't see the member list.
-	if _, err := st.ListMembers(ctx, stranger.ID, ws.ID); err != nil {
-		t.Fatalf("stranger ListMembers unexpectedly errored: %v", err)
-	} else {
-		list, _ := st.ListMembers(ctx, stranger.ID, ws.ID)
-		if len(list) != 0 {
-			t.Fatalf("stranger ListMembers: want empty (RLS-filtered), got %d rows", len(list))
-		}
+	// Deny: a stranger still can't see the member list — and learns it from an
+	// error, not from an empty list.
+	if _, err := st.ListMembers(ctx, stranger.ID, ws.ID); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("stranger ListMembers: want ErrForbidden, got %v", err)
 	}
 
 	// Deny: only the creator can delete, not a (now-)admin member.
