@@ -42,6 +42,12 @@ class VersionsStack extends StatelessWidget {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     final behind = commits.where((c) => c.id != selected?.id).take(2).toList();
+    // Every edit is a revision, so commits pin numbers with gaps: the position
+    // is how many commits are at or before the front one, not its revision.
+    final rev = selected?.revision;
+    final position = rev == null
+        ? 0
+        : commits.where((c) => c.revision <= rev).length;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
@@ -63,7 +69,7 @@ class VersionsStack extends StatelessWidget {
             const SizedBox(height: Cobalt.space4),
             Text(
               l10n.t('versions.stackEyebrow', {
-                'n': selected?.revision ?? 0,
+                'n': position,
                 'total': commits.length,
               }),
               textAlign: TextAlign.center,
