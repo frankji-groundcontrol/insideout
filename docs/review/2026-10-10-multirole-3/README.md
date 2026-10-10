@@ -90,6 +90,7 @@ throughout; no `.env` content was read.
 
 1. [00-executive-summary.md](00-executive-summary.md) — top ten, effort by bucket
 2. [01-findings-register.md](01-findings-register.md) — every finding, verdict-joined
-3. [40-remediation-plan.md](40-remediation-plan.md) — the workflow-executable plan
-4. [30-completeness-critic.md](30-completeness-critic.md) — what this review could not cover
-5. Role and dimension files, worst-first: [14-user](14-user.md), [20-feature-implementation](20-feature-implementation.md), [11-ai-developer](11-ai-developer.md), [10-architect](10-architect.md), [23-testing](23-testing.md), then the rest
+3. [50-promise-register.md](50-promise-register.md) — every PRODUCT.md promise stamped IMPLEMENTED/PARTIAL/DEAD/DOCS-ONLY (lead 14, run in remediation wave 4)
+4. [40-remediation-plan.md](40-remediation-plan.md) — the workflow-executable plan
+5. [30-completeness-critic.md](30-completeness-critic.md) — what this review could not cover
+6. Role and dimension files, worst-first: [14-user](14-user.md), [20-feature-implementation](20-feature-implementation.md), [11-ai-developer](11-ai-developer.md), [10-architect](10-architect.md), [23-testing](23-testing.md), then the rest
