@@ -43,6 +43,11 @@ or a secret, not unfinished code, and it is the owner's:
    redeploy; a store-signed Android bundle (needs the keystore); the Supabase
    automated-backup toggle; the GitHub App install; a live critic exercise
    (needs an LLM key). Each is on its [board](plans/README.md) row.
+   Mail/lead-15 state (review-3 probes, 2026-10-10): invitation-only signup
+   verified live and the hosted binary verified pre-wave; the mail-key
+   setting is owner-blocked (Railway-only), and the board's email-auth row
+   still records "all five flows exercised live" (2026-08-24) — the owner
+   must reconcile the two when setting the keys.
 3. **MBP:** install Flutter 3.44.x
    ([issue](issues/2026-10-09-host-setup-drift-between-macs.md)) and check that
    the leftover `app/.env` from Wave 0.12 is gone (absent on MBP2, not
