@@ -76,7 +76,7 @@ func TestEnsureConversationForPrd_ConverterKeepsTheConvertedOne(t *testing.T) {
 	st := newTestStore(t)
 	c := mkCoachPrd(t, st)
 
-	got, created, err := st.EnsureConversationForPrd(context.Background(), c.converter.ID, c.prd.ID)
+	got, created, err := st.EnsureConversationForPrd(context.Background(), c.converter.ID, c.prd.ID, LocaleZH)
 	if err != nil {
 		t.Fatalf("ensure: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestEnsureConversationForPrd_AnotherAdminGetsTheirOwn(t *testing.T) {
 		t.Fatalf("admin GetLatestConversationForPrd before ensure: want ErrNotFound, got %v", err)
 	}
 
-	first, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID)
+	first, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID, LocaleZH)
 	if err != nil {
 		t.Fatalf("ensure: %v", err)
 	}
@@ -110,7 +110,7 @@ func TestEnsureConversationForPrd_AnotherAdminGetsTheirOwn(t *testing.T) {
 		t.Fatalf("admin's conversation = %+v, want a new one owned by the admin on this PRD", first)
 	}
 
-	again, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID)
+	again, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID, LocaleZH)
 	if err != nil {
 		t.Fatalf("ensure again: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestEnsureConversationForPrd_ConcurrentCallsLeaveOneRow(t *testing.T) {
 			go func(i int) {
 				defer wg.Done()
 				<-start
-				conv, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID)
+				conv, created, err := st.EnsureConversationForPrd(ctx, admin.ID, c.prd.ID, LocaleZH)
 				errs[i], made[i] = err, created
 				if conv != nil {
 					ids[i] = conv.ID
@@ -205,17 +205,17 @@ func TestEnsureConversationForPrd_MemberAndStrangerAreRefused(t *testing.T) {
 	stranger := mkUser(t, st)
 
 	// A plain member is in the workspace but is neither author nor admin.
-	if _, _, err := st.EnsureConversationForPrd(ctx, member.ID, c.prd.ID); !errors.Is(err, ErrForbidden) {
+	if _, _, err := st.EnsureConversationForPrd(ctx, member.ID, c.prd.ID, LocaleZH); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("member: want ErrForbidden, got %v", err)
 	}
 	if n := countConversations(t, st, c.prd.ID, member.ID); n != 0 {
 		t.Fatalf("a refused member has %d conversations, want 0", n)
 	}
 	// A non-member cannot see the PRD at all: existence is not disclosed.
-	if _, _, err := st.EnsureConversationForPrd(ctx, stranger.ID, c.prd.ID); !errors.Is(err, ErrNotFound) {
+	if _, _, err := st.EnsureConversationForPrd(ctx, stranger.ID, c.prd.ID, LocaleZH); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("stranger: want ErrNotFound, got %v", err)
 	}
-	if _, _, err := st.EnsureConversationForPrd(ctx, c.converter.ID, uuid.New()); !errors.Is(err, ErrNotFound) {
+	if _, _, err := st.EnsureConversationForPrd(ctx, c.converter.ID, uuid.New(), LocaleZH); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("unknown PRD: want ErrNotFound, got %v", err)
 	}
 }

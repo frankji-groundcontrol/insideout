@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,16 +18,40 @@ type AgentConversation struct {
 	PrdID       uuid.UUID
 	Stage       string
 	Status      string
-	Meta        json.RawMessage
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	// Locale is the language the coach speaks in this conversation ('en' /
+	// 'zh'), chosen by the client at creation — the agent package selects
+	// its prompts from it.
+	Locale    string
+	Meta      json.RawMessage
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
-const agentConversationColumns = `id, workspace_id, user_id, prd_id, stage, status, meta, created_at, updated_at`
+// The two locales a conversation can coach in (PRODUCT.md's first-class
+// product languages); anything else a client sends canonicalizes to zh,
+// the only language the prompts spoke before the column existed.
+const (
+	LocaleEN = "en"
+	LocaleZH = "zh"
+)
+
+// NormalizeLocale canonicalizes a client locale tag ('en-US', 'zh-CN',
+// 'en', ...) to the stored two-value form; empty and unrecognized tags
+// stay zh, which is also the column default.
+func NormalizeLocale(tag string) string {
+	switch {
+	case strings.HasPrefix(strings.ToLower(strings.TrimSpace(tag)), LocaleEN):
+		return LocaleEN
+	default:
+		return LocaleZH
+	}
+}
+
+const agentConversationColumns = `id, workspace_id, user_id, prd_id, stage, status, locale, meta, created_at, updated_at`
 
 func scanAgentConversation(row pgx.Row) (*AgentConversation, error) {
 	var c AgentConversation
-	err := row.Scan(&c.ID, &c.WorkspaceID, &c.UserID, &c.PrdID, &c.Stage, &c.Status, &c.Meta, &c.CreatedAt, &c.UpdatedAt)
+	err := row.Scan(&c.ID, &c.WorkspaceID, &c.UserID, &c.PrdID, &c.Stage, &c.Status, &c.Locale, &c.Meta, &c.CreatedAt, &c.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -34,13 +59,15 @@ func scanAgentConversation(row pgx.Row) (*AgentConversation, error) {
 }
 
 // insertAgentConversation must be called with an open transaction — used
-// by ConvertIdea (ideas.go) when an idea becomes a PRD.
-func insertAgentConversation(ctx context.Context, tx pgx.Tx, workspaceID, userID, prdID uuid.UUID) (*AgentConversation, error) {
+// by ConvertIdea (ideas.go) when an idea becomes a PRD. The locale is
+// normalized to the stored two-value form; the callers pass what the
+// client sent (possibly nothing).
+func insertAgentConversation(ctx context.Context, tx pgx.Tx, workspaceID, userID, prdID uuid.UUID, locale string) (*AgentConversation, error) {
 	row := tx.QueryRow(ctx, `
-		INSERT INTO insideout.agent_conversations (workspace_id, user_id, prd_id)
-		VALUES ($1, $2, $3)
+		INSERT INTO insideout.agent_conversations (workspace_id, user_id, prd_id, locale)
+		VALUES ($1, $2, $3, $4)
 		RETURNING `+agentConversationColumns,
-		workspaceID, userID, prdID,
+		workspaceID, userID, prdID, NormalizeLocale(locale),
 	)
 	return scanAgentConversation(row)
 }
@@ -117,7 +144,7 @@ func latestConversationForPrd(ctx context.Context, tx pgx.Tx, prdID, userID uuid
 // applies to the sections the coach edits. The per-(PRD, user) advisory lock
 // closes the check-then-insert window: the table has no unique key on it, so
 // concurrent starts would each add a row.
-func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*AgentConversation, bool, error) {
+func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uuid.UUID, locale string) (*AgentConversation, bool, error) {
 	var conv *AgentConversation
 	created := false
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -132,7 +159,7 @@ func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uui
 		if !errors.Is(err, ErrNotFound) {
 			return err
 		}
-		conv, err = insertAgentConversation(ctx, tx, prd.WorkspaceID, actorID, prdID)
+		conv, err = insertAgentConversation(ctx, tx, prd.WorkspaceID, actorID, prdID, locale)
 		created = err == nil
 		return err
 	})

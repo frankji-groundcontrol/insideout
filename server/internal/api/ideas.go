@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -187,13 +188,25 @@ func (s *Server) handleDropIdea(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
+type convertIdeaRequest struct {
+	// Locale is the app locale the client will coach the converted PRD in
+	// ('en-US', 'zh-CN', ...); the store canonicalizes it. Absent stays zh
+	// — the language every pre-locale conversation already coached in.
+	Locale string `json:"locale"`
+}
+
 func (s *Server) handleConvertIdea(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	iid, ok := pathUUID(w, r, "iid")
 	if !ok {
 		return
 	}
-	prd, conv, err := s.store.ConvertIdea(r.Context(), userID, iid)
+	var req convertIdeaRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil && !errors.Is(err, io.EOF) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	prd, conv, err := s.store.ConvertIdeaWithLocale(r.Context(), userID, iid, req.Locale)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "idea not found", "", nil)
 		return

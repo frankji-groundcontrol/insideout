@@ -196,6 +196,14 @@ func (s *Store) DropIdea(ctx context.Context, actorID, ideaID uuid.UUID) error {
 // journey). Requires actorID to be the idea's author and still a member of
 // its workspace (SEC-11): the PRD it mints is visible to that workspace.
 func (s *Store) ConvertIdea(ctx context.Context, actorID, ideaID uuid.UUID) (*Prd, *AgentConversation, error) {
+	return s.ConvertIdeaWithLocale(ctx, actorID, ideaID, LocaleZH)
+}
+
+// ConvertIdeaWithLocale is ConvertIdea with the coaching locale the client
+// chose — the conversation the converter coaches in is minted here, so the
+// language has to ride the same transaction. The plain ConvertIdea keeps
+// the zh default every existing caller coached in.
+func (s *Store) ConvertIdeaWithLocale(ctx context.Context, actorID, ideaID uuid.UUID, locale string) (*Prd, *AgentConversation, error) {
 	var prd *Prd
 	var conv *AgentConversation
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -239,7 +247,7 @@ func (s *Store) ConvertIdea(ctx context.Context, actorID, ideaID uuid.UUID) (*Pr
 			return err
 		}
 
-		conv, err = insertAgentConversation(ctx, tx, idea.WorkspaceID, actorID, prd.ID)
+		conv, err = insertAgentConversation(ctx, tx, idea.WorkspaceID, actorID, prd.ID, locale)
 		if err != nil {
 			return err
 		}

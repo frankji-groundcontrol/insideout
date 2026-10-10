@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -27,13 +28,16 @@ type conversationView struct {
 	// the client renders it as proposed, never as current (USER-01).
 	PendingStage string `json:"pendingStage,omitempty"`
 	Status       string `json:"status"`
-	UpdatedAt    string `json:"updatedAt"`
+	// Locale is the language the coach speaks here ('en' / 'zh'), chosen
+	// at creation; the agent package selects its prompts from it.
+	Locale    string `json:"locale"`
+	UpdatedAt string `json:"updatedAt"`
 }
 
 func conversationResponse(c store.AgentConversation) conversationView {
 	view := conversationView{
 		ID: c.ID.String(), WorkspaceID: c.WorkspaceID.String(), PrdID: c.PrdID.String(),
-		Stage: c.Stage, Status: c.Status, UpdatedAt: c.UpdatedAt.Format(timeLayout),
+		Stage: c.Stage, Status: c.Status, Locale: c.Locale, UpdatedAt: c.UpdatedAt.Format(timeLayout),
 	}
 	if len(c.Meta) > 0 {
 		var meta struct {
@@ -65,6 +69,13 @@ func (s *Server) handleGetConversation(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, conversationResponse(*conv))
 }
 
+type startConversationRequest struct {
+	// Locale is the app locale the client coaches in ('en-US', 'zh-CN',
+	// ...); the store canonicalizes it. Absent stays zh — the language
+	// every pre-locale conversation already coached in.
+	Locale string `json:"locale"`
+}
+
 // handleStartPrdConversation starts the caller's own coach conversation on a
 // PRD, or returns the one they already have. GET /prds/{id}/conversation only
 // ever finds the caller's (conversations are owner-only) and ConvertIdea makes
@@ -75,7 +86,12 @@ func (s *Server) handleStartPrdConversation(w http.ResponseWriter, r *http.Reque
 	if !ok {
 		return
 	}
-	conv, created, err := s.store.EnsureConversationForPrd(r.Context(), userID, pid)
+	var req startConversationRequest
+	if err := httpx.DecodeJSON(r, &req); err != nil && !errors.Is(err, io.EOF) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	conv, created, err := s.store.EnsureConversationForPrd(r.Context(), userID, pid, req.Locale)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
 		return
