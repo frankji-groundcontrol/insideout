@@ -182,7 +182,8 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		c.failTurn(ctx, userID, run.ID, err, sse)
 		return
 	}
-	history = append(history, Message{Role: RoleUser, Content: content})
+	// No append of `content`: it was stored above, so the history already ends
+	// with this turn (the empty assistant placeholder is not replayed).
 
 	sectionUpdated := false
 	// streamCtx lets a failed SSE write abort the in-flight provider
@@ -236,7 +237,6 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	if errors.Is(loopErr, ErrContextLength) && streamed.Len() == 0 {
 		tightHistory, herr := c.loadHistory(ctx, userID, conversationID, tightenedHistoryLimit)
 		if herr == nil {
-			tightHistory = append(tightHistory, Message{Role: RoleUser, Content: content})
 			finalText, loopErr = c.runLoop(streamCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, tightHistory, executor, onDelta)
 		}
 	}
