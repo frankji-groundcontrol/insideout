@@ -86,7 +86,8 @@ Flags precede positional ids (Go convention). Statuses are
 ## MCP server
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
-verbs as tools (50 today), token via `INSIDEOUT_TOKEN`:
+verbs as tools (ask `tools/list` for the current set — a count written
+here drifted twice), token via `INSIDEOUT_TOKEN`:
 
 ```json
 { "mcpServers": { "insideout": {

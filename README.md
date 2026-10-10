@@ -26,14 +26,15 @@ Three surfaces, one `/api/v1` contract:
 
 - **Web 应用** — Flutter 网页端：想法箱、PRD 编辑、AI 教练对话、路线图画布、版本历史。
 - **`insideout` CLI** — 终端里的全部动词：认证、想法箱、PRD、路线图、版本、证据、代理词汇。
-- **`insideout-mcp` MCP 服务器** — 同样的 50 个工具暴露给任何支持 MCP 的编码代理；让 Claude Code、Cursor 或你自己的代理直接驱动这个产品。
+- **`insideout-mcp` MCP 服务器** — 同样的动词作为 MCP 工具暴露给任何支持 MCP 的编码代理（当前数量以 `tools/list` 为准，不在文档里写死）；让 Claude Code、Cursor 或你自己的代理直接驱动这个产品。
 
 - **Web app** — the Flutter client: inbox, PRD editing, the AI coach
   conversation, the roadmap canvas, version history.
 - **`insideout` CLI** — every verb in the terminal: auth, idea inbox,
   PRDs, roadmap, versions, evidence, the agent vocabulary.
-- **`insideout-mcp` MCP server** — the same surface as 50 tools for any
-  MCP-capable coding agent; let Claude Code, Cursor, or your own agent
+- **`insideout-mcp` MCP server** — the same verbs as MCP tools for any
+  MCP-capable coding agent (`tools/list` answers the current count, so no
+  number is frozen here); let Claude Code, Cursor, or your own agent
   drive the product directly.
 
 ## 安装 / Install
