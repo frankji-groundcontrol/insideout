@@ -87,7 +87,9 @@ func runPromoteAdmin(ctx context.Context, log *slog.Logger, st *store.Store, ema
 		log.Error("promote-admin", "error", err)
 		os.Exit(1)
 	}
-	log.Info("promote-admin: done", "email", email)
+	// The operator typed the address; the log may end up in CI or hosted
+	// log storage, so it states the fact without echoing it.
+	log.Info("promote-admin: done", "role", "admin")
 }
 
 func args() string {
