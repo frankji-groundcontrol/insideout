@@ -234,4 +234,42 @@ void main() {
       reason: 'the last card must never slide under the quick-capture FAB',
     );
   });
+
+  // USER-15: the invite card showed only the bare code. Nothing said a
+  // teammate needs an account first, or that on an invitation-only install a
+  // site admin mints the invitation under Profile > Admin.
+  for (final (locale, hint) in [
+    (
+      'en-US',
+      'Teammates need an InsideOut account first. If sign-up is invitation-only, an admin can create a site invitation under Profile > Admin.',
+    ),
+    ('zh-CN', '队友需要先有 InsideOut 账号。若注册仅限邀请，管理员可在「个人资料 > 管理」中创建站点邀请。'),
+  ]) {
+    testWidgets('the invite card says teammates need an account ($locale)', (
+      tester,
+    ) async {
+      final session = Session();
+      session.ready = true;
+      session.api = _FakeApi();
+      await tester.binding.setSurfaceSize(const Size(1400, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: session),
+            ChangeNotifierProvider(
+              create: (_) =>
+                  Appearance(store: MemorySettingsStore(), locale: locale),
+            ),
+            ChangeNotifierProvider(create: (_) => LoopFocus()),
+          ],
+          child: const MaterialApp(home: WorkspacePage(id: 'ws1')),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(hint), findsOneWidget);
+    });
+  }
 }
