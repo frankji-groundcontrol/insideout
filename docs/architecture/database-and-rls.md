@@ -58,23 +58,36 @@ not the table owner, so RLS applies to the runtime login. DEFINER
 helpers run as `insideout_owner` (NOSUPERUSER, `BYPASSRLS`) so membership
 lookups do not recurse under FORCE RLS.
 
-11 tables carry RLS: `users`, `workspaces`, `projects`, `project_updates`,
-`ideas`, `prds`, `prd_revisions`, `agent_conversations`, `agent_messages`,
-`ai_runs`, and `workspace_memberships` (policies **defined** but not
-**forced** — see below). `sessions`, `ai_run_events`, and `ai_circuit_breaker`
-are intentionally left without RLS: pure auth plumbing or system telemetry
-with no per-end-user access story.
+16 tables carry RLS, every one of them `FORCE`d (`workspace_memberships` too,
+since the 2026-08-19 role split): `agent_conversations`, `agent_messages`,
+`ai_runs`, `ideas`, `prd_commits`, `prd_revisions`, `prds`, `project_updates`,
+`projects`, `proposal_decisions`, `proposal_items`, `roadmap_evidence`,
+`roadmap_nodes`, `users`, `workspace_memberships` and `workspaces`.
+`sessions`, `auth_tokens`, `invitations`, `settings`, `ai_run_events`,
+`ai_circuit_breaker` and the migration ledger `schema_migrations` are
+intentionally left without RLS: backend-only auth plumbing, deployment
+settings, system telemetry and bookkeeping with no per-end-user access story.
 
-Two pre-auth exceptions are load-bearing and deliberate: `CreateUser`
-(registration) and `GetUserByEmail` (login) run **without** `app.user_id` set
-— there is no authenticated identity yet at that point in the flow. The
-`users` RLS policy treats `current_user_id() IS NULL` as a trusted system
-context, since `insideout_app` is never called by anything but this repo's
-own backend. Joining a workspace by invite code has a similar, narrower
-exception: `JoinWorkspace` sets a second session variable, `app.join_code`,
-so the one-time "look up a workspace I'm not a member of yet, by the code I
-was given" read can pass RLS without a blanket bypass (see the
+Two system-context exceptions are load-bearing and deliberate, and they are
+the only RLS tables that trust an unset `app.user_id`
+(`current_user_id() IS NULL`), since `insideout_app` is never called by
+anything but this repo's own backend. `users`: `CreateUser` (registration) and
+`GetUserByEmail` (login) run **without** `app.user_id` set — there is no
+authenticated identity yet at that point in the flow. `ai_runs`: the stale-run
+reaper (`ReapStaleAIRuns`) is a background sweep with no acting user
+(migration `20260721160000`). Joining a workspace by invite code has a
+similar, narrower exception: `JoinWorkspace` sets a second session variable,
+`app.join_code`, so the one-time "look up a workspace I'm not a member of yet,
+by the code I was given" read can pass RLS without a blanket bypass (see the
 `workspaces_select` policy).
+
+`server/internal/store/rls_walk_test.go` (`TestRLSWalk`) holds this boundary
+mechanically rather than by memory: it reads the RLS tables from `pg_class`,
+requires each to be `FORCE`d and listed in its `rlsTables` map, and checks that
+a member, a user in no workspace, and a session with no `app.user_id` see
+exactly what is described above. A new RLS table, or a new policy (on any
+command) that trusts an unset user, fails it until a reviewer decides which way
+it goes.
 
 Authorship is not membership (SEC-11). The author branches of `ideas_select`,
 `ideas_update` and `prds_insert` also require
