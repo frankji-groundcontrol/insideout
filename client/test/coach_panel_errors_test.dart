@@ -34,8 +34,9 @@ class _FailingApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async => throw failure;
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async => throw failure;
 }
 
 // Fails only once the test says so, so the failure can land after the panel
@@ -56,8 +57,9 @@ class _LateFailingApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     await gate.future;
     throw ApiException(
       'Rate limit exceeded',
@@ -87,8 +89,9 @@ class _HoldingApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     this.handlers = handlers;
     await gate.future;
   }

@@ -34,8 +34,9 @@ class _SendApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     sent.add(content);
     final f = failure;
     if (f != null) throw f;
@@ -166,8 +167,9 @@ class _GatedApi extends _SendApi {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     await gate.future;
     throw ApiException('coach failed', status: 500);
   }

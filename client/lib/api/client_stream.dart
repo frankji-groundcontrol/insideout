@@ -5,8 +5,9 @@ mixin _StreamVerbs on _ApiCore {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     final token = await _readAccess();
     final open = coachSseOpen(
       baseUrl: baseUrl,

@@ -26,8 +26,9 @@ class _FactApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     applyCoachFrame(SseFrame('fact_recorded', payload), handlers);
   }
 }

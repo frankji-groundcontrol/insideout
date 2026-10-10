@@ -36,8 +36,9 @@ class _FindingsApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     sends += 1;
     final next = sends > 1 ? later : null;
     applyCoachFrame(next ?? SseFrame('critic_findings', payload), handlers);
@@ -64,8 +65,9 @@ class _StallingApi extends ApiClient {
   Future<void> sendCoach(
     String conversationId,
     String content,
-    CoachHandlers handlers,
-  ) async {
+    CoachHandlers handlers, {
+    Future<void>? stop,
+  }) async {
     sends += 1;
     if (sends > 1) {
       handlers.onDelta?.call('recovered');
