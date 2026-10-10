@@ -103,6 +103,31 @@ jobs:
       # web-only conditional imports (they broke exactly this way once).
       - run: flutter build web --release --dart-define=API_BASE=/api/v1
 
+  android:
+    name: android (flutter apk)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          # Same pin as the client job and client/Dockerfile.
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+      - run: flutter pub get --enforce-lockfile
+      # The release build type signs with the debug keys
+      # (client/android/app/build.gradle.kts), so this needs no keystore. A
+      # store-signed bundle stays an owner step.
+      - run: flutter build apk --release --dart-define=API_BASE=https://insideout.yalotein.net/api/v1
+
   env-suites:
     name: env catalog suites (python)
     runs-on: ubuntu-latest
