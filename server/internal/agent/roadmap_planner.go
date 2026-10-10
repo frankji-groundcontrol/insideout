@@ -206,7 +206,14 @@ func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, 
 	user := fmt.Sprintf("项目：%s\n要拆解的节点：%s\n节点说明：%s", projectTitle, nodeTitle, nodeDesc)
 
 	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitSubtasksTool, nil)
-	if err != nil || turn.ToolCall == nil {
+	if err != nil {
+		// Serve the template, but carry the provider error back: a fallback
+		// that reports success would keep the caller's circuit breaker
+		// healthy through a provider outage.
+		draft, _ := p.fallback.ExpandNode(ctx, projectTitle, nodeTitle, nodeDesc)
+		return draft, &templateExpandError{err: err, draft: draft}
+	}
+	if turn.ToolCall == nil {
 		return p.fallback.ExpandNode(ctx, projectTitle, nodeTitle, nodeDesc)
 	}
 	var payload struct {
@@ -241,6 +248,23 @@ func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, 
 	}
 	return out, nil
 }
+
+// templateExpandError reports that an expand was answered from the built-in
+// template because the provider call failed. The draft is still served, but
+// the error must reach the caller's gate (Admit's done) so the breaker
+// counts the outage instead of a success. The API layer finds it
+// structurally, the way it finds AIGate on a Coach.
+type templateExpandError struct {
+	err   error
+	draft []store.RoadmapPlanNode
+}
+
+func (e *templateExpandError) Error() string {
+	return "agent: expand served from the template: " + e.err.Error()
+}
+
+func (e *templateExpandError) Unwrap() error                          { return e.err }
+func (e *templateExpandError) TemplateDraft() []store.RoadmapPlanNode { return e.draft }
 
 // --- deterministic template (offline / fallback) ---
 

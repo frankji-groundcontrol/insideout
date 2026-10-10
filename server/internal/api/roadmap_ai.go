@@ -28,6 +28,15 @@ type AIGate interface {
 	Admit(w http.ResponseWriter, r *http.Request, workspaceID, userID uuid.UUID, label string) (done func(error), ok bool)
 }
 
+// templateExpandDraft is the mark an ExpandNode error carries when the draft
+// came from the planner's built-in template because the provider failed: the
+// draft is served as usual, but Admit's done still hears the error so the
+// circuit breaker counts the outage. Found structurally, like AIGate.
+type templateExpandDraft interface {
+	error
+	TemplateDraft() []store.RoadmapPlanNode
+}
+
 // admitAI gates one planner call through the coach when it can.
 func (s *Server) admitAI(w http.ResponseWriter, r *http.Request, workspaceID, userID uuid.UUID, label string) (done func(error), ok bool) {
 	if g, gated := s.coach.(AIGate); gated {
@@ -167,8 +176,15 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	children, err := s.planner.ExpandNode(r.Context(), project.Title, node.Title, node.Description)
+	// A fallback-served expand answers with the planner's built-in template
+	// but still reports the provider error: done must count the failure for
+	// the breaker, and the HTTP answer stays the template.
+	var fromTemplate templateExpandDraft
+	if errors.As(err, &fromTemplate) {
+		children = fromTemplate.TemplateDraft()
+	}
 	done(err)
-	if err != nil {
+	if err != nil && fromTemplate == nil {
 		s.log.Error("expand node", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return

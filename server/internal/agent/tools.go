@@ -115,7 +115,7 @@ type toolExecutor struct {
 	prdID          uuid.UUID
 	conversationID uuid.UUID
 	currentStage   string
-	userMessages   []string // this conversation's user turns, for record_fact quote grounding
+	userMessages   []string // record_fact grounding override; nil grounds quotes against the conversation's stored turns
 	onSectionWrite func(section string)
 	onStageChange  func(stage string)
 	onFactRecorded func(f Fact)
