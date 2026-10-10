@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_button.dart';
 import '../../theme/cobalt.dart';
@@ -102,7 +103,7 @@ class PrdDeskColumn extends StatelessWidget {
                 const SizedBox(width: Cobalt.space3),
                 Expanded(
                   child: Text(
-                    'v${prd?.currentRevision ?? 0} · ${prd?.updatedAt ?? ''}',
+                    'v${prd?.currentRevision ?? 0} · ${timeAgo(prd?.updatedAt ?? '', l10n.t)}',
                     style: theme.textTheme.bodySmall,
                   ),
                 ),

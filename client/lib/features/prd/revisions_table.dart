@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
+import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_chrome.dart';
@@ -193,7 +194,9 @@ class _RevisionRowState extends State<_RevisionRow> {
               ),
               const SizedBox(height: Cobalt.space1),
               Text(
-                r.note?.isNotEmpty == true ? r.note! : r.createdAt,
+                r.note?.isNotEmpty == true
+                    ? r.note!
+                    : timeAgo(r.createdAt, l10n.t),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall,
