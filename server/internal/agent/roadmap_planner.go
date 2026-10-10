@@ -202,8 +202,8 @@ func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, prdTitle string, 
 
 func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error) {
 	system := `你是 InsideOut 的产品落地教练。用户要把路线图里的一个节点进一步拆解成可以直接执行的子任务。
-给出 3-6 个子任务：title 简洁（12 字以内）、动词开头、可独立执行；description 一句话说明产出。只通过 submit_subtasks 工具返回。`
-	user := fmt.Sprintf("项目：%s\n要拆解的节点：%s\n节点说明：%s", projectTitle, nodeTitle, nodeDesc)
+给出 3-6 个子任务：title 简洁（12 字以内）、动词开头、可独立执行；description 一句话说明产出。只通过 submit_subtasks 工具返回。` + "\n\n" + dataFenceClause
+	user := fmt.Sprintf("项目：%s\n要拆解的节点：%s\n节点说明：%s", fenceData(projectTitle), fenceData(nodeTitle), fenceData(nodeDesc))
 
 	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitSubtasksTool, nil)
 	if err != nil {
