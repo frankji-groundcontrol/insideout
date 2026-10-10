@@ -42,6 +42,7 @@ const zhPrd = <String, String>{
   'versions.commitTitle': '提交此版本',
   'versions.commitNow': '提交版本',
   'versions.nameLabel': '版本名称',
+  'versions.nameRequired': '给这个版本起个名字',
   'versions.audienceLabel': '主要读者',
   'versions.audience.validation': '验证',
   'versions.audience.decision': '决策',

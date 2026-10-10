@@ -45,6 +45,7 @@ const enPrd = <String, String>{
   'versions.commitTitle': 'Commit this version',
   'versions.commitNow': 'Commit version',
   'versions.nameLabel': 'Version name',
+  'versions.nameRequired': 'Give this version a name',
   'versions.audienceLabel': 'Primary audience',
   'versions.audience.validation': 'Validation',
   'versions.audience.decision': 'Decision',

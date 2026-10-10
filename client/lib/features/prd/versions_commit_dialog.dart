@@ -45,6 +45,7 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
   late final TextEditingController _summary;
   late final TextEditingController _note;
   late String _audience;
+  bool _nameMissing = false;
 
   @override
   void initState() {
@@ -61,6 +62,14 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
     _summary.dispose();
     _note.dispose();
     super.dispose();
+  }
+
+  /// False, with the name field saying why, when the version has no name; the
+  /// confirm button asks before it closes the modal.
+  bool validate() {
+    final missing = _name.text.trim().isEmpty;
+    setState(() => _nameMissing = missing);
+    return !missing;
   }
 
   CommitFormResult result() => CommitFormResult(
@@ -81,6 +90,10 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
           label: l10n.t('versions.nameLabel'),
           controller: _name,
           textInputAction: TextInputAction.next,
+          errorText: _nameMissing ? l10n.t('versions.nameRequired') : null,
+          onChanged: (_) {
+            if (_nameMissing) setState(() => _nameMissing = false);
+          },
         ),
         const SizedBox(height: Cobalt.space4),
         BlockSelect<String>(
@@ -149,7 +162,10 @@ Future<CommitFormResult?> showVersionsCommit({
         key: const Key('commit-confirm'),
         label: t('versions.commitNow'),
         icon: Icons.verified_outlined,
-        onPressed: () => navigator.pop(formKey.currentState?.result()),
+        onPressed: () {
+          final form = formKey.currentState;
+          if (form != null && form.validate()) navigator.pop(form.result());
+        },
       ),
     ],
   );
