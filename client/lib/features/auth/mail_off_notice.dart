@@ -5,13 +5,13 @@ import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_chrome.dart';
 
-/// Whether this server only logs email (mail dev mode). A failed call answers
-/// false: the emailed options are annotated when the server says so, never on
-/// a guess.
+/// Whether this server only logs email (mail dev mode). A failed call — or a
+/// server that predates the flag, answering null — answers false: the emailed
+/// options are annotated when the server says so, never on a guess.
 Future<bool> mailIsOff(BuildContext context) async {
   final api = context.read<Session>().api;
   try {
-    return !await api.authMailEnabled();
+    return await api.authMailEnabled() == false;
   } catch (_) {
     return false;
   }
