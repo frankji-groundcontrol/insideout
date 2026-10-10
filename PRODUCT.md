@@ -415,11 +415,16 @@ one of them.
 
 ## Superseded assumptions and current status
 
-This baseline supersedes the earlier product assumptions that every PRD is
-eight fixed sections, every coaching session follows four rigid stages, a
-Workspace admin approves all PRDs, captured Ideas are automatically visible to
-the Workspace, Roadmap status alone proves completion, or a manually synced
-public-commit timeline is an independent source of progress truth.
+This baseline supersedes the earlier product assumptions that every coaching
+session follows four rigid stages or a fixed question count (the Coach
+contract above adapts depth instead), that a Workspace admin approves all
+PRDs, that captured Ideas are automatically visible to the Workspace, that
+Roadmap status alone proves completion, and that a manually synced
+public-commit timeline is an independent source of progress truth. The eight
+PRD sections are superseded as a forced interview sequence, not as storage:
+every section key is still validated against exactly those eight
+(`server/internal/store/prds.go`), so they remain the data-model scaffold
+until flexible sections are designed.
 
 The current Go, PostgreSQL/RLS, Flutter, PRD Coach, Roadmap Canvas, and public
 GitHub-sync implementation remains the running foundation. It does **not** yet
