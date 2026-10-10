@@ -256,7 +256,7 @@ func (e *toolExecutor) checkStageGate(ctx context.Context, next string) error {
 			}
 		}
 		if len(missing) > 0 {
-			return fmt.Errorf("agent: cannot draft yet — no attested fact recorded for: %s. Ask the user and call record_fact, or if they want to skip, record a decision fact saying so", strings.Join(missing, ", "))
+			return fmt.Errorf("agent: cannot draft yet — no recorded fact for: %s. Ask the user and call record_fact, or if they want to skip, record a decision fact saying so", strings.Join(missing, ", "))
 		}
 		for _, f := range lm.Facts {
 			if f.Kind == "segment" && f.Status == FactStatusAttested && segmentFailsEveryoneLint(f.Text) {

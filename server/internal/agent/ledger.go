@@ -11,18 +11,22 @@ import (
 	"github.com/google/uuid"
 )
 
-// Fact is one user-attested entry in a conversation's evidence ledger —
-// the anti-fabrication backbone (plan §4.1). Every PRD claim should trace
-// to one of these, or be explicitly marked [ASSUMPTION].
+// Fact is one model-recorded entry in a conversation's evidence ledger —
+// the anti-fabrication backbone (plan §4.1). The coach records it quoting
+// the user's words; no human confirms it (AIDEV-09). Every PRD claim
+// should trace to one of these, or be explicitly marked [ASSUMPTION].
 type Fact struct {
 	ID     string `json:"id"`
 	Kind   string `json:"kind"`
 	Text   string `json:"text"`
 	Quote  string `json:"quote"`
-	Status string `json:"status"` // attested | assumed | needs-validation
+	Status string `json:"status"` // attested (legacy value; model-recorded, no human vouched) | assumed | needs-validation
 }
 
 const (
+	// FactStatusAttested is the stored value's legacy name: it is granted
+	// by the model's own record_fact (quote grounded at 70% bigrams), not
+	// by any human action. Kept byte-compatible with stored meta (AIDEV-09).
 	FactStatusAttested = "attested"
 	FactStatusAssumed  = "assumed"
 
