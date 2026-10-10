@@ -181,14 +181,21 @@ class ProductDock extends StatelessWidget {
         focus.projectId;
     final prd = _prdOnRoute(context) ?? focus.prdId;
     return switch (item) {
+      // On the wall itself neither item can navigate anywhere: the tap
+      // pulses the wall's capture bar instead of dead-tapping.
       DockItem.capture || DockItem.ideas => (
-        path: workspace != null ? '/workspace/$workspace/ideas' : null,
-        pulse: false,
+        path: workspace != null && location != '/workspace/$workspace/ideas'
+            ? '/workspace/$workspace/ideas'
+            : null,
+        pulse: workspace != null && location == '/workspace/$workspace/ideas',
       ),
       // Version rides to the versions route; from the PRD desk the old
-      // /prd/<id> target was a self-navigation dead click.
+      // /prd/<id> target was a self-navigation dead click. On the versions
+      // route itself there is nowhere further to go: both render disabled.
       DockItem.version || DockItem.commit => (
-        path: prd != null ? '/prd/$prd/versions' : null,
+        path: prd != null && location != '/prd/$prd/versions'
+            ? '/prd/$prd/versions'
+            : null,
         pulse: false,
       ),
       DockItem.roadmap => (
@@ -207,9 +214,15 @@ class ProductDock extends StatelessWidget {
   static void _activate(BuildContext context, DockItem item) {
     final (:path, :pulse) = _target(context, item);
     if (pulse) {
-      // Already on the evidence destination: no re-push, ask the page to
-      // scroll-highlight its evidence section instead.
-      context.read<LoopFocus>().pulseEvidence();
+      // Already on the destination: no re-push, ask the page to
+      // scroll-highlight instead — the evidence section, or the capture
+      // bar when the ideas wall is the destination on screen.
+      final focus = context.read<LoopFocus>();
+      if (item == DockItem.capture || item == DockItem.ideas) {
+        focus.pulseIdeas();
+      } else {
+        focus.pulseEvidence();
+      }
       return;
     }
     if (path == null) return; // disabled items never fire
