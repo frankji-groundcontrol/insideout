@@ -64,6 +64,10 @@ class _PrdPageState extends State<PrdPage> {
       final conv = await api.conversationForPrd(widget.id);
       var msgs = <ChatMessage>[];
       if (conv != null) msgs = await api.listMessages(conv.id);
+      // The fetches can outlive the page: writing a disposed controller or
+      // seeding the focus store for a departed page is the race 2bb4999
+      // closed for onStageChanged — nothing below runs once unmounted.
+      if (!mounted) return;
       titleCtrl.text = loaded.title;
       for (final key in prdSectionKeys) {
         sectionCtrls[key]?.dispose();
@@ -78,7 +82,6 @@ class _PrdPageState extends State<PrdPage> {
           workspaceId: loaded.workspaceId,
         );
       }
-      if (!mounted) return;
       setState(() {
         prd = loaded;
         conversation = conv;

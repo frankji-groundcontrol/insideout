@@ -49,11 +49,28 @@ class _SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
+  // What _load last seeded each field with: a reload (say, after a member
+  // action) keeps whatever the member typed over the seed, while untouched
+  // fields still adopt the server's newer value.
+  String? _seededTitle;
+  String? _seededDescription;
+
   Future<({Workspace ws, List<WorkspaceMember> members})> _load() async {
     final api = context.read<Session>().api;
     final ws = await api.getWorkspace(widget.workspaceId);
-    title.text = ws.title;
-    description.text = ws.description;
+    if (!mounted) {
+      // The page left while the fetch was out; its controllers are disposed
+      // and nothing can show the answer.
+      return (ws: ws, members: const <WorkspaceMember>[]);
+    }
+    if (_seededTitle == null || title.text == _seededTitle) {
+      _seededTitle = ws.title;
+      title.text = ws.title;
+    }
+    if (_seededDescription == null || description.text == _seededDescription) {
+      _seededDescription = ws.description;
+      description.text = ws.description;
+    }
     return (ws: ws, members: await api.listMembers(widget.workspaceId));
   }
 
