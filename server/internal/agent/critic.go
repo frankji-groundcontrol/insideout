@@ -258,7 +258,9 @@ const criticSystemPromptTemplate = `你是一位严格的 PRD 评审员，正在
 func runCritic(ctx context.Context, streamer ChatStreamer, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage Usage, ok bool) {
 	focus := ""
 	if len(focusSections) > 0 {
-		focus = "\n\n本轮只需重新评审以下此前被标记过的章节：" + strings.Join(focusSections, ", ")
+		// The names come from stored findings whose section is model output, so
+		// they ride in a fence like the rest of the PRD-derived text.
+		focus = "\n\n本轮只需重新评审以下此前被标记过的章节：" + fenceData(strings.Join(focusSections, ", "))
 	}
 	system := fmt.Sprintf(criticSystemPromptTemplate, focus, dataFenceClause,
 		fenceData(prdTitle), fenceData(formatSectionsForPrompt(sections)), fenceData(formatLedgerForPrompt(lm)))

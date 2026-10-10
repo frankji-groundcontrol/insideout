@@ -181,8 +181,8 @@ func NewAnthropicRoadmapPlanner(streamer ChatStreamer) RoadmapPlanner {
 
 func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error) {
 	system := `你是 InsideOut 的产品落地教练。根据用户给出的 PRD（标题和各章节），把这个产品拆成一棵可执行的 MVP 路线图树。
-规则：一个根节点（交付 MVP 的总目标）；根节点下 3-5 个可以并行推进的工作流（例如：核心功能、打磨与验证、发布）；每个工作流下 2-4 个具体任务。每个节点 title 简洁（12 字以内），description 一句话。不要编造 PRD 里没有的重大方向。只通过 submit_roadmap 工具返回。`
-	user := "PRD 标题：" + prdTitle + "\n\n各章节内容：\n" + formatSectionsForPrompt(sections)
+规则：一个根节点（交付 MVP 的总目标）；根节点下 3-5 个可以并行推进的工作流（例如：核心功能、打磨与验证、发布）；每个工作流下 2-4 个具体任务。每个节点 title 简洁（12 字以内），description 一句话。不要编造 PRD 里没有的重大方向。只通过 submit_roadmap 工具返回。` + "\n\n" + dataFenceClause
+	user := "PRD 标题：" + fenceData(prdTitle) + "\n\n各章节内容：\n" + fenceData(formatSectionsForPrompt(sections))
 
 	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
 	if err != nil {
