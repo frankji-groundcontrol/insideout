@@ -41,6 +41,27 @@ func aiConcurrencyLimits() (int, time.Duration) {
 	return maxConcurrent, queueWait
 }
 
+// defaultTurnDeadline bounds a whole coach turn in wall-clock time. The
+// iteration cap and the idle watchdog bound tool loops and silence, but a
+// slow-trickle upstream (a delta every <90s) trips neither — and each turn
+// holds one of defaultMaxConcurrent permits plus the conversation lock.
+// 12 minutes sits far above any healthy turn (the model finishes, or the
+// idle watchdog fires, long before it). Overridable via
+// INSIDEOUT_AI_TURN_DEADLINE, same pattern as the knobs above.
+const defaultTurnDeadline = 12 * time.Minute
+
+// turnDeadlineFromEnv resolves the total-turn bound from
+// INSIDEOUT_AI_TURN_DEADLINE, falling back to defaultTurnDeadline when the
+// variable is unset, unparsable, or non-positive.
+func turnDeadlineFromEnv() time.Duration {
+	if v := os.Getenv("INSIDEOUT_AI_TURN_DEADLINE"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil && d > 0 {
+			return d
+		}
+	}
+	return defaultTurnDeadline
+}
+
 // persistTimeout bounds the detached terminal writes (cleanup/persist) that
 // must survive a client disconnect but must not outlive the process. Without a
 // bound, a wedged DB write on a WithoutCancel context hangs its goroutine — and
@@ -58,16 +79,17 @@ func detachedContext(ctx context.Context) (context.Context, context.CancelFunc) 
 }
 
 type Coach struct {
-	store     *store.Store
-	streamer  ChatStreamer
-	log       *slog.Logger
-	dispatch  *dispatcher
-	queueWait time.Duration // permit queue timeout, surfaced as the 503 retry hint
+	store        *store.Store
+	streamer     ChatStreamer
+	log          *slog.Logger
+	dispatch     *dispatcher
+	queueWait    time.Duration // permit queue timeout, surfaced as the 503 retry hint
+	turnDeadline time.Duration // total wall-clock bound on one turn (see defaultTurnDeadline)
 }
 
 func New(st *store.Store, streamer ChatStreamer, log *slog.Logger) *Coach {
 	maxConcurrent, queueWait := aiConcurrencyLimits()
-	return &Coach{store: st, streamer: streamer, log: log, dispatch: newDispatcher(maxConcurrent, queueWait), queueWait: queueWait}
+	return &Coach{store: st, streamer: streamer, log: log, dispatch: newDispatcher(maxConcurrent, queueWait), queueWait: queueWait, turnDeadline: turnDeadlineFromEnv()}
 }
 
 // HandleMessage implements the api.Coach interface. Rate-limit and
@@ -221,7 +243,14 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		}
 	}
 
-	finalText, loopErr := c.runLoop(streamCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, history, executor, onDelta)
+	// The total-turn deadline spans both runLoop attempts (the auto-tighten
+	// retry below included): a trickling provider defeats the idle watchdog
+	// and never runs out of iterations, but it cannot outlive this bound —
+	// the permit and the conversation lock come back no matter what.
+	turnCtx, cancelTurn := context.WithTimeout(streamCtx, c.turnDeadline)
+	defer cancelTurn()
+
+	finalText, loopErr := c.runLoop(turnCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, history, executor, onDelta)
 	// One auto-tighten attempt on a context-length failure: rebuild with a much
 	// smaller window, same stage/prd (the ledger, once H2 lands, rides along
 	// inside systemPrompt). Only retry when NOTHING has reached the client yet
@@ -237,8 +266,16 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	if errors.Is(loopErr, ErrContextLength) && streamed.Len() == 0 {
 		tightHistory, herr := c.loadHistory(ctx, userID, conversationID, tightenedHistoryLimit)
 		if herr == nil {
-			finalText, loopErr = c.runLoop(streamCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, tightHistory, executor, onDelta)
+			finalText, loopErr = c.runLoop(turnCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, tightHistory, executor, onDelta)
 		}
+	}
+	if loopErr != nil && errors.Is(turnCtx.Err(), context.DeadlineExceeded) {
+		// The turn outlived its total bound. Classified as our own loop
+		// failing (like the iteration cap), not provider health: a turn that
+		// merely ran long says nothing the breaker should act on. DeadlineExceeded
+		// specifically — a client disconnect cancels turnCtx with Canceled and
+		// keeps its routine no-fault handling below.
+		loopErr = fmt.Errorf("%w: exceeded the total turn deadline (%s)", ErrLoopInternal, c.turnDeadline)
 	}
 	if sseErr != nil {
 		// An SSE write failed mid-turn — the client is gone. Same handling
