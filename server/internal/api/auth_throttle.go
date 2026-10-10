@@ -202,6 +202,10 @@ func (t *authThrottle) evictHitsLocked(window time.Duration) {
 // and unknown accounts, so the throttle never doubles as an
 // account-existence oracle.
 func (s *Server) withAuthThrottle(next http.Handler) http.Handler {
+	// Constructing this middleware is part of startup (main builds the
+	// handler chain once), which is when the single-replica contract that
+	// all this in-process state relies on gets announced — single_replica.go.
+	s.startSingletonGuard()
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		category, ok := authThrottleRules[r.URL.Path]
 		if !ok || r.Method != http.MethodPost {
