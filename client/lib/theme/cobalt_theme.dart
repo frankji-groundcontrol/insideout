@@ -108,6 +108,22 @@ ThemeData cobaltTheme(Cobalt c, {required Brightness brightness}) {
         side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
       ),
     ),
+    // showDatePicker defaults to a 28px dialog with circular day cells and a
+    // stadium year cell. Same flat 2px block as the dialog above, with square
+    // cells; today keeps a 2px outline (cobalt, the only accent) instead of
+    // M3's 1px circle.
+    datePickerTheme: DatePickerThemeData(
+      backgroundColor: c.surfaceRaised,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      shape: shapeCard.copyWith(
+        side: BorderSide(color: c.strokeSubtle, width: Cobalt.borderContainer),
+      ),
+      dayShape: WidgetStatePropertyAll(shapeControl),
+      yearShape: WidgetStatePropertyAll(shapeControl),
+      todayBorder: BorderSide(color: c.brand, width: Cobalt.borderContainer),
+    ),
     // Stock M3 menus are 4px-rounded with a blurred elevation shadow. This is
     // the block menu every PopupMenuButton adopts with no per-site styling.
     popupMenuTheme: PopupMenuThemeData(
