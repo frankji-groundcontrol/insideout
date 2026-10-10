@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -136,7 +137,10 @@ func (t *InstallationTokens) Token(ctx context.Context, installationID int64) (s
 // FetchGuideFile downloads insideout.yaml from the repo at a ref.
 // token may be empty (public repos work unauthenticated).
 func FetchGuideFile(ctx context.Context, token, owner, repo, ref string) ([]byte, error) {
-	url := fmt.Sprintf("%s/repos/%s/%s/contents/insideout.yaml?ref=%s", apiBaseURL, owner, repo, ref)
+	// Escape what gets interpolated: a raw '#' in a segment would start a
+	// fragment and a '&' in the ref would inject query parameters (SEC-06).
+	url := fmt.Sprintf("%s/repos/%s/%s/contents/insideout.yaml?ref=%s",
+		apiBaseURL, url.PathEscape(owner), url.PathEscape(repo), url.QueryEscape(ref))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err

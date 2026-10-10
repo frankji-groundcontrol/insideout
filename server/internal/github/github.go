@@ -38,10 +38,25 @@ func ParseRepoURL(raw string) (owner, repo string, err error) {
 		s = s[i+len("github.com/"):]
 	}
 	parts := strings.Split(s, "/")
-	if len(parts) < 2 || parts[0] == "" || parts[1] == "" {
+	if len(parts) < 2 || parts[0] == "" || parts[1] == "" || !isRepoSegment(parts[0]) || !isRepoSegment(parts[1]) {
 		return "", "", fmt.Errorf("github: cannot parse repo %q — want owner/repo or a github.com URL", raw)
 	}
 	return parts[0], parts[1], nil
+}
+
+// isRepoSegment reports whether s is safe to interpolate as a path segment
+// of an api.github.com URL: GitHub names are [A-Za-z0-9._-], and anything
+// else ('?', '#', '%', spaces…) could reshape the outbound request (SEC-06).
+func isRepoSegment(s string) bool {
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9',
+			r == '.', r == '_', r == '-':
+		default:
+			return false
+		}
+	}
+	return true
 }
 
 // apiBaseURL is the GitHub API root. A package var (not a const) so tests can
