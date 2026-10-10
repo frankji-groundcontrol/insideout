@@ -203,6 +203,28 @@ void main() {
     expect(_path(router), '/projects/proj-1/roadmap');
   });
 
+  testWidgets('replacing a roadmap of one node says "1 node"', (tester) async {
+    final api = _RecordingApi(
+      confirmErrors: [
+        ApiException(
+          'replace?',
+          status: 409,
+          code: 'replace_conflict',
+          liveCount: 1,
+        ),
+      ],
+    );
+    await _pumpPrd(tester, api);
+
+    await tester.tap(find.text('Next: Request review'));
+    await tester.pump();
+    await tester.tap(find.text('Draft the roadmap'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('with 1 node.'), findsOneWidget);
+    expect(find.textContaining('1 nodes'), findsNothing);
+  });
+
   testWidgets('declining the replace keeps the roadmap and the PRD page', (
     tester,
   ) async {

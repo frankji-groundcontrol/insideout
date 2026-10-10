@@ -158,4 +158,23 @@ void main() {
 
     expect(find.text('Fresh WS'), findsOneWidget);
   });
+
+  // The card read "1 members" for a workspace of one.
+  testWidgets('the member count agrees with its number', (tester) async {
+    Workspace ws(String id, int members) => Workspace.fromJson({
+      'id': id,
+      'title': 'WS $id',
+      'description': '',
+      'code': 'C$id',
+      'status': 'active',
+      'memberCount': members,
+      'myRole': 'admin',
+      'createdAt': '2026-10-06T00:00:00Z',
+    });
+    await _pump(tester, _FakeApi([ws('a', 1), ws('b', 2)]));
+
+    expect(find.textContaining('· 1 member'), findsOneWidget);
+    expect(find.textContaining('1 members'), findsNothing);
+    expect(find.textContaining('· 2 members'), findsOneWidget);
+  });
 }
