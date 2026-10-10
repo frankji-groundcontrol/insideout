@@ -127,8 +127,8 @@ func (s *Server) handleCreateInvitation(w http.ResponseWriter, r *http.Request) 
 	}
 
 	link := s.cfg.PublicURL + "/register?invite=" + code
-	text := "You are invited to InsideOut. Open this link to create your account (the invitation works once and expires " + humanTTL(ttl) + "):"
-	if err := s.mail.Send(r.Context(), email, "Your InsideOut invitation", text+"\n\n"+link+"\n\nIf you weren't expecting this, you can ignore this email.", simpleEmailHTML("Your invitation", text, link, int(ttl.Hours()))); err != nil {
+	subject, text, html := invitationEmail(link, ttl)
+	if err := s.mail.Send(r.Context(), email, subject, text, html); err != nil {
 		s.log.Error("admin: send invitation", "error", err)
 	}
 
@@ -145,6 +145,17 @@ func humanTTL(ttl time.Duration) string {
 		return fmt.Sprintf("in %d day(s)", h/24)
 	}
 	return fmt.Sprintf("in %d hour(s)", h)
+}
+
+// invitationEmail builds the invitation mail's subject and both bodies in
+// one place so tests can pin them against each other — the HTML footer
+// once misstated a 7-day link as "168 minutes" (review-3 FULL-01) because
+// the two bodies were assembled inline at the send call.
+func invitationEmail(link string, ttl time.Duration) (subject, text, html string) {
+	intro := "You are invited to InsideOut. Open this link to create your account (the invitation works once and expires " + humanTTL(ttl) + "):"
+	return "Your InsideOut invitation",
+		intro + "\n\n" + link + "\n\nIf you weren't expecting this, you can ignore this email.",
+		simpleEmailHTML("Your invitation", intro, link, int(ttl.Hours()))
 }
 
 func (s *Server) handleListInvitations(w http.ResponseWriter, r *http.Request) {
