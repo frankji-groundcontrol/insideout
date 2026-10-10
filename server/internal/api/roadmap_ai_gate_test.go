@@ -25,6 +25,10 @@ import (
 // The build and expand endpoints spend LLM budget just like a coach turn, so
 // they must pass the same rate-limit, circuit and permit gate before planning.
 
+// The gate is found by an optional type assertion, so a signature drift on
+// Coach.Admit would silently ungate both routes. This keeps it a compile error.
+var _ AIGate = (*agent.Coach)(nil)
+
 type gateFixture struct {
 	st     *store.Store
 	tokens *auth.TokenIssuer

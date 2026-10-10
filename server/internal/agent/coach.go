@@ -87,29 +87,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		return
 	}
 
-	rl, err := c.store.CheckRateLimit(ctx, userID)
-	if err != nil {
-		c.log.Error("check rate limit", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	if !rl.Allowed {
-		httpx.WriteError(w, http.StatusTooManyRequests, "Rate limit exceeded", "APP_THROTTLE", map[string]interface{}{
-			"retry_after_seconds": rl.RetryAfterSeconds, "current_count": rl.CurrentCount, "max_requests": rl.MaxRequests,
-		})
-		return
-	}
-
-	circuit, err := c.store.CheckCircuit(ctx)
-	if err != nil {
-		c.log.Error("check circuit", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	if !circuit.Allowed {
-		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service temporarily unavailable", "CIRCUIT_OPEN", map[string]interface{}{
-			"retry_after_seconds": circuit.RetryAfterSeconds, "circuit_state": circuit.State,
-		})
+	if !c.preflight(w, r, userID) {
 		return
 	}
 
@@ -120,11 +98,8 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	}
 	defer unlock()
 
-	release, waited, ok := c.dispatch.acquirePermit()
+	release, waited, ok := c.acquire(w)
 	if !ok {
-		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service is busy, try again shortly", "CIRCUIT_OPEN", map[string]interface{}{
-			"retry_after_seconds": int(c.queueWait.Seconds()),
-		})
 		return
 	}
 	defer release()

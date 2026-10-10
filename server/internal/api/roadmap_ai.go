@@ -8,6 +8,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
 
 // RoadmapPlanner is the subset of the agent planner the API layer needs,
@@ -15,6 +16,24 @@ import (
 type RoadmapPlanner interface {
 	PlanMVP(ctx context.Context, prdTitle string, sections map[string]string) (*store.RoadmapPlanNode, error)
 	ExpandNode(ctx context.Context, projectTitle, nodeTitle, nodeDesc string) ([]store.RoadmapPlanNode, error)
+}
+
+// AIGate is the optional gate in front of an LLM call. The real coach
+// implements it, so the roadmap planner draws on the same rate-limit, circuit
+// breaker and permit budget as coach turns. Admit writes its own refusal and
+// returns ok=false; otherwise the caller calls done once with the call's error.
+// A Coach without it (a test double, none at all) leaves those calls ungated,
+// which is why this is a separate interface and not part of Coach.
+type AIGate interface {
+	Admit(w http.ResponseWriter, r *http.Request, workspaceID, userID uuid.UUID, label string) (done func(error), ok bool)
+}
+
+// admitAI gates one planner call through the coach when it can.
+func (s *Server) admitAI(w http.ResponseWriter, r *http.Request, workspaceID, userID uuid.UUID, label string) (done func(error), ok bool) {
+	if g, gated := s.coach.(AIGate); gated {
+		return g.Admit(w, r, workspaceID, userID, label)
+	}
+	return func(error) {}, true
 }
 
 func (s *Server) registerRoadmapAIRoutes(mux *http.ServeMux) {
@@ -42,7 +61,12 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	done, ok := s.admitAI(w, r, built.project.WorkspaceID, userID, "roadmap:plan-mvp")
+	if !ok {
+		return
+	}
 	tree, err := s.planner.PlanMVP(r.Context(), built.prd.Title, built.prd.Sections)
+	done(err)
 	if err != nil {
 		s.log.Error("plan mvp", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
@@ -138,7 +162,12 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	done, ok := s.admitAI(w, r, project.WorkspaceID, userID, "roadmap:expand")
+	if !ok {
+		return
+	}
 	children, err := s.planner.ExpandNode(r.Context(), project.Title, node.Title, node.Description)
+	done(err)
 	if err != nil {
 		s.log.Error("expand node", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
