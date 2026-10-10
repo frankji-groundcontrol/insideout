@@ -168,7 +168,7 @@ func (a *AnthropicStreamer) doStreamChat(ctx context.Context, system string, msg
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return Turn{}, anthropicHTTPError(resp)
+		return Turn{}, providerHTTPError("anthropic", resp)
 	}
 
 	idle := a.idleTimeout

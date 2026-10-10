@@ -151,7 +151,7 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return Turn{}, anthropicHTTPError(resp)
+		return Turn{}, providerHTTPError("openai-compatible responses", resp)
 	}
 
 	idle := s.idleTimeout

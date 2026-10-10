@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// fakeResponse builds an *http.Response the way anthropicHTTPError expects
+// fakeResponse builds an *http.Response the way providerHTTPError expects
 // to read one: status code, optional Retry-After header, and a body
 // shaped like a real Anthropic error payload
 // (https://docs.anthropic.com/en/api/errors).
@@ -83,7 +83,7 @@ func TestAnthropicHTTPError_Classification(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := anthropicHTTPError(tc.resp)
+			err := providerHTTPError("anthropic", tc.resp)
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("classified as %v, want wrapping %v", err, tc.wantErr)
 			}
@@ -99,13 +99,13 @@ func TestAnthropicHTTPError_Classification(t *testing.T) {
 
 func TestRetryAfterFrom_DefaultsAndCaps(t *testing.T) {
 	// No Retry-After header at all -> default cap.
-	err := anthropicHTTPError(fakeResponse(http.StatusTooManyRequests, "", `{}`))
+	err := providerHTTPError("anthropic", fakeResponse(http.StatusTooManyRequests, "", `{}`))
 	if got := retryAfterFrom(err); got != 20*time.Second {
 		t.Fatalf("no Retry-After: got %v, want 20s default", got)
 	}
 
 	// A huge Retry-After is capped at 20s, not honored verbatim.
-	err = anthropicHTTPError(fakeResponse(http.StatusTooManyRequests, "600", `{}`))
+	err = providerHTTPError("anthropic", fakeResponse(http.StatusTooManyRequests, "600", `{}`))
 	if got := retryAfterFrom(err); got != 20*time.Second {
 		t.Fatalf("huge Retry-After: got %v, want capped at 20s", got)
 	}

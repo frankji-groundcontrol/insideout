@@ -130,7 +130,7 @@ func retryAfterFrom(err error) time.Duration {
 }
 
 // rateLimitError carries the provider's Retry-After so streamChat can
-// honor it without anthropicHTTPError needing to know about retries.
+// honor it without providerHTTPError needing to know about retries.
 type rateLimitError struct {
 	msg        string
 	retryAfter time.Duration
@@ -140,17 +140,19 @@ func (e *rateLimitError) Error() string             { return e.msg }
 func (e *rateLimitError) Unwrap() error             { return ErrProviderRateLimited }
 func (e *rateLimitError) RetryAfter() time.Duration { return e.retryAfter }
 
-// anthropicHTTPError classifies a non-200 response into one of the
+// providerHTTPError classifies a non-200 response into one of the
 // sentinels in llm.go. This is the taxonomy's single decision point for
-// HTTP-level failures.
-func anthropicHTTPError(resp *http.Response) error {
+// HTTP-level failures. provider names who answered ("anthropic",
+// "openai-compatible responses") so a log line or ai_runs.error_message
+// blames the right upstream; both speak the {"error":{"type","message"}} body.
+func providerHTTPError(provider string, resp *http.Response) error {
 	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 	var parsed anthropicErrorBody
 	msg := string(raw)
 	if json.Unmarshal(raw, &parsed) == nil && parsed.Error.Message != "" {
 		msg = fmt.Sprintf("%s: %s", parsed.Error.Type, parsed.Error.Message)
 	}
-	full := fmt.Sprintf("agent: anthropic returned %s: %s", resp.Status, msg)
+	full := fmt.Sprintf("agent: %s returned %s: %s", provider, resp.Status, msg)
 
 	switch {
 	case resp.StatusCode == http.StatusTooManyRequests:
