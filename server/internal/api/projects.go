@@ -55,13 +55,35 @@ func projectQuietFlagged(p store.ProjectWithLatest, now time.Time) bool {
 	return now.Sub(last) > quietAfter
 }
 
+// boardPreviewRunes bounds the latest-update note the board list carries: a
+// card renders one ellipsized line, so the full text (up to
+// maxUpdateContentRunes) stays in the updates feed.
+const boardPreviewRunes = 200
+
+// previewRunes cuts a note to boardPreviewRunes runes plus an ellipsis,
+// counting runes so multibyte text is never split mid-character.
+func previewRunes(s *string) *string {
+	if s == nil {
+		return nil
+	}
+	n := 0
+	for i := range *s {
+		if n == boardPreviewRunes {
+			cut := (*s)[:i] + "…"
+			return &cut
+		}
+		n++
+	}
+	return s
+}
+
 func projectResponse(p store.ProjectWithLatest) projectView {
 	v := projectView{
 		ID: p.ID.String(), WorkspaceID: p.WorkspaceID.String(), Title: p.Title, Description: p.Description,
 		Status: p.Status, RepoURL: p.RepoURL, CreatedAt: p.CreatedAt.Format(timeLayout),
 		Flagged:             projectQuietFlagged(p, time.Now()),
 		LatestUpdateKind:    p.LatestUpdateKind,
-		LatestUpdateContent: p.LatestUpdateContent,
+		LatestUpdateContent: previewRunes(p.LatestUpdateContent),
 	}
 	if p.OwnerID != nil {
 		id := p.OwnerID.String()
