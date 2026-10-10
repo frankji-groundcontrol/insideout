@@ -93,7 +93,7 @@ const zhPrd = <String, String>{
   'coach.suggestTitle': '试试这样问',
   'coach.noConversation': '这份 PRD 还没有关联教练对话。',
   'coach.start': '开始教练对话',
-  'coach.factRecorded': '事实：{fact}',
+  'coach.factRecorded': '已记录事实：{fact}',
   'coach.finding.label': '评审发现',
   'coach.finding.severity.blocking': '阻塞',
   'coach.finding.severity.major': '重要',

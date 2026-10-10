@@ -107,7 +107,7 @@ const enPrd = <String, String>{
   'coach.suggestTitle': 'Try asking',
   'coach.noConversation': 'No coach conversation is linked to this PRD yet.',
   'coach.start': 'Start coaching',
-  'coach.factRecorded': 'Fact: {fact}',
+  'coach.factRecorded': 'Recorded fact: {fact}',
   'coach.finding.label': 'Review finding',
   'coach.finding.severity.blocking': 'Blocking',
   'coach.finding.severity.major': 'Major',
