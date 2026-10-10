@@ -235,6 +235,7 @@ Fail-fast errors from `config.Load` (the server refuses to start):
 | `config: INSIDEOUT_JWT_SECRET must be at least 32 characters` | Use a longer secret (≥32 chars). |
 | `config: invalid INSIDEOUT_ACCESS_TTL "xyz": time: invalid duration "xyz"` | Use a valid Go duration (e.g. `15m`, `720h`) or unset it to take the default. Same shape for `INSIDEOUT_REFRESH_TTL`. |
 | `config: INSIDEOUT_LLM_SCHEMA must be messages or responses` | Set `INSIDEOUT_LLM_SCHEMA` to `messages` or `responses`, or unset it to take `messages`. |
+| `config: INSIDEOUT_DEV_CORS=1 reflects any Origin with credentials, so it is only allowed with a localhost INSIDEOUT_PUBLIC_URL` | Unset `INSIDEOUT_DEV_CORS` (never set it on a hosted deployment). Needs a LAN or hosted browser origin? List it in `INSIDEOUT_CORS_ORIGINS` instead. |
 
 **The browser drops auth cookies over http.** That is the `Secure` attribute
 doing its job. Set `INSIDEOUT_COOKIE_SECURE=0` for plain-http local dev.
