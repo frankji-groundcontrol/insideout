@@ -201,6 +201,29 @@ class _PrdPageState extends State<PrdPage> {
     }
   }
 
+  // Mirrors the server (EnsureConversationForPrd): the PRD's author or a
+  // workspace admin. While the role or the author is unknown the block stays
+  // and the server decides.
+  bool get _canStartCoach {
+    final me = context.read<Session>().user?.id;
+    final author = prd?.authorId;
+    return myRole != 'member' || me == null || author == null || me == author;
+  }
+
+  Future<void> _startCoach() async {
+    final api = context.read<Session>().api;
+    await guardWrite(context, () async {
+      final conv = await api.startPrdConversation(widget.id);
+      // A resumed one (say, begun in another tab) already has a history.
+      final msgs = await api.listMessages(conv.id);
+      if (!mounted) return;
+      setState(() {
+        conversation = conv;
+        messages = msgs;
+      });
+    });
+  }
+
   Future<void> _requestReview() async {
     await guardWrite(context, () async {
       final updated = await context.read<Session>().api.updatePrdStatus(
@@ -242,6 +265,7 @@ class _PrdPageState extends State<PrdPage> {
       prdId: widget.id,
       conversation: conversation,
       messages: messages,
+      onStart: _canStartCoach ? _startCoach : null,
       onPrdUpdated: () async {
         final fresh = await context.read<Session>().api.getPrd(widget.id);
         if (!mounted) return;

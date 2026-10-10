@@ -96,6 +96,7 @@ const enPrd = <String, String>{
   'coach.closeCoach': 'Close the coach',
   'coach.suggestTitle': 'Try asking',
   'coach.noConversation': 'No coach conversation is linked to this PRD yet.',
+  'coach.start': 'Start coaching',
   'coach.factRecorded': 'Fact: {fact}',
   'coach.finding.label': 'Review finding',
   'coach.finding.severity.blocking': 'Blocking',

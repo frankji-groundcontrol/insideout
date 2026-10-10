@@ -15,6 +15,7 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
 import 'coach_finding.dart';
+import 'coach_start.dart';
 
 class CoachPanel extends StatefulWidget {
   const CoachPanel({
@@ -24,6 +25,7 @@ class CoachPanel extends StatefulWidget {
     required this.messages,
     required this.onPrdUpdated,
     required this.onStageChanged,
+    this.onStart,
   });
 
   final String prdId;
@@ -31,6 +33,9 @@ class CoachPanel extends StatefulWidget {
   final List<ChatMessage> messages;
   final Future<void> Function() onPrdUpdated;
   final void Function(String stage) onStageChanged;
+
+  /// Starts the viewer's own conversation; null when they may not.
+  final Future<void> Function()? onStart;
 
   @override
   State<CoachPanel> createState() => _CoachPanelState();
@@ -175,12 +180,9 @@ class _CoachPanelState extends State<CoachPanel> {
               onClose: () => setState(() => open = false),
             ),
             if (widget.conversation == null)
-              Padding(
-                padding: const EdgeInsets.all(Cobalt.space6),
-                child: Text(
-                  l10n.t('coach.noConversation'),
-                  style: cobaltSerif(palette, size: 20, color: ink),
-                ),
+              CoachStart(
+                message: l10n.t('coach.noConversation'),
+                onStart: widget.onStart,
               )
             else ...[
               if (suggestions.isNotEmpty)
