@@ -1,0 +1,33 @@
+version: 2
+task: "Multirole review 3 and the workflow-ready improvement plan"
+coordinator: zcode
+history_file: 2026-10-10-multirole-3-and-improvement.track.history.jsonl
+main:
+  outcome: "A third whole-tree review over the close-open-gaps tip: every High skeptic-verified, the top findings reproduced by the coordinator, the report written and indexed, and a remediation plan the next session can execute as dynamic workflows."
+  owner: zcode
+  status: completed
+  next_evidence: "main at 97a7919 (review folder + plan + records, docs-only); CI 38060821064 green; GitHub, MBP2, MBP on one commit. Register: 83 findings, 17 High (16 confirmed, 0 refuted), buckets FIX 22 / HARDEN 22 / IMPROVE 25 / ADD 8."
+side_tracks: []
+updated_at: "2026-10-10T14:55:00Z"
+plan:
+- step: "Scout: branches, routers, cheap leads run (done pre-workflow)"
+  owner: zcode
+  status: completed
+- step: "Fan out 10 briefs (5 roles + 5 dimensions) via one dynamic workflow (dwfrun-b9216947, 52 min)"
+  owner: zcode
+  status: completed
+- step: "Skeptics refute every High/Critical (16 confirmed, 0 refuted); completeness critic closes (6 rows)"
+  owner: zcode
+  status: completed
+- step: "Reproduce the top findings myself (11 Highs; ARCH-01's fix direction corrected — x/sys and x/term pin the floor at Go 1.26.0)"
+  owner: zcode
+  status: completed
+- step: "Write docs/review/2026-10-10-multirole-3/ (register, exec summary, role files, critic, remediation plan) and link both indexes"
+  owner: zcode
+  status: completed
+- step: "Remediation plan is workflow-executable: 4 waves, 30 file-disjoint clusters, red-first briefs, worker→verifier→repair contract"
+  owner: zcode
+  status: completed
+- step: "Close records: changelog, board row, HANDOFF, learning note; push, CI green, MBP synced"
+  owner: zcode
+  status: completed

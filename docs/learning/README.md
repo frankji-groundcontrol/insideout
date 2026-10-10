@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-10 | [A skeptic confirms the finding, not the fix](2026-10-10-a-skeptic-confirms-the-finding-not-the-fix.md) | [multirole review 3](../changelogs/2026-10-10-multirole-review-3.md) |
 | 2026-10-10 | [A frozen orchestration is recoverable if the state is on disk](2026-10-10-resumable-orchestration.md) | [review-register sweep](../changelogs/2026-10-10-close-open-gaps/review-sweep-server.md) |
 | 2026-10-10 | [zh Material strings cost the web bundle ~110 KB gzip](2026-10-10-locale-tables-cost-110kb-gzip.md) | [review-register sweep, client](../changelogs/2026-10-10-close-open-gaps/review-sweep-client.md) |
 | 2026-10-10 | [A VM test cannot show what the web's key map does](2026-10-10-vm-tests-do-not-run-the-web-key-map.md) | [BUG-028](../issues/2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md) |
