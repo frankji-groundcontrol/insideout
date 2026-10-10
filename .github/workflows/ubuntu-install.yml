@@ -77,12 +77,21 @@ jobs:
         run: |
           curl -fsIL "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.0-stable.tar.xz" | head -1
 
+      # A clean PATH again: the runner already has ~/.local/bin on it, which
+      # would send install.sh down its "already on PATH" branch and skip the
+      # rc-file edit a fresh Ubuntu user relies on.
       - name: Step 3A, install.sh builds both binaries and puts them on PATH
         run: |
-          SHELL=/bin/bash ./scripts/install.sh
+          env -i HOME="$HOME" SHELL=/bin/bash \
+            PATH=/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+            ./scripts/install.sh
           grep -q 'added by insideout installer' "$HOME/.bashrc"
+          # A new interactive shell (the rc file returns early otherwise) finds both binaries.
+          for b in insideout insideout-mcp; do
+            found=$(env -i HOME="$HOME" PATH=/usr/bin:/bin bash -ic "command -v $b" 2>/dev/null)
+            test "$found" = "$HOME/.local/bin/$b" || { echo "::error::new shell resolves $b to '$found'"; exit 1; }
+          done
           export PATH="$HOME/.local/bin:$PATH"
-          test -x "$HOME/.local/bin/insideout-mcp"
           insideout setup --hosted </dev/null
           # A closed port proves the Linux binary runs and reaches its HTTP
           # client without calling the hosted API from CI.
