@@ -263,7 +263,7 @@ class _WorkspaceColumn extends StatelessWidget {
                 Text(workspaces[i].title, style: theme.textTheme.titleLarge),
                 const SizedBox(height: Cobalt.space2),
                 Text(
-                  '${l10n.t('workspace.role.${workspaces[i].myRole}')} · ${l10n.t('workspace.members', {'count': workspaces[i].memberCount})}',
+                  '${l10n.t('workspace.role.${workspaces[i].myRole}')} · ${l10n.t(workspaces[i].memberCount == 1 ? 'workspace.membersOne' : 'workspace.members', {'count': workspaces[i].memberCount})}',
                   style: theme.textTheme.bodySmall,
                 ),
               ],

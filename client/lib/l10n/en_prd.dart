@@ -19,6 +19,8 @@ const enPrd = <String, String>{
   'prd.buildMVP': 'Draft the roadmap',
   'prd.buildReplaceConfirm':
       'This project already has a roadmap with {count} nodes. Replace it with a freshly drafted one? The current tree will be lost.',
+  'prd.buildReplaceConfirmOne':
+      'This project already has a roadmap with {count} node. Replace it with a freshly drafted one? The current tree will be lost.',
   'prd.exportPrint': 'Print / Save as PDF',
   'prd.revisionsTitle': 'Version history',
   'prd.revisionN': 'Version {n}',

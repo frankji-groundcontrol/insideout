@@ -158,7 +158,12 @@ class _PrdPageState extends State<PrdPage> {
         final ok = await showBlockConfirm(
           context: context,
           title: t('prd.buildMVP'),
-          message: t('prd.buildReplaceConfirm', {'count': e.liveCount}),
+          message: t(
+            e.liveCount == 1
+                ? 'prd.buildReplaceConfirmOne'
+                : 'prd.buildReplaceConfirm',
+            {'count': e.liveCount},
+          ),
           confirmText: t('common.confirm'),
           danger: true,
         );

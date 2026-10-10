@@ -16,6 +16,7 @@ const enWorkspace = <String, String>{
       "You haven't joined any workspace yet. Create one or enter an invite code.",
   'workspace.inviteCode': 'Invite code: {code}',
   'workspace.members': '{count} members',
+  'workspace.membersOne': '{count} member',
   'workspace.ideas': 'Ideas',
   'workspace.settings': 'Settings',
   'workspace.settingsTitle': 'Workspace settings',

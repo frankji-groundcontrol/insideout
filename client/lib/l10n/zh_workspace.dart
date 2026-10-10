@@ -15,6 +15,7 @@ const zhWorkspace = <String, String>{
   'workspace.empty': '你还没有加入任何工作区。创建一个，或输入邀请码。',
   'workspace.inviteCode': '邀请码：{code}',
   'workspace.members': '{count} 位成员',
+  'workspace.membersOne': '{count} 位成员',
   'workspace.ideas': '想法',
   'workspace.settings': '设置',
   'workspace.settingsTitle': '工作区设置',

@@ -18,6 +18,7 @@ const zhPrd = <String, String>{
   'prd.exportMarkdown': '下载 Markdown',
   'prd.buildMVP': '起草路线图',
   'prd.buildReplaceConfirm': '这个项目已有 {count} 个路线图节点。用新起草的树替换吗？当前树会丢失。',
+  'prd.buildReplaceConfirmOne': '这个项目已有 {count} 个路线图节点。用新起草的树替换吗？当前树会丢失。',
   'prd.exportPrint': '打印 / 另存为 PDF',
   'prd.revisionsTitle': '版本历史',
   'prd.revisionN': '第 {n} 版',
