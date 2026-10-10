@@ -24,8 +24,13 @@ class PrdDeskColumn extends StatelessWidget {
     required this.onSnapshot,
     required this.onBuild,
     required this.onStatus,
+    this.embedded = false,
   });
 
+  /// True when the page's own list already scrolls (the stacked phone
+  /// layout): the column then lays out at full height instead of scrolling
+  /// inside a fixed box, where a touch drag over it never moved the page.
+  final bool embedded;
   final String prdId;
   final Prd? prd;
   final TextEditingController titleCtrl;
@@ -64,11 +69,13 @@ class PrdDeskColumn extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
+          shrinkWrap: embedded,
+          physics: embedded ? const NeverScrollableScrollPhysics() : null,
+          padding: EdgeInsets.fromLTRB(
             Cobalt.space6,
             64,
             Cobalt.space6,
-            140,
+            embedded ? Cobalt.space4 : 140,
           ),
           children: [
             Text(

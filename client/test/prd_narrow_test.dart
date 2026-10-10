@@ -135,12 +135,15 @@ void main() {
     tester,
   ) async {
     await _pump(tester, size: _phone);
-    final coach = find.text('PRD COACH');
-    final before = tester.getTopLeft(coach).dy;
 
-    await tester.dragFrom(const Offset(200, 300), const Offset(0, -400));
-    await tester.pumpAndSettle();
+    // Keep dragging up from inside the PRD column, as a reader would.
+    for (var i = 0; i < 8; i++) {
+      await tester.dragFrom(const Offset(200, 300), const Offset(0, -500));
+      await tester.pumpAndSettle();
+    }
 
-    expect(tester.getTopLeft(coach).dy, lessThan(before));
+    // The page itself scrolled: the coach block is pulled up the screen
+    // (it sat at y=704 while the column's own list took every drag).
+    expect(tester.getTopLeft(find.text('PRD COACH')).dy, lessThan(400));
   });
 }

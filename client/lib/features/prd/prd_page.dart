@@ -206,7 +206,7 @@ class _PrdPageState extends State<PrdPage> {
                 )
               : ListView(
                   children: [
-                    SizedBox(height: 640, child: _prdColumn()),
+                    _prdColumn(embedded: true),
                     // 640, not 520: the coach chrome (header + prompt blocks +
                     // composer + dock clearance) leaves the quote list a real
                     // viewport instead of a negative one.
@@ -244,8 +244,9 @@ class _PrdPageState extends State<PrdPage> {
     );
   }
 
-  Widget _prdColumn() {
+  Widget _prdColumn({bool embedded = false}) {
     return PrdDeskColumn(
+      embedded: embedded,
       prdId: widget.id,
       prd: prd,
       titleCtrl: titleCtrl,
