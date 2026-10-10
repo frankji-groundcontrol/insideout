@@ -121,9 +121,7 @@ class RoadmapCanvas extends StatelessWidget {
                       ),
                       Text(
                         c.name,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(fontSize: 10),
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
                   ),

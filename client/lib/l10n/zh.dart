@@ -362,6 +362,11 @@ const zhCN = <String, String>{
   'write.failed': '保存失败：{error}',
   'proposal.accept': '接受',
   'proposal.reject': '驳回',
+  // project (close-open-gaps)
+  'roadmap.minimap.status.done': '完成',
+  'roadmap.minimap.status.in_progress': '进行中',
+  'roadmap.minimap.status.locked': '锁定',
+  'roadmap.minimap.status.pending': '待办',
 };
 
 const zhCoachSuggest = <String, List<String>>{

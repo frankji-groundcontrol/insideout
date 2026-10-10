@@ -388,6 +388,11 @@ const enUS = <String, String>{
   'write.failed': 'Save failed — {error}',
   'proposal.accept': 'Accept',
   'proposal.reject': 'Reject',
+  // project (close-open-gaps)
+  'roadmap.minimap.status.done': 'done',
+  'roadmap.minimap.status.in_progress': 'in progress',
+  'roadmap.minimap.status.locked': 'locked',
+  'roadmap.minimap.status.pending': 'pending',
 };
 
 const enCoachSuggest = <String, List<String>>{
