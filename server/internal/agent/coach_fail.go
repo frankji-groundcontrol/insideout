@@ -7,6 +7,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// ErrLoopInternal marks a failure of our own coach loop (the tool-iteration cap,
+// a store read mid-turn) as opposed to anything the provider did. It is not a
+// provider-health signal, so it never feeds the circuit breaker.
+var ErrLoopInternal = errors.New("agent: internal loop failure")
+
 // countsAgainstCircuit reports whether a failed turn says something about the
 // provider's health. The breaker is one global row, so only such failures may
 // feed it: a config problem, a refused answer, an oversized context or a client
