@@ -19,6 +19,11 @@
 #   cd server && ./scripts/smoke.sh            # boots its own server
 #   SMOKE_BASE=http://127.0.0.1:54321 ./scripts/smoke.sh   # use a running one
 #   SMOKE_SERVER_LOG=/path/server.log ./scripts/smoke.sh   # keep the boot log
+#   SMOKE_HOSTED=1 SMOKE_BASE=https://host ./scripts/smoke.sh   # read-only
+#     probes of a running deployment (TEST-03): the SPA entry page, healthz,
+#     the public auth config and an unauthenticated 401, plus an
+#     authenticated /me when INSIDEOUT_TOKEN is set. It registers no users
+#     and writes nothing, so it needs neither a database nor open signup.
 #
 # ponytail: one bash script + curl + jq is the smallest live check that fails
 # loudly if any surface breaks; upgrade to a Go httptest harness only if this
@@ -52,6 +57,13 @@ trap cleanup EXIT
 
 pass() { PASS=$((PASS+1)); printf '  \033[32mPASS\033[0m %s\n' "$1"; }
 fail() { FAIL=$((FAIL+1)); printf '  \033[31mFAIL\033[0m %s\n    code=%s body=%.240s\n' "$1" "${CODE:-?}" "${BODY:-}"; }
+
+# Hosted mode only ever probes, so it must not fall through to booting a
+# server of its own: without SMOKE_BASE it has nothing to probe.
+if [ "${SMOKE_HOSTED:-0}" = "1" ] && [ -z "${SMOKE_BASE:-}" ]; then
+  echo "hosted mode probes a running deployment: set SMOKE_BASE to its public URL" >&2
+  exit 2
+fi
 
 # ---- boot the server unless SMOKE_BASE points at one already ----------------
 if [ -z "${SMOKE_BASE:-}" ]; then
@@ -94,6 +106,45 @@ expect_nonempty() { # expect_field_nonempty JQPATH LABEL
   local got; got="$(jget "$1")"
   [ -n "$got" ] && pass "$2" || fail "$2 (field $1 empty)"
 }
+
+# ---- hosted mode: read-only probes of a running deployment (TEST-03) -----
+# The five surfaces below register users and write data, so they need an
+# open-signup database of their own; the hosted deployment is
+# invitation-only and must not be written to by a probe. Hosted mode
+# instead proves the deployed stack answers at all: the SPA entry page
+# (where a missing client image or a broken nginx upstream shows first,
+# BUG-027), healthz, the public auth config, and the unauthenticated 401
+# of BUG-027's owner check. The one authenticated probe is gated on
+# INSIDEOUT_TOKEN (the CLI's session env) and skips with a message when
+# it is not configured — a missing secret never fails a hosted run.
+if [ "${SMOKE_HOSTED:-0}" = "1" ]; then
+  echo
+  echo "=== H: hosted deployment, read-only probes at $BASE ==="
+  CODE="$(curl -sL -o "$BODYF" -w '%{http_code}' "$BASE/" || echo 000)"
+  BODY="$(cat "$BODYF" 2>/dev/null || echo '')"
+  expect_code 200 "hosted SPA entry page 200"
+  if printf '%s' "$BODY" | grep -iq '<html'; then
+    pass "entry page serves HTML (the client image is there)"
+  else
+    fail "entry page serves HTML (the client image is there)"
+  fi
+  call GET /healthz "" "$NOJAR"; expect_code 200 "hosted healthz 200"
+  call GET /api/v1/auth/config "" "$NOJAR"; expect_code 200 "hosted auth config 200"
+  expect_nonempty .signupMode "auth config carries signupMode"
+  call GET /api/v1/me "" "$NOJAR"; expect_code 401 "hosted unauthenticated /me 401"
+  if [ -n "${INSIDEOUT_TOKEN:-}" ]; then
+    CODE="$(curl -s -o "$BODYF" -w '%{http_code}' \
+      -H "Authorization: Bearer $INSIDEOUT_TOKEN" "$BASE/api/v1/me" || echo 000)"
+    BODY="$(cat "$BODYF" 2>/dev/null || echo '')"
+    expect_code 200 "hosted authenticated /me 200 (INSIDEOUT_TOKEN)"
+  else
+    echo "  SKIP: authenticated /me probe — INSIDEOUT_TOKEN not set (read-only probes only)"
+  fi
+  printf '=== RESULT: %d passed, %d failed ===\n' "$PASS" "$FAIL"
+  [ "$FAIL" -eq 0 ] || exit 1
+  echo "HOSTED PROBES GREEN"
+  exit 0
+fi
 
 # A fresh database is invitation-only and answers 403 to a bare register, so
 # say so up front instead of failing every later step.

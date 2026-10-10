@@ -5,11 +5,26 @@ name: smoke
 # schedule. It runs nightly and on demand, never on a pull request: it boots a
 # server and reaches GitHub's public API once. Scheduled runs use the default
 # branch; a red one is a real signal (GitHub 429/404/502 is tolerated by S3).
+#
+# TEST-03: the five surfaces boot their own throwaway server, so the nightly
+# could stay green while the public deployment is broken. The hosted mode
+# (dispatchable, and on the nightly schedule with it) runs smoke.sh against
+# the public URL in read-only probe mode: the SPA entry page, healthz, the
+# auth config, an unauthenticated 401, and an authenticated /me when
+# INSIDEOUT_TOKEN is configured — a missing secret skips, never fails.
 
 on:
   schedule:
     - cron: "23 2 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "dev = the five-surface suite on a throwaway database; hosted = read-only probes of the public deployment"
+        type: choice
+        options:
+          - dev
+          - hosted
+        default: dev
 
 permissions:
   contents: read
@@ -17,6 +32,9 @@ permissions:
 jobs:
   smoke:
     name: live smoke (go + postgres)
+    # TEST-03: the hosted dispatch mode runs the hosted-smoke job below
+    # instead of this one; scheduled runs (empty inputs.mode) stay here.
+    if: inputs.mode != 'hosted'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -77,3 +95,26 @@ jobs:
           path: /tmp/smoke-server.log
           if-no-files-found: ignore
           retention-days: 7
+
+  # TEST-03: read-only probes of the public deployment — the lane that
+  # fails first when the hosted stack breaks (a missing client image, a
+  # broken nginx upstream, a mis-set env var). No database and no writes:
+  # smoke.sh in SMOKE_HOSTED mode registers no users. The authenticated
+  # /me probe runs only when INSIDEOUT_TOKEN (the CLI's session env) is
+  # configured as a repo secret; without it the probe prints a skip line,
+  # so a missing secret never fails this job. The origin is
+  # apiclient.DefaultBase's host; scripts/tests/check_smoke_wiring.py
+  # pins the two together.
+  hosted-smoke:
+    name: hosted smoke (read-only probes, public deployment)
+    if: github.event_name == 'schedule' || inputs.mode == 'hosted'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SMOKE_BASE: https://insideout.yalotein.net
+      SMOKE_HOSTED: "1"
+      INSIDEOUT_TOKEN: ${{ secrets.INSIDEOUT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe the public deployment
+        run: ./server/scripts/smoke.sh
