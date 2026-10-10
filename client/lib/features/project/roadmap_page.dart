@@ -19,6 +19,7 @@ import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
 import 'roadmap_canvas.dart';
+import 'roadmap_header.dart';
 import 'roadmap_node_card.dart';
 import 'roadmap_progress_view.dart';
 import 'roadmap_tree.dart';
@@ -194,51 +195,27 @@ class _RoadmapPageState extends State<RoadmapPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    final theme = Theme.of(context);
+    final choices = [
+      for (final view in _RoadmapView.values)
+        BlockChoice(
+          label: l10n.t(switch (view) {
+            _RoadmapView.progress => 'roadmap.viewProgress',
+            _RoadmapView.bands => 'roadmap.viewBands',
+            _RoadmapView.canvas => 'roadmap.viewCanvas',
+          }),
+          selected: _view == view,
+          onTap: () => setState(() => _view = view),
+        ),
+    ];
+    // Three toggles plus four utility icons run off a phone's left edge, so
+    // there the toggles move into the header.
+    final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
     return AppScaffold(
-      actions: [
-        for (final view in _RoadmapView.values)
-          BlockChoice(
-            label: l10n.t(switch (view) {
-              _RoadmapView.progress => 'roadmap.viewProgress',
-              _RoadmapView.bands => 'roadmap.viewBands',
-              _RoadmapView.canvas => 'roadmap.viewCanvas',
-            }),
-            selected: _view == view,
-            onTap: () => setState(() => _view = view),
-          ),
-      ],
+      actions: narrow ? null : choices,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 64, 28, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.t('roadmap.title').toUpperCase(),
-                        style: theme.textTheme.displaySmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        l10n.t('roadmap.lead'),
-                        style: theme.textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
-                ),
-                BlockButton(
-                  label: l10n.t('roadmap.newItem'),
-                  icon: Icons.add,
-                  onPressed: _addRoot,
-                ),
-              ],
-            ),
-          ),
+          RoadmapHeader(compact: narrow, viewChoices: choices, onAdd: _addRoot),
           if (_presence.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
