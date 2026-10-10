@@ -6,9 +6,9 @@ main:
   outcome: "Every open issue record and board item is fixed and verified, or carries the reason only the owner can close it; CI on main is green; GitHub, MBP2, and MBP share one commit."
   owner: zcode
   status: active
-  next_evidence: "Sweep complete 2026-10-10: all 24 batches accepted by independent verifiers (13 round-1 + 11 round-2/resume), integrated onto main (fast-forward to 82cf072) with 3 cross-cluster conflicts resolved and 2 integration fixes gated. Full gates on a fresh PostgreSQL 18: gofmt/build/vet clean, go test 814 PASS / 0 FAIL / 1 named SKIP, go test -race 25 packages clean, Flutter 421/421 (analyze 14 infos < 16 baseline, format clean), all three nginx checks pass. Disposition ledger final: 187 findings, 0 unresolved. Left: push, CI green, MBP fast-forward (reachable at 8ee97fc), records."
+  next_evidence: "Sweep complete 2026-10-10: all 24 batches accepted by independent verifiers (13 round-1 + 11 round-2/resume), integrated onto main (fast-forward to 82cf072) with 3 cross-cluster conflicts resolved and 2 integration fixes gated. Full gates on a fresh PostgreSQL 18: gofmt/build/vet clean, go test 814 PASS / 0 FAIL / 1 named SKIP, go test -race 25 packages clean, Flutter 421/421 (analyze 14 infos < 16 baseline, format clean), all three nginx checks pass. Disposition ledger final: 187 findings, 0 unresolved. Records landed in 8a6b4a7..f90722a; left: push, CI green on the new tip, MBP fast-forward (reachable at 8ee97fc)."
 side_tracks: []
-updated_at: "2026-10-10T11:30:00Z"
+updated_at: "2026-10-10T12:10:00Z"
 plan:
 - step: "Fix BUG-021: pin XDG_CONFIG_HOME beside HOME; isolate the mcp-config script test"
   owner: claude
