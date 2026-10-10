@@ -11,8 +11,13 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
 
+// Two findings as agent/critic.go CriticFinding marshals them; the first
+// carries a suggestion, the second does not.
+const _findings =
+    '{"findings":[{"id":"c1","section":"goals","severity":"blocking","kind":"omission","issue":"no measurable objective","suggestion":"name one metric and a target","status":"open"},{"id":"c2","section":"users","severity":"minor","kind":"defect","issue":"segment is unnamed","quote":"someone","status":"open"}]}';
+
 class _FindingsApi extends ApiClient {
-  _FindingsApi()
+  _FindingsApi({this.payload = _findings, this.later})
     : super(
         baseUrl: 'http://127.0.0.1:9/api/v1',
         readAccess: () async => null,
@@ -21,15 +26,21 @@ class _FindingsApi extends ApiClient {
         clearTokens: () async {},
       );
 
+  final String payload;
+
+  /// Applied instead of the findings on every send after the first.
+  final SseFrame? later;
+  int sends = 0;
+
   @override
   Future<void> sendCoach(
     String conversationId,
     String content,
     CoachHandlers handlers,
   ) async {
-    const payload =
-        '{"findings":[{"id":"c1","section":"goals","severity":"blocking","kind":"omission","issue":"no measurable objective","status":"open"},{"id":"c2","section":"users","severity":"minor","kind":"defect","issue":"segment is unnamed","quote":"someone","status":"open"}]}';
-    applyCoachFrame(const SseFrame('critic_findings', payload), handlers);
+    sends += 1;
+    final next = sends > 1 ? later : null;
+    applyCoachFrame(next ?? SseFrame('critic_findings', payload), handlers);
   }
 }
 
@@ -143,6 +154,23 @@ Future<void> _pumpCoach(
   await tester.pumpAndSettle();
 }
 
+// Tall enough that every finding is on screen without scrolling.
+Future<void> _pumpTall(
+  WidgetTester tester,
+  ApiClient api,
+  String locale,
+) async {
+  await tester.binding.setSurfaceSize(const Size(800, 1800));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  await _pumpCoach(tester, api, locale: locale);
+}
+
+Future<void> _send(WidgetTester tester, String text) async {
+  await tester.enterText(find.byType(TextField), text);
+  await tester.tap(find.byIcon(Icons.send));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('coach panel shows both critic findings from one SSE event', (
     tester,
@@ -187,6 +215,84 @@ void main() {
     expect(find.textContaining('no measurable objective'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, -400));
     await tester.pumpAndSettle();
+    expect(find.textContaining('segment is unnamed'), findsOneWidget);
+  });
+
+  // The finding block rendered only the issue, under the raw English token
+  // 'critic' (also in zh). Severity, kind and suggestion were sent and dropped.
+  for (final (locale, blocking, minor, label, suggestion) in const [
+    (
+      'en-US',
+      'Blocking',
+      'Minor',
+      'Review finding',
+      'Suggestion: name one metric and a target',
+    ),
+    ('zh-CN', '阻塞', '次要', '评审发现', '建议：name one metric and a target'),
+  ]) {
+    testWidgets('a critic finding shows its severity, label and suggestion '
+        '($locale)', (tester) async {
+      await _pumpTall(tester, _FindingsApi(), locale);
+      await _send(tester, 'review this');
+
+      expect(find.text('$blocking / $label'), findsOneWidget);
+      expect(find.text('$minor / $label'), findsOneWidget);
+      // Only the first finding carries a suggestion.
+      expect(find.text(suggestion), findsOneWidget);
+      expect(find.text('critic'), findsNothing);
+    });
+  }
+
+  testWidgets('an unknown severity prints the label alone, never the token', (
+    tester,
+  ) async {
+    await _pumpTall(
+      tester,
+      _FindingsApi(
+        payload:
+            '{"findings":[{"id":"c1","section":"goals","severity":"catastrophic","issue":"no measurable objective","status":"open"}]}',
+      ),
+      'en-US',
+    );
+    await _send(tester, 'review this');
+
+    expect(find.textContaining('no measurable objective'), findsOneWidget);
+    expect(find.text('Review finding'), findsOneWidget);
+    expect(find.textContaining('catastrophic'), findsNothing);
+    expect(find.text('critic'), findsNothing);
+  });
+
+  // Findings belong to the stage they were raised in; the server keeps the list
+  // across non-critique turns on purpose, so only a stage change retires them.
+  testWidgets('a stage change retires the findings raised in the old stage', (
+    tester,
+  ) async {
+    final api = _FindingsApi(
+      later: const SseFrame('stage_changed', '{"stage":"finalize"}'),
+    );
+    await _pumpTall(tester, api, 'en-US');
+    await _send(tester, 'review this');
+    expect(find.textContaining('no measurable objective'), findsOneWidget);
+
+    await _send(tester, 'looks good, finalize');
+
+    expect(api.sends, 2);
+    expect(find.textContaining('no measurable objective'), findsNothing);
+    expect(find.textContaining('segment is unnamed'), findsNothing);
+  });
+
+  testWidgets('a send that leaves the stage alone keeps the findings', (
+    tester,
+  ) async {
+    final api = _FindingsApi(
+      later: const SseFrame('delta', '{"text":"Take the first one."}'),
+    );
+    await _pumpTall(tester, api, 'en-US');
+    await _send(tester, 'review this');
+    await _send(tester, 'which first?');
+
+    expect(find.textContaining('Take the first one.'), findsOneWidget);
+    expect(find.textContaining('no measurable objective'), findsOneWidget);
     expect(find.textContaining('segment is unnamed'), findsOneWidget);
   });
 
