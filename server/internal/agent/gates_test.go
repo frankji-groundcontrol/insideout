@@ -40,7 +40,9 @@ func seedConversation(t *testing.T, st *store.Store) (userID string, executor *t
 	if err != nil {
 		t.Fatalf("create workspace: %v", err)
 	}
-	idea, err := st.CreateIdea(ctx, u.ID, ws.ID, "an idea", "content")
+	// Bodyless idea: ConvertIdea seeds the body as the conversation's first
+	// message, and the coach-turn tests must own the transcript they assert.
+	idea, err := st.CreateIdea(ctx, u.ID, ws.ID, "an idea", "")
 	if err != nil {
 		t.Fatalf("create idea: %v", err)
 	}
