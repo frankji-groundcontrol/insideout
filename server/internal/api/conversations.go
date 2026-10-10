@@ -14,6 +14,7 @@ func (s *Server) registerConversationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/conversations/{id}/messages", s.requireAuth(s.handleListConversationMessages))
 	mux.HandleFunc("POST /api/v1/conversations/{id}/messages", s.requireAuth(s.handleSendConversationMessage))
 	mux.HandleFunc("POST /api/v1/conversations/{id}/stage", s.requireAuth(s.handleConfirmConversationStage))
+	mux.HandleFunc("POST /api/v1/prds/{id}/conversation", s.requireAuth(s.handleStartPrdConversation))
 }
 
 type conversationView struct {
@@ -49,6 +50,37 @@ func (s *Server) handleGetConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, conversationResponse(*conv))
+}
+
+// handleStartPrdConversation starts the caller's own coach conversation on a
+// PRD, or returns the one they already have. GET /prds/{id}/conversation only
+// ever finds the caller's (conversations are owner-only) and ConvertIdea makes
+// just the converter's, so this is how any other author or admin gets one.
+func (s *Server) handleStartPrdConversation(w http.ResponseWriter, r *http.Request) {
+	userID, _ := UserID(r.Context())
+	pid, ok := pathUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	conv, created, err := s.store.EnsureConversationForPrd(r.Context(), userID, pid)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrForbidden) {
+		httpx.WriteError(w, http.StatusForbidden, "only the author or a workspace admin can coach this PRD", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("start prd conversation", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	status := http.StatusOK
+	if created {
+		status = http.StatusCreated
+	}
+	httpx.WriteJSON(w, status, conversationResponse(*conv))
 }
 
 type messageView struct {

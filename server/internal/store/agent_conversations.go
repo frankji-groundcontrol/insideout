@@ -74,22 +74,58 @@ func (s *Store) GetConversationForOwner(ctx context.Context, conversationID, use
 func (s *Store) GetLatestConversationForPrd(ctx context.Context, prdID, userID uuid.UUID) (*AgentConversation, error) {
 	var c *AgentConversation
 	err := s.withUserContext(ctx, userID, func(tx pgx.Tx) error {
-		row := tx.QueryRow(ctx, `
-			SELECT `+agentConversationColumns+`
-			FROM insideout.agent_conversations
-			WHERE prd_id = $1 AND user_id = $2
-			ORDER BY created_at DESC
-			LIMIT 1`,
-			prdID, userID,
-		)
 		var scanErr error
-		c, scanErr = scanAgentConversation(row)
+		c, scanErr = latestConversationForPrd(ctx, tx, prdID, userID)
 		return scanErr
 	})
 	if err != nil {
 		return nil, err
 	}
 	return c, nil
+}
+
+// latestConversationForPrd must be called with an open transaction.
+func latestConversationForPrd(ctx context.Context, tx pgx.Tx, prdID, userID uuid.UUID) (*AgentConversation, error) {
+	return scanAgentConversation(tx.QueryRow(ctx, `
+		SELECT `+agentConversationColumns+`
+		FROM insideout.agent_conversations
+		WHERE prd_id = $1 AND user_id = $2
+		ORDER BY created_at DESC
+		LIMIT 1`,
+		prdID, userID,
+	))
+}
+
+// EnsureConversationForPrd returns actorID's own coach conversation on the PRD,
+// starting one if they have none; created reports a new row. Conversations are
+// owner-only and ConvertIdea makes just the converter's, so every other author
+// or admin needs this to coach the PRD. The gate is the one UpdateSections
+// applies to the sections the coach edits. The per-(PRD, user) advisory lock
+// closes the check-then-insert window: the table has no unique key on it, so
+// concurrent starts would each add a row.
+func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*AgentConversation, bool, error) {
+	var conv *AgentConversation
+	created := false
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		prd, err := requirePrdAuthorOrAdmin(ctx, tx, prdID, actorID)
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, "prd_conversation:"+prdID.String()+":"+actorID.String()); err != nil {
+			return err
+		}
+		conv, err = latestConversationForPrd(ctx, tx, prdID, actorID)
+		if !errors.Is(err, ErrNotFound) {
+			return err
+		}
+		conv, err = insertAgentConversation(ctx, tx, prd.WorkspaceID, actorID, prdID)
+		created = err == nil
+		return err
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	return conv, created, nil
 }
 
 func (s *Store) UpdateConversationStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
@@ -132,9 +168,4 @@ func (s *Store) CompleteConversation(ctx context.Context, actorID, conversationI
 		_, err := tx.Exec(ctx, `UPDATE insideout.agent_conversations SET status = 'completed' WHERE id = $1`, conversationID)
 		return err
 	})
-}
-
-// EnsureConversationForPrd is a stub until the fix lands.
-func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*AgentConversation, bool, error) {
-	return nil, false, errors.New("not implemented")
 }
