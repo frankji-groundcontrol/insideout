@@ -10,6 +10,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/presence"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
 
 // Real-time canvas presence: connecting to the stream registers the
@@ -20,6 +21,24 @@ func (s *Server) registerPresenceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}/presence", s.requireAuth(s.handlePresenceList))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/presence/stream", s.requireAuth(s.handlePresenceStream))
 	mux.HandleFunc("POST /api/v1/projects/{pid}/cursor", s.requireAuth(s.handleCursor))
+}
+
+// maxClientIDRunes caps the caller-chosen part of a presence key.
+const maxClientIDRunes = 64
+
+// presenceKey is the registry key of one viewer tab. The client id comes from
+// the query string, so the key also carries the authenticated user: two
+// members who send the same id are two sessions, and neither can overwrite or
+// evict the other. No client id keeps the bare user id, which is what callers
+// that predate the parameter get.
+func presenceKey(userID uuid.UUID, client string) string {
+	if client == "" {
+		return userID.String()
+	}
+	if r := []rune(client); len(r) > maxClientIDRunes {
+		client = string(r[:maxClientIDRunes])
+	}
+	return userID.String() + ":" + client
 }
 
 func (s *Server) handlePresenceList(w http.ResponseWriter, r *http.Request) {
@@ -55,15 +74,11 @@ func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
-	client := r.URL.Query().Get("client")
-	if client == "" {
-		client = userID.String()
-	}
 	name := userID.String()[:8]
 	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {
 		name = u.Username
 	}
-	s.presence.Cursor(pid.String(), client, name, req.X, req.Y)
+	s.presence.Cursor(pid.String(), presenceKey(userID, r.URL.Query().Get("client")), name, req.X, req.Y)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -77,10 +92,7 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 		presenceProjectError(w, err)
 		return
 	}
-	client := r.URL.Query().Get("client")
-	if client == "" {
-		client = userID.String()
-	}
+	key := presenceKey(userID, r.URL.Query().Get("client"))
 	name := userID.String()[:8]
 	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {
 		name = u.Username
@@ -107,7 +119,7 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 
 	// Registering is itself the first change: subscribers (including
 	// this one) receive the snapshot with us in it.
-	s.presence.Touch(pid.String(), client, userID.String(), name)
+	s.presence.Touch(pid.String(), key, userID.String(), name)
 	writeSnapshot(s.presence.List(pid.String()))
 
 	heartbeat := time.NewTicker(streamHeartbeat)
@@ -115,10 +127,10 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 	for {
 		select {
 		case <-r.Context().Done():
-			s.presence.Leave(pid.String(), client)
+			s.presence.Leave(pid.String(), key)
 			return
 		case <-s.streamsCtx.Done():
-			s.presence.Leave(pid.String(), client)
+			s.presence.Leave(pid.String(), key)
 			return
 		case entries, okCh := <-updates:
 			if !okCh {
@@ -129,6 +141,9 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 			if !okEv {
 				return
 			}
+			if ev.SessionID == key {
+				continue // the viewer's own pointer: the client already knows where it is
+			}
 			if raw, err := json.Marshal(ev); err == nil {
 				httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 				fmt.Fprintf(w, "event: cursor\ndata: %s\n\n", raw)
@@ -136,7 +151,7 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 			}
 		case <-heartbeat.C:
 			// The ping doubles as this session's heartbeat refresh.
-			s.presence.Touch(pid.String(), client, userID.String(), name)
+			s.presence.Touch(pid.String(), key, userID.String(), name)
 			httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 			fmt.Fprint(w, ": ping\n\n")
 			flusher.Flush()
