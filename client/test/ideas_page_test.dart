@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
@@ -26,6 +28,10 @@ class _FakeApi extends ApiClient {
   void Function(String title)? onCreate;
   Future<Map<String, String>> Function(String id)? onConvert;
 
+  /// While set, every write waits on it, so a test can unmount the page with
+  /// the write still in flight.
+  Completer<void>? gate;
+
   @override
   Future<List<Idea>> listIdeas(String workspaceId) async => ideas;
 
@@ -38,6 +44,7 @@ class _FakeApi extends ApiClient {
     String title,
     String content,
   ) async {
+    await gate?.future;
     onCreate?.call(title);
     final idea = _idea('i-${ideas.length + 1}', title);
     ideas.add(idea);
@@ -45,7 +52,20 @@ class _FakeApi extends ApiClient {
   }
 
   @override
-  Future<void> dropIdea(String id) async => onDrop?.call(id);
+  Future<void> dropIdea(String id) async {
+    await gate?.future;
+    onDrop?.call(id);
+  }
+
+  @override
+  Future<Idea> updateIdea(
+    String id, {
+    required String title,
+    required String content,
+  }) async {
+    await gate?.future;
+    return _idea(id, title);
+  }
 
   @override
   Future<Map<String, String>> convertIdea(String ideaId) async {
@@ -90,6 +110,18 @@ Future<void> _pump(WidgetTester tester, _FakeApi api) async {
     ),
   );
   await tester.pumpAndSettle();
+}
+
+// FS-08: a write that outlives its page must not touch the disposed capture
+// field or call setState on the dead state. Unmount, then let the write finish.
+Future<void> _unmountThenFinish(
+  WidgetTester tester,
+  Completer<void> gate,
+) async {
+  await tester.pumpWidget(const SizedBox());
+  gate.complete();
+  await tester.pump();
+  expect(tester.takeException(), isNull);
 }
 
 void main() {
@@ -230,5 +262,50 @@ void main() {
 
     expect(find.text('Drop'), findsOneWidget);
     expect(converts, 0);
+  });
+
+  testWidgets('a capture that finishes after the page is gone does not throw', (
+    tester,
+  ) async {
+    final gate = Completer<void>();
+    await _pump(tester, _FakeApi([_idea('i1', 'Keep me')])..gate = gate);
+
+    await tester.enterText(find.byType(TextField), 'Ship the cobalt wave');
+    await tester.tap(find.text('Capture'));
+    await tester.pump();
+
+    await _unmountThenFinish(tester, gate);
+  });
+
+  testWidgets('a drop that finishes after the page is gone does not throw', (
+    tester,
+  ) async {
+    final gate = Completer<void>();
+    await _pump(tester, _FakeApi([_idea('i1', 'Drop me')])..gate = gate);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Drop'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Drop').last);
+    await tester.pump();
+
+    await _unmountThenFinish(tester, gate);
+  });
+
+  testWidgets('an edit that finishes after the page is gone does not throw', (
+    tester,
+  ) async {
+    final gate = Completer<void>();
+    await _pump(tester, _FakeApi([_idea('i1', 'Edit me')])..gate = gate);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+
+    await _unmountThenFinish(tester, gate);
   });
 }
