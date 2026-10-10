@@ -8,9 +8,14 @@ import 'package:insideout/theme/cobalt.dart';
 import 'package:insideout/theme/cobalt_theme.dart';
 import 'package:insideout/widgets/pressable_block.dart';
 
-Widget host(Widget child, {bool dark = true}) {
+Widget host(
+  Widget child, {
+  bool dark = true,
+  Map<ShortcutActivator, Intent>? shortcuts,
+}) {
   final palette = dark ? Cobalt.dark : Cobalt.light;
   return MaterialApp(
+    shortcuts: shortcuts,
     theme: cobaltTheme(
       palette,
       brightness: dark ? Brightness.dark : Brightness.light,
@@ -18,6 +23,18 @@ Widget host(Widget child, {bool dark = true}) {
     home: Scaffold(body: Center(child: child)),
   );
 }
+
+/// The key map Flutter uses on the web: Space is [ActivateIntent] but Enter is
+/// [ButtonActivateIntent] ("on the web, enter activates buttons, but not other
+/// controls", `WidgetsApp.defaultShortcuts`). A control that handles only
+/// [ActivateIntent] answers Space and ignores Enter in a browser, while every
+/// test on the VM, where Enter is [ActivateIntent], passes.
+final webShortcuts = <ShortcutActivator, Intent>{
+  ...WidgetsApp.defaultShortcuts,
+  const SingleActivator(LogicalKeyboardKey.enter): const ButtonActivateIntent(),
+  const SingleActivator(LogicalKeyboardKey.numpadEnter):
+      const ButtonActivateIntent(),
+};
 
 /// The cobalt focus ring, found by its painter so the assertion cannot be
 /// satisfied by an unrelated CustomPaint in the widget tree.
@@ -164,5 +181,49 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
     expect(blocks, 1);
+  });
+
+  testWidgets('Enter activates every focusable block under the web key map', (
+    tester,
+  ) async {
+    final hits = <String>[];
+    await tester.pumpWidget(
+      host(
+        shortcuts: webShortcuts,
+        Column(
+          children: [
+            BlockButton(label: 'Go', onPressed: () => hits.add('button')),
+            BlockIconButton(
+              icon: Icons.translate,
+              onPressed: () => hits.add('icon'),
+            ),
+            BlockChoice(
+              label: 'One',
+              selected: false,
+              onTap: () => hits.add('choice'),
+            ),
+            PressableBlock(
+              onTap: () => hits.add('row'),
+              child: const SizedBox(width: 80, height: 40),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Space first, so a miss on Enter cannot be a focus or key-map problem.
+    for (var i = 0; i < 4; i++) {
+      await focusFirst(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.space);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+    }
+    expect(hits, [
+      'button', 'button', //
+      'icon', 'icon',
+      'choice', 'choice',
+      'row', 'row',
+    ]);
   });
 }
