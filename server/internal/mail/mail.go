@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sync"
 	"time"
 )
 
@@ -26,6 +27,12 @@ type Sender struct {
 	client  *http.Client
 	// endpoint defaults to the Resend API; tests point it at httptest.
 	endpoint string
+	// lastMu guards lastErr, the error of the most recent Send (nil after
+	// a success). The admin mail probe surfaces it: the auth flows swallow
+	// send failures into a uniform 200, so without it a dead mail funnel
+	// leaves nothing but a server log line (review-3 ARCH-03).
+	lastMu  sync.Mutex
+	lastErr error
 }
 
 func NewSender(apiKey, from string, log *slog.Logger, devBody bool) *Sender {
@@ -46,10 +53,31 @@ func (s *Sender) Enabled() bool {
 	return s.apiKey != ""
 }
 
-// Send delivers (or, in dev mode, logs) a message. The text body should
-// carry the load-bearing content — links included; in dev mode it reaches
-// the log line only when the sender was built with the devBody opt-in.
+// Send delivers (or, in dev mode, logs) a message and records the outcome
+// for LastSendError. The text body should carry the load-bearing content —
+// links included; in dev mode it reaches the log line only when the sender
+// was built with the devBody opt-in.
 func (s *Sender) Send(ctx context.Context, to, subject, text, html string) error {
+	err := s.send(ctx, to, subject, text, html)
+	s.lastMu.Lock()
+	s.lastErr = err
+	s.lastMu.Unlock()
+	return err
+}
+
+// LastSendError returns the error of the most recent Send, or "" when the
+// last send succeeded (or nothing has been sent yet). The admin mail probe
+// reports it so an operator can see the funnel's last real failure.
+func (s *Sender) LastSendError() string {
+	s.lastMu.Lock()
+	defer s.lastMu.Unlock()
+	if s.lastErr == nil {
+		return ""
+	}
+	return s.lastErr.Error()
+}
+
+func (s *Sender) send(ctx context.Context, to, subject, text, html string) error {
 	if !s.Enabled() {
 		if s.devBody {
 			s.log.Info("mail dev mode — not sent", "to", to, "subject", subject, "text", text)

@@ -24,6 +24,7 @@ func (s *Server) registerAdminRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/admin/invitations", s.requireAdmin(s.handleCreateInvitation))
 	mux.HandleFunc("GET /api/v1/admin/invitations", s.requireAdmin(s.handleListInvitations))
 	mux.HandleFunc("POST /api/v1/admin/invitations/{id}/revoke", s.requireAdmin(s.handleRevokeInvitation))
+	mux.HandleFunc("POST /api/v1/admin/mail/probe", s.requireAdmin(s.handleAdminMailProbe))
 }
 
 // requireAdmin chains requireAuth with the system_role check. The 403
@@ -187,4 +188,60 @@ func (s *Server) handleRevokeInvitation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// handleAdminMailProbe is the mail funnel's working-signal (review-3
+// ARCH-03). The auth email flows answer every request with a uniform 200 —
+// deliberately, so callers can't probe addresses — and mailEnabled only
+// reports key presence, so a deployment whose key is set but whose domain
+// is unverified silently delivers nothing, with a log line as the only
+// trace. The probe sends one typed test message and reports the provider's
+// verdict to the admin instead.
+//
+// Operator note: with the default From (InsideOut <onboarding@resend.dev>)
+// Resend delivers only to the account owner's own verified address — a
+// probe to any other recipient comes back with the provider's refusal.
+// Verify a domain (INSIDEOUT_MAIL_FROM), then exercise one real invitee
+// before opening signup.
+func (s *Server) handleAdminMailProbe(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := httpx.DecodeJSON(r, &req); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if !emailPattern.MatchString(email) {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid email", "", nil)
+		return
+	}
+
+	// Snapshot the last failure of any earlier send (a user's magic link,
+	// an invitation) before this probe's own send overwrites the record.
+	lastError := s.mail.LastSendError()
+
+	// The send always runs: in dev mode it logs the message and returns
+	// nil, so the probe exercises the same path every other send takes.
+	sendErr := s.mail.Send(r.Context(), email,
+		"InsideOut mail probe",
+		"This is a test send from the InsideOut admin mail probe. If you received it, delivery to this address works.",
+		"")
+
+	res := map[string]any{
+		"mailEnabled": s.mail.Enabled(),
+		"lastError":   lastError,
+	}
+	switch {
+	case !s.mail.Enabled():
+		res["status"] = "disabled"
+		res["detail"] = "no mail API key configured; the message was logged (dev mode), not delivered"
+	case sendErr != nil:
+		res["status"] = "error"
+		res["error"] = sendErr.Error()
+	default:
+		res["status"] = "sent"
+	}
+	s.log.Info("admin: mail probe", "to", email, "status", res["status"], "error", sendErr)
+	httpx.WriteJSON(w, http.StatusOK, res)
 }
