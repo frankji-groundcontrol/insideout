@@ -94,8 +94,9 @@ mixin _PrdVerbs on _ApiCore {
   }
 
   /// The caller's coach conversation on the PRD, started if they have none.
-  Future<Conversation> startPrdConversation(String prdId) async {
-    final res = await _exec(req.postPrdConversation(prdId));
+  /// [locale] is the language the coach speaks in it — the app locale.
+  Future<Conversation> startPrdConversation(String prdId, String locale) async {
+    final res = await _exec(req.postPrdConversation(prdId, locale));
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
   }
 

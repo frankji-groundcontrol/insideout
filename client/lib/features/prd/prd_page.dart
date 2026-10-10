@@ -182,8 +182,10 @@ class _PrdPageState extends State<PrdPage> {
 
   Future<void> _startCoach() async {
     final api = context.read<Session>().api;
+    // The coach speaks the language the app is running in.
+    final locale = context.read<Appearance>().locale;
     await guardWrite(context, () async {
-      final conv = await api.startPrdConversation(widget.id);
+      final conv = await api.startPrdConversation(widget.id, locale);
       // A resumed one (say, begun in another tab) already has a history.
       final msgs = await api.listMessages(conv.id);
       if (!mounted) return;

@@ -116,8 +116,16 @@ mixin _WorkspaceVerbs on _ApiCore {
     await _parse(await _exec(req.deleteIdea(id)), (d) => d);
   }
 
-  Future<Map<String, String>> convertIdea(String ideaId) async {
-    final res = await _dio.post('/ideas/$ideaId/convert');
+  /// Converts the idea and mints its coaching conversation; [locale] is the
+  /// language that conversation coaches in — the app locale.
+  Future<Map<String, String>> convertIdea(
+    String ideaId, {
+    required String locale,
+  }) async {
+    final res = await _dio.post(
+      '/ideas/$ideaId/convert',
+      data: {'locale': locale},
+    );
     return _parse(
       res,
       (d) => (d as Map).map((k, v) => MapEntry(k.toString(), v.toString())),

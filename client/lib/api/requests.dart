@@ -124,9 +124,10 @@ ApiCall postPrdStatus(String id, String status) {
 /// Starts the caller's own coach conversation on the PRD, or returns the one
 /// they already have: 201 when new, 200 when resumed. Conversations are
 /// owner-only, so `GET /prds/{id}/conversation` finds nothing for a teammate
-/// who has not started one.
-ApiCall postPrdConversation(String id) =>
-    ApiCall('POST', '/prds/$id/conversation');
+/// who has not started one. [locale] is the app locale the coach must speak
+/// ('en-US' / 'zh-CN'); the server canonicalizes and remembers it.
+ApiCall postPrdConversation(String id, String locale) =>
+    ApiCall('POST', '/prds/$id/conversation', {'locale': locale});
 
 /// Confirms the stage the coach proposed (it waits in conversation meta,
 /// not in the stage column): the server writes it and clears the proposal.

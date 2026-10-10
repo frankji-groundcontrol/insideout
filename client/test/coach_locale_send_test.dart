@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -18,7 +16,8 @@ import 'package:provider/provider.dart';
 // strings come from.
 
 class _StartApi extends ApiClient {
-  _StartApi() : super(
+  _StartApi()
+    : super(
         baseUrl: 'http://127.0.0.1:9/api/v1',
         readAccess: () async => null,
         readRefresh: () async => null,
@@ -31,34 +30,34 @@ class _StartApi extends ApiClient {
 
   @override
   Future<Prd> getPrd(String id) async => Prd(
-        id: id,
-        workspaceId: 'ws-1',
-        title: 'Ship a thing',
-        sections: const {},
-        status: 'draft',
-        currentRevision: 1,
-        updatedAt: '2026-10-05T00:00:00Z',
-        authorId: 'u-author',
-      );
+    id: id,
+    workspaceId: 'ws-1',
+    title: 'Ship a thing',
+    sections: const {},
+    status: 'draft',
+    currentRevision: 1,
+    updatedAt: '2026-10-05T00:00:00Z',
+    authorId: 'u-author',
+  );
 
   @override
   Future<Conversation?> conversationForPrd(String prdId) async => null;
 
   @override
   Future<Workspace> getWorkspace(String id) async => Workspace.fromJson({
-        'id': id,
-        'title': 'Locale Test WS',
-        'description': '',
-        'code': 'CODE12',
-        'status': 'active',
-        'memberCount': 2,
-        'myRole': 'admin',
-        'createdAt': '2026-01-01T00:00:00Z',
-      });
+    'id': id,
+    'title': 'Locale Test WS',
+    'description': '',
+    'code': 'CODE12',
+    'status': 'active',
+    'memberCount': 2,
+    'myRole': 'admin',
+    'createdAt': '2026-01-01T00:00:00Z',
+  });
 
   @override
-  Future<Conversation> startPrdConversation(String prdId) async {
-    calls.add(postPrdConversation(prdId));
+  Future<Conversation> startPrdConversation(String prdId, String locale) async {
+    calls.add(postPrdConversation(prdId, locale));
     return Conversation(
       id: 'c-new',
       prdId: prdId,

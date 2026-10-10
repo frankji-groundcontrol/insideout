@@ -32,6 +32,9 @@ class _FakeApi extends ApiClient {
   /// the write still in flight.
   Completer<void>? gate;
 
+  /// Every convert request's locale, as the page read it from Appearance.
+  final convertLocales = <String>[];
+
   @override
   Future<List<Idea>> listIdeas(String workspaceId) async => ideas;
 
@@ -68,7 +71,11 @@ class _FakeApi extends ApiClient {
   }
 
   @override
-  Future<Map<String, String>> convertIdea(String ideaId) async {
+  Future<Map<String, String>> convertIdea(
+    String ideaId, {
+    required String locale,
+  }) async {
+    convertLocales.add(locale);
     final convert = onConvert;
     if (convert != null) return convert(ideaId);
     return {'prdId': 'prd-1'};
@@ -221,6 +228,20 @@ void main() {
       findsOneWidget,
     );
     expect(_card('keep me'), findsOneWidget);
+  });
+
+  // FEAT-01 (review 3): the conversation minted by conversion coaches in
+  // the app's language, so the convert request carries the running locale.
+  testWidgets('convert sends the running app locale', (tester) async {
+    final api = _FakeApi([
+      _idea('i1', 'Keep me'),
+    ], onConvert: (_) async => throw ApiException('boom', status: 500));
+    await _pump(tester, api);
+
+    await tester.tap(find.text('Convert to PRD'));
+    await tester.pumpAndSettle();
+
+    expect(api.convertLocales, ['en-US']);
   });
 
   // The poster looks like the primary object, so its body does what its

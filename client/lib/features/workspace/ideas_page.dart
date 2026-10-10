@@ -159,8 +159,10 @@ class _IdeasPageState extends State<IdeasPage> {
               // 4.2: on failure the guard shows the error and the idea card
               // stays as-is — nothing is cleared, so retrying is safe.
               await guardWrite(context, () async {
+                // The minted conversation coaches in the app's language.
                 final ids = await context.read<Session>().api.convertIdea(
                   idea.id,
+                  locale: l10n.locale,
                 );
                 final prdId = ids['prdId'];
                 if (prdId != null && context.mounted) {

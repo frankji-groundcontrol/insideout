@@ -77,8 +77,8 @@ class _StartApi extends ApiClient {
   });
 
   @override
-  Future<Conversation> startPrdConversation(String prdId) async {
-    calls.add(postPrdConversation(prdId));
+  Future<Conversation> startPrdConversation(String prdId, String locale) async {
+    calls.add(postPrdConversation(prdId, locale));
     await hold?.future;
     final failure = this.failure;
     if (failure != null) throw failure;
