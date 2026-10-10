@@ -112,6 +112,11 @@ func runMigrate(ctx context.Context, log *slog.Logger, st *store.Store) {
 	log.Info("migrate: applied", "files", applied)
 }
 
+// shutdownDrain is how long in-flight requests get after shutdown starts
+// before they are cut. Scaffolding so the shutdown test compiles: nothing
+// reads it yet.
+var shutdownDrain = 20 * time.Second
+
 func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *config.Config) {
 	if _, err := st.Migrate(ctx); err != nil {
 		log.Error("migrate on startup", "error", err)
