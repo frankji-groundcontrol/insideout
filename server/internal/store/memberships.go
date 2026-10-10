@@ -46,12 +46,20 @@ func (s *Store) GetMembership(ctx context.Context, workspaceID, userID uuid.UUID
 	return &m, nil
 }
 
-// ListMembers requires actorID to already be a member (enforced by RLS
-// returning zero rows for non-members, not by a separate check — callers
-// already verify membership first via GetMembership for the 404 case).
+// ListMembers requires actorID to be a member, re-checked in the same
+// transaction as the read: a non-member gets ErrForbidden, not an empty list
+// that looks like a workspace with no members. RLS on workspace_memberships
+// filters the same rows (20260819190000 restored the FORCE that 20260720153000
+// had dropped), but a roster read shouldn't hinge on that table's RLS state —
+// every other member-gated store call checks in Go too. The API still answers
+// 404 up front via GetMembership.
 func (s *Store) ListMembers(ctx context.Context, actorID, workspaceID uuid.UUID) ([]MemberWithUser, error) {
 	var out []MemberWithUser
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
+			return err
+		}
+
 		rows, err := tx.Query(ctx, `
 			SELECT m.id, m.workspace_id, m.user_id, m.role, m.created_at, m.updated_at, u.username, u.email
 			FROM insideout.workspace_memberships m
