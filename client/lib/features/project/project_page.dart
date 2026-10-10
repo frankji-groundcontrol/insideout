@@ -13,6 +13,7 @@ import '../../session/session.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
+import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'project_dialogs.dart';
 import 'project_github_card.dart';
@@ -162,7 +163,9 @@ class _ProjectPageState extends State<ProjectPage> {
                         // fades back out (Cobalt-Neo tokens, 0 radius).
                         AnimatedContainer(
                           key: const ValueKey('evidence-pulse-flash'),
-                          duration: const Duration(milliseconds: 180),
+                          duration: inkReduceMotion(context)
+                              ? Duration.zero
+                              : const Duration(milliseconds: 180),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: _flash

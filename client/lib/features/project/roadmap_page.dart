@@ -15,6 +15,7 @@ import '../../theme/block_form.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
+import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
 import 'roadmap_canvas.dart';
@@ -142,9 +143,15 @@ class _RoadmapPageState extends State<RoadmapPage> {
   void _scrollToBand(int i) {
     if (!_canvasController.hasClients) return;
     final target =
-        i * (RoadmapCanvas.bandWidth + RoadmapCanvas.bandSpacing) - 24;
+        (i * (RoadmapCanvas.bandWidth + RoadmapCanvas.bandSpacing) - 24)
+            .clamp(0.0, _canvasController.position.maxScrollExtent)
+            .toDouble();
+    if (inkReduceMotion(context)) {
+      _canvasController.jumpTo(target);
+      return;
+    }
     _canvasController.animateTo(
-      target.clamp(0.0, _canvasController.position.maxScrollExtent).toDouble(),
+      target,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutCubic,
     );
