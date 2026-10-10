@@ -236,7 +236,7 @@ func TestRolelessProbeMatchesCatalog(t *testing.T) {
 	c := newRolelessCluster(t)
 	ctx := context.Background()
 	got, err := probeRoles(ctx, c.admin, ownerRole, appRole)
-	if want := (rolesProbe{canTry: true, database: "postgres"}); err != nil || got != want {
+	if want := (rolesProbe{canTry: true, database: "postgres", schemaMissing: true, dbOwner: "postgres"}); err != nil || got != want {
 		t.Fatalf("superuser on a roleless cluster: probeRoles = %+v, %v; want %+v", got, err, want)
 	}
 	checkProbeRoles(t, c.admin)

@@ -273,29 +273,41 @@ func TestCreateRolesFlagIsScopedToLocalOwn(t *testing.T) {
 // checkProbeRoles holds probeRoles to the catalog it reads: the connected role
 // (always present) is found in whichever slot it is asked about, a name nobody
 // has is not, canTry is the documented rule applied to the connected role's
-// own attributes, and database is the connected one. The role names are
-// parameters, so no insideout role is needed and nothing is created.
+// own attributes, and database is the connected one. The database facts —
+// who owns it, whether the schema is there, whether the role in the owner slot
+// may CREATE in it — are restated from other catalog views and functions. The
+// role names are parameters, so no insideout role is needed and nothing is
+// created.
 func checkProbeRoles(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 	ctx := context.Background()
-	var me, db string
-	var super, createRole, bypass bool
+	var me, db, dbOwner string
+	var super, createRole, bypass, haveSchema, meCanCreate bool
 	if err := pool.QueryRow(ctx, `
-		SELECT current_user, current_database(), rolsuper, rolcreaterole, rolbypassrls
-		FROM pg_roles WHERE rolname = current_user`).Scan(&me, &db, &super, &createRole, &bypass); err != nil {
+		SELECT current_user, current_database(), rolsuper, rolcreaterole, rolbypassrls,
+		       to_regnamespace('insideout') IS NOT NULL,
+		       has_database_privilege(current_user, current_database(), 'CREATE'),
+		       (SELECT o.rolname FROM pg_database d JOIN pg_roles o ON o.oid = d.datdba WHERE d.datname = current_database())
+		FROM pg_roles WHERE rolname = current_user`).
+		Scan(&me, &db, &super, &createRole, &bypass, &haveSchema, &meCanCreate, &dbOwner); err != nil {
 		t.Fatalf("read the connected role: %v", err)
 	}
 	const nobody = "insideout_probe_no_such_role"
-	canTry := super || (createRole && bypass)
+	want := func(owner, app, ownerCantCreate bool) rolesProbe {
+		return rolesProbe{
+			owner: owner, app: app, canTry: super || (createRole && bypass), database: db,
+			schemaMissing: !haveSchema, ownerCantCreate: ownerCantCreate, dbOwner: dbOwner,
+		}
+	}
 	for _, tt := range []struct {
 		name       string
 		owner, app string
 		want       rolesProbe
 	}{
-		{"connected role in the owner slot", me, nobody, rolesProbe{owner: true, canTry: canTry, database: db}},
-		{"connected role in the app slot", nobody, me, rolesProbe{app: true, canTry: canTry, database: db}},
-		{"neither exists", nobody, nobody + "_2", rolesProbe{canTry: canTry, database: db}},
-		{"both exist", me, me, rolesProbe{owner: true, app: true, canTry: canTry, database: db}},
+		{"connected role in the owner slot", me, nobody, want(true, false, !meCanCreate)},
+		{"connected role in the app slot", nobody, me, want(false, true, false)},
+		{"neither exists", nobody, nobody + "_2", want(false, false, false)},
+		{"both exist", me, me, want(true, true, !meCanCreate)},
 	} {
 		got, err := probeRoles(ctx, pool, tt.owner, tt.app)
 		if err != nil {

@@ -30,7 +30,7 @@ const (
 	appRole   = "insideout_app"
 )
 
-// rolesProbe is what one pg_roles round trip tells the decision.
+// rolesProbe is what one catalog round trip tells the decision.
 type rolesProbe struct {
 	owner, app bool // the role exists
 	// canTry: the connecting role may be able to create them — a superuser, or
@@ -39,6 +39,16 @@ type rolesProbe struct {
 	// stays authoritative (see provisionRoles).
 	canTry   bool
 	database string // current_database(): what the provisioning SQL targets
+
+	// What the migration needs of this database, as demonstrated facts (the
+	// zero value is "no problem known"). Its one database-level need is CREATE
+	// for insideout_owner, to create the insideout schema, and only while that
+	// is missing — owning the database or a grant provide it. A database
+	// somebody else owns migrates fine once an admin pre-created the schema (the
+	// shared-instance layout), so ownership alone is not the test.
+	schemaMissing   bool   // no insideout schema yet
+	ownerCantCreate bool   // insideout_owner exists and lacks CREATE on this database
+	dbOwner         string // who owns this database, for the message
 }
 
 func probeRoles(ctx context.Context, pool *pgxpool.Pool, owner, app string) (rolesProbe, error) {
@@ -47,28 +57,39 @@ func probeRoles(ctx context.Context, pool *pgxpool.Pool, owner, app string) (rol
 		SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1),
 		       EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $2),
 		       r.rolsuper OR (r.rolcreaterole AND r.rolbypassrls),
-		       current_database()
-		FROM pg_roles r WHERE r.rolname = current_user`, owner, app).
-		Scan(&p.owner, &p.app, &p.canTry, &p.database)
+		       current_database(),
+		       NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'insideout'),
+		       COALESCE((SELECT NOT has_database_privilege(o.rolname, current_database(), 'CREATE')
+		                 FROM pg_roles o WHERE o.rolname = $1), false),
+		       pg_get_userbyid(d.datdba)
+		FROM pg_roles r, pg_database d
+		WHERE r.rolname = current_user AND d.datname = current_database()`, owner, app).
+		Scan(&p.owner, &p.app, &p.canTry, &p.database, &p.schemaMissing, &p.ownerCantCreate, &p.dbOwner)
 	return p, err
 }
 
 type rolesAction int
 
 const (
-	rolesProceed rolesAction = iota // both present: migrate exactly as before
-	rolesCreate                     // provision without asking (--create-roles)
-	rolesAsk                        // provision if the user confirms (terminal)
-	rolesStop                       // print the SQL and stop before migrating
+	rolesProceed  rolesAction = iota // both present: migrate exactly as before
+	rolesCreate                      // provision without asking (--create-roles)
+	rolesAsk                         // provision if the user confirms (terminal)
+	rolesStop                        // print the SQL and stop before migrating
+	rolesNotReady                    // both present, but the migration cannot create the schema here
 )
 
 // decideRoles is the whole policy. A piped run never prompts (its stdin is the
 // DSN) and never provisions unasked: creating cluster-wide roles and changing
 // the database owner needs an explicit yes, from a prompt or --create-roles.
 // A lone existing role stops too: its password is unknown, so setup could not
-// wire it.
+// wire it. With both present it proceeds unless the migration would certainly
+// die on this database — schema missing and insideout_owner unable to create
+// it — and then it prints the fix and stops: changing a database's owner is
+// the operator's call, not a side effect of --create-roles.
 func decideRoles(p rolesProbe, terminal, create bool) rolesAction {
 	switch {
+	case p.owner && p.app && p.schemaMissing && p.ownerCantCreate:
+		return rolesNotReady
 	case p.owner && p.app:
 		return rolesProceed
 	case p.owner || p.app || !p.canTry:
@@ -101,6 +122,9 @@ func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL
 		return ownerURL, true
 	case rolesStop:
 		explainMissingRoles(p)
+		return "", false
+	case rolesNotReady:
+		explainNotReady(p)
 		return "", false
 	}
 	appURL, newOwnerURL, err := provisionRoles(ctx, pool, dsn, envPath, p.database)
@@ -158,6 +182,24 @@ func printRoleSQL(database string) {
 	}
 }
 
+// explainNotReady: the roles exist but this database is not theirs yet (a
+// further database on a provisioned cluster). Both fixes change someone's
+// database — its owner, or its schemas — so setup prints them and stops; the
+// second is the documented shared-instance layout, for a database that must
+// keep its owner.
+func explainNotReady(p rolesProbe) {
+	fmt.Fprintf(os.Stderr, "setup: roles %s and %s exist, but database %q is owned by %q,\n", ownerRole, appRole, p.database, p.dbOwner)
+	fmt.Fprintf(os.Stderr, "  and %s cannot create the insideout schema in it: the migrations would fail with\n", ownerRole)
+	fmt.Fprintln(os.Stderr, "  \"permission denied for database\". Nothing in the database was changed.")
+	fmt.Fprintf(os.Stderr, "\nRun ONE of these on database %q as a superuser (or as its owner, if that role is a\n", p.database)
+	fmt.Fprintf(os.Stderr, "member of %s), then re-run setup. To hand the database to the roles, as the bundled one is:\n\n", ownerRole)
+	for _, s := range databaseStatements(pgx.Identifier{p.database}.Sanitize()) {
+		fmt.Fprintf(os.Stderr, "  %s;\n", s)
+	}
+	fmt.Fprintln(os.Stderr, "\nOr, if the database must keep its owner (a shared instance), pre-create the schema instead:")
+	fmt.Fprintf(os.Stderr, "\n  CREATE SCHEMA insideout AUTHORIZATION %s;\n", ownerRole)
+}
+
 // roleStatements is 001-create-app-role.sh's end state in fresh-create form:
 // no NOT EXISTS guards and no trailing ALTER ROLE, which only matter when a
 // role may already exist (here both are known absent). Plain SQL, so it pastes
@@ -165,9 +207,17 @@ func printRoleSQL(database string) {
 // identifier; ownerPW and appPW are SQL string literals (placeholders when
 // printed).
 func roleStatements(db, ownerPW, appPW string) []string {
-	return []string{
+	return append([]string{
 		"CREATE ROLE " + ownerRole + " LOGIN NOSUPERUSER BYPASSRLS PASSWORD " + ownerPW,
 		"CREATE ROLE " + appRole + " LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD " + appPW,
+	}, databaseStatements(db)...)
+}
+
+// databaseStatements is the per-database half of that contract: what a further
+// database on an already-provisioned cluster still lacks. db is a quoted
+// identifier.
+func databaseStatements(db string) []string {
+	return []string{
 		"ALTER DATABASE " + db + " OWNER TO " + ownerRole,
 		"GRANT CONNECT ON DATABASE " + db + " TO " + appRole,
 		"REVOKE CREATE ON SCHEMA public FROM PUBLIC",
