@@ -177,4 +177,37 @@ void main() {
     expect(find.textContaining('1 members'), findsNothing);
     expect(find.textContaining('· 2 members'), findsOneWidget);
   });
+
+  // The create button only existed in the empty state, so once a user had one
+  // workspace the board offered join and nothing else.
+  testWidgets('a user who already has a workspace can still create another', (
+    tester,
+  ) async {
+    Workspace ws(String id, String title) => Workspace.fromJson({
+      'id': id,
+      'title': title,
+      'description': '',
+      'code': 'C$id',
+      'status': 'active',
+      'memberCount': 1,
+      'myRole': 'admin',
+      'createdAt': '2026-10-06T00:00:00Z',
+    });
+    final workspaces = [ws('w1', 'First WS')];
+    final api = _FakeApi(
+      workspaces,
+      onCreate: (title) => workspaces.add(ws('w2', title)),
+    );
+    await _pump(tester, api);
+
+    expect(find.text('Create a workspace'), findsOneWidget);
+    await tester.tap(find.text('Create a workspace'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Second WS');
+    await tester.tap(find.text('Create').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Second WS'), findsOneWidget);
+    expect(find.text('First WS'), findsOneWidget);
+  });
 }
