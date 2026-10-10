@@ -25,6 +25,7 @@ const enPrd = <String, String>{
       'What limits the work: time, budget, tech, dependencies?',
   'prd.sectionHint.risks': 'What could go wrong, and what is still unanswered?',
   'prd.exportMarkdown': 'Download Markdown',
+  'prd.exportTitle': 'Export',
   'prd.buildMVP': 'Draft the roadmap',
   'prd.buildReplaceConfirm':
       'This project already has a roadmap with {count} nodes. Replace it with a freshly drafted one? The current tree will be lost.',

@@ -77,7 +77,7 @@ class _ExportPageState extends State<ExportPage> {
     final palette = Cobalt.of(context);
     final markdown = format == 'markdown';
     return AppScaffold(
-      title: l10n.t('prd.exportMarkdown'),
+      title: l10n.t('prd.exportTitle'),
       paintTitle: true,
       body: Center(
         child: ConstrainedBox(

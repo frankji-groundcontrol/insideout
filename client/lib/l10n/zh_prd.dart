@@ -24,6 +24,7 @@ const zhPrd = <String, String>{
   'prd.sectionHint.constraints': '什么在限制这项工作：时间、预算、技术、依赖？',
   'prd.sectionHint.risks': '可能出什么问题？还有哪些问题没有答案？',
   'prd.exportMarkdown': '下载 Markdown',
+  'prd.exportTitle': '导出',
   'prd.buildMVP': '起草路线图',
   'prd.buildReplaceConfirm': '这个项目已有 {count} 个路线图节点。用新起草的树替换吗？当前树会丢失。',
   'prd.buildReplaceConfirmOne': '这个项目已有 {count} 个路线图节点。用新起草的树替换吗？当前树会丢失。',

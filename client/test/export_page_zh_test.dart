@@ -76,7 +76,8 @@ void main() {
     expect(tester.takeException(), isNull);
 
     // Distinctive zh strings; an English fallback would fail these.
-    expect(find.text('下载 Markdown'), findsNWidgets(2)); // title + format
+    expect(find.text('导出'), findsOneWidget); // prd.exportTitle
+    expect(find.text('下载 Markdown'), findsOneWidget); // format option
     expect(find.text('打印 / 另存为 PDF'), findsOneWidget); // prd.exportPrint
     expect(find.text('读者视图（可选）'), findsOneWidget); // prd.exportAudience
     expect(find.text('完整文档'), findsOneWidget); // prd.exportFull
