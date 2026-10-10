@@ -59,9 +59,13 @@ class _FakeApi extends ApiClient {
   }
 }
 
-Future<_FakeApi> _pump(WidgetTester tester, {String locale = 'en-US'}) async {
-  // Short enough that the board scrolls, so the list can be pulled at all.
-  await tester.binding.setSurfaceSize(const Size(900, 420));
+Future<_FakeApi> _pump(
+  WidgetTester tester, {
+  String locale = 'en-US',
+  // Short enough that the board scrolls, unless a test wants it not to.
+  Size size = const Size(900, 420),
+}) async {
+  await tester.binding.setSurfaceSize(size);
   addTearDown(() => tester.binding.setSurfaceSize(null));
   final api = _FakeApi();
   final session = Session()
@@ -131,6 +135,31 @@ void main() {
       }
     });
   }
+
+  // A phone showing a young workspace: the board is shorter than the screen.
+  // A list that cannot scroll cannot be overscrolled either, so the gesture
+  // only works while the list keeps always-scrollable physics (a vertical
+  // ListView without a controller has them by default).
+  testWidgets('a board shorter than the screen can still be pulled', (
+    tester,
+  ) async {
+    final api = await _pump(tester, size: const Size(900, 1500));
+    final list = tester.state<ScrollableState>(
+      find.descendant(
+        of: find.byType(ListView),
+        matching: find.byType(Scrollable),
+      ),
+    );
+    expect(list.position.maxScrollExtent, 0, reason: 'the board fits');
+
+    // The pull must clear a sixth of the viewport to arm.
+    await tester.fling(find.byType(ListView), const Offset(0, 700), 1000);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+
+    expect(api.projectLoads, 2);
+  });
 
   testWidgets('the loader arms only once the pull is long enough to refresh', (
     tester,
