@@ -110,6 +110,76 @@ jobs:
           INSIDEOUT_ROLELESS_URL: postgres://postgres:postgres@localhost:5433/postgres?sslmode=disable
         run: go test -tags roleless ./cmd/insideout/ -run Roleless -count=1 -v -timeout 10m
 
+  # TEST-01 (review-3): every other lane migrates a fresh empty database, so
+  # the post-2026-10-08 migrations (RLS policy rewrites, the short invite-code
+  # rotation) first meet real rows when the hosted stack deploys. This job
+  # replays only the deployed schema, loads the pinned old-shape seed
+  # (server/scripts/upgrade-seed.sql), migrates to HEAD through the server's
+  # own runner, then smokes the result: the upgrade path runs against
+  # production-shaped data before production ever sees it.
+  upgrade-replay:
+    name: upgrade replay (deployed schema + seed, migrate, smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:18.6 # same pin as the server job
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://insideout_app:ci-app-password@localhost:5432/postgres
+      DATABASE_OWNER_URL: postgres://insideout_owner:ci-owner-password@localhost:5432/postgres
+      INSIDEOUT_JWT_SECRET: ci-only-secret-not-used-anywhere-else-32
+      SMOKE_SERVER_LOG: /tmp/smoke-server.log
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      # Same two-role setup as the server job above. Throwaway passwords;
+      # this database lives only for this run.
+      - name: Create the two database roles
+        run: |
+          psql postgres://postgres:postgres@localhost:5432/postgres -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE insideout_owner LOGIN NOSUPERUSER BYPASSRLS PASSWORD 'ci-owner-password';
+          CREATE ROLE insideout_app LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD 'ci-app-password';
+          ALTER DATABASE postgres OWNER TO insideout_owner;
+          GRANT CONNECT ON DATABASE postgres TO insideout_app;
+          REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+          REVOKE ALL ON SCHEMA public FROM insideout_app;
+          SQL
+      - name: Replay the deployed schema, seed old data, migrate to HEAD
+        run: ./scripts/upgrade-replay.sh
+      # A replayed database is invitation-only like production; smoke.sh
+      # registers its own users, so open signup on this throwaway one.
+      - name: Open signup on the throwaway database
+        run: |
+          psql "$DATABASE_OWNER_URL" -v ON_ERROR_STOP=1 <<'SQL'
+          INSERT INTO insideout.settings (key, value) VALUES ('signup_mode', '"open"')
+          ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = now();
+          SQL
+      - name: Smoke
+        run: ./scripts/smoke.sh
+      - name: Keep the smoke server log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-replay-smoke-server-log
+          path: /tmp/smoke-server.log
+          if-no-files-found: ignore
+          retention-days: 7
+
   # Review-3 ARCH-01: go.mod's floor moved to 1.26.0 while the Dockerfile
   # stayed on golang:1.25 and no lane noticed — the image build is the only
   # place that toolchain mismatch can surface. CI must certify the toolchain
