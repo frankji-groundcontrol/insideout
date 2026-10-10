@@ -125,44 +125,8 @@ expect_nonempty() { # expect_field_nonempty JQPATH LABEL
   [ -n "$got" ] && pass "$2" || fail "$2 (field $1 empty)"
 }
 
-# ---- hosted mode: read-only probes of a running deployment (TEST-03) -----
-# The five surfaces below register users and write data, so they need an
-# open-signup database of their own; the hosted deployment is
-# invitation-only and must not be written to by a probe. Hosted mode
-# instead proves the deployed stack answers at all: the SPA entry page
-# (where a missing client image or a broken nginx upstream shows first,
-# BUG-027), healthz, the public auth config, and the unauthenticated 401
-# of BUG-027's owner check. The one authenticated probe is gated on
-# INSIDEOUT_TOKEN (the CLI's session env) and skips with a message when
-# it is not configured — a missing secret never fails a hosted run.
-if [ "${SMOKE_HOSTED:-0}" = "1" ]; then
-  echo
-  echo "=== H: hosted deployment, read-only probes at $BASE ==="
-  CODE="$(curl -sL -o "$BODYF" -w '%{http_code}' "$BASE/" || echo 000)"
-  BODY="$(cat "$BODYF" 2>/dev/null || echo '')"
-  expect_code 200 "hosted SPA entry page 200"
-  if printf '%s' "$BODY" | grep -iq '<html'; then
-    pass "entry page serves HTML (the client image is there)"
-  else
-    fail "entry page serves HTML (the client image is there)"
-  fi
-  call GET /healthz "" "$NOJAR"; expect_code 200 "hosted healthz 200"
-  call GET /api/v1/auth/config "" "$NOJAR"; expect_code 200 "hosted auth config 200"
-  expect_nonempty .signupMode "auth config carries signupMode"
-  call GET /api/v1/me "" "$NOJAR"; expect_code 401 "hosted unauthenticated /me 401"
-  if [ -n "${INSIDEOUT_TOKEN:-}" ]; then
-    CODE="$(curl -s -o "$BODYF" -w '%{http_code}' \
-      -H "Authorization: Bearer $INSIDEOUT_TOKEN" "$BASE/api/v1/me" || echo 000)"
-    BODY="$(cat "$BODYF" 2>/dev/null || echo '')"
-    expect_code 200 "hosted authenticated /me 200 (INSIDEOUT_TOKEN)"
-  else
-    echo "  SKIP: authenticated /me probe — INSIDEOUT_TOKEN not set (read-only probes only)"
-  fi
-  printf '=== RESULT: %d passed, %d failed ===\n' "$PASS" "$FAIL"
-  [ "$FAIL" -eq 0 ] || exit 1
-  echo "HOSTED PROBES GREEN"
-  exit 0
-fi
+source "$REPO_ROOT/server/scripts/smoke_hosted.sh"
+
 
 # A fresh database is invitation-only and answers 403 to a bare register, so
 # say so up front instead of failing every later step.
@@ -291,87 +255,8 @@ call GET "/api/v1/conversations/$CONV/messages" "" "$JAR2"; expect_any "403 404"
 call POST "/api/v1/prds/$PRD/build" "" "$JAR2"; expect_any "403 404" "user2 cannot build from foreign prd"
 call PATCH "/api/v1/updates/$UPD" '{"content":"hijack"}' "$JAR2"; expect_any "403 404" "user2 cannot edit foreign update"
 call GET "/api/v1/projects/$PROJ" "" "$NOJAR"; expect_code 401 "unauthenticated project read 401"
+source "$REPO_ROOT/server/scripts/smoke_providers.sh"
 
-echo
-echo "=== P1: mail provider shape (one real probe send) ==="
-# The auth email flows answer 200 regardless of delivery, so the only
-# response-truthful mail surface is the admin probe (review-3 ARCH-03). It
-# needs an admin: this run's own user is promoted through the owner pool —
-# the sanctioned path, there is no self-promotion API — and left that way;
-# every user here is a throwaway with a per-run name. The recipient must be
-# the Resend account's verified address (the default sender delivers to
-# nothing else), which is why SMOKE_MAIL_TO is configured, never invented.
-if [ -z "${INSIDEOUT_MAIL_API_KEY:-}" ]; then
-  echo "  SKIP: mail provider shape — INSIDEOUT_MAIL_API_KEY not set; mail runs in dev mode (logged, not delivered)"
-elif [ -z "${SMOKE_MAIL_TO:-}" ]; then
-  echo "  SKIP: mail provider shape — SMOKE_MAIL_TO not set; the default sender delivers only to the account's verified address"
-elif [ -n "${SMOKE_BASE:-}" ] || [ ! -x "$TMP/insideout" ]; then
-  echo "  SKIP: mail provider shape — needs the server booted by this script (promote-admin uses its owner pool)"
-elif [ -z "${DATABASE_OWNER_URL:-}" ]; then
-  echo "  SKIP: mail provider shape — no DATABASE_OWNER_URL to grant the probe's admin role"
-else
-  if "$TMP/insideout" promote-admin "$EMAIL1" >/dev/null 2>&1; then
-    pass "promote-admin granted the probe's admin role"
-    call POST /api/v1/admin/mail/probe "{\"email\":\"$SMOKE_MAIL_TO\"}" "$JAR"
-    expect_code 200 "admin mail probe accepted 200"
-    expect_field .status sent "provider accepted the send (status=sent)"
-    [ "$(jget .status)" = "sent" ] || echo "    provider says: $(jget .error)"
-  else
-    fail "promote-admin for the mail probe (owner pool reachable?)"
-  fi
-fi
-
-echo
-echo "=== P2: LLM provider shape (one real coach turn) ==="
-# S1/S2 above ran on the offline-template coach to stay deterministic, so
-# they prove nothing about the provider. This leg (review-3 TEST-05) is the
-# one place smoke talks to the real LLM: a second server with the key takes
-# over the database — the single-replica contract (api/single_replica.go's
-# advisory lock) allows exactly one api server per database, so the offline
-# one is stopped first instead of run beside — and a single coach turn
-# through it fails here, with logs, when the provider stops accepting our
-# request shape, instead of on deploy day.
-if [ -n "${SMOKE_BASE:-}" ]; then
-  echo "  SKIP: LLM provider shape — SMOKE_BASE run; S1 above already exercised that server's coach"
-elif [ -z "${INSIDEOUT_LLM_API_KEY:-}" ]; then
-  echo "  SKIP: LLM provider shape — INSIDEOUT_LLM_API_KEY not set; only the offline template coach is covered (S1/S2)"
-else
-  PORT2=$(( (RANDOM % 20000) + 20000 )); BASE2="http://127.0.0.1:$PORT2"
-  kill "$SRV_PID" 2>/dev/null || true
-  wait "$SRV_PID" 2>/dev/null || true # exit ends the lock's session; sleep out the race
-  SRV_PID=""; sleep 1
-  echo "  real-key server taking over the database on $BASE2"
-  INSIDEOUT_ADDR=":$PORT2" "$TMP/insideout" >>"$SERVER_LOG" 2>&1 &
-  SRV2_PID=$!
-  HEALTHY=""
-  for _ in $(seq 1 60); do
-    if curl -fsS "$BASE2/healthz" >/dev/null 2>&1; then HEALTHY=1; break; fi
-    sleep 0.5
-  done
-  if [ -z "$HEALTHY" ]; then
-    fail "real-key server healthy at $BASE2"
-  else
-    BASE="$BASE2" # the helpers below target the real-key server
-    JAR3="$TMP/u3.jar"; : > "$JAR3"
-    call POST /api/v1/auth/register "{\"email\":\"smoke+$RUN-c@example.com\",\"password\":\"smokepass123\",\"username\":\"smoke3$RUN\"}" "$JAR3"
-    expect_code 201 "register user3 on the real-key server 201"
-    call POST /api/v1/workspaces "{\"title\":\"WS2 $RUN\",\"description\":\"smoke\"}" "$JAR3"
-    expect_code 201 "create workspace on the real-key server 201"; WS2="$(jget .id)"
-    call POST "/api/v1/workspaces/$WS2/ideas" "{\"title\":\"Idea2 $RUN\",\"content\":\"a note-taking app for teams\"}" "$JAR3"
-    expect_code 201 "create idea on the real-key server 201"; IDEA2="$(jget .id)"
-    call POST "/api/v1/ideas/$IDEA2/convert" "" "$JAR3"
-    expect_code 201 "convert idea on the real-key server 201"; CONV2="$(jget .conversationId)"
-    CODE=""; : > "$SSEOUT"
-    curl -sN --max-time 60 -b "$JAR3" -H 'Content-Type: application/json' \
-      -d '{"content":"你好，帮我打磨这个想法"}' \
-      "$BASE/api/v1/conversations/$CONV2/messages" >"$SSEOUT" 2>/dev/null || true
-    BODY="$(head -c 240 "$SSEOUT")"
-    grep -q '^event: message_start' "$SSEOUT" && pass "real-key SSE message_start" || fail "real-key SSE missing message_start"
-    grep -q '^event: delta' "$SSEOUT" && pass "real-key SSE delta frame" || fail "real-key SSE missing delta"
-    grep -q '^event: message_end' "$SSEOUT" && pass "real-key SSE message_end (the provider accepted the turn)" || fail "real-key SSE missing message_end"
-    BASE="http://127.0.0.1:$PORT"
-  fi
-fi
 
 echo
 printf '=== RESULT: %d passed, %d failed ===\n' "$PASS" "$FAIL"

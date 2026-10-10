@@ -125,32 +125,57 @@ def smoke_yml_failures(failures, origin):
         )
 
 
-def smoke_sh_failures(failures):
+def smoke_family_text():
+    """smoke.sh plus every smoke_*.sh fragment it sources. The hosted probes
+    and the provider legs live in their own files to keep each under the
+    line budget, so the demands below hold over the family the parent
+    actually wires in — fold a fragment back into smoke.sh and the demand
+    simply applies to smoke.sh again."""
     sh = read(SMOKE)
+    texts = [sh]
+    # The path often embeds a command ("$(dirname "$0")/..."), so match up to
+    # the fragment name across any characters, quotes included.
+    for name in re.findall(r'source ".*(smoke_[a-z_]+\.sh)"', sh):
+        path = ROOT / "server/scripts" / name
+        if path.exists():
+            texts.append(path.read_text(encoding="utf-8"))
+    return sh, "\n".join(texts)
+
+
+def smoke_sh_failures(failures):
+    sh, family = smoke_family_text()
 
     def want(condition, message):
         if not condition:
             failures.append(f"{SMOKE}: {message}")
 
+    # A fragment beside the script that smoke.sh does not source is dead
+    # code the demands below must not be satisfied by.
+    for path in sorted((ROOT / "server/scripts").glob("smoke_*.sh")):
+        want(
+            path.name in sh,
+            f"{path.name} exists but smoke.sh never sources it — dead fragment",
+        )
+
     # TEST-05: each provider leg runs for real when its key exists and says
     # why it cannot otherwise — silence is the defect the review filed.
     want(
-        re.search(r"\b(if|elif)\b.*INSIDEOUT_LLM_API_KEY", sh) is not None,
+        re.search(r"\b(if|elif)\b.*INSIDEOUT_LLM_API_KEY", family) is not None,
         "no branch on INSIDEOUT_LLM_API_KEY — the LLM leg cannot run for "
         "real when the key is configured (TEST-05)",
     )
     want(
-        re.search(r"SKIP.*INSIDEOUT_LLM_API_KEY", sh) is not None,
+        re.search(r"SKIP.*INSIDEOUT_LLM_API_KEY", family) is not None,
         "no SKIP line names INSIDEOUT_LLM_API_KEY — a skipped LLM leg is "
         "silent, which is what the review filed (TEST-05)",
     )
     want(
-        re.search(r"\b(if|elif)\b.*INSIDEOUT_MAIL_API_KEY", sh) is not None,
+        re.search(r"\b(if|elif)\b.*INSIDEOUT_MAIL_API_KEY", family) is not None,
         "no branch on INSIDEOUT_MAIL_API_KEY — the mail leg cannot run for "
         "real when the key is configured (TEST-05)",
     )
     want(
-        re.search(r"SKIP.*INSIDEOUT_MAIL_API_KEY", sh) is not None,
+        re.search(r"SKIP.*INSIDEOUT_MAIL_API_KEY", family) is not None,
         "no SKIP line names INSIDEOUT_MAIL_API_KEY — a skipped mail leg is "
         "silent (TEST-05)",
     )
@@ -158,7 +183,7 @@ def smoke_sh_failures(failures):
     # force has to be per-command on that boot, because a script-wide
     # export would also strip the key from the provider leg's own server.
     want(
-        'INSIDEOUT_LLM_API_KEY= "$TMP/insideout"' in sh,
+        'INSIDEOUT_LLM_API_KEY= "$TMP/insideout"' in family,
         "the booted server is not offline per-command "
         "('INSIDEOUT_LLM_API_KEY= \"$TMP/insideout\"') — either the five "
         "surfaces lost their determinism or a global export strips the key "
@@ -167,7 +192,7 @@ def smoke_sh_failures(failures):
     # Background server boots only: the build (-o) and the mail leg's
     # foreground promote-admin call do not count. Two boots = the
     # deterministic five-surface server plus the leg's key-carrying one.
-    launches = len(re.findall(r'"\$TMP/insideout".*&\s*$', sh, re.M))
+    launches = len(re.findall(r'"\$TMP/insideout".*&\s*$', family, re.M))
     want(
         launches >= 2,
         f"{launches} background server boot(s) — the LLM leg boots no "
@@ -178,7 +203,7 @@ def smoke_sh_failures(failures):
     api_files = [p for p in (ROOT / "server/internal/api").glob("*.go") if not p.name.endswith("_test.go")]
     if any(MAIL_PROBE_ROUTE in p.read_text(encoding="utf-8") for p in api_files):
         want(
-            MAIL_PROBE_ROUTE in sh,
+            MAIL_PROBE_ROUTE in family,
             f"the mail leg does not call {MAIL_PROBE_ROUTE} — the auth "
             "flows answer 200 regardless of delivery, so a shape break "
             "would stay invisible (TEST-05)",
