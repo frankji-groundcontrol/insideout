@@ -51,18 +51,19 @@ class _VersionsPageState extends State<VersionsPage> {
   }
 
   Future<void> _commitDialog() async {
-    List<String> carry;
+    Map<String, AudienceReadiness> readiness;
     try {
-      carry =
-          (await _readiness).audiences[audience]?.carryIntoCommit ?? const [];
+      readiness = (await _readiness).audiences;
     } catch (_) {
-      carry = const [];
+      readiness = const {};
     }
+    // Per audience: the dialog lets the reader change it after it opens.
+    List<String> carry(String a) => readiness[a]?.carryIntoCommit ?? const [];
     if (!mounted) return;
     final result = await showVersionsCommit(
       context: context,
       initialAudience: audience,
-      carryCount: carry.length,
+      carryCounts: {for (final a in versionAudiences) a: carry(a).length},
     );
     if (result == null || result.name.isEmpty || !mounted) return;
     final done = await guardWrite(
@@ -72,7 +73,7 @@ class _VersionsPageState extends State<VersionsPage> {
         name: result.name,
         audience: result.audience,
         summary: result.summary,
-        unresolved: carry,
+        unresolved: carry(result.audience),
         note: result.note,
       ),
     );

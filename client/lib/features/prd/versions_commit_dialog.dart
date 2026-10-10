@@ -27,11 +27,14 @@ class VersionsCommitForm extends StatefulWidget {
   const VersionsCommitForm({
     super.key,
     required this.initialAudience,
-    required this.carryCount,
+    required this.carryCounts,
   });
 
   final String initialAudience;
-  final int carryCount;
+
+  /// The open items a commit would carry, per audience: the notice follows the
+  /// audience chosen in the form, not the one it opened on.
+  final Map<String, int> carryCounts;
 
   @override
   State<VersionsCommitForm> createState() => VersionsCommitFormState();
@@ -104,11 +107,13 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
           minLines: 2,
           maxLines: 5,
         ),
-        if (widget.carryCount > 0) ...[
+        if ((widget.carryCounts[_audience] ?? 0) > 0) ...[
           const SizedBox(height: Cobalt.space4),
           BlockBanner(
             tone: BlockTone.info,
-            message: l10n.t('versions.carryInfo', {'n': widget.carryCount}),
+            message: l10n.t('versions.carryInfo', {
+              'n': widget.carryCounts[_audience],
+            }),
           ),
         ],
       ],
@@ -121,7 +126,7 @@ class VersionsCommitFormState extends State<VersionsCommitForm> {
 Future<CommitFormResult?> showVersionsCommit({
   required BuildContext context,
   required String initialAudience,
-  required int carryCount,
+  required Map<String, int> carryCounts,
 }) {
   final formKey = GlobalKey<VersionsCommitFormState>();
   final t = context.read<Appearance>().t;
@@ -132,7 +137,7 @@ Future<CommitFormResult?> showVersionsCommit({
     body: VersionsCommitForm(
       key: formKey,
       initialAudience: initialAudience,
-      carryCount: carryCount,
+      carryCounts: carryCounts,
     ),
     footer: [
       BlockButton(
