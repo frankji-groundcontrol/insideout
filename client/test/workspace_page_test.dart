@@ -16,7 +16,7 @@ import 'package:provider/provider.dart';
 // status label — replacing substring-grepping with rendered-output
 // assertions (CQ-02 pattern).
 class _FakeApi extends ApiClient {
-  _FakeApi({this.onCreateProject})
+  _FakeApi({this.onCreateProject, this.onUpdateWorkspace})
     : super(
         baseUrl: 'http://127.0.0.1:9/api/v1',
         readAccess: () async => null,
@@ -26,11 +26,16 @@ class _FakeApi extends ApiClient {
       );
 
   void Function(String title)? onCreateProject;
+  void Function(String id, String title, String description)? onUpdateWorkspace;
+
+  /// The workspace title as the "server" holds it, so a rename is observable
+  /// on the board after the reload.
+  String wsTitle = 'Board Test WS';
 
   @override
   Future<Workspace> getWorkspace(String id) async => Workspace.fromJson({
     'id': 'ws1',
-    'title': 'Board Test WS',
+    'title': wsTitle,
     'description': '',
     'code': 'CODE12',
     'status': 'active',
@@ -56,6 +61,18 @@ class _FakeApi extends ApiClient {
       'createdAt': DateTime.now().toUtc().toIso8601String(),
       'flagged': false,
     });
+  }
+
+  @override
+  Future<Workspace> updateWorkspace(
+    String id, {
+    required String title,
+    required String description,
+    String? coverUrl,
+  }) async {
+    onUpdateWorkspace?.call(id, title, description);
+    wsTitle = title;
+    return getWorkspace(id);
   }
 
   @override
@@ -169,6 +186,61 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Failing Project'), findsNothing);
+  });
+
+  // CQ-02: workspace rename used to be guarded only by a substring grep —
+  // assert the board's edit dialog really calls updateWorkspace with the
+  // edited name, and the painted title follows the reload.
+  testWidgets('the edit dialog renames the workspace through updateWorkspace', (
+    tester,
+  ) async {
+    String? savedId;
+    String? savedTitle;
+    String? savedDescription;
+    final session = Session();
+    session.ready = true;
+    session.api = _FakeApi(
+      onUpdateWorkspace: (id, title, description) {
+        savedId = id;
+        savedTitle = title;
+        savedDescription = description;
+      },
+    );
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: WorkspacePage(id: 'ws1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Edit'));
+    await tester.pumpAndSettle();
+    final dialogTitle = find
+        .descendant(of: find.byType(Dialog), matching: find.byType(TextField))
+        .first;
+    expect(
+      tester.widget<TextField>(dialogTitle).controller!.text,
+      'Board Test WS',
+    );
+    await tester.enterText(dialogTitle, 'Renamed Board');
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(savedId, 'ws1');
+    expect(savedTitle, 'Renamed Board');
+    expect(savedDescription, '');
+    expect(find.text('Renamed Board'), findsOneWidget);
   });
 
   // N1: with the dock mounted (signed-in chrome) the quick-capture FAB
