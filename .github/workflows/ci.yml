@@ -75,7 +75,10 @@ jobs:
       - name: Test (integration suite must run, not skip)
         run: |
           set -o pipefail
-          go test ./... -count=1 -v -timeout 20m 2>&1 | tee /tmp/gotest.log
+          # TEST-12/REL-22: -race, because the suite owns the shared state the
+          # detector is for (auth throttle, resend cooldown, presence, turn
+          # locks, SSE writers). It needs cgo; the runner image has gcc.
+          go test ./... -race -count=1 -v -timeout 20m 2>&1 | tee /tmp/gotest.log
           # TEST-02/TEST-09: a skipped test anywhere — store, api, agent — is
           # a red build: every DATABASE_URL-gated test skips itself when the
           # variable is unset, and the postgres service above is the point of
