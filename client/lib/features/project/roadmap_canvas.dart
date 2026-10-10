@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
@@ -52,6 +53,18 @@ class RoadmapCanvas extends StatelessWidget {
   static const bandWidth = 300.0;
   static const bandSpacing = 16.0;
 
+  /// Up/Down scroll the band that holds focus on every platform. Flutter
+  /// binds the arrows to scrolling on the web only; elsewhere they move focus
+  /// to the neighboring card. PageUp/PageDown already scroll natively.
+  static const _arrowScroll = <ShortcutActivator, Intent>{
+    SingleActivator(LogicalKeyboardKey.arrowUp): ScrollIntent(
+      direction: AxisDirection.up,
+    ),
+    SingleActivator(LogicalKeyboardKey.arrowDown): ScrollIntent(
+      direction: AxisDirection.down,
+    ),
+  };
+
   List<RoadmapNode> get _roots {
     final roots = nodes.where((n) => n.parentId == null).toList()
       ..sort((a, b) => a.position.compareTo(b.position));
@@ -76,18 +89,21 @@ class RoadmapCanvas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roots = _roots;
-    final content = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (var i = 0; i < roots.length; i++) ...[
-          if (i > 0) const SizedBox(width: bandSpacing),
-          _Band(
-            width: bandWidth,
-            nodes: _subtree(roots[i]),
-            tileBuilder: tileBuilder,
-          ),
+    final content = Shortcuts(
+      shortcuts: _arrowScroll,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < roots.length; i++) ...[
+            if (i > 0) const SizedBox(width: bandSpacing),
+            _Band(
+              width: bandWidth,
+              nodes: _subtree(roots[i]),
+              tileBuilder: tileBuilder,
+            ),
+          ],
         ],
-      ],
+      ),
     );
     return SingleChildScrollView(
       controller: controller,
