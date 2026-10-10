@@ -25,7 +25,8 @@ func TestCircuitFunctions_TakeARowID(t *testing.T) {
 
 	const own = "circuit-own-row-test"
 	if _, err := st.Pool.Exec(ctx,
-		`INSERT INTO insideout.ai_circuit_breaker (id) VALUES ($1)
+		`INSERT INTO insideout.ai_circuit_breaker (id, state, failure_count, opened_at, last_failure_at)
+		 VALUES ($1, 'open', 5, now(), now())
 		 ON CONFLICT (id) DO UPDATE SET state = 'open', failure_count = 5, success_count = 0, opened_at = now(), last_failure_at = now()`,
 		own); err != nil {
 		t.Fatalf("seed an open test row: %v", err)

@@ -10,15 +10,19 @@ import (
 	"testing"
 )
 
-// Pins for the circuit-breaker rules that surround an LLM call. The breaker
-// is one global ai_circuit_breaker row ('anthropic'), so this file is
-// deliberately sequential (no t.Parallel) and asserts DELTAS, never
-// absolutes: in a full `go test ./...` run the api package's real-coach
-// tests execute in a parallel package binary against the same database and
-// reset the row mid-flight. Those resets only ever zero the counts — they
-// never touch last_failure_at — so a failure recording is witnessed by that
-// timestamp moving, and "records nothing" is witnessed by counts that stay
-// put around code that must not record.
+// Pins for the circuit-breaker WIRING that surrounds an LLM call: which
+// errors feed the breaker and what Admit's done records. The SQL rules
+// themselves (open verdict, failed half-open probe reopening, row-id
+// isolation) are pinned on a dedicated test row in
+// internal/store/circuit_row_id_test.go — the functions take a row id
+// since 20261011100000 — so this file no longer needs to pin them against
+// the shared row. The wiring still runs on the one production row
+// ('anthropic', global by design), so this file is deliberately sequential
+// (no t.Parallel) and the api package's parallel resets remain the reason
+// these assert DELTAS, never absolutes: those resets only ever zero the
+// counts — they never touch last_failure_at — so a failure recording is
+// witnessed by that timestamp moving, and "records nothing" is witnessed by
+// counts that stay put around code that must not record.
 
 // breakerState reads the shared row's failure count and the epoch of its last
 // recorded failure (0 when there was none).
