@@ -29,6 +29,16 @@ class LoopFocus extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Bumped when the dock's Capture/Ideas step is tapped while the ideas
+  /// wall is already on screen. The wall listens and scroll-highlights its
+  /// capture bar, so the tap gives feedback instead of dead-tapping.
+  int ideasPulse = 0;
+
+  void pulseIdeas() {
+    ideasPulse++;
+    notifyListeners();
+  }
+
   void rememberWorkspace(String id) {
     workspaceId = id;
   }
