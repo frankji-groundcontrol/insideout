@@ -217,26 +217,18 @@ class _WorkspaceColumn extends StatelessWidget {
     }
     return Column(
       children: [
-        FieldCard(
+        // Create and join stay reachable once a workspace exists; the empty
+        // state's buttons are gone by then.
+        _ActionCard(
+          icon: Icons.add,
+          label: l10n.t('workspace.createTitle'),
+          onTap: onCreate,
+        ),
+        const SizedBox(height: Cobalt.space3),
+        _ActionCard(
+          icon: Icons.group_add_outlined,
+          label: l10n.t('workspace.joinTitle'),
           onTap: onJoin,
-          padding: const EdgeInsets.all(Cobalt.space4),
-          child: Row(
-            children: [
-              const BlockIconWell(
-                icon: Icons.group_add_outlined,
-                size: 40,
-                iconSize: 20,
-              ),
-              const SizedBox(width: Cobalt.space3),
-              Expanded(
-                child: Text(
-                  l10n.t('workspace.joinTitle'),
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              Icon(Icons.chevron_right, color: palette.fgMuted),
-            ],
-          ),
         ),
         for (var i = 0; i < workspaces.length; i++) ...[
           const SizedBox(height: Cobalt.space3),
@@ -271,6 +263,37 @@ class _WorkspaceColumn extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// A one-line action row above the workspace cards: icon well, title, chevron.
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    return FieldCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(Cobalt.space4),
+      child: Row(
+        children: [
+          BlockIconWell(icon: icon, size: 40, iconSize: 20),
+          const SizedBox(width: Cobalt.space3),
+          Expanded(child: Text(label, style: theme.textTheme.titleMedium)),
+          Icon(Icons.chevron_right, color: palette.fgMuted),
+        ],
+      ),
     );
   }
 }
