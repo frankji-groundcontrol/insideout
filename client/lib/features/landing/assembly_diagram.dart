@@ -163,8 +163,8 @@ class _AssemblyPainter extends CustomPainter {
 
   Color _nodeColor(int i) {
     if (mode == AssemblyDiagramMode.hero) return i == 3 ? brand : ink;
-    if (i == currentStep - 1) return ink;
-    if (i < currentStep - 1) return ink;
+    // currentStep is 1-based, so steps 1..currentStep are lit.
+    if (i < currentStep) return ink;
     return muted;
   }
 
