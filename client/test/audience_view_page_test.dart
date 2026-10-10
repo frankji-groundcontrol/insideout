@@ -193,4 +193,59 @@ void main() {
       expect(find.textContaining('validate_later'), findsNothing);
     },
   );
+
+  testWidgets('the zh audience view speaks the gap reasons, not the server '
+      'English', (tester) async {
+    // The server sends one fixed English sentence per gap (readiness.go); a
+    // zh reader must get the translated reason, never a half-Chinese line.
+    final session = Session();
+    session.ready = true;
+    session.api = _FakeApi({
+      'prdId': 'p1',
+      'title': 'Gap language',
+      'projection': {
+        'audience': 'decision',
+        'purpose': 'why now',
+        'sections': const <Map<String, String>>[],
+      },
+      'readiness': {
+        'gaps': [
+          {
+            'section': 'background',
+            'priority': 'must_clarify_now',
+            'reason': 'the why-this, why-now argument a decision maker needs',
+          },
+          {
+            'section': 'stories',
+            'priority': 'validate_later',
+            'reason': 'useful eventually',
+          },
+        ],
+      },
+    });
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'zh-CN'),
+          ),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: AudienceViewPage(prdId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('背景与问题陈述'), findsOneWidget);
+    expect(find.textContaining('决策者需要'), findsOneWidget);
+    expect(find.textContaining('迟早有用'), findsOneWidget);
+    expect(find.textContaining('decision maker needs'), findsNothing);
+    expect(find.textContaining('useful eventually'), findsNothing);
+  });
 }
