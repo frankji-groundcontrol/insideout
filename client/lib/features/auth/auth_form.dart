@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
@@ -124,7 +125,13 @@ class _AuthFormState extends State<AuthForm> {
         if (mounted) context.go('/dashboard');
       }
     } catch (e) {
-      setState(() => error = l10n.t(_errorKey));
+      // The server answers register with 403 when the invitation is the
+      // problem (closed, missing, wrong or expired); "try again" cannot fix it.
+      final inviteProblem = _register && e is ApiException && e.status == 403;
+      setState(
+        () =>
+            error = l10n.t(inviteProblem ? 'register.inviteError' : _errorKey),
+      );
     } finally {
       if (mounted) setState(() => busy = false);
     }

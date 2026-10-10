@@ -95,6 +95,8 @@ const enAccount = <String, String>{
   'register.passwordHint': 'At least 8 characters',
   'register.submit': 'Create account',
   'register.error': 'Could not create account. Please try again.',
+  'register.inviteError':
+      'That invitation code is missing, invalid or expired. Check it, or ask an admin for a new invitation.',
   'profile.title': 'Profile',
   'profile.username': 'Username',
   'profile.bio': 'Bio',
