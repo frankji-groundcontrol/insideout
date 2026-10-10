@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
+import 'package:insideout/chrome/loop_focus.dart';
+import 'package:insideout/features/project/project_page.dart';
 import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
@@ -49,6 +51,45 @@ class _ValidationApi extends ApiClient {
     validateReason = reason;
     return _doneLeaf;
   }
+
+  @override
+  Future<Map<String, dynamic>> getProject(String id) async => {
+    'id': id,
+    'workspaceId': 'ws-1',
+    'title': 'Loop project',
+    'description': '',
+    'status': 'active',
+    'repoUrl': '',
+    'ownerId': 'u1',
+    'updates': const <Map<String, dynamic>>[],
+  };
+
+  @override
+  Future<List<RoadmapNode>> listRoadmap(String projectId) async => [
+    RoadmapNode(
+      id: 'root',
+      projectId: projectId,
+      title: 'Ship',
+      description: '',
+      status: 'in_progress',
+      position: 0,
+    ),
+    RoadmapNode(
+      id: 'n1',
+      projectId: projectId,
+      parentId: 'root',
+      title: 'Tour',
+      description: '',
+      status: 'validated',
+      position: 0,
+      validationReason: reason68,
+    ),
+  ];
+
+  @override
+  Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async => [
+    {'kind': 'validation', 'detail': '4 of 5 pilot users finished the tour'},
+  ];
 
   static final _doneLeaf = RoadmapNode(
     id: 'n1',
@@ -178,5 +219,38 @@ void main() {
 
     expect(find.text('Validated'), findsOneWidget);
     expect(find.textContaining(_ValidationApi.reason68), findsOneWidget);
+  });
+
+  testWidgets('the Evidence screen keeps a validated leaf\'s observation', (
+    tester,
+  ) async {
+    final api = _ValidationApi();
+    final session = Session()
+      ..ready = true
+      ..api = api;
+    // The evidence card sits below the fold at the default test surface;
+    // give the page the board tests' taller window so it is built.
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: ProjectPage(id: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The observation recorded on the leaf stays visible after the leaf
+    // validates — the evidence is the loop's record, not done-only.
+    expect(find.text('Tour'), findsOneWidget);
+    expect(find.textContaining('4 of 5 pilot users finished the tour'),
+        findsOneWidget);
   });
 }
