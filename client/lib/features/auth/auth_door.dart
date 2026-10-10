@@ -97,7 +97,7 @@ class AuthDoor extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(height: 20),
+                                      const SizedBox(height: Cobalt.space4),
                                       InkReveal(
                                         delay: const Duration(
                                           milliseconds: 300,
