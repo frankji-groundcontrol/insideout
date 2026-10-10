@@ -5,9 +5,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 
 // USER-04: the client reads mailEnabled from the public auth config next to
-// signupMode. A server that omits the flag must read as "mail works" (the
-// notice is never shown on a guess), and the signupMode reader the admin
-// section relies on must not care about the extra key.
+// signupMode. A server that omits the flag reads as UNKNOWN (PM-04): the
+// notice is shown only on an explicit false, never on a guess. The
+// signupMode reader the admin section relies on must not care about the
+// extra key.
 void main() {
   Future<ApiClient> clientFor(Map<String, Object?> config) async {
     final http = await HttpServer.bind('127.0.0.1', 0);
@@ -35,9 +36,9 @@ void main() {
     expect(await on.authMailEnabled(), isTrue);
   });
 
-  test('a config without the flag reads as mail on', () async {
+  test('a config without the flag reads as unknown mail', () async {
     final client = await clientFor({'signupMode': 'invitation_only'});
-    expect(await client.authMailEnabled(), isTrue);
+    expect(await client.authMailEnabled(), isNull);
   });
 
   test('authConfig still reads signupMode beside the mail flag', () async {
