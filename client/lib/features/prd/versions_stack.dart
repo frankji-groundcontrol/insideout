@@ -11,6 +11,7 @@ import '../../theme/field_card.dart';
 import '../../widgets/pressable_block.dart';
 import 'audience_selector.dart';
 import 'versions_commit_dialog.dart' show versionAudiences;
+import 'versions_gap_text.dart';
 
 /// Lock C — centered fanned commit stack, not a 300px list + detail row.
 class VersionsStack extends StatelessWidget {
@@ -241,7 +242,7 @@ class _FrontCard extends StatelessWidget {
                             const SizedBox(width: Cobalt.space2),
                             Expanded(
                               child: Text(
-                                '${l10n.t('prd.sections.${g.section}')} — ${_reason(l10n, audience, g)}',
+                                '${l10n.t('prd.sections.${g.section}')} — ${gapReason(l10n, audience, g)}',
                                 style: theme.textTheme.bodyMedium,
                               ),
                             ),
@@ -268,6 +269,21 @@ class _FrontCard extends StatelessWidget {
                       }),
                       style: theme.textTheme.bodySmall,
                     ),
+                    if (commit!.unresolved.isNotEmpty) ...[
+                      const SizedBox(height: Cobalt.space3),
+                      Text(
+                        l10n.t('versions.unresolvedTitle'),
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      for (final item in commit!.unresolved)
+                        Padding(
+                          padding: const EdgeInsets.only(top: Cobalt.space1),
+                          child: Text(
+                            '· ${carriedItem(l10n, commit!.primaryAudience, item)}',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                    ],
                   ],
                 ],
               ),
@@ -310,17 +326,6 @@ class _FrontCard extends StatelessWidget {
 }
 
 /// Square status mark — the decree replaces the round check/uncheck glyphs.
-/// The gap's reason in the reader's language. The server sends one fixed
-/// English sentence per audience and section (readiness.go); a pair the
-/// client has no translation for keeps the server's text.
-String _reason(Appearance l10n, String audience, ReadinessGap gap) {
-  final key = gap.priority == 'validate_later'
-      ? 'versions.gap.later'
-      : 'versions.gap.$audience.${gap.section}';
-  final text = l10n.t(key);
-  return text == key ? gap.reason : text;
-}
-
 class _GapMark extends StatelessWidget {
   const _GapMark({required this.blocking});
 
