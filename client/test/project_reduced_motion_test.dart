@@ -62,8 +62,9 @@ class _Api extends ApiClient {
   @override
   Future<void> progressStream(
     String projectId,
-    void Function(RoadmapProgress progress) onProgress,
-  ) => _parked.future;
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) => _parked.future;
 
   @override
   Future<void> presenceStream(
@@ -71,6 +72,7 @@ class _Api extends ApiClient {
     String clientId,
     void Function(List<PresenceEntry> entries) onChange, {
     void Function(String sessionId, String name, double x, double y)? onCursor,
+    Future<void>? stop,
   }) => _parked.future;
 }
 

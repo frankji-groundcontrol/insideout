@@ -25,6 +25,8 @@ class _FakeApi extends ApiClient {
 
   final _presenceParked = Completer<void>();
   void Function(RoadmapProgress progress)? onProgress;
+  Future<void>? progressStop;
+  Future<void>? presenceStop;
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];
@@ -76,7 +78,9 @@ class _FakeApi extends ApiClient {
     String clientId,
     void Function(List<PresenceEntry> entries) onChange, {
     void Function(String sessionId, String name, double x, double y)? onCursor,
+    Future<void>? stop,
   }) {
+    presenceStop = stop;
     // Park the presence loop without timers so the test disposes cleanly.
     return _presenceParked.future;
   }
@@ -84,9 +88,11 @@ class _FakeApi extends ApiClient {
   @override
   Future<void> progressStream(
     String projectId,
-    void Function(RoadmapProgress progress) onProgress,
-  ) {
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) {
     this.onProgress = onProgress;
+    progressStop = stop;
     return _presenceParked.future;
   }
 }
@@ -188,5 +194,42 @@ void main() {
     expect(find.text('Streamed leaf'), findsOneWidget);
     expect(find.text('Payment retry'), findsNothing);
     expect(find.text('1 done'), findsOneWidget);
+  });
+
+  testWidgets('leaving the page tells both live streams to stop', (
+    tester,
+  ) async {
+    final session = Session();
+    session.ready = true;
+    final fake = _FakeApi();
+    session.api = fake;
+    await tester.binding.setSurfaceSize(const Size(1400, 900));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider.value(value: session),
+          ChangeNotifierProvider(
+            create: (_) =>
+                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+          ),
+          ChangeNotifierProvider(create: (_) => LoopFocus()),
+        ],
+        child: const MaterialApp(home: RoadmapPage(projectId: 'p1')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(fake.progressStop, isNotNull);
+    expect(fake.presenceStop, isNotNull);
+
+    var stopped = 0;
+    fake.progressStop!.then((_) => stopped++);
+    fake.presenceStop!.then((_) => stopped++);
+    await tester.pump();
+    expect(stopped, 0, reason: 'a stop while the page is still up');
+
+    await tester.pumpWidget(const SizedBox());
+    expect(stopped, 2);
   });
 }

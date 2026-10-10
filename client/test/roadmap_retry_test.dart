@@ -45,8 +45,9 @@ class _ScriptedApi extends ApiClient {
   @override
   Future<void> progressStream(
     String projectId,
-    void Function(RoadmapProgress progress) onProgress,
-  ) async {
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) async {
     final call = progressCalls++;
     if (call < progressScript.length) {
       throw ApiException('down', status: progressScript[call]);
@@ -60,6 +61,7 @@ class _ScriptedApi extends ApiClient {
     String clientId,
     void Function(List<PresenceEntry> entries) onChange, {
     void Function(String sessionId, String name, double x, double y)? onCursor,
+    Future<void>? stop,
   }) async {
     final call = presenceCalls++;
     if (call < presenceScript.length) {

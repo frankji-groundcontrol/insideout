@@ -75,8 +75,9 @@ class _FakeApi extends ApiClient {
   @override
   Future<void> progressStream(
     String projectId,
-    void Function(RoadmapProgress progress) onProgress,
-  ) {
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) {
     return _parked.future;
   }
 }

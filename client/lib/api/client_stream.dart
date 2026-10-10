@@ -63,6 +63,7 @@ mixin _StreamVerbs on _ApiCore {
     String clientId,
     void onChange(List<PresenceEntry> entries), {
     void Function(String sessionId, String name, double x, double y)? onCursor,
+    Future<void>? stop,
   }) async {
     final token = await _readAccess();
     final headers = {
@@ -116,8 +117,9 @@ mixin _StreamVerbs on _ApiCore {
   /// replace-calls [onProgress]; the stream ends when the page disposes.
   Future<void> progressStream(
     String projectId,
-    void Function(RoadmapProgress progress) onProgress,
-  ) async {
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) async {
     final token = await _readAccess();
     final headers = {
       if (token != null) 'Authorization': 'Bearer $token',

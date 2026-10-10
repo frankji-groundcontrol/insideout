@@ -54,13 +54,15 @@ class _FakeApi extends ApiClient {
     String clientId,
     void Function(List<PresenceEntry> entries) onChange, {
     void Function(String sessionId, String name, double x, double y)? onCursor,
+    Future<void>? stop,
   }) => _parked.future;
 
   @override
   Future<void> progressStream(
     String projectId,
-    void Function(RoadmapProgress progress) onProgress,
-  ) => _parked.future;
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) => _parked.future;
 }
 
 /// Pumps the signed-in roadmap page (all four utility icons present, the
