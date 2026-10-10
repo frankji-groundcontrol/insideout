@@ -107,7 +107,8 @@ func rankedCritiqueFindings(stage, reply string) []CriticFinding {
 }
 
 // captureRankedCritique turns a critique-stage reply into the findings the
-// panel renders: it persists them and emits the critic_findings event.
+// panel renders: it merges them into what's stored (a restatement may not
+// erase or reset stored findings — AIDEV-01) and emits the merged list.
 func (c *Coach) captureRankedCritique(ctx context.Context, actorID, conversationID uuid.UUID, stage, reply string, sse *sseWriter) {
 	findings := rankedCritiqueFindings(stage, reply)
 	if findings == nil {
@@ -118,7 +119,8 @@ func (c *Coach) captureRankedCritique(ctx context.Context, actorID, conversation
 		return
 	}
 	lm, extra := loadLedger(conv.Meta)
-	saveCriticFindings(extra, findings)
+	merged := mergeRankedCritique(loadCriticFindings(extra), findings)
+	saveCriticFindings(extra, merged)
 	metaJSON, err := saveLedger(lm, extra)
 	if err != nil {
 		return
@@ -127,7 +129,7 @@ func (c *Coach) captureRankedCritique(ctx context.Context, actorID, conversation
 		c.log.Error("persist ranked critique", "error", err)
 		return
 	}
-	_ = sse.criticFindings(findings)
+	_ = sse.criticFindings(merged)
 }
 
 // CriticFinding is one item from a critic pass, persisted in
