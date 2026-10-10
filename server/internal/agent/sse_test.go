@@ -23,7 +23,7 @@ func TestSSE_Event_PropagatesWriteError(t *testing.T) {
 		t.Fatal("failAfterHeadersWriter must support flushing")
 	}
 
-	if err := sw.messageStart("m1"); err == nil {
+	if err := sw.messageStart("m1", "claude-test"); err == nil {
 		t.Fatal("messageStart must propagate the write error")
 	}
 	if err := sw.delta("hi"); err == nil {

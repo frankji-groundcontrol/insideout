@@ -164,7 +164,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	if err := sse.messageStart(assistantMsg.ID.String()); err != nil {
+	if err := sse.messageStart(assistantMsg.ID.String(), c.streamer.Model()); err != nil {
 		// Client already gone before the first byte — same handling as a
 		// mid-stream disconnect: fail the turn, no circuit result.
 		c.log.Error("sse: message_start write failed", "error", err)

@@ -50,8 +50,15 @@ func (s *sseWriter) event(name string, data any) error {
 	return nil
 }
 
-func (s *sseWriter) messageStart(id string) error {
-	return s.event("message_start", map[string]string{"id": id})
+// messageStart opens the turn. model identifies the streamer; the template
+// (offline dev-mode) streamer is flagged offline so clients can disclose that
+// the reply is canned. Both fields are additive — older clients ignore them.
+func (s *sseWriter) messageStart(id, model string) error {
+	return s.event("message_start", map[string]any{
+		"id":      id,
+		"model":   model,
+		"offline": model == templateModelID,
+	})
 }
 func (s *sseWriter) delta(text string) error {
 	return s.event("delta", map[string]string{"text": text})

@@ -2,8 +2,11 @@ package agent
 
 import (
 	"context"
-	"fmt"
 )
+
+// templateModelID is what the offline streamer reports as its identity; the
+// SSE layer flags message_start offline by comparing against it.
+const templateModelID = "template"
 
 // templateStreamer is used when no AI provider is configured
 // (INSIDEOUT_LLM_API_KEY unset) — offline dev mode. It never calls a network and
@@ -23,11 +26,13 @@ func (templateStreamer) StreamChat(_ context.Context, _ string, msgs []Message, 
 			break
 		}
 	}
-	reply := fmt.Sprintf("收到你的消息：%s\n\n已启用模板回复（尚未配置 AI 凭据）。请在环境变量中配置 INSIDEOUT_LLM_BASE_URL 和 INSIDEOUT_LLM_API_KEY。", lastUser)
+	// A bare, locale-neutral echo: disclosure rides the stream
+	// (message_start offline), never operator env-var instructions in the
+	// member's face.
 	if onDelta != nil {
-		onDelta(reply)
+		onDelta(lastUser)
 	}
-	return Turn{Text: reply}, nil
+	return Turn{Text: lastUser}, nil
 }
 
 // StreamChatForcingTool returns an empty tool call with no arguments —
@@ -37,4 +42,4 @@ func (templateStreamer) StreamChatForcingTool(_ context.Context, _ string, _ []M
 	return Turn{ToolCall: &ToolCallRequest{ID: "template", Name: tool.Name, Arguments: "{}"}}, nil
 }
 
-func (templateStreamer) Model() string { return "template" }
+func (templateStreamer) Model() string { return templateModelID }

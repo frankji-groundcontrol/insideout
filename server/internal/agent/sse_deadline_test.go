@@ -49,7 +49,7 @@ func TestSSEWriter_ArmsAWriteDeadlineBeforeEveryEvent(t *testing.T) {
 	if !ok {
 		t.Fatal("newSSEWriter refused a writer that flushes")
 	}
-	sw.messageStart("m1")
+	sw.messageStart("m1", "claude-test")
 	sw.delta("hello")
 	sw.prdUpdated("problem")
 	sw.messageEnd("m1", 3)
