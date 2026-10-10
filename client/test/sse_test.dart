@@ -95,30 +95,31 @@ void main() {
     expect(buf.toString(), 'Hi!');
   });
 
-  test(
-    'applyCoachFrame dispatches prd_updated stage_changed fact_recorded',
-    () {
-      String? section;
-      String? stage;
-      Map<String, dynamic>? fact;
-      applyCoachFrame(
-        const SseFrame('prd_updated', '{"section":"goals"}'),
-        CoachHandlers(onPrdUpdated: (s) => section = s),
-      );
-      applyCoachFrame(
-        const SseFrame('stage_changed', '{"stage":"critique"}'),
-        CoachHandlers(onStageChanged: (s) => stage = s),
-      );
-      applyCoachFrame(
-        const SseFrame('fact_recorded', '{"key":"users","value":"founders"}'),
-        CoachHandlers(onFactRecorded: (f) => fact = f),
-      );
-      expect(section, 'goals');
-      expect(stage, 'critique');
-      expect(fact?['key'], 'users');
-      expect(fact?['value'], 'founders');
-    },
-  );
+  test('applyCoachFrame dispatches prd_updated stage_changed fact_recorded', () {
+    String? section;
+    String? stage;
+    Map<String, dynamic>? fact;
+    applyCoachFrame(
+      const SseFrame('prd_updated', '{"section":"goals"}'),
+      CoachHandlers(onPrdUpdated: (s) => section = s),
+    );
+    applyCoachFrame(
+      const SseFrame('stage_changed', '{"stage":"critique"}'),
+      CoachHandlers(onStageChanged: (s) => stage = s),
+    );
+    // The shape agent/sse.go factRecorded writes.
+    applyCoachFrame(
+      const SseFrame(
+        'fact_recorded',
+        '{"id":"f1","kind":"constraint","text":"Solo founders only","status":"proposed"}',
+      ),
+      CoachHandlers(onFactRecorded: (f) => fact = f),
+    );
+    expect(section, 'goals');
+    expect(stage, 'critique');
+    expect(fact?['kind'], 'constraint');
+    expect(fact?['text'], 'Solo founders only');
+  });
 
   test('applyCoachFrame throws ApiException on error frames', () {
     expect(

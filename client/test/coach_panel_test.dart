@@ -33,6 +33,30 @@ class _FindingsApi extends ApiClient {
   }
 }
 
+/// Emits fact_recorded as agent/sse.go factRecorded writes it:
+/// {id, kind, text, status}, never a bare key/value pair.
+class _FactApi extends ApiClient {
+  _FactApi(this.payload)
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
+
+  final String payload;
+
+  @override
+  Future<void> sendCoach(
+    String conversationId,
+    String content,
+    CoachHandlers handlers,
+  ) async {
+    applyCoachFrame(SseFrame('fact_recorded', payload), handlers);
+  }
+}
+
 /// First send stalls like a server holding the SSE connection open: it
 /// emits one delta after [firstEventDelay] (if any) and then never
 /// completes. Later sends answer immediately so retries can be observed.
@@ -80,7 +104,11 @@ class _StallingApi extends ApiClient {
   }
 }
 
-Future<void> _pumpCoach(WidgetTester tester, ApiClient api) async {
+Future<void> _pumpCoach(
+  WidgetTester tester,
+  ApiClient api, {
+  String locale = 'en-US',
+}) async {
   final session = Session();
   session.ready = true;
   session.api = api;
@@ -91,7 +119,7 @@ Future<void> _pumpCoach(WidgetTester tester, ApiClient api) async {
         ChangeNotifierProvider.value(value: session),
         ChangeNotifierProvider(
           create: (_) =>
-              Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+              Appearance(store: MemorySettingsStore(), locale: locale),
         ),
       ],
       child: MaterialApp(
@@ -160,6 +188,50 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -400));
     await tester.pumpAndSettle();
     expect(find.textContaining('segment is unnamed'), findsOneWidget);
+  });
+
+  // The panel interpolated the whole payload Map, so the snackbar read
+  // "Fact: {id: f1, kind: constraint, text: ..., status: proposed}".
+  for (final (locale, shown) in const [
+    ('en-US', 'Fact: Solo founders only'),
+    ('zh-CN', '事实：Solo founders only'),
+  ]) {
+    testWidgets('a recorded fact shows its text, not the raw payload ($locale)', (
+      tester,
+    ) async {
+      await _pumpCoach(
+        tester,
+        _FactApi(
+          '{"id":"f1","kind":"constraint","text":"Solo founders only","status":"proposed"}',
+        ),
+        locale: locale,
+      );
+
+      await tester.enterText(find.byType(TextField), 'we are two people');
+      await tester.tap(find.byIcon(Icons.send));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 750));
+
+      expect(find.text(shown), findsOneWidget);
+      expect(find.textContaining('kind:'), findsNothing);
+      // Let the snackbar's own timer run out inside the test clock.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+    });
+  }
+
+  testWidgets('a recorded fact with no text shows no snackbar', (tester) async {
+    await _pumpCoach(
+      tester,
+      _FactApi('{"id":"f1","kind":"constraint","status":"proposed"}'),
+    );
+
+    await tester.enterText(find.byType(TextField), 'we are two people');
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 750));
+
+    expect(find.byType(SnackBar), findsNothing);
   });
 
   testWidgets(
