@@ -164,7 +164,7 @@ Credential + env script suites (Python; the same two batteries CI runs
 in its env-suites job — from `scripts/`):
 
 ```bash
-python3 -m unittest test_env_catalog test_env_writes      # env catalog + write batteries
+python3 test_env_catalog.py && python3 test_env_writes.py   # env catalog + write batteries (plain-assert scripts)
 python3 -m unittest discover -s tests/keys -t .           # key store suites
 ```
 

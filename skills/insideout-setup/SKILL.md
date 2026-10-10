@@ -166,7 +166,7 @@ success. Report failures honestly with the command output.
 | DB integration | `./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v` | repo root, needs migrated DB |
 | Live smoke | `./server/scripts/smoke.sh` | repo root, needs curl+jq + DB |
 | Client | `flutter analyze --no-fatal-infos && flutter test` | `client/` |
-| Env + key suites | `python3 -m unittest test_env_catalog test_env_writes` then `python3 -m unittest discover -s tests/keys -t .` | `scripts/` |
+| Env + key suites | `python3 test_env_catalog.py && python3 test_env_writes.py` then `python3 -m unittest discover -s tests/keys -t .` | `scripts/` |
 
 ## Step 7 — record the installation
 

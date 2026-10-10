@@ -116,6 +116,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+          cache: gradle
       - uses: subosito/flutter-action@v2
         with:
           # Same pin as the client job and client/Dockerfile.
@@ -126,7 +127,11 @@ jobs:
       # The release build type signs with the debug keys
       # (client/android/app/build.gradle.kts), so this needs no keystore. A
       # store-signed bundle stays an owner step.
-      - run: flutter build apk --release --dart-define=API_BASE=https://insideout.yalotein.net/api/v1
+      # Gradle fetches its plugins from plugins.gradle.org, which now and then
+      # serves a truncated POM; one retry resumes from what is already cached.
+      - run: |
+          build() { flutter build apk --release --dart-define=API_BASE=https://insideout.yalotein.net/api/v1; }
+          build || { echo "::warning::retrying the APK build once (dependency fetch)"; sleep 15; build; }
 
   env-suites:
     name: env catalog suites (python)
@@ -137,7 +142,11 @@ jobs:
         working-directory: scripts
     steps:
       - uses: actions/checkout@v4
-      - name: unittest env batteries + key suites
+      - name: env batteries + key suites
         run: |
-          python3 -m unittest test_env_catalog test_env_writes
+          # The two env batteries are plain-assert scripts that exit at import
+          # (env_testlib.run), so `unittest test_env_catalog test_env_writes`
+          # stopped after the first and never ran the second.
+          python3 test_env_catalog.py
+          python3 test_env_writes.py
           python3 -m unittest discover -s tests/keys -t . -p "test_*.py" -v
