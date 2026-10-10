@@ -242,6 +242,8 @@ const criticSystemPromptTemplate = `你是一位严格的 PRD 评审员，正在
 对每一节都要评估，不能跳过。每条 finding 分两种：kind="defect" 表示章节里有具体问题，quote 参数必须是该章节的原文片段；kind="omission" 表示章节缺少某项标准要求的内容，不需要 quote。severity 分 blocking/major/minor。必须通过 report_findings 工具报告，不要用自然语言回复。
 %s
 
+%s
+
 当前 PRD 标题：%s
 当前各章节内容：
 %s
@@ -258,7 +260,8 @@ func runCritic(ctx context.Context, streamer ChatStreamer, prdTitle string, sect
 	if len(focusSections) > 0 {
 		focus = "\n\n本轮只需重新评审以下此前被标记过的章节：" + strings.Join(focusSections, ", ")
 	}
-	system := fmt.Sprintf(criticSystemPromptTemplate, focus, prdTitle, formatSectionsForPrompt(sections), formatLedgerForPrompt(lm))
+	system := fmt.Sprintf(criticSystemPromptTemplate, focus, dataFenceClause,
+		fenceData(prdTitle), fenceData(formatSectionsForPrompt(sections)), fenceData(formatLedgerForPrompt(lm)))
 	tool := reportFindingsTool()
 
 	var lastErr error

@@ -71,8 +71,11 @@ requirements 章节要写清楚要解决的问题，而不是预设的技术方�
 	if findings == "" {
 		findings = "(无)"
 	}
-	return fmt.Sprintf("%s\n\n%s\n\n%s\n\n当前 PRD 标题：%s\n当前各章节内容：\n%s\n当前读者缺口（按读者分组，含优先级与原因；「之后再验证」的缺口不阻塞成版）：\n%s\n已记录的事实清单：\n%s\n独立评审员发现的问题：\n%s",
-		body, toolCallDiscipline, factDiscipline, prdTitle, formatSectionsForPrompt(sections), formatGapsForPrompt(sections), ledgerText, findings)
+	// The title and sections are human-written and the ledger and findings are
+	// derived from them, so all four ride in data fences; the gaps come from
+	// static readiness text and stay outside.
+	return fmt.Sprintf("%s\n\n%s\n\n%s\n\n%s\n\n当前 PRD 标题：%s\n当前各章节内容：\n%s\n当前读者缺口（按读者分组，含优先级与原因；「之后再验证」的缺口不阻塞成版）：\n%s\n已记录的事实清单：\n%s\n独立评审员发现的问题：\n%s",
+		body, toolCallDiscipline, factDiscipline, dataFenceClause, fenceData(prdTitle), fenceData(formatSectionsForPrompt(sections)), formatGapsForPrompt(sections), fenceData(ledgerText), fenceData(findings))
 }
 
 // formatFindingsForPrompt renders open critic findings for injection —
