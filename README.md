@@ -200,6 +200,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 | 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |
 | 架构 / Architecture | [`docs/architecture/index.md`](docs/architecture/index.md) |
 | 变更记录 / Change log | [`docs/changelogs/`](docs/changelogs/README.md) |
+| 贡献与安全 / Contributing & security | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) |
 | 许可证 / License | [`LICENSE`](LICENSE) - Mozilla Public License 2.0 |
 
 ## 第三方资源 / Third-party assets
