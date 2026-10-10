@@ -136,8 +136,9 @@ func TestStreams_ArmAWriteDeadlineBeforeEveryWrite(t *testing.T) {
 	t.Run("presence", func(t *testing.T) {
 		w, stop := serveStream(t, h, fx.tokenA, base+"/presence/stream?client=tab-1")
 		w.await(t, "event: presence", ": ping") // the connect snapshot, then a heartbeat ping
+		// The other member moves their pointer: a stream does not echo its own viewer's.
 		post := httptest.NewRequest(http.MethodPost, base+"/cursor?client=tab-1", strings.NewReader(`{"x":1,"y":2}`))
-		post.Header.Set("Authorization", "Bearer "+fx.tokenA)
+		post.Header.Set("Authorization", "Bearer "+fx.tokenB)
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, post)
 		if rec.Code != http.StatusNoContent {
