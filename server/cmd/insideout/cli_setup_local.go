@@ -98,11 +98,15 @@ func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 		fmt.Fprintln(os.Stderr, "setup: --local needs --postgres bundled|own")
 		return true, 2
 	}
-	if err := envwrite.SetVar(envPath, "DATABASE_URL", dsn); err != nil {
-		fmt.Fprintf(os.Stderr, "setup: write DATABASE_URL: %v\n", err)
-		return true, 1
+	// An own-URL DSN becomes the runtime URL once the role gate below has
+	// passed (ensureRoles writes it): a stop before that must not leave an
+	// admin DSN in .env for `serve` to run as. --no-start never reaches the
+	// gate, so it writes now.
+	if postgres == "bundled" || noStart {
+		if !wireDatabaseURL(envPath, dsn) {
+			return true, 1
+		}
 	}
-	fmt.Fprintf(os.Stderr, "setup: wrote DATABASE_URL → %s\n", catalog.RedactDSN(dsn))
 	if postgres == "bundled" {
 		if err := envwrite.SetVar(envPath, "DATABASE_OWNER_URL", ownerURL); err != nil {
 			fmt.Fprintf(os.Stderr, "setup: write DATABASE_OWNER_URL: %v\n", err)
@@ -168,6 +172,16 @@ func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 	fmt.Fprintln(os.Stderr, "  export INSIDEOUT_API=http://127.0.0.1:8080/api/v1")
 
 	return offerBoot(repoRoot, envPath)
+}
+
+// wireDatabaseURL writes the runtime URL into .env and says so, redacted.
+func wireDatabaseURL(envPath, dsn string) bool {
+	if err := envwrite.SetVar(envPath, "DATABASE_URL", dsn); err != nil {
+		fmt.Fprintf(os.Stderr, "setup: write DATABASE_URL: %v\n", err)
+		return false
+	}
+	fmt.Fprintf(os.Stderr, "setup: wrote DATABASE_URL → %s\n", catalog.RedactDSN(dsn))
+	return true
 }
 
 // bundledDSN mirrors scripts/setup.sh: app role, loopback, sslmode

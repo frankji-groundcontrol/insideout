@@ -105,7 +105,8 @@ func decideRoles(p rolesProbe, terminal, create bool) rolesAction {
 // ensureRoles gates the own-URL path before its first migration. It returns
 // the owner DSN Migrate should attach (the one just provisioned, else the one
 // .env already had) and false when setup must stop; every stop precedes any
-// migration.
+// migration and any write of the supplied DSN as DATABASE_URL, which happens
+// here: the supplied DSN when the roles exist, the app URL when provisioned.
 func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL string, create bool) (string, bool) {
 	p, err := probeRoles(ctx, pool, ownerRole, appRole)
 	if err != nil {
@@ -119,6 +120,9 @@ func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL
 	switch act {
 	case rolesProceed:
 		fmt.Fprintf(os.Stderr, "setup: roles %s and %s present\n", ownerRole, appRole)
+		if !wireDatabaseURL(envPath, dsn) {
+			return "", false
+		}
 		return ownerURL, true
 	case rolesStop:
 		explainMissingRoles(p)
