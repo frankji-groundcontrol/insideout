@@ -158,7 +158,9 @@ class _NodeMenu extends StatelessWidget {
         context: context,
         title: t('roadmap.addChild'),
         confirmLabel: t('roadmap.add'),
-        fields: [BlockFormField(label: t('roadmap.childPlaceholder'))],
+        fields: [
+          BlockFormField(label: t('roadmap.childPlaceholder'), required: true),
+        ],
       );
       if (values == null || !context.mounted) return;
       final title = values.first.trim();

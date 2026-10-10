@@ -88,7 +88,9 @@ class _WorkspacePageState extends State<WorkspacePage> {
       context: context,
       title: t('project.newProject'),
       confirmLabel: t('project.create'),
-      fields: [BlockFormField(label: t('project.namePlaceholder'))],
+      fields: [
+        BlockFormField(label: t('project.namePlaceholder'), required: true),
+      ],
     );
     final title = values?.first.trim() ?? '';
     if (title.isEmpty || !mounted) return;
@@ -109,6 +111,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
         BlockFormField(
           label: t('workspace.createNamePlaceholder'),
           initial: ws.title,
+          required: true,
         ),
         BlockFormField(
           label: t('workspace.createDescPlaceholder'),

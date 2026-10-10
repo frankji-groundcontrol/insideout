@@ -12,6 +12,7 @@ const zhShell = <String, String>{
   'common.retry': '重试',
   'common.refresh': '刷新',
   'common.confirmTitle': '确认继续吗？',
+  'common.fieldRequired': '此项为必填项',
   'common.moreActions': '更多',
   'state.emptyTitle': '这里还没有内容',
   'state.emptyBody': '等有内容时，会显示在这里。',

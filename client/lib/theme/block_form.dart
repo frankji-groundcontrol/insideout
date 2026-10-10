@@ -13,17 +13,25 @@ class BlockFormField {
     required this.label,
     this.initial = '',
     this.multiline = false,
+    this.required = false,
   });
 
   final String label;
   final String initial;
   final bool multiline;
+
+  /// Confirm refuses to close while this field is blank after trim: the
+  /// write would fail server-side anyway, and a dialog that says so beats
+  /// one that closes on a lost tap.
+  final bool required;
 }
 
 /// Text prompt on the shared modal chrome (D2/D3): label-above raised fields,
 /// sunken footer with cancel + confirm. Resolves to the field values, or null
-/// on cancel/dismiss. The form state owns its controllers and disposes them
-/// when the dialog route unmounts, so callers receive plain strings and no
+/// on cancel/dismiss. A field marked [BlockFormField.required] keeps the
+/// dialog open on confirm, saying why, until it is filled. The form state
+/// owns its controllers and disposes them when the dialog route unmounts, so
+/// callers receive plain strings and no
 /// controller outlives (or is disposed under) the pop animation.
 ///
 /// No autofocus on purpose: a blinking caret never lets the dialog-opening
@@ -50,8 +58,8 @@ Future<List<String>?> showBlockForm({
       BlockButton(
         label: confirmLabel,
         onPressed: () {
-          final values = formKey.currentState?.values;
-          if (values != null) navigator.pop(values);
+          final form = formKey.currentState;
+          if (form != null && form.validate()) navigator.pop(form.values);
         },
       ),
     ],
@@ -73,7 +81,27 @@ class _BlockFormState extends State<_BlockForm> {
       TextEditingController(text: field.initial),
   ];
 
+  late final List<bool> _missing = List.filled(widget.fields.length, false);
+
   List<String> get values => [for (final c in _controllers) c.text];
+
+  /// False, with each required field saying why, when one of them is blank
+  /// after trim; the confirm button asks before it closes the dialog.
+  bool validate() {
+    var ok = true;
+    for (var i = 0; i < widget.fields.length; i++) {
+      _missing[i] =
+          widget.fields[i].required && _controllers[i].text.trim().isEmpty;
+      if (_missing[i]) ok = false;
+    }
+    setState(() {});
+    return ok;
+  }
+
+  void _typed(int i) {
+    if (!_missing[i]) return;
+    setState(() => _missing[i] = false);
+  }
 
   @override
   void dispose() {
@@ -85,6 +113,7 @@ class _BlockFormState extends State<_BlockForm> {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.watch<Appearance>().t;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -95,11 +124,15 @@ class _BlockFormState extends State<_BlockForm> {
             BlockTextarea(
               label: widget.fields[i].label,
               controller: _controllers[i],
+              errorText: _missing[i] ? t('common.fieldRequired') : null,
+              onChanged: (_) => _typed(i),
             )
           else
             BlockField(
               label: widget.fields[i].label,
               controller: _controllers[i],
+              errorText: _missing[i] ? t('common.fieldRequired') : null,
+              onChanged: (_) => _typed(i),
             ),
         ],
       ],

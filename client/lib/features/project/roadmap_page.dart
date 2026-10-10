@@ -181,7 +181,9 @@ class _RoadmapPageState extends State<RoadmapPage> {
       context: context,
       title: t('roadmap.addRoot'),
       confirmLabel: t('roadmap.add'),
-      fields: [BlockFormField(label: t('roadmap.rootPlaceholder'))],
+      fields: [
+        BlockFormField(label: t('roadmap.rootPlaceholder'), required: true),
+      ],
     );
     if (values == null || !mounted) return;
     final title = values.first.trim();

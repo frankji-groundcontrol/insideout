@@ -135,6 +135,7 @@ class ProjectUpdatesFeed extends StatelessWidget {
                                   BlockFormField(
                                     label: l10n.t('project.updatePlaceholder'),
                                     initial: u.content,
+                                    required: true,
                                   ),
                                 ],
                               );

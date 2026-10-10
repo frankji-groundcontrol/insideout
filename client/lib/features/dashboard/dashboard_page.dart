@@ -43,7 +43,12 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       title: t('workspace.createTitle'),
       confirmLabel: t('workspace.create'),
-      fields: [BlockFormField(label: t('workspace.createNamePlaceholder'))],
+      fields: [
+        BlockFormField(
+          label: t('workspace.createNamePlaceholder'),
+          required: true,
+        ),
+      ],
     );
     final title = values?.first.trim() ?? '';
     if (title.isEmpty || !mounted) return;
@@ -60,7 +65,12 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       title: t('workspace.joinTitle'),
       confirmLabel: t('workspace.join'),
-      fields: [BlockFormField(label: t('workspace.joinCodePlaceholder'))],
+      fields: [
+        BlockFormField(
+          label: t('workspace.joinCodePlaceholder'),
+          required: true,
+        ),
+      ],
     );
     final code = values?.first.trim() ?? '';
     if (code.isEmpty || !mounted) return;

@@ -117,7 +117,11 @@ class _IdeasPageState extends State<IdeasPage> {
       title: t('common.edit'),
       confirmLabel: t('common.save'),
       fields: [
-        BlockFormField(label: t('idea.titlePlaceholder'), initial: idea.title),
+        BlockFormField(
+          label: t('idea.titlePlaceholder'),
+          initial: idea.title,
+          required: true,
+        ),
         BlockFormField(
           label: t('idea.contentPlaceholder'),
           initial: idea.content,

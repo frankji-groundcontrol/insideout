@@ -12,6 +12,7 @@ const enShell = <String, String>{
   'common.retry': 'Retry',
   'common.refresh': 'Refresh',
   'common.confirmTitle': 'Are you sure?',
+  'common.fieldRequired': 'This field is required',
   'common.moreActions': 'More',
   'state.emptyTitle': 'Nothing here yet',
   'state.emptyBody': 'When there is something to show, it will appear here.',
