@@ -89,6 +89,17 @@ funnel's live state is what the probe says.
 - `check_docs_truth.py` green; it caught one stale tree (backend.md missing
   `internal/linebudget/`) — fixed here.
 
+## Verification
+
+Full gates (all CI lanes) ran green on the deployed `b6c34c4` (run
+38077887705, 7/7). The records commit `2929074` is docs-only; GitHub
+Actions could not start its CI run — the account's billing/spending limit
+failed (same cause as the release workflow above; annotation: "recent
+account payments have failed or your spending limit needs to be
+increased"). Locally verified in its place: `check_docs_truth.py` green,
+all new/changed relative links resolve. Re-run CI when the billing is
+settled (`gh run rerun 38105183080 --failed`).
+
 ## What an operator of an existing deployment must do
 
 Nothing new to apply — the deploy is live. The one open step is the Resend

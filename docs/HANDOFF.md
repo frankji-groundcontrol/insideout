@@ -64,6 +64,11 @@ Every other thread is closed with its exact status and links on its
   `flutter pub get` there rewrites `client/pubspec.lock`. CI and the Dockerfile
   use `pub get --enforce-lockfile`, which fails on a drifted lockfile; on MBP
   do not commit a rewritten `client/pubspec.lock`.
+- **GitHub Actions billing (2026-10-11):** CI and the release workflow
+  cannot start — GitHub reports failed account payments / spending limit
+  (runs 38104710052 and 38105183080). The `v0.1.0` assets were built and
+  published locally instead. Re-run `gh run rerun 38105183080 --failed`
+  once billing is settled; `2929074` is docs-only and locally verified.
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship landed
   changes explicitly: any `server/` change with `railway up --service server`,
