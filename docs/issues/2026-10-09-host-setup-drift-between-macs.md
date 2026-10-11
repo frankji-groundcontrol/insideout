@@ -84,7 +84,20 @@ Fix: `git branch --set-upstream-to=origin/main main` on MBP. Verify:
 **Fixed 2026-10-10:** `git branch --set-upstream-to=origin/main main` on MBP;
 `git rev-parse --abbrev-ref @{u}` prints `origin/main`.
 
-## 2026-10-11 update
+## 2026-10-11 update (closed)
+
+Flutter 3.44.8 (arm64) is installed on MBP at `~/flutter` with the PATH
+line in `~/.zshrc`; `flutter pub get --enforce-lockfile` passes there and
+`client/pubspec.lock` stays unwritten. The `app/.env` leftover is confirmed
+absent. Both halves of the drift are closed; MBP is back on the shared
+commit.
+
+The interim note below is kept for the record: the first archive grab
+(`flutter_macos_3.44.8-stable.zip`, no arch suffix) is the **Intel-only**
+build — on an arm64 Mac its dart binary answers "Bad CPU type in
+executable"; the arm64 archive is `flutter_macos_arm64_3.44.8-stable.zip`.
+
+## 2026-10-11 update (interim)
 
 The `app/.env` leftover is confirmed absent on MBP. Flutter 3.44.8
 (repo-pinned line, matching MBP2's homebrew 3.44.8) is **staged, not yet

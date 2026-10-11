@@ -39,11 +39,10 @@ The review-3 remediation and its records are
    users; a store-signed Android bundle (needs the keystore); the Supabase
    automated-backup toggle; the GitHub App install. Each is on its
    [board](plans/README.md) row.
-3. **MBP:** Flutter 3.44.8 is staged at `/tmp/flutter.zip` there — the
-   machine went offline mid-install; the one-line finish is in the
-   [drift issue](issues/2026-10-09-host-setup-drift-between-macs.md). The
-   leftover `app/.env` is confirmed gone. MBP was synced to `fff6fcb`
-   before it left; fast-forward it when it returns.
+3. **MBP:** closed 2026-10-11 — Flutter 3.44.8 (arm64) installed and
+   `pub get --enforce-lockfile` passes with the lockfile unwritten;
+   the leftover `app/.env` is gone
+   ([drift issue](issues/2026-10-09-host-setup-drift-between-macs.md)).
 
 Every other thread is closed with its exact status and links on its
 [board](plans/README.md) row. Local run commands:
