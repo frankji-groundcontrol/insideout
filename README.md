@@ -108,18 +108,14 @@ across Claude Code, Cursor, and anything speaking the standard
 
 ### CLI 与 MCP（预编译二进制 / prebuilt binaries）
 
-`v0.1.0`（2026-10-11）已发布四个目标平台的 tarball 与校验和。匿名
-`curl | bash` 还差一步：**仓库当前是私有的**，GitHub 对私有仓库的
-`releases/latest/download` 一律 404——仓库转为公开后这条命令即可用
-（可见性是 owner 的决定）。在此之前，`gh release download v0.1.0`
-（已认证）或上面的从源码路径都可以。
+`v0.1.0`（2026-10-11）发布了四个目标平台的 tarball、校验和与安装
+脚本；仓库已于同日转为公开，下面这条命令已验证可用（bootstrap、
+tarball 与校验和均以匿名请求 200 通过）。
 
-`v0.1.0` (2026-10-11) publishes tarballs and checksums for all four
-targets. The anonymous one-liner below additionally needs the
-**repository to be public** — GitHub answers `releases/latest/download`
-with 404 for private repos, and visibility is the owner's call. Until
-then, `gh release download v0.1.0` (authenticated) or the from-source
-path above both work.
+`v0.1.0` (2026-10-11) publishes tarballs, checksums, and the installer
+for all four targets; the repository went public the same day, and the
+one-liner below is verified working (bootstrap, tarball, and checksum
+all answered 200 anonymously).
 
 ```bash
 curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash

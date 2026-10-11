@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-11 | [Purge by an enumerated keep-set, never by a date rule](2026-10-11-purge-by-keep-set-not-by-date.md) | [the legacy purge](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |
 | 2026-10-11 | [A send-scoped API key's 401 looks exactly like a dead key](2026-10-11-a-send-scoped-keys-401-looks-like-a-dead-key.md) | [the re-key and mailed-flow pass](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |
 | 2026-10-11 | [A key "synced everywhere" can still be dead everywhere](2026-10-11-synced-everywhere-is-not-liveness.md) | [owner gap closure](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |
 | 2026-10-11 | [`CREATE OR REPLACE` with a changed signature creates an overload](2026-10-11-create-or-replace-with-a-new-signature-overloads.md) | [review-3 remediation](../changelogs/2026-10-11-rv3-remediation/index.md) |

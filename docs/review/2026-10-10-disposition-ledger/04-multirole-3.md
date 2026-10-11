@@ -87,7 +87,7 @@ What each fix does, the operator migration notes and the final gate run live in 
 | USER-09 | L | Fixed | wave 3 — fix ba6ad5e · red client/test/dashboard_capture_route_test.dart |
 | PM-02 | M | Fixed | Deploy landed 2026-10-11 (`b6c34c4`): the behind-`main` qualifier is dropped, client/README states the deploy date, and the docs-truth check's deploy-skew arm retired with it |
 | PM-04 | M | Fixed | Deploy landed 2026-10-11: `/api/v1/auth/config` reports `mailEnabled` live, so the client's unknown-state handling answers a real field |
-| USER-05 | M | Fixed (visibility caveat) | `v0.1.0` tagged and published 2026-10-11 (four targets + checksums + bootstrap.sh; assets download- and checksum-verified). The anonymous curl one-liner additionally needs the repository public — GitHub 404s `releases/latest/download` for private repos; README states exactly this, and visibility stays the owner's call |
+| USER-05 | M | Fixed | `v0.1.0` tagged and published 2026-10-11 (four targets + checksums + bootstrap.sh); the repository went public the same day after a privacy sweep (no committed `.env`, no tokens or private keys in tree or history — the only hit is a code comment and the Supabase anon key, which is public-by-design), and the anonymous `curl \| bash` path is verified: bootstrap 200, tarball checksum OK, anonymous clone OK |
 | COMP-03 | M | Satisfied by the report | Satisfied by the report itself: the score table carries the recalibrated 8.0 with the reason |
 | COMP-05 | L | Satisfied by the report | Satisfied by the plan: bucket distribution stated; the verify contract adds mutation checks for IMPROVE rows |
 | COMP-06 | L | Satisfied by the report | Satisfied by the report: 379/379 used throughout |

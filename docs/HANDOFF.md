@@ -33,10 +33,12 @@ The review-3 remediation and its records are
    domain delivers to any address; the Resend account's own address
    (`frank.ji@…`) and `scihill.com` addresses deliver, the old rehearsal
    address `dingjue.ji@…` bounces.
-2. **Destructive or secret steps still the owner's:** purging the 582 legacy
-   users; a store-signed Android bundle (needs the keystore); the Supabase
-   automated-backup toggle; the GitHub App install. Each is on its
-   [board](plans/README.md) row.
+2. **Still the owner's, console-only:** the Supabase automated-backup
+   toggle (dashboard — a schema-scoped snapshot was taken 2026-10-11
+   before the purge) and a store-signed Android bundle (needs the
+   keystore). The legacy-user purge is **done** (859 junk accounts,
+   keep-set enumerated — [changelog](changelogs/2026-10-11-owner-deploy-and-mail-truth.md)),
+   and the GitHub App is already installed (`insideout-roadmap`).
 3. **MBP:** closed 2026-10-11 — Flutter 3.44.8 (arm64) installed and
    `pub get --enforce-lockfile` passes with the lockfile unwritten;
    the leftover `app/.env` is gone
@@ -63,14 +65,11 @@ Every other thread is closed with its exact status and links on its
   `flutter pub get` there rewrites `client/pubspec.lock`. CI and the Dockerfile
   use `pub get --enforce-lockfile`, which fails on a drifted lockfile; on MBP
   do not commit a rewritten `client/pubspec.lock`.
-- **GitHub Actions billing (2026-10-11):** CI and the release workflow
-  cannot start — GitHub reports failed account payments / spending limit
-  (blocked runs: 38104710052, 38105183080, 38105636267). The `v0.1.0`
-  assets were built and published locally instead, and the blocked CI runs
-  are superseded by local verification (docs-truth green; client 458/458,
-  analyze 14, format clean; full CI was green on the deployed `b6c34c4`,
-  run 38077887705). Re-run each with `gh run rerun <id> --failed` once
-  billing is settled.
+- **GitHub Actions billing (2026-10-11):** the repository is now
+  **public**, so Actions are free and CI runs normally (the head run is
+  green); the ten billing-blocked runs were purged as superseded. A
+  failed payment may still be sitting on the account for other
+  GitHub services — worth a look in Settings → Billing.
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship landed
   changes explicitly: any `server/` change with `railway up --service server`,

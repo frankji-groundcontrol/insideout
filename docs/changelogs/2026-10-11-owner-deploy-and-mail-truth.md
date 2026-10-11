@@ -131,6 +131,40 @@ a suppressed send is visible in the provider's events. The flow account is
 not recorded anywhere); the first rehearsal account was demoted back to
 member after its admin leg — sole-admin posture holds.
 
+## Minimal CI, public repo, legacy purge, and the App (owner-directed)
+
+Per the owner's direction — *only run the necessary [CI], otherwise purge;
+for the rest of the open ones, use the recommended choice*:
+
+- **CI minimized**: the one necessary run (head `b2cdfca`) re-ran and is
+  **green** once the repo went public (Actions are free for public repos —
+  the payment failure no longer gates CI). Ten superseded billing-blocked
+  runs were purged (8 stale CI + the release run whose assets I had built
+  locally).
+- **Repository is public** (the recommended choice — the product is built
+  for it: installer-first README, releases, free CI). Guarded by a privacy
+  sweep first: no `.env` ever committed, no tokens or private keys in the
+  tree or the full 1,153-commit history (the only pattern hits are a PEM
+  format mention in a code comment and the Supabase **anon** key, public
+  by design). Anonymous install path verified end-to-end: bootstrap 200,
+  tarball sha256 OK, anonymous clone OK.
+- **Legacy purge executed** after a schema-scoped snapshot
+  (`pg_dump --schema=insideout`, 46 tables — the shared instance's other
+  schemas are unreadable to our role and untouched). The census first:
+  864 users = 840 `@test.local` fixtures + 19 old-app/simulation accounts
+  never seen since + **5 real accounts kept** (the owner-admin, the
+  dogfood account that owns the GitHub binding, the active demo account,
+  and the two funnel-rehearsal accounts — a date-only rule would have
+  deleted the dogfood binding, so the keep-set was enumerated, not
+  dated). One transaction deleted 859 users, 446 workspaces, 214
+  projects and their rows; post-purge hosted probes 6/6 green.
+- **GitHub App: already installed** — `insideout-roadmap` (the board's
+  install item was stale), installation live on the owner's account,
+  verified with the app's own JWT.
+- Still owner-console only: the Supabase automated-backup **toggle**
+  (dashboard; today's snapshot mitigates) and the Android **signing
+  keystore** (secret material).
+
 ## Verification
 
 Full gates (all CI lanes) ran green on the deployed `b6c34c4` (run
