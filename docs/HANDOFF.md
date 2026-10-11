@@ -10,9 +10,9 @@ path and current warnings, never history.
 
 ## What to do next
 
-**The deploy is done; re-keying Resend is the one open step.** On 2026-10-11
-`railway up` shipped both services (server @ `b6c34c4`, app redeployed at
-`6b1f24f` with the throttled-copy fix): the seven pending
+**Everything engineering is closed; the owner's account actions below are
+all that remain.** 2026-10-11: the deploy (server @ `b6c34c4`, app @
+`6b1f24f`), the Resend re-key and the full mailed-flow pass are done — the seven pending
 migrations applied (confirmed by running `insideout migrate` against the
 hosted database — "already up to date"), `/api/v1/auth/config` reports
 `mailEnabled`, the hosted read-only smoke probes pass, BUG-027's owner
@@ -22,19 +22,17 @@ ran on the hosted box (model answered, 45 deltas, clean `message_end`).
 The review-3 remediation and its records are
 [on `main`](changelogs/2026-10-11-rv3-remediation/index.md).
 
-1. **Re-key Resend — the mail funnel's only blocker.** The live admin mail
-   probe (2026-10-11, transcript in the
-   [changelog](changelogs/2026-10-11-owner-deploy-and-mail-truth.md))
-   reports `resend returned 401 Unauthorized`: every stored copy of
-   `INSIDEOUT_MAIL_API_KEY` is revoked — Railway's, the root `.env`'s, and
-   both hosts' key stores were each tested and rejected. Sign in to Resend,
-   mint a fresh key, set it in Railway (`railway variables --service server
-   --set "INSIDEOUT_MAIL_API_KEY=…"` + redeploy) and in the three local
-   homes, then re-run the probe (expect `status: "sent"`), send one real
-   magic link and one password reset to the operator's address, and click
-   both through. Until then invitations still work via the inline code the
-   admin API returns; the emailed flows (magic link, login code, reset)
-   log-only.
+1. ~~Re-key Resend~~ **Done 2026-10-11** — the owner's fresh send-scoped
+   key is synced to Railway + `.env` + both hosts' stores; the admin mail
+   probe answers `status:"sent"` and every mailed flow ran live through the
+   provider (invitation, magic link, login code, forgot/reset — each token
+   read from the delivered email and redeemed; transcript in the
+   [changelog](changelogs/2026-10-11-owner-deploy-and-mail-truth.md)).
+   Note for the future: the key is send-scoped (`/domains` answers 401 —
+   that is the restriction, not a dead key), and the verified sender
+   domain delivers to any address; the Resend account's own address
+   (`frank.ji@…`) and `scihill.com` addresses deliver, the old rehearsal
+   address `dingjue.ji@…` bounces.
 2. **Destructive or secret steps still the owner's:** purging the 582 legacy
    users; a store-signed Android bundle (needs the keystore); the Supabase
    automated-backup toggle; the GitHub App install. Each is on its

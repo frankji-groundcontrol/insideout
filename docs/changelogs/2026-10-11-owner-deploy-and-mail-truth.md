@@ -107,6 +107,30 @@ unwritten ([drift issue](../issues/2026-10-09-host-setup-drift-between-macs.md),
 including the Intel-vs-arm64 archive gotcha). All three machines and
 GitHub sit on one commit again.
 
+## The mailed-flow pass (FEAT-03, REL-06 — closed)
+
+The owner handed over a fresh **send-scoped** Resend key (its `/domains`
+401 is the scope restriction, not a dead key) via the MBP2 key store. It
+was synced to Railway (auto-redeploy `d6ccd21d`), the root `.env`, and
+MBP's store, then every mailed flow ran live on production — each email's
+token was read back from the provider and redeemed:
+
+| Flow | Evidence |
+| --- | --- |
+| Admin mail probe | `{"status":"sent","mailEnabled":true}` |
+| Invitation | minted via the admin API → email delivered (verified-domain sender) → **emailed code == inline code** → redeemed by `register` 201 |
+| Magic link | requested → token extracted from the delivered email → `magic-link/consume` → 200, tokens issued |
+| Login code | requested (after the resend cooldown — the first attempt was correctly swallowed) → 6-digit code read from the email → `login-code/verify` → 200, tokens issued |
+| Forgot/reset | requested → token extracted → `reset-password` → 200 → **login with the new password** → 200 |
+
+Delivery facts learned: the verified sender domain
+(`INSIDEOUT_MAIL_FROM`) delivers to any address; the Resend account's own
+address delivers; the first rehearsal address bounces (provider-side), and
+a suppressed send is visible in the provider's events. The flow account is
+`gapclosure@scihill.com` (a member on the owner's domain; its password is
+not recorded anywhere); the first rehearsal account was demoted back to
+member after its admin leg — sole-admin posture holds.
+
 ## Verification
 
 Full gates (all CI lanes) ran green on the deployed `b6c34c4` (run
