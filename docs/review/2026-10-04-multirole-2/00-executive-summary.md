@@ -8,6 +8,15 @@
 | **Cross-role mean** | **7.3 / 10** (range 6.5–8.4) |
 | **Register** | 108 unique: 0 Critical · 7 High · 53 Medium · 46 Low |
 
+*Superseded 2026-10-11: the repository has been public since 2026-10-11 — see
+[the owner-gap changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
+
+*Corrected 2026-10-11: recounted, the register's severity tables contain 106
+rows (7 + 53 + 46), so the 108 headline does not match its own severity sum —
+106 rows + the two never-registered Info findings (SEC-19, SEC-20) = 108 is
+the likely origin; see the note in
+[01-findings-register.md](01-findings-register.md).*
+
 **Verdict.** The tree that closed the first review's five waves is visibly
 healthier: no Criticals, the CI spine exists, the new tests are the strongest in
 the repo, and the line-budget rule holds everywhere it applies. The seven
@@ -26,7 +35,7 @@ Medium by the skeptics because PRODUCT.md's own header frames them as end-state.
 | code-quality | 8.4 | Rule holds; residue is one widget duplication and helper hygiene |
 | architect | 7.6 | Sound structure and CI spine; toolchain pin divergence is the wobble |
 | feature-implementation | 7.5 | 50 MCP tools verified; Branches/Merge/Decision-Log ledger honest |
-| security | 7.5 | No secrets, auth tight; XFF severity understated (see critic) |
+| security | 7.5 | No secrets, auth tight; XFF severity understated (see [critic](30-completeness-critic.md)) |
 | reliability-ops | 7.5 | Limits and retries mostly present; XFF collapse is the outlier |
 | fullstack | 7.2 | Happy paths solid; failure paths (popup, 401, errors) are the debt |
 | testing | 7.0 | Real DB-gated suite, 0 skips; guard scope, no `-race`, no smoke |

@@ -1,6 +1,6 @@
 # 2026-08-22 — Audience view projections (one PRD core, many views)
 
-PRODUCT.md "One PRD core, multiple audience views": the same fact core
+[PRODUCT.md](../../PRODUCT.md) "One PRD core, multiple audience views": the same fact core
 projects as Decision / Management / Delivery / Validation views —
 projections, never separately maintained documents. This increment made
 the projections real on every surface.

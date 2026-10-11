@@ -22,7 +22,8 @@ nodes:
 ```
 
 An event attaches evidence to every matched **leaf**; unmatched events
-stay visible but attach to nothing (PRODUCT.md). The full rules ship in
+stay visible but attach to nothing
+([PRODUCT.md](../../PRODUCT.md)). The full rules ship in
 the generated file's header.
 
 ## Surfaces (1:1 by construction)
@@ -54,3 +55,7 @@ the generated file's header.
   leaf-node evidence (needs the installation-token flow to read private
   repos; public repos could load unauthenticated).
 - Install the GitHub App on the repo (user) for real deliveries.
+
+*Superseded 2026-10-11: both closed the same day — the loader shipped and the
+App was installed (install ping 200), per the
+[evidence-loop record](2026-08-21-evidence-loop.md).*

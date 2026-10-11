@@ -1,6 +1,9 @@
 # 2026-08-13 — Task board and handoff responsibility correction
 
 Status: complete; awaiting checkpoint.
+*Corrected 2026-10-11: the board files this under Completed (defined there
+as "a checkpoint commit exists") and checkpoint commits have landed
+regularly since 2026-08-13.*
 
 ## Goal
 

@@ -15,7 +15,7 @@ exists to catch this class. None of it breaks the documented path today; all
 of it compounds.
 
 Reviewed against main@877ad03; High/Critical findings re-checked by an
-independent skeptic — verdicts in 01-findings-register.md.
+independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 ## Scope

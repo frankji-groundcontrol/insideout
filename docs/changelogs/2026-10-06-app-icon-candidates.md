@@ -42,3 +42,7 @@ Nothing to migrate or deploy. The install is filed and blocked on a
 pick
 ([issue](../issues/2026-10-06-app-icon-not-installed.md),
 [plan](../plans/2026-10-06-app-icon/2026-10-06-app-icon.md)).
+
+*Superseded 2026-10-06: the pick landed the same day — the user named
+`breakout` the logo and it was installed on every platform
+([record](2026-10-06-app-icon-breakout.md)).*

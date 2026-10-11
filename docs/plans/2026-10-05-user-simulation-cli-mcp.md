@@ -64,7 +64,8 @@ for PG18 is reverted and never committed).
       the owner. Chen's workspace stayed hidden (404 / blank page).
 - [x] Parity spot-check table — in the
       [changelog](../changelogs/2026-10-06-user-simulation-three-personas.md).
-- [x] Findings triaged: BUG-017, BUG-018 (raw pressure key on web),
+- [x] Findings triaged: BUG-017,
+      [BUG-018](../issues/2026-10-06-bug-018-roadmap-pressure-label-untranslated.md) (raw pressure key on web),
       BUG-019, BUG-020. All four fixed 2026-10-06
       ([fixes](../changelogs/2026-10-06-simulation-bug-fixes.md)).
       BUG-016 was fixed during bootstrap.

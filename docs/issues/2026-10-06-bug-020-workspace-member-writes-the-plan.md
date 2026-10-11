@@ -39,3 +39,8 @@ carries a decision. The list query joins `proposal_decisions`, and the
 live project response shows the rejected proposal with
 `decision: rejected`. The release bundle on :5174 predates that client
 change.
+
+*Superseded 2026-10-11: the app image was rebuilt and deployed with
+`v0.1.0` (see the
+[owner-deploy changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md));
+the hosted client no longer predates that change.*

@@ -22,6 +22,15 @@ and a completeness critic. 108 unique findings; 7 confirmed High; 0 Critical.
 ## Findings at a glance
 
 **108 unique findings: 0 Critical · 7 High · 53 Medium · 46 Low.**
+
+*Corrected 2026-10-11: recounted, the severity tables in
+[01-findings-register.md](01-findings-register.md) contain 106 rows (7 + 53 +
+46), so the 108 headline does not match its own severity sum. The methodology
+below records a third count (105 unique from 105 filed), and 22-security.md's
+two Info findings (SEC-19, SEC-20) never entered the register — 106 table
+rows + those 2 Info rows = 108, the likely origin of the headline. The table
+rows are the ground truth.*
+
 Skeptic verdicts on all 15 filed Highs: **7 confirmed, 8 downgraded, 0 refuted**;
 one sub-claim inside PM-13 ("all five commits undeployed") was refuted by the
 coordinator's execution evidence. Cross-role mean score: **7.3 / 10**.
@@ -44,6 +53,12 @@ coordinator's execution evidence. Cross-role mean score: **7.3 / 10**.
 
 None. The first review's Critical (committed key material) stays closed, and the
 Wave 0–4 remediation introduced no new Critical-severity defects.
+
+*Corrected 2026-10-11: the first review recorded 0 Critical (its register
+totals: 0 Critical · 12 High · 25 Medium · 38 Low), and its security reviewer
+verified "No secret has ever been committed — git history shows only
+`.env.example` files ever tracked" — there was no committed-key-material
+Critical to stay closed; the sentence above is factually wrong about review 1.*
 
 ## Bugs reproduced by running the code
 
@@ -85,6 +100,10 @@ identifiers — **clean** (commands and output in the changelog for this review)
 2. [01-findings-register.md](01-findings-register.md) — all 108 rows by severity.
 3. [14-user.md](14-user.md) then [11-ai-developer.md](11-ai-developer.md) — the two confirmed-High clusters.
 4. [30-completeness-critic.md](30-completeness-critic.md) — what nobody covered.
+
+*Note 2026-10-11: [00-executive-summary.md](00-executive-summary.md) —
+verdict, top ten by impact, effort table — was written after this list;
+read it first.*
 
 ## Related
 

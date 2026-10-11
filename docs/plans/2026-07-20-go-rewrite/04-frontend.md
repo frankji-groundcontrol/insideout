@@ -79,3 +79,13 @@ Naming cleanup rides along (Q3 decided): `juanleme-theme`/`juanleme-lang` keys �
   vitest 继续覆盖 store 与 composable（`useCoachStream` 的 SSE 解析对着测试模式下的真实本地 Go 服务），外加 §5 新增的 i18n 齐全性守卫。
 - The old supabase-adapter unit tests (which mocked the client) are deleted with the adapters; their replacement is the Go backend's own HTTP-level integration tests plus one end-to-end happy path: register → create workspace → record idea → convert → one coach exchange → snapshot revision → submit review — run against the compose stack.
   旧的 supabase 适配层单测（mock 客户端）随适配层删除；替代物是 Go 后端自身的 HTTP 集成测试，外加一条端到端主路径：注册 → 建工作区 → 记想法 → 转化 → 一次教练往返 → 存版本 → 提交评审——在 compose 栈上运行。
+
+---
+
+*Superseded 2026-10-11 (historical bilingual record, body kept verbatim):
+this Nuxt 4 frontend plan was executed and then replaced — the `app/`
+directory was deleted 2026-08-18 and the client is the Flutter `client/`
+([Flutter cutover](../2026-08-17-flutter-client.md),
+[deletion](../2026-08-18-delete-nuxt-app.md)). Its registry.ts / Nitro
+proxy / vue-i18n / `useCoachStream` mechanics describe code that no
+longer exists.*

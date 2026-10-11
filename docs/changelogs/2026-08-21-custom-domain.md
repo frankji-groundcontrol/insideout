@@ -20,4 +20,5 @@ The product now serves from one domain instead of two Railway hostnames.
   build).
 
 The old `*.up.railway.app` hostnames keep working; the domain is the
-canonical URL going forward (HANDOFF examples updated).
+canonical URL going forward
+([HANDOFF](../HANDOFF.md) examples updated).

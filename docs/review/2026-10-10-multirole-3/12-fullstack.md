@@ -4,6 +4,11 @@
 
 **Bottom line:** The fullstack surfaces at 754c502 are genuinely hardened — every control I traced does what its label says except in small corners, the async/setState contracts the recent wave tightened hold almost everywhere, env names agree across compose/.env.example/dev.sh/code with one catalog omission, the Docker/nginx path serves a from-source build with a correct CSP, and en/zh key sets are exactly identical (375/375, verified). The worst defect I found is in the one funnel that has never run live: the invitation email's HTML tells the invitee the link expires in 168 minutes when it lives 7 days — a 60x misstatement in the first message every new user receives. Beyond that: two pages still write TextEditingControllers after awaits without a mounted guard, the dock's Capture/Ideas/Version/Commit items dead-tap on their own destination (only Evidence got the pulse fix), and the PRODUCT.md-to-implementation delta is admitted only for roles while autosave, personas, product branches, decision log, the facts surface, lenses, and dependencies have no implementation and no tracker.
 
+*Corrected 2026-10-11: the completeness critic re-measured the en/zh key sets
+at 379/379 with identical sets (COMP-06; the README score footnote records it)
+— the 375/375 count in this file (bottom line, i18n evidence, and next steps)
+is short by four keys.*
+
 ---
 
 ## Fullstack review — InsideOut @ `754c502`

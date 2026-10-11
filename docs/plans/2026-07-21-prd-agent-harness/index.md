@@ -1,6 +1,12 @@
 # 2026-07-21 — PRD agent harness redesign
 
 Status: complete — plan reviewed and revised, ready to implement (pending the §9 user decisions).
+*Corrected 2026-10-11: "ready to implement" understates history — the
+harness's core mechanics (fact ledger, critic, streaming, run lifecycle)
+largely shipped, and the [2026-07-27 hardening pass](../2026-07-27-hardening/README.md)
+was already fixing bugs in its live components. Do not reimplement them;
+see the board's superseded note
+([plans/README.md](../README.md)).*
 
 PRD writing is a subtle task: the failure mode of a naive agent is confident
 fabrication — inventing users, requirements, and metrics the human never

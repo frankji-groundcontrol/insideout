@@ -86,3 +86,10 @@ coach, mail funnel) never exercised live. Fix the toolchain floor (ARCH-01),
 land wave 1, then deploy and tag: that single owner sequence un-darks the
 whole register's FIX bucket and converts the mail/LLM "never run live" rows
 from unknown to verified.
+
+*Superseded 2026-10-11: the deploy milestone happened — both services deployed
+at `b6c34c4` with all seven pending migrations applied, `v0.1.0` tagged and
+published, and the mail funnel plus one real hosted LLM coach turn exercised
+live (see the [owner-gap changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md));
+every row's disposition is in the
+[ledger](../2026-10-10-disposition-ledger/04-multirole-3.md).*

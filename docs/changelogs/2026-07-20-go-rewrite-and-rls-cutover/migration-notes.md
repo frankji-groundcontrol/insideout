@@ -60,6 +60,10 @@ uses `POSTGRES_PORT`, `POSTGRES_APP_PASSWORD`, `POSTGRES_SUPERUSER_PASSWORD`,
   docker-compose `postgres:17`) or a shared instance where `insideout_app`
   owns only the `insideout` schema
   ([BUG-008](../../issues/2026-07-20-bug-008-shared-instance-db-provisioning.md)).
+
+  *Superseded 2026-10-11: under the two-role setup the app-role DSN is refused
+  for migrations — `insideout migrate` runs against `DATABASE_OWNER_URL`
+  ([setup roles record](../2026-10-10-close-open-gaps/setup-roles-and-bundled-owner.md)).*
 - If your `DATABASE_URL` goes through a transaction pooler, include
   `pgbouncer=true` so pgx switches to the simple query protocol
   (`server/internal/store/pool.go`).

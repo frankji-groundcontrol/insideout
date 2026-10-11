@@ -4,7 +4,7 @@
 **Score:** **7.0 / 10**
 **Bottom line:** The security core of this repo is unusually disciplined for its size: every data route is behind `requireAuth`/`requireAdmin`, refresh tokens are hashed at rest with atomic rotation and replay detection, the GitHub webhook verifies HMAC in constant time and fails closed at 503 when unconfigured, RLS is forced on every domain table, signup fails closed to invitation-only, and the JWT secret has a boot-time floor. No secret has ever been committed — git history shows only `.env.example` files ever tracked. The real hole is what is missing: zero rate limiting or lockout on the credential-verifying auth endpoints (login is brute-forceable at unlimited speed, and the email-token request endpoints can bomb a victim's inbox while burning their live tokens), plus a root-running container with no healthcheck and an RLS backstop whose NULL-context trust is enforced only by code-review convention.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 ## Scope

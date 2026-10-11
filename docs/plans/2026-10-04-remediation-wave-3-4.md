@@ -88,3 +88,9 @@ projects are never flagged — quiet is expected there.
   2026-10-04; nothing was committed or transmitted).
 - The release gate's signed-in hosted page load (PM-02) still needs a
   member login on the deployed domain.
+
+*Superseded 2026-10-11: both operator items closed — the Resend key was
+rotated 2026-10-05 and re-keyed 2026-10-11 with the full mailed funnel
+live ([mail-truth changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md)),
+and the hosted signed-in exercise ran 2026-10-11 (PM-02 Fixed in the
+[disposition ledger](../review/2026-10-10-disposition-ledger/04-multirole-3.md)).*

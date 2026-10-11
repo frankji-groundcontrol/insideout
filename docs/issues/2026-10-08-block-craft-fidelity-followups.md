@@ -50,14 +50,14 @@ the uncommitted worktree of 2026-10-08.
   message for rate-limit copy. The sibling catch (108-110) documents
   the correct keep-the-object rule. Fix: store the exception object and
   let `localizedError` map it (D5 residue).
-- **Dark-mode cobalt-950 on slab surfaces** — DESIGN.md reserves
+- **Dark-mode cobalt-950 on slab surfaces** — [DESIGN.md](../../DESIGN.md) reserves
   cobalt-950 (`brandSubtle` in dark) for status-chip backgrounds, but
   it paints the whole Next band (`features/project/roadmap_bands.dart:79`),
   the needsDeadline band (`features/project/roadmap_progress_view.dart:81`),
   the idea-poster gradient end (`features/workspace/idea_poster.dart:44`),
   and the versions peek cards (`features/prd/versions_stack.dart:145`).
   Fix: move band/poster surfaces to `surfaceSunken`/`surfaceRaised`, or
-  amend DESIGN.md deliberately if the bands are meant to be brand-tinted.
+  amend [DESIGN.md](../../DESIGN.md) deliberately if the bands are meant to be brand-tinted.
 
 ## Low
 

@@ -4,7 +4,7 @@
 **Score:** **6.5 / 10**
 **Bottom line:** The Go runtime is engineered to a high reliability standard — every outbound HTTP client has explicit timeouts, the LLM path has a classified retry taxonomy, an idle watchdog, a circuit breaker, and a DB-backed reaper, and the coach's terminal-state guarantee survives client disconnects and panics. The packaging and operations layer is where the rot is: the compose file cannot be parsed without postgres-only secrets (the documented remote-DB path is dead), the server service forwards so few variables that email login silently never delivers on a self-host, the container runs as root with no healthcheck, the nginx-at-boot DNS fragility is a manual ritual with no tracked issue, and the two load limits the plan names were never wired to env. `go build`/`go vet`/`go test` all green, verified independently.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 ## Scope

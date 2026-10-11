@@ -33,5 +33,7 @@ force a regenerate at GitHub.
 
 ## 6. Installation guide
 
-This file is the detail. Contract row in
-[environment.md](../../environment.md).
+This file is the detail. No contract row in
+[environment.md](../../environment.md) — nothing consumes the variable
+yet (part 2), so it is absent from the catalog (`.env.example`) as
+well; the store keeps the credential.

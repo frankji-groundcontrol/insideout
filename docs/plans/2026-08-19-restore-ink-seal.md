@@ -2,6 +2,10 @@
 
 Status: **in flight**. Opened after user QA: an infra/client migration is
 not a visual rewrite.
+*Corrected 2026-10-11: fonts signed off 2026-08-20, canvas v1 deployed
+2026-08-22 — the checklist fully landed and the board row is Completed;
+the follow-on is owned by
+[presence hardening](2026-08-23-canvas-presence-hardening.md).*
 
 ## Why this exists
 
@@ -46,8 +50,18 @@ token file `app/src/assets/tokens.css` (last live at `f897fb4`).
       toggle, interaction-tested and deployed
       ([changelog](../changelogs/2026-08-22-product-follow-ons.md));
       real-time multi-user presence remains a follow-on
+  *Superseded 2026-10-11 (event 2026-08-22): presence shipped the same day
+  with the [frontier](../changelogs/2026-08-22-frontier.md) and
+  [depth](../changelogs/2026-08-22-depth-thread.md) threads — the
+  [presence-hardening plan](2026-08-23-canvas-presence-hardening.md) opens
+  by correcting this exact follow-on note.*
 
 ## Source of truth
+
+*Superseded 2026-10-11 (event 2026-09-18): `DESIGN.md` has since been
+rewritten to the Cobalt system by the
+[Cobalt restyle](2026-09-18-cobalt-flutter.md); the Ink & Seal sources of
+truth live in git history (`f897fb4`) and the design-system records below.*
 
 - [`DESIGN.md`](../../DESIGN.md)
 - [`docs/design-system/CHANGELOG.md`](../design-system/CHANGELOG.md) `0.2.0` / `0.4.0`

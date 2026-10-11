@@ -19,7 +19,7 @@ browser ──> client (Flutter web + nginx, :8080) ── /api/ ──> server 
 | Service | Image / build | Container port | Host port |
 |---------|---------------|----------------|-----------|
 | `postgres` | `postgres:18` | 5432 | `127.0.0.1:${POSTGRES_PORT:-5442}` (localhost only) |
-| `server` | built from `server/` (golang:1.25 → distroless/static, runs as nonroot) | 8080 | `${SERVER_PORT:-8080}` |
+| `server` | built from `server/` (golang:1.26-alpine → distroless/static, runs as nonroot) | 8080 | `${SERVER_PORT:-8080}` |
 | `client` | built from `client/` (Flutter build → nginx-unprivileged) | 8080 | `${CLIENT_PORT:-5173}` |
 
 The bundled `postgres` service is the self-hosted default. When
@@ -148,7 +148,9 @@ is `pg_advisory_lock` on the conversation id, a database-backed permit
 counter, and a shared store for the throttle, cooldown and presence state.
 
 A runtime guard makes a stray second replica loud instead of silent
-(`api/single_replica.go`, review-3 SEC-03/REL-05): at startup the server
+([`api/single_replica.go`](../../server/internal/api/single_replica.go),
+review-3 [SEC-03/REL-05](../review/2026-10-10-multirole-3/01-findings-register.md)):
+at startup the server
 logs its single-replica contract once, then holds the
 `insideout:singleton` Postgres advisory lock on a hijacked connection for
 the life of the process, and any process that finds the lock already held

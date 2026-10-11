@@ -7,7 +7,7 @@ slice 1 of the [promise-gap set](2026-10-11-product-promise-gaps.md)).
 
 > "**Product Branch / Explore direction:** an alternative product hypothesis,
 > such as a different core user, value proposition, business model, or scope."
-> (PRODUCT.md:206-207)
+> ([PRODUCT.md](../../PRODUCT.md):206-207)
 >
 > "**Merge / Combine conclusion:** a human decision to bring a Product Branch
 > into the main product line." (PRODUCT.md:209-210)

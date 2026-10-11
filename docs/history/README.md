@@ -13,6 +13,7 @@ Nothing here describes the current InsideOut system — see
   subsequently removed in the Go rewrite.
 - [design/01_dashboard_wireframe.md](design/01_dashboard_wireframe.md) —
   pre-rebrand dashboard wireframe.
-- [workshop-classes/](workshop-classes/class_01_review.md) — retrospectives
+- [workshop-classes/](workshop-classes/README.md) — retrospectives
   from the JuanLeMe workshop classes (records of what was taught, not claims
-  about the current app).
+  about the current app): [the class 01 review](workshop-classes/class_01_review.md)
+  and [class_02.md](workshop-classes/class_02.md).

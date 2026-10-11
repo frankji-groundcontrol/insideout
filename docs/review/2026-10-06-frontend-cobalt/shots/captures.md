@@ -4,7 +4,11 @@
 - **Build:** release Flutter web (CanvasKit) served at `http://127.0.0.1:5174/` from `client/build/web`
 - **Driver:** `scripts/sim/web_driver.py` (headless Chrome, CDP, vision-driven clicks)
 - **Viewport:** 1440×900 (desktop shots), 390×844 @2x (narrow shots)
-- **Method notes:** Chrome was launched *without* the driver's usual `--disable-remote-fonts` flag so CanvasKit could fetch Noto Sans SC and render CJK (the boot-gate timeout fix from BUG-016 keeps the app booting). Demo login used: `demo@insideout.local`. In-app navigation only — direct deep links 404 (see anomaly A9). Narrow shots were taken with CDP mobile emulation; taps via `Input.dispatchTouchEvent`.
+- **Method notes:** Chrome was launched *without* the driver's usual `--disable-remote-fonts` flag so CanvasKit could fetch Noto Sans SC and render CJK (the boot-gate timeout fix from [BUG-016](../../../issues/2026-10-06-bug-016-web-boot-gate-hangs-on-font-load.md) keeps the app booting). Demo login used: `demo@insideout.local`. In-app navigation only — direct deep links 404 (see anomaly A9). Narrow shots were taken with CDP mobile emulation; taps via `Input.dispatchTouchEvent`.
+
+*Corrected 2026-10-11: the deep-link 404 anomaly is **A8**, not A9 (A9 is the
+coach-panel top-bar contrast issue); the same mis-tag recurs in the Console
+section below.*
 
 ## Shot index
 
@@ -42,6 +46,11 @@
 | 提交 | Navigates to `/prd/<id>/versions` (same page as 版本; no separate commits page exists) |
 | 路线图 | Navigates to `/projects/<id>/roadmap` |
 | 证据 | Dead click from project roadmap — no navigation, no feedback (A7) |
+
+*Corrected 2026-10-11: the dead/inconsistent dock clicks tagged (A7) in this
+table are **A6** in the anomaly log; A7 is the empty workspace rows.
+12-first-run-user.md quotes the mis-tagged row verbatim, so that quote keeps
+the original tag.*
 
 ## Console (after walk, `web_driver.py console` = reload + 20 s drain)
 

@@ -16,3 +16,8 @@ in the two locale tables. The progress-view widget test renders a
 `normal` item and asserts the raw key is absent. The release bundle
 on :5174 predates the fix, so the running web client still shows the
 key until it is rebuilt.
+
+*Superseded 2026-10-11: the app image was rebuilt and deployed with
+`v0.1.0` (see the
+[owner-deploy changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md));
+the hosted client no longer predates the fix.*

@@ -109,3 +109,15 @@ Per our testing rules: **no mocks, real dependencies, all tests must pass**.
 
 `docker-compose.yml` at repo root: `postgres:17` + `server` (multi-stage Go build, distroless) + `app` (Nuxt, fronting the API via its Nitro proxy) — the self-hosted default. During this build the developer instead points `DATABASE_URL` at a separately provisioned remote PostgreSQL instance; the embedded migration runner behaves identically either way, so the compose file stays the shipped artifact without being the only supported path. `.env.example` with every variable documented, real `.env` git-ignored and never read by tooling. At P7, the retired TypeScript backend (`supabase/functions/` and remaining `supabase/` config) is deleted from the repo.
 仓库根部 `docker-compose.yml`：`postgres:17` + `server`（多阶段 Go 构建，distroless）+ `app`（Nuxt，经其 Nitro 代理承接 API）——自托管默认形态。本次构建中开发者改为将 `DATABASE_URL` 指向单独配置的远程 PostgreSQL 实例；内嵌迁移执行器对两者行为一致，因此 compose 文件仍是交付产物，但不是唯一支持路径。`.env.example` 注释齐全，真实 `.env` 忽略入库且工具不读取。P7 阶段从仓库删除弃用的 TypeScript 后端（`supabase/functions/` 及其余 `supabase/` 配置）。
+
+---
+
+*Superseded 2026-10-11 (historical bilingual record, body kept verbatim):
+§1's AI env names (`ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN` /
+`AI_MODEL`) were replaced 2026-08-18 by `INSIDEOUT_LLM_BASE_URL` /
+`INSIDEOUT_LLM_API_KEY` / `INSIDEOUT_LLM_MODEL`
+([plan](../2026-08-18-llm-env.md); `server/internal/config/config.go`).
+§6's delivery shape — the Nuxt `app/` fronting the API via its Nitro
+proxy — was replaced by the Flutter client: `app/` was deleted 2026-08-18
+([Flutter cutover](../2026-08-17-flutter-client.md),
+[deletion](../2026-08-18-delete-nuxt-app.md)).*

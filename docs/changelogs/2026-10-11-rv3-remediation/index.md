@@ -37,3 +37,9 @@ mutation-checked before acceptance. All 32 clusters were accepted in round 1.
 - Nothing here is deployed. Shipping remains the owner's explicit step
   ([HANDOFF](../../HANDOFF.md)); the six owner rows are enumerated in the
   [promise register](../../review/2026-10-10-multirole-3/50-promise-register.md).
+
+*Superseded 2026-10-11: shipped — `main` @ `b6c34c4` deployed to both
+services; the seven migrations applied at boot and the hosted database
+reports "already up to date" ([owner-deploy
+record](../2026-10-11-owner-deploy-and-mail-truth.md);
+[HANDOFF](../../HANDOFF.md)).*

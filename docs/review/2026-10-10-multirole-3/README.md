@@ -99,3 +99,7 @@ throughout; no `.env` content was read.
 4. [40-remediation-plan.md](40-remediation-plan.md) — the workflow-executable plan
 5. [30-completeness-critic.md](30-completeness-critic.md) — what this review could not cover
 6. Role and dimension files, worst-first: [14-user](14-user.md), [20-feature-implementation](20-feature-implementation.md), [11-ai-developer](11-ai-developer.md), [10-architect](10-architect.md), [23-testing](23-testing.md), then the rest
+
+*Note 2026-10-11: "the rest" is [12-fullstack](12-fullstack.md),
+[13-project-manager](13-project-manager.md),
+[21-code-quality](21-code-quality.md) and [22-security](22-security.md).*

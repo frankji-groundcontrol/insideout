@@ -9,8 +9,8 @@
 Shipped and running:
 
 - Go API over PostgreSQL with row-level security; embedded migrations + seed;
-  the `insideout` CLI and a 50-tool MCP server (`insideout-mcp`) projecting
-  the same `/api/v1` contract.
+  the `insideout` CLI and an MCP server (`insideout-mcp`) projecting
+  the same `/api/v1` contract (`tools/list` answers the current tool count).
 - Flutter Cobalt web client (the Cobalt restyle merged 2026-09-18), with the
   roadmap canvas and live presence.
 - Invitation-only signup (`signup_mode = invitation_only` on a fresh

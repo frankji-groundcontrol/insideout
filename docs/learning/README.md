@@ -6,6 +6,10 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-11 | [A truncated gate snapshot can mislabel its sections](2026-10-11-truncated-gate-snapshots-mislabel-sections.md) | [docs-order final audit D](../changelogs/2026-10-11-docs-order-marksman.md) |
+| 2026-10-11 | [A duplicate source entry masquerades as a rewrite](2026-10-11-a-duplicate-source-entry-masquerades-as-a-rewrite.md) | [docs-order C2 review-fix](../changelogs/2026-10-11-docs-order-marksman.md) |
+| 2026-10-11 | [Rerun the gate after a workflow's last repair round](2026-10-11-rerun-gates-after-a-workflows-last-repair.md) | [docs-order C1](../changelogs/2026-10-11-docs-order-marksman.md) |
+| 2026-10-11 | [A verbatim quote is evidence, not a link](2026-10-11-a-verbatim-quote-is-evidence-not-a-link.md) | [docs-order link surgery](../plans/2026-10-11-docs-marksman-order.md) |
 | 2026-10-11 | [Purge by an enumerated keep-set, never by a date rule](2026-10-11-purge-by-keep-set-not-by-date.md) | [the legacy purge](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |
 | 2026-10-11 | [A send-scoped API key's 401 looks exactly like a dead key](2026-10-11-a-send-scoped-keys-401-looks-like-a-dead-key.md) | [the re-key and mailed-flow pass](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |
 | 2026-10-11 | [A key "synced everywhere" can still be dead everywhere](2026-10-11-synced-everywhere-is-not-liveness.md) | [owner gap closure](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |

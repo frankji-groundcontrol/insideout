@@ -22,6 +22,9 @@ is no longer what Railway serves.
 
 `app/` was **not** deleted.
 
+*Corrected 2026-10-11: `app/` was deleted later the same day — the delete
+record's `test -d app` is false ([delete record](2026-08-18-delete-nuxt-app.md)).*
+
 ## Verification
 
 - Railway deploy `34932e26-d975-4a6e-928d-dc8b745ae9a4` (path strategy)

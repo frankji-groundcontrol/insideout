@@ -10,7 +10,7 @@ slice 2 of the [promise-gap set](2026-10-11-product-promise-gaps.md)).
 > becomes a suggestion or proposed branch rather than a silent mainline edit.
 > External respondents see their own feedback by default, not everyone
 > else's; the team sees the complete set, and the Decision Owner can publish
-> a deliberate synthesis." (PRODUCT.md:253-259)
+> a deliberate synthesis." ([PRODUCT.md](../../PRODUCT.md):253-259)
 
 ## What exists today
 

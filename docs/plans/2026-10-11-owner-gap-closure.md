@@ -4,6 +4,11 @@ The owner directed full closure of the six owner-blocked review-3 rows
 (SEC-01, USER-02, FEAT-03, PM-01, PM-02, PM-04, USER-05, REL-06, SEC-05 —
 the register's owner halves). Everything below is delegated operator work;
 each step lands with observable evidence.
+*Corrected 2026-10-11: the parenthetical calls all nine register
+owner-halves "owner-blocked rows"; at the remediation close the
+disposition ledger's Owner dispositions were exactly six (SEC-01, USER-02,
+FEAT-03, PM-01, REL-06, SEC-05) plus the owner halves of three code-closed
+rows (PM-02, PM-04, USER-05).*
 
 ## Checklist
 
@@ -41,3 +46,8 @@ each step lands with observable evidence.
 MAIL_FROM, PUBLIC_URL, LLM quartet all present on the server service
 (names only — values never read); no local CLI session, so hosted admin
 goes through the owner-pool bootstrap above.
+*Superseded 2026-10-11 (same day): the checklist's "re-key is the one
+owner credential left" no longer holds — the owner's send-scoped key was
+synced to all four homes and every mailed flow ran live through the
+provider ([changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md),
+[HANDOFF](../HANDOFF.md) item 1).*

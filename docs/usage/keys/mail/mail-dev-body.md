@@ -34,5 +34,5 @@ rendered body in addition to sending via the
 
 ## 6. Installation guide
 
-This file is the detail — [SETENV.md](../../../SETENV.md) Step 3
+This file is the detail — [SETENV.md](../../../SETENV.md) Step 4
 links here. Contract row in [environment.md](../../environment.md).

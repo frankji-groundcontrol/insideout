@@ -26,7 +26,8 @@ This closes the five-wave plan.
 
 ### Idea privacy: private to the author by default (USER-05, FEAT-04)
 
-Product decision (recorded in the plan): PRODUCT.md's "private to its
+Product decision (recorded in the plan):
+[PRODUCT.md](../../PRODUCT.md)'s "private to its
 author by default" and the README's personal-inbox promise win — no
 workspace-shared inbox.
 
@@ -45,6 +46,11 @@ workspace-shared inbox.
   user's ideas (same store path).
 
 ### Export downloads a real file (FEAT-03)
+
+*Corrected 2026-10-11: one ID, two findings — FEAT-03 here is the
+review-1 register's export-download finding; the same-day review-2 register
+uses FEAT-03 for the agent-proposals web decision loop
+([record](2026-10-04-remediation-review-2.md)).*
 
 - New `client/lib/api/download_stub.dart` + `download_web.dart`
   (conditional import, the `sse_transport` pattern): markdown export
@@ -73,8 +79,17 @@ workspace-shared inbox.
   - **client** job: Flutter 3.47.0 `pub get` + `analyze
     --no-fatal-infos` (the 21 pre-existing infos are the accepted
     baseline; warnings/errors stay fatal) + `flutter test`.
+
+    *Corrected 2026-10-11: the pin was 3.44.0 — the same-day review-2
+    remediation pinned CI to the Dockerfile's Flutter 3.44.0
+    ([record](2026-10-04-remediation-review-2.md)), and the repo has stayed
+    on 3.44.x.*
   - **env-suites** job: `python3 -m unittest test_env_catalog
     test_env_writes`.
+
+    *Superseded 2026-10-11: CI has since been minimized to a single head
+    pipeline (owner-directed, repo public — see the
+    [owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*
 - `server/internal/api/conversations_test.go` (new, DB-gated): POST a
   conversation message through the real handler stack against a stubbed
   coach — asserts `text/event-stream`, and that frame 1

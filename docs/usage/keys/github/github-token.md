@@ -12,7 +12,9 @@ intended state until rate limits actually bite.
 ## 2. How it is propagated
 
 Read ad hoc from process env by `server/internal/github/github.go`
-when present; no other consumer.
+when present, and by `insideout setup --check`
+(`server/cmd/insideout/cli_setup_check.go`), which validates it
+against the GitHub API; no other consumer.
 
 ## 3. How to set it
 

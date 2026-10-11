@@ -9,8 +9,9 @@ scripts that end in `raise SystemExit(run(globals()))`. The CI step loaded them
 through `python3 -m unittest`, so importing the first one ended the whole
 process with that script's status: the second battery and the key-store audits
 behind it never ran, and the step stayed green. The step (and the two live
-docs that copied the command, `docs/usage/local-development.md` and
-`skills/insideout-setup/SKILL.md`) now run each battery as a script, then
+docs that copied the command,
+[`docs/usage/local-development.md`](../../usage/local-development.md) and
+[`skills/insideout-setup/SKILL.md`](../../../skills/insideout-setup/SKILL.md)) now run each battery as a script, then
 `unittest discover` over `tests/keys`. Lesson:
 [script-style tests are skipped by unittest](../../learning/2026-10-10-script-style-tests-are-skipped-by-unittest.md).
 
@@ -75,7 +76,7 @@ roleless-cluster and bundled walks in
 
 ## The backup runbook
 
-`docs/usage/backup-restore.md` told operators to dump with the app-role DSN,
+[`docs/usage/backup-restore.md`](../../usage/backup-restore.md) told operators to dump with the app-role DSN,
 which `pg_dump` cannot read through row-level security. Walked end to end on
 PostgreSQL 18 (dump with the owner DSN, 244 KB; restore into a bare database;
 `migrate` a no-op; 23 tables; store and api suites green with no skips) and

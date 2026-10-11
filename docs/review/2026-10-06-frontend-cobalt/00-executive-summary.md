@@ -7,6 +7,11 @@
 - Verdicts on High/Critical: 28 confirmed, 1 downgraded, 0 refuted
 - **Mean score: 5.22 / 10**
 
+*Corrected 2026-10-11: the printed breakdown sums to 111, not 114 — it counts
+only the reviewer findings as filed; 114 includes the critic's +3 rows (the
+register header after the one downgrade reads 7C/21H/52M/34L = 114). See
+[README](README.md).*
+
 ## Verdict
 
 The engineering core is healthy — session management, API wiring, feature

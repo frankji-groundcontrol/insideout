@@ -76,3 +76,7 @@ Build MVP bug is [BUG-022](../../issues/2026-10-10-bug-022-build-mvp-wrote-nothi
 ## Operator notes
 
 None. Nothing here is deployed; the hosted bundle predates these changes.
+
+*Superseded 2026-10-11: the hosted bundle now carries these changes — the
+2026-10-11 owner deploy shipped both services
+([record](../2026-10-11-owner-deploy-and-mail-truth.md)).*

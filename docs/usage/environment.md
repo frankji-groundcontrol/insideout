@@ -84,8 +84,10 @@ browser drops the auth cookies (see [Recipes](#recipes)).
 ### Go backend
 
 Read by [`server/internal/config/config.go`](../../server/internal/config/config.go)
-(`GITHUB_TOKEN` is read ad hoc in `server/internal/github/github.go`). The
-real-DB integration tests also read `DATABASE_URL` directly and skip
+(`GITHUB_TOKEN` is read ad hoc in `server/internal/github/github.go` and by
+`insideout setup --check` in
+[`server/cmd/insideout/cli_setup_check.go`](../../server/cmd/insideout/cli_setup_check.go)).
+The real-DB integration tests also read `DATABASE_URL` directly and skip
 themselves when it is unset.
 
 | Variable | Required | Default | Meaning |
@@ -103,7 +105,11 @@ themselves when it is unset.
 | `INSIDEOUT_MAIL_DEV_BODY` | no | off | Dev mode only: exactly `1` includes full message bodies in the not-sent mail log (`scripts/dev.sh` sets it locally). Never set on a deployed host. |
 | `INSIDEOUT_MAIL_FROM` | no | `InsideOut <onboarding@resend.dev>` | From address for auth email; must be a Resend-verified sender. The default is Resend's sandbox address, which only delivers to the Resend account's own email. |
 | `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed invite/magic/reset link. Set to the hosted domain in production. Locally, run the web dev server on this port (`flutter run --web-port=5173`) or set this to the port in use. |
-| `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). |
+| `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). Also read by `insideout setup --check`, which validates it against the GitHub API. |
+| `INSIDEOUT_GH_APP_ID` | no | — | Numeric id of the GitHub App; with the App's private key it mints installation access tokens (server-to-server evidence sync). Authenticates nothing alone. |
+| `INSIDEOUT_GH_PRIVATE_KEY` | no | — | The App's `.pem` with newlines escaped as literal `\n` on a single line. Ignored when `INSIDEOUT_GH_PRIVATE_KEY_FILE` is set. |
+| `INSIDEOUT_GH_PRIVATE_KEY_FILE` | no | — | Path to the App's `.pem` on disk; wins over the escaped inline var when set — the file is read raw, no `\n` unescaping. |
+| `INSIDEOUT_GH_WEBHOOK_SECRET` | no | — | HMAC-SHA256 shared secret (`X-Hub-Signature-256`) verifying GitHub App webhook deliveries; the same string is configured on the App at github.com. Empty disables `POST /api/v1/hooks/github`. |
 
 ### AI provider
 

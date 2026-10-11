@@ -12,6 +12,13 @@ default branch is the product, the repo is private with no license finding.
 One standing **user action** carried from the first review, not code: rotate the
 Resend mail key if any local transcript ever leaves the machine.
 
+*Superseded 2026-10-11: the repository has been public since 2026-10-11 — see
+[the owner-gap changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
+
+*Corrected 2026-10-11: "no license finding" contradicts the same review's
+register — PM-21 (Low) carries the missing README license bullet, which stayed
+open until 882278f added the row on 2026-10-10, after this plan was written.*
+
 **Check:** the two `rg` scans pasted in this review's changelog, `git status` clean.
 
 ## Wave 1 — one-line fixes, one commit

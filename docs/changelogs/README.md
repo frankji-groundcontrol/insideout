@@ -15,459 +15,131 @@ code) with relative links.
 
 ## Records
 
-- [2026-10-11 — The owner gap closure: deploy, live probes, first release, and the mail truth](2026-10-11-owner-deploy-and-mail-truth.md)
-  — shipped `main` @ `b6c34c4` (seven migrations confirmed, BUG-027 checks
-  passed, hosted smoke 6/6, one real LLM coach turn), rehearsed the funnel
-  live (invite → register 201), tagged and published `v0.1.0`, and found
-  the mail key revoked in every home — re-key is the one open owner step.
-- [2026-10-11 — Review-3 remediation: four verified waves](2026-10-11-rv3-remediation/index.md)
-  — executed the 83-finding register as 32 red-first clusters in four
-  dynamic-workflow waves, every one adversarially verified before cherry-pick
-  onto `main` (`5c8f54f..4464330`); three migrations, the locale-threaded
-  coach, the validation leg, CI upgrade-replay and docker-build lanes;
-  dispositions in the [ledger](../review/2026-10-10-disposition-ledger/04-multirole-3.md).
-- [2026-10-10 — Multirole review 3 and the workflow-ready improvement plan](2026-10-10-multirole-review-3.md)
-  — docs-only: the third whole-tree review (83 findings, 17 High, 16
-  skeptic-confirmed) plus a 4-wave, 30-cluster remediation plan executable as
-  dynamic workflows.
-- [2026-10-10 — Close the open gaps](2026-10-10-close-open-gaps/index.md)
-- [2026-10-09 — Three-way sync: GitHub, MBP2, and MBP on one `main`](2026-10-09-host-sync.md)
-  — committed the uncommitted app-icon and block-craft slices as four
-  commits, pushed 13 commits (`9c572ce..8a7e9ab`, fast-forward, no tags),
-  fast-forwarded MBP; held-out tool scratch is listed in a local manifest;
-  commit, tree, and on-disk digest match on all three.
-- [2026-10-08 — Block primitives get keyboard focus and the cobalt ring](2026-10-08-block-focus-ring.md)
-  — closes the block-craft review's only high finding: `BlockFocus` gives
-  `BlockButton`, `BlockIconButton`, `PressableBlock` (and so `BlockChoice`,
-  `FieldCard` taps, and the dock) Tab traversal, Enter/Space activation,
-  and a 2px cobalt ring painted outside the block bounds so the measured
-  control heights never move. 7 new widget tests; gates green
-  (analyze 0 errors / 0 warnings, 167 tests, format clean).
-- [2026-10-07 — Frontend block craft: the component layer landed](2026-10-07-frontend-block-craft.md)
-  — the reference's component + interaction layer ported onto the
-  frozen cobalt tokens: `theme/block_*` primitives (measured heights,
-  press choreography, one modal chrome, square loaders, localized
-  states), every surface swept, D1–D9 resolved. Gates green
-  (analyze 0/0, 160 tests, format clean); fidelity review 7.5/10 with
-  the focus-ring/keyboard regression filed high. Uncommitted; web walk
-  still user-owned.
-- [2026-10-07 — Release pipeline: prebuilt binaries + bootstrap one-liner](2026-10-07-release-pipeline.md)
-  — `v*` tag → four-target tarballs + checksums + `bootstrap.sh`
-  via gh; `curl | bash` installs sha256-verified binaries; all
-  workflow gates green, review clean; first real tag push is
-  user-owned.
-- [2026-10-07 — Setup TUI: live walks verified and the series landed](2026-10-07-setup-tui-landed.md)
-  — PTY walks of both branches (remote: honest live rejection, no
-  config write; local own-URL: exit 0, 31 migrations); walk-caught
-  SignedIn-message bug fixed; bundled-Docker gate closed by
-  acceptance; six per-task local commits (no push).
-- [2026-10-07 — Setup TUI: interactive local branch wired](2026-10-07-setup-tui-interactive-local.md)
-  — the form's local choice now runs the slice-2 assembly
-  (LocalSetup join hook; flow stays pure); 25 pkgs green.
-- [2026-10-07 — Setup TUI slice 3: `--check` + docs teach the front door](2026-10-07-setup-tui-slice-3.md)
-  — offline-safe probe re-verification (API/DB/GitHub/LLM, `--llm`
-  live opt-in); installation.md, CLI reference, install skill,
-  README, SKILL all teach `insideout setup`. Live: api ok · db ok.
-- [2026-10-07 — Setup TUI slice 2: local mode assembled and live-exercised](2026-10-07-setup-tui-slice-2.md)
-  — `setup --local` end-to-end (env write, compose, pgx probe,
-  in-process migrate, boot offer, summary gate); 31 migrations live
-  on a scratch PostgreSQL 18, `/healthz` 200; 25 pkgs green.
-- [2026-10-07 — Setup TUI slice 1: setup subcommand via parallel workflow + join](2026-10-07-setup-tui-slice-1.md)
-  — slots A–E (clientconfig, flow, ui, catalog, envwrite, probe,
-  hidden prompts) + `cli_setup.go` join; 25 packages green, hosted
-  401 live, binary 19,760,802 bytes. Local mode (slice 2) next.
-- [2026-10-07 — mcp-config.sh reads the setup config file](2026-10-07-mcp-config-config-file.md)
-  — early join item: flags > env > config file > hosted default;
-  verified with five live precedence cases. Behavior unchanged
-  without a config file.
-- [2026-10-07 — Setup TUI plan: binding parallel-workflows strategy](2026-10-07-setup-tui-parallel-workflows.md)
-  — six disjoint slots after a lone deps commit, join points and
-  shared-docs discipline named; serial pass explicitly rejected.
-- [2026-10-07 — Setup TUI standardized on Go (plan revision)](2026-10-07-setup-tui-standardizes-on-go.md)
-  — user-directed language call: `insideout setup` subcommand with
-  bubbletea/huh, config persistence in slice 1, catalog ported with a
-  consolidation issue; Python tooling untouched and green.
-- [2026-10-07 — Setup TUI plan opened](2026-10-07-setup-tui-plan.md)
-  — planning only: the guided two-mode install experience (remote
-  URL+login / local env+probes) designed around existing pieces;
-  engineering review gates slice 1.
-- [2026-10-06 — Install skill for agent-guided from-scratch setup](2026-10-06-install-skill.md)
-  — `skills/insideout-setup/` ships the macOS/Ubuntu installer flow
-  (modules, paths, key store, host record); pointers wired from
-  SKILL/README/doc map/usage. Docs + skill files only.
-- [2026-10-06 — Install calls the hosted API](2026-10-06-install-hosted-default.md)
-  — CLI and MCP default to the hosted API; `setup.sh` guides a local
-  PostgreSQL server. Not deployed.
-- [2026-10-06 — Breakout is the app icon](2026-10-06-app-icon-breakout.md)
-  — `breakout.svg` rasterized onto web, iOS, and Android icons.
-  Not deployed.
-- [2026-10-06 — App icon candidates](2026-10-06-app-icon-candidates.md)
-  — transparent cobalt marks drawn before the pick.
-- [2026-10-06 — Cobalt-Neo remediation closed](2026-10-06-frontend-cobalt-neo.md)
-  — waves 4–7 landed in the worktree (guarded writes, 75s coach idle
-  timeout, minimap shape channel, dock and auth geometry tests, CI
-  format step, web font assets limited to native, URL secrets stripped).
-  Analyze has no errors or warnings (32 infos); flutter test 143 passed.
-  On `main` as `28e1fb1`. W3-N2 minified console errors stay open.
-- [2026-10-06 — The four simulation bugs are fixed](2026-10-06-simulation-bug-fixes.md)
-  — move shifts siblings, pressure is translated, proposal items keep
-  their order, and a plain member can no longer change the plan.
-- [2026-10-06 — Three personas exercised live across CLI, Web, and MCP](2026-10-06-user-simulation-three-personas.md)
-  — the 3×3×3 simulation matrix, with the parity table. No product
-  code. Findings: [BUG-020](../issues/2026-10-06-bug-020-workspace-member-writes-the-plan.md)
-  plus the still-open 017–019.
-- [2026-10-06 — Web boot gate no longer hangs on an unreachable font host](2026-10-06-web-boot-font-gate-timeout.md)
-  — per-await timeout on `document.fonts.load()` so the boot deadline
-  can expire ([BUG-016](../issues/2026-10-06-bug-016-web-boot-gate-hangs-on-font-load.md)).
-- [2026-10-06 — Config-companion key kinds: every value gets the triple](2026-10-06-config-companion-keys.md)
-  — llm trio + mail pair + the PEM pointer become store-backed key
-  kinds with docs and tests (18 kinds); keys.py placeholder detector
-  fixed for display-name senders; audits 0-unmapped on both hosts.
-- [2026-10-05 — Buddy host key store (key-by-key, jwt first)](2026-10-05-buddy-host-keys.md)
-  — second host in `hosts/`, manifests land per verified key;
-  `INSIDEOUT_KEYS_HOST` scopes audit/fill; jwt-secret filled from the
-  local `.env` without printing; usage layer is per-key six-part docs
-  under `docs/usage/keys/` (README index + one file per credential
-  kind) plus the setting-up-a-key practice record.
-- [2026-10-05 — Install scripts + agent skill + README](2026-10-05-installer-and-readme.md)
-  — `scripts/install.sh` (both binaries → `~/.local/bin` + idempotent
-  PATH fix), `scripts/mcp-config.sh` (standard `mcpServers` JSON with
-  placement hints), SKILL.md self-setup for agents, README rewritten
-  around what/install/usage/further-reading.
-- [2026-10-05 — Planning-flow remediation](2026-10-05-planning-flow-remediation.md)
-  — four-wave fix/harden/improve/add of the planning flow (40 slices from
-  the multirole review of it; 36 landed, 4 schema slices specified for the
-  gap-closing phase); both suites green after two post-run repairs.
-- [2026-10-05 — Roadmap progress SSE](2026-10-05-roadmap-progress-stream.md)
-  — `GET /projects/{id}/roadmap/progress/stream` emits the progress
-  payload when a node changes; the Flutter progress view subscribes.
-  Folded into the planning-flow remediation records.
-- [2026-10-05 — Host key store (hosts/) with audit/fill tooling](2026-10-05-hosts-keys.md)
-  — module-grouped `keys/` tree (auth, database, github, llm, mail;
-  8 YAML manifests, 12 keys, 10 filled), redacting `keys.py audit|fill`
-  bridge, CI script suite. No service code changed.
-- [2026-10-04 — Remediation of multirole review 2](2026-10-04-remediation-review-2.md)
-  — all 7 confirmed Highs fixed (critic empty-messages, drop visibility,
-  web SSE 401 refresh, l10n error mapper, proposal web loop, XFF
-  per-client keys), wave-1 one-liners, backup story + deployment
-  evidence, band scaffold; CI green, both services deployed and
-  domain-verified.
-- [2026-10-04 — Multirole review 2](2026-10-04-multirole-review-2.md)
-  — second whole-tree review on `main` @ `26db979` (fix/harden/improve/
-  features-left mandate); 10 reviewers + 3 skeptics + critic; 108 findings,
-  7 High confirmed, 8 downgraded, 0 refuted; four-wave plan. Docs only.
-- [2026-10-04 — Remediation Waves 3–4](2026-10-04-remediation-wave-3-4.md)
-  — board quiet-flag + latest-update cards, ideas private-by-default
-  (RLS migration), export file download, roadmap Progress default view;
-  CI with postgres-backed store suite (skip = red), coach SSE
-  HTTP-level test, lint-tier demotion, three modularity issues. Closes
-  the five-wave plan.
-- [2026-10-04 — Remediation Wave 2](2026-10-04-remediation-wave-2.md)
-  — auth throttle + resend cooldown (closes 2026-08-24), mail-log hygiene,
-  streaming retry guard, env-tunable AI limits, SSE write errors,
-  unprivileged containers with healthchecks, client joins compose,
-  postgres 18.
-- [2026-10-04 — Remediation Waves 0–1](2026-10-04-remediation-wave-0-1.md)
-  — invite-link, CORS, and 401-refresh client unblocks (TDD); compose/env/
-  records honesty pass; redaction sweep; CLI/MCP default API now localhost.
-- [2026-10-04 — Multirole review (whole tree)](2026-10-04-multirole-review.md)
-  — 16-agent audit of main@877ad03; 75 findings (12 High confirmed), register
-  + five-wave remediation plan in `docs/review/2026-10-04-multirole/`.
-- [2026-09-18 — Cobalt Flutter wired to a real API](2026-09-18-cobalt-backend-wire.md)
-  — Coach web POST SSE via fetch; dock IDs from real loads.
-- [2026-09-18 — Goal prompt: Cobalt Flutter against the live API](2026-09-18-cobalt-backend-goal.md)
-  — restyle walk was fake-API; prompt to connect and exercise for real.
-- [2026-09-18 — Cobalt Flutter restyle](2026-09-18-cobalt-flutter-restyle.md)
-  — live client swapped to the accepted Cobalt card lock.
-- [2026-09-18 — Cobalt accepted for Flutter](2026-09-18-cobalt-flutter-lock.md)
-  — lock + goal prompt in-repo; restyle shipped the same day.
-- [2026-09-17 — Vibrant frontend direction](2026-09-17-vibrant-frontend-direction.md)
-  — Cobalt lock pinned in OpenDesign; language + page prototypes;
-  no Flutter theme change shipped.
-- [2026-09-03 — Surface parity gaps](2026-09-03-surface-parity-gaps.md)
-  — six audit-found API ↔ CLI ↔ MCP gaps closed (invite revoke,
-  signup_mode, prd_export, workspace join, move position, build
-  expected_count; 46 → 50 tools) plus BUG-015 (SetSignupMode POST→PUT)
-  caught by the live matrix.
-- [2026-08-25 — Agent CRUD tool surface](2026-08-25-agent-crud-tool-surface.md)
-  — +7 tools → 46 (idea inbox lifecycle, PRD section edits, evidence
-  read, bootstrapping), 1:1 API ↔ CLI ↔ MCP; repo-root SKILL.md for
-  external coding agents; soft-drop semantics documented everywhere.
-- [2026-08-25 — Invitation-only signup + first admin](2026-08-25-invitation-only-signup.md)
-  — qwenimage pattern: system_role, email-bound single-use invitations,
-  settings-driven signup_mode fail-closed; register gate + admin API/UI +
-  CLI/MCP verbs; promote-admin subcommand; 582 legacy users left for the
-  user's call.
-- [2026-08-25 — Mail delivery enabled on production](2026-08-25-mail-delivery-live.md)
-  — Resend key + custom MAIL_FROM set in Railway, server redeployed; sender out of dev mode, delivery pending the user's real-inbox test.
-- [2026-08-25 — Boot loading page](2026-08-25-boot-loading-page.md)
-  — app renders immediately with a 印 + spinner boot gate while session/
-  fonts hydrate (reimbursement pattern); kills the blank cold-load
-  screen while preserving the web font gate.
-- [2026-08-24 — Login form action hierarchy](2026-08-24-login-form-layout.md)
-  — design-QA ("so ugly"): stacked red links re-grouped into secondary
-  sign-in buttons under a labeled divider + a forgot/register footer row.
-- [2026-08-24 — Auth parity: CLI + MCP get every login/register way](2026-08-24-auth-parity-cli-mcp.md)
-  — apiclient auth verbs; CLI register/`login --code`/`login --magic`/
-  forgot/reset; MCP `auth_*` tools with an in-process session (token never
-  echoed); every flow verified live; MCP server moved to
-  `internal/mcpserver` with stdio-level tests.
-- [2026-08-24 — Email auth: magic-link login + password reset + code login](2026-08-24-email-auth.md)
-  — one-time SHA-256-hashed email tokens (`insideout.auth_tokens`), Resend
-  mail with dev-log fallback, reset revokes all sessions; Flutter pages and
-  login-form magic/code modes; typed 6-digit code login with a 5-miss
-  attempt budget; all five flows exercised live; deployed to Railway (mail
-  key still operator-owned).
-- [2026-08-23 — Canvas presence hardening](2026-08-23-canvas-presence-hardening.md)
-  — presence reconnect with capped backoff; web SSE moved off dio's
-  non-streaming XHR adapter to fetch + ReadableStream; two-tab live proof.
-- [2026-08-23 — Web first-refresh font flash gated on CJK font readiness](2026-08-23-web-font-flash.md)
-  — CanvasKit first frame painted tofu boxes until Google Fonts CJK
-  subsets arrived; first frame now gated on font readiness.
-- [2026-08-22 — Frontier closed](2026-08-22-frontier.md)
-  — audience-view web page, proposal→structure application, canvas
-  cursors; all live-verified.
-- [2026-08-22 — Depth thread](2026-08-22-depth-thread.md)
-  — PRD-revision verbs (parity closed), live canvas presence (SSE),
-  time-first roadmap (deadlines, pressure, Now/Next/Done).
-- [2026-08-22 — Product follow-ons](2026-08-22-product-follow-ons.md)
-  — coach gap weaving, proposal acceptance (with reversal), idea
-  create/convert verbs, canvas v1 (bands + minimap); Android verified
-  SDK-blocked.
-- [2026-08-22 — Agent vocabulary v1](2026-08-22-agent-vocabulary.md)
-  — `context`/`focus`/`checkpoint`/`propose` live via API/CLI/MCP;
-  `version` stays human-only; typed timeline records verified live.
-- [2026-08-22 — Audience view projections](2026-08-22-audience-views.md)
-  — Decision/Management/Delivery/Validation projections via API
-  `view`, audience markdown export, CLI/MCP verbs, web dropdown.
-- [2026-08-21 — Version-first slice Stage 1: the human Commit](2026-08-21-version-commit.md)
-  — immutable PRD versions with audience, unresolved items, and real
-  section diffs, via API/CLI/MCP; verified live with a two-commit diff.
-- [2026-08-21 — Dogfood project made real; scratch data purged](2026-08-21-dogfood-and-cleanup.md)
-  — durable dogfood account/project owns the repo binding;
-  `insideout.yaml` regenerated; five scratch users deleted.
-- [2026-08-21 — Evidence loop closed](2026-08-21-evidence-loop.md)
-  — guide-matched deliveries append idempotent leaf evidence;
-  installation tokens + guide fetching wired; verified live.
-- [2026-08-21 — Guidance system scaffolding + MCP server](2026-08-21-guide-and-mcp.md)
-  — `insideout.yaml` format v1 + generation from API/CLI/MCP; MCP
-  server with 14 tools 1:1 with the CLI; verified live.
-- [2026-08-21 — GitHub webhook live (Stage B core)](2026-08-21-github-webhook.md)
-  — HMAC-verified `/api/v1/hooks/github`; DEFINER repo→project lookup;
-  push/PR trigger per-project sync; nginx stale-upstream gotcha recorded.
-- [2026-08-21 — Custom domain insideout.yalotein.net](2026-08-21-custom-domain.md)
-  — one domain for web, same-origin API, and the future GitHub webhook;
-  verified TLS + proxy + assets.
-- [2026-08-21 — Roadmap parity on the CLI](2026-08-21-roadmap-cli-parity.md)
-  — agent `build`/`expand`, branch CRUD, repo bind + GitHub sync as CLI
-  verbs, verified live end-to-end; webhook + user-granted GitHub access
-  designed next.
-- [2026-08-21 — CLI read-surface parity](2026-08-21-cli-read-parity.md)
-  — shared `apiclient` + `insideout login|whoami|workspaces|projects|prd`
-  over the same API contract; MCP server next, then agent vocabulary.
-- [2026-08-20 — Native Noto fonts bundled (Ink & Seal)](2026-08-20-native-fonts-bundling.md)
-  — variable TTFs as lazy assets + startup `FontLoader` on non-web; web
-  unchanged via index.html CDN; visual device sign-off still open.
-- [2026-08-20 — Owner/app roles rolled out to the shared Supabase instance](2026-08-20-owner-app-roles-shared-instance.md)
-  — scoped ownership transfer + grants migration via admin session;
-  FORCE RLS restored; Railway deployed with `DATABASE_OWNER_URL`
-  (`railway up`, not stale-image `redeploy`); local `.env` repaired.
-- [2026-08-19 — insideout_owner + insideout_app](2026-08-19-owner-app-roles.md)
-  — two NOSUPERUSER roles; SECURITY DEFINER owned by owner, not superuser.
-- [2026-08-19 — Restore Ink & Seal on Flutter](2026-08-19-restore-ink-seal.md)
-  — Material 3 visual lock reversed; Flutter ThemeData + AuthDoor chrome
-  use recovered celadon/ink/seal tokens.
-- [2026-08-18 — Delete leftover Nuxt `app/`](2026-08-18-delete-nuxt-app.md)
-  — Nuxt tree removed; compose is postgres + server; env catalog has
-  no frontend dotenv contract.
-- [2026-08-18 — Railway `app` serves Flutter web, not Nuxt](2026-08-18-flutter-web-host.md)
-  — `client/` nginx + Flutter web on the public app domain; same-origin
-  `/api/` proxy to `server`; `app/` source kept.
-- [2026-08-18 — Railway server uses shared Supabase, dedicated Postgres removed](2026-08-18-railway-supabase.md)
-  — production `DATABASE_URL` is `insideout_app` on the session pooler
-  (5432); Railway plugin Postgres deleted after a live write check.
-- [2026-08-18 — LLM env names and messages/responses schema](2026-08-18-llm-env.md)
-  — `INSIDEOUT_LLM_BASE_URL` / `API_KEY` / `MODEL` / `SCHEMA` replace
-  `ANTHROPIC_*` and `AI_MODEL`; chat URL is `{base}/messages` or
-  `{base}/responses` with no inserted `/v1`.
-- [2026-08-17 — Flutter client started (web + iOS + Android)](2026-08-17-flutter-client.md)
-  — `client/` Flutter app against the existing Go API; login/register
-  return Bearer tokens; refresh/logout accept a JSON refresh token;
-  Railway `server` is now publicly reachable for native clients.
-- [2026-08-17 — First Railway deploy + build-time API proxy](2026-08-17-railway-deploy.md)
-  — public app at `https://app-production-591e.up.railway.app`; server
-  honors `PORT` when `INSIDEOUT_ADDR` is unset; Nuxt Dockerfile bakes
-  `NUXT_API_INTERNAL_BASE` so the same-origin API proxy does not target
-  localhost.
-- [2026-08-13 — Task board and handoff responsibility correction](2026-08-13-task-board-and-handoff.md)
-  — makes `docs/plans/README.md` the authoritative concurrent task board and
-  reduces `docs/HANDOFF.md` to one human-readable resume path with worktree
-  warnings; docs only.
-- [2026-08-13 — Canonical product-experience baseline](2026-08-13-product-experience-baseline.md)
-  — consolidates the completed product interview into `PRODUCT.md`: a
-  version-first Coach, audience projections, human Commit/Branch/Diff/Merge,
-  one role-aware and deadline-bound Roadmap Graph, Git evidence, and shared
-  Web/CLI/MCP/Agent context. Docs only; target experience is kept distinct
-  from current implementation.
-- [2026-07-30 — Env catalog + TUI, contract-scoped propagation, honest schema](2026-07-30-env-catalog-propagate.md)
-  — `env.sh edit` (curses catalog of every variable and its state, secrets
-  masked both ways) and `env.sh propagate` (generate `app/.env` scoped to the
-  component's contract and stamped with the root file's checksum); `check`
-  becomes component- and staleness-aware and `dev.sh` gates on it, so a stale
-  copy blocks that launch instead of silently disagreeing with the root.
-  `.env.example` corrected — nine optional variables were marked required and
-  two consumed variables were absent — and `env.sh` split into three files,
-  closing the ~350-line budget issue.
-- [2026-07-28 — env.sh: interactive .env setup + validation; dev.sh preflights it](2026-07-28-envsh.md)
-  — new `scripts/env.sh` (`init` = interactive tty-only setup that never
-  prints values; `check` = non-interactive required-key validation) and
-  `scripts/dev.sh` now runs `check` before launching anything, aborting with
-  the named missing keys. Companion to the same-day SETENV.md guide.
-- [2026-07-28 — Hands-on .env key-set guide](2026-07-28-setenv-guide.md)
-  — new `docs/SETENV.md` walkthrough (create → choose each key → prove it)
-  as the hands-on companion to `docs/usage/environment.md`'s variable
-  reference; cross-links wired through the doc map, agent routers,
-  environment.md, local-development.md, and the `.env.example` header.
-- [2026-07-28 — dev.sh moves to the repo root with `-C <dir>`](2026-07-28-devsh-root.md)
-  — the server-only env-export wrapper becomes one root `scripts/dev.sh -C
-  server|app <cmd>` for any consumer (and grows the frontend propagation path
-  for a non-default `NUXT_API_INTERNAL_BASE`); doc commands repointed
-  root-relative, fixing bare `go run` invocations that never exported `.env`.
-  No behavior change.
-- [2026-07-27 — Canonical environment configuration guide](2026-07-27-env-guide.md)
-  — new `docs/usage/environment.md` is the single source of truth for every
-  environment variable (grouped by consumer, with required/default/meaning,
-  the `.env`→process bridges, database setups, recipes, and fail-fast
-  troubleshooting); the duplicated var tables in local-development.md collapse
-  into links, and README/CLAUDE.md/deployment.md repoint at it. Companion to
-  the same-day environment hygiene pass. Docs only, no behavior change.
-- [2026-07-27 — Environment hygiene pass](2026-07-27-env-hygiene.md)
-  — deleted the Supabase-era `app/.env.example` fossil, regrouped the root
-  `.env.example` by consumer (Go backend / AI provider / docker-compose
-  only — fixing `SERVER_PORT`/`APP_PORT` misfiled under Go/frontend
-  headings), and added `server/scripts/dev.sh` so `./scripts/dev.sh <cmd>`
-  replaces the hand-typed `set -a && source ../.env` incantation in CLAUDE.md,
-  local-development.md, and HANDOFF.md. No behavior change.
-- [2026-07-27 — Auth pages become one shared prompted floating modal](2026-07-27-auth-door-modal.md)
-  — `/login` and `/register` are now thin pages rendering a shared `AuthDoor`
-  shell: a paper panel over a dimmed scrim with real dialog semantics
-  (focus trap, Escape, backdrop close → `/`, scroll lock, focus restore)
-  extracted from `BaseModal` into `composables/useDialogA11y.ts` and reused by
-  `BaseModal` unchanged; reduced-motion-gated seal stamp + surfacing motion;
-  register loses its fake bordered-glyph placeholder for the real 印 seal.
-  Frontend-only; routes, i18n, and the auth flow are unchanged.
-- [2026-07-27 — New docs/design-qa/ record surface](2026-07-27-design-qa-surface.md)
-  — a records surface for verbatim user design-QA feedback on page appearance
-  and the frontend (each comment quoted exactly, with its resolution and files
-  touched), plus a standing rule added identically to AGENTS.md and CLAUDE.md
-  to record such comments there. Seeded with the auth-door QA thread.
-- [2026-07-27 — Login page refined into the Ink & Seal door](2026-07-27-login-page-refinement.md)
-  — the real 印 baiwen seal (was a fake bordered letter), the serif wordmark,
-  and a paper card that surfaces like a modal, animated with the landing's
-  reduced-motion-aware stamp + rise. Notes the pre-existing product-wide
-  motion hydration warning (shared composable, not a regression).
-- [2026-07-27 — PuHuiTi fonts: reference, don't redistribute](2026-07-27-puhuiti-reference-only.md)
-  — removed the 4 self-hosted PuHuiTi WOFF2 binaries and purged them from git
-  history (the font is proprietary "free to use", not redistributable — an
-  open-source-style grant it does not carry). The font is now named in the sans
-  stack as a reference only; rendering falls back to Noto Sans SC / system CJK.
-  Honest attribution added to the README; self-host claims corrected in
-  DESIGN.md / PRODUCT.md.
-- [2026-07-27 — Repository structure cleanup](2026-07-27-repo-structure-cleanup.md)
-  — deleted 12 unreferenced root verification screenshots, gitignored `.claude/`,
-  and (user-approved) untracked the JuanLeMe-era `.sisyphus/` / `.trae/` /
-  `review/` tool scratch and purged it from git history (`git filter-repo` +
-  force-push). Closes the tracked-tool-scratch-dirs issue.
-- [2026-07-27 — Live end-to-end smoke test for all five surfaces](2026-07-27-live-smoke-test.md)
-  — `server/scripts/smoke.sh`: one rerun-safe script that boots the server and
-  drives the PRD coach SSE, AI roadmap, GitHub sync, project-updates timeline,
-  and cross-tenant authz over real HTTP against the real DB (curl + jq, no
-  mocks), exiting non-zero on any failure. Closes task #75; 48/48 green twice.
-- [2026-07-27 — Cross-surface security hardening pass](2026-07-27-security-hardening-pass.md)
-  — 22 workflow findings (F1–F22) + 4 code-traced items (R1–R4) fixed at root
-  cause across the PRD coach, AI roadmap, GitHub sync, project-updates
-  timeline, and authz: invite code raised to 128 bits, four concurrency races
-  closed (ConvertIdea, EnsureProject, PRD-section CAS, revision snapshot),
-  DecodeJSON rejects trailing bytes, upstream error detail kept off the wire.
-  Resolves six 2026-07-26 deferred items; real-DB tests throughout.
-- [2026-07-26 — Backend optimization pass](2026-07-26-backend-optimization-pass.md)
-  — five audit findings fixed at root cause: request-body cap + server
-  timeouts, the dispatcher conversation-lock TOCTOU, the roadmap move/create
-  cycle race, the coach success-path detached-context persist, and unchecked
-  SSE frame-index assertions.
-- [2026-07-26 — Roadmap canvas: Workstream D (transitions + sibling bands + minimap) — collab T9](2026-07-26-roadmap-canvas-workstream-d.md)
-  — closes the collaborative-canvas plan. Cards glide (keyed wrappers + a
-  reduced-motion-gated `transform` transition), parallel tracks get a neutral
-  sibling band, and the full route gains a pointer-only minimap — plus a
-  load-bearing routing fix (a `pages/x/[id].vue` without `<NuxtPage />` was
-  silently swallowing the canvas route) and a one-line popover stacking fix the
-  adversarial pass surfaced (a trapped Add button could silently reparent a
-  node). Live-verified light/dark × embedded/full; 52/52 tests + clean typecheck.
-- [2026-07-26 — Roadmap canvas: B3 attribution (collab T6)](2026-07-26-roadmap-canvas-collab-attribution.md)
-  — roadmap nodes gain provenance: `created_by`/`updated_by`
-  (`uuid → users ON DELETE SET NULL`), resolved to display names via a
-  `LEFT JOIN`, surfaced as a neutral last-editor initial + "created by X ·
-  edited by Y" tooltip on each card; the insert policy now checks
-  `created_by = current_user_id()`. Live-verified against this repo as
-  subject: GitHub sync persisted 20 commits (idempotent re-sync `added:0`)
-  and attribution columns round-tripped through the real DB, and the card
-  visual (neutral roundel + tooltip) is now confirmed in light and dark.
-  The earlier browser pass was blocked not by Node 25 but by an IPv4/IPv6
-  bind split in the Nuxt dev server (fixed with `HOST=127.0.0.1`).
-- [2026-07-26 — Roadmap canvas: review mode + edge re-semantics (collab T7–T8)](2026-07-26-roadmap-canvas-collab-review-and-edges.md)
-  — frontend-only collab lanes: a truly read-only review/present mode
-  (`v-if` + `:disabled`, `?review=1` deep-link, drag disabled) with a quiet
-  chip, i18n-aware card freshness, a prospective drag edge, and neutral
-  hairline edges with 7-day hot-branch emphasis (2.5px in dark). Live-verified
-  light/dark × 中文/EN; 44/44 tests + clean typecheck.
-- [2026-07-26 — Roadmap node actions get explicit `aria-label`s](2026-07-26-roadmap-node-action-aria-labels.md)
-  — the five per-node canvas action buttons (status-cycle, Break down with AI,
-  Add sub-task, Edit, Delete) relied on `title` alone for their accessible name;
-  they now carry an explicit `:aria-label` mirroring `:title`, matching the
-  toolbar buttons.
-- [2026-07-26 — Backend optimization pass](2026-07-26-backend-optimization-pass.md)
-  — five confirmed audit findings fixed at root cause: a 1 MiB request-body
-  cap + server timeouts (unauth DoS), the dispatcher conversation-lock TOCTOU,
-  the roadmap move/create per-project advisory-lock cycle race, the coach
-  success-path detached-context persist, and checked SSE frame-index
-  assertions. Deferred findings (incl. a HIGH invite-code brute-force) tracked
-  in the [bug book](../issues/2026-07-26-backend-optimization-deferred.md).
-- [2026-07-25 — Roadmap canvas: single-player hardening pass](2026-07-25-roadmap-canvas-hardening.md)
-  — eight adversarial-review fixes close out the pan/zoom roadmap canvas
-  (toolbar-aware fit, load-error state, pointercancel, mid-stream rate-limit
-  mapping, popover flip, keyboard/touch action reveal, focus restore, mutation
-  error surfacing); the single-player canvas is now implemented + hardened.
-- [2026-07-24 — AI-generated baiwen seals for landing + navbar](2026-07-24-seal-image-generation.md)
-  — replaced the landing's hand-drawn `bg-seal` chops and the text-only navbar
-  brand with six codex-generated baiwen seal impressions (落墨/成文/分枝/盖印,
-  印, 内外), margin-knocked-out to transparency, normalized to the
-  `--color-seal` token, and served as 320px WebP.
-- [2026-07-23 — WOFF2 fonts + scratch cleanup](2026-07-23-woff2-fonts-and-scratch-cleanup.md)
-  — converted the 4 self-hosted PuHuiTi weights from TTF (~32 MB) to WOFF2
-  (~16 MB, full CJK coverage kept) and deleted the Prisma-detour scratch
-  screenshots/mock.
-- [2026-07-23 — Bring the frontend rewrite + infra under version control](2026-07-23-frontend-version-control.md)
-  — tracked the Nuxt 4 SSR frontend rewrite and deployment infra
-  (docker-compose + Dockerfiles), removed the superseded `supabase/` backend,
-  and self-hosted the PuHuiTi fonts. Completes the cutover: the whole new
-  stack is now in git.
-- [2026-07-23 — Coach markdown rendering + idea-shaping positioning](2026-07-23-coach-markdown-and-positioning.md)
-  — coach messages render real markdown (marked + dompurify, SSR-safe) via a
-  token-styled `MarkdownBody`, and copy was reframed from "build/code" to
-  idea-shaping + roadmap-definition. Also records BUG-012 (workspace-board
-  NULL-scan 500).
-- [2026-07-23 — Ink & Seal reconciliation + landing rethink](2026-07-23-ink-seal-landing/index.md)
-  — reverted the Prisma cinematic detour back to the committed Ink & Seal world,
-  and rebuilt the public landing as 「The Assembly」 (ink build-instructions;
-  three a11y fixes from an adversarial critique).
-- [2026-07-22 — Idea → Reality](2026-07-22-idea-to-reality/index.md)
-  — branched-tree roadmap on projects, GitHub progress sync, AI "build the
-  MVP" (PRD → generated roadmap), and a full UI re-theme to the Prisma
-  cinematic reference.
-- [2026-07-21 — Documentation reorganization](2026-07-21-docs-reorganization.md)
-  — clean-repo-org layout: routers, architecture/usage/learning/practices
-  surfaces, bug book merged into `docs/issues/` (English-only), legacy
-  retired to `docs/history/`, guardrail installed.
-- [2026-07-20 — Go rewrite and RLS cutover](2026-07-20-go-rewrite-and-rls-cutover/index.md)
-  — full backend rewrite to Go, frontend swap to the Go API, JWT+RLS
-  defense-in-depth, and the juanleme → insideout data cutover.
+Per-month index files ([folder README](index/README.md)), newest first:
+
+- [October 2026](index/2026-10.md)
+- [September 2026](index/2026-09.md)
+- [August 2026](index/2026-08.md)
+- [July 2026](index/2026-07.md)
+
+Every record file and dated folder directly in this folder, newest first
+(folder entries link the folder's `index.md`) — the month indexes above
+carry the one-line descriptions:
+
+### 2026-10
+
+- [2026-10-11-owner-deploy-and-mail-truth.md](2026-10-11-owner-deploy-and-mail-truth.md)
+- [2026-10-11-docs-order-marksman.md](2026-10-11-docs-order-marksman.md)
+- [2026-10-11-rv3-remediation/](2026-10-11-rv3-remediation/index.md)
+- [2026-10-10-multirole-review-3.md](2026-10-10-multirole-review-3.md)
+- [2026-10-10-close-open-gaps/](2026-10-10-close-open-gaps/index.md)
+- [2026-10-09-host-sync.md](2026-10-09-host-sync.md)
+- [2026-10-08-block-focus-ring.md](2026-10-08-block-focus-ring.md)
+- [2026-10-07-setup-tui-standardizes-on-go.md](2026-10-07-setup-tui-standardizes-on-go.md)
+- [2026-10-07-setup-tui-slice-3.md](2026-10-07-setup-tui-slice-3.md)
+- [2026-10-07-setup-tui-slice-2.md](2026-10-07-setup-tui-slice-2.md)
+- [2026-10-07-setup-tui-slice-1.md](2026-10-07-setup-tui-slice-1.md)
+- [2026-10-07-setup-tui-plan.md](2026-10-07-setup-tui-plan.md)
+- [2026-10-07-setup-tui-parallel-workflows.md](2026-10-07-setup-tui-parallel-workflows.md)
+- [2026-10-07-setup-tui-landed.md](2026-10-07-setup-tui-landed.md)
+- [2026-10-07-setup-tui-interactive-local.md](2026-10-07-setup-tui-interactive-local.md)
+- [2026-10-07-release-pipeline.md](2026-10-07-release-pipeline.md)
+- [2026-10-07-mcp-config-config-file.md](2026-10-07-mcp-config-config-file.md)
+- [2026-10-07-frontend-block-craft.md](2026-10-07-frontend-block-craft.md)
+- [2026-10-06-web-boot-font-gate-timeout.md](2026-10-06-web-boot-font-gate-timeout.md)
+- [2026-10-06-user-simulation-three-personas.md](2026-10-06-user-simulation-three-personas.md)
+- [2026-10-06-simulation-bug-fixes.md](2026-10-06-simulation-bug-fixes.md)
+- [2026-10-06-install-skill.md](2026-10-06-install-skill.md)
+- [2026-10-06-install-hosted-default.md](2026-10-06-install-hosted-default.md)
+- [2026-10-06-frontend-cobalt-neo.md](2026-10-06-frontend-cobalt-neo.md)
+- [2026-10-06-config-companion-keys.md](2026-10-06-config-companion-keys.md)
+- [2026-10-06-app-icon-candidates.md](2026-10-06-app-icon-candidates.md)
+- [2026-10-06-app-icon-breakout.md](2026-10-06-app-icon-breakout.md)
+- [2026-10-05-roadmap-progress-stream.md](2026-10-05-roadmap-progress-stream.md)
+- [2026-10-05-planning-flow-remediation.md](2026-10-05-planning-flow-remediation.md)
+- [2026-10-05-installer-and-readme.md](2026-10-05-installer-and-readme.md)
+- [2026-10-05-hosts-keys.md](2026-10-05-hosts-keys.md)
+- [2026-10-05-buddy-host-keys.md](2026-10-05-buddy-host-keys.md)
+- [2026-10-04-remediation-wave-3-4.md](2026-10-04-remediation-wave-3-4.md)
+- [2026-10-04-remediation-wave-2.md](2026-10-04-remediation-wave-2.md)
+- [2026-10-04-remediation-wave-0-1.md](2026-10-04-remediation-wave-0-1.md)
+- [2026-10-04-remediation-review-2.md](2026-10-04-remediation-review-2.md)
+- [2026-10-04-multirole-review.md](2026-10-04-multirole-review.md)
+- [2026-10-04-multirole-review-2.md](2026-10-04-multirole-review-2.md)
+
+### 2026-09
+
+- [2026-09-18-cobalt-flutter-restyle.md](2026-09-18-cobalt-flutter-restyle.md)
+- [2026-09-18-cobalt-flutter-lock.md](2026-09-18-cobalt-flutter-lock.md)
+- [2026-09-18-cobalt-backend-wire.md](2026-09-18-cobalt-backend-wire.md)
+- [2026-09-18-cobalt-backend-goal.md](2026-09-18-cobalt-backend-goal.md)
+- [2026-09-17-vibrant-frontend-direction.md](2026-09-17-vibrant-frontend-direction.md)
+- [2026-09-03-surface-parity-gaps.md](2026-09-03-surface-parity-gaps.md)
+
+### 2026-08
+
+- [2026-08-25-mail-delivery-live.md](2026-08-25-mail-delivery-live.md)
+- [2026-08-25-invitation-only-signup.md](2026-08-25-invitation-only-signup.md)
+- [2026-08-25-boot-loading-page.md](2026-08-25-boot-loading-page.md)
+- [2026-08-25-agent-crud-tool-surface.md](2026-08-25-agent-crud-tool-surface.md)
+- [2026-08-24-login-form-layout.md](2026-08-24-login-form-layout.md)
+- [2026-08-24-email-auth.md](2026-08-24-email-auth.md)
+- [2026-08-24-auth-parity-cli-mcp.md](2026-08-24-auth-parity-cli-mcp.md)
+- [2026-08-23-web-font-flash.md](2026-08-23-web-font-flash.md)
+- [2026-08-23-canvas-presence-hardening.md](2026-08-23-canvas-presence-hardening.md)
+- [2026-08-22-product-follow-ons.md](2026-08-22-product-follow-ons.md)
+- [2026-08-22-frontier.md](2026-08-22-frontier.md)
+- [2026-08-22-depth-thread.md](2026-08-22-depth-thread.md)
+- [2026-08-22-audience-views.md](2026-08-22-audience-views.md)
+- [2026-08-22-agent-vocabulary.md](2026-08-22-agent-vocabulary.md)
+- [2026-08-21-version-commit.md](2026-08-21-version-commit.md)
+- [2026-08-21-roadmap-cli-parity.md](2026-08-21-roadmap-cli-parity.md)
+- [2026-08-21-guide-and-mcp.md](2026-08-21-guide-and-mcp.md)
+- [2026-08-21-github-webhook.md](2026-08-21-github-webhook.md)
+- [2026-08-21-evidence-loop.md](2026-08-21-evidence-loop.md)
+- [2026-08-21-dogfood-and-cleanup.md](2026-08-21-dogfood-and-cleanup.md)
+- [2026-08-21-custom-domain.md](2026-08-21-custom-domain.md)
+- [2026-08-21-cli-read-parity.md](2026-08-21-cli-read-parity.md)
+- [2026-08-20-owner-app-roles-shared-instance.md](2026-08-20-owner-app-roles-shared-instance.md)
+- [2026-08-20-native-fonts-bundling.md](2026-08-20-native-fonts-bundling.md)
+- [2026-08-19-restore-ink-seal.md](2026-08-19-restore-ink-seal.md)
+- [2026-08-19-owner-app-roles.md](2026-08-19-owner-app-roles.md)
+- [2026-08-18-railway-supabase.md](2026-08-18-railway-supabase.md)
+- [2026-08-18-llm-env.md](2026-08-18-llm-env.md)
+- [2026-08-18-flutter-web-host.md](2026-08-18-flutter-web-host.md)
+- [2026-08-18-delete-nuxt-app.md](2026-08-18-delete-nuxt-app.md)
+- [2026-08-17-railway-deploy.md](2026-08-17-railway-deploy.md)
+- [2026-08-17-flutter-client.md](2026-08-17-flutter-client.md)
+- [2026-08-13-task-board-and-handoff.md](2026-08-13-task-board-and-handoff.md)
+- [2026-08-13-product-experience-baseline.md](2026-08-13-product-experience-baseline.md)
+
+### 2026-07
+
+- [2026-07-30-env-catalog-propagate.md](2026-07-30-env-catalog-propagate.md)
+- [2026-07-28-setenv-guide.md](2026-07-28-setenv-guide.md)
+- [2026-07-28-envsh.md](2026-07-28-envsh.md)
+- [2026-07-28-devsh-root.md](2026-07-28-devsh-root.md)
+- [2026-07-27-security-hardening-pass.md](2026-07-27-security-hardening-pass.md)
+- [2026-07-27-repo-structure-cleanup.md](2026-07-27-repo-structure-cleanup.md)
+- [2026-07-27-puhuiti-reference-only.md](2026-07-27-puhuiti-reference-only.md)
+- [2026-07-27-login-page-refinement.md](2026-07-27-login-page-refinement.md)
+- [2026-07-27-live-smoke-test.md](2026-07-27-live-smoke-test.md)
+- [2026-07-27-env-hygiene.md](2026-07-27-env-hygiene.md)
+- [2026-07-27-env-guide.md](2026-07-27-env-guide.md)
+- [2026-07-27-design-qa-surface.md](2026-07-27-design-qa-surface.md)
+- [2026-07-27-auth-door-modal.md](2026-07-27-auth-door-modal.md)
+- [2026-07-26-roadmap-node-action-aria-labels.md](2026-07-26-roadmap-node-action-aria-labels.md)
+- [2026-07-26-roadmap-canvas-workstream-d.md](2026-07-26-roadmap-canvas-workstream-d.md)
+- [2026-07-26-roadmap-canvas-collab-review-and-edges.md](2026-07-26-roadmap-canvas-collab-review-and-edges.md)
+- [2026-07-26-roadmap-canvas-collab-attribution.md](2026-07-26-roadmap-canvas-collab-attribution.md)
+- [2026-07-26-backend-optimization-pass.md](2026-07-26-backend-optimization-pass.md)
+- [2026-07-25-roadmap-canvas-hardening.md](2026-07-25-roadmap-canvas-hardening.md)
+- [2026-07-24-seal-image-generation.md](2026-07-24-seal-image-generation.md)
+- [2026-07-23-woff2-fonts-and-scratch-cleanup.md](2026-07-23-woff2-fonts-and-scratch-cleanup.md)
+- [2026-07-23-frontend-version-control.md](2026-07-23-frontend-version-control.md)
+- [2026-07-23-coach-markdown-and-positioning.md](2026-07-23-coach-markdown-and-positioning.md)
+- [2026-07-23-backend-version-control.md](2026-07-23-backend-version-control.md)
+- [2026-07-23-ink-seal-landing/](2026-07-23-ink-seal-landing/index.md)
+- [2026-07-22-idea-to-reality/](2026-07-22-idea-to-reality/index.md)
+- [2026-07-21-docs-reorganization.md](2026-07-21-docs-reorganization.md)
+- [2026-07-20-go-rewrite-and-rls-cutover/](2026-07-20-go-rewrite-and-rls-cutover/index.md)

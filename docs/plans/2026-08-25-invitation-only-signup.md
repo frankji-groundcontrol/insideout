@@ -2,6 +2,11 @@
 
 Status: **Finished** — implemented, live-verified, deployed; see the
 [changelog](../changelogs/2026-08-25-invitation-only-signup.md).
+*Superseded 2026-10-11: the user made the destructive call this plan
+parked with them — 859 junk accounts (840 `@test.local` fixtures + 19
+dead old-era accounts, superseding the 582-row legacy count below) were
+purged after a snapshot, with the keep-set enumerated
+([changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md)).*
 
 ## Why
 

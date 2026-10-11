@@ -11,7 +11,10 @@ path and current warnings, never history.
 ## What to do next
 
 **Everything engineering is closed; the owner's account actions below are
-all that remain.** 2026-10-11: the deploy (server @ `b6c34c4`, app @
+all that remain.** The 2026-10-11 docs-order pass (survey, folder READMEs,
+index consistency, Marksman cross-references — zero orphan docs) landed
+with its [changelog](changelogs/2026-10-11-docs-order-marksman.md) and
+closed [plan](plans/2026-10-11-docs-marksman-order.md). 2026-10-11: the deploy (server @ `b6c34c4`, app @
 `6b1f24f`), the Resend re-key and the full mailed-flow pass are done — the seven pending
 migrations applied (confirmed by running `insideout migrate` against the
 hosted database — "already up to date"), `/api/v1/auth/config` reports
@@ -43,10 +46,6 @@ The review-3 remediation and its records are
    `pub get --enforce-lockfile` passes with the lockfile unwritten;
    the leftover `app/.env` is gone
    ([drift issue](issues/2026-10-09-host-setup-drift-between-macs.md)).
-
-Every other thread is closed with its exact status and links on its
-[board](plans/README.md) row. Local run commands:
-[`docs/usage/local-development.md`](usage/local-development.md).
 
 Every other thread is closed with its exact status and links on its
 [board](plans/README.md) row. Local run commands:

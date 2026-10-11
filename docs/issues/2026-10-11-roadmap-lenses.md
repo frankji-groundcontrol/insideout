@@ -13,7 +13,7 @@ slice 6 of the [promise-gap set](2026-10-11-product-promise-gaps.md)).
 > - **Validation:** demos, hypotheses, requested feedback, and evidence.
 > - **Agent context:** the current objective, Why, baseline, acceptance,
 >   constraints, dependencies, and latest checkpoint."
-> (PRODUCT.md:277-285)
+> ([PRODUCT.md](../../PRODUCT.md):277-285)
 
 ## What exists today
 

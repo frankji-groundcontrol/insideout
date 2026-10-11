@@ -1,6 +1,8 @@
 # 2026-08-23 — Canvas presence hardening: reconnect + live multi-session proof
 
 Status: **in flight**.
+*Corrected 2026-10-11: the checklist fully landed — closed 2026-08-24,
+deployed with the font fix; hosted cold capture clean (see the checklist).*
 
 ## Why this exists
 

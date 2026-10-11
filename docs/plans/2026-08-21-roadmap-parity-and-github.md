@@ -48,6 +48,9 @@ Design (implementation next; requires a user-registered GitHub App):
       live via the domain; ping/bad-sig/push verified, 62 backlog
       commits synced, [changelog](../changelogs/2026-08-21-github-webhook.md))
 - [ ] Install the GitHub App on the repo (user action) — real deliveries
+  *(duplicate box, kept as written — completed by the checked entry later
+  in this stage: "Install the GitHub App on the repo (done 2026-08-21:
+  install ping answered 200 in the server log …)".)*
 - [x] Guide scaffolding for users on every surface (2026-08-21):
       `GET /projects/{id}/guide`, `insideout guide [--out F]`, MCP `guide`
       tool; format v1 node-keyed with leaf-only matchers

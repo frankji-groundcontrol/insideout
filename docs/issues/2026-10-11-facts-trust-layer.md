@@ -1,7 +1,9 @@
 # The facts trust layer (confirm/correct/remove) is promised but not built
 
 Open, recorded 2026-10-11 (review-3 wave 4, finding FULL-03; the full path
-parked from AIDEV-09; slice 5 of the
+parked from
+[AIDEV-09](../review/2026-10-10-multirole-3/01-findings-register.md);
+slice 5 of the
 [promise-gap set](2026-10-11-product-promise-gaps.md)).
 
 ## What PRODUCT.md promises
@@ -11,7 +13,7 @@ parked from AIDEV-09; slice 5 of the
 > - the supporting user words or source;
 > - whether it is confirmed, synthesized, assumed, or still to validate;
 > - small actions to confirm, correct, remove, or discuss it."
-> (PRODUCT.md:182-187)
+> ([PRODUCT.md](../../PRODUCT.md):182-187)
 
 ## What exists today
 
@@ -22,7 +24,8 @@ parked from AIDEV-09; slice 5 of the
   (`server/internal/api/server.go:98-110`) has no facts route; the PRD desk
   shows none. AIDEV-09 additionally found the stored status is set
   `attested` by the model's own `record_fact` (`ledger.go:239-244`) — the
-  parallel `w4-attestation-honesty` slice makes user-facing copy say
+  parallel [`w4-attestation-honesty`](../review/2026-10-10-multirole-3/40-remediation-plan.md)
+  slice makes user-facing copy say
   "model-recorded"; the confirm/correct/remove API itself lands here.
 
 ## Slice order

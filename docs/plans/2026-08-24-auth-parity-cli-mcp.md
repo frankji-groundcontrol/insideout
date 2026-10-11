@@ -13,7 +13,7 @@ login/register in the different ways**. Today the CLI has password login
 only (`insideout login <email>`, token on stdout) and the MCP server has
 no login at all — `INSIDEOUT_TOKEN` env, with a deliberately-absent login
 tool ("token is environment state, not conversation state",
-docs/usage/cli-mcp-and-guidance.md). The user's product call reverses
+[docs/usage/cli-mcp-and-guidance.md](../usage/cli-mcp-and-guidance.md)). The user's product call reverses
 that stance: MCP gets auth tools too.
 
 ## Design

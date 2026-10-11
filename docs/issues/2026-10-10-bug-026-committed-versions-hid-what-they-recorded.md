@@ -8,13 +8,15 @@ records were shown nowhere in the app:
 
 - **The open items it carried.** The commit dialog says "{n} open item(s) will
   be carried as unresolved", the server stores them, and the API, CLI and MCP
-  return them. PRODUCT.md says a Commit "records a name, primary audience,
-  change summary, unresolved validation items, and a Diff".
+  return them. [PRODUCT.md](../../PRODUCT.md) says a Commit "records a name,
+  primary audience, change summary, unresolved validation items, and a Diff".
 - **Which sections changed.** The card gave "added 1, changed 1, removed 0" and
   no names.
-- **The decision note.** PRODUCT.md asks for a Decision Log with a Commit. The
-  server stores a `decisionNote`, but the commit dialog never asked for one
-  (the 2026-10-04 review filed that as FEAT-02), so a note could only come from
+- **The decision note.** [PRODUCT.md](../../PRODUCT.md) asks for a Decision
+  Log with a Commit. The server stores a `decisionNote`, but the commit
+  dialog never asked for one (the 2026-10-04
+  [review](../review/2026-10-04-multirole-2/01-findings-register.md) filed
+  that as FEAT-02), so a note could only come from
   the CLI or MCP, and nothing showed it.
 
 ## Root cause

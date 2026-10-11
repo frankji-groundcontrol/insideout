@@ -2,7 +2,8 @@
 
 Five confirmed findings from the adversarial backend audit, fixed at root
 cause. Deferred findings (incl. a HIGH invite-code brute-force) are tracked
-in `docs/issues/2026-07-26-backend-optimization-deferred.md`.
+in
+[`docs/issues/2026-07-26-backend-optimization-deferred.md`](../issues/2026-07-26-backend-optimization-deferred.md).
 
 ## Security
 

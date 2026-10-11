@@ -8,8 +8,10 @@ definition.
 - The **currently running system** is described by
   [`docs/architecture/`](architecture/index.md) and
   [`docs/HANDOFF.md`](HANDOFF.md).
-- Delivery status and known implementation gaps live in
-  [`docs/TODO.md`](TODO.md).
+- Delivery status lives on the task board,
+  [`docs/plans/README.md`](plans/README.md); known gaps and debt in
+  [`docs/issues/README.md`](issues/README.md), with the shipped-system
+  baseline in [`docs/TODO.md`](TODO.md).
 - Historical decisions for the 2026-07-20 JuanLeMe → InsideOut rewrite remain
   in [`docs/plans/2026-07-20-go-rewrite/`](plans/2026-07-20-go-rewrite/README.md).
 

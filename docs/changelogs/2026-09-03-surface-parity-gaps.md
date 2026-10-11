@@ -55,7 +55,8 @@ caught a seventh, pre-existing bug. All fixed TDD-first; MCP tool count
   (invite_revoke, signup_mode) and `product_tools.go` (workspace_join,
   prd_export) — registered via `addAdminTools` in `server.go`.
 - Pre-existing modularity note: `internal/apiclient/apiclient.go` is
-  ~478 lines, over the ~350 guideline; filed as a dated issue.
+  ~478 lines, over the ~350 guideline; filed as a
+  [dated issue](../issues/2026-09-03-apiclient-line-budget.md).
 - Stale checkboxes on
   [2026-08-21-cli-mcp-parity](../plans/2026-08-21-cli-mcp-parity.md)
   Stage 3 backfilled — those verbs shipped in later slices; the board

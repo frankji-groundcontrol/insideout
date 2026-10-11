@@ -50,6 +50,10 @@ The five follow-ons from the week's product arc, tracked in
   tap); deployed to the hosted app. Real-time multi-user presence
   stays a follow-on (v1 is the visual canvas the plan named).
 
+  *Corrected 2026-10-11: presence shipped the same day — the depth-thread
+  record landed the presence registry, the SSE stream, and the web chips,
+  live-verified with two tabs ([depth thread](2026-08-22-depth-thread.md)).*
+
 ## Android — verified blocked
 
 - `flutter doctor`: "Unable to locate Android SDK". The release build

@@ -96,7 +96,7 @@ commit: `flutter analyze --no-fatal-infos` at the 16-info baseline,
 - **The light danger chip clears 4.5:1** (`r3/dark-status-pills-collapse`,
   `r3/light-warn-pill-borderline`): its label was cobalt-700 on cobalt-200 at
   4.49:1; it is the ink colour now (13.0:1). The dark chips still share one hue
-  by the one-hue decision; DESIGN.md records it.
+  by the one-hue decision; [DESIGN.md](../../../DESIGN.md) records it.
 - **The dock's keyboard focus is visible** (`r3/no-focus-indicators`). The brand
   ring on the brand-coloured dock measured 1.0:1. `BlockFocus` and
   `PressableBlock` take an optional `ringColor`, the dock passes its foreground

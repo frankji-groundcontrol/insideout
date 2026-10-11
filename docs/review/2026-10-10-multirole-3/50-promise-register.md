@@ -130,7 +130,7 @@ out of the walked range except the one row the review confirmed broken.
 
 | Promise | Stamp | Verified surface / absence |
 |---|---|---|
-| English and Simplified Chinese are first-class product languages (PRODUCT.md:441-442) | **PARTIAL** | UI catalogs complete en/zh (379/379 keys, review-3 measurement); every LLM prompt is Chinese-only (`prompts.go:43`; no locale/language parameter in `internal/agent`) — FEAT-01, wave 4 in flight when this register was stamped |
+| English and Simplified Chinese are first-class product languages (PRODUCT.md:441-442) | **PARTIAL** | UI catalogs complete en/zh (379/379 keys, review-3 measurement); every LLM prompt is Chinese-only (`prompts.go:43`; no locale/language parameter in `internal/agent`) — FEAT-01, wave 4 in flight when this register was stamped. *Superseded 2026-10-11: w4-locale-threading landed — `prompts.go` now defines both locales, conversations store a `locale` column (migration `20261011110000_conversation_locale.sql`), and an `en` conversation carries English prompts end to end; see FEAT-01 in [40-remediation-plan.md](40-remediation-plan.md) wave 4 and the [disposition ledger](../2026-10-10-disposition-ledger/04-multirole-3.md).* |
 
 ## The end-state loop, item by item (PRODUCT.md 357–383)
 

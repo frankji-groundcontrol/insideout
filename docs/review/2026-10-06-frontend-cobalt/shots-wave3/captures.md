@@ -19,6 +19,7 @@
 | `08-project-light.png` | /projects/<id> | light | 1440×813 | Squared GitHub 同步 card; content clear of dock |
 | `09-ideas-wall-light.png` | ideas wall | light | 1440×813 | Squared capture bar + idea card; card fully above dock |
 | `10-prd-desk-light.png` | /prd/<id> | light | 1440×813 | Squared PRD sections; top-bar icons on light pill over navy panel (A9 stays fixed) |
+| `11-landing-dark.png` | landing (logged out) | dark | 1440×813 | Dark companion to `01`: squared 开始打磨/登录 blocks, 2px borders, ink cast shadows |
 | `11-roadmap-light.png` | roadmap | light | 1440×813 | Squared chrome; empty state |
 | `12-versions-light.png` | /prd/<id>/versions | light | 1440×813 | Squared checklist card; dock clean |
 | `13-profile-light.png` | /profile | light | 1440×813 | Squared form; A5 evidence — see `14` |

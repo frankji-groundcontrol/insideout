@@ -17,37 +17,37 @@ a var can be defaulted doesn't mean it is left out.
 
 | Module | File | Env var | Manifest |
 | --- | --- | --- | --- |
-| [app/](app/) | [addr.md](app/addr.md) | `INSIDEOUT_ADDR` | `app/runtime.yaml` |
-| [app/](app/) | [cookie-secure.md](app/cookie-secure.md) | `INSIDEOUT_COOKIE_SECURE` | `app/runtime.yaml` |
-| [app/](app/) | [cors-origins.md](app/cors-origins.md) | `INSIDEOUT_CORS_ORIGINS` | `app/runtime.yaml` |
-| [app/](app/) | [dev-cors.md](app/dev-cors.md) | `INSIDEOUT_DEV_CORS` | `app/runtime.yaml` |
-| [app/](app/) | [access-ttl.md](app/access-ttl.md) | `INSIDEOUT_ACCESS_TTL` | `app/runtime.yaml` |
-| [app/](app/) | [refresh-ttl.md](app/refresh-ttl.md) | `INSIDEOUT_REFRESH_TTL` | `app/runtime.yaml` |
-| [auth/](auth/) | [jwt-secret.md](auth/jwt-secret.md) | `INSIDEOUT_JWT_SECRET` | `auth/jwt.yaml` |
-| [compose/](compose/) | [server-port.md](compose/server-port.md) | `SERVER_PORT` | `compose/stack.yaml` |
-| [compose/](compose/) | [postgres-port.md](compose/postgres-port.md) | `POSTGRES_PORT` | `compose/stack.yaml` |
-| [compose/](compose/) | [postgres-superuser-password.md](compose/postgres-superuser-password.md) | `POSTGRES_SUPERUSER_PASSWORD` | `compose/stack.yaml` |
-| [compose/](compose/) | [client-port.md](compose/client-port.md) | `CLIENT_PORT` | `compose/stack.yaml` |
-| [database/](database/) | [database-app-dsn.md](database/database-app-dsn.md) | `DATABASE_URL` | `database/postgres.yaml` |
-| [database/](database/) | [database-owner-dsn.md](database/database-owner-dsn.md) | `DATABASE_OWNER_URL` | `database/postgres.yaml` |
-| [database/](database/) | [postgres-app-password.md](database/postgres-app-password.md) | `POSTGRES_APP_PASSWORD` | `database/local-stack.yaml` |
-| [database/](database/) | [postgres-owner-password.md](database/postgres-owner-password.md) | `POSTGRES_OWNER_PASSWORD` | `database/local-stack.yaml` |
-| [github/](github/) | [gh-app-id.md](github/gh-app-id.md) | `INSIDEOUT_GH_APP_ID` | `github/app.yaml` |
-| [github/](github/) | [gh-app-private-key.md](github/gh-app-private-key.md) | `INSIDEOUT_GH_PRIVATE_KEY` | `github/app.yaml` |
-| [github/](github/) | [gh-client-secret.md](github/gh-client-secret.md) | `INSIDEOUT_GH_CLIENT_SECRET` | `github/app.yaml` |
-| [github/](github/) | [gh-private-key-file.md](github/gh-private-key-file.md) | `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) | `github/app.yaml` |
-| [github/](github/) | [gh-webhook-secret.md](github/gh-webhook-secret.md) | `INSIDEOUT_GH_WEBHOOK_SECRET` | `github/webhooks.yaml` |
-| [github/](github/) | [github-token.md](github/github-token.md) | `GITHUB_TOKEN` (optional) | `github/tokens.yaml` |
-| [llm/](llm/) | [llm-api-key.md](llm/llm-api-key.md) | `INSIDEOUT_LLM_API_KEY` | `llm/provider.yaml` |
-| [llm/](llm/) | [llm-base-url.md](llm/llm-base-url.md) | `INSIDEOUT_LLM_BASE_URL` | `llm/provider.yaml` |
-| [llm/](llm/) | [llm-model.md](llm/llm-model.md) | `INSIDEOUT_LLM_MODEL` | `llm/provider.yaml` |
-| [llm/](llm/) | [llm-schema.md](llm/llm-schema.md) | `INSIDEOUT_LLM_SCHEMA` | `llm/provider.yaml` |
-| [llm/](llm/) | [ai-max-concurrent.md](llm/ai-max-concurrent.md) | `INSIDEOUT_AI_MAX_CONCURRENT` | `llm/coach.yaml` |
-| [llm/](llm/) | [ai-queue-wait.md](llm/ai-queue-wait.md) | `INSIDEOUT_AI_QUEUE_WAIT` | `llm/coach.yaml` |
-| [mail/](mail/) | [mail-api-key.md](mail/mail-api-key.md) | `INSIDEOUT_MAIL_API_KEY` | `mail/resend.yaml` |
-| [mail/](mail/) | [mail-from.md](mail/mail-from.md) | `INSIDEOUT_MAIL_FROM` | `mail/resend.yaml` |
-| [mail/](mail/) | [public-url.md](mail/public-url.md) | `INSIDEOUT_PUBLIC_URL` | `mail/resend.yaml` |
-| [mail/](mail/) | [mail-dev-body.md](mail/mail-dev-body.md) | `INSIDEOUT_MAIL_DEV_BODY` | `mail/dev.yaml` |
+| [app/](app/README.md) | [addr.md](app/addr.md) | `INSIDEOUT_ADDR` | `app/runtime.yaml` |
+| [app/](app/README.md) | [cookie-secure.md](app/cookie-secure.md) | `INSIDEOUT_COOKIE_SECURE` | `app/runtime.yaml` |
+| [app/](app/README.md) | [cors-origins.md](app/cors-origins.md) | `INSIDEOUT_CORS_ORIGINS` | `app/runtime.yaml` |
+| [app/](app/README.md) | [dev-cors.md](app/dev-cors.md) | `INSIDEOUT_DEV_CORS` | `app/runtime.yaml` |
+| [app/](app/README.md) | [access-ttl.md](app/access-ttl.md) | `INSIDEOUT_ACCESS_TTL` | `app/runtime.yaml` |
+| [app/](app/README.md) | [refresh-ttl.md](app/refresh-ttl.md) | `INSIDEOUT_REFRESH_TTL` | `app/runtime.yaml` |
+| [auth/](auth/README.md) | [jwt-secret.md](auth/jwt-secret.md) | `INSIDEOUT_JWT_SECRET` | `auth/jwt.yaml` |
+| [compose/](compose/README.md) | [server-port.md](compose/server-port.md) | `SERVER_PORT` | `compose/stack.yaml` |
+| [compose/](compose/README.md) | [postgres-port.md](compose/postgres-port.md) | `POSTGRES_PORT` | `compose/stack.yaml` |
+| [compose/](compose/README.md) | [postgres-superuser-password.md](compose/postgres-superuser-password.md) | `POSTGRES_SUPERUSER_PASSWORD` | `compose/stack.yaml` |
+| [compose/](compose/README.md) | [client-port.md](compose/client-port.md) | `CLIENT_PORT` | `compose/stack.yaml` |
+| [database/](database/README.md) | [database-app-dsn.md](database/database-app-dsn.md) | `DATABASE_URL` | `database/postgres.yaml` |
+| [database/](database/README.md) | [database-owner-dsn.md](database/database-owner-dsn.md) | `DATABASE_OWNER_URL` | `database/postgres.yaml` |
+| [database/](database/README.md) | [postgres-app-password.md](database/postgres-app-password.md) | `POSTGRES_APP_PASSWORD` | `database/local-stack.yaml` |
+| [database/](database/README.md) | [postgres-owner-password.md](database/postgres-owner-password.md) | `POSTGRES_OWNER_PASSWORD` | `database/local-stack.yaml` |
+| [github/](github/README.md) | [gh-app-id.md](github/gh-app-id.md) | `INSIDEOUT_GH_APP_ID` | `github/app.yaml` |
+| [github/](github/README.md) | [gh-app-private-key.md](github/gh-app-private-key.md) | `INSIDEOUT_GH_PRIVATE_KEY` | `github/app.yaml` |
+| [github/](github/README.md) | [gh-client-secret.md](github/gh-client-secret.md) | `INSIDEOUT_GH_CLIENT_SECRET` | `github/app.yaml` |
+| [github/](github/README.md) | [gh-private-key-file.md](github/gh-private-key-file.md) | `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) | `github/app.yaml` |
+| [github/](github/README.md) | [gh-webhook-secret.md](github/gh-webhook-secret.md) | `INSIDEOUT_GH_WEBHOOK_SECRET` | `github/webhooks.yaml` |
+| [github/](github/README.md) | [github-token.md](github/github-token.md) | `GITHUB_TOKEN` (optional) | `github/tokens.yaml` |
+| [llm/](llm/README.md) | [llm-api-key.md](llm/llm-api-key.md) | `INSIDEOUT_LLM_API_KEY` | `llm/provider.yaml` |
+| [llm/](llm/README.md) | [llm-base-url.md](llm/llm-base-url.md) | `INSIDEOUT_LLM_BASE_URL` | `llm/provider.yaml` |
+| [llm/](llm/README.md) | [llm-model.md](llm/llm-model.md) | `INSIDEOUT_LLM_MODEL` | `llm/provider.yaml` |
+| [llm/](llm/README.md) | [llm-schema.md](llm/llm-schema.md) | `INSIDEOUT_LLM_SCHEMA` | `llm/provider.yaml` |
+| [llm/](llm/README.md) | [ai-max-concurrent.md](llm/ai-max-concurrent.md) | `INSIDEOUT_AI_MAX_CONCURRENT` | `llm/coach.yaml` |
+| [llm/](llm/README.md) | [ai-queue-wait.md](llm/ai-queue-wait.md) | `INSIDEOUT_AI_QUEUE_WAIT` | `llm/coach.yaml` |
+| [mail/](mail/README.md) | [mail-api-key.md](mail/mail-api-key.md) | `INSIDEOUT_MAIL_API_KEY` | `mail/resend.yaml` |
+| [mail/](mail/README.md) | [mail-from.md](mail/mail-from.md) | `INSIDEOUT_MAIL_FROM` | `mail/resend.yaml` |
+| [mail/](mail/README.md) | [public-url.md](mail/public-url.md) | `INSIDEOUT_PUBLIC_URL` | `mail/resend.yaml` |
+| [mail/](mail/README.md) | [mail-dev-body.md](mail/mail-dev-body.md) | `INSIDEOUT_MAIL_DEV_BODY` | `mail/dev.yaml` |
 
 [SETENV.md](../../SETENV.md) — the `.env` operating manual — links
 into these files from its per-key steps; the detail lives here, not

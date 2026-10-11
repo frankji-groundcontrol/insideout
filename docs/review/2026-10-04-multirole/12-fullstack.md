@@ -19,7 +19,7 @@ quickstart silently fails on CORS. A new user cannot get from README to
 a working product without hitting at least two dead ends.
 
 Reviewed against main@877ad03; High/Critical findings re-checked by an
-independent skeptic — verdicts in 01-findings-register.md.
+independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 

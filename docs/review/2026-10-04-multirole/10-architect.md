@@ -18,7 +18,7 @@ at the superseded stack or at production. The structure underneath is sound;
 the maps at the entrance disagree with the building.
 
 Reviewed against main@877ad03; High/Critical findings re-checked by an
-independent skeptic — verdicts in 01-findings-register.md.
+independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 

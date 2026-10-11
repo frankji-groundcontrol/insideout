@@ -4,7 +4,7 @@
 **Score:** **5.0 / 10**
 **Bottom line:** The repository has an unusually disciplined records culture — dated changelogs, an authoritative task board, a handoff file — but the three documents a newcomer touches first all mislead: the README's docker quick start cannot run, its "core features" sell the product model PRODUCT.md has superseded, and the HANDOFF/task board still say "merge PR #3" sixteen days after that merge, with no evidence the accepted Cobalt build ever reached the hosted deployment. Nothing gates merges (no CI, no tags, no CODEOWNERS), and what production serves is unverifiable from the repo. The project works for its sole maintainer on the `dev.sh` path, but as a documented, releasable project it is drifting.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 ## Scope

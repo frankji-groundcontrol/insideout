@@ -15,5 +15,10 @@ Rasterized
 onto `#F7F8FA` and replaced the Flutter default tiles. The hosted
 client is unchanged until that image is rebuilt and deployed.
 
+*Superseded 2026-10-11: the app image was rebuilt and deployed with
+`v0.1.0` (see the
+[owner-deploy changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md));
+the hosted client now carries the installed icon.*
+
 Plan:
 [2026-10-06-app-icon](../plans/2026-10-06-app-icon/2026-10-06-app-icon.md).

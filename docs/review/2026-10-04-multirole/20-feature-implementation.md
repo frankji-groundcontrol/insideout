@@ -4,7 +4,7 @@
 **Score:** **6.5 / 10**
 **Bottom line:** The core loop is real and unusually well-built: idea → four-stage coach → PRD → review → versions → roadmap → GitHub evidence all have implementing code behind them, server-enforced state machines, and green tests (57/57 Flutter, Go build/vet clean — I ran both). The gap is between the marquee README promises and the shipped UI: the shared board shows only title + status, the "flagged when quiet" behavior has literally zero implementation anywhere in the tree, the web export page renders text instead of downloading it, and the server-side canonical Progress view (deadline-gated Now) has no web consumer at all. Nothing here is unsalvageable — most fixes are tens of lines — but as documented today, the team-lead board story overpromises.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 ## Scope

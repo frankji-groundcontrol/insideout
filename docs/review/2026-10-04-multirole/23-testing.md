@@ -4,7 +4,7 @@
 **Score:** **5.5 / 10**
 **Bottom line:** The test craft itself is unusually disciplined — honest `t.Skip` gates, zero mock libraries, real `httptest` servers, captured real SSE streams — but the verification system around it is hollow: one suite (scripts env catalog) has been failing for six weeks with exit code 1 and nobody noticed, 43 of 188 Go test results skip to a green `ok`, the API layer holding the coach SSE endpoint has 4 test files for 30 source files, and with no CI (L1) and git hooks that only check docs-recorded, nothing on earth runs any of these tests automatically. The tests that exist are good; the promise they make is unkept.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 

@@ -23,7 +23,7 @@ pass. Plan: [depth-thread](../plans/2026-08-22-depth-thread.md).
 - Live: two tabs saw each other join and leave in their streams; the
   CLI snapshot after both left was `[]`.
 
-## Time-first roadmap (PRODUCT.md "Time is a first-class constraint")
+## Time-first roadmap ([PRODUCT.md](../../PRODUCT.md) "Time is a first-class constraint")
 
 - Migration `20260822120000`: `roadmap_nodes.deadline` (nullable).
 - `roadmaptime` package: pressure states (normal → near → high risk →

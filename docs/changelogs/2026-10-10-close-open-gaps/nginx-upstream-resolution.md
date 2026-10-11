@@ -2,7 +2,7 @@
 
 `client/nginx.conf` looked the API upstream up once, when nginx loaded its
 configuration. After a `server` deploy the public `/api/` returned 504 until
-`app` was restarted (the "restart app" ritual in HANDOFF), and nginx would not
+`app` was restarted (the "restart app" ritual in [HANDOFF](../../HANDOFF.md)), and nginx would not
 start at all while the upstream name did not resolve
 ([BUG-027](../../issues/2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md),
 review items REL-07 and REL-18).
@@ -44,3 +44,9 @@ not deployed. Deploy `app` (`railway up --service app`), then check
 `/api/v1/me` returns 401 through the domain; deploy `server` alone and check it
 again within 15 seconds without restarting `app`. Keep the HANDOFF restart note
 until that has been seen.
+
+*Superseded 2026-10-11: both owner checks passed on the hosted deploy — a
+server-only redeploy kept `/api/v1/me` at 401 with no app restart, and the
+restart ritual is retired
+([owner-deploy record](../2026-10-11-owner-deploy-and-mail-truth.md);
+[HANDOFF](../../HANDOFF.md)).*

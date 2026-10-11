@@ -4,6 +4,11 @@
 
 Status: **Authoritative.** Every generation agent follows this verbatim. Do not re-derive decisions.
 
+*Corrected 2026-10-11: retired — this status was true only for the
+JuanLeMe-era Nuxt migration; the banner above is the operative one, and the
+current architecture is [docs/architecture/](../architecture/index.md). No
+agent should follow this spec today.*
+
 ## 0. Scope, Locations, and Global Rules
 
 - **Target:** Nuxt 4, Universal SSR (`ssr: true`).

@@ -6,7 +6,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding FULL-03; slice 9 of the
 ## What PRODUCT.md promises
 
 > "**Working version:** autosaved, mutable work; autosave is not a formal
-> product version." (PRODUCT.md:201-202)
+> product version." ([PRODUCT.md](../../PRODUCT.md):201-202)
 
 ## What exists today
 

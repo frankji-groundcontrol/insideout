@@ -1,7 +1,7 @@
 # 2026-08-21 — Version-first slice Stage 1: the human Commit
 
 Plan: [version-commit](../plans/2026-08-21-version-commit.md). First P2
-product slice: PRODUCT.md's product version control — "without a
+product slice: [PRODUCT.md](../../PRODUCT.md)'s product version control — "without a
 version, people remain stuck in the Idea stage."
 
 ## What changed

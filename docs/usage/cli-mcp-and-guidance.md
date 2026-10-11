@@ -7,14 +7,15 @@ contract the web client uses.
 
 ## Setup
 
-From a checkout of this repository (needs Go 1.25+, see
+From a checkout of this repository (needs Go 1.26+, see
 `server/go.mod`), the installer builds and installs both binaries
 into `~/.local/bin` (override with the first argument or
 `INSIDEOUT_INSTALL_DIR`) and adds that directory to PATH via your
 shell rc when missing. The binaries call the hosted API unless
 `INSIDEOUT_API` is set. `./scripts/default-api.sh` prints the URL.
-Once a `v*` release is tagged, `scripts/bootstrap.sh` (or
-`curl -fsSL <release-url>/bootstrap.sh | bash`) installs prebuilt,
+Since the `v0.1.0` release (2026-10-11),
+`curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash`
+(or `scripts/bootstrap.sh` from a checkout) installs prebuilt,
 checksum-verified binaries with no checkout and no Go toolchain.
 The full guide is [installation.md](installation.md).
 

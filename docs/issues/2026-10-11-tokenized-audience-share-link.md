@@ -6,7 +6,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding USER-04; slice 3 of the
 ## What PRODUCT.md promises
 
 > "Early users and advisers can receive a scoped feedback invitation without
-> joining the Workspace." (PRODUCT.md:254-255)
+> joining the Workspace." ([PRODUCT.md](../../PRODUCT.md):254-255)
 
 The validation leg of the product loop (PRODUCT.md:26) assumes an outside
 reader can inspect a version's view.

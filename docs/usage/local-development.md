@@ -1,13 +1,13 @@
 # Local Development
 
-Developer setup for InsideOut: a Go 1.25 API server (`server/`) and the
+Developer setup for InsideOut: a Go 1.26 API server (`server/`) and the
 Flutter client (`client/`, web + iOS + Android), backed by PostgreSQL.
 
 This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git history).
 
 ## Prerequisites
 
-- **Go 1.25+** (see `server/go.mod`)
+- **Go 1.26+** (see `server/go.mod`)
 - **Flutter 3.44.x** (for `client/`; CI and `client/Dockerfile` pin 3.44.0; see [`client/README.md`](../../client/README.md))
 - **PostgreSQL 14+** reachable via `DATABASE_URL` — either your own instance or the bundled one below
 - **Docker** (optional) — only needed for the bundled Postgres / full-compose runs

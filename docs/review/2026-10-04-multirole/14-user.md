@@ -4,7 +4,7 @@
 **Score:** **5.5 / 10**
 **Bottom line:** Once you are inside, InsideOut mostly keeps its promises — the Coach UI, the review flow, and the bilingual strings all match what the Go engine actually enforces. But the first three minutes documented in the README do not work: step 1 ("Register an account") dead-ends because signup is invitation-only by default and no quick-start doc says so or says how to create the first admin; the advertised `docker compose up -d` fails to parse for the documented default remote-DSN setup; and after 15 minutes the client's expired access token turns every action into a raw English 401 error until a full page reload. The polish inside is real; the doorstep is broken.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 ## Scope

@@ -60,6 +60,10 @@ invitations; the 582-row purge decision stays with the user.
 ## Not done here
 
 - The 582 legacy users remain — the user's explicit call (destructive).
+
+  *Superseded 2026-10-11: the legacy purge is done — 859 junk accounts deleted
+  after a schema-scoped snapshot, five real accounts kept by enumerated keep-set
+  ([owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*
 - Email verification on open-mode signup (still out of scope, as before).
 - Invite prefill from the `?invite=` signup URL deep link in the register
   form (the server emails the link; the field is paste-into for now).

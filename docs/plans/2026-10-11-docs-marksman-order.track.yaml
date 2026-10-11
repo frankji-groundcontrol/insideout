@@ -1,0 +1,30 @@
+version: 2
+task: "Docs order: survey, READMEs, index consistency, Marksman cross-references"
+coordinator: zcode
+history_file: 2026-10-11-docs-marksman-order.track.history.jsonl
+main:
+  outcome: "A settled (17 batches, 506/506 docs read, 204 observations); C1 landed and independently re-verified (orphans=0 md_broken=0, marksman hard=0, QUOTED_EVIDENCE policy in the gate); C2 landed (151 files changed/new across 6 clusters: living docs corrected, dated records annotated Corrected/Superseded, changelogs README split to index/YYYY-MM.md, 21 observations verified and skipped); adversarial review passed with 4 findings dispositioned by the coordinator (SKILL drift wording fixed to the evidenced 52-tool registry, historical line-budget issue filed). D (final audit: graph + marksman + coverage + docs-truth/redaction gates, sampling verifiers) submitting now; then records closure and commit."
+  owner: zcode
+  status: completed
+  next_evidence: "Final coordinator runs on the landed tree: graph GATE orphans=0 md_broken=0 (528 files); coverage missing=0 unlink=0; docs-truth exit 0; scripts/check-redaction.sh exit 0; marksman hard=0 (files=528). Landing commit on main, CI green, hosts synced."
+side_tracks: []
+updated_at: "2026-10-11T11:10:00Z"
+plan:
+- step: "Census + plan + board row + engineering-review rationale recorded"
+  owner: zcode
+  status: completed
+- step: "Workflow A: survey fan-out — every doc read, one-line English summary + inconsistency/stale/missing-ref observations (/tmp/insideout-gap/docs/survey/b*.json)"
+  owner: zcode
+  status: completed
+- step: "Workflow C1: fix 14 broken doc links + index all 20 orphans (4 file-disjoint clusters, graph gate, adversarial diff review)"
+  owner: zcode
+  status: completed
+- step: "Marksman LSP stdio driver built and smoke-tested over the whole tree"
+  owner: zcode
+  status: completed
+- step: "Workflow C2: consistency triage from survey, README completion (design-system README, changelogs README split per 2026-10-11 issue), cross-reference weaving"
+  owner: zcode
+  status: completed
+- step: "Workflow D: final audit (graph + marksman gates), records closure (changelog, board, HANDOFF, learning), commit, push, CI, MBP/MBP2 sync"
+  owner: zcode
+  status: completed

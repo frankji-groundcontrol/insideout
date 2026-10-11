@@ -4,7 +4,7 @@
 **Score:** **7.2 / 10**
 **Bottom line:** The agent subsystem is the strongest-engineered part of this repo — mechanical stage gates, quote grounding for facts, optimistic concurrency on section writes, a circuit breaker, an idle watchdog, and metadata-only telemetry are all real, tested code, not prompt hopes. But I found one High defect on a designed resilience path (a mid-stream retry re-streams the whole answer on top of the partial one), one Medium tool-contract mismatch (`record_fact` quote grounding only searches the last ~20 turns, which can wedge the documented clarify→draft path), and a cluster of honesty/polish gaps around the offline template mode and error labeling.
 
-Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in 01-findings-register.md.
+Reviewed against main@877ad03; High/Critical findings re-checked by an independent skeptic — verdicts in [01-findings-register.md](01-findings-register.md).
 
 ---
 

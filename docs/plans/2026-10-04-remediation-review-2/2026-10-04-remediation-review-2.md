@@ -16,6 +16,12 @@ env batteries), both services deployed, and the domain verified.
 slice 1, per-project authority) — roadmap work, each needs its own plan;
 Flutter toolchain upgrade beyond the one-line CI pin; the two human-only
 actions (Resend key rotation, signed-in hosted page load).
+*Superseded 2026-10-11: the two human-only actions closed — the Resend
+key was rotated 2026-10-05
+([hosts-keys plan](../2026-10-05-hosts-keys/2026-10-05-hosts-keys.md))
+and re-keyed 2026-10-11, and the signed-in hosted page load plus the
+live mail funnel ran 2026-10-11
+([mail-truth changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md)).*
 
 ## Wave 1 — one-liners, one commit
 

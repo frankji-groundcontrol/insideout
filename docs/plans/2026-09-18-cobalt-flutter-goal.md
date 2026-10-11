@@ -154,3 +154,9 @@ run the real-DB authz tests. Never print secrets.
 
 Repo contract: [`AGENTS.md`](../../AGENTS.md),
 [`docs/index.md`](../index.md).
+
+*Superseded 2026-10-11: the restyle this prompt drove is long merged —
+PR #2 (this goal prompt, docs) and PR #3 (the Cobalt restyle itself)
+both merged 2026-09-18, so "Stay on `cursor/vibrant-ink-seal-198b` (PR
+#2)" is dead guidance; the restyle record is
+[2026-09-18-cobalt-flutter.md](2026-09-18-cobalt-flutter.md).*

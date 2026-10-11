@@ -1,5 +1,12 @@
 # BUG-011: SSR always renders `zh-CN`, client hydrates to saved `en-US` — locale hydration mismatch on every page
 
+*Superseded 2026-10-11: not applicable — the files this record is about,
+`src/plugins/i18n.ts` and `src/pages/index.vue`, went with the Nuxt app
+(deleted 2026-08-18). The Flutter web client has no SSR — there is no
+server-rendered locale and no hydration step to mismatch — and the cookie
+fix was never applied. Reopen as a new record if a server-rendered client
+returns. The original record follows, unedited.*
+
 **Found**: 2026-07-23, while visually verifying the Ink & Seal Assembly landing (`src/pages/index.vue`) in the dev preview — the console showed ~360 `Hydration text mismatch` warnings spanning the `NavBar` (layout) and every section of the page.
 
 **Symptom**: `[Vue warn]: Hydration text mismatch` on every localized string. Server-rendered HTML is Chinese (`把想法，一件件搭出来。`, `开始旅程`); the client then re-renders in English (`Build your idea, piece by piece.`, `Start Journey`), so the two trees disagree. It resolves to English after hydration, but the mismatch floods the console and defeats the point of SSR for localized text.

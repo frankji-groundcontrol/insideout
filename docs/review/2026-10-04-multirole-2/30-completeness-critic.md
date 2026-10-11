@@ -63,3 +63,7 @@ improve: CQ/ARCH; features-left: PM/FEAT), but several advertised surfaces got n
 ## Bottom line
 
 The register is broad and mostly self-consistent: all four mandate asks are populated, migrations/RLS and the MCP surface are well covered, and the seven confirmed Highs are genuine. The real holes are quiet surfaces — CLI, observability, backup/restore, mail — plus two PRODUCT.md contradictions (deployment evidence promised but dropped; admin approval "superseded" but still load-bearing) that the 105-finding register missed. The one score-side correction worth making: security's SEC-10 should be re-registered at High alongside REL-13, since the skeptic confirmed the same defect as a sitewide fail-closed backstop failure.
+
+*Corrected 2026-10-11: recounted, the register's severity tables contain 106
+rows (the folder README headlines 108, its methodology says 105 unique) — see
+the correction note in [01-findings-register.md](01-findings-register.md).*

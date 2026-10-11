@@ -115,5 +115,6 @@ Two realms. Public (Persuade): `/` landing (done), `/login`, `/register`,
 - Roadmap drag-reorder (`roadmap.move` API exists; HANDOFF known limitation).
 - Idea inline edit; project-update edit/delete (APIs exist) — light, follow-up.
 - Avatar real upload (HANDOFF known limitation — preview-only).
-- Server-driven coach suggestions (belongs to the 2026-07-21 agent-harness
-  plan); this phase ships client-curated stage-keyed cards.
+- Server-driven coach suggestions (belongs to the
+  [2026-07-21 agent-harness plan](2026-07-21-prd-agent-harness/index.md));
+  this phase ships client-curated stage-keyed cards.

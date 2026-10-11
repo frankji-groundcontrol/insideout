@@ -35,6 +35,11 @@ copy, semantic-token component migration) is KEPT. Only the theme detour reverts
 
 - [x] `PRODUCT.md` Brand Commitments → Ink & Seal confirmed as the binding
       whole-product identity (replace the stale "open decision" line).
+  *Superseded 2026-10-11 (event 2026-09-18): PRODUCT.md's identity
+  commitment has since been rewritten — the binding visual identity is
+  now the shipped Cobalt-Neo design system
+  ([Cobalt restyle](2026-09-18-cobalt-flutter.md)); this Ink & Seal
+  commitment is the historical record.*
 - [x] `DESIGN.md` → document the Ink & Seal world (per impeccable `document.md`),
       whole-product scope.
 

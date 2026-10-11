@@ -19,6 +19,12 @@ All of `client/lib` (68 files, 10,173 lines) and `client/test` (34 files, ~2,959
 - The test suite (34 files, ~2,959 lines) covers the sharp edges rather than padding coverage: `client/test/sse_test.dart`, `client/test/api_token_refresh_test.dart`, `client/test/errors_l10n_test.dart`, and `client/test/leftover_scan_test.dart` — a sweep guard that fails CI if the retired Ink & Seal design tokens ever return to `lib/`.
 - Animation and painting code is kept out of pages: `client/lib/features/landing/ink_motion.dart` (192 lines) and `client/lib/features/landing/assembly_diagram.dart` own the motion/keyframe layer; pages only consume it.
 
+  *Corrected 2026-10-11: the ink_motion.dart path is wrong — the file lives at
+  `client/lib/theme/ink_motion.dart`, as the register's `no-press-the-block`
+  row cites (`client/lib/theme/ink_motion.dart:4`); `features/landing/` exists
+  at the reviewed tree but holds the assembly/landing widgets, not ink_motion
+  (verified via `git ls-tree` at `f185e94` and HEAD).*
+
 ## Findings, worst first
 
 ### cq-line-budget-drift — Medium

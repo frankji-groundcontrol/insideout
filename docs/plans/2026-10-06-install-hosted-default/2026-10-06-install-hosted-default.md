@@ -25,6 +25,11 @@ in with `INSIDEOUT_API`.
 
 Finished in the worktree 2026-10-06. Not deployed. Re-run
 `./scripts/install.sh` on machines that already have the old binary.
+*Superseded 2026-10-11: pushed to `main` with the 2026-10-09 three-way
+host sync and live since — the repo is public, `v0.1.0` is published
+with the anonymous bootstrap download verified, and the published
+binaries carry the hosted default
+([owner-gap plan](../2026-10-11-owner-gap-closure.md)).*
 
 Records:
 [changelog](../../changelogs/2026-10-06-install-hosted-default.md),

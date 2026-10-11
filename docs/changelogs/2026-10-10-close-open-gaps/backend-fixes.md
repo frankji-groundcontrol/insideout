@@ -77,6 +77,10 @@ new.
 
 - **Apply two migrations** on deploy: `ai_runs_reaper_idx` and the invite-code
   rotation. Nothing is deployed from this change set.
+
+  *Superseded 2026-10-11: deployed and applied — the 2026-10-11 owner deploy
+  shipped this set and the hosted database reports "already up to date"
+  ([owner-deploy record](../2026-10-11-owner-deploy-and-mail-truth.md)).*
 - **Outstanding 6-digit invite codes stop working** after the rotation. Admins
   read the new code in the workspace and re-share it. The `updated_at` of the
   rotated workspaces moves (the code did change).

@@ -39,7 +39,7 @@ PostgreSQL 18 cluster. Plan:
 Homebrew postgresql@18 scratch cluster (initdb on port 5599, roles
 provisioned per `docker/postgres-init/001-create-app-role.sh`):
 `setup --local --postgres own` with the DSN piped → secret written
-(not printed; DSN shown redacted) → pgx probe pass → **23
+(not printed; DSN shown redacted) → pgx probe pass → **31
 migrations applied in-process** → summary `2 set · 27 missing ·
 required satisfied` → exit 0. Server booted with the child-env values
 against the scratch DB: **`/healthz` → 200, `/api/v1/me` → 401**;
@@ -47,6 +47,11 @@ clean stop; cluster torn down. Two real findings the exercise taught,
 recorded as
 [learning](../learning/2026-10-07-own-url-role-provisioning-precondition.md)
 and [an issue](../issues/2026-10-07-own-url-fresh-db-bootstrap.md).
+
+*Corrected 2026-10-11: the live run applied 31 migrations (the on-disk
+file count), not 23 — the figure above is amended per the
+[landed record](2026-10-07-setup-tui-landed.md), which corrected the count
+on its walk the same day.*
 
 ## Verification
 

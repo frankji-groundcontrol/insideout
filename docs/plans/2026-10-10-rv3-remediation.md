@@ -2,11 +2,14 @@
 
 Execute every workflow-executable cluster of
 [40-remediation-plan.md](../review/2026-10-10-multirole-3/40-remediation-plan.md)
-— 4 sequential waves, 30 file-disjoint clusters — until the only rows left
+— 4 sequential waves, 32 file-disjoint clusters — until the only rows left
 open are the owner-blocked ones (deploy, keys, first `v*` tag). Each wave: one
 dynamic workflow (worker → adversarial verifier → repair ≤3 per cluster, in
 per-cluster git worktrees), then integrator cherry-pick `-x`, full gates,
 and on to the next wave.
+*Corrected 2026-10-11: "30" was a typo — the wave checklists below
+enumerate 7+11+6+8 = 32 clusters, as the board row and disposition ledger
+record.*
 
 ## Checklist
 
@@ -52,3 +55,8 @@ accepted with no blocking items. Dispositions live in the
 What remains is the owner's — deploy, mail/LLM keys, the first `v*` tag —
 enumerated in [HANDOFF](../HANDOFF.md) and the
 [promise register](../review/2026-10-10-multirole-3/50-promise-register.md).
+*Superseded 2026-10-11: all three owner items closed that day — deploy
+(`b6c34c4`, 7 migrations confirmed, BUG-027 checks passed), the mail key
+re-keyed with the full funnel live plus one real hosted LLM turn, and
+`v0.1.0` published; see
+[2026-10-11-owner-gap-closure.md](2026-10-11-owner-gap-closure.md).*

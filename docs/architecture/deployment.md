@@ -11,7 +11,7 @@
   the owner of the `insideout` database. The app never connects as the
   superuser.
 - **server** — multi-stage build (`server/Dockerfile`):
-  `golang:1.25-alpine` builder → `gcr.io/distroless/static-debian12` runtime
+  `golang:1.26-alpine` builder → `gcr.io/distroless/static-debian12` runtime
   (~18 MB image), runs as `nonroot` with a `HEALTHCHECK` driven by the
   binary's own `health` subcommand (distroless ships no shell). Requires
   `DATABASE_URL` and `INSIDEOUT_JWT_SECRET` explicitly (Compose cannot

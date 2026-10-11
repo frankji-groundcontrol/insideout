@@ -17,6 +17,11 @@ nothing to deploy. Plan:
   - `database/supabase.yaml` — app + owner DSNs; `database/local-stack.yaml`
     — the disposable compose stack's two postgres passwords (split because
     they belong to a different installation).
+
+    *Superseded 2026-10-05 (same day): the manifest was renamed
+    `postgres.yaml` — the kind is the role-scoped Postgres DSNs, and Supabase
+    is merely today's host ([buddy host keys](2026-10-05-buddy-host-keys.md),
+    slice 4).*
   - `github/app.yaml` — App id + private key + client secret;
     `github/webhooks.yaml` — webhook secret; `github/tokens.yaml` —
     optional operator PAT.
@@ -37,6 +42,10 @@ nothing to deploy. Plan:
   placeholder/missing skips, unmapped detection, CLI end-to-end. CI
   env-suites job now runs it
   (`test_env_catalog test_env_writes test_keys`).
+
+  *Superseded 2026-10-05 (same day): `scripts/test_keys.py` was retired for
+  the `scripts/tests/keys/` tree, which CI's env-suites job discovers instead
+  ([buddy host keys](2026-10-05-buddy-host-keys.md), slice 10).*
 - **`docs/SETENV.md`** — pointer paragraph: `.env` stays the only file
   processes read; the hosts tree is the out-of-git credential store.
 

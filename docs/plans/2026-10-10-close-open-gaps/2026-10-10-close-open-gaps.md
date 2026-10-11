@@ -114,6 +114,16 @@ Left this list with evidence: the install skill on Ubuntu (the
 an Android build (the `android` job builds a release APK in CI), and the
 Wave 0.12 `app/.env` on MBP2.
 
+*Superseded 2026-10-11: most of this list closed that day — the deploy is
+live with the BUG-027 checks passed, the legacy purge is done (859 junk
+accounts), the mail key is re-keyed with the full funnel live, the GitHub
+App is confirmed installed, the live LLM exercise ran (a real hosted
+coach turn), and MBP is closed (Flutter 3.44.8, `app/.env` gone) — see
+the [owner-gap plan](../2026-10-11-owner-gap-closure.md) and the
+[mail-truth changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).
+Still the owner's: the store-signed Android bundle (keystore) and the
+Supabase automated-backup toggle ([HANDOFF](../../HANDOFF.md) item 2).*
+
 ## Status
 
 Done 2026-10-10, modulo the push/CI/MBP delivery step in flight. The

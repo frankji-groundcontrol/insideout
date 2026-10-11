@@ -39,6 +39,10 @@ When the script boots the server itself it forces `ANTHROPIC_AUTH_TOKEN=` so the
 offline template coach/planner make S1/S2 deterministic; pass `SMOKE_BASE` to
 exercise a real-key server instead.
 
+*Superseded 2026-10-11: the variable is `INSIDEOUT_LLM_API_KEY` since the
+2026-08-18 rename — the current script forces that one
+([llm-env record](2026-08-18-llm-env.md); `server/scripts/smoke.sh:93`).*
+
 ## Operator notes
 
 None — this is a test harness only. It requires `jq` and `curl` on `PATH` and a

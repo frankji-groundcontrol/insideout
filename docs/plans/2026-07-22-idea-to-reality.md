@@ -1,6 +1,10 @@
 # 2026-07-22 — Idea → Reality: branched roadmap, MVP build, GitHub sync, UI prettify
 
 Live plan. Drive this task from it as a checklist. English-only per repo rule.
+*Superseded 2026-10-11: historical record — its Prisma styling was later
+reverted and its linear product assumptions are superseded by
+[`PRODUCT.md`](../../PRODUCT.md); the board files it under "Superseded or
+historical foundations".*
 
 ## Goal (user directive)
 

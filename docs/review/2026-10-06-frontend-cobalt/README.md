@@ -63,6 +63,13 @@ Full detail: [01-findings-register.md](01-findings-register.md).
 7. **Top-bar icons invisible over navy** — `client/lib/app.dart:90`:
    translate/theme icons at **1.42:1** over the navy scaffold.
 
+*Corrected 2026-10-11: two of the cited paths never existed — there is no
+`client/lib/widgets/`; the files live at `client/lib/chrome/product_dock.dart`
+and `client/lib/theme/ink_motion.dart` (verified via `git ls-tree` at the
+reviewed `f185e94` and at HEAD; the register cites the `chrome/` path). The
+same wrong `lib/widgets/` family recurs in
+[40-remediation-plan.md](40-remediation-plan.md).*
+
 ## Bugs reproduced
 
 Reading is not evidence for runtime claims; the top three were executed:
@@ -72,6 +79,13 @@ Reading is not evidence for runtime claims; the top three were executed:
 | Mid-screen dock root cause | Read `product_dock.dart:28` + `app.dart:71/135`, cross-check shots 04/06/07 | CONFIRMED — `Center` fills full `bottomNavigationBar` height → pill ≈ (720,443) mid-viewport; `height = 88.0` (:15) unreferenced. Companion lead "six hardcoded `bottom: 140` paddings" **REFUTED** by grep |
 | Shared `_retryTimer` drops loops | Read `roadmap_page.dart:40-102` | CONFIRMED — `_progressLoop` (:69) and `_presenceLoop` (:92) share `_backoff()` which overwrites `_retryTimer` (:45); `dispose` (:99) cancels only the last → dangling Completer |
 | Formatting drift | `dart format --set-exit-if-changed lib` | CONFIRMED — 55/68 files changed; no CI gate exists |
+
+*Corrected 2026-10-11: the REFUTED verdict on the companion lead is wrong —
+the register row `dead-dock-height-constant-and-magic-140s` and
+[26-responsive.md](26-responsive.md) both establish that six pages hardcode
+`bottom: 140` (e.g. `dashboard_page.dart:137`), and the disposition ledger
+later fixed those clearance copies with a red scan test; the register is the
+standard. The same refuted-lead claim recurs under Methodology below.*
 
 ## Methodology
 
@@ -98,6 +112,34 @@ report.
 4. Role files by interest; [30-completeness-critic.md](30-completeness-critic.md)
    last.
 
+## Raw outputs and captures
+
+- [raw/](raw/README.md) — the ten role agents' unedited submissions, one
+  file per role, indexed by its own README.
+- [reviews-wave1.json](reviews-wave1.json) /
+  [reviews-wave2.json](reviews-wave2.json) — the ten role submissions as
+  machine-readable JSON on the shared schema: wave 1 carries the six
+  engineering roles (code-quality, testing, reliability-ops, fullstack,
+  feature-implementation, project-manager), wave 2 the four experience roles
+  (first-run-user, design-fidelity, a11y-visual, responsive).
+- [reviews-all.json](reviews-all.json) — the two waves merged into one
+  ten-review file.
+- [build_result.py](build_result.py) — the script that attaches the 29
+  skeptic verdicts (and carries the critic block through) to
+  `reviews-all.json`, writing `result.json` for the register build.
+- [result.json](result.json) — that merged output: the ten reviews plus the
+  `verdicts` and `critic` sections, the input the register was generated
+  from.
+- [shots/captures.md](shots/captures.md) — wave-1 capture index: the baseline
+  screenshot pass at 1440×900 and 390×844, with per-shot notes and anomalies.
+- [shots-wave2/captures.md](shots-wave2/captures.md) — wave-2 capture index:
+  light/dark pairs re-shot on the rebuilt client.
+- [shots-wave3/captures.md](shots-wave3/captures.md) — wave-3 capture index:
+  verification pass after the Cobalt-Neo tokens were applied.
+- [register-all-table.md](register-all-table.md) — the deduped finding
+  register as flat per-severity tables (111 findings, before the critic's +3
+  and the one downgrade).
+
 ## Related
 
 - Prior whole-tree reviews:
@@ -106,3 +148,6 @@ report.
 - Closure records for this review land with the implementation phase:
   plan `docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md`, dated changelog, and
   issue entries linked to register IDs.
+  *Superseded 2026-10-10: they exist — every register row's disposition is
+  traced in
+  [the disposition ledger](../2026-10-10-disposition-ledger/03-frontend-cobalt.md).*

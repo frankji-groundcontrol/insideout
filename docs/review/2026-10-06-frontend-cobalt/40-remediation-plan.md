@@ -5,6 +5,17 @@ start a wave until the previous wave's check passes. Register IDs refer to
 [01-findings-register.md](01-findings-register.md). All paths under
 `client/` unless noted.
 
+*Corrected 2026-10-11: many File-column paths above never existed at the
+reviewed tree (`f185e94`) — there is no `lib/widgets/`, no
+`lib/features/ideas|admin|settings|coach|roadmap/`, and no `test/widgets/`.
+Real locations (verified via `git ls-tree` at `f185e94` and HEAD):
+`product_dock.dart` → `lib/chrome/`, `ink_motion.dart` → `lib/theme/`,
+`ideas_page.dart` → `lib/features/workspace/`, `admin_section.dart` →
+`lib/features/profile/`, `appearance.dart` → `lib/session/`, `coach_panel.dart`
+→ `lib/features/prd/`, `roadmap_canvas.dart` → `lib/features/project/`,
+`product_dock_test.dart` → `client/test/`. The register cites the correct
+paths.*
+
 ## Wave 0 — safety
 
 Nothing to do: no committed secrets found, `main` is the product branch,

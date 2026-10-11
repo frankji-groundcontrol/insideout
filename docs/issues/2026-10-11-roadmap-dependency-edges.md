@@ -6,7 +6,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding FEAT-05; slice 7 of the
 ## What PRODUCT.md promises
 
 > "A dependency delay shows the affected path and a proposed time Diff; a
-> human confirms the rebaseline." (PRODUCT.md:300-302)
+> human confirms the rebaseline." ([PRODUCT.md](../../PRODUCT.md):300-302)
 
 ## What exists today
 

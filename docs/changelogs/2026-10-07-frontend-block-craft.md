@@ -29,7 +29,7 @@ deployed; closure finished 2026-10-08.
   (D7). Additive `cobalt.dart` tokens only: `space1`–`space10`,
   breakpoints 600/900/1200, `contentMaxWidth` 1120, `controlHeight`
   44/40, `warnAmber` `#FFD166` (the dock warn-dot precedent widened
-  into the warning tone channel — a DESIGN.md amendment, now recorded
+  into the warning tone channel — a [DESIGN.md](../../DESIGN.md) amendment, now recorded
   there).
 - **Waves 1–5 + the Wave 6 sweep** — shell (`app.dart` utility row,
   dock), dashboard, workspace, ideas, settings, project, roadmap, PRD,
@@ -119,3 +119,7 @@ deployed web client does not pick it up until the client is rebuilt and
 shipped. `DESIGN.md` was amended to match what shipped; the design-QA
 thread is recorded at
 [design-qa/2026-10-07-block-craft.md](../design-qa/2026-10-07-block-craft.md).
+
+*Superseded 2026-10-11: committed as `185ed46` ([host
+sync](2026-10-09-host-sync.md)) and shipped with the 2026-10-11 app deploy
+([owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*

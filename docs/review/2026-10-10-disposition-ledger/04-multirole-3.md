@@ -13,6 +13,12 @@ Four dynamic-workflow waves (32 clusters) executed the plan. Each cluster worked
 
 What each fix does, the operator migration notes and the final gate run live in the [changelog folder](../../changelogs/2026-10-11-rv3-remediation/index.md). Six rows remain **Owner** — hosted deploy, mail/LLM keys, or the first `v*` tag — enumerated in [HANDOFF](../../HANDOFF.md) and the [promise register](../2026-10-10-multirole-3/50-promise-register.md); they are the only rows not closed by code.
 
+*Corrected 2026-10-11: the six owner rows all closed on 2026-10-11 — deploy at
+`b6c34c4` with every migration applied, the mail key re-keyed with the funnel
+exercised live, and `v0.1.0` published — so the table below contains no open
+Owner rows; see [the owner-gap plan](../../plans/2026-10-11-owner-gap-closure.md)
+and [changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
+
 | ID | Sev | Status | Resolution |
 |---|---|---|---|
 | AIDEV-01 | H | Fixed | wave 1 — fix ec60e5d · red TestCaptureRankedCritique_RestatementCannotEraseStoredFindin… |

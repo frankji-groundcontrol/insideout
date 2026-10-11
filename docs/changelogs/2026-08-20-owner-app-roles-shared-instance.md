@@ -45,7 +45,8 @@ one transaction, verified after commit:
   cutover. The running server was never restarted.
 - Local `.env` `DATABASE_URL` replaced with the known-good app DSN
   (5432 session pooler); `scripts/env.sh check server` passes. This
-  resolves the SASL failure noted in `docs/HANDOFF.md`.
+  resolves the SASL failure noted in
+  [`docs/HANDOFF.md`](../HANDOFF.md).
 
 The DB-gated `authz_test.go` battery was not re-run against the shared
 instance (it writes test data); its prior real-Postgres run is recorded in

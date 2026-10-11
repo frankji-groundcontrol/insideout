@@ -55,3 +55,8 @@ consolidated 50-promise register (the `w4-promise-register` cluster) was
 not yet in this branch's base; when it lands, its rows and these records
 must be reconciled to one truth — every row here cites its PRODUCT.md
 line for exactly that.
+
+*Corrected 2026-10-11: the register has landed — the
+[50-promise register](../review/2026-10-10-multirole-3/50-promise-register.md)
+(stamped 2026-10-11, base `2c5631b`). The reconciliation above has not
+been recorded yet.*

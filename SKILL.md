@@ -1,6 +1,6 @@
 ---
 name: insideout
-description: Use when driving InsideOut — the ideas → PRDs → roadmaps product with GitHub-tracked evidence — through its CLI (`insideout`), MCP server (`insideout-mcp`, 50 tools), or /api/v1; covers auth, the idea inbox, PRD authoring, roadmap CRUD, versions/Commits, repo binding and evidence, and the agent vocabulary (checkpoint / propose / humans decide).
+description: Use when driving InsideOut — the ideas → PRDs → roadmaps product with GitHub-tracked evidence — through its CLI (`insideout`), MCP server (`insideout-mcp`; `tools/list` answers the current tool count), or /api/v1; covers auth, the idea inbox, PRD authoring, roadmap CRUD, versions/Commits, repo binding and evidence, and the agent vocabulary (checkpoint / propose / humans decide).
 ---
 
 # InsideOut
@@ -14,7 +14,7 @@ CLI/MCP surface. This skill is the contract for the second mode.
 
 ## Setup
 
-From a checkout of this repository (needs Go 1.25+, see
+From a checkout of this repository (needs Go 1.26+, see
 `server/go.mod`). Setting up a machine from scratch — installing the
 toolchains, choosing hosted vs own server, the key store, and the
 installation record — is its own skill:
@@ -96,8 +96,10 @@ Join an existing workspace with `workspace_join` / `insideout join
 
 ## Surface parity
 
-Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (50 tools:
-auth ×9, admin ×4, ideas/PRD/roadmap/evidence/workspace/project CRUD,
+Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (ask
+`tools/list` for the current set — a count frozen here has already
+drifted: the registry stood at 52 while this page said 50:
+auth, admin, ideas/PRD/roadmap/evidence/workspace/project CRUD,
 versions, agent vocabulary, GitHub tracking, planner). Prefer the
 narrowest tool; reads return raw JSON — trust it over your assumptions.
 

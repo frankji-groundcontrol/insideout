@@ -52,3 +52,5 @@
 ## Why it matters
 
 Every one of these is invisible to `go build`, `go vet`, and pure-Go unit tests — they are real Postgres/pgx runtime behavior, several of them (#2–#4) specific, non-obvious PostgreSQL RLS limitations that don't show up in documentation examples. This is the strongest argument in this codebase for never marking database-dependent work "done" without running it against a real database — see `docs/testing/item-32-testing.md`'s "no mocks" rule.
+
+*Corrected 2026-10-11: `docs/testing/item-32-testing.md` has never existed in this repository (nothing under `docs/testing/` in any commit); the no-mocks rule lives in [AGENTS.md](../../AGENTS.md) ("No mocks. DB-dependent changes must pass the `DATABASE_URL`-gated integration tests…") and [CLAUDE.md](../../CLAUDE.md).*

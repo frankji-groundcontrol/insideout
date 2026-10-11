@@ -9,28 +9,21 @@ Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
 records continue the numbering (next: BUG-031).
 
-**State on 2026-10-10:** every record is fixed, superseded or closed with
-evidence, except the two under "Waiting on the owner" and one deferred
-engineering item under Client. The
+**State on 2026-10-11:** every record is fixed, superseded or closed with
+evidence, except the open-by-design product slices below. The last two
+owner items closed 2026-10-11:
+[BUG-027](2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)'s
+nginx re-resolve is verified live after the `app` deploy (both owner checks
+passed, the restart ritual retired), and
+[host drift](2026-10-09-host-setup-drift-between-macs.md) is closed with
+Flutter 3.44.8 installed on MBP. The
 [close-open-gaps plan](../plans/2026-10-10-close-open-gaps/2026-10-10-close-open-gaps.md)
-worked through all of them. Owner steps that are not issue records (production
+worked through the rest. Owner steps that are not issue records (production
 deploys and migrations, purging legacy users, mail and signing credentials,
 backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md).
 2026-10-11: the parked PRODUCT.md slices opened as records under
 "Open product slices" below — open by design, they track promises the
 running system does not implement yet.
-
-## Waiting on the owner
-
-- [BUG-027 — nginx resolved the API upstream once](2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)
-  — fixed and checked on a real nginx; it takes effect when `app` is next
-  deployed (`railway up --service app`). The record lists the two requests that
-  confirm it.
-- [2026-10-09 — Host setup drift between the two Macs](2026-10-09-host-setup-drift-between-macs.md)
-  — hooks on MBP2, MBP's upstream and its HTTP/2 route are **fixed
-  2026-10-10**; the Flutter 3.47.0-vs-3.44.x lock drift is guarded by
-  `pub get --enforce-lockfile` in CI and the Dockerfile. Open only for the
-  owner: installing 3.44.x on MBP.
 
 ## Open product slices (2026-10-11)
 
@@ -100,6 +93,8 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
   — SSR always renders `zh-CN` (no `localStorage` on the server) while the
   client hydrates to the saved `en-US`, so every localized page logs a
   hydration text mismatch. Fix: read the locale from a cookie during SSR.
+  **Not applicable 2026-10-11**: the Nuxt app is gone; the Flutter web client
+  has no SSR.
 - [BUG-012 — project list NULL latest-update scan](2026-07-23-bug-012-project-list-null-latest-update-scan.md)
   — `ListProjectsForWorkspace`'s `LEFT JOIN LATERAL` yields `NULL` `lu.*`
   columns for projects with no updates; scanning them into value
@@ -169,7 +164,7 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [BUG-027 — the app's nginx resolved the API upstream once, at start](2026-10-10-bug-027-nginx-resolved-the-api-upstream-once.md)
   — after a `server` redeploy `/api/` returned 504 until `app` was
   restarted, and nginx refused to start for a name that did not resolve yet.
-  **Fixed in the repository 2026-10-10**; live after an `app` deploy.
+  **Fixed 2026-10-10; verified live 2026-10-11** after the `app` deploy.
 - [BUG-028 — Enter did not activate a focused block in a browser](2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md)
   — on the web Enter is `ButtonActivateIntent`, the custom blocks bound only
   `ActivateIntent`, and every test ran on the VM. **Fixed 2026-10-10**,
@@ -190,8 +185,10 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 
 ### Line-budget splits (pure moves)
 
+- [2026-10-11 — changelogs README](2026-10-11-changelogs-readme-line-budget.md) — 473 lines; per-record bullets move to per-month index files under `index/`.
 - [2026-10-06 — roadmap.go](2026-10-06-roadmap-go-line-budget.md) — `store/roadmap.go` is 309 lines.
 - [2026-10-04 — coach.go](2026-10-04-coach-go-line-budget.md) — 349 lines, the provider/tool loop in its own file.
+- [2026-10-11 — historical records (annotated-only growth)](2026-10-11-historical-records-over-line-budget.md) — setup-tui (361), nuxt-migration (605), prd-agent-harness plan (500); split deferred behind record immutability, folder-extract on next growth.
 - [2026-10-04 — anthropic.go](2026-10-04-anthropic-go-line-budget.md) — 235 lines plus `anthropic_parse.go` (186).
 - [2026-09-03 — apiclient.go](2026-09-03-apiclient-line-budget.md) — 169 lines, the verbs in their own files.
 - [2026-10-04 — models.dart](2026-10-04-models-dart-line-budget.md) — a 4-line barrel over four domain files.
@@ -203,6 +200,10 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 
 ### Backend, setup and environment
 
+- [2026-10-09 — Host setup drift between the two Macs](2026-10-09-host-setup-drift-between-macs.md)
+  — items 2–4 fixed 2026-10-10; the Flutter half (3.44.8 on MBP,
+  `--enforce-lockfile` passing) closed 2026-10-11. Both halves of the drift
+  are closed.
 - [2026-07-23 — Backend pre-commit review findings](2026-07-23-backend-precommit-review-findings.md) — every confirmed item fixed, each test-first on real PostgreSQL.
 - [2026-07-26 — Backend optimization, deferred findings](2026-07-26-backend-optimization-deferred.md) — every item still open is closed; the `ListWorkspacesForUser` count was measured and deliberately not shipped.
 - [2026-07-25 — Build-from-PRD runs the LLM before the conflict guard](2026-07-25-build-from-prd-runs-llm-before-conflict-guard.md) — superseded by the draft/confirm split ([BUG-022](2026-10-10-bug-022-build-mvp-wrote-nothing.md) found the client still on the old contract).

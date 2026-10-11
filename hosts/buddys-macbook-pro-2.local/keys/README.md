@@ -27,4 +27,4 @@ tooling:
 init|audit|fill` (never prints values). Per-key shape tests:
 `python3 -m unittest discover -s tests/keys -t .` from `scripts/`.
 The root `.env` stays the only file running processes read
-([docs/SETENV.md](../../../../docs/SETENV.md) is the bridge manual).
+([docs/SETENV.md](../../../docs/SETENV.md) is the bridge manual).

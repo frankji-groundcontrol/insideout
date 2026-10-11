@@ -31,7 +31,7 @@ has verified production gaps (checked against code, not hypothesized):
   `ai_run_events` telemetry table exist in SQL but are dead code.
 - No global bound on concurrent upstream calls; no token budget beyond
   `max_tokens=4096` per call; no context-window-overflow handling; no
-  startup model check (BUG-009's `model_not_found` surfaced only at the
+  startup model check ([BUG-009](../../issues/2026-07-21-bug-009-langchaingo-removed.md)'s `model_not_found` surfaced only at the
   first user request).
 
 ## 2. What the research says (see [research.md](research.md))
@@ -295,7 +295,7 @@ One classification point in `anthropic.go`, one policy in `coach.go`:
   how we'd know.
 - **Startup model check**: on boot with a token configured, `GET
   /v1/models`; if `AI_MODEL` is absent, log a loud warning (don't crash —
-  gateways lie) — turns BUG-009's silent config drift into an operator
+  gateways lie) — turns [BUG-009](../../issues/2026-07-21-bug-009-langchaingo-removed.md)'s silent config drift into an operator
   signal.
 - **SSE keepalive**: emit `: ping` comment lines every 15s during model
   silence; delivery includes verifying end-to-end streaming through the
@@ -470,13 +470,15 @@ here as binding plan amendments:
 | Review | Trigger | Why | Runs | Status | Findings |
 |--------|---------|-----|------|--------|----------|
 | CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | issues_open | 13 findings (1 blocking), all folded into the revision |
-| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | issues_open | 38 issues across 4 sections; majors resolved in §5/§6/§10 |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | issues_open | 20 findings; majors resolved in §5/§6/§10 |
 | Outside Voice | codex (cross-model) | Independent 2nd opinion | 1 | issues_found | 15 findings; 11 adopted as §10 amendments, 4 residual risks acknowledged |
 | Design Review | `/plan-design-review` | UI/UX gaps | 0 | — | — |
 
 - **CODEX:** the cross-model pass caught three enforcement gaps the section review missed — the reaper vs forced-RLS conflict, cleanup writes dying on the cancelled request context, and the in-turn stage-switch no-op — all now in §10.
 - **CROSS-MODEL:** eng-review and codex agreed on the load-bearing structural fixes (permit inheritance, lock-before-durable-writes, critic omission-findings). No unreconciled tension: where they overlapped they agreed; codex added enforcement-correctness findings the rubric sections didn't reach.
 - **VERDICT:** ENG reviewed, not CLEARED — this is a design plan, not a diff; the review's job was to harden it, and every blocking/major finding is resolved or explicitly accepted as a residual risk (§10.12). Ready to implement once the plan §9 user decisions are made.
+
+*Corrected 2026-10-11: the Eng Review row above said "38 issues"; [reviews.md](reviews.md) numbers 20 eng-review findings (13 CEO + 20 eng = 33 total), matching this plan's own opening "plan-eng-review (20 findings)".*
 
 **UNRESOLVED DECISIONS:**
 - Critic model: same as coach vs cheaper (decidable by eval 6c).
@@ -485,3 +487,14 @@ here as binding plan amendments:
 - Gate strictness under load: skip-marker satisfies finalize vs critic block-acquires when gate-critical.
 - H4 slim-down (budgets → fast-follow, idempotency dropped) — ratify or ship budgets in H4 on placeholder defaults.
 - Whether to accept the residual quote-pairing risk (§10.12) or add a stronger fact-attestation step.
+
+*Superseded 2026-10-11: the plan's "ready to implement" positioning
+predates reality — the harness shipped, and the
+[2026-07-27 hardening pass](../2026-07-27-hardening/README.md) was already
+fixing bugs in its live components (critic, dispatch permissioning, coach
+idle watchdog, `WithoutCancel` persistence). Its Nuxt-era frontend
+references (e.g. §6/§10 delivery via `app/src/composables/useCoachStream.ts`)
+describe the since-deleted `app/`; the client is Flutter `client/`. Do not
+reimplement or execute this plan; regenerate the next implementation plan
+from `PRODUCT.md` and current code (see the board's superseded note in
+[plans/README.md](../README.md)).*

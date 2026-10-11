@@ -1,10 +1,10 @@
 # Frontend Cobalt-Neo — remediation implementation plan
 
 - **Date:** 2026-10-06 · **Branch:** `main` @ `f185e94`
-- **Source:** [2026-10-06 frontend cobalt review](../review/2026-10-06-frontend-cobalt/README.md)
+- **Source:** [2026-10-06 frontend cobalt review](../../review/2026-10-06-frontend-cobalt/README.md)
   (114 findings, 7 Critical / 22 High; 28 confirmed, 1 downgraded, 0 refuted).
 - **Contract:** execute the review's
-  [40-remediation-plan](../review/2026-10-06-frontend-cobalt/40-remediation-plan.md)
+  [40-remediation-plan](../../review/2026-10-06-frontend-cobalt/40-remediation-plan.md)
   waves 1–7 in order; each wave's runnable check gates the next.
 
 **Design target — Cobalt-Neo:** 0px corner radius, 2px solid borders, 4px4px
@@ -127,7 +127,7 @@ wins); DESIGN.md records the new default.
 ## Wave checklist
 
 Details (register IDs, file:line, diffs) live in the
-[40-remediation-plan](../review/2026-10-06-frontend-cobalt/40-remediation-plan.md);
+[40-remediation-plan](../../review/2026-10-06-frontend-cobalt/40-remediation-plan.md);
 this checklist is the live tracker.
 
 - [x] **Wave 1** — one-line & token-value fixes (1.1 dock Align · 1.2 viewport

@@ -56,6 +56,7 @@ keeps its original bilingual text as a historical record).
   findings with skeptic verdicts, reproduction evidence, and remediation
   plans.
 - [history/](history/README.md) — retired JuanLeMe-era records.
-- [design-system/CHANGELOG.md](design-system/CHANGELOG.md) — token-layer
-  version record (live Flutter is Cobalt-Neo **1.1.0**; the pre-Neo lock
-  screens are in [cobalt/](design-system/cobalt/README.md)).
+- [design-system/](design-system/README.md) — the design system's home:
+  the token-layer version record ([CHANGELOG.md](design-system/CHANGELOG.md);
+  live Flutter is Cobalt-Neo **1.1.0**) and the pre-Neo lock screens in
+  [cobalt/](design-system/cobalt/README.md).

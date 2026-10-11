@@ -183,7 +183,13 @@ in the skeleton. For a real provider, set `INSIDEOUT_LLM_API_KEY` (plus
 `INSIDEOUT_LLM_BASE_URL` if your provider is not the default). Put any `/v1`
 on the base URL yourself. `INSIDEOUT_LLM_MODEL` defaults to
 `claude-sonnet-4-20250514`; `INSIDEOUT_LLM_SCHEMA` is `messages` or `responses`.
-Per-key detail: [usage/keys/llm/llm-api-key.md](usage/keys/llm/llm-api-key.md).
+Per-key detail:
+[usage/keys/llm/llm-api-key.md](usage/keys/llm/llm-api-key.md),
+[usage/keys/llm/llm-base-url.md](usage/keys/llm/llm-base-url.md),
+[usage/keys/llm/llm-model.md](usage/keys/llm/llm-model.md),
+[usage/keys/llm/llm-schema.md](usage/keys/llm/llm-schema.md),
+[usage/keys/llm/ai-max-concurrent.md](usage/keys/llm/ai-max-concurrent.md),
+[usage/keys/llm/ai-queue-wait.md](usage/keys/llm/ai-queue-wait.md).
 
 ## Step 4 — Local-dev toggles
 
@@ -198,7 +204,9 @@ Per-key detail: [usage/keys/llm/llm-api-key.md](usage/keys/llm/llm-api-key.md).
   password-reset mails (`mail dev mode — not sent`), and the sign-in screens
   say so. `scripts/dev.sh` sets `INSIDEOUT_MAIL_DEV_BODY=1` for the server so
   the log line carries the link or code itself. Both rows are in the Go backend
-  table of [usage/environment.md](usage/environment.md#go-backend).
+  table of [usage/environment.md](usage/environment.md#go-backend). Per-key
+  detail for the body toggle:
+  [usage/keys/mail/mail-dev-body.md](usage/keys/mail/mail-dev-body.md).
 - `INSIDEOUT_ADDR` and the two TTLs rarely need changing.
 
 ## Step 5 — Only if you run docker compose

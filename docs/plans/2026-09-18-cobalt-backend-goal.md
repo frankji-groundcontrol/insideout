@@ -166,3 +166,10 @@ authz tests. Never print secrets.
 
 Repo contract: [`AGENTS.md`](../../AGENTS.md),
 [`docs/index.md`](../index.md).
+
+*Superseded 2026-10-11: "Hosted production still serves the pre-restyle
+bundle until someone runs `railway up --service app`" no longer holds —
+both services were deployed and domain-verified 2026-10-04, and the owner
+deploy 2026-10-11 shipped `b6c34c4` (server) / `6b1f24f` (app) with
+`v0.1.0` published
+([owner-gap plan](2026-10-11-owner-gap-closure.md)).*

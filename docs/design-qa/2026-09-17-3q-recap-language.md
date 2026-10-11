@@ -4,6 +4,12 @@ Locked after the user said **3Q**, then:
 
 > Share it with open design as reference, build design language
 
+*Corrected 2026-10-11: the lock did not hold — the Recap screens built on
+this language were rejected later the same day ("That pass is rejected");
+see [2026-09-17 — Live language](2026-09-17-live-language.md) and the
+follow-ups in [2026-09-17 — Vibrant for younger
+audiences](2026-09-17-vibrant-younger-audiences.md).*
+
 Canonical image in the OpenDesign project:
 `REFERENCE-3Q.jpg` (copy of `variant-3q-evidence-recap.jpg`).
 Language file there: `DESIGN_3Q.md`. Images first. No HTML yet.

@@ -4,6 +4,8 @@ Status: **in flight**. The last designed piece of
 [cli-mcp-parity](2026-08-21-cli-mcp-parity.md) Stage 3: PRODUCT.md's
 minimum agent-facing vocabulary — `context`, `focus`,
 `checkpoint/report`, `propose`, `version`.
+*Corrected 2026-10-11: completed 2026-08-22 — the checklist closes with
+"Docs closure; checkpoint pushed" and the board row is Completed.*
 
 ## Semantics (PRODUCT.md)
 

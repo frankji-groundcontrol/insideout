@@ -2,8 +2,8 @@
 
 One test file per mapped kind — filename = the key name, module
 folder = the store's module — exactly mirroring
-[`hosts/<host>/keys/`](../../../../hosts/README.md) and
-[docs/usage/keys/](../../../../docs/usage/keys/README.md). Two
+[`hosts/<host>/keys/`](../../../hosts/README.md) and
+[docs/usage/keys/](../../../docs/usage/keys/README.md). Two
 cross-cutting suites sit at this root: the tool behaviors
 (`keys.py` parsing, init, fill, audit, multi-host scoping) and the
 store-wide invariants (perms, never-absent, emptiness only with a

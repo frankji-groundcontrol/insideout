@@ -127,6 +127,12 @@ audit on execution day), 6 owner-blocked (below), and 3 satisfied by the report 
 (COMP-03 score recalibration, COMP-05 bucket statement + this plan's verify contract,
 COMP-06 the 379/379 correction — all in the review README).
 
+*Corrected 2026-10-11: the original note counted "77 executed + 6 owner + 3
+report" (= 86) against the 83-row register and omitted the parked CQ-04; the
+executed-by-code count is 73 (73 + 3 report + 1 parked + 6 owner = 83),
+matching the review README and the plans board (all six owner rows then
+closed on 2026-10-11 per the ledger).*
+
 ## Sequencing note
 
 Waves are sequential (wave N+1 rebases on wave N's integrated main); clusters

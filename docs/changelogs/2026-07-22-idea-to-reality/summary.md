@@ -61,3 +61,8 @@ the Prisma reference.
   reveals on the landing; the landing hero/pillars rebuilt.
 - The landing message re-framed to "idea → reality" (the PRD is one step) with
   a 4-pillar journey: capture → refine → roadmap → track-to-shipped.
+
+*Superseded 2026-10-11: the Prisma re-theme of section 4 was an uncommitted
+detour, reverted the next day back to the committed Ink & Seal world — the
+product work of sections 1–3 stayed
+([Ink & Seal reconciliation](../2026-07-23-ink-seal-landing/index.md)).*

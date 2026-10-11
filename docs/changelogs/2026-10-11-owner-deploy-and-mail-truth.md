@@ -178,6 +178,10 @@ settled (`gh run rerun 38105183080 --failed`).
 
 ## What an operator of an existing deployment must do
 
+*Corrected 2026-10-11: the re-key is done — this record's "The mailed-flow
+pass" section (above) records the fresh send-scoped key synced everywhere
+and every mailed flow run live; the sentence below predates that close.*
+
 Nothing new to apply — the deploy is live. The one open step is the Resend
 re-key in [HANDOFF](../HANDOFF.md); the rehearsal account
 (`gapclosure261011`) stays as a plain member with its workspace, and its

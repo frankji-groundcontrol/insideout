@@ -60,3 +60,7 @@ and, because that token swap is a perceptual near-no-op on the dark ground
 None — frontend-only. B3 attribution (the `created_by`/`updated_by`
 migration) remains deferred pending an explicit go; pre-migration rows will
 render an "unknown" initial once it lands.
+
+*Corrected 2026-10-11: B3 landed later the same day — the migration was
+applied and live-verified against the real database and the running app
+([attribution record](2026-07-26-roadmap-canvas-collab-attribution.md)).*

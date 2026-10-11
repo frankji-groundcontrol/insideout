@@ -83,7 +83,8 @@ Go/client code, nothing deploys.
 - Config companions ride the SAME store mechanics (`.secrets/` 0600,
   no-print fill) — like agents_home's model-id keys. They are not
   secrets; the store is their out-of-git backup, fixing the
-  recovery hole documented 2026-10-05.
+  recovery hole documented 2026-10-05
+  ([buddy-host-keys changelog](../changelogs/2026-10-05-buddy-host-keys.md)).
 - `gh-private-key-file` uses `kind: path`; its test asserts the target
   file exists — mapping it also silences the audit's permanent
   unmapped flag.

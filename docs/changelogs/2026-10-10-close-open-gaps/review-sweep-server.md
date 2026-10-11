@@ -59,7 +59,7 @@ of the sweep is in [review-sweep-client.md](review-sweep-client.md).
   1 MiB body cap rejected real push payloads with `400`; the webhook path alone
   now takes up to 8 MiB (exactly 8 MiB passes, one byte more is `400`), and the
   signature is still checked before the body is trusted. The app's nginx needs
-  the matching limit; see [the CI and infra record](review-sweep-ci-and-infra.md).
+  the matching limit; see [the CI and infra record](#round-2-the-follow-ups-the-round-1-verifiers-left).
 - **The web dev port is pinned** (`r1/AIDEV-06`, `r1/FS-08`). Magic links point
   at `http://localhost:5173`; the three `flutter run -d web-server` commands in
   the usage docs now pass `--web-port=5173`, so the link lands on the app instead
@@ -152,6 +152,10 @@ of the sweep is in [review-sweep-client.md](review-sweep-client.md).
   Both only redefine policies; they are idempotent and safe to re-run, and
   both were applied to a freshly created empty database as well as an
   existing one.
+
+  *Superseded 2026-10-11: applied — the 2026-10-11 owner deploy shipped this
+  set and the hosted database reports "already up to date"
+  ([owner-deploy record](../2026-10-11-owner-deploy-and-mail-truth.md)).*
 - **CI got slower and stronger on purpose**: the Go job runs the whole suite
   under `-race` (a 20-minute timeout), the client job fails past the
   16-info analyze baseline, and a nightly job runs the five-surface smoke

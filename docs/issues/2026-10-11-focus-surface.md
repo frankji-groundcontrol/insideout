@@ -7,7 +7,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding FEAT-06; slice 8 of the
 
 > "Focus is a non-exclusive pointer for one person or one Agent session,
 > with one main Focus per session; team Now is the shared set that
-> aggregates active Focuses." (PRODUCT.md:246-249)
+> aggregates active Focuses." ([PRODUCT.md](../../PRODUCT.md):246-249)
 
 ## What exists today
 

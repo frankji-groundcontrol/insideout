@@ -39,4 +39,4 @@ designs the full loop: user-registered GitHub App for per-user access,
 `POST /api/v1/hooks/github` webhook with HMAC-SHA256 verification, and
 a repo-side matching guide (`insideout.yaml`) mapping branches, labels,
 and paths to roadmap nodes — events advance leaf-level evidence only,
-per PRODUCT.md.
+per [PRODUCT.md](../../PRODUCT.md).

@@ -32,4 +32,4 @@ shape tests: `python3 -m unittest discover -s tests/keys -t .` from
 
 The root `.env` stays the only file running processes read; this tree is
 the out-of-git store behind it (`scripts/env.sh init` is the bridge —
-see [docs/SETENV.md](../../../../docs/SETENV.md)).
+see [docs/SETENV.md](../../../docs/SETENV.md)).

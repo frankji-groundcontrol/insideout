@@ -2,6 +2,9 @@
 
 Status: **complete** (2026-08-20). Reverses go-rewrite D2 (single role
 `insideout_app`). Only the optional app-password rotation remains open.
+*Corrected 2026-10-11: the app-password rotation also closed 2026-08-20 —
+its own checklist records it done (old password rejected, auto-deploy
+SUCCESS); nothing in this plan remains open.*
 
 ## Why
 

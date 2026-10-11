@@ -6,7 +6,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding CQ-02; slice 4 of the
 ## What PRODUCT.md promises
 
 > "Personas are prioritized as core users, key participants, and later
-> users." (PRODUCT.md:124-125)
+> users." ([PRODUCT.md](../../PRODUCT.md):124-125)
 >
 > "Every persona is labeled as grounded in real evidence, synthesized from
 > evidence, or an assumption. A plausible persona must never masquerade as a

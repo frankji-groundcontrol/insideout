@@ -62,3 +62,6 @@ screenshots are kept locally under `.gstack/browse-reports/` (ignored by git).
 ## Operator notes
 
 None. Nothing here is deployed.
+
+*Superseded 2026-10-11: deployed — the 2026-10-11 owner deploy shipped the
+bundle ([record](../2026-10-11-owner-deploy-and-mail-truth.md)).*

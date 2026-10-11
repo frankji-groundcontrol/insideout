@@ -1,6 +1,9 @@
 # 2026-08-17 — Flutter client (web + iOS + Android)
 
 Status: in flight — architecture confirmed; engineering review recorded.
+*Corrected 2026-10-11: the checklist fully landed — the Railway `app`
+cutover to `client/` ran 2026-08-18 and the board row has been Completed
+since (re-closed 2026-10-11 with the CI android job).*
 
 ## Goal
 

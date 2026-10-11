@@ -24,6 +24,10 @@ No new routes, schema, or product verbs. Tokens stay
 unchanged. Hosted production still serves the pre-restyle bundle until
 someone runs `railway up --service app` after merge.
 
+*Superseded 2026-10-11: the hosted bundle no longer predates the restyle —
+the 2026-10-11 owner deploy shipped both services
+([record](2026-10-11-owner-deploy-and-mail-truth.md)).*
+
 ## Verification
 
 - Local Go API (offline coach) + seed database: login, workspaces,

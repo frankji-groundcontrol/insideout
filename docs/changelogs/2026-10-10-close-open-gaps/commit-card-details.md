@@ -1,7 +1,8 @@
 # The commit card shows what a version recorded
 
 A committed version records its change summary, the open items it carried, a
-diff against the previous commit and, per PRODUCT.md, a Decision Log. The
+diff against the previous commit and, per
+[PRODUCT.md](../../../PRODUCT.md), a Decision Log. The
 Cobalt restyle's commit card showed the summary and three diff counts, and
 nothing else
 ([BUG-026](../../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md)).
@@ -46,3 +47,7 @@ already stored and returned all of it.
 ## Operator notes
 
 None. Nothing here is deployed; the hosted bundle predates it.
+
+*Superseded 2026-10-11: the hosted bundle now carries it — the 2026-10-11
+owner deploy shipped both services
+([record](../2026-10-11-owner-deploy-and-mail-truth.md)).*

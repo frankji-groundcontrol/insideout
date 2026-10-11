@@ -22,7 +22,7 @@ and the provider/error detail leaks. Still open: login/register rate limiting +
 argon2 timing, `loadHistory` over-fetch, the `ai_runs` reaper index, the
 `ListWorkspacesForUser` correlated count, and the join-endpoint rate limit.
 The five highest-value findings from the original review were fixed in the same
-pass (see `docs/changelogs/2026-07-26-backend-optimization-pass.md`):
+pass (see [`docs/changelogs/2026-07-26-backend-optimization-pass.md`](../changelogs/2026-07-26-backend-optimization-pass.md)):
 request-body cap + server timeouts, the dispatcher conversation-lock TOCTOU,
 the roadmap move/create cycle race, the coach success-path detached-context
 persist, and the unchecked SSE frame-index assertions.

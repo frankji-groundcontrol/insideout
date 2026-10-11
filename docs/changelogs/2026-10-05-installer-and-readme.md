@@ -23,7 +23,7 @@ to deploy. Plan:
   (Claude Code `.mcp.json`, Cursor `mcp.json`, generic `mcpServers`
   blocks) by default, `-q` for JSON only. Minimal JSON string escaping
   for backslash and quote.
-- **`SKILL.md`** — Setup now leads with `install.sh` + `mcp-config.sh`
+- **[`SKILL.md`](../../SKILL.md)** — Setup now leads with `install.sh` + `mcp-config.sh`
   so an external agent can self-install and self-register; manual `go
   build` kept as the fallback.
 - **`README.md`** — rewritten around the four onboarding questions: what

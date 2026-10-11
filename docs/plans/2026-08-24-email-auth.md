@@ -6,6 +6,13 @@ implemented, verified, committed to `main`, and deployed to Railway on
 domain). The only open item is operator-owned: the Resend key
 (`INSIDEOUT_MAIL_API_KEY` + verified `INSIDEOUT_MAIL_FROM`, then redeploy
 `server`) — until then mail runs in log-only dev mode.
+*Superseded 2026-10-11: the Resend key was set 2026-08-25, rotated
+2026-10-05, and re-keyed 2026-10-11 (owner's send-scoped key in all four
+homes) — the full mailed-flow pass then ran live through the provider
+(invitation, magic link, login code, forgot/reset, each token read from
+the delivered email and redeemed; the 2026-08-24 runs themselves were
+dev-mode log only) — see the
+[mail-truth changelog](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
 
 ## Why this exists
 

@@ -56,3 +56,8 @@ Nothing runs until the first `v*` tag is pushed — that first real
 release (and a real HTTPS download) is the remaining user-owned
 check. Evidence artifact: "Release pipeline evidence" on workflow
 run `dwfrun-6e6ca8f5`.
+
+*Superseded 2026-10-11: `v0.1.0` was tagged at the deployed commit and
+published — assets built with the workflow's own commands and sha256-verified,
+and the anonymous download verified once the repository went public
+([owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*

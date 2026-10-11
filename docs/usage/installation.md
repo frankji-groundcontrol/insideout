@@ -12,7 +12,7 @@ Print the hosted API the binaries call:
 ./scripts/default-api.sh
 ```
 
-## Prebuilt binaries (once a release is tagged)
+## Prebuilt binaries
 
 No checkout, no Go toolchain — the bootstrap script downloads the
 right `insideout` + `insideout-mcp` for your OS and architecture
@@ -25,8 +25,9 @@ curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/do
 ```
 
 `INSIDEOUT_RELEASE_BASE` overrides the download base (self-hosted
-mirrors, testing). This path works from the first pushed `v*` tag —
-until then use the checkout paths below.
+mirrors, testing). This path is live: `v0.1.0` (2026-10-11) publishes
+all four targets and the anonymous one-liner above is verified working
+(the repository went public the same day).
 
 ## Hosted service
 

@@ -90,5 +90,11 @@ without a token.
 ## Operator actions (unchanged, human-only)
 
 - Rotate the Resend mail key if local transcripts can leave the machine.
+
+  *Superseded 2026-10-11: done — the key was rotated 2026-10-05
+  ([hosts-keys record](2026-10-05-hosts-keys.md)), and on 2026-10-11 every
+  stored copy was re-keyed with the owner's fresh send-scoped key and every
+  mailed flow verified live
+  ([owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*
 - The signed-in hosted page load (PM-02 release gate).
 - Confirm Supabase automated backups are enabled (CC-03's managed half).

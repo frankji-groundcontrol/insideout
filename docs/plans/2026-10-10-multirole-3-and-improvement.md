@@ -30,7 +30,11 @@ sweep.
 
 Delivered 2026-10-10 — review written and indexed, remediation plan
 workflow-ready; the four waves are the next session's work (submit one
-workflow per wave per the plan's How-to-run section). Product: `main` @ `754c502` (1346 files; the
+workflow per wave per the plan's How-to-run section).
+*Superseded 2026-10-11: the four waves were executed and delivered
+2026-10-11 — see [2026-10-10-rv3-remediation.md](2026-10-10-rv3-remediation.md)
+(its board row carries the "executed 2026-10-11" annotation).*
+Product: `main` @ `754c502` (1346 files; the
 `cursor/vibrant-ink-seal-198b` remote is the known Nuxt-era leftover, owner
 item). Prior reviews 1–2 and the frontend review are fully dispositioned in
 the [disposition ledger](../review/2026-10-10-disposition-ledger/README.md)

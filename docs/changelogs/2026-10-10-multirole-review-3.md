@@ -13,9 +13,12 @@ Docs-only change: no code moved.
   new under `docs/review/2026-10-10-multirole-3/`, indexed from
   [docs/review/README.md](../review/README.md).
 - The [remediation plan](../review/2026-10-10-multirole-3/40-remediation-plan.md)
-  is workflow-executable: 4 sequential waves, 30 file-disjoint clusters,
+  is workflow-executable: 4 sequential waves, 32 file-disjoint clusters,
   red-first briefs, the worker→adversarial-verifier→repair(≤3) contract that
   carried the sweep, plus the owner-blocked list kept out of the waves.
+  *Corrected 2026-10-11: "30" was a typo — the wave checklists enumerate
+  7+11+6+8 = 32 clusters, as the [rv3 plan](../plans/2026-10-10-rv3-remediation.md)
+  and disposition ledger record.*
 - [docs/plans/2026-10-10-multirole-3-and-improvement.md](../plans/2026-10-10-multirole-3-and-improvement.md)
   closed; its board row is Finished. HANDOFF's resume path now points at
   running wave 1.

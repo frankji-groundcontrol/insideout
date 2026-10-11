@@ -136,7 +136,7 @@ path.
   `roadmap_ai.go:46` optional-body pattern — so a genuinely malformed body is a
   client error, not a silent no-op snapshot.
 - [x] **F16 context-length-retry-client-divergence** — `agent/coach.go:225`.
-  Took the plan's "abort once deltas have flushed" option (no new SSE event —
+  Took [the plan](../2026-07-21-prd-agent-harness/plan.md)'s "abort once deltas have flushed" option (no new SSE event —
   a `stream_reset` with no frontend listener would be dead code). `onDelta`
   writes to `streamed` and flushes the SSE delta in lockstep, so
   `streamed.Len()==0` is exactly "the client bubble is still empty". The
@@ -187,7 +187,7 @@ path.
   The existing `Flush()` forwarder is unchanged. (no test — panic-after-commit
   on a live SSE writer; verified by build/vet.)
 - [x] **F22 empty-tool-call-bubbles** — `api/conversations.go:81` (NOT the
-  store — the plan's `store/conversations.go:83` does not exist). The display
+  store — [the plan](../2026-07-21-prd-agent-harness/plan.md)'s `store/conversations.go:83` does not exist). The display
   loop in `handleListConversationMessages` skips `role=="tool"` rows and
   tool-call-only assistant rows (`role=="assistant" && content==""`), mirroring
   the `loadHistory` filter (coach.go). The store's `ListAgentMessages` stays
