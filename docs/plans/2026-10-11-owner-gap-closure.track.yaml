@@ -3,12 +3,12 @@ task: "Close the owner-blocked gaps"
 coordinator: zcode
 history_file: 2026-10-11-owner-gap-closure.track.history.jsonl
 main:
-  outcome: "Deploy-dependent rows closed live (migrations confirmed, BUG-027 checks passed, hosted smoke 6/6, real LLM coach turn, funnel rehearsed to the provider); v0.1.0 tagged and published with verified assets; the mail records reconciled to one truth — the Resend key is revoked in every home, and minting its replacement is the single remaining owner credential. The board's deferred throttled-roadmap-copy item closed red-first (458/458) and deployed."
+  outcome: "All owner-directed closures landed: deploy verified, the re-keyed mail funnel exercised live end-to-end (every token read from the provider and redeemed), v0.1.0 published, the repo made public with the anonymous installer verified, 859 junk accounts purged after a snapshot with an enumerated keep-set of 5, the GitHub App confirmed installed, and CI minimized to one green run."
   owner: zcode
   status: completed
-  next_evidence: "server @ b6c34c4 + app @ 6b1f24f live; /api/v1/auth/config reports mailEnabled; admin mail probe answered resend 401 (key revoked in Railway, .env, both hosts' stores); v0.1.0 assets sha256-verified; anonymous curl one-liner needs the repo public (owner visibility call); CI blocked on account billing (runs 38104710052/38105183080/38105636267) — locally verified in its place."
+  next_evidence: "main @ 583978b, CI green; hosted funnel live (probe status:sent; invitation/magic-link/login-code/reset all delivered and redeemed); repo public with anonymous install verified; users=5 after the purge; remaining owner-console only: Supabase backup toggle, Android keystore."
 side_tracks: []
-updated_at: "2026-10-11T11:05:00Z"
+updated_at: "2026-10-11T13:40:00Z"
 plan:
 - step: "Deploy server+app; confirm 7 migrations; BUG-027 checks 1+2 pass (ritual dropped); hosted smoke 6/6"
   owner: zcode
