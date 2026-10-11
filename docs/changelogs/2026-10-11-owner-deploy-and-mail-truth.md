@@ -89,6 +89,15 @@ funnel's live state is what the probe says.
 - `check_docs_truth.py` green; it caught one stale tree (backend.md missing
   `internal/linebudget/`) — fixed here.
 
+### The deferred engineering item
+
+[Throttled roadmap copy](../issues/2026-10-10-throttled-roadmap-copy-deferred.md)
+— the board's one deliberately-deferred engineering item — is closed
+red-first in the same pass: `guardWrite` now maps `APP_THROTTLE` /
+`CIRCUIT_OPEN` to the coach's own countdown copy (both proved failing
+before the fix), keeping the generic line for every other error; client
+suite 458/458, analyze at the 14 baseline, format clean.
+
 ## Verification
 
 Full gates (all CI lanes) ran green on the deployed `b6c34c4` (run

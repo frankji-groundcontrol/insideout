@@ -1,6 +1,10 @@
 # Throttled roadmap answers still show the generic error copy
 
-Open, deferred 2026-10-10 (deliberately not scheduled in the sweep).
+**Closed 2026-10-11** — red-first in `client/test/guarded_action_test.dart`
+(both codes proved failing on the generic copy), fixed in
+`guardWrite` itself: a backoff code now shows the coach's own
+service-down vs rate-limited copy with its countdown, every other error
+keeps the generic line; full client suite 458/458.
 
 ## What
 

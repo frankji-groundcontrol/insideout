@@ -69,4 +69,49 @@ void main() {
     expect(outcome, isTrue);
     expect(find.byType(SnackBar), findsNothing);
   });
+
+  // The deferred roadmap-copy issue: an AI build/expand answered with
+  // APP_THROTTLE or CIRCUIT_OPEN must surface the coach's specific copy
+  // with its countdown, not guardWrite's generic save-failed snackbar.
+  testWidgets('an APP_THROTTLE write shows the coach rate-limit countdown', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      () async =>
+          throw ApiException('throttled', status: 429, code: 'APP_THROTTLE'),
+      (_) {},
+    );
+
+    await tester.tap(find.text('go'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Rate limited. Retry in 60s...'), findsOneWidget);
+    expect(find.textContaining('Save failed'), findsNothing);
+  });
+
+  testWidgets(
+    'a CIRCUIT_OPEN write says the AI service is down, with a timer',
+    (tester) async {
+      await _pump(
+        tester,
+        () async => throw ApiException(
+          'open',
+          status: 503,
+          code: 'CIRCUIT_OPEN',
+          retryAfterSeconds: 30,
+        ),
+        (_) {},
+      );
+
+      await tester.tap(find.text('go'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('AI service temporarily unavailable. Retry in 30s...'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('Save failed'), findsNothing);
+    },
+  );
 }
