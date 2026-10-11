@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-11 | [A key "synced everywhere" can still be dead everywhere](2026-10-11-synced-everywhere-is-not-liveness.md) | [owner gap closure](../changelogs/2026-10-11-owner-deploy-and-mail-truth.md) |
 | 2026-10-11 | [`CREATE OR REPLACE` with a changed signature creates an overload](2026-10-11-create-or-replace-with-a-new-signature-overloads.md) | [review-3 remediation](../changelogs/2026-10-11-rv3-remediation/index.md) |
 | 2026-10-10 | [A skeptic confirms the finding, not the fix](2026-10-10-a-skeptic-confirms-the-finding-not-the-fix.md) | [multirole review 3](../changelogs/2026-10-10-multirole-review-3.md) |
 | 2026-10-10 | [A frozen orchestration is recoverable if the state is on disk](2026-10-10-resumable-orchestration.md) | [review-register sweep](../changelogs/2026-10-10-close-open-gaps/review-sweep-server.md) |
