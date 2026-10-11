@@ -98,6 +98,15 @@ red-first in the same pass: `guardWrite` now maps `APP_THROTTLE` /
 before the fix), keeping the generic line for every other error; client
 suite 458/458, analyze at the 14 baseline, format clean.
 
+### The MBP host drift closed too
+
+MBP came back online: `app/.env` confirmed gone, and Flutter **3.44.8
+(arm64)** installed at `~/flutter` with the PATH wired —
+`flutter pub get --enforce-lockfile` passes there and the lockfile stays
+unwritten ([drift issue](../issues/2026-10-09-host-setup-drift-between-macs.md),
+including the Intel-vs-arm64 archive gotcha). All three machines and
+GitHub sit on one commit again.
+
 ## Verification
 
 Full gates (all CI lanes) ran green on the deployed `b6c34c4` (run
