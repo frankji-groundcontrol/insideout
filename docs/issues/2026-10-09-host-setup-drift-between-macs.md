@@ -83,3 +83,19 @@ Fix: `git branch --set-upstream-to=origin/main main` on MBP. Verify:
 
 **Fixed 2026-10-10:** `git branch --set-upstream-to=origin/main main` on MBP;
 `git rev-parse --abbrev-ref @{u}` prints `origin/main`.
+
+## 2026-10-11 update
+
+The `app/.env` leftover is confirmed absent on MBP. Flutter 3.44.8
+(repo-pinned line, matching MBP2's homebrew 3.44.8) is **staged, not yet
+extracted**: the 2.2 GB archive sits at `/tmp/flutter.zip` on MBP and the
+install went offline mid-task (laptop left the network). One command when
+it is back:
+
+```bash
+ssh MBP 'cd ~ && rm -rf flutter && unzip -q /tmp/flutter.zip && rm -f /tmp/flutter.zip &&   grep -q flutter/bin .zshrc || printf "\nexport PATH="\$HOME/flutter/bin:\$PATH"\n" >> .zshrc;   ~/flutter/bin/flutter --version'
+```
+
+(macOS clears /tmp after ~3 days — if the zip is gone, re-download
+`flutter_macos_3.44.8-stable.zip` from Flutter's stable releases first.)
+
