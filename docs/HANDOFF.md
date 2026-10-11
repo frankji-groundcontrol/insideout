@@ -11,7 +11,8 @@ path and current warnings, never history.
 ## What to do next
 
 **The deploy is done; re-keying Resend is the one open step.** On 2026-10-11
-`railway up` shipped `main` @ `b6c34c4` to both services: the seven pending
+`railway up` shipped both services (server @ `b6c34c4`, app redeployed at
+`6b1f24f` with the throttled-copy fix): the seven pending
 migrations applied (confirmed by running `insideout migrate` against the
 hosted database — "already up to date"), `/api/v1/auth/config` reports
 `mailEnabled`, the hosted read-only smoke probes pass, BUG-027's owner
@@ -66,9 +67,12 @@ Every other thread is closed with its exact status and links on its
   do not commit a rewritten `client/pubspec.lock`.
 - **GitHub Actions billing (2026-10-11):** CI and the release workflow
   cannot start — GitHub reports failed account payments / spending limit
-  (runs 38104710052 and 38105183080). The `v0.1.0` assets were built and
-  published locally instead. Re-run `gh run rerun 38105183080 --failed`
-  once billing is settled; `2929074` is docs-only and locally verified.
+  (blocked runs: 38104710052, 38105183080, 38105636267). The `v0.1.0`
+  assets were built and published locally instead, and the blocked CI runs
+  are superseded by local verification (docs-truth green; client 458/458,
+  analyze 14, format clean; full CI was green on the deployed `b6c34c4`,
+  run 38077887705). Re-run each with `gh run rerun <id> --failed` once
+  billing is settled.
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship landed
   changes explicitly: any `server/` change with `railway up --service server`,

@@ -1,0 +1,27 @@
+version: 2
+task: "Close the owner-blocked gaps"
+coordinator: zcode
+history_file: 2026-10-11-owner-gap-closure.track.history.jsonl
+main:
+  outcome: "Deploy-dependent rows closed live (migrations confirmed, BUG-027 checks passed, hosted smoke 6/6, real LLM coach turn, funnel rehearsed to the provider); v0.1.0 tagged and published with verified assets; the mail records reconciled to one truth — the Resend key is revoked in every home, and minting its replacement is the single remaining owner credential. The board's deferred throttled-roadmap-copy item closed red-first (458/458) and deployed."
+  owner: zcode
+  status: completed
+  next_evidence: "server @ b6c34c4 + app @ 6b1f24f live; /api/v1/auth/config reports mailEnabled; admin mail probe answered resend 401 (key revoked in Railway, .env, both hosts' stores); v0.1.0 assets sha256-verified; anonymous curl one-liner needs the repo public (owner visibility call); CI blocked on account billing (runs 38104710052/38105183080/38105636267) — locally verified in its place."
+side_tracks: []
+updated_at: "2026-10-11T11:05:00Z"
+plan:
+- step: "Deploy server+app; confirm 7 migrations; BUG-027 checks 1+2 pass (ritual dropped); hosted smoke 6/6"
+  owner: zcode
+  status: completed
+- step: "Funnel rehearsal: owner-pool invite → register 201 → promote → probe (resend 401) → demote; every stored mail key tested dead; real LLM coach turn on hosted"
+  owner: zcode
+  status: completed
+- step: "v0.1.0 tagged at the deployed commit; workflow billing-blocked so assets built locally with the workflow's commands and published; sha256-verified"
+  owner: zcode
+  status: completed
+- step: "Records reconciled (HANDOFF, client README, board rows, BUG-027, ledger, README release truth); docs-truth green"
+  owner: zcode
+  status: completed
+- step: "Deferred throttled-roadmap-copy item closed red-first (guardWrite maps the coach countdown copy); client 458/458; app redeployed"
+  owner: zcode
+  status: completed
