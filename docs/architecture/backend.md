@@ -27,6 +27,7 @@ server/
     github/            linked-repo commit fetch feeding project progress
     guide/             the repo-side matching guide (insideout.yaml) generator
     httpx/             JSON request/response helpers, the error contract
+    linebudget/        the ~350-line file-budget guard the server tree runs
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb
     presence/          in-memory who-is-here registry behind live canvas presence

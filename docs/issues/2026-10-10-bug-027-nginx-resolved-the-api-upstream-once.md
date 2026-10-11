@@ -103,7 +103,11 @@ Read from nginx's documented behaviour; not exercised, and not guarded.
 
 ## Status
 
-**Fixed in the repository 2026-10-10**; live only after the owner deploys `app`.
+**Fixed in the repository 2026-10-10; verified live 2026-10-11.** Owner
+checks 1 and 2 both passed after the `app` deploy at `b6c34c4`: check 1
+(`/api/v1/me` → 401), then a server-only redeploy answered 401 continuously
+(t+2s through t+32s, no app restart, no 504) — the re-resolve works in
+production. The restart ritual is dropped from HANDOFF.
 CI runs `scripts/check_nginx_reresolve.py` on every push (job `app nginx
 (re-resolve)`, on the runner's distro nginx); re-run it locally on the image's own
 nginx when the base image is bumped.

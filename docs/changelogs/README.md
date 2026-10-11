@@ -15,6 +15,11 @@ code) with relative links.
 
 ## Records
 
+- [2026-10-11 — The owner gap closure: deploy, live probes, first release, and the mail truth](2026-10-11-owner-deploy-and-mail-truth.md)
+  — shipped `main` @ `b6c34c4` (seven migrations confirmed, BUG-027 checks
+  passed, hosted smoke 6/6, one real LLM coach turn), rehearsed the funnel
+  live (invite → register 201), tagged and published `v0.1.0`, and found
+  the mail key revoked in every home — re-key is the one open owner step.
 - [2026-10-11 — Review-3 remediation: four verified waves](2026-10-11-rv3-remediation/index.md)
   — executed the 83-finding register as 32 red-first clusters in four
   dynamic-workflow waves, every one adversarially verified before cherry-pick

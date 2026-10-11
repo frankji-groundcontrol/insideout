@@ -108,14 +108,18 @@ across Claude Code, Cursor, and anything speaking the standard
 
 ### CLI 与 MCP（预编译二进制 / prebuilt binaries）
 
-首个 `v*` 版本发布后，无需检出仓库与 Go 工具链，一条命令装好经
-sha256 校验的两个二进制（macOS/Ubuntu，amd64/arm64）。今天还没有任何
-`v*` 标签——首个标签发布前，这条命令 404；在那之前请用上面的从源码路径。
+`v0.1.0`（2026-10-11）已发布四个目标平台的 tarball 与校验和。匿名
+`curl | bash` 还差一步：**仓库当前是私有的**，GitHub 对私有仓库的
+`releases/latest/download` 一律 404——仓库转为公开后这条命令即可用
+（可见性是 owner 的决定）。在此之前，`gh release download v0.1.0`
+（已认证）或上面的从源码路径都可以。
 
-Once a `v*` release is tagged, one command installs both binaries,
-sha256-verified, with no checkout and no Go toolchain
-(macOS/Ubuntu, amd64/arm64). No `v*` tag exists yet — until the first
-release this URL 404s; use the from-source path above until then.
+`v0.1.0` (2026-10-11) publishes tarballs and checksums for all four
+targets. The anonymous one-liner below additionally needs the
+**repository to be public** — GitHub answers `releases/latest/download`
+with 404 for private repos, and visibility is the owner's call. Until
+then, `gh release download v0.1.0` (authenticated) or the from-source
+path above both work.
 
 ```bash
 curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash

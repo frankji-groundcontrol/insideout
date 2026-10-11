@@ -85,16 +85,16 @@ What each fix does, the operator migration notes and the final gate run live in 
 | USER-07 | L | Fixed | wave 3 — fix f62f98b27f · red client/test/coach_strapline_test.dart |
 | USER-08 | L | Fixed | wave 2 — Fixed by the integrator across the ownership boundary: the stable '[interrupted]' token renders in the reader's locale |
 | USER-09 | L | Fixed | wave 3 — fix ba6ad5e · red client/test/dashboard_capture_route_test.dart |
-| PM-02 | M | Fixed (code half) | wave 3 fix landed; owner half: Half fixed in wave 3 (truthful wording); the deploy that drops the qualifier is the owner's |
-| PM-04 | M | Fixed (code half) | wave 2 fix landed; owner half: Half fixed in wave 2 (absent mailEnabled reads as unknown); the field exists once the owner deploys |
-| USER-05 | M | Fixed (code half) | wave 3 fix landed; owner half: Half fixed in wave 3 (install one-liner demoted under the release conditional); tagging v* is the owner's |
+| PM-02 | M | Fixed | Deploy landed 2026-10-11 (`b6c34c4`): the behind-`main` qualifier is dropped, client/README states the deploy date, and the docs-truth check's deploy-skew arm retired with it |
+| PM-04 | M | Fixed | Deploy landed 2026-10-11: `/api/v1/auth/config` reports `mailEnabled` live, so the client's unknown-state handling answers a real field |
+| USER-05 | M | Fixed (visibility caveat) | `v0.1.0` tagged and published 2026-10-11 (four targets + checksums + bootstrap.sh; assets download- and checksum-verified). The anonymous curl one-liner additionally needs the repository public — GitHub 404s `releases/latest/download` for private repos; README states exactly this, and visibility stays the owner's call |
 | COMP-03 | M | Satisfied by the report | Satisfied by the report itself: the score table carries the recalibrated 8.0 with the reason |
 | COMP-05 | L | Satisfied by the report | Satisfied by the plan: bucket distribution stated; the verify contract adds mutation checks for IMPROVE rows |
 | COMP-06 | L | Satisfied by the report | Satisfied by the report: 379/379 used throughout |
 | CQ-04 | L | Parked | Parked by the brief's own pure-move gate: the delta-counter triplication is not a pure move (three providers' streaming bodies diverge); consolidation is a behavior-risk refactor beyond a Low finding — recorded here, not silently dropped |
-| FEAT-03 | H | Owner | Owner: set and verify the mail key; one live pass of every mailed flow |
-| PM-01 | H | Owner | Owner: reconcile the three mail-state records; only Railway can be read |
-| REL-06 | L | Owner | Owner: the first real invitee is the mail funnel's acceptance test |
-| SEC-01 | H | Owner | Owner: apply the seven pending migrations (the four `20261010*` plus `20261011100000`, `20261011110000`, `20261011140000`) on the hosted database |
-| SEC-05 | L | Owner | Owner: a live provider exercise before trusting the email-auth posture |
-| USER-02 | H | Owner | Owner: deploy the wave and exercise one full funnel before the first external invite |
+| FEAT-03 | H | Owner (one credential) | The funnel ran live 2026-10-11 and the provider refused: the mail key is revoked in every home (Railway 401; `.env`, MBP and MBP2 key stores rejected). One owner credential — the Resend login — mints the replacement; the exact re-key + verify procedure is [HANDOFF](../../HANDOFF.md) item 1 |
+| PM-01 | H | Fixed | Reconciled 2026-10-11 with live evidence: Railway read (all mail vars present by name), the deployed `/auth/config` reports `mailEnabled:true`, and the admin mail probe answered `resend returned 401 Unauthorized` — every stored key copy (Railway, root `.env`, both hosts' stores) is revoked. The three disagreeing records now state this one truth; the re-key is the single remaining mail step (FEAT-03) |
+| REL-06 | L | Owner (one credential) | The invitation email itself is the last untested leg and needs the re-keyed sender (FEAT-03); register via the inline invite code already passed live 2026-10-11 |
+| SEC-01 | H | Fixed | Deployed 2026-10-11 and confirmed: `insideout migrate` against the hosted database reports already up to date — all seven migrations (four `20261010*` + three `20261011*`) applied |
+| SEC-05 | L | Fixed | The live provider exercise ran 2026-10-11 and did its job: the admin mail probe reported the provider's 401 (the revoked key), and the LLM leg took a real hosted coach turn. The email-auth posture is now known — untrusted until the re-key, with a probe that tells the truth |
+| USER-02 | H | Fixed (funnel rehearsed to the provider) | Deployed 2026-10-11; invitation minted through the admin API, register completed 201 with the invite code, and one real LLM coach turn ran on the hosted box (model answered, clean message_end). The mailed halves (magic link, login code, reset) reached the provider and exposed the revoked key — they complete with the Resend re-key ([changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md)) |
