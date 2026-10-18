@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -63,6 +64,12 @@ type Config struct {
 	// the links inside emailed magic/reset links. Defaults to the local
 	// Flutter dev origin.
 	PublicURL string
+	// TrustedProxyHops is how many reverse proxies in front of the server
+	// each append the address they saw to X-Forwarded-For (rv4-SEC-02). 0, the
+	// default, trusts no header: the auth throttle and resend cooldown key on
+	// the TCP peer, the one address a client cannot write. N > 0 keys on the
+	// Nth entry from the right, the one the outermost trusted proxy appended.
+	TrustedProxyHops int
 }
 
 func Load() (*Config, error) {
@@ -90,6 +97,9 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 	if c.RefreshTTL, err = parseDuration("INSIDEOUT_REFRESH_TTL", "720h"); err != nil {
+		return nil, err
+	}
+	if c.TrustedProxyHops, err = parseHops("INSIDEOUT_TRUSTED_PROXY_HOPS"); err != nil {
 		return nil, err
 	}
 	c.DevPermissiveCORS = os.Getenv("INSIDEOUT_DEV_CORS") == "1"
@@ -177,6 +187,18 @@ func splitCSV(raw string) []string {
 		}
 	}
 	return out
+}
+
+// parseHops reads a trusted-proxy count: unset is 0, anything but a
+// non-negative integer fails startup (a typo must not silently trust, or
+// silently distrust, a header the throttle keys on).
+func parseHops(key string) (int, error) {
+	raw := getenv(key, "0")
+	n, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil || n < 0 {
+		return 0, fmt.Errorf("config: %s must be a non-negative integer (the number of trusted reverse proxies), got %q", key, raw)
+	}
+	return n, nil
 }
 
 func parseDuration(key, fallback string) (time.Duration, error) {

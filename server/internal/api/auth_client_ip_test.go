@@ -4,35 +4,43 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 )
+
+// clientIPBehind is what the throttle keys on for r with hops trusted proxies
+// in front of the server (rv4-SEC-02: without a trusted hop the header is ignored).
+func clientIPBehind(hops int, r *http.Request) string {
+	return (&Server{cfg: &config.Config{TrustedProxyHops: hops}}).clientIP(r)
+}
 
 func TestClientIPPrefersRightmostXForwardedFor(t *testing.T) {
 	r := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login", nil)
 	r.RemoteAddr = "10.0.0.1:40000"
 	r.Header.Set("X-Forwarded-For", "1.1.1.1, 2.2.2.2, 3.3.3.3")
-	if got := clientIP(r); got != "3.3.3.3" {
+	if got := clientIPBehind(1, r); got != "3.3.3.3" {
 		t.Fatalf("got %q, want rightmost XFF entry 3.3.3.3", got)
 	}
 
 	r.Header.Set("X-Forwarded-For", "9.9.9.9")
-	if got := clientIP(r); got != "9.9.9.9" {
+	if got := clientIPBehind(1, r); got != "9.9.9.9" {
 		t.Fatalf("got %q, want 9.9.9.9", got)
 	}
 
 	// A trailing empty entry must not hide the client behind RemoteAddr: the
 	// resend cooldown and the auth throttle both key on this one helper.
 	r.Header.Set("X-Forwarded-For", "9.9.9.9, ")
-	if got := clientIP(r); got != "9.9.9.9" {
+	if got := clientIPBehind(1, r); got != "9.9.9.9" {
 		t.Fatalf("got %q with a trailing empty entry, want 9.9.9.9", got)
 	}
 
 	r.Header.Del("X-Forwarded-For")
-	if got := clientIP(r); got != "10.0.0.1" {
+	if got := clientIPBehind(1, r); got != "10.0.0.1" {
 		t.Fatalf("got %q, want RemoteAddr host 10.0.0.1", got)
 	}
 
 	r.RemoteAddr = "10.0.0.2" // no port
-	if got := clientIP(r); got != "10.0.0.2" {
+	if got := clientIPBehind(1, r); got != "10.0.0.2" {
 		t.Fatalf("got %q, want 10.0.0.2", got)
 	}
 }
@@ -47,17 +55,17 @@ func TestClientIP_RailwayChainIsPerClient(t *testing.T) {
 	r.RemoteAddr = "10.0.0.1:40000"
 
 	r.Header.Set("X-Forwarded-For", "6.6.6.6, 7.7.7.7, 198.51.100.23")
-	if got := clientIP(r); got != "198.51.100.23" {
+	if got := clientIPBehind(1, r); got != "198.51.100.23" {
 		t.Fatalf("got %q, want the edge-appended client 198.51.100.23", got)
 	}
 
 	r.Header.Set("X-Forwarded-For", "198.51.100.23, ")
-	if got := clientIP(r); got != "198.51.100.23" {
+	if got := clientIPBehind(1, r); got != "198.51.100.23" {
 		t.Fatalf("got %q with a trailing empty entry, want 198.51.100.23", got)
 	}
 
 	r.Header.Set("X-Forwarded-For", ", ,")
-	if got := clientIP(r); got != "10.0.0.1" {
+	if got := clientIPBehind(1, r); got != "10.0.0.1" {
 		t.Fatalf("all-empty XFF should fall back to RemoteAddr, got %q", got)
 	}
 }
@@ -79,6 +87,7 @@ func TestSendCooldownKeysOnClientIPPastTrailingEmptyXFF(t *testing.T) {
 	} {
 		t.Run(path, func(t *testing.T) {
 			s := newValidationServer()
+			s.cfg.TrustedProxyHops = 1 // behind one trusted proxy, as hosted
 
 			first := postAuthSend(s, path, "first-client@example.com", "9.9.9.9, ")
 			if first.Code != http.StatusInternalServerError {

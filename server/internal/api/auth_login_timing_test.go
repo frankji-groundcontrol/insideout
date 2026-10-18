@@ -22,7 +22,7 @@ import (
 
 // timedLogin POSTs a login through the full handler stack and returns the
 // status and the wall time. Every call gets its own client IP (via the header
-// clientIP trusts) so the failure lockout never joins in.
+// clientIP trusts behind one proxy) so the failure lockout never joins in.
 func timedLogin(t *testing.T, s *Server, n int, email string) (int, time.Duration) {
 	t.Helper()
 	body, err := json.Marshal(map[string]string{"email": email, "password": "not-the-password"})
@@ -67,7 +67,7 @@ func TestLogin_UnknownEmailCostsLikeWrongPassword(t *testing.T) {
 		t.Fatalf("create user: %v", err)
 	}
 	unknownEmail := "no-such-user-" + uuid.NewString() + "@test.local"
-	s := NewServer(st, nil, &config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)
+	s := NewServer(st, nil, &config.Config{TrustedProxyHops: 1}, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)
 
 	// Both paths must end in the same 401, or comparing their times is moot.
 	login := func(n int, email string) time.Duration {

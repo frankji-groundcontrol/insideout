@@ -134,7 +134,7 @@ func TestSendCooldownEndpointsReturnUniform200(t *testing.T) {
 }
 
 // postAuthSend POSTs an email-only auth-send body, pinning the client IP
-// via X-Forwarded-For (the same header clientIP trusts) when xff is set.
+// via X-Forwarded-For (the header clientIP trusts once TrustedProxyHops > 0) when xff is set.
 func postAuthSend(s *Server, path, email, xff string) *httptest.ResponseRecorder {
 	body, err := json.Marshal(map[string]string{"email": email})
 	if err != nil {
@@ -235,7 +235,7 @@ func TestEmailAuthCooldownEndToEnd(t *testing.T) {
 	}
 
 	var mailLog bytes.Buffer
-	s := NewServer(st, nil, &config.Config{},
+	s := NewServer(st, nil, &config.Config{TrustedProxyHops: 1},
 		slog.New(slog.NewTextHandler(&mailLog, nil)), nil, nil)
 
 	clock := newFakeClock()

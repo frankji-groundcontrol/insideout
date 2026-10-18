@@ -92,6 +92,16 @@ services:
       INSIDEOUT_COOKIE_SECURE: ${INSIDEOUT_COOKIE_SECURE:-}
       INSIDEOUT_ACCESS_TTL: ${INSIDEOUT_ACCESS_TTL:-15m}
       INSIDEOUT_REFRESH_TTL: ${INSIDEOUT_REFRESH_TTL:-720h}
+      # How many reverse proxies in front of the server append the address
+      # they saw to X-Forwarded-For (rv4-SEC-02). 0 trusts no header: the auth
+      # throttle and resend cooldown key on the TCP peer. The bundled nginx
+      # passes the client's header through WITHOUT appending
+      # (client/nginx.conf), so trusting it here would let any client pick its
+      # own bucket; 0 is the only safe value for this stack on its own, and
+      # every client then shares nginx's bucket. Put one proxy that appends
+      # the client address in front of nginx (the hosted Railway edge is one)
+      # and set 1.
+      INSIDEOUT_TRUSTED_PROXY_HOPS: ${INSIDEOUT_TRUSTED_PROXY_HOPS:-0}
       # GitHub integration. The webhook secret verifies HMAC of POST
       # /api/v1/hooks/github; APP_ID + PRIVATE_KEY mint installation access
       # tokens (PRIVATE_KEY is the .pem with \n-escaped newlines;
@@ -105,7 +115,11 @@ services:
       INSIDEOUT_GH_PRIVATE_KEY_FILE: ${INSIDEOUT_GH_PRIVATE_KEY_FILE:-}
       GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     ports:
-      - "${SERVER_PORT:-8080}:8080"
+      # Loopback only (rv4-SEC-02): the server's own port is the one place a
+      # client can write X-Forwarded-For itself. The client service below is
+      # the published front door and reaches the server over the compose
+      # network, not through this mapping.
+      - "127.0.0.1:${SERVER_PORT:-8080}:8080"
     healthcheck:
       # distroless ships no shell or curl: the binary self-probes via its
       # `health` subcommand (port derived from INSIDEOUT_ADDR above).

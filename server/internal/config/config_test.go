@@ -203,3 +203,43 @@ func TestLoadAcceptsDevCORSBesideLocalPublicURL(t *testing.T) {
 		})
 	}
 }
+
+// rv4-SEC-02: the hop count the auth throttle trusts. Unset is 0 (trust no
+// header); a typo fails startup rather than silently trusting or distrusting
+// X-Forwarded-For.
+func TestLoadTrustedProxyHops(t *testing.T) {
+	cases := []struct {
+		name    string
+		value   string
+		want    int
+		wantErr bool
+	}{
+		{"unset trusts no header", "", 0, false},
+		{"zero", "0", 0, false},
+		{"one proxy", "1", 1, false},
+		{"two proxies", " 2 ", 2, false},
+		{"negative", "-1", 0, true},
+		{"not a number", "one", 0, true},
+		{"a fraction", "1.5", 0, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("DATABASE_URL", "postgres://u:p@localhost/db")
+			t.Setenv("INSIDEOUT_JWT_SECRET", strings.Repeat("s", 32))
+			t.Setenv("INSIDEOUT_TRUSTED_PROXY_HOPS", tc.value)
+			cfg, err := Load()
+			if tc.wantErr {
+				if err == nil || !strings.Contains(err.Error(), "INSIDEOUT_TRUSTED_PROXY_HOPS") {
+					t.Fatalf("Load error = %v, want one naming INSIDEOUT_TRUSTED_PROXY_HOPS", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Load: %v", err)
+			}
+			if cfg.TrustedProxyHops != tc.want {
+				t.Fatalf("TrustedProxyHops = %d, want %d", cfg.TrustedProxyHops, tc.want)
+			}
+		})
+	}
+}
