@@ -45,11 +45,10 @@ cd server && go build -o /usr/local/bin/insideout ./cmd/insideout
 go build -o /usr/local/bin/insideout-mcp ./cmd/insideout-mcp
 ```
 
-To register the MCP server with an agent, `scripts/mcp-config.sh` emits
-the standard `mcpServers` JSON (`INSIDEOUT_TOKEN` included only when
-that variable is already set; `-q` for JSON only) plus placement hints
-for common clients — the same snippet ports across Claude Code, Cursor,
-and anything speaking the standard shape.
+To register the MCP server with an agent, merge the standard
+`mcpServers` entry shown under [MCP server](#mcp-server) — the same
+snippet ports across Claude Code, Cursor, and anything speaking the
+standard shape. It needs no `env` or token.
 
 `login` prompts for the password on stderr; the token is the only
 stdout. A successful `login` or `register` also saves the session
@@ -95,17 +94,28 @@ Flags precede positional ids (Go convention). Statuses are
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
 verbs as tools (ask `tools/list` for the current set — a count written
-here drifted twice), token via `INSIDEOUT_TOKEN`:
+here drifted twice). It resolves the server and the token exactly like
+the CLI (`--api`, `INSIDEOUT_API`, the saved `insideout login`, then the
+hosted API; `INSIDEOUT_TOKEN` or the saved token), so the entry needs
+no `env`:
 
 ```json
-{ "mcpServers": { "insideout": {
-    "command": "/usr/local/bin/insideout-mcp",
-    "env": { "INSIDEOUT_API": "https://<your-domain>/api/v1",
-             "INSIDEOUT_TOKEN": "…" } } } }
+{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }
 ```
 
-(Equivalent to what `scripts/mcp-config.sh` prints, with the install
-path resolved for you.)
+- Claude Code: `claude mcp add insideout -- insideout-mcp`, or
+  `.mcp.json` in the repo root. Cursor: `~/.cursor/mcp.json` (global)
+  or `.cursor/mcp.json` (project). Other agents: their `mcpServers`
+  block. Reload MCP servers afterwards.
+- A client that does not inherit your shell `PATH` needs the absolute
+  `command`: `command -v insideout-mcp` (`~/.local/bin/insideout-mcp`
+  after `scripts/install.sh`).
+- The server is fixed when the process starts: the saved login's
+  tokens are only ever sent to the server they were issued by. After
+  `insideout login --api <other server>`, restart the MCP server. Add
+  `"env": { "INSIDEOUT_API": "http://127.0.0.1:8080/api/v1" }` only to
+  pin a server other than the saved login's; an `INSIDEOUT_TOKEN` in
+  `env` is an explicit credential and is never renewed.
 
 Signup policy: registration is invitation-only by default
 (`GET /auth/config`); admins mint per-email invitations (`invite` /

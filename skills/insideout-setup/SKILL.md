@@ -136,14 +136,15 @@ what the check names, do not bypass it.
 
 ## Step 4 — register MCP with the user's agent
 
-```bash
-./scripts/mcp-config.sh       # hints + JSON; -q for JSON only
+```json
+{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }
 ```
 
 Merge the `insideout` entry where the user's agent reads MCP config
-(Claude Code `.mcp.json`, Cursor `~/.cursor/mcp.json`, others: the
-standard `mcpServers` shape). Reload MCP servers afterwards. Omit the
-token until sign-in exists; the `auth_*` tools can sign in later.
+(Claude Code `.mcp.json` or `claude mcp add insideout -- insideout-mcp`,
+Cursor `~/.cursor/mcp.json`, others: the standard `mcpServers` shape).
+Reload MCP servers afterwards. No `env` and no token: `insideout-mcp`
+reads the saved login, and the `auth_*` tools can sign in later.
 
 ## Step 5 — the host key store
 

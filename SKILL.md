@@ -38,13 +38,13 @@ Docker Postgres, or your own URL on stdin). Then set
 the hosted API. Full steps, including the questions an agent should
 ask: [docs/usage/installation.md](docs/usage/installation.md).
 
-To register the MCP server, emit the snippet and merge it. With no
-token the `INSIDEOUT_TOKEN` field is omitted; sign in with
-`insideout login` or the `auth_*` tools:
+To register the MCP server, merge this entry into the agent's MCP config
+(Claude Code: `claude mcp add insideout -- insideout-mcp`). It needs no
+`env` or token: `insideout-mcp` reads the server and token of the saved
+`insideout login`; or sign in with the `auth_*` tools:
 
-```bash
-./scripts/mcp-config.sh
-./scripts/mcp-config.sh -q
+```json
+{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }
 ```
 
 Manual fallback (no script): `cd server && go build -o /usr/local/bin/insideout

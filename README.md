@@ -95,15 +95,16 @@ load the installation skill — module-by-module toolchain install,
 environment setup, and a written installation record:
 [`skills/insideout-setup/SKILL.md`](skills/insideout-setup/SKILL.md).
 
-把 MCP 服务器注册进你的代理（同一段 JSON 适用于 Claude Code、Cursor 等标准 `mcpServers` 配置）：
+把 MCP 服务器注册进你的代理（同一段 JSON 适用于 Claude Code、Cursor 等标准 `mcpServers` 配置）。不需要 `env`：`insideout-mcp` 自己读取 `insideout login` 保存的服务器与令牌。Claude Code 也可以用 `claude mcp add insideout -- insideout-mcp`：
 
 Register the MCP server with your agent (the same JSON snippet ports
 across Claude Code, Cursor, and anything speaking the standard
-`mcpServers` shape):
+`mcpServers` shape). It needs no `env`: `insideout-mcp` reads the server
+and token of the saved `insideout login`. Claude Code can also use
+`claude mcp add insideout -- insideout-mcp`:
 
-```bash
-./scripts/mcp-config.sh                  # 打印说明 + JSON / hints + JSON
-./scripts/mcp-config.sh -q >> some.json  # 只输出 JSON / JSON only
+```json
+{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }
 ```
 
 ### CLI 与 MCP（预编译二进制 / prebuilt binaries）

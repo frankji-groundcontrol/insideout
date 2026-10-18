@@ -65,17 +65,21 @@ still works. `insideout whoami` before any sign-in exits non-zero with
 `unauthorized: not signed in; run insideout login`. That is a finished
 install, not a missing server.
 
-Register MCP. The snippet omits the token until you have one; the
-`auth_*` tools can sign the process in afterwards:
+Register MCP. The entry needs no `env` or token: `insideout-mcp` reads
+the server and token of the saved login, and the `auth_*` tools can
+sign the process in:
 
-```bash
-./scripts/mcp-config.sh          # hints + JSON
-./scripts/mcp-config.sh -q       # JSON only
+```json
+{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }
 ```
 
 Cursor reads `~/.cursor/mcp.json` (global) or `.cursor/mcp.json`
 (this project). Merge the `insideout` entry. Claude Code reads
-`.mcp.json`. Reload MCP servers after writing the file.
+`.mcp.json`, or run `claude mcp add insideout -- insideout-mcp`. A
+client that does not inherit your shell `PATH` needs the absolute path
+from `command -v insideout-mcp`. Reload MCP servers after writing the
+file. Details:
+[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md#mcp-server).
 
 Signup on the hosted service is invitation-only. Register with an invite
 code, then sign in with a password, emailed code, or magic link:
@@ -207,7 +211,8 @@ Do not print secret values, tokens, or database URLs.
 1. Ask whether they want the hosted service or a server on this machine.
 2. Hosted: `./scripts/install.sh`, then `insideout setup --hosted`
    (or the interactive `insideout setup` on a terminal). Merge
-   `./scripts/mcp-config.sh -q` into the agent MCP config. Do not
+   `{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }`
+   into the agent MCP config. Do not
    set `INSIDEOUT_API`. Do not invent a token. Sign-in is
    `ACCOUNT_EMAIL='you@example.test'; insideout login "$ACCOUNT_EMAIL"` with
    the password on stdin.

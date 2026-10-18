@@ -209,7 +209,7 @@ the module view:
 | `.env` | `./scripts/env.sh init` or `setup.sh` | the only file holding real values; never printed, never committed |
 | Host key store | `python3 scripts/keys.py init` + `fill` | `hosts/<host>/keys/` — one `.key` per mapped kind, never absent |
 | Database schema | `./scripts/dev.sh -C server go run ./cmd/insideout migrate` (bundled path runs it via `setup.sh`) | embedded SQL in `server/db/migrations/`, inside the `insideout` schema only |
-| MCP registration | `./scripts/mcp-config.sh` | standard `mcpServers` JSON to merge into the user's agent config |
+| MCP registration | the user's agent MCP config (the `insideout-mcp` entry from Step 4 of the skill) | standard `mcpServers` entry; the agent lists the `insideout` tools after a reload |
 
 Verify: `insideout whoami` — `not signed in` is the
 finished-install signal on the hosted path; on a local server,

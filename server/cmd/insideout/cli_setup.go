@@ -199,7 +199,7 @@ func runInteractiveSetup() (bool, int) {
 	if res.SignedIn {
 		fmt.Fprintf(os.Stderr, "setup: signed in and saved the config (token not printed) — API base %s\n", res.APIBase)
 		if res.RegisterMCP {
-			fmt.Println("Merge the MCP registration: ./scripts/mcp-config.sh -q")
+			fmt.Println(`Merge the MCP registration: {"mcpServers":{"insideout":{"command":"insideout-mcp"}}} (docs/usage/cli-mcp-and-guidance.md)`)
 		}
 		fmt.Println("Verify: insideout whoami")
 	}
