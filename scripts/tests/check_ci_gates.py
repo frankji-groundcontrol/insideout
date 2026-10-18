@@ -184,7 +184,7 @@ def guards_see_the_tags():
         for p in (ROOT / "scripts/tests").glob("check_*.py")
         if p.name != me
     )
-    checkout = steps(job(read(CI), "env-suites"))[0]
+    checkout = next((s for s in steps(job(read(CI), "env-suites")) if "actions/checkout" in s), "")
     if not wants or "fetch-tags: true" in checkout or "fetch-depth: 0" in checkout:
         return []
     return [
