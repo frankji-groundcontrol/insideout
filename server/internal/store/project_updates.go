@@ -26,33 +26,46 @@ type ProjectUpdate struct {
 // project owner or a workspace admin may file one; notes, progress,
 // and blockers stay open to any member (BUG-020).
 func (s *Store) AddProjectUpdate(ctx context.Context, actorID, projectID uuid.UUID, kind, content string) (*ProjectUpdate, error) {
-	var u ProjectUpdate
+	var u *ProjectUpdate
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		var workspaceID uuid.UUID
-		err := tx.QueryRow(ctx, `SELECT workspace_id FROM insideout.projects WHERE id = $1`, projectID).Scan(&workspaceID)
-		if errors.Is(err, pgx.ErrNoRows) {
-			return ErrNotFound
-		}
-		if err != nil {
-			return err
-		}
-		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
-			return err
-		}
-		if kind == "agent_proposal" {
-			if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
-				return err
-			}
-		}
-
-		return tx.QueryRow(ctx, `
-			INSERT INTO insideout.project_updates (project_id, author_id, kind, content)
-			VALUES ($1, $2, $3, $4)
-			RETURNING id, project_id, author_id, kind, content, created_at`,
-			projectID, actorID, kind, content,
-		).Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt)
+		var err error
+		u, err = addProjectUpdateTx(ctx, tx, actorID, projectID, kind, content)
+		return err
 	})
 	if err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+// addProjectUpdateTx is AddProjectUpdate inside the caller's transaction (and
+// RLS context), for a caller that writes more than the update — a proposal
+// with its items — and needs it all to land or none of it to.
+func addProjectUpdateTx(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID, kind, content string) (*ProjectUpdate, error) {
+	var workspaceID uuid.UUID
+	err := tx.QueryRow(ctx, `SELECT workspace_id FROM insideout.projects WHERE id = $1`, projectID).Scan(&workspaceID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
+		return nil, err
+	}
+	if kind == "agent_proposal" {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+			return nil, err
+		}
+	}
+
+	var u ProjectUpdate
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO insideout.project_updates (project_id, author_id, kind, content)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, project_id, author_id, kind, content, created_at`,
+		projectID, actorID, kind, content,
+	).Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt); err != nil {
 		return nil, err
 	}
 	return &u, nil

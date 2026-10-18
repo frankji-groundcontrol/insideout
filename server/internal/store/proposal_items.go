@@ -25,15 +25,38 @@ type ProposalItem struct {
 // the API layer.
 func (s *Store) AddProposalItems(ctx context.Context, actorID, updateID uuid.UUID, items []ProposalItem) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		for i, it := range items {
-			if _, err := tx.Exec(ctx, `
-					INSERT INTO insideout.proposal_items (update_id, action, title, parent_hint, position)
-					VALUES ($1, $2, $3, $4, $5)`, updateID, it.Action, it.Title, it.ParentHint, i); err != nil {
-				return err
-			}
-		}
-		return nil
+		return addProposalItemsTx(ctx, tx, updateID, items)
 	})
+}
+
+func addProposalItemsTx(ctx context.Context, tx pgx.Tx, updateID uuid.UUID, items []ProposalItem) error {
+	for i, it := range items {
+		if _, err := tx.Exec(ctx, `
+				INSERT INTO insideout.proposal_items (update_id, action, title, parent_hint, position)
+				VALUES ($1, $2, $3, $4, $5)`, updateID, it.Action, it.Title, it.ParentHint, i); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// AddProposal files an agent proposal (the project_updates row, plan writers
+// only) together with its structured items in one transaction, so a failure
+// part-way cannot leave a proposal without its items for a human to accept.
+// The items' UpdateID is ignored: they belong to the update this call creates.
+func (s *Store) AddProposal(ctx context.Context, actorID, projectID uuid.UUID, content string, items []ProposalItem) (*ProjectUpdate, error) {
+	var u *ProjectUpdate
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		var err error
+		if u, err = addProjectUpdateTx(ctx, tx, actorID, projectID, "agent_proposal", content); err != nil {
+			return err
+		}
+		return addProposalItemsTx(ctx, tx, u.ID, items)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 // ListProposalItems returns a proposal's items.

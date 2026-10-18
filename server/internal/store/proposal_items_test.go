@@ -191,3 +191,49 @@ func TestProposalApply_AMemberWhoMayNotApplyIsRefused(t *testing.T) {
 		t.Fatalf("owner apply after the refused attempt: %d nodes, %v, want both items (the refusal must not claim them)", len(ids), err)
 	}
 }
+
+// rv4-LEAD-PROPOSE-VALIDATE, the other half (green-only: AddProposal did not
+// exist at the base). The proposal and its items are one transaction, so an
+// item the database refuses leaves no proposal behind: a human could accept
+// that one and apply nothing.
+func TestAddProposal_AnItemTheDatabaseRefusesLeavesNoProposal(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	poison := "poison-" + uuid.NewString()
+	lift := poisonTitleOn(t, "proposal_items", poison)
+	f := newApplyFixture(t, st) // files one item-less proposal: the baseline
+	proposals := func() int {
+		updates, err := st.ListProjectUpdates(ctx, f.owner.ID, f.proj.ID, 100, nil)
+		if err != nil {
+			t.Fatalf("list updates: %v", err)
+		}
+		n := 0
+		for _, u := range updates {
+			if u.Kind == "agent_proposal" {
+				n++
+			}
+		}
+		return n
+	}
+	items := []ProposalItem{{Action: "add_node", Title: "Intake"}, {Action: "add_node", Title: poison}}
+
+	if _, err := st.AddProposal(ctx, f.owner.ID, f.proj.ID, "[agent proposal/structure] refused", items); err == nil {
+		t.Fatalf("AddProposal returned no error although the database refuses item 2")
+	}
+	if n := proposals(); n != 1 {
+		t.Fatalf("the failed AddProposal left %d proposals, want only the baseline one", n)
+	}
+
+	lift()
+	u, err := st.AddProposal(ctx, f.owner.ID, f.proj.ID, "[agent proposal/structure] fine", items)
+	if err != nil {
+		t.Fatalf("AddProposal once the cause is gone: %v", err)
+	}
+	if n := proposals(); n != 2 {
+		t.Fatalf("after the good AddProposal there are %d proposals, want 2", n)
+	}
+	listed, err := st.ListProposalItems(ctx, f.owner.ID, u.ID)
+	if err != nil || len(listed) != 2 || listed[0].Title != "Intake" || listed[1].Title != poison {
+		t.Fatalf("items of the filed proposal: %+v, %v, want Intake then the formerly refused title", listed, err)
+	}
+}

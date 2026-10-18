@@ -168,20 +168,9 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	if d := strings.TrimSpace(req.Detail); d != "" {
 		content += "\n" + d
 	}
-	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, "agent_proposal", content)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can propose a change", "", nil)
-		return
-	}
-	if err != nil {
-		s.log.Error("agent propose", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
+	// Every item is validated before the first write: a refused propose must
+	// leave nothing behind (a 400 once left an orphan proposal a human could
+	// still accept).
 	items := make([]store.ProposalItem, 0, len(req.Items))
 	for _, it := range req.Items {
 		title := strings.TrimSpace(it.Title)
@@ -197,18 +186,26 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusBadRequest, "item action must be add_node", "", nil)
 			return
 		}
-		items = append(items, store.ProposalItem{UpdateID: u.ID, Action: action, Title: title, ParentHint: strings.TrimSpace(it.ParentHint)})
+		items = append(items, store.ProposalItem{Action: action, Title: title, ParentHint: strings.TrimSpace(it.ParentHint)})
 	}
 	if len(items) > 10 {
 		httpx.WriteError(w, http.StatusBadRequest, "at most 10 items per proposal", "", nil)
 		return
 	}
-	if len(items) > 0 {
-		if err := s.store.AddProposalItems(r.Context(), userID, u.ID, items); err != nil {
-			s.log.Error("proposal items", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-			return
-		}
+	// The proposal and its items are one transaction: both land or neither.
+	u, err := s.store.AddProposal(r.Context(), userID, pid, content, items)
+	if errors.Is(err, store.ErrNotFound) {
+		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrForbidden) {
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can propose a change", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("agent propose", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
 }
