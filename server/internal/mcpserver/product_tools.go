@@ -195,7 +195,16 @@ func addProductTools(s *server.MCPServer, api string) {
 		})
 	addTextTool("propose", "Propose a structure/scope/priority change; a human decides",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strReq("kind", "structure|scope|priority"),
-			strReq("summary", "the proposal"), strOpt("detail", "extra detail")},
+			strReq("summary", "the proposal"), strOpt("detail", "extra detail"),
+			mcp.WithArray("items", mcp.Description("structured roadmap nodes a human can apply on acceptance (optional, at most 10)"),
+				mcp.Items(map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"title":      map[string]any{"type": "string", "description": "node title (required, at most 200 characters)"},
+						"parentHint": map[string]any{"type": "string", "description": "title of the existing parent node; empty for a top-level node"},
+					},
+					"required": []string{"title"},
+				}))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			detail, _ := req.GetArguments()["detail"].(string)
 			var items []apiclient.ProposeItem
