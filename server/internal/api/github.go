@@ -32,12 +32,16 @@ func (s *Server) handleSetProjectRepo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.RepoURL = strings.TrimSpace(req.RepoURL)
-	// Allow clearing with an empty value; otherwise it must parse as a repo.
+	// Allow clearing with an empty value; otherwise it must parse as a repo,
+	// and what is stored is the canonical URL, not the raw input: the sync and
+	// the webhook lookup both read that exact string (rv4-SEC-06).
 	if req.RepoURL != "" {
-		if _, _, err := github.ParseRepoURL(req.RepoURL); err != nil {
+		owner, repo, err := github.ParseRepoURL(req.RepoURL)
+		if err != nil {
 			httpx.WriteError(w, http.StatusBadRequest, err.Error(), "", nil)
 			return
 		}
+		req.RepoURL = github.CanonicalRepoURL(owner, repo)
 	}
 
 	p, err := s.store.SetProjectRepo(r.Context(), userID, pid, req.RepoURL)

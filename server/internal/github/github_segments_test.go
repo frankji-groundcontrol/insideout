@@ -104,3 +104,19 @@ func TestFetchCommitsSinceSendsNothingForAHostileRepo(t *testing.T) {
 		t.Errorf("GitHub received %d request(s) for hostile repos, want none: %q", len(seen), seen)
 	}
 }
+
+// The stored spelling is the one the webhook asks for, built from GitHub's own
+// full_name: same scheme, same host, same case. If the two ever drift apart the
+// lookup silently matches nothing.
+func TestCanonicalRepoURLIsWhatTheWebhookLookupMatches(t *testing.T) {
+	if got, want := CanonicalRepoURL("Owner", "Repo"), "https://github.com/Owner/Repo"; got != want {
+		t.Errorf("CanonicalRepoURL = %q, want %q", got, want)
+	}
+	owner, repo, err := ParseRepoURL("github.com/Owner/Repo.git/")
+	if err != nil {
+		t.Fatalf("ParseRepoURL: %v", err)
+	}
+	if got, want := CanonicalRepoURL(owner, repo), RepoURLFor("Owner/Repo"); got != want {
+		t.Errorf("canonical %q differs from the webhook's %q", got, want)
+	}
+}
