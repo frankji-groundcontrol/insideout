@@ -18,6 +18,10 @@ check_release_gate.py.
           pinned to an exact release and installed by `go install` (no
           third-party Action), gitleaks redacting and seeing full history;
           .gitignore keeps *.pem, *.key and *.p12 out of commits.
+  SEC-07  every `uses:` in every workflow is pinned to a full 40-hex commit
+          SHA with the release tag kept in a trailing `# vX.Y.Z` comment, so
+          a moved or hijacked tag cannot change what runs (Dependabot reads
+          the comment and rewrites both). Local and docker:// refs are exempt.
 
 CI-config properties: the first real proof is the first tag run after push.
 """
@@ -176,7 +180,23 @@ def pub07():
     return workflow_permissions() + dependabot() + security_workflow() + gitignore_keys()
 
 
-CHECKS = [pub04, pub07]
+def sec07():
+    """SEC-07: every Action is pinned to a full commit SHA, the tag kept in a trailing comment."""
+    out = []
+    for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+        for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            m = re.match(r"\s*(?:- )?uses:\s*(\S+)(.*)$", line)
+            if not m or m.group(1).startswith(("./", "docker://")):
+                continue
+            ref = m.group(1).partition("@")[2]
+            if not re.fullmatch(r"[0-9a-f]{40}", ref):
+                out.append(f"{path.name}:{n}: {m.group(1)} is not pinned to a full commit SHA (SEC-07)")
+            elif not re.match(r"\s*#\s*v\d+(\.\d+)+", m.group(2)):
+                out.append(f"{path.name}:{n}: {m.group(1)} has no `# vX.Y.Z` comment naming the tag it pins (SEC-07)")
+    return out
+
+
+CHECKS = [pub04, pub07, sec07]
 
 
 def main():
