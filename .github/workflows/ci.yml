@@ -306,7 +306,10 @@ jobs:
       run:
         working-directory: scripts
     steps:
+      # rv4-PM-01: check_docs_truth.py lists v* tags and a default checkout has none.
       - uses: actions/checkout@v4
+        with:
+          fetch-tags: true
       # TEST-17: a pinned interpreter instead of whatever python3 the runner
       # image ships (the scripts target 3.9 or newer).
       - uses: actions/setup-python@v5
@@ -324,3 +327,13 @@ jobs:
       # the repo root itself, so the job's scripts/ working directory is fine.
       - name: redaction guard
         run: sh check-redaction.sh
+      # rv4-PM-01: the contract guards ran by hand only. The glob takes the next
+      # guard without an edit here; the repo root, not the job's scripts/ default.
+      - name: contract guards (scripts/tests/check_*.py)
+        working-directory: .
+        run: |
+          status=0
+          for f in scripts/tests/check_*.py; do
+            python3 -I "$f" || { echo "::error file=$f::contract guard failed"; status=1; }
+          done
+          exit "$status"
