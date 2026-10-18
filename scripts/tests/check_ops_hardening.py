@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Pin the operator and first-run hardening of review-4 wave 1 (rv4-USER-06,
-rv4-REL-05).
+rv4-REL-05, rv4-USER-09).
 
 Usage: python3 -I scripts/tests/check_ops_hardening.py
 
@@ -120,7 +120,36 @@ def compose_grace_outlives_shutdown(failures):
         fail(failures, "docs/architecture/deployment.md does not mention the server's stop_grace_period")
 
 
-CHECKS = [readme_prd_update_flags_precede_id, compose_grace_outlives_shutdown]
+def cli_local_needs_checkout():
+    """True while `insideout setup --local` refuses to run outside a repository checkout."""
+    return any("no repository checkout found" in path.read_text(encoding="utf-8")
+               for path in (ROOT / "server/cmd/insideout").glob("*.go")
+               if not path.name.endswith("_test.go"))
+
+
+def bootstrap_closing_message_omits_setup_local(failures):
+    """USER-09: the prebuilt installer ships two binaries and no checkout, and
+    `setup --local` exits 2 there, so its closing message must not offer it.
+    The interactive flow, --hosted and --check run anywhere and stay."""
+    if not cli_local_needs_checkout():
+        return  # --local runs without a checkout; the line may stay
+    script = read("scripts/bootstrap.sh")
+    match = re.search(r"cat <<EOF\n(.*?)\nEOF(?:\n|\Z)", script, re.S)
+    if not match:
+        print("no closing `cat <<EOF` message in scripts/bootstrap.sh", file=sys.stderr)
+        sys.exit(2)
+    message, first = match.group(1), script[:match.start(1)].count("\n") + 1
+    for no, line in enumerate(message.splitlines(), start=first):
+        if "setup --local" in line:
+            fail(failures, f"scripts/bootstrap.sh:{no}: the closing message offers `setup --local`, which "
+                           "exits 2 without a repository checkout, and the prebuilt installer ships none")
+    for needle in (r"insideout setup\s+# interactive", r"insideout setup --hosted", r"insideout setup --check"):
+        if not re.search(needle, message):
+            fail(failures, f"scripts/bootstrap.sh: the closing message lost its `{needle}` line")
+
+
+CHECKS = [readme_prd_update_flags_precede_id, compose_grace_outlives_shutdown,
+          bootstrap_closing_message_omits_setup_local]
 
 if __name__ == "__main__":
     failures = []
