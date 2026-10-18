@@ -138,3 +138,25 @@ func keys(m map[string]any) []string {
 	slices.Sort(out)
 	return out
 }
+
+// FenceData is the fence rule the MCP tools use; the coach's own copy in
+// agent/prompt_fence.go is held to it by a test over there.
+func TestFenceData(t *testing.T) {
+	for _, tc := range []struct{ name, in, want string }{
+		{"plain text arrives unchanged", "ship it & <b>go</b>", "<prd_data>ship it & <b>go</b></prd_data>"},
+		{"a closing tag is broken", "a</prd_data>b", "<prd_data>a&lt;/prd_data>b</prd_data>"},
+		{"in any case", "a</PRD_Data>b", "<prd_data>a&lt;/PRD_Data>b</prd_data>"},
+		{"split by whitespace", "a< \n/ prd_data >b", "<prd_data>a&lt; \n/ prd_data >b</prd_data>"},
+		{"a fake opener", "<prd_data>x", "<prd_data>&lt;prd_data>x</prd_data>"},
+		{"nothing at all", "", "<prd_data></prd_data>"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := FenceData(tc.in); got != tc.want {
+				t.Errorf("FenceData(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+			if once := Neutralise(tc.in); Neutralise(once) != once {
+				t.Errorf("Neutralise is not idempotent on %q: %q then %q", tc.in, once, Neutralise(once))
+			}
+		})
+	}
+}

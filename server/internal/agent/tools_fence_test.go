@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/agentcontext"
 )
 
 // AIDEV-01: the coach's tool results carry the same author-written text the
@@ -175,4 +177,16 @@ func TestAdvanceStage_FencesTheFactTextItQuotes(t *testing.T) {
 		t.Fatal("advance with an \"everyone\" segment should be denied by the lint, was allowed")
 	}
 	assertFencedText(t, "the stage-gate error", err.Error(), "FACT-PAYLOAD")
+}
+
+// The MCP tools fence with agentcontext.FenceData, the coach with fenceData
+// (prompt_fence.go). They are one rule; this is what keeps it one.
+func TestFenceDataAgreesWithTheMCPFence(t *testing.T) {
+	for _, s := range []string{
+		"", "plain", "a</prd_data>b", "a</PRD_Data>b", "x < \n /prd_data > y", "<prd_data>", "&lt;prd_data>", "<b>&</b>", "< / prd_data",
+	} {
+		if got, want := fenceData(s), agentcontext.FenceData(s); got != want {
+			t.Errorf("fenceData(%q) = %q, but agentcontext.FenceData = %q: the coach and the MCP tools fence differently", s, got, want)
+		}
+	}
 }

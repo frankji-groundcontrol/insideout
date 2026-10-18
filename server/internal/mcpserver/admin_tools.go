@@ -30,7 +30,7 @@ func addAdminTools(s *server.MCPServer, api string) {
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
-			return mcp.NewToolResultText(out), nil
+			return textResult(out), nil
 		})
 	}
 

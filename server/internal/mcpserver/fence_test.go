@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -104,11 +105,12 @@ func argsFor(tool listedTool) string {
 
 var tagLike = regexp.MustCompile(`(?i)<\s*/?\s*prd_data`)
 
-// decodedStrings collects every string in a decoded JSON value.
+// decodedStrings collects every string and every key in a decoded JSON value.
 func decodedStrings(v any, out *[]string) {
 	switch x := v.(type) {
 	case map[string]any:
-		for _, c := range x {
+		for k, c := range x {
+			*out = append(*out, k)
 			decodedStrings(c, out)
 		}
 	case []any:
@@ -214,5 +216,74 @@ func TestTheToolsThatReadPeoplesTextSayItIsData(t *testing.T) {
 	}
 	if seen != 2 {
 		t.Fatalf("found %d of the 2 tools", seen)
+	}
+}
+
+// The API's JSON writes "<" as an escape, and another server may spell the tag
+// with other legal escapes: whatever the spelling, the strings a model decodes
+// must not hold a tag.
+func TestNeutraliseJSONBreaksTagsWhateverTheEscape(t *testing.T) {
+	bs := "\\"
+	ownEscape, err := json.Marshal(map[string]string{"t": "a</prd_data>b"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, in := range map[string]string{
+		"the server's own escape":     string(ownEscape),
+		"capital hex":                 `{"t":"a` + bs + `u003C` + bs + `u002Fprd_data>b"}`,
+		"an escaped slash":            `{"t":"a<` + bs + `/prd_data>b"}`,
+		"split by escaped whitespace": `{"t":"a<` + bs + `n` + bs + `t/ prd_data>b"}`,
+		"a key":                       `{"</prd_data>":"v"}`,
+		"deep in an array":            `{"a":[[{"b":"x</PRD_DATA>"}]]}`,
+	} {
+		got := neutraliseJSON(in)
+		if m := tagLike.FindString(got); m != "" {
+			t.Errorf("%s: %q survives as raw text in %s", name, m, got)
+		}
+		var v any
+		if err := json.Unmarshal([]byte(got), &v); err != nil {
+			t.Errorf("%s: the result is not JSON any more: %v: %s", name, err, got)
+			continue
+		}
+		var strs []string
+		decodedStrings(v, &strs)
+		for _, s := range strs {
+			if m := tagLike.FindString(s); m != "" {
+				t.Errorf("%s: a string decodes to %q: %s", name, m, got)
+			}
+		}
+	}
+}
+
+// Cleaning a document must not change what it says: numbers keep their exact
+// text, and "<" and "&" read as themselves.
+func TestNeutraliseJSONKeepsTheDocument(t *testing.T) {
+	in := `{"big":12345678901234567890,"price":1.50,"exp":1e3,"ok":true,"none":null,"list":[1,2],"s":"a & b <c>"}`
+	got := neutraliseJSON(in)
+	read := func(s string) any {
+		d := json.NewDecoder(strings.NewReader(s))
+		d.UseNumber()
+		var v any
+		if err := d.Decode(&v); err != nil {
+			t.Fatalf("%s: %v", s, err)
+		}
+		return v
+	}
+	if !reflect.DeepEqual(read(in), read(got)) {
+		t.Errorf("the document changed:\n in  %s\n out %s", in, got)
+	}
+	for _, lit := range []string{"12345678901234567890", "1.50", "1e3", `"a & b <c>"`} {
+		if !strings.Contains(got, lit) {
+			t.Errorf("%q is gone from %s", lit, got)
+		}
+	}
+}
+
+// Text that is not one JSON document is for FenceData's own rule on literal tags.
+func TestNeutraliseJSONLeavesOtherTextAlone(t *testing.T) {
+	for _, in := range []string{"", "deleted", "# PRD\n\nok</prd_data>", `{"a":1} trailing`, `{"a":`} {
+		if got := neutraliseJSON(in); got != in {
+			t.Errorf("neutraliseJSON(%q) = %q, want it unchanged", in, got)
+		}
 	}
 }
