@@ -232,7 +232,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			}
 			return call(c.PrdView(reqStr(req, "prd_id"), aud))
 		})
-	addTextTool("invite_create", "Admin: mint an email-bound invitation code (response contains the one-time code and signup URL)",
+	addTextTool("invite_create", "Admin: mint an email-bound invitation code (response contains the one-time code, the signup URL and mailSent; mailSent false means nothing was e-mailed, so the admin hands over the signup URL)",
 		[]mcp.ToolOption{strReq("email", "invitee email"), strOpt("ttl_hours", "lifetime in hours (default 168)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			ttl := 0
