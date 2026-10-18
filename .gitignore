@@ -175,3 +175,8 @@ backups/
 
 # macOS Finder metadata
 .DS_Store
+
+# Key material (rv4-PUB-07): never commit private keys or certificates
+*.pem
+*.key
+*.p12

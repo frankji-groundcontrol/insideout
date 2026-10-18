@@ -17,6 +17,11 @@ concurrency:
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# rv4-PUB-07: least privilege. Nothing here writes to the repository or calls
+# the API beyond the checkout; a job that ever needs more asks at job level.
+permissions:
+  contents: read
+
 jobs:
   server:
     name: server (go + postgres)

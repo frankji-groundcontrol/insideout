@@ -1,0 +1,89 @@
+name: security
+
+# rv4-PUB-07: dependency vulnerability and secret scanning. Both tools are
+# pinned to an exact release and installed with `go install` (module proxy
+# plus the checksum database), so no third-party Action is added to the
+# supply chain this file is meant to protect. Bump a pin on purpose.
+#   govulncheck  the Go vulnerability database against the packages the server
+#                builds. It runs with the toolchain server/go.mod selects, the
+#                one release.yml ships binaries with, so it reports what ships.
+#                A finding is fixed by bumping the module (or the go.mod
+#                toolchain line), never by muting this job. The weekly schedule
+#                catches an advisory that lands without a code change.
+#   gitleaks     secrets in the commits this push or pull request adds, with the
+#                value redacted in the log. It scans the added range, not the
+#                whole history: the old history holds findings that are an owner
+#                decision (see docs/usage/releasing.md).
+# CI-config file: the first real proof is the first run after this lands.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Off the :00 mark, where scheduled runs queue; one hour after ci.yml's.
+    - cron: "37 4 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    name: govulncheck (server)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: server/go.mod
+          cache-dependency-path: server/go.sum
+      # Built by the toolchain it then analyses: a govulncheck built with an
+      # older Go refuses to load a newer module.
+      - name: Install the pinned govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Scan the packages the server builds
+        working-directory: server
+        run: govulncheck ./...
+
+  secrets:
+    name: gitleaks (commits added by this push or pull request)
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Full history: the range below needs the base commit.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version-file: server/go.mod
+          cache: false
+      - name: Install the pinned gitleaks
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+      - name: Scan the added commits, secrets redacted in the log
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          # ponytail: a force-push or a new branch has no usable "before"; it
+          # falls back to the tip commit alone. Scan more with a manual run.
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            range="origin/${BASE_REF}..HEAD"
+          elif [ "$GITHUB_EVENT_NAME" = push ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            range="${BEFORE}..${GITHUB_SHA}"
+          else
+            range="HEAD~1..HEAD"
+          fi
+          echo "==> scanning ${range}"
+          gitleaks git --redact --verbose --no-banner --exit-code 1 --log-opts="$range" .

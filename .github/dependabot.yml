@@ -1,0 +1,28 @@
+# rv4-PUB-07: weekly update pull requests for the three dependency sets this
+# repository ships. These are version updates; Dependabot alerts and security
+# updates are a repository setting (an owner action). The 7-day cooldown keeps
+# a just-published release out of the first week, so a hijacked release is
+# likelier to be pulled before we adopt it (security updates ignore it).
+# Actions are pinned by commit SHA with the tag in a trailing comment, which
+# Dependabot reads and rewrites; the Go and Flutter toolchain floors are
+# changed by hand (scripts/tests/check_go_floor.py pins them).
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "pub"
+    directory: "/client"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    cooldown:
+      default-days: 7

@@ -29,6 +29,10 @@ concurrency:
   group: ubuntu-install-${{ github.ref }}
   cancel-in-progress: true
 
+# rv4-PUB-07: least privilege; the job only checks out and runs the skill.
+permissions:
+  contents: read
+
 jobs:
   ubuntu:
     name: install skill (ubuntu 24.04)
