@@ -140,3 +140,31 @@ func dispatchedVerbs(t *testing.T, sources ...string) []string {
 	sort.Strings(verbs)
 	return verbs
 }
+
+// The cliVerbs table, the dispatch switches and the help text are three
+// views of one inventory: a verb added to one must show up in the others,
+// and a table row nothing dispatches is a lie in the help text.
+func TestVerbTableMatchesDispatch(t *testing.T) {
+	dispatched := map[string]bool{}
+	for _, v := range dispatchedVerbs(t, "cli.go:runClientCommand", "main.go:main", "help.go:runFrontDoor") {
+		dispatched[v] = true
+	}
+	listed := map[string]bool{}
+	for _, v := range cliVerbs {
+		if listed[v.name] {
+			t.Errorf("verb %q is listed twice", v.name)
+		}
+		listed[v.name] = true
+		if v.group == "" || v.summary == "" {
+			t.Errorf("verb %q needs a group and a summary", v.name)
+		}
+		if !dispatched[v.name] {
+			t.Errorf("cliVerbs lists %q but no dispatch switch handles it", v.name)
+		}
+	}
+	for verb := range dispatched {
+		if !listed[verb] {
+			t.Errorf("a dispatch switch handles %q but cliVerbs does not list it", verb)
+		}
+	}
+}

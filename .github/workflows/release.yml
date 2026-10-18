@@ -39,8 +39,10 @@ jobs:
             arch=${target#*/}
             # CGO is off per build: the amd64-linux runner cannot
             # cross-link cgo for the other three targets.
+            # The tag is the version `insideout version` reports.
             CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
-              go build -o "build/$os-$arch/insideout" ./cmd/insideout
+              go build -ldflags "-X main.version=${GITHUB_REF_NAME}" \
+                -o "build/$os-$arch/insideout" ./cmd/insideout
             CGO_ENABLED=0 GOOS=$os GOARCH=$arch \
               go build -o "build/$os-$arch/insideout-mcp" ./cmd/insideout-mcp
             # Both binaries sit at the top level of the archive, where

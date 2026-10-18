@@ -5,11 +5,14 @@
 //	insideout seed        create demo data for local development
 //	insideout health      container HEALTHCHECK: probe /healthz over loopback
 //	insideout promote-admin <email>  grant admin (owner pool); creates the account, password on stdin, when absent
+//	insideout help        list every command (also -h, --help)
+//	insideout version     print the build version (also --version)
 //
 // The product CLI verbs (login, ideas, prd, roadmap, setup, …) dispatch
 // from runClientCommand in cli.go before any server env or DB is touched;
-// cli.go's switch is the verb inventory — verbs enumerated here went stale
-// (review-3 ARCH-04), so this comment deliberately does not list them.
+// the cliVerbs table there is the verb inventory `help` prints — verbs
+// enumerated here went stale (review-3 ARCH-04), so this comment
+// deliberately does not list them. An unknown verb exits 2 (help.go).
 package main
 
 import (
@@ -36,6 +39,11 @@ func main() {
 	// Product CLI commands need no server env or DB — dispatch them
 	// before any config/store setup (docs/plans/2026-08-21-cli-mcp-parity.md).
 	if handled, code := runClientCommand(os.Args[1:]); handled {
+		os.Exit(code)
+	}
+	// help, version and a mistyped verb answer here too: none of them may
+	// reach config.Load() and its "DATABASE_URL is required" (rv4-USER-02).
+	if handled, code := runFrontDoor(os.Args[1:], os.Stdout, os.Stderr); handled {
 		os.Exit(code)
 	}
 

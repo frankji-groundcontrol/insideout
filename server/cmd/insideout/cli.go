@@ -18,6 +18,72 @@ import (
 
 const defaultAPIBase = apiclient.DefaultBase
 
+// cliVerb is one row of the verb inventory; cliVerbs is that inventory, in
+// `insideout help` print order. help.go prints it and answers "unknown
+// command" against it, and TestVerbTableMatchesDispatch fails when it and
+// the dispatch switches (runClientCommand below, main, runFrontDoor) drift
+// apart — hand-written verb lists went stale (review-3 ARCH-04).
+type cliVerb struct{ group, name, summary string }
+
+const (
+	groupServer  = "Server operator commands (need DATABASE_URL and INSIDEOUT_JWT_SECRET)"
+	groupSetup   = "Setup and diagnostics"
+	groupAccount = "Account and sign-in"
+	groupWork    = "Workspaces, ideas and projects"
+	groupPRD     = "PRDs and versions"
+	groupRoadmap = "Roadmap and agent"
+	groupAdmin   = "Admin (needs an admin token)"
+)
+
+var cliVerbs = []cliVerb{
+	{groupServer, "migrate", "apply pending SQL migrations and exit"},
+	{groupServer, "seed", "create demo data for local development"},
+	{groupServer, "promote-admin", "make an account admin, creating it (password on stdin) if absent"},
+
+	{groupSetup, "setup", "first-run front door: hosted sign-in or a local server (--check re-probes)"},
+	{groupSetup, "health", "probe /healthz over loopback (the container HEALTHCHECK)"},
+	{groupSetup, "help", "print this list (also -h, --help)"},
+	{groupSetup, "version", "print the build version (also --version)"},
+
+	{groupAccount, "register", "create an account (password on stdin; --invite when signup is invitation-only)"},
+	{groupAccount, "login", "sign in and print a token (--code or --magic for emailed sign-in)"},
+	{groupAccount, "forgot-password", "email a password-reset link"},
+	{groupAccount, "reset-password", "finish a reset: paste the link, then the new password"},
+	{groupAccount, "whoami", "show the signed-in user"},
+
+	{groupWork, "workspaces", "list workspaces (workspaces create --title T)"},
+	{groupWork, "join", "join a workspace with its invite code"},
+	{groupWork, "projects", "list a workspace's projects (projects create --title T <workspace-id>)"},
+	{groupWork, "ideas", "list a workspace's ideas"},
+	{groupWork, "idea", "create, update, delete or convert an idea; decide a proposal"},
+	{groupWork, "evidence", "show the evidence behind a roadmap node"},
+	{groupWork, "repo", "link a GitHub repository to a project (repo set <project-id> <url>)"},
+	{groupWork, "sync", "pull a project's GitHub activity into its roadmap"},
+	{groupWork, "guide", "print or write a project's insideout.yaml guide"},
+
+	{groupPRD, "prd", "show a PRD (prd update edits its title, sections or status)"},
+	{groupPRD, "view", "render a PRD for an audience (--export FILE writes markdown)"},
+	{groupPRD, "readiness", "report how ready a PRD is to commit"},
+	{groupPRD, "commit", "freeze a named, audience-specific version of a PRD"},
+	{groupPRD, "versions", "list a PRD's committed versions"},
+	{groupPRD, "revisions", "list a PRD's revisions"},
+	{groupPRD, "snapshot", "snapshot a PRD's current revision (--note)"},
+
+	{groupRoadmap, "roadmap", "list, add, update, move or delete nodes; progress; presence"},
+	{groupRoadmap, "presence", "show who is active on a project's roadmap"},
+	{groupRoadmap, "build", "draft a roadmap from a PRD (apply it with build-confirm)"},
+	{groupRoadmap, "build-confirm", "apply a drafted roadmap"},
+	{groupRoadmap, "expand", "draft children for a roadmap node (apply with expand-confirm)"},
+	{groupRoadmap, "expand-confirm", "apply drafted children"},
+	{groupRoadmap, "agent-context", "fetch the agent briefing for a project (--mode, --focus)"},
+	{groupRoadmap, "checkpoint", "record an agent progress checkpoint (--node)"},
+	{groupRoadmap, "propose", "propose a roadmap change for review (--kind, --item)"},
+
+	{groupAdmin, "invite", "invite one email address (invite revoke <id> cancels)"},
+	{groupAdmin, "invites", "list invitations"},
+	{groupAdmin, "signup-mode", "show or set invitation_only | open | closed"},
+}
+
 // runClientCommand handles login/whoami/workspaces/projects/prd and
 // reports whether the argument was a client command (already executed;
 // the caller should exit with the returned code).
