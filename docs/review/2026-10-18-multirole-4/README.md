@@ -27,6 +27,7 @@ A whole-tree review of InsideOut at `main` @ `9f0b1c7` (a clean detached worktre
 | [00](00-executive-summary.md) | Executive summary | n/a | n/a | top ten, effort, what not to do yet |
 | [01](01-findings-register.md) | Findings register | n/a | n/a | 145 rows, 0 rejected |
 | [40](40-remediation-plan.md) | Remediation plan | n/a | n/a | 4 waves, a check per wave |
+| [41](41-remediation-contract.md) | Remediation execution contract | n/a | n/a | how the plan is split, proven and merged |
 
 Mean of the 13 scores: **6.7** reported, **6.2** after the critic's reconciliation.
 
@@ -99,7 +100,7 @@ not counted as identifiers: the public repo path, the key name ssh_alias, and th
 
 ## Reading order for a fixer
 
-1. [40-remediation-plan.md](40-remediation-plan.md), rows 0.1 and 1.1 first.
+1. [40-remediation-plan.md](40-remediation-plan.md), rows 0.1 and 1.1 first; to run it as a fan-out, [41-remediation-contract.md](41-remediation-contract.md).
 2. [00-executive-summary.md](00-executive-summary.md), the top ten and "what not to do yet".
 3. [01-findings-register.md](01-findings-register.md), then the role file for the area you are touching (10 to 14, 20 to 27).
 4. [30-completeness-critic.md](30-completeness-critic.md), for the root-cause clusters and what was not covered.
