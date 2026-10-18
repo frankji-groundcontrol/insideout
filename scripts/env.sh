@@ -214,8 +214,14 @@ do_check() {
       ok POSTGRES_OWNER_PASSWORD "$(mask_secret "$POSTGRES_OWNER_PASSWORD")"
     fi
   fi
+  # DATABASE_OWNER_URL — the bundled postgres' DATABASE_URL is insideout_app,
+  # which cannot apply migrations, so an empty owner DSN there is a FAILURE
+  # (compose would die at migrate); for any other database it stays an info,
+  # because the app DSN may already be the owner. / 自带 postgres 下留空即失败。
   if [ -n "${DATABASE_OWNER_URL:-}" ]; then
     ok DATABASE_OWNER_URL "set (insideout_owner migrate DSN)"
+  elif is_bundled_pg; then
+    fail DATABASE_OWNER_URL "empty — the bundled postgres' DATABASE_URL is insideout_app, which cannot apply migrations; set the insideout_owner DSN (./scripts/setup.sh writes it; see SETENV.md)"
   else
     info DATABASE_OWNER_URL "empty — migrate uses DATABASE_URL (must already be insideout_owner)"
   fi
