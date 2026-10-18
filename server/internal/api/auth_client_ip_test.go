@@ -54,3 +54,37 @@ func TestClientIP_RailwayChainIsPerClient(t *testing.T) {
 		t.Fatalf("all-empty XFF should fall back to RemoteAddr, got %q", got)
 	}
 }
+
+// rv4-QUAL-02: the resend cooldown kept its own copy of the client-IP
+// extraction, and the copy took the rightmost X-Forwarded-For entry even
+// when it was empty, then fell back to RemoteAddr: behind the proxy that is
+// the shared hop, so every client whose header ended in ", " shared one
+// cooldown bucket and the first of them silenced everyone else's sends
+// behind the uniform 200. The gate must key on clientIP, which walks past
+// empty entries. A server with a nil store answers 500 when a request clears
+// the gate (the user lookup dies) and the uniform 200 when the gate blocks
+// it, so the status tells the two apart without a database.
+func TestSendCooldownKeysOnClientIPPastTrailingEmptyXFF(t *testing.T) {
+	for _, path := range []string{
+		"/api/v1/auth/magic-link",
+		"/api/v1/auth/forgot-password",
+		"/api/v1/auth/login-code",
+	} {
+		t.Run(path, func(t *testing.T) {
+			s := newValidationServer()
+
+			first := postAuthSend(s, path, "first-client@example.com", "9.9.9.9, ")
+			if first.Code != http.StatusInternalServerError {
+				t.Fatalf("first client: status = %d, want 500 (a quiet gate lets the request reach the lookup)", first.Code)
+			}
+			// A different client behind the same proxy: its own bucket.
+			second := postAuthSend(s, path, "second-client@example.com", "8.8.8.8, ")
+			if second.Code != http.StatusInternalServerError {
+				t.Fatalf("second client: status = %d, want 500 (200 means the gate keyed on the shared RemoteAddr instead of the client's own address)", second.Code)
+			}
+			// The same client with another address is still held by its IP.
+			third := postAuthSend(s, path, "third-client@example.com", "9.9.9.9, ")
+			assertUniformOK(t, third)
+		})
+	}
+}
