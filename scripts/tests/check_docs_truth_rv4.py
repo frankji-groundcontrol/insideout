@@ -83,7 +83,7 @@ def offline_coach_not_overclaimed(failures):
     text = section.group(1) if section else ""
     if not re.search(r"(?i)\becho", text):
         fail(failures, "local-development.md's Offline AI mode section does not say the coach echoes")
-    if not re.search(r"\bset `INSIDEOUT_LLM_API_KEY`", text):
+    if not re.search(r"\bset\s+`INSIDEOUT_LLM_API_KEY`", text):
         fail(failures, "local-development.md's Offline AI mode section does not say coaching "
                        "needs a set INSIDEOUT_LLM_API_KEY")
 

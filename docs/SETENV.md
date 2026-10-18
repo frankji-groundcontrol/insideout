@@ -184,9 +184,9 @@ secret in production. Per-key detail:
 
 An empty `INSIDEOUT_LLM_API_KEY` **selects** the offline coach. The server logs
 `INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach` and runs a
-deterministic template streamer — the PRD coach works end to end (stages, tools,
-SSE) with no network and no cost. That is why the LLM lines are commented
-in the skeleton. For a real provider, set `INSIDEOUT_LLM_API_KEY` (plus
+template streamer that only echoes the member's last message (no stages, no
+section fills, no tool calls), with no network and no cost. That is why the LLM
+lines are commented in the skeleton. For real coaching, set `INSIDEOUT_LLM_API_KEY` (plus
 `INSIDEOUT_LLM_BASE_URL` if your provider is not the default). Put any `/v1`
 on the base URL yourself. `INSIDEOUT_LLM_MODEL` defaults to
 `claude-sonnet-4-20250514`; `INSIDEOUT_LLM_SCHEMA` is `messages` or `responses`.

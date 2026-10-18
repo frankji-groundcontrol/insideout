@@ -22,7 +22,9 @@ type ChatStreamer interface {
 
 Swapping providers later is a one-file change. `internal/agent/template.go`
 provides an offline, no-network fallback `ChatStreamer` used when
-`INSIDEOUT_LLM_API_KEY` is unset — this is also local dev mode.
+`INSIDEOUT_LLM_API_KEY` is unset — this is also local dev mode. It echoes the
+member's last message and makes no tool calls, so no stage or section moves;
+the SSE `message_start` frame carries `offline: true` and the client banners it.
 `INSIDEOUT_LLM_SCHEMA=messages` (default) posts Anthropic Messages JSON to
 `{base}/messages`. `INSIDEOUT_LLM_SCHEMA=responses` posts OpenAI Responses
 JSON to `{base}/responses`. The operator includes any `/v1` on

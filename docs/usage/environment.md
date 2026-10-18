@@ -226,8 +226,9 @@ it. Session-mode / dedicated Postgres is unaffected.
 
 **Offline AI mode.** Leave `INSIDEOUT_LLM_API_KEY` empty. The server logs
 `INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach` and runs
-the deterministic template streamer — the PRD coach works end-to-end with no
-network calls. Recommended default for local dev.
+the template streamer, which only echoes the member's last message: no stages,
+no section fills, no tool calls, and no network. Fine for exercising auth and
+the UI locally; set `INSIDEOUT_LLM_API_KEY` for real coaching.
 
 **Plain-http local dev cookies.** Set `INSIDEOUT_COOKIE_SECURE=0` so the
 browser stores auth cookies without TLS. Secure by default; only disable for

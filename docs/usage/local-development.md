@@ -62,10 +62,13 @@ recipes, and troubleshooting — lives in
 
 If `INSIDEOUT_LLM_API_KEY` is unset, the server logs
 `INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach` and swaps
-in a template-reply streamer (`server/internal/agent`). The PRD coach works
-end-to-end (stages, tools, SSE) with canned replies — no network, no cost.
-This is the recommended default for local dev (see the recipes in
-[environment.md](environment.md)).
+in a template streamer (`server/internal/agent/template.go`). It only **echoes**
+the member's last message back: no stage moves, no PRD section fills and no
+tool runs. That is enough to exercise sign-in, projects, the stream and the UI
+with no network and no cost, but it is not coaching; to get coaching, set
+`INSIDEOUT_LLM_API_KEY` (recipes in [environment.md](environment.md)). The web
+client says so with an "offline" banner, shown once the first reply starts
+streaming rather than before the first send.
 
 ### Mail dev mode
 

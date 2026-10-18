@@ -141,13 +141,14 @@ links from `INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`); Flutter
 otherwise picks a random port, and those links would point at a port
 nothing listens on.
 
-`dev.sh` 是必需的：应用只读进程环境变量，由它先导出 `.env` 并做缺项检查。必填只有 `DATABASE_URL`（PostgreSQL 18，即 CI 所测版本）和 `INSIDEOUT_JWT_SECRET`（≥32 字符）；不设 `INSIDEOUT_LLM_API_KEY` 时教练走离线模板。详见 [docs/SETENV.md](docs/SETENV.md) 与 [docs/usage/local-development.md](docs/usage/local-development.md)。
+`dev.sh` 是必需的：应用只读进程环境变量，由它先导出 `.env` 并做缺项检查。必填只有 `DATABASE_URL`（PostgreSQL 18，即 CI 所测版本）和 `INSIDEOUT_JWT_SECRET`（≥32 字符）；不设 `INSIDEOUT_LLM_API_KEY` 时教练走离线模板，只回显你最后一条消息、不做辅导。详见 [docs/SETENV.md](docs/SETENV.md) 与 [docs/usage/local-development.md](docs/usage/local-development.md)。
 
 `dev.sh` is not optional: nothing reads `.env` itself (Go reads the
 process environment), so it exports it first and checks for missing keys.
 Only two variables are required — `DATABASE_URL` (PostgreSQL 18, the version CI tests) and
 `INSIDEOUT_JWT_SECRET` (min 32 chars); without `INSIDEOUT_LLM_API_KEY` the
-coach falls back to an offline template. Step by step:
+coach falls back to an offline template that only echoes your last message
+(no coaching). Step by step:
 [docs/SETENV.md](docs/SETENV.md) and
 [docs/usage/local-development.md](docs/usage/local-development.md).
 
