@@ -22,6 +22,8 @@ one, so the first CI run after a push is what proves the behavior.
   the tags, because check_docs_truth.py asks git for them.
 - rv4-PM-12: the Ubuntu install lane accepts no Go older than server/go.mod's
   floor, and no step name announces an older one.
+- rv4-PM-07: the analyzer ratchet (INFO_BASELINE in the client job) never
+  allows more infos than the pinned toolchain measures (INFO_CEILING below).
 """
 import pathlib
 import re
@@ -33,6 +35,10 @@ import textwrap
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CI = ".github/workflows/ci.yml"
 UBUNTU = ".github/workflows/ubuntu-install.yml"
+# rv4-PM-07: the info lines `flutter analyze --no-fatal-infos` prints on the
+# toolchain ci.yml pins (Flutter 3.44): 14. INFO_BASELINE may fall as infos are
+# fixed; raising it past this is a regression, so raise this only on purpose.
+INFO_CEILING = 14
 
 
 def read(name):
@@ -195,8 +201,20 @@ def ubuntu_go_floor():
     return problems
 
 
+def analyzer_ratchet():
+    """PM-07: a baseline above the measured count is slack the tree can fill."""
+    found = re.search(r"INFO_BASELINE:\s*\"?(\d+)\"?", job(read(CI), "client"))
+    if found and int(found.group(1)) <= INFO_CEILING:
+        return []
+    return [
+        f"{CI}: INFO_BASELINE is {found.group(1) if found else 'missing'}, past the "
+        f"{INFO_CEILING} infos the pinned toolchain measures - slack that new "
+        "infos can fill unseen (rv4-PM-07)"
+    ]
+
+
 CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests,
-          contract_guards_run, guards_see_the_tags, ubuntu_go_floor]
+          contract_guards_run, guards_see_the_tags, ubuntu_go_floor, analyzer_ratchet]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
