@@ -10,9 +10,11 @@ on:
     - cron: "41 3 * * 1"
 
 concurrency:
-  group: ci-${{ github.ref }}
   # rv4-TEST-08: a newer push supersedes an older pull request run only; a main
-  # or scheduled run is the one verdict on its commit, so it finishes.
+  # or scheduled run is the one verdict on its commit, so it finishes. It also
+  # gets a group of its own: a run waiting behind another in a shared group is
+  # replaced when a third is queued, cancel-in-progress or not.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
