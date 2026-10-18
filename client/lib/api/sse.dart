@@ -263,13 +263,20 @@ class SseAttempt {
   final Stream<List<int>> chunks;
 }
 
+/// Whether a failed token refresh means the session is over: the server
+/// rejected the refresh token (401/403) or none is stored. A dropped
+/// connection or a 5xx says nothing about the token, so the session stays
+/// for the next try (FULL-05; the rule SessionState.hydrate already follows).
+bool refreshEndsSession(Object error) =>
+    error is ApiException && (error.status == 401 || error.status == 403);
+
 /// USER-10: on web the coach stream is a raw fetch that bypasses dio's 401
 /// refresh interceptor. Same policy as the interceptor, applied eagerly:
 /// on 401 run the single-flight refresh once and re-open (the opener
 /// re-reads the access token, so the retry carries the rotated bearer); a
-/// failed refresh or a still-401 retry clears the session so the router
-/// lands on the auth door instead of looping "stream failed" until a
-/// manual page reload.
+/// refresh the server rejects ([refreshEndsSession]) or a still-401 retry
+/// clears the session so the router lands on the auth door instead of
+/// looping "stream failed" until a manual page reload.
 Stream<List<int>> coachSseWithRefresh(
   Future<SseAttempt> Function() open,
   Future<void> Function() refresh,
@@ -279,8 +286,8 @@ Stream<List<int>> coachSseWithRefresh(
   if (attempt.status == 401) {
     try {
       await refresh();
-    } catch (_) {
-      await clearTokens();
+    } catch (e) {
+      if (refreshEndsSession(e)) await clearTokens();
       throw ApiException('stream failed', status: attempt.status);
     }
     attempt = await open();

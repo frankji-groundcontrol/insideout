@@ -53,8 +53,8 @@ abstract class _ApiCore {
           options.extra[_retriedKey] = true;
           try {
             await _refreshSingleFlight();
-          } catch (_) {
-            await _clearTokens();
+          } catch (e) {
+            if (refreshEndsSession(e)) await _clearTokens();
             handler.next(response);
             return;
           }
@@ -74,8 +74,9 @@ abstract class _ApiCore {
   Future<void>? _refreshing;
 
   /// Exactly one in-flight refresh no matter how many requests 401 at the
-  /// same moment. A failed refresh clears the session so the app routes to
-  /// the auth door instead of retrying with a dead token.
+  /// same moment. A refresh the server rejects clears the session so the app
+  /// routes to the auth door instead of retrying with a dead token; one that
+  /// merely failed (network, 5xx) keeps it ([refreshEndsSession]).
   Future<void> _refreshSingleFlight() =>
       _refreshing ??= refresh().whenComplete(() => _refreshing = null);
 

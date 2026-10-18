@@ -197,7 +197,7 @@ void main() {
       final (_, err) = await drain(
         coachSseWithRefresh(
           open,
-          () async => throw Exception('refresh rejected'),
+          () async => throw ApiException('refresh rejected', status: 401),
           () async => cleared = true,
         ),
       );
