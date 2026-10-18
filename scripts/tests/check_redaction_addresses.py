@@ -108,5 +108,14 @@ class AddressRule(unittest.TestCase):
                 self.assertEqual(r.returncode, 1, r.stderr)
 
 
+class TrackedTree(unittest.TestCase):
+    """Facts about this checkout that the scrub established and must not drift back."""
+
+    def test_guard_passes_on_this_checkout(self):
+        # rv4-PM-11: the owner-domain account address sat in a dated record.
+        r = run(["sh", str(GUARD)], ROOT)
+        self.assertEqual(r.returncode, 0, r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
