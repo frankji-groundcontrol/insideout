@@ -18,8 +18,7 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 
 	var text strings.Builder
-	var toolID, toolName string
-	var toolArgs strings.Builder
+	var calls respCalls
 	var usage Usage
 	var truncated, finished bool
 
@@ -49,23 +48,11 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 				}
 			}
 		case "response.output_item.added":
-			if item, ok := ev["item"].(map[string]any); ok {
-				if item["type"] == "function_call" {
-					if id, ok := item["call_id"].(string); ok {
-						toolID = id
-					}
-					if name, ok := item["name"].(string); ok {
-						toolName = name
-					}
-					if args, ok := item["arguments"].(string); ok {
-						toolArgs.WriteString(args)
-					}
-				}
+			if item, ok := ev["item"].(map[string]any); ok && item["type"] == "function_call" {
+				calls.add(item)
 			}
 		case "response.function_call_arguments.delta":
-			if d, ok := ev["delta"].(string); ok {
-				toolArgs.WriteString(d)
-			}
+			calls.delta(ev)
 		case "error":
 			msg, _ := ev["message"].(string)
 			code, _ := ev["code"].(string)
@@ -98,17 +85,17 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	if !finished {
 		return Turn{}, fmt.Errorf("%w: %s stream ended before response.completed", ErrProviderTransient, responsesProvider)
 	}
-	if toolName != "" {
+	if call := calls.first(); call != nil {
 		if truncated {
 			// The cap cut the call's JSON short: it never runs, and the person
 			// is told the answer was cut off instead.
 			return Turn{Text: text.String(), Usage: usage, Truncated: true}, nil
 		}
-		args := toolArgs.String()
+		args := call.args.String()
 		if args == "" {
 			args = "{}"
 		}
-		return Turn{ToolCall: &ToolCallRequest{ID: toolID, Name: toolName, Arguments: args}, Usage: usage}, nil
+		return Turn{ToolCall: &ToolCallRequest{ID: call.id, Name: call.name, Arguments: args}, Usage: usage}, nil
 	}
 	if text.Len() == 0 {
 		return Turn{}, fmt.Errorf("%w: empty text response", ErrContentRefusal)
@@ -130,4 +117,66 @@ func responseFailure(ev map[string]any) (code, msg string) {
 		code = "server_error"
 	}
 	return code, msg
+}
+
+// respCall is one function_call item being streamed.
+type respCall struct {
+	id, name string
+	args     strings.Builder
+}
+
+// respCalls keeps the function_call items of one response apart. Each is filed
+// under the item id the provider stamps on every event of that item, so two
+// calls can never be spliced into one (rv4-AIDEV-06).
+type respCalls struct {
+	byItem map[string]*respCall
+	order  []string // item ids, in the order the provider announced them
+	last   string   // the item announced most recently
+}
+
+// add starts a call from a response.output_item.added function_call item. A
+// provider that sends no item id is keyed by its call id.
+func (c *respCalls) add(item map[string]any) {
+	key, _ := item["id"].(string)
+	if key == "" {
+		key, _ = item["call_id"].(string)
+	}
+	call := &respCall{}
+	call.id, _ = item["call_id"].(string)
+	call.name, _ = item["name"].(string)
+	if args, ok := item["arguments"].(string); ok {
+		call.args.WriteString(args)
+	}
+	if c.byItem == nil {
+		c.byItem = map[string]*respCall{}
+	}
+	if _, seen := c.byItem[key]; !seen {
+		c.order = append(c.order, key)
+	}
+	c.byItem[key] = call
+	c.last = key
+}
+
+// delta appends an argument fragment to the call it names; a fragment that
+// names none belongs to the call announced last.
+func (c *respCalls) delta(ev map[string]any) {
+	key, _ := ev["item_id"].(string)
+	call := c.byItem[key]
+	if call == nil {
+		call = c.byItem[c.last]
+	}
+	if d, ok := ev["delta"].(string); ok && call != nil {
+		call.args.WriteString(d)
+	}
+}
+
+// first is the call to run: only one runs per turn (see ToolCallRequest), the
+// first the provider announced. The rest are dropped, never merged into it.
+func (c *respCalls) first() *respCall {
+	for _, key := range c.order {
+		if call := c.byItem[key]; call.name != "" {
+			return call
+		}
+	}
+	return nil
 }

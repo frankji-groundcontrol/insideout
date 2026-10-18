@@ -20,8 +20,8 @@ const (
 // ToolCallRequest is the model asking to invoke one tool. Only one tool
 // call per assistant turn is supported — see §5 of 03-agents.md: the
 // coach prompts for exactly one tool call per turn anyway (see
-// prompts.go), so anthropic.go only ever surfaces the first tool_use
-// block in a response.
+// prompts.go), so the stream parsers (anthropic_parse.go,
+// trust_responses.go) only ever surface the first tool call in a response.
 type ToolCallRequest struct {
 	ID        string
 	Name      string

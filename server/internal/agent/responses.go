@@ -119,6 +119,10 @@ type responsesRequest struct {
 	// large) ceiling, and hitting our cap is what makes the final status
 	// "incomplete", which parseResponsesStream maps to Turn.Truncated (F13).
 	MaxOutputTokens int `json:"max_output_tokens,omitempty"`
+	// ParallelToolCalls is sent as false whenever tools are offered: the coach
+	// runs one tool call per iteration, so a second call in the same response
+	// could only be dropped (rv4-AIDEV-06). A pointer so false is not omitted.
+	ParallelToolCalls *bool `json:"parallel_tool_calls,omitempty"`
 }
 
 func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []Message, tools []Tool, forceTool string, onDelta func(string)) (Turn, error) {
@@ -132,6 +136,10 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 	}
 	if forceTool != "" {
 		reqBody.ToolChoice = map[string]any{"type": "function", "name": forceTool}
+	}
+	if len(reqBody.Tools) > 0 {
+		oneCall := false
+		reqBody.ParallelToolCalls = &oneCall
 	}
 	body, err := json.Marshal(reqBody)
 	if err != nil {
