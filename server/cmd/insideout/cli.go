@@ -14,9 +14,8 @@ import (
 	"os"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
+	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
-
-const defaultAPIBase = apiclient.DefaultBase
 
 // cliVerb is one row of the verb inventory; cliVerbs is that inventory, in
 // `insideout help` print order. help.go prints it and answers "unknown
@@ -95,11 +94,10 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 
 	// CRUD-completion sub-verbs piggyback on the existing read verbs
 	// (idea/prd/workspaces/projects) and add ideas/evidence.
-	apiBase := clientAPIBase()
 	if len(rest) > 0 {
 		switch cmd + " " + rest[0] {
 		case "idea update", "idea delete", "prd update", "workspaces create", "projects create":
-			return runCrudCommand(cmd+" "+rest[0], rest[1:], apiBase)
+			return runCrudCommand(cmd+" "+rest[0], rest[1:])
 		}
 	}
 	switch cmd {
@@ -109,37 +107,36 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		// Container probe: no API client, no flags — see cli_health.go.
 		return true, runHealthCommand()
 	case "ideas", "evidence", "join":
-		return runCrudCommand(cmd, rest, apiBase)
+		return runCrudCommand(cmd, rest)
 	case "roadmap":
-		return runRoadmapCommand(rest, clientAPIBase())
+		return runRoadmapCommand(rest)
 	case "build", "expand", "build-confirm", "expand-confirm":
-		return runAgentCommand(cmd, rest, clientAPIBase())
+		return runAgentCommand(cmd, rest)
 	case "repo", "sync":
-		return runGithubCommand(cmd, rest, clientAPIBase())
+		return runGithubCommand(cmd, rest)
 	case "guide":
-		return runGuideCommand(rest, clientAPIBase())
+		return runGuideCommand(rest)
 	case "commit", "versions", "readiness", "view", "agent-context", "checkpoint", "propose", "revisions", "snapshot":
-		return runVersionCommands(cmd, rest, clientAPIBase())
+		return runVersionCommands(cmd, rest)
 	case "presence":
-		return runRoadmapCommand(append([]string{"presence"}, rest...), clientAPIBase())
+		return runRoadmapCommand(append([]string{"presence"}, rest...))
 	case "idea":
-		return runIdeaCommand(rest, clientAPIBase())
+		return runIdeaCommand(rest)
 	case "login", "register", "forgot-password", "reset-password":
-		return runAuthCommand(cmd, rest, clientAPIBase())
+		return runAuthCommand(cmd, rest)
 	case "invite", "invites", "signup-mode":
-		return runAdminCommand(cmd, rest, clientAPIBase())
+		return runAdminCommand(cmd, rest)
 	case "whoami", "workspaces", "projects", "prd":
 	default:
 		return false, 0
 	}
 
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	api := fs.String("api", clientAPIBase(), "API base URL")
+	api := apiFlag(fs)
 	if err := fs.Parse(rest); err != nil {
 		return true, 2
 	}
-	c := apiclient.New(*api)
-	c.SetToken(clientToken())
+	c := clientFromFlag(*api)
 
 	switch cmd {
 	case "whoami":
@@ -160,6 +157,19 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return printJSON(c.Prd(fs.Args()[0]))
 	}
 	return false, 0
+}
+
+// apiFlag registers the shared --api flag. It stays empty unless the operator
+// passes it, so clientconfig.Resolve alone decides the base (--api, then
+// INSIDEOUT_API, then the saved login, then the hosted API).
+func apiFlag(fs *flag.FlagSet) *string {
+	return fs.String("api", "", "API base URL (default: INSIDEOUT_API, the saved login, then the hosted API)")
+}
+
+// clientFromFlag builds a verb's API client from its parsed --api value.
+// Call it only after fs.Parse: a client built earlier cannot see the flag.
+func clientFromFlag(flagAPI string) *apiclient.Client {
+	return clientconfig.Resolve(flagAPI).Client()
 }
 
 func credentials(args []string) (string, string, error) {
@@ -188,11 +198,4 @@ func printJSON(raw json.RawMessage, err error) (bool, int) {
 	}
 	fmt.Println(buf.String())
 	return true, 0
-}
-
-func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return fallback
 }

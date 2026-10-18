@@ -8,21 +8,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-func runGuideCommand(args []string, api string) (bool, int) {
+func runGuideCommand(args []string) (bool, int) {
 	fs := flag.NewFlagSet("guide", flag.ContinueOnError)
-	applyAPIFlag(fs, &api)
+	api := apiFlag(fs)
 	out := fs.String("out", "", "write the guide to this file instead of stdout")
 	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 		fmt.Fprintln(os.Stderr, "usage: insideout guide [--out insideout.yaml] <project-id>")
 		return true, 2
 	}
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
-	g, err := c.Guide(fs.Args()[0])
+	g, err := clientFromFlag(*api).Guide(fs.Args()[0])
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return true, 1

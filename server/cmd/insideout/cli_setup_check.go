@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/probe"
 )
 
@@ -55,7 +56,7 @@ func runHealthCheck(llmLive bool) (bool, int) {
 }
 
 func checkAPI(ctx context.Context) checkOutcome {
-	base := clientAPIBase()
+	base := clientconfig.Resolve("").Base
 	res, err := probe.APIProbe(ctx, nil, base)
 	switch {
 	case err == nil && res.AuthRequired:

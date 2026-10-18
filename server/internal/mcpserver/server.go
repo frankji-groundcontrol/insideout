@@ -6,7 +6,6 @@ package mcpserver
 
 import (
 	"encoding/json"
-	"os"
 	"sync"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -16,11 +15,12 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
-// Build returns the MCP server for the given API base. Configure with
-// INSIDEOUT_API (default: hosted API) and INSIDEOUT_TOKEN, or sign the
-// process in at runtime with the auth_* tools (2026-08-24: all four
-// surfaces must agree on auth ways; a login tool's token is process
-// state, never conversation output).
+// Build returns the MCP server for the given API base. An empty base
+// resolves like the CLI (INSIDEOUT_API, the saved login's api_base, then the
+// hosted API) and the token comes from INSIDEOUT_TOKEN or the saved login —
+// all through clientconfig.Resolve — or sign the process in at runtime with
+// the auth_* tools (2026-08-24: all four surfaces must agree on auth ways; a
+// login tool's token is process state, never conversation output).
 func Build(api string) *server.MCPServer {
 	s := server.NewMCPServer("insideout", "0.1.0",
 		server.WithToolCapabilities(false),
@@ -37,33 +37,11 @@ func Build(api string) *server.MCPServer {
 }
 
 // session holds the token acquired by an auth tool so subsequent tool
-// calls use it; INSIDEOUT_TOKEN stays the fallback. Process memory, never
-// conversation output.
+// calls use it; the saved credentials stay the fallback. Process memory,
+// never conversation output.
 var session struct {
 	sync.Mutex
 	token string
-}
-
-// sessionToken returns the in-process login token, falling back to
-// INSIDEOUT_TOKEN, then to the config file `insideout setup` writes —
-// the same precedence every client surface resolves through
-// internal/clientconfig (docs/plans/2026-10-07-setup-tui.md).
-func sessionToken() string {
-	session.Lock()
-	inProcess := session.token
-	session.Unlock()
-	if inProcess != "" {
-		return inProcess
-	}
-	if v := os.Getenv("INSIDEOUT_TOKEN"); v != "" {
-		return v
-	}
-	if path, err := clientconfig.DefaultPath(); err == nil {
-		if cfg, err := clientconfig.Load(path); err == nil {
-			return cfg.Token
-		}
-	}
-	return ""
 }
 
 func setSessionToken(tok string) {
@@ -72,9 +50,16 @@ func setSessionToken(tok string) {
 	session.Unlock()
 }
 
+// client resolves the saved credentials like every other surface
+// (clientconfig.Resolve) and lets this process's own login win over them.
 func client(api string) *apiclient.Client {
-	c := apiclient.New(api)
-	c.SetToken(sessionToken())
+	c := clientconfig.Resolve(api).Client()
+	session.Lock()
+	inProcess := session.token
+	session.Unlock()
+	if inProcess != "" {
+		c.SetToken(inProcess)
+	}
 	return c
 }
 

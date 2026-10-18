@@ -11,50 +11,46 @@ import (
 	"fmt"
 	"os"
 	"time"
-
-	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
 // runRoadmapCommand handles `insideout roadmap
 // <list|add|update|move|delete|progress|presence> …`.
 // Returns (handled, exitCode).
-func runRoadmapCommand(args []string, api string) (bool, int) {
+func runRoadmapCommand(args []string) (bool, int) {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|add|update|move|delete|progress|presence> …")
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
 
 	switch sub {
 	case "progress":
 		fs := flag.NewFlagSet("roadmap progress", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout roadmap progress <project-id>")
 			return true, 2
 		}
-		return printJSON(c.RoadmapProgress(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).RoadmapProgress(fs.Args()[0]))
 	case "presence":
 		fs := flag.NewFlagSet("presence", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout presence <project-id>")
 			return true, 2
 		}
-		return printJSON(c.ProjectPresence(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).ProjectPresence(fs.Args()[0]))
 	case "list":
 		fs := flag.NewFlagSet("roadmap list", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout roadmap list <project-id>")
 			return true, 2
 		}
-		return printJSON(c.RoadmapList(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).RoadmapList(fs.Args()[0]))
 	case "add":
 		fs := flag.NewFlagSet("roadmap add", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		title := fs.String("title", "", "node title (required)")
 		description := fs.String("description", "", "node description")
 		parent := fs.String("parent", "", "parent node id (empty = root)")
@@ -66,10 +62,10 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 		if *parent != "" {
 			parentID = parent
 		}
-		return printJSON(c.RoadmapAdd(fs.Args()[0], *title, *description, parentID))
+		return printJSON(clientFromFlag(*api).RoadmapAdd(fs.Args()[0], *title, *description, parentID))
 	case "update":
 		fs := flag.NewFlagSet("roadmap update", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		title := fs.String("title", "", "new title")
 		description := fs.String("description", "", "new description")
 		status := fs.String("status", "", "locked|pending|in_progress|done")
@@ -90,10 +86,10 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 			}
 			dl = deadline
 		}
-		return printJSON(c.RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status), dl))
+		return printJSON(clientFromFlag(*api).RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status), dl))
 	case "move":
 		fs := flag.NewFlagSet("roadmap move", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		parent := fs.String("parent", "", "new parent id (empty = root)")
 		position := fs.Int("position", -1, "position among siblings")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
@@ -108,15 +104,15 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 		if *position >= 0 {
 			pos = position
 		}
-		return printJSON(c.RoadmapMove(fs.Args()[0], parentID, pos))
+		return printJSON(clientFromFlag(*api).RoadmapMove(fs.Args()[0], parentID, pos))
 	case "delete":
 		fs := flag.NewFlagSet("roadmap delete", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout roadmap delete <node-id>")
 			return true, 2
 		}
-		if err := c.RoadmapDelete(fs.Args()[0]); err != nil {
+		if err := clientFromFlag(*api).RoadmapDelete(fs.Args()[0]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return true, 1
 		}
@@ -129,9 +125,9 @@ func runRoadmapCommand(args []string, api string) (bool, int) {
 
 // runAgentCommand handles the draft verbs (`build`, `expand`) and the
 // confirm verbs that write them (`build-confirm`, `expand-confirm`).
-func runAgentCommand(cmd string, args []string, api string) (bool, int) {
+func runAgentCommand(cmd string, args []string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	applyAPIFlag(fs, &api)
+	api := apiFlag(fs)
 	count := 0
 	draft := ""
 	switch cmd {
@@ -155,8 +151,7 @@ func runAgentCommand(cmd string, args []string, api string) (bool, int) {
 		fmt.Fprintln(os.Stderr, "confirm needs the drafted JSON from the matching draft command")
 		return true, 2
 	}
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
+	c := clientFromFlag(*api)
 	switch cmd {
 	case "build":
 		return printJSON(c.BuildFromPrd(fs.Args()[0]))
@@ -171,14 +166,13 @@ func runAgentCommand(cmd string, args []string, api string) (bool, int) {
 
 // runGithubCommand handles `insideout repo set <project-id> <repo-url>`
 // and `insideout sync <project-id>`.
-func runGithubCommand(cmd string, args []string, api string) (bool, int) {
+func runGithubCommand(cmd string, args []string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	applyAPIFlag(fs, &api)
+	api := apiFlag(fs)
 	if err := fs.Parse(args); err != nil {
 		return true, 2
 	}
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
+	c := clientFromFlag(*api)
 	switch cmd {
 	case "repo":
 		if len(fs.Args()) != 3 || fs.Args()[0] != "set" {
@@ -201,8 +195,4 @@ func strPtrIfSet(v string) *string {
 		return nil
 	}
 	return &v
-}
-
-func applyAPIFlag(fs *flag.FlagSet, api *string) {
-	fs.StringVar(api, "api", envOr("INSIDEOUT_API", defaultAPIBase), "API base URL")
 }

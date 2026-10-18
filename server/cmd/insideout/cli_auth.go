@@ -14,11 +14,13 @@ import (
 	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
+	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 	"golang.org/x/term"
 )
 
-func runAuthCommand(cmd string, args []string, api string) (bool, int) {
+func runAuthCommand(cmd string, args []string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
+	api := apiFlag(fs)
 	useCode := fs.Bool("code", false, "email a 6-digit code and read it from stdin")
 	useMagic := fs.Bool("magic", false, "email a sign-in link and read the pasted link/token from stdin")
 	invite := fs.String("invite", "", "invitation code (required when signup is invitation-only)")
@@ -26,7 +28,8 @@ func runAuthCommand(cmd string, args []string, api string) (bool, int) {
 		return true, 2
 	}
 	positional := fs.Args()
-	c := apiclient.New(api)
+	// Sign-in verbs carry no bearer: build the client from the resolved base only.
+	c := apiclient.New(clientconfig.Resolve(*api).Base)
 
 	switch cmd {
 	case "login":

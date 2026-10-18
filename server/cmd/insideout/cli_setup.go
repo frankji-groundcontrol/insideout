@@ -21,28 +21,6 @@ import (
 	"sync"
 )
 
-// clientAPIBase and clientToken resolve client credentials through
-// internal/clientconfig once for the whole process: per field, the
-// environment (INSIDEOUT_API / INSIDEOUT_TOKEN) overrides the config
-// file `insideout setup` writes, and the hosted default applies last.
-// Every CLI verb resolves through these helpers instead of reading
-// os.Getenv directly (the plan's single-precedence rule).
-func clientAPIBase() string {
-	cfg, err := clientconfig.Load(mustConfigPath())
-	if err != nil || cfg.APIBase == "" {
-		return defaultAPIBase
-	}
-	return cfg.APIBase
-}
-
-func clientToken() string {
-	cfg, err := clientconfig.Load(mustConfigPath())
-	if err != nil {
-		return ""
-	}
-	return cfg.Token
-}
-
 func mustConfigPath() string {
 	path, err := clientconfig.DefaultPath()
 	if err != nil {
@@ -72,7 +50,7 @@ func (s *setupClient) client() *apiclient.Client {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.c == nil {
-		s.c = apiclient.New(defaultAPIBase)
+		s.c = apiclient.New(apiclient.DefaultBase)
 	}
 	return s.c
 }
@@ -162,7 +140,7 @@ func runSetupCommand(rest []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start/--create-roles belong to --local")
 			return true, 2
 		}
-		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", clientAPIBase())
+		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", clientconfig.Resolve("").Base)
 		fmt.Println("Sign in interactively:  insideout setup")
 		fmt.Println("Or with the plain CLI:  insideout login you@example.com")
 		fmt.Println("A server on this machine: insideout setup --local --postgres bundled|own")
@@ -195,7 +173,7 @@ func runInteractiveSetup() (bool, int) {
 		Prober:         setupProber{sc: sc},
 		Client:         sc,
 		Persister:      setupPersister{path: mustConfigPath()},
-		DefaultBaseURL: defaultAPIBase,
+		DefaultBaseURL: apiclient.DefaultBase,
 		LocalSetup: func(ctx context.Context, postgres string) error {
 			_, code := runLocalSetup(postgres, false, false)
 			if code == 0 {

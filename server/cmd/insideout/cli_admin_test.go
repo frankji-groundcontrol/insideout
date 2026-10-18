@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
 // The admin verbs against a live HTTP API: invite revoke is a subcommand
@@ -16,9 +18,10 @@ func TestInviteRevokeSubcommand(t *testing.T) {
 		w.Write([]byte(`{"ok":true}`))
 	}))
 	t.Cleanup(srv.Close)
+	writeClientConfig(t, clientconfig.Config{})
 	t.Setenv("INSIDEOUT_TOKEN", "tok")
 
-	handled, code := runAdminCommand("invite", []string{"revoke", "inv-1"}, srv.URL)
+	handled, code := runAdminCommand("invite", []string{"--api", srv.URL, "revoke", "inv-1"})
 	if !handled || code != 0 {
 		t.Fatalf("invite revoke = (handled=%v, code=%d), want (true, 0)", handled, code)
 	}
@@ -37,9 +40,10 @@ func TestInviteCreateUnchanged(t *testing.T) {
 		w.Write([]byte(`{"code":"c"}`))
 	}))
 	t.Cleanup(srv.Close)
+	writeClientConfig(t, clientconfig.Config{})
 	t.Setenv("INSIDEOUT_TOKEN", "tok")
 
-	handled, code := runAdminCommand("invite", []string{"a@b.c"}, srv.URL)
+	handled, code := runAdminCommand("invite", []string{"--api", srv.URL, "a@b.c"})
 	if !handled || code != 0 {
 		t.Fatalf("invite = (handled=%v, code=%d), want (true, 0)", handled, code)
 	}

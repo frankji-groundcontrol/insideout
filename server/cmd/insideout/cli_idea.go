@@ -7,33 +7,29 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-func runIdeaCommand(args []string, api string) (bool, int) {
+func runIdeaCommand(args []string) (bool, int) {
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "usage: insideout idea <create|convert> …")
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
 
 	switch sub {
 	case "create":
 		fs := flag.NewFlagSet("idea create", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		title := fs.String("title", "", "idea title (required)")
 		content := fs.String("content", "", "idea body")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 || *title == "" {
 			fmt.Fprintln(os.Stderr, "usage: insideout idea create --title T [--content C] <workspace-id>")
 			return true, 2
 		}
-		return printJSON(c.IdeaCreate(fs.Args()[0], *title, *content))
+		return printJSON(clientFromFlag(*api).IdeaCreate(fs.Args()[0], *title, *content))
 	case "proposal-decide":
 		fs := flag.NewFlagSet("proposal-decide", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		accept := fs.Bool("accept", false, "accept the proposal")
 		reject := fs.Bool("reject", false, "reject the proposal")
 		reason := fs.String("reason", "", "why")
@@ -46,15 +42,15 @@ func runIdeaCommand(args []string, api string) (bool, int) {
 		if *accept {
 			decision = "accepted"
 		}
-		return printJSON(c.DecideProposal(fs.Args()[0], decision, *reason, *apply))
+		return printJSON(clientFromFlag(*api).DecideProposal(fs.Args()[0], decision, *reason, *apply))
 	case "convert":
 		fs := flag.NewFlagSet("idea convert", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout idea convert <idea-id>")
 			return true, 2
 		}
-		return printJSON(c.IdeaConvert(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).IdeaConvert(fs.Args()[0]))
 	}
 	fmt.Fprintln(os.Stderr, "unknown idea subcommand:", sub)
 	return true, 2

@@ -9,7 +9,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
-// sessionToken must resolve like every other client surface
+// The MCP client must resolve credentials like every other client surface
 // (docs/plans/2026-10-07-setup-tui.md): the environment wins, and a
 // token written by `insideout setup`'s config file is the fallback.
 // These tests pin HOME and XDG_CONFIG_HOME so the user's real config file
@@ -30,7 +30,7 @@ func setConfigToken(t *testing.T, token string) {
 	}
 }
 
-func TestSessionTokenFallsBackToConfigFile(t *testing.T) {
+func TestClientTokenFallsBackToConfigFile(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	// Linux resolves the config dir from XDG_CONFIG_HOME before HOME (and CI
 	// sets it), so pinning HOME alone leaves every test on one shared file.
@@ -38,23 +38,23 @@ func TestSessionTokenFallsBackToConfigFile(t *testing.T) {
 	t.Setenv("INSIDEOUT_TOKEN", "")
 	setConfigToken(t, "cfg-file-token")
 
-	if got := sessionToken(); got != "cfg-file-token" {
-		t.Fatalf("sessionToken() = %q, want the config-file token", got)
+	if got := client("").Token(); got != "cfg-file-token" {
+		t.Fatalf("client token = %q, want the config-file token", got)
 	}
 }
 
-func TestSessionTokenEnvBeatsConfigFile(t *testing.T) {
+func TestClientTokenEnvBeatsConfigFile(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_TOKEN", "env-token")
 	setConfigToken(t, "cfg-file-token")
 
-	if got := sessionToken(); got != "env-token" {
-		t.Fatalf("sessionToken() = %q, want the env token to win", got)
+	if got := client("").Token(); got != "env-token" {
+		t.Fatalf("client token = %q, want the env token to win", got)
 	}
 }
 
-func TestSessionTokenInProcessBeatsBoth(t *testing.T) {
+func TestClientTokenInProcessBeatsBoth(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("INSIDEOUT_TOKEN", "env-token")
@@ -62,8 +62,8 @@ func TestSessionTokenInProcessBeatsBoth(t *testing.T) {
 	setSessionToken("in-process-token")
 	t.Cleanup(func() { setSessionToken("") })
 
-	if got := sessionToken(); got != "in-process-token" {
-		t.Fatalf("sessionToken() = %q, want the in-process token to win", got)
+	if got := client("").Token(); got != "in-process-token" {
+		t.Fatalf("client token = %q, want the in-process token to win", got)
 	}
 }
 

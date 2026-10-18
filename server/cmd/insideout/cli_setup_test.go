@@ -12,11 +12,10 @@ import (
 )
 
 // The setup subcommand's flag surface mirrors scripts/setup.sh's
-// agent contract (docs/plans/2026-10-07-setup-tui.md, join phase),
-// and the CLI's credential helpers resolve through clientconfig:
-// env beats the config file, the config file beats the hosted
-// default. HOME and XDG_CONFIG_HOME are pinned per test so the user's
-// real config never influences a result, on macOS or Linux.
+// agent contract (docs/plans/2026-10-07-setup-tui.md, join phase).
+// HOME and XDG_CONFIG_HOME are pinned per test so the user's real
+// config never influences a result, on macOS or Linux. Credential
+// precedence itself is tested where it lives, in internal/clientconfig.
 
 func writeClientConfig(t *testing.T, cfg clientconfig.Config) {
 	t.Helper()
@@ -32,50 +31,6 @@ func writeClientConfig(t *testing.T, cfg clientconfig.Config) {
 	}
 	if err := clientconfig.Save(path, cfg); err != nil {
 		t.Fatalf("write config: %v", err)
-	}
-}
-
-func TestClientAPIBaseAndTokenFromConfigFile(t *testing.T) {
-	writeClientConfig(t, clientconfig.Config{
-		APIBase: "https://selfhosted.example/api/v1",
-		Token:   "cfg-token",
-	})
-
-	if got := clientAPIBase(); got != "https://selfhosted.example/api/v1" {
-		t.Errorf("clientAPIBase() = %q, want the config-file base", got)
-	}
-	if got := clientToken(); got != "cfg-token" {
-		t.Errorf("clientToken() = %q, want the config-file token", got)
-	}
-}
-
-func TestClientEnvBeatsConfigFile(t *testing.T) {
-	writeClientConfig(t, clientconfig.Config{
-		APIBase: "https://selfhosted.example/api/v1",
-		Token:   "cfg-token",
-	})
-	t.Setenv("INSIDEOUT_API", "https://env.example/api/v1")
-	t.Setenv("INSIDEOUT_TOKEN", "env-token")
-
-	if got := clientAPIBase(); got != "https://env.example/api/v1" {
-		t.Errorf("clientAPIBase() = %q, want the env base to win", got)
-	}
-	if got := clientToken(); got != "env-token" {
-		t.Errorf("clientToken() = %q, want the env token to win", got)
-	}
-}
-
-func TestClientDefaultsWithoutConfig(t *testing.T) {
-	t.Setenv("HOME", t.TempDir())
-	t.Setenv("XDG_CONFIG_HOME", "")
-	t.Setenv("INSIDEOUT_API", "")
-	t.Setenv("INSIDEOUT_TOKEN", "")
-
-	if got := clientAPIBase(); got != defaultAPIBase {
-		t.Errorf("clientAPIBase() = %q, want the hosted default", got)
-	}
-	if got := clientToken(); got != "" {
-		t.Errorf("clientToken() = %q, want empty", got)
 	}
 }
 

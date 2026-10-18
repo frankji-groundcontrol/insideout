@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
 // stringList is a repeatable string flag (--section k=v --section k2=v2).
@@ -22,8 +20,9 @@ func (s *stringList) Set(v string) error {
 	return nil
 }
 
-func runCrudCommand(cmd string, args []string, api string) (bool, int) {
+func runCrudCommand(cmd string, args []string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
+	api := apiFlag(fs)
 	title := fs.String("title", "", "title")
 	content := fs.String("content", "", "content (idea body / section text)")
 	desc := fs.String("desc", "", "description")
@@ -34,8 +33,7 @@ func runCrudCommand(cmd string, args []string, api string) (bool, int) {
 		return true, 2
 	}
 	positional := fs.Args()
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
+	c := clientFromFlag(*api)
 
 	need := func(n int, usage string) bool {
 		if len(positional) != n {

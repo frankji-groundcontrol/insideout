@@ -12,52 +12,50 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-func runVersionCommands(cmd string, args []string, api string) (bool, int) {
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
+func runVersionCommands(cmd string, args []string) (bool, int) {
 	if cmd == "revisions" {
 		fs := flag.NewFlagSet("revisions", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout revisions <prd-id>")
 			return true, 2
 		}
-		return printJSON(c.PrdRevisions(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).PrdRevisions(fs.Args()[0]))
 	}
 	if cmd == "snapshot" {
 		fs := flag.NewFlagSet("snapshot", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		note := fs.String("note", "", "optional note")
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout snapshot [--note N] <prd-id>")
 			return true, 2
 		}
-		return printJSON(c.SnapshotPrd(fs.Args()[0], *note))
+		return printJSON(clientFromFlag(*api).SnapshotPrd(fs.Args()[0], *note))
 	}
 	if cmd == "agent-context" {
 		fs := flag.NewFlagSet("agent-context", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		mode := fs.String("mode", "implementation", "brainstorming|implementation|review")
 		focus := fs.String("focus", "", "focus node id")
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout agent-context [--mode M] [--focus node] <project-id>")
 			return true, 2
 		}
-		return printJSON(c.AgentContext(fs.Args()[0], *mode, *focus))
+		return printJSON(clientFromFlag(*api).AgentContext(fs.Args()[0], *mode, *focus))
 	}
 	if cmd == "checkpoint" {
 		fs := flag.NewFlagSet("checkpoint", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		node := fs.String("node", "", "roadmap node id (optional)")
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 2 {
 			fmt.Fprintln(os.Stderr, "usage: insideout checkpoint [--node id] <project-id> <summary>")
 			return true, 2
 		}
-		return printJSON(c.AgentCheckpoint(fs.Args()[0], *node, fs.Args()[1]))
+		return printJSON(clientFromFlag(*api).AgentCheckpoint(fs.Args()[0], *node, fs.Args()[1]))
 	}
 	if cmd == "propose" {
 		fs := flag.NewFlagSet("propose", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		kind := fs.String("kind", "structure", "structure|scope|priority")
 		detail := fs.String("detail", "", "extra detail")
 		var items multiFlag
@@ -71,17 +69,18 @@ func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 			title, hint, _ := strings.Cut(it, "@")
 			proposed[i] = apiclient.ProposeItem{Title: title, ParentHint: hint}
 		}
-		return printJSON(c.AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail, proposed))
+		return printJSON(clientFromFlag(*api).AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail, proposed))
 	}
 	if cmd == "view" {
 		fs := flag.NewFlagSet("view", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		audience := fs.String("audience", "decision", "decision|management|delivery|validation")
 		out := fs.String("export", "", "write the audience markdown view to this file")
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout view [--audience A] [--export FILE] <prd-id>")
 			return true, 2
 		}
+		c := clientFromFlag(*api)
 		if *out != "" {
 			md, err := c.PrdExportAudience(fs.Args()[0], *audience)
 			if err != nil {
@@ -99,25 +98,25 @@ func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 	}
 	if cmd == "readiness" {
 		fs := flag.NewFlagSet("readiness", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout readiness <prd-id>")
 			return true, 2
 		}
-		return printJSON(c.PrdReadiness(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).PrdReadiness(fs.Args()[0]))
 	}
 	if cmd == "versions" {
 		fs := flag.NewFlagSet("versions", flag.ContinueOnError)
-		applyAPIFlag(fs, &api)
+		api := apiFlag(fs)
 		if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 			fmt.Fprintln(os.Stderr, "usage: insideout versions <prd-id>")
 			return true, 2
 		}
-		return printJSON(c.PrdVersions(fs.Args()[0]))
+		return printJSON(clientFromFlag(*api).PrdVersions(fs.Args()[0]))
 	}
 	// commit
 	fs := flag.NewFlagSet("commit", flag.ContinueOnError)
-	applyAPIFlag(fs, &api)
+	api := apiFlag(fs)
 	name := fs.String("name", "", "version name (required)")
 	audience := fs.String("audience", "", "decision|management|delivery|validation (required)")
 	summary := fs.String("summary", "", "change summary")
@@ -128,7 +127,7 @@ func runVersionCommands(cmd string, args []string, api string) (bool, int) {
 		fmt.Fprintln(os.Stderr, "usage: insideout commit --name N --audience A [--summary S] [--unresolved U]... [--note D] <prd-id>")
 		return true, 2
 	}
-	return printJSON(c.CommitPrd(fs.Args()[0], *name, *audience, *summary, unresolved, *note))
+	return printJSON(clientFromFlag(*api).CommitPrd(fs.Args()[0], *name, *audience, *summary, unresolved, *note))
 }
 
 // multiFlag collects repeated string flags.

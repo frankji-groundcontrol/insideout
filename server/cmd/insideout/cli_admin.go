@@ -8,18 +8,16 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
-func runAdminCommand(cmd string, args []string, api string) (bool, int) {
+func runAdminCommand(cmd string, args []string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
+	api := apiFlag(fs)
 	ttl := fs.Int("ttl", 0, "invitation lifetime in hours (default 168 = 7 days)")
 	if err := fs.Parse(args); err != nil {
 		return true, 2
 	}
-	c := apiclient.New(api)
-	c.SetToken(clientToken())
+	c := clientFromFlag(*api)
 
 	switch cmd {
 	case "invite":
