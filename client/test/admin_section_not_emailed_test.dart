@@ -81,4 +81,30 @@ void main() {
     expect(find.text(link), findsOneWidget);
     expect(find.text('Copy signup link'), findsOneWidget);
   });
+
+  testWidgets('mailSent true keeps saying the invitee was emailed', (
+    tester,
+  ) async {
+    await _createInvitationDialog(tester, {
+      'code': 'one-time-code',
+      'signupUrl': link,
+      'mailSent': true,
+    });
+
+    expect(find.textContaining('was emailed to the invitee'), findsOneWidget);
+    expect(find.textContaining('was not sent'), findsNothing);
+  });
+
+  testWidgets('a server that predates mailSent makes no not-emailed claim', (
+    tester,
+  ) async {
+    // Same convention as authMailEnabled: only an explicit false warns.
+    await _createInvitationDialog(tester, {
+      'code': 'one-time-code',
+      'signupUrl': link,
+    });
+
+    expect(find.textContaining('was emailed to the invitee'), findsOneWidget);
+    expect(find.textContaining('was not sent'), findsNothing);
+  });
 }

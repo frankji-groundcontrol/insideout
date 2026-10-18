@@ -15,7 +15,8 @@ import '../../theme/field_card.dart';
 
 /// Admin surface on the profile page: the signup-mode switch and the
 /// invitation ledger (create shows the one-time code once; the server
-/// also emails it to the invitee).
+/// also emails it to the invitee, best-effort: when it reports mailSent
+/// false the dialog tells the admin to send the signup link themselves).
 class AdminSection extends StatefulWidget {
   const AdminSection({super.key});
 
@@ -84,6 +85,9 @@ class _AdminSectionState extends State<AdminSection> {
       if (!mounted) return;
       final code = res['code']?.toString() ?? '';
       final url = res['signupUrl']?.toString() ?? '';
+      // Only an explicit false: a server that predates the field says nothing
+      // either way, same convention as authMailEnabled.
+      final notEmailed = res['mailSent'] == false;
       await showBlockModal<void>(
         context: context,
         title: l10n.t('admin.codeTitle'),
@@ -91,7 +95,9 @@ class _AdminSectionState extends State<AdminSection> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l10n.t('admin.codeOnce')),
+            Text(
+              l10n.t(notEmailed ? 'admin.codeNotEmailed' : 'admin.codeOnce'),
+            ),
             const SizedBox(height: Cobalt.space3),
             SelectableText(
               code,

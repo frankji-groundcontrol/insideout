@@ -93,7 +93,11 @@ func invitationResponse(i *store.Invitation) invitationView {
 
 // handleCreateInvitation mints an email-bound invitation code and emails
 // it to the invitee. The code is returned exactly once — only its sha256
-// lives in the database.
+// lives in the database. The mail is best-effort: a send failure is logged
+// and the invitation still stands, so the response says whether the mail
+// actually went out (mailSent: the sender is enabled — dev mode only logs —
+// and the provider accepted the message). When it is false the admin hands
+// over signupUrl themselves; the CLI and MCP pass the field through.
 func (s *Server) handleCreateInvitation(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email    string `json:"email"`
@@ -129,14 +133,16 @@ func (s *Server) handleCreateInvitation(w http.ResponseWriter, r *http.Request) 
 
 	link := s.cfg.PublicURL + "/register?invite=" + code
 	subject, text, html := invitationEmail(link, ttl)
-	if err := s.mail.Send(r.Context(), email, subject, text, html); err != nil {
-		s.log.Error("admin: send invitation", "error", err)
+	sendErr := s.mail.Send(r.Context(), email, subject, text, html)
+	if sendErr != nil {
+		s.log.Error("admin: send invitation", "error", sendErr)
 	}
 
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{
 		"invitation": invitationResponse(inv),
 		"code":       code,
 		"signupUrl":  link,
+		"mailSent":   s.mail.Enabled() && sendErr == nil,
 	})
 }
 
