@@ -124,7 +124,6 @@ interactive flow, or go straight there:
 
   insideout setup                                  # interactive
   insideout setup --hosted                         # use the hosted API
-  insideout setup --local --postgres bundled|own   # own server + PostgreSQL
   insideout setup --check                          # verify the current setup
 
 Docs: docs/usage/installation.md in the $repo repository.
