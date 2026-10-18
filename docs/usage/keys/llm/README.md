@@ -28,3 +28,8 @@ provider credentials.
   `INSIDEOUT_AI_MAX_CONCURRENT` (`llm/coach.yaml`)
 - [ai-queue-wait.md](ai-queue-wait.md) — `INSIDEOUT_AI_QUEUE_WAIT`
   (`llm/coach.yaml`)
+
+`INSIDEOUT_AI_TURN_DEADLINE` (default `12m`) is a third coach knob with no key
+kind: it is an env-only Go duration that bounds one whole coach turn, set in
+`.env` like any optional variable and not managed by the key store. Its row is
+in the [environment reference](../../environment.md#ai-provider).

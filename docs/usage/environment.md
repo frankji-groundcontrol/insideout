@@ -128,6 +128,7 @@ offline coach, not an error.
 | `INSIDEOUT_LLM_SCHEMA` | no | `messages` | Wire format: `messages` (Anthropic Messages at `{base}/messages`) or `responses` (OpenAI Responses at `{base}/responses`). |
 | `INSIDEOUT_AI_MAX_CONCURRENT` | no | `4` | Concurrency ceiling for AI turns; excess turns queue briefly, then are rejected (503 with a retry hint). |
 | `INSIDEOUT_AI_QUEUE_WAIT` | no | `15s` | How long a queued AI turn waits for a slot before rejection (Go `time.Duration`). |
+| `INSIDEOUT_AI_TURN_DEADLINE` | no | `12m` | Wall-clock bound on one whole coach turn (Go `time.Duration`). Stops an upstream that trickles output but never finishes from holding a slot and the conversation lock. Unset, unparsable or non-positive keeps `12m`. Env-only (not a key-store kind), and `docker-compose.yml` does not interpolate it yet, so a compose deployment runs the default. |
 
 ### docker-compose only
 
@@ -158,6 +159,28 @@ while model/schema/base take the same fallbacks `config.Load` applies.
 `DATABASE_URL` deliberately has no
 derived default because Compose cannot nest `${...}` inside a `:-` default
 ([why](../issues/2026-07-20-bug-004-compose-nested-interpolation.md)).
+
+### CLI and MCP client
+
+Read by the `insideout` CLI and the `insideout-mcp` stdio server through
+[`clientconfig.Resolve`](../../server/internal/clientconfig/resolve.go), never by
+`serve`. The saved-login file and the rest of the flow are in
+[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md).
+
+| Variable | Required | Default | Meaning |
+|----------|----------|---------|---------|
+| `INSIDEOUT_API` | no | the saved login's server, else the hosted default | API base the client talks to, `/api/v1` included. Order: `--api`, this variable, the saved login, the hosted default. A saved token is only sent to the server it was saved for. |
+| `INSIDEOUT_TOKEN` | no | — | Bearer token for whichever base is in effect; wins over the saved login. Nothing renews it: the saved session's refresh token is never used with it. |
+
+### Setup and test overrides
+
+Test affordances; none is needed for a normal install.
+
+| Variable | Required | Default | Meaning |
+|----------|----------|---------|---------|
+| `INSIDEOUT_ENV_FILE` | no | `<repo>/.env` | Env file that `env.sh`, `setup.sh`, `insideout setup --local` and `setup --check` read and write instead of the root `.env`. Point it at a scratch file so a test never touches the real one. |
+| `INSIDEOUT_SETUP_REPO_ROOT` | no | walk up from the working directory | Checkout `insideout setup` treats as the repo root. It must hold `docker-compose.yml`, `.env.example` and `server/go.mod`, else the command stops. |
+| `INSIDEOUT_ROLELESS_URL` | no | `postgres://postgres@127.0.0.1:5612/postgres?sslmode=disable` | `-tags roleless` Go tests only (CI sets it): a superuser DSN of a throwaway cluster that has no `insideout_*` roles; the suite refuses a cluster that already has them. Never aim it at a shared instance. |
 
 ### Frontend
 
