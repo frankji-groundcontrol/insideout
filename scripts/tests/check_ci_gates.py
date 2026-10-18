@@ -106,13 +106,23 @@ def weekly_schedule():
 
 
 def scheduled_shuffle():
-    """PM-02: the scheduled run is the one that shuffles test order."""
-    tests = [s for s in steps(job(read(CI), "server")) if re.search(r"go test \./\.\.\. .*-race", s)]
-    if any("-shuffle=on" in s and "github.event_name == 'schedule'" in s for s in tests):
-        return []
+    """PM-02: only the scheduled run shuffles, and the test command gets the flag."""
+    for step in steps(job(read(CI), "server")):
+        text = code(step)
+        test = re.search(r"^\s*(go test \./\.\.\. .*-race.*)$", text, re.M)
+        if not test:
+            continue
+        if "-shuffle=on" in test.group(1) and re.search(r"^\s+if:.*github\.event_name == 'schedule'", text, re.M):
+            return []
+        # NAME: ${{ github.event_name == 'schedule' && '-shuffle=on' || '-shuffle=off' }}
+        for name, expr in re.findall(r"^\s+(\w+):\s*(\$\{\{.*\}\})\s*$", text, re.M):
+            if ("github.event_name == 'schedule'" in expr and "-shuffle=on" in expr
+                    and re.search(rf"\$\{{?{name}\b", test.group(1))):
+                return []
     return [
         f"{CI}: no server-job step runs `go test ./... -race -shuffle=on` for the "
-        "scheduled event - an order dependence stays invisible (rv4-PM-02)"
+        "scheduled event only, with the flag reaching the command - an order "
+        "dependence stays invisible (rv4-PM-02)"
     ]
 
 
