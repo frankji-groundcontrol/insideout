@@ -103,11 +103,11 @@ full A–F layout if they are not in the lock set.
 
 Theme is still Ink & Seal:
 
-- [`client/lib/theme/ink_seal.dart`](../../client/lib/theme/ink_seal.dart)
-- [`client/lib/theme/ink_seal_theme.dart`](../../client/lib/theme/ink_seal_theme.dart)
-- [`client/lib/theme/seal_chip.dart`](../../client/lib/theme/seal_chip.dart)
+- `client/lib/theme/ink_seal.dart`
+- `client/lib/theme/ink_seal_theme.dart`
+- `client/lib/theme/seal_chip.dart`
 - wired from [`client/lib/app.dart`](../../client/lib/app.dart)
-- asserted by [`client/test/ink_seal_test.dart`](../../client/test/ink_seal_test.dart)
+- asserted by `client/test/ink_seal_test.dart`
   (expects vermilion `#C8402F` and celadon ground)
 
 Rename the token type to **Cobalt**. Do not keep celadon/seal values

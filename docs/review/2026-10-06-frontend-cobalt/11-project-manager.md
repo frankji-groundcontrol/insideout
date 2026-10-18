@@ -69,7 +69,7 @@ No user-facing doc pins the Flutter version: local-development says only "Flutte
 **Evidence:** `docs/usage/local-development.md:11`
 
 ```
-- **Flutter 3** (for `client/`; see [`client/README.md`](../../client/README.md)); — client/README.md has no version or Prerequisites section at all; client/Dockerfile:1-3 `# Pin to 3.44.0 (Dart 3.12.0). ... FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build`; ci.yml:85 `flutter-version: 3.44.0`.
+- **Flutter 3** (for `client/`; see [`client/README.md`](../../../client/README.md)); — client/README.md has no version or Prerequisites section at all; client/Dockerfile:1-3 `# Pin to 3.44.0 (Dart 3.12.0). ... FROM ghcr.io/cirruslabs/flutter:3.44.0 AS build`; ci.yml:85 `flutter-version: 3.44.0`.
 ```
 
 **Fix:** Add a Prerequisites line to `client/README.md` ("Flutter 3.44.x — the version CI and client/Dockerfile pin") and tighten `docs/usage/local-development.md:11` to match.

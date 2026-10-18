@@ -31,13 +31,13 @@ closes the gap in **one pass** (decision D1), ordered cheapest-correctness-first
 
 ## Findings (from the analysis)
 
-**Layout** ([tidyTree.ts](../../app/src/utils/tidyTree.ts)): rightward implies
+**Layout** (`tidyTree.ts`): rightward implies
 "later," but children are decompositions — depth reads as progress; the seals
 carry the real state. The root band grows tall and left-heavy; `fitTo` zooms the
 embedded shell to an unreadable thumbnail (embedded = map, full = territory).
 "Parallel tracks" have no visual grouping. Blank 留白 ground is unanchored.
 
-**Connections** ([RoadmapCanvas.vue](../../app/src/components/roadmap/RoadmapCanvas.vue)):
+**Connections** (`RoadmapCanvas.vue`):
 edge tint = child status duplicates the node's seal and spends vermilion (erodes
 the One Seal Rule). Edges encode status (redundant) and none of the collaborative
 signal the lead needs. During drag the edge shows the *past*, never the
@@ -52,7 +52,7 @@ unanswerable; concurrent edits teleport cards.
 
 `UpdateRoadmapNode` is a blind full-field write (`SET title, description,
 status`), and `cycleStatus()` re-sends the title/description it holds *in memory*
-with the new status ([RoadmapCanvasNode.vue:42](../../app/src/components/roadmap/RoadmapCanvasNode.vue)).
+with the new status (`RoadmapCanvasNode.vue:42`).
 A edits a title while B clicks the status seal; B's PATCH overwrites A's title
 with B's stale copy. `saveEdit` does the symmetric thing to `status`. The most
 common collaborative action — advancing a status — is the one that silently
@@ -142,7 +142,7 @@ clobbers a teammate's edit.
   you mean "don't touch" — omit the field (leave it nil) instead. The data-loss
   case is the inverse of the clear case: a status-only PATCH must leave a
   populated `description` intact, and that's covered by a dedicated store test.
-- `app/src/types/services.ts` ([IRoadmapService.update:109](../../app/src/types/services.ts)):
+- `app/src/types/services.ts` (`IRoadmapService.update:109`):
   payload → `Partial<{ title; description; status }>`. **Sparse body (D9
   re-review):** the service serializes only the keys being changed — absent keys
   are omitted from the JSON, not empty-filled (an empty-fill would either trip
@@ -218,7 +218,7 @@ clobbers a teammate's edit.
   hover edit/delete/AI-expand buttons, the edit + add-child popovers, **and the
   add-goal form/input** all render `v-if`-off / `:disabled`. **Drag-to-reparent**
   is not a button — it lives on the card wrapper's `@pointerdown`
-  ([RoadmapCanvas.vue:216](../../app/src/components/roadmap/RoadmapCanvas.vue)),
+  (`RoadmapCanvas.vue:216`),
   so `onCardPointerDown` returns early when reviewing. Zoom / pan / fit /
   open-full stay enabled (read operations, not mutations).
   **Entry point (design D7):** honor `?review=1` on mount to seed read-only, so a
@@ -229,7 +229,7 @@ clobbers a teammate's edit.
   deep-link into a read-only *view*, never a permissions boundary.
 - **B2. Freshness on the card.** `updated_at` → "updated X ago" + a "quiet N
   days" stale tint. **Must be i18n-aware** — the existing
-  [useTimeAgo.ts](../../app/src/composables/useTimeAgo.ts) is hard-coded English;
+  `useTimeAgo.ts` is hard-coded English;
   localize (today/yesterday/Nd/Nmo/Ny) in `en-US`/`zh-CN` to pass the 中文 check.
   No schema change.
 - **B3. Attribution (migration).** `ALTER TABLE insideout.roadmap_nodes ADD
@@ -256,10 +256,10 @@ clobbers a teammate's edit.
   **drop target (parent) to the drag ghost (child)** — matching tree edge
   direction — so the gesture previews the structure it creates. **Coordinate
   fix (correctness):** the ghost tracks the cursor in viewport px
-  ([RoadmapCanvas.vue:124](../../app/src/components/roadmap/RoadmapCanvas.vue))
+  (`RoadmapCanvas.vue:124`)
   but edges render inside the world/transformed SVG (`:184`); convert the cursor
   via the existing `toWorld`
-  ([usePanZoom.ts](../../app/src/composables/usePanZoom.ts)) and draw the
+  (`usePanZoom.ts`) and draw the
   prospective path inside that world SVG. Style: `stroke-subtle`,
   `stroke-dasharray="4 4"`; render **nothing** when `dropTargetId` is null
   (move-to-root). Drops still send `position 0` (append); sibling-order control
@@ -341,7 +341,7 @@ onCardPointerDown (no drag) + add-goal form (D2)
 ## What already exists (reuse map)
 
 - `updated_at` + `set_updated_at` trigger → B2 freshness (no schema change).
-- [useTimeAgo.ts](../../app/src/composables/useTimeAgo.ts) → base for B2 (needs i18n).
+- `useTimeAgo.ts` → base for B2 (needs i18n).
 - `window.confirm` → delete + tree-replace confirms (existing pattern).
 - `isDescendant` / tidyTree walk → delete-count helper + C1.
 - `meta jsonb` → stays the extension point for non-relational extras.

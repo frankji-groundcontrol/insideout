@@ -15,7 +15,7 @@ both before anything was committed.
 
 [Install-skill changelog](../changelogs/2026-10-06-install-skill.md),
 verification section; the check is a ~20-line Python pass that
-extracts `](target)` pairs per file and calls `os.path.exists` on
+extracts the target of each inline link per file and calls `os.path.exists` on
 `normpath(join(dirname(file), target))`, skipping absolute URLs. It
 runs in seconds over every file a change touched.
 

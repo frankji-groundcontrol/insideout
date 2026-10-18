@@ -41,7 +41,7 @@ README.md (both languages), PRODUCT.md, docs/PLAN.md, docs/TODO.md, docs/plans/R
 
 ### PM-04 · Medium · TODO.md is a two-month-stale tracker for a deleted frontend, still linked as the "Progress tracker"
 - **File:** docs/TODO.md (README.md:84)
-- **Evidence:** README.md:84: "开发进度 / Progress tracker: [`docs/TODO.md`](docs/TODO.md)". docs/TODO.md:7: "**Last updated**: 2026-08-13"; its completed sections describe the Nuxt app deleted 2026-08-18 (docs/TODO.md:94 "Nitro same-origin proxy", :149 "Prisma cinematic re-theme", :143 "`GithubSync.vue`").
+- **Evidence:** README.md:84: "开发进度 / Progress tracker: [`docs/TODO.md`](../../TODO.md)". docs/TODO.md:7: "**Last updated**: 2026-08-13"; its completed sections describe the Nuxt app deleted 2026-08-18 (docs/TODO.md:94 "Nitro same-origin proxy", :149 "Prisma cinematic re-theme", :143 "`GithubSync.vue`").
 - **Failure scenario:** The stranger opens the linked "progress tracker" and learns project status from a frontend that no longer exists, while real progress since 2026-08-13 (CLI/MCP parity, email auth, invitation signup, Cobalt) is invisible outside the changelog index. Two disagreeing "progress" sources beat none only when labeled.
 - **Fix:** Refresh TODO.md's delta to the current baseline and mark P5-P8 historical, or retire it into docs/history/ and repoint README.md:84 at docs/plans/README.md. ~15 lines.
 
@@ -53,7 +53,7 @@ README.md (both languages), PRODUCT.md, docs/PLAN.md, docs/TODO.md, docs/plans/R
 
 ### PM-06 · Medium · PRODUCT.md brand commitment contradicts the accepted, shipped Cobalt identity — no supersession record
 - **File:** PRODUCT.md:435-437
-- **Evidence:** PRODUCT.md:436-437: "Visual identity: the existing Ink & Seal system—celadon ground, sumi-ink text, a single vermilion accent, Noto Serif SC display…". docs/index.md:49-50: "live Flutter is Cobalt **1.0.0**; lock screens in [cobalt/](design-system/cobalt/README.md)".
+- **Evidence:** PRODUCT.md:436-437: "Visual identity: the existing Ink & Seal system—celadon ground, sumi-ink text, a single vermilion accent, Noto Serif SC display…". docs/index.md:49-50: "live Flutter is Cobalt **1.0.0**; lock screens in [cobalt/](../../design-system/cobalt/README.md)".
 - **Failure scenario:** PRODUCT.md declares itself the winning authority (PRODUCT.md:6-9), and its brand commitment is unamended since 2026-08-13. A future contributor following it will "restore Ink & Seal" and undo the accepted Cobalt lock — which is literally what happened on 2026-08-19 before Cobalt was accepted.
 - **Fix:** Update Brand commitments to Cobalt, or add a supersession note pointing at docs/design-system/cobalt/ and the 2026-09-17 direction record. ~3 lines.
 
