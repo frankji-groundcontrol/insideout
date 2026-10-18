@@ -45,6 +45,10 @@ services:
     restart: unless-stopped
     # Starting value, not measured: check it against `docker stats` (REL-20).
     mem_limit: 512m
+    # runServe's Shutdown window is 30 s (a 20 s drain plus the coach's 10 s
+    # terminal writes, cmd/insideout/main.go); Docker's 10 s default stop
+    # timeout would SIGKILL it mid-drain. 35 s leaves a 5 s margin (rv4-REL-05).
+    stop_grace_period: 35s
     depends_on:
       postgres:
         condition: service_healthy

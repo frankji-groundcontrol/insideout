@@ -38,6 +38,14 @@ Ports (host side, all overridable): postgres `POSTGRES_PORT` (default 5442),
 server `SERVER_PORT` (default 8080), client `CLIENT_PORT` (default 5173,
 matching the default `INSIDEOUT_PUBLIC_URL`).
 
+Stopping the server: on SIGTERM `runServe` gives in-flight requests a 20 s
+drain, then cancels what is left so a running coach turn keeps its streamed
+text and is marked failed; with the coach's 10 s terminal writes that fills a
+30 s `Shutdown` window. Docker's default stop timeout is 10 s and would SIGKILL
+the process mid-drain, so the `server` service sets `stop_grace_period: 35s`
+(the window plus a 5 s margin). Any other runtime that stops the container
+needs an equivalent grace period of at least 35 s.
+
 Run exactly one `server` replica: its auth throttle, resend cooldown,
 conversation locks, provider permits and presence state live in process
 memory and degrade silently across replicas
