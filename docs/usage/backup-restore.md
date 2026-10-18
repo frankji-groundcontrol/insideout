@@ -42,8 +42,17 @@ against it stops at the first policy-protected table ("query would be
 affected by row-level security policy"); the owner role bypasses RLS and
 exists for schema-level work like this.
 
-The script never prints the DSN. Dump files contain user data: keep them
-on the operator's disk, never in the repository (`backups/` is ignored).
+The script never prints the DSN. A dump holds every member's work and the
+schema's credential material: password hashes (`users.password_hash`),
+refresh-token hashes (`sessions.token_hash`), the hashes of emailed sign-in
+and reset tokens (`auth_tokens.token_hash`) and of invitation codes
+(`invitations.code_hash`), and the workspace join codes in the clear
+(`workspaces.code`). So the script sets `umask 077` before `pg_dump` and runs
+`chmod 600` on the file afterwards: the dump is owner-only (mode 0600) even
+under a permissive umask, and a new output directory is created 0700. Keep
+that mode when you copy the file (widen it only on purpose), keep dumps on
+the operator's disk, and never put one in the repository (`backups/` is
+ignored).
 
 ## Restoring
 

@@ -13,8 +13,12 @@
 #
 # The dump is schema+data of the insideout schema only, plain SQL, so a
 # restore works on any Postgres with the two roles present (see
-# docs/usage/backup-restore.md for the full runbook).
+# docs/usage/backup-restore.md for the full runbook). It holds credential
+# hashes, so the file (and a new output directory) is owner-only.
 set -euo pipefail
+
+# pg_dump creates its file under the caller's umask (0644 under the usual 022).
+umask 077
 
 out_dir="${1:-backups}"
 : "${DATABASE_OWNER_URL:?DATABASE_OWNER_URL must be set — source it from your env, never hardcode it here}"
@@ -31,6 +35,10 @@ pg_dump "$DATABASE_OWNER_URL" \
   --no-owner \
   --clean --if-exists \
   --file="$file"
+
+# umask covers a fresh file; a same-second leftover keeps its old, wider mode.
+# A failed chmod aborts under set -e rather than leaving a readable dump.
+chmod 600 "$file"
 
 # Print the path and size only — never the DSN or row counts.
 echo "wrote $file ($(du -h "$file" | cut -f1))"
