@@ -42,3 +42,53 @@ CREATE POLICY workspace_memberships_insert ON insideout.workspace_memberships
       insideout.current_user_id(),
       insideout.workspace_memberships.role)
   );
+
+-- DATA-03. 20260819190000 gave insideout_app table-wide INSERT and UPDATE on
+-- insideout.users, while users_insert is WITH CHECK (true) and users_update
+-- only pins the row to its owner. Nothing said which columns the app may
+-- write, so one statement could create an admin (INSERT ... system_role =
+-- 'admin') or promote itself (UPDATE ... SET system_role = 'admin'), and
+-- rewrite role, email_verified_at, email or meta: the columns that gate
+-- /api/v1/admin and sign-in.
+--
+-- INSERT is limited by column grants. CreateUser writes email, password_hash
+-- and username and nothing else; every other column, including one added
+-- later, is refused with 42501 before a row exists. The REVOKE comes first:
+-- a table-level privilege masks column grants, and the REVOKE also clears any
+-- column grant made earlier, so re-running this file ends in the same state.
+REVOKE INSERT ON insideout.users FROM insideout_app;
+GRANT INSERT (email, password_hash, username) ON insideout.users TO insideout_app;
+
+-- UPDATE is limited by a pinning trigger, not by column grants. A column grant
+-- is checked before the statement reads a row, so promote-admin run without
+-- DATABASE_OWNER_URL (an UPDATE of someone else's system_role on the app pool,
+-- which RLS answers with "no row", which the CLI turns into its "set
+-- DATABASE_OWNER_URL" hint) would start failing with "permission denied". The
+-- trigger only sees rows RLS already let through. It compares the new row with
+-- the old one after dropping the columns a profile edit really changes
+-- (UpdateProfile, UpdatePasswordHash; updated_at belongs to set_updated_at);
+-- anything else, a column added later included, has to come out unchanged.
+-- A role RLS does not apply to (insideout_owner, which runs migrations and
+-- promote-admin; a superuser) is trusted with every column: the same line
+-- RLS draws.
+CREATE OR REPLACE FUNCTION insideout._pin_user_columns()
+RETURNS trigger
+LANGUAGE plpgsql SET search_path = insideout, pg_catalog
+AS $$
+DECLARE
+  v_editable constant text[] := ARRAY['username', 'avatar_url', 'bio', 'keywords', 'password_hash', 'updated_at'];
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = current_user AND (rolbypassrls OR rolsuper)) THEN
+    RETURN NEW;
+  END IF;
+  IF to_jsonb(NEW) - v_editable IS DISTINCT FROM to_jsonb(OLD) - v_editable THEN
+    RAISE EXCEPTION 'insideout.users: this role may only change username, avatar_url, bio, keywords and password_hash'
+      USING ERRCODE = 'insufficient_privilege';
+  END IF;
+  RETURN NEW;
+END
+$$;
+
+DROP TRIGGER IF EXISTS users_pin_columns ON insideout.users;
+CREATE TRIGGER users_pin_columns BEFORE UPDATE ON insideout.users
+  FOR EACH ROW EXECUTE FUNCTION insideout._pin_user_columns();
