@@ -116,6 +116,13 @@ class TrackedTree(unittest.TestCase):
         r = run(["sh", str(GUARD)], ROOT)
         self.assertEqual(r.returncode, 0, r.stderr)
 
+    def test_gitignore_reallows_no_dotenv_file(self):
+        # rv4-PUB-05: an exception for a file nothing reads any more kept a
+        # committable slot for real DSNs; only the example file may be re-allowed.
+        lines = [l.strip() for l in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()]
+        reallowed = [l for l in lines if l.startswith("!.env") and l != "!.env.example"]
+        self.assertEqual(reallowed, [])
+
 
 if __name__ == "__main__":
     unittest.main()
