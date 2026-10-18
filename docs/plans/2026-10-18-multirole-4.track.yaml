@@ -6,9 +6,9 @@ main:
   outcome: "A fourth whole-tree review over the public, released product: every High skeptic-reviewed, the top findings reproduced, a completeness critic closed, the report written and indexed, and an ordered 4-wave remediation plan ready to run as dynamic workflows."
   owner: claude
   status: in_progress
-  next_evidence: "Review delivered (145 findings: 0 Critical, 10 High, 88 Medium, 47 Low) in docs/review/2026-10-18-multirole-4/; changelog, issue record, learning note, board row and HANDOFF written, uncommitted. Remediation goal prompt is with the owner; no workflow launched."
+  next_evidence: "Review delivered (145 findings: 0 Critical, 10 High, 88 Medium, 47 Low) in docs/review/2026-10-18-multirole-4/. Remediation is under way on the local branch rv4/integration (base d53035a, nothing pushed): wave 0 (w0-privacy, rows 0.1-0.4) accepted round 1 and integrated at 97d7529 with follow-ups in 3d65d50; owner halves of 0.1-0.4 are DEFERRED_OWNER. Gates green apart from the baseline failure TestProjectQuietFlagged, proven identical at d53035a and fixed by row 1.3 in wave 1. Waves 1-3 not started. Record: docs/changelogs/2026-10-18-rv4-remediation/index.md."
 side_tracks: []
-updated_at: "2026-10-18T06:55:00Z"
+updated_at: "2026-10-18T08:38:49Z"
 plan:
 - step: "Scout: product is main, clean worktree at 9f0b1c7, 18 leads with run results"
   owner: claude
@@ -32,5 +32,20 @@ plan:
   owner: claude
   status: completed
 - step: "Remediation: owner approves the goal prompt, then one workflow per wave"
+  owner: claude
+  status: in_progress
+- step: "Wave 0: w0-privacy (rows 0.1-0.4) accepted round 1, 13 commits cherry-picked to 97d7529, follow-ups in 3d65d50, dispositions in the changelog index and the open-findings record; owner halves DEFERRED_OWNER"
+  owner: claude
+  status: completed
+- step: "Wave 1: 9 clusters (rows 1.1-1.18); w1-clock-and-runes fixes the baseline-red TestProjectQuietFlagged, and the full suite must be green from here on"
+  owner: claude
+  status: pending
+- step: "Wave 2: 4 clusters (rows 2.1-2.6)"
+  owner: claude
+  status: pending
+- step: "Wave 3: 11 clusters (rows 3.1-3.11); w3-docs-truth refreshes the HANDOFF and plans-board claims"
+  owner: claude
+  status: pending
+- step: "Whole-change adversarial review of d53035a..rv4/integration (correctness, security, PRODUCT.md regression), then the full gates once more"
   owner: claude
   status: pending
