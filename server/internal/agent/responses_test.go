@@ -59,6 +59,9 @@ func TestParseResponsesStreamToolCall(t *testing.T) {
 		``,
 		`data: {"type":"response.function_call_arguments.delta","delta":"1}"}`,
 		``,
+		// A turn is only whole once the provider says so (rv4-AIDEV-05).
+		`data: {"type":"response.completed","response":{"status":"completed"}}`,
+		``,
 	}, "\n")
 	turn, err := parseResponsesStream(strings.NewReader(raw), nil, nil)
 	if err != nil {
