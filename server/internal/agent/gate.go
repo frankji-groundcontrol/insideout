@@ -86,15 +86,15 @@ func (c *Coach) Admit(w http.ResponseWriter, r *http.Request, workspaceID, userI
 			ctx, cancel := detachedContext(r.Context())
 			defer cancel()
 			if callErr == nil {
-				_ = c.store.MarkAIRunSucceeded(ctx, userID, run.ID, "")
-				_ = c.store.RecordCircuitResult(ctx, true)
+				logErr(c.log, "MarkAIRunSucceeded", c.store.MarkAIRunSucceeded(ctx, userID, run.ID, ""), "run_id", run.ID)
+				logErr(c.log, "RecordCircuitResult", c.store.RecordCircuitResult(ctx, true), "run_id", run.ID)
 				return
 			}
-			_ = c.store.MarkAIRunFailed(ctx, userID, run.ID, callErr.Error())
+			logErr(c.log, "MarkAIRunFailed", c.store.MarkAIRunFailed(ctx, userID, run.ID, callErr.Error()), "run_id", run.ID)
 			// Only a provider-health signal feeds the breaker; a plan the model
 			// botched, or a client that went away, is not provider load.
 			if errors.Is(callErr, ErrProviderRateLimited) || errors.Is(callErr, ErrProviderTransient) || errors.Is(callErr, ErrUpstreamStall) {
-				_ = c.store.RecordCircuitResult(ctx, false)
+				logErr(c.log, "RecordCircuitResult", c.store.RecordCircuitResult(ctx, false), "run_id", run.ID)
 			}
 		})
 	}, true

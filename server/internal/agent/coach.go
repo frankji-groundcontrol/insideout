@@ -188,11 +188,11 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		partial := streamed.String()
 		if partial != "" {
 			partial += "\n\n[interrupted]"
-			_ = c.store.UpdateAgentMessageContent(cleanupCtx, userID, assistantMsg.ID, partial, nil)
+			logErr(c.log, "UpdateAgentMessageContent", c.store.UpdateAgentMessageContent(cleanupCtx, userID, assistantMsg.ID, partial, nil), "run_id", run.ID)
 		}
 		if r := recover(); r != nil {
-			_ = c.store.MarkAIRunFailed(cleanupCtx, userID, run.ID, fmt.Sprintf("panic: %v", r))
-			_ = c.store.RecordCircuitResult(cleanupCtx, false)
+			logErr(c.log, "MarkAIRunFailed", c.store.MarkAIRunFailed(cleanupCtx, userID, run.ID, fmt.Sprintf("panic: %v", r)), "run_id", run.ID)
+			logErr(c.log, "RecordCircuitResult", c.store.RecordCircuitResult(cleanupCtx, false), "run_id", run.ID)
 			c.log.Error("agent loop panic", "panic", r)
 			panic(r) // repanic so the recover middleware still logs/500s the request
 		}
@@ -299,7 +299,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	if err := c.store.MarkAIRunSucceeded(persistCtx, userID, run.ID, finalText); err != nil {
 		c.log.Error("mark ai run succeeded", "error", err)
 	}
-	_ = c.store.RecordCircuitResult(persistCtx, true)
+	logErr(c.log, "RecordCircuitResult", c.store.RecordCircuitResult(persistCtx, true), "run_id", run.ID)
 	if err := c.store.UpdateAgentMessageContent(persistCtx, userID, assistantMsg.ID, finalText, nil); err != nil {
 		c.log.Error("persist final assistant message", "error", err)
 	} else {

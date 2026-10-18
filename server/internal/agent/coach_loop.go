@@ -40,7 +40,7 @@ const truncatedMarker = "\n\n[response truncated — hit the token limit; ask me
 func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, prdTitle string, sections map[string]string, history []Message, executor *toolExecutor, onDelta func(string)) (string, error) {
 	msgs := history
 	for i := 0; i < maxToolIterations; i++ {
-		_ = c.store.TouchAIRun(ctx, actorID, runID)
+		logErr(c.log, "TouchAIRun", c.store.TouchAIRun(ctx, actorID, runID), "run_id", runID)
 
 		// The previous iteration may have rewritten sections, so prompt from
 		// the PRD as it is now, not the pre-turn snapshot (this also freshens

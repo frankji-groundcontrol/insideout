@@ -35,9 +35,9 @@ func countsAgainstCircuit(err error) bool {
 func (c *Coach) failTurn(ctx context.Context, userID uuid.UUID, runID uuid.UUID, loopErr error, sse *sseWriter) {
 	cleanupCtx, cancel := detachedContext(ctx)
 	defer cancel()
-	_ = c.store.MarkAIRunFailed(cleanupCtx, userID, runID, loopErr.Error())
+	logErr(c.log, "MarkAIRunFailed", c.store.MarkAIRunFailed(cleanupCtx, userID, runID, loopErr.Error()), "run_id", runID)
 	if countsAgainstCircuit(loopErr) {
-		_ = c.store.RecordCircuitResult(cleanupCtx, false)
+		logErr(c.log, "RecordCircuitResult", c.store.RecordCircuitResult(cleanupCtx, false), "run_id", runID)
 	}
 
 	switch {
