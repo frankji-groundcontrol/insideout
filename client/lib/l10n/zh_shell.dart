@@ -1,4 +1,4 @@
-// Chinese: app chrome and shared strings: common, state, nav, theme, lang, dock, home, time, error, write.
+// Chinese: app chrome and shared strings: common, state, nav, theme, lang, privacy, dock, home, time, error, write.
 const zhShell = <String, String>{
   'common.loading': '加载中...',
   'common.close': '关闭',
@@ -24,6 +24,8 @@ const zhShell = <String, String>{
   'theme.toggleDark': '切换暗色模式',
   'theme.toggleLight': '切换亮色模式',
   'lang.switchTo': '切换语言',
+  'privacy.link': '隐私声明',
+  'privacy.linkCopied': '链接已复制',
   'dock.capture': '记下',
   'dock.ideas': '想法',
   'dock.version': '版本',

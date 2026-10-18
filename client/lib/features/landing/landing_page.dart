@@ -265,6 +265,10 @@ class _LandingPageState extends State<LandingPage> {
               _prompt == AuthPrompt.register ? 'register.title' : 'login.title',
             ),
             onClose: _close,
+            footer: PrivacyNoticeLink(
+              label: l10n.t('privacy.link'),
+              copiedMessage: l10n.t('privacy.linkCopied'),
+            ),
             child: AuthForm(
               prompt: _prompt!,
               inviteCode: widget.invite,

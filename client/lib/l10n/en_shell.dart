@@ -1,4 +1,4 @@
-// English: app chrome and shared strings: common, state, nav, theme, lang, dock, home, time, error, write.
+// English: app chrome and shared strings: common, state, nav, theme, lang, privacy, dock, home, time, error, write.
 const enShell = <String, String>{
   'common.loading': 'Loading...',
   'common.close': 'Close',
@@ -24,6 +24,8 @@ const enShell = <String, String>{
   'theme.toggleDark': 'Switch to dark mode',
   'theme.toggleLight': 'Switch to light mode',
   'lang.switchTo': 'Switch language',
+  'privacy.link': 'Privacy notice',
+  'privacy.linkCopied': 'Link copied',
   'dock.capture': 'Capture',
   'dock.ideas': 'Ideas',
   'dock.version': 'Version',
