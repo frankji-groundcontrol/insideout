@@ -71,7 +71,8 @@ email-bound, single-use invitation code (`insideout.invitations`,
 SHA-256 hash at rest) before provisioning; `users.system_role` gates the
 admin routes (invitations + the mode switch, `requireAdmin`), and the
 only path to admin is the `insideout promote-admin <email>` operator
-subcommand on the owner pool. Their tokens live in
+subcommand on the owner pool, which first creates the account (password read
+from stdin) when the address has none. Their tokens live in
 `insideout.auth_tokens` (SHA-256 hash at rest, single-use, expiring —
 magic links 15 min, resets 60 min, sign-in codes 10 min with a 5-miss
 attempt budget; issuing a new one supersedes the previous unused token of
@@ -108,6 +109,14 @@ contract is `{"error": string, "code"?: string, ...extra}` (see
 frontend countdown logic expects; a provider-side rate limit hits after the
 SSE stream is already open, so it surfaces as an SSE `error` event with code
 `ANTHROPIC_RATE_LIMIT` rather than an HTTP status.
+
+Response builders take the instant as a parameter instead of reading the wall
+clock: `Server` owns a `clock` behind `s.now()` (nil means the wall clock;
+only tests set it), handlers pass `s.now()` to `projectResponse` and
+`roadmapNodeResponse`, and `view_clock_guard_test.go` fails on any
+`time.Now`, `time.Since` or `time.Until` in a non-test file of the package
+outside its allowlist. Request field limits count characters, not bytes,
+through `tooLong` in `util.go`.
 
 Full endpoint-by-endpoint detail (request/response shapes) lives in
 [`docs/plans/2026-07-20-go-rewrite/02-backend-go.md`](../plans/2026-07-20-go-rewrite/02-backend-go.md).

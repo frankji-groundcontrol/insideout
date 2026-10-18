@@ -78,6 +78,8 @@ insideout reset-password                            # paste link/token + new pas
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
 | Admin | `invite [--ttl hours] <email>`, `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
+| Server operator | `migrate`, `seed`, `promote-admin <email>` (creates the account, password on stdin, when absent); these need the server config (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`), and `promote-admin` also the owner DSN (`DATABASE_OWNER_URL`) |
+| Front door | `help` (also `-h`, `--help`) and `version` (also `--version`) answer before any server config, so they work with no database; an unknown verb exits 2 with a pointer to `help` |
 | Guidance | `guide [--out insideout.yaml] <proj>`, `repo set <proj> <repo-url>`, `sync <proj>`, `snapshot [--note] <prd>` |
 
 Flags precede positional ids (Go convention). Statuses are
@@ -104,8 +106,14 @@ Signup policy: registration is invitation-only by default
 (`GET /auth/config`); admins mint per-email invitations (`invite` /
 `invite_create`, revoke with `invite revoke` / `invite_revoke`) and
 switch the mode (`signup-mode` / `signup_mode`, the web admin panel
-on the profile page). The first admin is created out-of-band with
-`insideout promote-admin <email>` (server subcommand, owner DSN).
+on the profile page). `invite` and `invite_create` print the whole
+response, including `mailSent`: true only when the provider accepted the
+e-mail, so when it is false (dev mode, or a provider refusal) nothing was
+e-mailed and you send the `signupUrl` to the invitee yourself. The first
+admin is created out-of-band with `insideout promote-admin <email>`
+(server subcommand, owner DSN): when the address has no account it
+creates one, reading the new password from stdin (never from argv), and an
+existing account is promoted with its password untouched.
 
 Auth can also happen at runtime: the `auth_*` tools
 (`auth_register`, `auth_login`, `auth_login_code_request` +
@@ -124,7 +132,9 @@ that — a login tool's token is process state, not conversation state.)
 Connecting a repository so pushes and PRs feed your roadmap:
 
 1. **Bind the repo**: `insideout repo set <project-id>
-   https://github.com/owner/repo` (web: the project's repo field).
+   https://github.com/owner/repo` (web: the project's repo field). Accepted:
+   `owner/repo` or a github.com URL (the host must be exactly `github.com`);
+   the server stores `https://github.com/<owner>/<repo>`.
 2. **Scaffold the guide**: `insideout guide --out insideout.yaml
    <project-id>` — generated from your roadmap: every leaf node with
    editable matchers, branch nodes documented as comments.

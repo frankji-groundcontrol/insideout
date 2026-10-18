@@ -100,6 +100,12 @@ The cost is one literal.
 - The shared indexes (this folder's `index.md`, the changelog README and month
   index, the plans board, the handoff) are the integrator's.
 
+**Closed (integrator follow-up, wave 1).** The noon-UTC sentence is in
+`docs/architecture/product-subsystems.md`. The CI zone step is residue R1-01 in
+the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md); it waits on the `ci.yml` split
+([issue](../../issues/2026-10-18-ci-yml-split.md)). The two optional product
+questions are R1-15.
+
 ## Verification
 
 Each red commit was replayed on its own parent and fails for the stated

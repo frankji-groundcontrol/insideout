@@ -142,10 +142,12 @@ export INSIDEOUT_API=http://127.0.0.1:8080/api/v1
 ```
 
 Registration is invitation-only on a fresh database. On a shared or hosted
-server, create an existing user through the operator's normal registration
-path, promote that account, and mint invites. For a disposable local
-development database, use the documented seed account instead of trying to
-promote an address that does not exist yet:
+server, run `promote-admin <email>` (server subcommand, owner DSN): when the
+address has no account it creates one, reading the new password from stdin
+(hidden and typed twice on a terminal, one line when piped), and promotes an
+existing account without touching its password. Then mint invites. For a
+disposable local development database, the documented seed account is the
+shorter path:
 
 ```bash
 ./scripts/dev.sh -C server go run ./cmd/insideout seed
@@ -210,9 +212,10 @@ Do not print secret values, tokens, or database URLs.
    `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI still calls
    the hosted API.
 5. First admin: on a disposable local database, run `insideout seed`, then
-   promote `demo@insideout.local`; on a shared or hosted server, promote an
-   existing account with
-   `ACCOUNT_EMAIL='you@example.test'; ./scripts/dev.sh -C server go run ./cmd/insideout promote-admin "$ACCOUNT_EMAIL"`.
+   promote `demo@insideout.local`; on a shared or hosted server, run
+   `ACCOUNT_EMAIL='you@example.test'; ./scripts/dev.sh -C server go run ./cmd/insideout promote-admin "$ACCOUNT_EMAIL"`,
+   which creates the account (password read from stdin) when it does not exist
+   and promotes it.
 6. Verify everything with `insideout setup --check`.
 
 Non-interactive `setup.sh` with no flags exits 2 and points here.

@@ -143,8 +143,8 @@ func (c *Client) AuthConfig() (mode string, err error) {
 // the bearer token of an admin session.
 
 // CreateInvitation mints an email-bound invitation code; the response
-// (JSON: invitation + code + signupUrl) is the only place the code ever
-// appears.
+// (JSON: invitation + code + signupUrl + mailSent) is the only place the
+// code ever appears. mailSent false means nothing was e-mailed.
 func (c *Client) CreateInvitation(email string, ttlHours int) (json.RawMessage, error) {
 	body := map[string]any{"email": email}
 	if ttlHours > 0 {

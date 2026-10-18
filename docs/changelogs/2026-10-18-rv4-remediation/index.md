@@ -142,3 +142,18 @@ Nothing to run or deploy: no migration, dependency or configuration change,
 and the hook change is a comment. The hosted admin address and the other owner
 items hold their defaults until the owner records a decision in
 [the owner record](../../issues/2026-10-18-rv4-owner-privacy-decisions.md).
+
+## Wave 1
+
+Nine clusters, plan rows 1.1 to 1.18, integrated on `rv4/integration`. One
+fragment per cluster:
+
+- [w1-cli-front-door.md](w1-cli-front-door.md): rows 1.1, 1.2, 1.5
+- [w1-ci-gates.md](w1-ci-gates.md): rows 1.4, 1.6, 1.11 and the CI half of 1.15
+- [w1-clock-and-runes.md](w1-clock-and-runes.md): rows 1.3, 1.17
+- [w1-auth-atomic.md](w1-auth-atomic.md): rows 1.9, 1.10 and the cooldown half of 1.13
+- [w1-apiclient-escape.md](w1-apiclient-escape.md): the apiclient half of row 1.13
+- [w1-github-repo.md](w1-github-repo.md): row 1.14
+- [w1-client-polish.md](w1-client-polish.md): row 1.16 and the dialog half of 1.12
+- [w1-ops-docs.md](w1-ops-docs.md): rows 1.7, 1.8, 1.18 and the bootstrap half of 1.12
+- [w1-misc-correctness.md](w1-misc-correctness.md): row 1.15 without its CI step

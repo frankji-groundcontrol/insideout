@@ -113,7 +113,9 @@ provision per `docker/postgres-init/001-create-app-role.sh`
 ([issue](../../docs/issues/2026-10-07-own-url-fresh-db-bootstrap.md)).
 
 Registration is invitation-only on a fresh database; locally-only, the
-human may prefer `signup-mode open` (see installation.md).
+human may prefer `signup-mode open` (see installation.md). Without the seed
+account, `promote-admin <email>` creates the account when the address has none
+(the human types its password; it is read from stdin, never from argv).
 
 **C. Full development** — B, plus:
 

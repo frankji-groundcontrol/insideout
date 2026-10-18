@@ -122,6 +122,12 @@ guard runs in CI only once the `check_*.py` loop from row 1.6 lands, and
    before and after this change. The documented form is
    `./scripts/backup-db.sh`; it was not changed.
 
+**Status after the integrator's wave-1 follow-up.** Item 1 landed with
+`w1-client-polish`. Item 4 is done in the document (`SKILL.md` now reads
+`prd update --section goals=… <id>`); extending the guard to scan it is residue
+R1-02. Items 2 and 3 are R1-06 and R1-07 (wave 3). Item 5 is R1-14, left as
+documented. The residue IDs are in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md).
+
 ## Operator notes
 
 No migration, dependency or configuration change. The new grace period applies

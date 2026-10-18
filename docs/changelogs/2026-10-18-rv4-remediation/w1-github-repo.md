@@ -129,6 +129,11 @@ Found while reading; each is outside the owned files or beyond the row.
 | --- | --- | --- | --- | --- |
 | rv4-SEC-06 | 1.14 | PARTIAL: dot segments, host and canonical URL FIXED; token deferred to `w3-github-evidence` | `028ad93` | `d5159fa` |
 
+**Closed (integrator follow-up, wave 1).** The accepted forms of `repo set` are
+in `docs/usage/cli-mcp-and-guidance.md`. The three `w3-github-evidence` items
+stay open as residue R1-08 in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md), which keeps
+rv4-SEC-06 `PARTIAL`.
+
 ## Verification
 
 Each commit was replayed from a plain export of its tree against a private

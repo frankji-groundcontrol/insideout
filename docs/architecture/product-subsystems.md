@@ -50,7 +50,9 @@ views (PRODUCT.md principle 3).
   only**; in-progress items without a deadline surface as
   `needsDeadline`; Next caps at three by earliest deadline.
 	`GET /projects/{id}/roadmap/progress`; node views carry `deadline` +
-	computed `pressure`; PATCH accepts `deadline` (RFC3339 or `""`).
+	computed `pressure`; PATCH accepts `deadline` (RFC3339 or `""`). The web
+	picker sends the picked day at noon UTC (RFC3339), so every member reads
+	the same calendar date.
 	`GET /projects/{id}/roadmap/progress/stream` (SSE) writes that same
 	payload as `event: progress` on connect and again whenever a roadmap
 	node changes. `internal/progresshub` is the in-memory fan-out (one

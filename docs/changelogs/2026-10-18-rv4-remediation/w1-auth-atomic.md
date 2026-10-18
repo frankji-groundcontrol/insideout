@@ -131,6 +131,12 @@ Documentation, comment and index edits only; no code is waiting.
   rv4-SEC-01, rv4-USER-07 and rv4-QUAL-02 (all `FIXED`); this folder's
   `index.md` wave-1 row; the changelog index files.
 
+**Closed (integrator follow-up, wave 1).** The `mailSent` sentences are in
+`docs/usage/cli-mcp-and-guidance.md` and `SKILL.md`, and the comment in
+`server/internal/apiclient/auth.go` names `mailSent`. Still open: the
+`invite_create` tool description in `product_tools.go` (R1-03 in the
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md)).
+
 ## Verification
 
 Run against a private PostgreSQL 18 cluster on a port of its own, migrated from

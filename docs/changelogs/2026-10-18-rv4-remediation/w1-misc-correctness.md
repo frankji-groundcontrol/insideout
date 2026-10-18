@@ -106,6 +106,13 @@ red on this branch.
 - The shared indexes, the open-findings record and the plan track for row 1.15
   are the integrator's, as in wave 0.
 
+**Closed (integrator follow-up, wave 1).** `docs/architecture/backend.md` lists
+`modtidy/` (the integrator applied the Layout line in `a079404`, so
+`check_docs_truth.py` stayed green), and the two operator docs name the
+bundled-postgres exception. The `go mod tidy -diff` step in `ci.yml` is green
+on the integrated tree and **pending first CI run after push** (R1-17 in the
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md)).
+
 ## Verification
 
 Run in this worktree at the branch head (repair round 1); the database-backed

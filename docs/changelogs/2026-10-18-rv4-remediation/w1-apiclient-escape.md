@@ -102,6 +102,11 @@ tree was clean afterwards). A verifier can repeat them:
   it is one more `withQuery` pair, and the compiler forces the sweep rows for
   `PrdView` and `PrdExport*` to gain the argument.
 
+**Integrator note (wave 1).** The comment on `CreateInvitation` in `auth.go`
+now names `mailSent`, the comment-only edit `w1-auth-atomic` asked for in this
+cluster's file. The `Cursor` nil reply target is residue R1-13 in the
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md).
+
 ## Verification
 
 Gates, all on `a1bd90e` with the fragment staged:

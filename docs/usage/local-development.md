@@ -116,9 +116,11 @@ for CI or checking a fresh database.
 
 **Registration is invitation-only on a fresh database** (migrations seed
 `signup_mode = invitation_only`; `register` returns 403 without an invite
-code). On a shared or hosted server, create an existing account through the
-operator's registration path, promote it with `insideout promote-admin
-<email>` (server subcommand, owner DSN), and mint per-email invites. For a
+code). On a shared or hosted server, make the first admin with `insideout
+promote-admin <email>` (server subcommand, owner DSN): when the address has no
+account it creates one, reading the new password from stdin (hidden and typed
+twice on a terminal, one line when piped); an existing account is promoted and
+its password is left alone. Then mint per-email invites. For a
 disposable local database, run `./scripts/dev.sh -C server go run ./cmd/insideout
 seed`, promote `demo@insideout.local`, set
 `INSIDEOUT_API=http://127.0.0.1:8080/api/v1`, and sign in through

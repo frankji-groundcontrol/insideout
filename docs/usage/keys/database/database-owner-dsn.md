@@ -14,7 +14,10 @@
 
 The root `.env` is exported by `scripts/dev.sh`; `insideout migrate` and
 `scripts/backup-db.sh` use this DSN. When it is empty, migrations fall back to
-`DATABASE_URL`, which must then already connect as `insideout_owner`.
+`DATABASE_URL`, which must then already connect as `insideout_owner`. The
+exception is the bundled postgres, where `DATABASE_URL` is the `insideout_app`
+role and cannot apply migrations: there an empty value fails
+`./scripts/env.sh check` (and so `scripts/dev.sh`) with the cause and the fix.
 
 ## 3. How to set it
 

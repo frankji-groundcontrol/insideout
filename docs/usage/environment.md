@@ -93,7 +93,7 @@ themselves when it is unset.
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
 | `DATABASE_URL` | **yes** | — | PostgreSQL DSN for the **runtime** role `insideout_app` (DML, subject to RLS). May carry `?pgbouncer=true` (see [Database setups](#database-setups)). |
-| `DATABASE_OWNER_URL` | no | empty | DSN for `insideout_owner` (NOSUPERUSER) used only to apply migrations. Empty = migrate uses `DATABASE_URL`, which must already be that owner. |
+| `DATABASE_OWNER_URL` | no | empty | DSN for `insideout_owner` (NOSUPERUSER) used only to apply migrations. Empty = migrate uses `DATABASE_URL`, which must already be that owner. Required on the bundled postgres, whose `DATABASE_URL` is the app role: `env.sh check` fails when it is empty there. |
 | `INSIDEOUT_JWT_SECRET` | **yes** | — | HMAC signing secret for access/refresh JWTs. **Min 32 characters** (fail-fast). |
 | `INSIDEOUT_ADDR` | no | `:8080` | HTTP listen address (host:port). |
 | `INSIDEOUT_ACCESS_TTL` | no | `15m` | Access-token lifetime (Go `time.Duration`). |

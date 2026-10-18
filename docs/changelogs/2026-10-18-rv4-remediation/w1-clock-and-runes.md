@@ -160,6 +160,15 @@ They are candidates for the integrator, not part of the dispositions.
 | rv4-QUAL-05 | 1.3 | FIXED | `99c25fa` | `34d7415` |
 | rv4-COMP-01 | 1.17 | FIXED | `d257713` | `7994d28` |
 
+**Closed (integrator follow-up, wave 1).** `docs/architecture/backend.md` says
+that builders take the instant and that limits count characters through
+`tooLong`, and the learning note carries a "Fixed in" line and the shipped
+shape (the `clock` field plus `now()`). The four observations above are
+residue in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md): R1-09 (the proposal written
+before it is validated), R1-10 (`flagged` on the detail responses), R1-11 (the
+byte-counted password minimum) and R1-12 (the 10,000-byte message cap and
+`firstLine`).
+
 ## Verification
 
 Each red commit was replayed from a plain export of its tree against a private

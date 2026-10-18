@@ -76,10 +76,10 @@ git check-ignore .env
 
 **Registration is invitation-only on a fresh database.** Migrations seed
 `signup_mode = invitation_only`, so `register` returns 403 without an invite
-code. On a shared or hosted server, create an existing user through the
-operator's registration path, then bootstrap that account with
-`insideout promote-admin <email>` (server subcommand, owner DSN) and mint
-per-email invites. For a disposable local database, run the documented
+code. On a shared or hosted server, bootstrap the first admin with
+`insideout promote-admin <email>` (server subcommand, owner DSN), which
+creates the account (password read from stdin) when the address has none, and
+mint per-email invites. For a disposable local database, run the documented
 `insideout seed` command first, promote `demo@insideout.local`, and sign in
 through `insideout setup` before optionally opening signup. Restore
 `invitation_only` afterward. Full detail:

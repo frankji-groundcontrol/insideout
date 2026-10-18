@@ -10,16 +10,19 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-10-18: multirole review 4 is delivered and the next engineering step
-is its remediation.** [The report](review/2026-10-18-multirole-4/README.md)
-(145 findings, 10 High) says the core held but the front door and the gates
-did not; start at [row 0.1 and row 1.1 of the plan](review/2026-10-18-multirole-4/40-remediation-plan.md).
-`main` has a red test (`TestProjectQuietFlagged`, wall clock, red since
-2026-10-16) and CI has no schedule, so do not read "the head run is green"
-below as true until plan row 1.4 lands; do not tag a release before row 1.5.
-Board row: [plan](plans/2026-10-18-multirole-4.md); open records:
-[issues](issues/2026-10-18-review-4-open-findings.md). Nothing from this
-review is committed yet.
+**2026-10-18: multirole review 4 is delivered and its remediation is under
+way.** [The report](review/2026-10-18-multirole-4/README.md) (145 findings,
+10 High) says the core held but the front door and the gates did not. The
+fixes are four waves on the local branch `rv4/integration` (base `main` @
+`d53035a`, nothing pushed): waves 0 and 1 are integrated and recorded in the
+[remediation index](changelogs/2026-10-18-rv4-remediation/index.md); resume at
+wave 2 with the [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
+and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md). `main`
+still has the red test (`TestProjectQuietFlagged`, wall clock, red since
+2026-10-16) until that branch lands; do not tag a release from `main` before
+it does (the release test gate is plan row 1.5). Board row:
+[plan](plans/2026-10-18-multirole-4.md); open records:
+[issues](issues/2026-10-18-review-4-open-findings.md).
 
 **Everything engineering is closed; the owner's account actions below are
 all that remain.** The 2026-10-11 docs-order pass (survey, folder READMEs,
@@ -80,9 +83,11 @@ Every other thread is closed with its exact status and links on its
   use `pub get --enforce-lockfile`, which fails on a drifted lockfile; on MBP
   do not commit a rewritten `client/pubspec.lock`.
 - **GitHub Actions billing (2026-10-11):** the repository is now
-  **public**, so Actions are free and CI runs normally (the head run is
-  green); the ten billing-blocked runs were purged as superseded. A
-  failed payment may still be sitting on the account for other
+  **public**, so Actions are free and CI runs normally. Last green `ci`
+  run: `9f0b1c7` (2026-10-11); the run on `d53035a` (2026-10-18) is red on
+  the server job (`TestProjectQuietFlagged`), fixed on `rv4/integration` and
+  not yet on `main`. The ten billing-blocked runs were purged as
+  superseded. A failed payment may still be sitting on the account for other
   GitHub services — worth a look in Settings → Billing.
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship landed

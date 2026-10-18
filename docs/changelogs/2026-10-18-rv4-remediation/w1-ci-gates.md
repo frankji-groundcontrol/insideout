@@ -148,6 +148,16 @@ and the plan's "0" is recorded here as not reproduced. The prose gate counts in
   fragment; the folder's `index.md` should link it next to `w0-privacy.md`.
 - The client image job above, and the modularity issue for `ci.yml`.
 
+**Closed (integrator follow-up, wave 1).** `docs/HANDOFF.md` cites the last
+green `ci` run (`9f0b1c7`, 2026-10-11) and the plans board no longer freezes
+the review-3 gate counts. The analyzer count was measured again on the
+integrated tree after `w1-client-polish` landed: 14, equal to `INFO_BASELINE`,
+so nothing was lowered. `go mod tidy -diff` prints nothing on the integrated
+tree. The `ci.yml` split is filed as
+[an issue](../../issues/2026-10-18-ci-yml-split.md); the client image job is
+residue R1-01 in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md). Everything this fragment
+says about a workflow stays **pending first CI run after push** (R1-17).
+
 ## Verification
 
 All checks live in `scripts/tests/check_ci_gates.py` (nine checks, one per

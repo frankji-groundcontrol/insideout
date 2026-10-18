@@ -25,11 +25,13 @@ backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md
 "Open product slices" below — open by design, they track promises the
 running system does not implement yet.
 
-**Update 2026-10-18:** two records are open for a reason other than design —
+**Update 2026-10-18:** three records are open for a reason other than design —
 [review 4's open findings](2026-10-18-review-4-open-findings.md) (ten Highs, a
-red test on `main`, owner decisions) and its
+red test on `main`, owner decisions), its
 [privacy decisions](2026-10-18-rv4-owner-privacy-decisions.md) (what only the
-owner can finish after wave 0); the full register lives in the
+owner can finish after wave 0) and the
+[ci.yml line-budget split](2026-10-18-ci-yml-split.md) (the workflow is at 346
+of 350 lines, which blocks two CI additions); the full register lives in the
 [review folder](../review/2026-10-18-multirole-4/01-findings-register.md).
 
 ## Open product slices (2026-10-11)
@@ -235,5 +237,6 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 ### Reviews
 
 - [2026-10-18 — Review 4 open findings](2026-10-18-review-4-open-findings.md) — the ten Highs, the red `TestProjectQuietFlagged` on `main` and the owner decisions from [multirole review 4](../review/2026-10-18-multirole-4/README.md), each linked to a register ID and a plan row. Open; no `BUG-NNN` number consumed.
+- [2026-10-18 — ci.yml is at its line budget](2026-10-18-ci-yml-split.md) — 346 of 350 lines after wave 1; the client image job (rv4-TEST-08) and the Shanghai-zone deadline test step (rv4-COMP-02) wait on moving the `android` and `env-suites` jobs into reusable workflows. Open; no `BUG-NNN` number consumed.
 - [2026-10-18 — Review 4 privacy: what only the owner can finish](2026-10-18-rv4-owner-privacy-decisions.md) — the owner halves of wave-0 rows 0.1 to 0.4 (rotate the two addresses, the legacy project and its key, a `hosts/` example tree, history identities), each with what is done, the safe default and what closes it. Open; no `BUG-NNN` number consumed.
 - [2026-10-04 — Multirole review findings register](../review/2026-10-04-multirole/01-findings-register.md) — 75 verified findings (12 High confirmed) with a five-wave remediation plan; the review of record for prioritization. A second pass is in [multirole-2](../review/2026-10-04-multirole-2/01-findings-register.md).

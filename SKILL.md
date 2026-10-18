@@ -54,7 +54,9 @@ Signup is invitation-only by default: an admin mints a per-email code
 (`invite_create` / `insideout invite <email>`, revoke with
 `invite_revoke` / `insideout invite revoke <id>`) and registration
 consumes it (`register --invite`, `auth_register` with `invite_code`).
-Join an existing workspace with `workspace_join` / `insideout join
+The invite response carries `mailSent`: `false` means nothing was e-mailed
+(dev mode, or the provider refused), so send the `signupUrl` to the invitee
+yourself. Join an existing workspace with `workspace_join` / `insideout join
 <code>`.
 
 ## The working loop (in order)
@@ -66,11 +68,11 @@ Join an existing workspace with `workspace_join` / `insideout join
    to their author) → `idea_update` to sharpen, `idea_delete` to drop (soft —
    the row is kept for audit but `ideas` no longer lists it), `idea_convert`
    to open a PRD from an idea.
-3. **Author the PRD directly**: `prd <id>` to read, `prd update <id>
-   --section goals=…` to edit. Section keys: background, users, goals,
-   nonGoals, stories, requirements, constraints, risks. `snapshot`
-   records a working revision; `prd_export` renders markdown (optionally
-   per audience).
+3. **Author the PRD directly**: `prd <id>` to read, `prd update
+   --section goals=… <id>` to edit (flags before the id). Section keys:
+   background, users, goals, nonGoals, stories, requirements, constraints,
+   risks. `snapshot` records a working revision; `prd_export` renders
+   markdown (optionally per audience).
 4. **Grow the roadmap**: `roadmap_add/update/move/delete`,
    `roadmap update --deadline` for time pressure, `progress <project>`
    for the time-first view. `expand` grows a node via the planner.

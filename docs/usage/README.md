@@ -15,6 +15,7 @@ How to run InsideOut — as a developer or an operator.
 | [../SETENV.md](../SETENV.md) | First-timers | The environment operating manual: create the file, choose each key (`env.sh init` / `edit`), propagate to the components, prove it works |
 | [deployment.md](deployment.md) | Operators | docker-compose topology, image builds, ports, reverse-proxy expectations, current Railway public deploy |
 | [backup-restore.md](backup-restore.md) | Operators | The backup story: managed (Supabase toggle) + portable dumps (`scripts/backup-db.sh`), restore runbook, scratch-stack walkthrough |
+| [releasing.md](releasing.md) | Maintainers | How a `v*` tag becomes a release: the test step, the four builds and checksums, the publish, and the decisions still open (version policy, rollback, a stronger gate) |
 | [cli-mcp-and-guidance.md](cli-mcp-and-guidance.md) | Users + agents | The `insideout` CLI (`scripts/install.sh` → `~/.local/bin` + PATH), the MCP server registration (`scripts/mcp-config.sh`), and the `insideout.yaml` guidance flow that feeds GitHub evidence into a roadmap |
 
 For what the product *is*, see the root [README.md](../../README.md).

@@ -130,6 +130,19 @@ files are outside this cluster, and the shared indexes are the integrator's.
   (`docs/plans/README.md`), `docs/HANDOFF.md`, `docs/changelogs/README.md` and
   `docs/changelogs/index/2026-10.md`.
 
+**Closed (integrator follow-up, wave 1).** The documentation items above are
+done: the first-admin wording in `docs/usage/installation.md`,
+`docs/usage/local-development.md`, `docs/SETENV.md`,
+`docs/architecture/backend.md` and `skills/insideout-setup/SKILL.md`;
+`help`, `version` and the create-when-absent behaviour in
+`docs/usage/cli-mcp-and-guidance.md`; and a new
+[`docs/usage/releasing.md`](../../usage/releasing.md), the factual half of
+rv4-PM-05. Still open, as residue in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md): the
+README first-run lines (R1-06, wave 3), the Dockerfile and `install.sh`
+version stamp (R1-04), the stronger release gate (R1-05) and the version
+policy and rollback (R1-16). The per-ID dispositions are in this folder's
+[index](index.md).
+
 ## Verification
 
 The red outputs were taken at each red commit, before its fix existed, and the
