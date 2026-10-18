@@ -11,9 +11,9 @@ import (
 
 // The auth verbs — one per public /auth route — so every projection of the
 // product (CLI, MCP) can authenticate all five ways the web can: password
-// login, register, magic link, password reset, and code login. The refresh
-// token stays unused by CLI/MCP sessions, which simply log in again when
-// the access token expires (same contract as Login).
+// login, register, magic link, password reset, and code login. Every verb
+// that opens a session keeps the access token and the refresh token it was
+// given (same contract as Login).
 
 // Register creates an account and stores its session token. inviteCode
 // is required when the deployment is invitation-only (GET /auth/config).
@@ -64,8 +64,9 @@ func (c *Client) ResetPassword(token, password string) error {
 	})
 }
 
-// authSession POSTs a credential exchange and stores the access token on
-// success — the shared shape of Register and the two consume/verify verbs.
+// authSession POSTs a credential exchange and stores the access and refresh
+// tokens on success — the shared shape of Register and the two consume/verify
+// verbs.
 func (c *Client) authSession(path string, body any) error {
 	out, err := c.authPost(path, body)
 	if err != nil {
@@ -74,7 +75,7 @@ func (c *Client) authSession(path string, body any) error {
 	if out.AccessToken == "" {
 		return fmt.Errorf("POST %s: no accessToken in response%s", path, errSuffix(out.Error))
 	}
-	c.token = out.AccessToken
+	c.token, c.refresh = out.AccessToken, out.RefreshToken
 	return nil
 }
 
@@ -122,9 +123,10 @@ func (c *Client) authPost(path string, body any) (authBody, error) {
 }
 
 type authBody struct {
-	AccessToken string `json:"accessToken"`
-	Email       string `json:"email"`
-	Error       string `json:"error"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	Email        string `json:"email"`
+	Error        string `json:"error"`
 }
 
 // AuthConfig returns the public signup mode (GET /auth/config) — the

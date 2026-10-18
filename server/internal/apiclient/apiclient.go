@@ -16,9 +16,10 @@ import (
 )
 
 type Client struct {
-	base  string
-	token string
-	hc    *http.Client
+	base    string
+	token   string
+	refresh string
+	hc      *http.Client
 }
 
 func New(base string) *Client {
@@ -35,14 +36,14 @@ func (c *Client) SetToken(token string) { c.token = token }
 // as `insideout login` can hand it to the user.
 func (c *Client) Token() string { return c.token }
 
-// Login exchanges credentials for an access token (POST /auth/login —
-// the same route the web client uses; the refresh token stays unused by
-// CLI/MCP sessions, which simply log in again when the token expires).
+// RefreshToken exposes the refresh token the last sign-in returned, so a
+// caller can persist it next to the access token.
+func (c *Client) RefreshToken() string { return c.refresh }
+
+// Login exchanges credentials for an access token and a refresh token
+// (POST /auth/login — the same route the web client uses).
 func (c *Client) Login(email, password string) error {
-	var out struct {
-		AccessToken string `json:"accessToken"`
-		Error       string `json:"error"`
-	}
+	var out authBody
 	if err := c.do(http.MethodPost, "/auth/login", map[string]string{
 		"email":    email,
 		"password": password,
@@ -52,7 +53,7 @@ func (c *Client) Login(email, password string) error {
 	if out.AccessToken == "" {
 		return fmt.Errorf("login: no accessToken in response%s", errSuffix(out.Error))
 	}
-	c.token = out.AccessToken
+	c.token, c.refresh = out.AccessToken, out.RefreshToken
 	return nil
 }
 

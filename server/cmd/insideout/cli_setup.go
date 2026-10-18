@@ -79,6 +79,8 @@ func (s *setupClient) AuthConfig() (string, error) { return s.client().AuthConfi
 
 func (s *setupClient) Token() string { return s.client().Token() }
 
+func (s *setupClient) RefreshToken() string { return s.client().RefreshToken() }
+
 // setupProber adapts probe.APIProbe to flow.Prober and rebinds the
 // shared login client to the URL flow resolved (see setupClient).
 type setupProber struct{ sc *setupClient }

@@ -17,6 +17,10 @@ import (
 type Config struct {
 	APIBase string `json:"api_base,omitempty"`
 	Token   string `json:"token,omitempty"`
+	// RefreshToken renews Token after its short access TTL; it is the
+	// server's rotating one-time refresh token, so it is replaced whenever
+	// it is used.
+	RefreshToken string `json:"refresh_token,omitempty"`
 }
 
 // DefaultPath returns the per-user config file location:

@@ -30,6 +30,7 @@ type fakeClient struct {
 	calls      []string
 	events     *[]string
 	token      string
+	refresh    string
 	loginErr   error
 	requestErr error
 	verifyErr  error
@@ -71,6 +72,8 @@ func (f *fakeClient) ConsumeMagicLink(token string) error {
 func (f *fakeClient) AuthConfig() (string, error) { return "password", nil }
 
 func (f *fakeClient) Token() string { return f.token }
+
+func (f *fakeClient) RefreshToken() string { return f.refresh }
 
 type fakePersister struct {
 	saved []clientconfig.Config

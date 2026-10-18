@@ -55,6 +55,7 @@ type LoginClient interface {
 	ConsumeMagicLink(token string) error
 	AuthConfig() (string, error)
 	Token() string
+	RefreshToken() string
 }
 
 // Persister stores the finished config (internal/clientconfig's 0600
@@ -125,7 +126,7 @@ func (e *ProbeError) Unwrap() error { return e.Err }
 
 // Run executes the remote branch (local mode is not implemented yet):
 // resolve and validate the base URL, probe it, run the chosen sign-in
-// method, and persist the resulting token.
+// method, and persist the resulting access and refresh tokens.
 func Run(ctx context.Context, inputs Inputs, deps Deps) (Result, error) {
 	if inputs.Mode == ModeLocal {
 		return Result{}, ErrLocalNotImplemented{}
@@ -150,7 +151,7 @@ func Run(ctx context.Context, inputs Inputs, deps Deps) (Result, error) {
 	if err := signIn(inputs, deps.Client, deps.PromptSecret); err != nil {
 		return Result{}, err
 	}
-	if err := deps.Persister.Save(clientconfig.Config{APIBase: base, Token: deps.Client.Token()}); err != nil {
+	if err := deps.Persister.Save(clientconfig.Config{APIBase: base, Token: deps.Client.Token(), RefreshToken: deps.Client.RefreshToken()}); err != nil {
 		return Result{}, err
 	}
 	return Result{APIBase: base, SignedIn: true}, nil
