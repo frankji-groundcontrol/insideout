@@ -96,8 +96,12 @@ tool call it resolves credentials as before (INSIDEOUT_TOKEN, the saved login, a
 in-process sign-in), and if the token is a full-scope JWT it calls
 `POST /agent/token` through the credential's own client (so the saved session
 renews as usual) and sends the tool call with the agent token alone. The agent token
-is cached until it is about a third of its life from expiry, then minted again. A
-failed exchange is a tool error: it never falls back to the full token.
+is cached (one slot, keyed by the server and the user) until it is about a third of
+its life from expiry, then minted again; signing in or out drops it. A failed
+exchange is a tool error: it never falls back to the full token. A server that
+predates the route answers 404, and the error says to update the server before the
+MCP binary. A token that already carries a scope (an agent token handed to the
+process as `INSIDEOUT_TOKEN`) is sent as it is, and the server decides.
 
 The registry follows the credential. When the credential in use is a JWT (at
 startup, or right after an in-process sign-in), the profile removes `commit`,
@@ -111,18 +115,35 @@ model; the 403 above is the guarantee.
 
 ## Fencing and labelling
 
-User-writable text in tool output is data, not instructions.
+User-writable text in tool output is data, not instructions. Three outputs carried
+it bare (review 4: AIDEV-01 for the coach, AIDEV-08 for the MCP tools); each now
+rides in the `<prd_data>` fence the coach's system prompts already explain.
 
-- `get_prd` (`agent/tools.go`) returns its JSON inside the existing `<prd_data>`
-  fence (`fenceData`), the clause the system prompts already carry.
-- `agentcontext.Assemble` keeps its field values (callers and tests read them) and
-  adds an `untrusted` object naming the fields that hold user or GitHub text, with
-  the data-not-instructions notice. It also exports `FenceData`, the one fence
-  implementation reachable from outside package `agent`; a parity test pins it to
-  `agent.fenceData`, whose file this cluster does not own.
-- `mcpserver/fence.go` wraps every product tool result: a one-line untrusted-data
-  label, then the answer inside `FenceData`, with tag-like text broken so stored
-  text cannot close the fence early.
+- Coach tool `get_prd` (`agent/tools.go`) returns `{title, sections}` with the title
+  and every written section fenced (`fenceData`); an unwritten section stays `""`,
+  which is how the coach tells it has to write it. The JSON is encoded without
+  HTML escaping, because `\u003c` would hide the fence tag the prompt names. The
+  stage-gate error quotes the offending segment fact, fenced. The tool description
+  says so.
+- `agentcontext.Assemble` keeps its values and adds an `untrusted` object: a notice
+  that the listed fields are data and the paths of the fields that hold people's
+  text (`projectTitle`, `version.name`, `productArgument`, `prdCore`, `focus.*`,
+  `leaves[].*`, `prdTitle`), each declared where the field is built. A test fills
+  every entry point with a marker and requires every place a marker lands to be
+  declared, and every declared path to hold one. It also exports `Neutralise` and
+  `FenceData`, the one fence rule reachable from outside package `agent`; a parity
+  test pins it to `agent.fenceData`, whose file this cluster does not own.
+- `mcpserver/fence.go` wraps every successful product and admin tool result: a
+  one-line label naming the tag and saying the text is data, not instructions, then
+  the answer inside one fence. The API's JSON writes `<` as `\u003c`, which a plain
+  scan for the tag misses, although a model decoding the string reads the tag, so a
+  JSON answer is decoded, cleaned in every string and key, and written back (numbers exact, keys
+  alphabetical, `<` and `&` unescaped); any other text, such as an export or a
+  guide, goes through the literal-tag rule. The `agent_context` and
+  `roadmap_evidence` descriptions and the server instructions say the same.
+
+The auth tools answer in the server's own words and are not fenced. Error results
+carry the server's message and are not fenced either.
 
 ## Limits, said plainly
 
@@ -133,6 +154,14 @@ User-writable text in tool output is data, not instructions.
   the hardening beyond this.
 - The agent acts under the user's id, so audit rows still carry the user. Logs add
   `scope=agent`; per-row actor attribution is out of scope here.
+- A process with no credential keeps the whole registry until it signs in, so it can
+  still sign in or register; the first sign-in narrows it (`notifications/tools/list_changed`).
+- A cached agent token outlives a server secret rotation or a client clock skew for at
+  most one token life; the next 401 or the renewal point clears it.
+- Deploy the server before the MCP binary: a new binary against a server without
+  `POST /agent/token` fails every tool with the 404 hint above.
+- The CLI's `context` and `evidence` verbs print the API's JSON as it is. The `untrusted`
+  block rides in it, but the CLI does not fence (its files are outside this cluster).
 - Single-user workspaces: the owner is also the author. The strict default
   (an agent token never decides) holds; DEFERRED_OWNER: should an agent token be
   allowed to decide a proposal when the human owner is also the author in a
@@ -145,5 +174,10 @@ Real PostgreSQL through the whole handler chain, with agent tokens built by the 
 itself so the red run exercises today's server: an agent token is refused on
 decision, commit, `PUT /admin/settings`, invitations, deletes and the mint route,
 passes on allowed reads, and the author-actor case (agent proposes, agent decides:
-403, human decides: 200). Then a live server, `curl`, and the built `insideout-mcp`
-over stdio with `INSIDEOUT_ACCESS_TTL=3s` to prove re-minting.
+403, human decides: 200). The route-table test fails the build for a route with no
+policy entry. Client side: the exchange, its cache, renewal and failure modes
+(`apiclient`), and the profile that removes the withheld tools (`mcpserver`), each
+mutation-tested. Fencing: hostile titles, sections and facts through `get_prd` and
+the stage gate against a real store; a marker sweep over `Assemble`; and a sweep of
+every non-auth MCP tool against a hostile API. Then a live server, `curl`, and the
+built `insideout-mcp` over stdio with `INSIDEOUT_ACCESS_TTL=3s` to prove re-minting.
