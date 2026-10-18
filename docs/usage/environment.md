@@ -174,7 +174,7 @@ cd client && flutter run -d chrome --web-port=5173 --dart-define=API_BASE=http:/
 Both use the same migrations; the runtime app always connects as the
 non-superuser `insideout_app` role.
 
-**(a) Remote instance** (dev default) — any Postgres 14+ host. The role named
+**(a) Remote instance** (dev default) — any PostgreSQL 18 host (older majors are untested). The role named
 in the URL must own that database:
 
 ```

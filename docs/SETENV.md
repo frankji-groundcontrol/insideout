@@ -134,7 +134,7 @@ warning; nothing breaks.
 
 The one real decision. Pick exactly one of the two setups.
 
-**(a) Remote instance** (dev default) — any Postgres 14+ host. `DATABASE_URL`
+**(a) Remote instance** (dev default) — any PostgreSQL 18 host (older majors are untested). `DATABASE_URL`
 is the runtime role `insideout_app`. Migrations use `DATABASE_OWNER_URL`
 (`insideout_owner`, NOSUPERUSER — never a superuser for DEFINER objects):
 

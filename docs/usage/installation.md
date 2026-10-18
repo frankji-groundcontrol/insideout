@@ -100,7 +100,7 @@ Confirm the hosted path without installing again:
 
 ## Your own server
 
-You need PostgreSQL 14+ and, for the bundled database, Docker. After the
+You need PostgreSQL 18 (the major CI tests) and, for the bundled database, Docker. After the
 binary/local server path is selected, use the complete
 [key setup tutorial](key-setup-tutorial.md) and
 [key testing tutorial](key-testing-tutorial.md) to configure and prove each
@@ -197,7 +197,7 @@ Bundled Docker Postgres comes up with `docker compose up -d postgres`
 on `127.0.0.1:${POSTGRES_PORT:-5442}`. The app role is `insideout_app`.
 `setup.sh` writes the matching `DATABASE_URL`.
 
-Your own Postgres 14+ can be a dedicated database or a shared
+Your own PostgreSQL 18 can be a dedicated database or a shared
 instance. Migrations stay inside the `insideout` schema and do not
 write to other tenants' `public` objects. On a shared instance the
 role should own only that schema. See

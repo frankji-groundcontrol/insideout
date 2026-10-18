@@ -33,7 +33,7 @@ out of the walked range except the one row the review confirmed broken.
 | Promise | Stamp | Verified surface / absence |
 |---|---|---|
 | Coaching loop: SSE turns with offline template fallback (PRODUCT.md:87) | **IMPLEMENTED** | `agent/coach.go` SSE, `agent/template.go` offline replies; offline identity disclosed in-band (`sse.go:56-60`, wave 2); stage proposals human-ratified via `conversations.go:16` + client `coach_panel.dart:43` (wave 1, was USER-01) |
-| Adaptive depth: no fixed question count, no forced sequence (PRODUCT.md:87-90) | **PARTIAL** | Clarify discipline is adaptive since wave 3 (`prompts.go:52`: 不设固定数量/顺序), but the session still runs the fixed four-stage machine over the eight storage sections (`prompts.go` StageDraft writes 全部 8 个章节; COMP-02 re-scoped those to the storage scaffold) |
+| Adaptive depth: no fixed question count, no forced sequence (PRODUCT.md:87-90) | **PARTIAL** | Clarify discipline is adaptive since wave 3 (`prompts.go:52`: 不设固定数量/顺序), but the session still runs the fixed four-stage machine over the eight storage sections (`prompts.go` StageDraft writes 全部 8 个章节; COMP-02 re-scoped those to the storage scaffold) *Tracked 2026-10-18 (rv4-COMP-08): [the eight fixed sections are disclosed in PRODUCT.md, listed in the promise-gap record](../../issues/2026-10-11-product-promise-gaps.md).* |
 | Every question carries priority, reader, why-now (PRODUCT.md:92-97) | **IMPLEMENTED** | `prompts.go:53` — 优先级（必须现在澄清 / 本版应澄清 / 之后再验证）+ who the answer serves + why now |
 | Grouping allowed; one-at-a-time only when the answer branches (PRODUCT.md:99-100) | **IMPLEMENTED** | `prompts.go:52` — 相互独立的问题可以合并成一组；只有答案改变下一分支时才单独先问 (wave 3) |
 | "Form a version now" any time; gaps marked; editable version (PRODUCT.md:102-104) | **IMPLEMENTED** | Gap disclosure `readiness/readiness.go` + `api/prd_readiness.go:12`; suggested unresolved items carried into the Commit; drafts stay editable |
@@ -47,7 +47,7 @@ out of the walked range except the one row the review confirmed broken.
 
 | Promise | Stamp | Verified surface / absence |
 |---|---|---|
-| One human-confirmed primary audience per version; Coach may recommend; secondary audiences attachable (PRODUCT.md:156-158) | **PARTIAL** | Primary audience on every Commit (`prd_commits.go:34`, `20260821150000_prd_commits.sql:11`) + client `audience_selector.dart`; no secondary-audience surface (`grep secondary` → 0) |
+| One human-confirmed primary audience per version; Coach may recommend; secondary audiences attachable (PRODUCT.md:156-158) | **PARTIAL** | Primary audience on every Commit (`prd_commits.go:34`, `20260821150000_prd_commits.sql:11`) + client `audience_selector.dart`; no secondary-audience surface (`grep secondary` → 0) *Tracked 2026-10-18 (rv4-COMP-08): [secondary audiences](../../issues/2026-10-18-promise-partial-secondary-audiences.md).* |
 | The four projections (Decision / Management / Delivery / Co-creation & validation) (PRODUCT.md:160-169) | **IMPLEMENTED** | `audienceview.go` projection map (audiences listed `api/prd_view.go:72`); served by `api/prd_view.go:23-40` |
 | Projections of one core; audience-specific readiness; no universal completeness score (PRODUCT.md:171-173) | **IMPLEMENTED** | `readiness.go` per-audience rules with priority gaps — no percent score exists |
 | Authorized readers switch views without gaining permissions (PRODUCT.md:174) | **IMPLEMENTED** | One `requireAuth` route serves all audiences (`api/prd_view.go`) |
@@ -58,7 +58,7 @@ out of the walked range except the one row the review confirmed broken.
 |---|---|---|
 | Coach records candidate facts without interrupting (PRODUCT.md:178-179) | **IMPLEMENTED** | `agent/ledger.go:260` record_fact with quote grounding (`quoteIsGrounded`, `ledger.go:139`) |
 | Critical facts presented together for confirmation before a meaningful Commit (PRODUCT.md:179-180) | **DOCS-ONLY** | No facts route exists (`grep -rn facts server/internal/api` → 0); nothing surfaces the facts at commit time (parked PM-17 / AIDEV-09 slice) |
-| Facts surface: interpretation, source, status, and confirm/correct/remove/discuss actions (PRODUCT.md:182-187) | **PARTIAL** | Recording + attested/assumed statuses implemented (`ledger.go:26-27,111`); the four user actions have no API and no client UI |
+| Facts surface: interpretation, source, status, and confirm/correct/remove/discuss actions (PRODUCT.md:182-187) | **PARTIAL** | Recording + attested/assumed statuses implemented (`ledger.go:26-27,111`); the four user actions have no API and no client UI *Tracked 2026-10-18 (rv4-COMP-08): [facts trust layer](../../issues/2026-10-11-facts-trust-layer.md).* |
 | Raw quotes private by default; views expose conclusions; no silent cross-PRD reuse (PRODUCT.md:189-195) | **IMPLEMENTED** | Facts and quotes live inside conversation meta; the projections pick sections only; no cross-PRD fact machinery exists to leak |
 
 ## Product version control (PRODUCT.md 197–225)
@@ -72,7 +72,7 @@ out of the walked range except the one row the review confirmed broken.
 | Merge / Combine conclusion (PRODUCT.md:210-211) | **DOCS-ONLY** | Same zero-match grep; merge decisions have no machinery |
 | Coach recommends Commit moments, never gates or performs them (PRODUCT.md:212-216) | **IMPLEMENTED** | The draft prompt proposes forming the version (`prompts.go:56`); the Commit route is a direct human action, readiness is a separate GET (`prd_readiness.go`) |
 | Saved versions immutable; later changes form the next working version (PRODUCT.md:215-216, 220-221) | **IMPLEMENTED** | `prd_commit_lock_test.go` + the revisions model (`store/prd_revisions.go:43`) |
-| Decision Log: who/why/evidence/alternatives for Commits, Merges, overrides, reversed decisions (PRODUCT.md:218-221) | **PARTIAL** | A free-text note on Commit (`prd_commits.go:34` decisionNote; `cli_version.go:124`; `product_tools.go:123`) and an immutable agent-proposal decision record (`proposal_decisions.go:13`, `20260822100000_proposal_decisions.sql`); no structured record or view, nothing for Merges/overrides/reversals |
+| Decision Log: who/why/evidence/alternatives for Commits, Merges, overrides, reversed decisions (PRODUCT.md:218-221) | **PARTIAL** | A free-text note on Commit (`prd_commits.go:34` decisionNote; `cli_version.go:124`; `product_tools.go:123`) and an immutable agent-proposal decision record (`proposal_decisions.go:13`, `20260822100000_proposal_decisions.sql`); no structured record or view, nothing for Merges/overrides/reversals *Tracked 2026-10-18 (rv4-COMP-08): [Branch, Merge and the Decision Log](../../issues/2026-10-11-product-branch-merge-decision-log.md).* |
 
 ## Collaboration and authority (PRODUCT.md 227–259)
 
@@ -81,26 +81,26 @@ out of the walked range except the one row the review confirmed broken.
 | Workspace roles manage organization access (PRODUCT.md:229-230) | **IMPLEMENTED** | `workspace_memberships` admin/member (`20260720135751_workspaces.sql:25`); `users.system_role` (`20260825120000_invitation_signup.sql:8-9`) |
 | Product authority per Project: Decision Owner / Driver / Contributor / Reviewer / Viewer (PRODUCT.md:230-241) | **DOCS-ONLY** | `grep -rniE "project[ _-]?role"` → **0**; self-disclosed at PRODUCT.md:431-434 |
 | One current Driver per Product Branch, transferable (PRODUCT.md:242-243) | **DOCS-ONLY** | No branches exist (row PRODUCT.md:207-208) |
-| Contributions remain proposals until accepted (PRODUCT.md:243-244) | **PARTIAL** | Agent proposals record with human decision (`api/agent_routes.go:20-21,213` accepted:false; `proposal_decisions.go`); human members edit the shared mainline directly in v1 |
+| Contributions remain proposals until accepted (PRODUCT.md:243-244) | **PARTIAL** | Agent proposals record with human decision (`api/agent_routes.go:20-21,213` accepted:false; `proposal_decisions.go`); human members edit the shared mainline directly in v1 *Tracked 2026-10-18 (rv4-COMP-08): [Branch, Merge and the Decision Log](../../issues/2026-10-11-product-branch-merge-decision-log.md).* |
 | Each Now item has exactly one human responsible owner; an Agent cannot be the only owner (PRODUCT.md:246-248) | **IMPLEMENTED** | `owner_user_id uuid REFERENCES users` (`20261005120000_roadmap_acceptance_owner.sql:8`), surfaced as OwnerName by `roadmaptime` |
 | Focus: non-exclusive pointer, one main Focus per session, team Now aggregates (PRODUCT.md:247-249) | **DOCS-ONLY** | Focus exists only as an agent-context parameter (`agentcontext.go:76`); no human focus surface (FEAT-06) |
-| GitHub or Agent advance leaf evidence when acceptance is explicit; Driver confirms milestones; Decision Owner confirms results and Merges (PRODUCT.md:250-252) | **PARTIAL** | Leaf evidence auto-attach implemented (evidence rows below); milestone = human Commit; Decision-Owner and Merge confirmation have no machinery (rows PRODUCT.md:230-241, 207-208) |
+| GitHub or Agent advance leaf evidence when acceptance is explicit; Driver confirms milestones; Decision Owner confirms results and Merges (PRODUCT.md:250-252) | **PARTIAL** | Leaf evidence auto-attach implemented (evidence rows below); milestone = human Commit; Decision-Owner and Merge confirmation have no machinery (rows PRODUCT.md:230-241, 207-208) *Tracked 2026-10-18 (rv4-COMP-08): [Branch, Merge and the Decision Log](../../issues/2026-10-11-product-branch-merge-decision-log.md).* |
 | Scoped feedback invitations without joining; feedback retains author/time/context; respondents see only their own; owner may publish a synthesis (PRODUCT.md:254-259) | **DOCS-ONLY** | No feedback route anywhere (`grep -rni feedback server/internal/api server/cmd client/lib` → no product hits); the invitations table is workspace signup only |
 
 ## The shared Roadmap Graph (PRODUCT.md 261–303)
 
 | Promise | Stamp | Verified surface / absence |
 |---|---|---|
-| One shared, versioned, hierarchical graph (PRODUCT.md:263-265) | **PARTIAL** | `roadmap_nodes` parent hierarchy (`20260722120000_roadmap_nodes.sql`) per project; the "tied to an explicit PRD Commit baseline" link is not modeled — no commit reference on the graph |
+| One shared, versioned, hierarchical graph (PRODUCT.md:263-265) | **PARTIAL** | `roadmap_nodes` parent hierarchy (`20260722120000_roadmap_nodes.sql`) per project; the "tied to an explicit PRD Commit baseline" link is not modeled — no commit reference on the graph *Tracked 2026-10-18 (rv4-COMP-08): [Commit-baseline tie](../../issues/2026-10-18-promise-partial-commit-baseline-tie.md).* |
 | Hierarchy expresses outcomes → work → evidence; up reveals Why, down acceptance/work/evidence (PRODUCT.md:267-270) | **IMPLEMENTED** | Canvas bands + tree (`roadmap_canvas.dart`, `roadmap_tree.dart`); acceptance and evidence columns on nodes |
 | Progress view: Now dominant, at most three justified Next, Done with evidence (PRODUCT.md:272-273) | **IMPLEMENTED** | `roadmaptime.Assemble` (`roadmaptime.go:77-88`) + client `roadmap_progress_view.dart` |
 | Canvas reveals the larger hierarchy and execution frontier (PRODUCT.md:273-274) | **IMPLEMENTED** | `roadmap_canvas.dart` with `roadmap_minimap.dart` |
 | History shows versions, decisions, evidence (PRODUCT.md:274-275) | **IMPLEMENTED** | `versions_page.dart` (versions + Commit detail incl. the decision note) + `project_updates_feed.dart` (activity/evidence feed) |
-| Lenses: Decision / Product / Delivery / Validation / Agent context; role, lens and permission stay separate (PRODUCT.md:277-289) | **PARTIAL** | The agent-context lens is implemented with mode-specific emphasis (`agentcontext.go:18,53-76`); the four human roadmap lenses have no parameter or view (`grep -rni lens` → only the `audienceview.go:16` comment). Audience switching already grants no permission, so the separation principle holds where a view exists |
-| Product outcomes carry target time ranges (PRODUCT.md:291-292) | **PARTIAL** | Node deadlines only; no outcome-level time-range field |
+| Lenses: Decision / Product / Delivery / Validation / Agent context; role, lens and permission stay separate (PRODUCT.md:277-289) | **PARTIAL** | The agent-context lens is implemented with mode-specific emphasis (`agentcontext.go:18,53-76`); the four human roadmap lenses have no parameter or view (`grep -rni lens` → only the `audienceview.go:16` comment). Audience switching already grants no permission, so the separation principle holds where a view exists *Tracked 2026-10-18 (rv4-COMP-08): [roadmap lenses](../../issues/2026-10-11-roadmap-lenses.md).* |
+| Product outcomes carry target time ranges (PRODUCT.md:291-292) | **PARTIAL** | Node deadlines only; no outcome-level time-range field *Tracked 2026-10-18 (rv4-COMP-08): [outcome time ranges](../../issues/2026-10-18-promise-partial-outcome-time-ranges.md).* |
 | Deadlines explicit; an item without a deadline cannot enter Now (PRODUCT.md:292-293) | **IMPLEMENTED** | Deadline column + `NeedsDeadline` band (`roadmaptime.go:63-88`) |
 | Pressure ladder normal → near → high risk → overdue (PRODUCT.md:295-297) | **IMPLEMENTED** | `roadmaptime.Pressure` (`roadmaptime.go:21-28`) |
-| Overdue never silently closed; continue / change deadline / transfer / abandon with recorded reason (PRODUCT.md:299-301) | **PARTIAL** | Pressure surfaces overdue; no transfer or abandon-with-reason action (`grep -rniE "overdue\|abandon"` over product code → comments only); parked review-2 FEAT-09/PM-18 |
+| Overdue never silently closed; continue / change deadline / transfer / abandon with recorded reason (PRODUCT.md:299-301) | **PARTIAL** | Pressure surfaces overdue; no transfer or abandon-with-reason action (`grep -rniE "overdue\|abandon"` over product code → comments only); parked review-2 FEAT-09/PM-18 *Tracked 2026-10-18 (rv4-COMP-08): [overdue resolution](../../issues/2026-10-18-promise-partial-overdue-resolution.md).* |
 | Dependency delay shows the affected path and a proposed time Diff; human confirms the rebaseline (PRODUCT.md:301-303) | **DOCS-ONLY** | No dependency edges (`grep -rni depend` over migrations/store/client → section copy only) |
 | Agents include deadline pressure when recommending (PRODUCT.md:303) | **IMPLEMENTED** | Agent context carries deadline + pressure (`agentcontext.go:138-139`) |
 
@@ -113,7 +113,7 @@ out of the walked range except the one row the review confirmed broken.
 | Feedback and metric observations arrive through their own evidence sources, never as GitHub events (PRODUCT.md:320-321) | **DOCS-ONLY** | No validation evidence source exists at all (FEAT-04, wave 4); the never-as-GitHub-events half holds by construction |
 | No Git event silently proves a higher outcome; unmatched activity stays visibly unassociated (PRODUCT.md:323-325) | **IMPLEMENTED** | Guide match required before leaf attach; unmatched commits still land in the updates feed (`syncGithubProject` → `SyncRepoCommits`, `github_webhook.go:160-188`) |
 | Reverts and failed deployments append evidence; they do not erase history (PRODUCT.md:325-326) | **IMPLEMENTED** | `deployment_status` failure appends its own activity row (`github_webhook_evidence.go:96-115`, FEAT-07 landed wave 2); evidence rows are insert-only |
-| Change Proposal for delivery-revealed product change; human accepts before the baseline changes (PRODUCT.md:326-328) | **PARTIAL** | The generic agent proposal + human decision flow exists (`agent_routes.go:20-21`, kinds structure/scope/priority at `:137-155`); no change-proposal surface showing impact on views/journeys/Roadmap (`grep change[ _-]?proposal` → 0) — a gap **no review list carried** |
+| Change Proposal for delivery-revealed product change; human accepts before the baseline changes (PRODUCT.md:326-328) | **PARTIAL** | The generic agent proposal + human decision flow exists (`agent_routes.go:20-21`, kinds structure/scope/priority at `:137-155`); no change-proposal surface showing impact on views/journeys/Roadmap (`grep change[ _-]?proposal` → 0) — a gap **no review list carried** *Tracked 2026-10-18 (rv4-COMP-08): [Change Proposal](../../issues/2026-10-18-promise-partial-change-proposal.md).* |
 | Web, GitHub, CLI, MCP, Agents on one source of truth; agent vocabulary context/focus/checkpoint/propose/version (PRODUCT.md:330-332) | **IMPLEMENTED** | All ride `/api/v1`: `agent_routes.go:18-21`, CLI dispatch `cmd/insideout/cli.go`, 52 MCP tools (41 `addTextTool` + 11 `addTool` registrations) |
 | Compact focus-scoped agent context; brainstorming/implementation/review modes (PRODUCT.md:334-340) | **IMPLEMENTED** | `agentcontext.go` — mode-specific emphasis, focus-node context at `:76` |
 | Agents can checkpoint and propose; cannot apply strategic changes, Commit, or Merge (PRODUCT.md:342-344) | **IMPLEMENTED** | Checkpoint/propose write drafts and proposal rows only (`agent_routes.go:19-21,213`); Commit is a human route |
@@ -123,7 +123,7 @@ out of the walked range except the one row the review confirmed broken.
 | Promise | Stamp | Verified surface / absence |
 |---|---|---|
 | implemented / released / validated are distinguished (PRODUCT.md:348) | **DOCS-ONLY** | Node statuses are `locked/pending/in_progress/done` only (`20260722120000_roadmap_nodes.sql:17`); no validated state (FEAT-04 / REL-07, wave 4) |
-| Completion links to verifiable evidence; human override only with a reason (PRODUCT.md:349-350) | **PARTIAL** | Evidence attaches to nodes (`AddRoadmapEvidence`, `github_webhook.go:145`); status changes record no reason |
+| Completion links to verifiable evidence; human override only with a reason (PRODUCT.md:349-350) | **PARTIAL** | Evidence attaches to nodes (`AddRoadmapEvidence`, `github_webhook.go:145`); status changes record no reason *Tracked 2026-10-18 (rv4-COMP-08): [completion override reason](../../issues/2026-10-18-promise-partial-completion-override-reason.md).* |
 | After release: compare outcomes with committed personas/assumptions/success criteria; begin the next version or Branch (PRODUCT.md:352-355) | **DOCS-ONLY** | The compare loop has no surface; depends on the persona and validation rows |
 
 ## Outside the walked range, confirmed by the review
@@ -138,13 +138,13 @@ out of the walked range except the one row the review confirmed broken.
 |---|---|---|
 | 1. private Idea or existing GitHub project, context preserved (PRODUCT.md:362-364) | **IMPLEMENTED** | — |
 | 2. prioritized, explained, adaptive coaching; form-now with explicit gaps (PRODUCT.md:364-366) | **IMPLEMENTED** | prompts are zh-only (row PRODUCT.md:441-442) |
-| 3. editable product argument with prioritized concrete personas (PRODUCT.md:366-368) | **PARTIAL** | personas are free text (row PRODUCT.md:121-134) |
+| 3. editable product argument with prioritized concrete personas (PRODUCT.md:366-368) | **PARTIAL** | personas are free text (row PRODUCT.md:121-134) *Tracked 2026-10-18 (rv4-COMP-08): [persona grounding labels](../../issues/2026-10-11-persona-grounding-labels.md).* |
 | 4. choose an audience; view one fact core through the projection (PRODUCT.md:368-369) | **IMPLEMENTED** | — |
-| 5. immutable Commit with Diff, summary, open validation items, Decision Log (PRODUCT.md:369-370) | **PARTIAL** | Decision Log is a free-text note only (row PRODUCT.md:218-221) |
-| 6. Roadmap baseline: Now / justified Next / evidenced Done, dependencies, one human owner, deadlines (PRODUCT.md:371-372) | **PARTIAL** | dependency edges DOCS-ONLY (row PRODUCT.md:301-303) |
+| 5. immutable Commit with Diff, summary, open validation items, Decision Log (PRODUCT.md:369-370) | **PARTIAL** | Decision Log is a free-text note only (row PRODUCT.md:218-221) *Tracked 2026-10-18 (rv4-COMP-08): [Decision Log](../../issues/2026-10-11-product-branch-merge-decision-log.md).* |
+| 6. Roadmap baseline: Now / justified Next / evidenced Done, dependencies, one human owner, deadlines (PRODUCT.md:371-372) | **PARTIAL** | dependency edges DOCS-ONLY (row PRODUCT.md:301-303) *Tracked 2026-10-18 (rv4-COMP-08): [dependency edges](../../issues/2026-10-11-roadmap-dependency-edges.md).* |
 | 7. Decision Owner and Driver separated; baselines and Merges human-confirmed (PRODUCT.md:373-374) | **DOCS-ONLY** | per-Project roles and Product Branch/Merge (rows PRODUCT.md:230-241, 207-208) |
-| 8. Git required at Focus; matched evidence without claiming unproven user value (PRODUCT.md:375-377) | **PARTIAL** | the requirement gate is DOCS-ONLY (row PRODUCT.md:247-249) |
-| 9. Web and one Agent interface share Focus-scoped Roadmap context (PRODUCT.md:378-379) | **PARTIAL** | agent context yes; human Focus surface no (row PRODUCT.md:247-249) |
+| 8. Git required at Focus; matched evidence without claiming unproven user value (PRODUCT.md:375-377) | **PARTIAL** | the requirement gate is DOCS-ONLY (row PRODUCT.md:247-249) *Tracked 2026-10-18 (rv4-COMP-08): [Focus surface](../../issues/2026-10-11-focus-surface.md).* |
+| 9. Web and one Agent interface share Focus-scoped Roadmap context (PRODUCT.md:378-379) | **PARTIAL** | agent context yes; human Focus surface no (row PRODUCT.md:247-249) *Tracked 2026-10-18 (rv4-COMP-08): [Focus surface](../../issues/2026-10-11-focus-surface.md).* |
 | 10. implemented / released / validated distinguished; next version without erasing history (PRODUCT.md:379-380) | **DOCS-ONLY** | no validated state or validation evidence (rows PRODUCT.md:348, 320-321) |
 
 ## Reconciling the five gap-lists
@@ -174,3 +174,10 @@ personas and the facts surface all hang off it). Walk totals at this tree —
 63 promise rows: **36 IMPLEMENTED · 13 PARTIAL · 14 DOCS-ONLY · 0 DEAD** —
 so the ADD bucket of the remediation plan is now sized from a verified
 inventory, which is what COMP-01 asked for.
+
+*Corrected 2026-10-18 (rv4-COMP-08): every PARTIAL row above now links the
+dated issue that tracks it, and `scripts/tests/check_product_promise_gaps.py`
+fails a PARTIAL row that links none. The five rows no earlier list carried (50,
+100, 103, 116, 126) and the Commit-baseline tie (94) each got a new record
+named `2026-10-18-promise-partial-*.md`; the others point at their
+2026-10-11 slice records.*

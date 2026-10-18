@@ -9,7 +9,7 @@ This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git histo
 
 - **Go 1.26+** (see `server/go.mod`)
 - **Flutter 3.44.x** (for `client/`; CI and `client/Dockerfile` pin 3.44.0; see [`client/README.md`](../../client/README.md))
-- **PostgreSQL 14+** reachable via `DATABASE_URL` — either your own instance or the bundled one below
+- **PostgreSQL 18** reachable via `DATABASE_URL` — either your own instance or the bundled one below (CI and the bundled service run 18; older majors are untested)
 - **Docker** (optional) — only needed for the bundled Postgres / full-compose runs
 
 ## Environment
@@ -93,7 +93,7 @@ brings up `postgres:18` on host port `${POSTGRES_PORT:-5442}`. On first boot,
 DATABASE_URL=postgres://insideout_app:<POSTGRES_APP_PASSWORD>@localhost:5442/insideout?sslmode=disable
 ```
 
-**(b) Existing / shared instance** — any Postgres 14+ host. On a dedicated
+**(b) Existing / shared instance** — any PostgreSQL 18 host (older majors are untested). On a dedicated
 database, the `insideout_app` role should own the database; on a shared
 multi-tenant instance, `insideout_app` owns only the `insideout` schema.
 Migrations create and stay inside the `insideout` schema — they never touch

@@ -58,7 +58,7 @@ The same migration files support two targets without modification (see
 
 1. **Bundled dedicated instance** — the compose `postgres` service above.
    `DATABASE_URL` points at it with `sslmode=disable`.
-2. **Existing/shared instance** — any PostgreSQL 14+ the operator provisions,
+2. **Existing/shared instance** — any PostgreSQL 18 the operator provisions (the major CI and the bundled service run; older majors are untested),
    including a shared multi-tenant managed project where `insideout_app`
    owns only the `insideout` schema. When connecting through a
    transaction-mode pooler (a `pgbouncer=true` connection string), the
