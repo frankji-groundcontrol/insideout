@@ -20,6 +20,8 @@ one, so the first CI run after a push is what proves the behavior.
   guard fails the step (the step's own script runs against a made-up tree), so
   a guard written red-first is not left for nobody to run. Its checkout fetches
   the tags, because check_docs_truth.py asks git for them.
+- rv4-PM-12: the Ubuntu install lane accepts no Go older than server/go.mod's
+  floor, and no step name announces an older one.
 """
 import pathlib
 import re
@@ -30,6 +32,7 @@ import textwrap
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CI = ".github/workflows/ci.yml"
+UBUNTU = ".github/workflows/ubuntu-install.yml"
 
 
 def read(name):
@@ -167,8 +170,33 @@ def guards_see_the_tags():
     ]
 
 
+def ubuntu_go_floor():
+    """PM-12: the premise (go.mod's floor) is read from the tree, so the lane
+    follows a floor bump instead of freezing the number it was written with."""
+    yml = read(UBUNTU)
+    major, floor = map(int, re.search(r"^go (\d+)\.(\d+)", read("server/go.mod"), re.M).groups())
+    verify = re.search(r"grep -E '([^']*go\d[^']*)'", yml)
+    if not verify:
+        return [f"{UBUNTU}: no `grep -E 'go1...'` verifies the installed Go version (rv4-PM-12)"]
+    oldest = next((m for m in range(100)
+                   if re.search(verify.group(1), f"go version go{major}.{m}.0 linux/amd64")), None)
+    problems = []
+    if oldest is None or oldest < floor:
+        problems.append(
+            f"{UBUNTU}: the Go verify step accepts Go {major}.{oldest}, below the "
+            f"{major}.{floor} floor of server/go.mod (rv4-PM-12)"
+        )
+    for named in re.findall(rf"Go {major}\.(\d+)\+", yml):
+        if int(named) < floor:
+            problems.append(
+                f"{UBUNTU}: a step name says Go {major}.{named}+, below the "
+                f"{major}.{floor} floor of server/go.mod (rv4-PM-12)"
+            )
+    return problems
+
+
 CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests,
-          contract_guards_run, guards_see_the_tags]
+          contract_guards_run, guards_see_the_tags, ubuntu_go_floor]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
@@ -176,4 +204,4 @@ if __name__ == "__main__":
         print(message, file=sys.stderr)
     if failures:
         sys.exit(1)
-    print("ci gates ok: weekly schedule with a shuffled scheduled run")
+    print(f"ci gates ok: {len(CHECKS)} checks")
