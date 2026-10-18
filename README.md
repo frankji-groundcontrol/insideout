@@ -167,7 +167,7 @@ insideout whoami                       # hosted API; no INSIDEOUT_API required
 insideout login you@example.com        # password on stdin, token on stdout
 insideout workspaces                   # 工作区列表 / list workspaces
 insideout ideas <ws-id>                # 想法箱 / the inbox
-insideout prd update <prd-id> --section goals="Ship the MVP"
+insideout prd update --section goals="Ship the MVP" <prd-id>
 insideout roadmap list <proj-id>       # 路线图 / the roadmap tree
 insideout commit --name "v0.1" --audience decision <prd-id>   # 人类专属 / humans only
 ```
