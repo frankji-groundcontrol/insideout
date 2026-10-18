@@ -9,12 +9,6 @@ import (
 	"testing"
 )
 
-func TestDefaultBaseIsTheHostedAPI(t *testing.T) {
-	if DefaultBase != "https://insideout.yalotein.net/api/v1" {
-		t.Fatalf("DefaultBase = %q", DefaultBase)
-	}
-}
-
 func TestMCPConfigUsesDefaultBaseWhenEnvUnset(t *testing.T) {
 	script := filepath.Join("..", "..", "..", "scripts", "mcp-config.sh")
 	cmd := exec.Command("bash", script, "-q")

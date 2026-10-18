@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -55,5 +56,14 @@ func TestDefaultAPIScriptPrintsDefaultBase(t *testing.T) {
 	}
 	if got := strings.TrimSpace(string(out)); got != DefaultBase {
 		t.Fatalf("default-api.sh prints %q, DefaultBase is %q", got, DefaultBase)
+	}
+}
+
+// The committed default is some deployment's API root — not pinned to one
+// host, which a release may retarget, but always an https URL ending /api/v1.
+func TestDefaultBaseIsAnHTTPSAPIv1URL(t *testing.T) {
+	u, err := url.Parse(DefaultBase)
+	if err != nil || u.Scheme != "https" || u.Host == "" || u.Path != "/api/v1" {
+		t.Fatalf("DefaultBase = %q, want https://<host>/api/v1", DefaultBase)
 	}
 }
