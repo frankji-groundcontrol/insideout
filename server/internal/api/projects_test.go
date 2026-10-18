@@ -17,6 +17,8 @@ func TestProjectQuietFlagged(t *testing.T) {
 	now := time.Date(2026, 10, 4, 12, 0, 0, 0, time.UTC)
 	fresh := now.Add(-2 * 24 * time.Hour)
 	stale := now.Add(-15 * 24 * time.Hour)
+	atThreshold := now.Add(-quietAfter)
+	overThreshold := atThreshold.Add(-time.Second)
 	k := "progress"
 	c := "shipped the API"
 
@@ -33,6 +35,9 @@ func TestProjectQuietFlagged(t *testing.T) {
 		{"active with stale update is flagged", "active", 20 * 24 * time.Hour, &stale, &k, &c, true},
 		{"active recently created with no updates is not flagged", "active", 2 * 24 * time.Hour, nil, nil, nil, false},
 		{"planning with stale creation is flagged", "planning", 16 * 24 * time.Hour, nil, nil, nil, true},
+		{"update exactly at the threshold is not flagged", "active", 30 * 24 * time.Hour, &atThreshold, &k, &c, false},
+		{"update a second over the threshold is flagged", "active", 30 * 24 * time.Hour, &overThreshold, &k, &c, true},
+		{"creation exactly at the threshold is not flagged", "planning", quietAfter, nil, nil, nil, false},
 		{"paused quiet is expected, not flagged", "paused", 20 * 24 * time.Hour, &stale, &k, &c, false},
 		{"done is never flagged", "done", 20 * 24 * time.Hour, &stale, &k, &c, false},
 		{"archived is never flagged", "archived", 20 * 24 * time.Hour, &stale, &k, &c, false},
