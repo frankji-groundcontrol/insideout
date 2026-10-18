@@ -140,7 +140,7 @@ func runSetupCommand(rest []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start/--create-roles belong to --local")
 			return true, 2
 		}
-		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", clientconfig.Resolve("").Base)
+		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", apiclient.DefaultBase)
 		fmt.Println("Sign in interactively:  insideout setup")
 		fmt.Println("Or with the plain CLI:  insideout login you@example.com")
 		fmt.Println("A server on this machine: insideout setup --local --postgres bundled|own")

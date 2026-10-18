@@ -1,9 +1,9 @@
 // Package clientconfig resolves InsideOut client credentials from a
-// single place. Resolution precedence is per field: the process
-// environment (INSIDEOUT_API, INSIDEOUT_TOKEN) overrides the per-user
-// config file, and only a non-empty variable overrides. Every CLI verb
-// and the MCP server resolve credentials through this package rather
-// than reading the environment or the file themselves.
+// single place. Resolve turns the --api flag, the process environment
+// (INSIDEOUT_API, INSIDEOUT_TOKEN) and the per-user config file into one
+// API base plus the token that belongs to exactly that base. Every CLI
+// verb and the MCP server resolve credentials through it rather than
+// reading the environment or the file themselves.
 package clientconfig
 
 import (
@@ -29,12 +29,11 @@ func DefaultPath() (string, error) {
 	return filepath.Join(dir, "insideout", "config.json"), nil
 }
 
-// Load reads the config at path. A missing file yields a zero Config
-// and a nil error; malformed JSON yields a descriptive error naming
-// the path. Per field, a non-empty INSIDEOUT_API or INSIDEOUT_TOKEN in
-// the process environment overrides the value loaded from the file —
-// including when no file exists at all, which is the common case for
-// a CLI pointed by environment alone.
+// Load reads the config at path and nothing else — the environment is
+// Resolve's business, because overlaying it here per field would pair one
+// server's saved token with another server's base. A missing file yields
+// a zero Config and a nil error; malformed JSON yields a descriptive
+// error naming the path.
 func Load(path string) (Config, error) {
 	var cfg Config
 	data, err := os.ReadFile(path)
@@ -44,15 +43,9 @@ func Load(path string) (Config, error) {
 			return Config{}, fmt.Errorf("parse config %s: %w", path, err)
 		}
 	case os.IsNotExist(err):
-		// no file: fall through so env overrides still apply
+		// no file: nothing saved yet
 	default:
 		return Config{}, fmt.Errorf("read config %s: %w", path, err)
-	}
-	if v := os.Getenv("INSIDEOUT_API"); v != "" {
-		cfg.APIBase = v
-	}
-	if v := os.Getenv("INSIDEOUT_TOKEN"); v != "" {
-		cfg.Token = v
 	}
 	return cfg, nil
 }

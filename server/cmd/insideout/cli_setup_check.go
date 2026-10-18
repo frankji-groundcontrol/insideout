@@ -56,7 +56,11 @@ func runHealthCheck(llmLive bool) (bool, int) {
 }
 
 func checkAPI(ctx context.Context) checkOutcome {
-	base := clientconfig.Resolve("").Base
+	creds, err := clientconfig.Resolve("")
+	if err != nil {
+		return checkOutcome{"api", "fail", err.Error()}
+	}
+	base := creds.Base
 	res, err := probe.APIProbe(ctx, nil, base)
 	switch {
 	case err == nil && res.AuthRequired:

@@ -168,8 +168,15 @@ func apiFlag(fs *flag.FlagSet) *string {
 
 // clientFromFlag builds a verb's API client from its parsed --api value.
 // Call it only after fs.Parse: a client built earlier cannot see the flag.
+// When the credentials cannot be resolved (an unreadable config file) the
+// client fails every request with that error, so the verb reports it
+// instead of falling back to the hosted API.
 func clientFromFlag(flagAPI string) *apiclient.Client {
-	return clientconfig.Resolve(flagAPI).Client()
+	creds, err := clientconfig.Resolve(flagAPI)
+	if err != nil {
+		return apiclient.Failing(err)
+	}
+	return creds.Client()
 }
 
 func credentials(args []string) (string, string, error) {

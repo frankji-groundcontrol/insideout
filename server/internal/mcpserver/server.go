@@ -52,8 +52,14 @@ func setSessionToken(tok string) {
 
 // client resolves the saved credentials like every other surface
 // (clientconfig.Resolve) and lets this process's own login win over them.
+// Credentials that cannot be resolved (an unreadable config file) give a
+// client that fails every call with that error.
 func client(api string) *apiclient.Client {
-	c := clientconfig.Resolve(api).Client()
+	creds, err := clientconfig.Resolve(api)
+	if err != nil {
+		return apiclient.Failing(err)
+	}
+	c := creds.Client()
 	session.Lock()
 	inProcess := session.token
 	session.Unlock()

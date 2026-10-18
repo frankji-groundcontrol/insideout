@@ -29,7 +29,12 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 	}
 	positional := fs.Args()
 	// Sign-in verbs carry no bearer: build the client from the resolved base only.
-	c := apiclient.New(clientconfig.Resolve(*api).Base)
+	creds, err := clientconfig.Resolve(*api)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return true, 1
+	}
+	c := apiclient.New(creds.Base)
 
 	switch cmd {
 	case "login":

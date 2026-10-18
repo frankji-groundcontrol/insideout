@@ -28,59 +28,6 @@ func TestLoadMissingFileIsZeroConfig(t *testing.T) {
 	}
 }
 
-func TestLoadProcessEnvOverridesFilePerField(t *testing.T) {
-	file := filepath.Join(t.TempDir(), "config.json")
-	onDisk := Config{APIBase: "https://file.example/api/v1", Token: "file-token"}
-	if err := Save(file, onDisk); err != nil {
-		t.Fatalf("Save: %v", err)
-	}
-
-	cases := []struct {
-		name     string
-		apiEnv   string
-		tokenEnv string
-		want     Config
-	}{
-		{
-			name:     "env overrides both fields",
-			apiEnv:   "https://env.example/api/v1",
-			tokenEnv: "env-token",
-			want:     Config{APIBase: "https://env.example/api/v1", Token: "env-token"},
-		},
-		{
-			name:     "api env only overrides APIBase",
-			apiEnv:   "https://env.example/api/v1",
-			tokenEnv: "",
-			want:     Config{APIBase: "https://env.example/api/v1", Token: "file-token"},
-		},
-		{
-			name:     "token env only overrides Token",
-			apiEnv:   "",
-			tokenEnv: "env-token",
-			want:     Config{APIBase: "https://file.example/api/v1", Token: "env-token"},
-		},
-		{
-			name:     "empty env keeps file values",
-			apiEnv:   "",
-			tokenEnv: "",
-			want:     onDisk,
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("INSIDEOUT_API", tc.apiEnv)
-			t.Setenv("INSIDEOUT_TOKEN", tc.tokenEnv)
-			got, err := Load(file)
-			if err != nil {
-				t.Fatalf("Load: %v", err)
-			}
-			if got != tc.want {
-				t.Fatalf("Load = %+v, want %+v", got, tc.want)
-			}
-		})
-	}
-}
-
 func TestLoadMalformedJSONIsDescriptiveError(t *testing.T) {
 	clearCredentialEnv(t)
 	path := filepath.Join(t.TempDir(), "config.json")
@@ -153,26 +100,5 @@ func TestDefaultPathJoinsUserConfigDir(t *testing.T) {
 	want := filepath.Join(userDir, "insideout", "config.json")
 	if got != want {
 		t.Fatalf("DefaultPath = %q, want %q", got, want)
-	}
-}
-
-// The common case for every CLI verb: no config file exists yet and
-// the operator points the binary with INSIDEOUT_API/INSIDEOUT_TOKEN.
-// The environment must win even when there is no file to override —
-// found by the join phase wiring (2026-10-07).
-func TestLoadMissingFileStillAppliesEnv(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "absent", "config.json")
-	t.Setenv("INSIDEOUT_API", "https://env.example/api/v1")
-	t.Setenv("INSIDEOUT_TOKEN", "env-token")
-
-	cfg, err := Load(path)
-	if err != nil {
-		t.Fatalf("Load(missing) error: %v", err)
-	}
-	if cfg.APIBase != "https://env.example/api/v1" {
-		t.Errorf("APIBase = %q, want the env value", cfg.APIBase)
-	}
-	if cfg.Token != "env-token" {
-		t.Errorf("Token = %q, want the env value", cfg.Token)
 	}
 }
