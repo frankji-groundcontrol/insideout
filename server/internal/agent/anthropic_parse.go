@@ -34,6 +34,7 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	var order []int
 	var stopReason string
 	var usage Usage
+	var sawStop bool
 
 	for scanner.Scan() {
 		if tick != nil {
@@ -102,6 +103,9 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 			}
 			readUsage(event["usage"], &usage)
 
+		case "message_stop":
+			sawStop = true
+
 		case "error":
 			errBody, _ := event["error"].(map[string]any)
 			errType, _ := errBody["type"].(string)
@@ -117,11 +121,24 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		return Turn{}, fmt.Errorf("%w: model declined to respond", ErrContentRefusal)
 	}
 
+	// A stream that just stops is not a finished turn — a dropped connection
+	// looks exactly like this — so the half it delivered is never taken for
+	// the whole (rv4-AIDEV-05). A stream with no content at all stays the
+	// empty-response case below.
+	if !sawStop && len(order) > 0 {
+		return Turn{}, fmt.Errorf("%w: anthropic stream ended before message_stop", ErrProviderTransient)
+	}
+
 	var text strings.Builder
+	var cutCall bool
 	for _, index := range order {
 		acc := blocks[index]
 		switch acc.blockType {
 		case "tool_use":
+			if stopReason == "max_tokens" {
+				cutCall = true // the cap cut this call's JSON short: it never runs
+				continue
+			}
 			input := acc.toolInput.String()
 			if input == "" {
 				input = "{}"
@@ -130,6 +147,9 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		case "text":
 			text.WriteString(acc.text.String())
 		}
+	}
+	if cutCall {
+		return Turn{Text: text.String(), Usage: usage, Truncated: true}, nil
 	}
 	if len(order) == 0 {
 		return Turn{}, fmt.Errorf("agent: empty response from provider")

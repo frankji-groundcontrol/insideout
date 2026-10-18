@@ -1,12 +1,10 @@
 package agent
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net"
 	"net/http"
 	"strings"
@@ -219,95 +217,6 @@ func toResponsesTools(tools []Tool) []map[string]any {
 		}
 	}
 	return out
-}
-
-func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn, error) {
-	scanner := bufio.NewScanner(r)
-	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
-
-	var text strings.Builder
-	var toolID, toolName string
-	var toolArgs strings.Builder
-	var usage Usage
-	var truncated bool
-
-	for scanner.Scan() {
-		if tick != nil {
-			tick()
-		}
-		line := scanner.Text()
-		if !strings.HasPrefix(line, "data: ") {
-			continue
-		}
-		payload := strings.TrimPrefix(line, "data: ")
-		if payload == "[DONE]" {
-			break
-		}
-		var ev map[string]any
-		if err := json.Unmarshal([]byte(payload), &ev); err != nil {
-			continue
-		}
-		typ, _ := ev["type"].(string)
-		switch typ {
-		case "response.output_text.delta":
-			if d, ok := ev["delta"].(string); ok && d != "" {
-				text.WriteString(d)
-				if onDelta != nil {
-					onDelta(d)
-				}
-			}
-		case "response.output_item.added":
-			if item, ok := ev["item"].(map[string]any); ok {
-				if item["type"] == "function_call" {
-					if id, ok := item["call_id"].(string); ok {
-						toolID = id
-					}
-					if name, ok := item["name"].(string); ok {
-						toolName = name
-					}
-					if args, ok := item["arguments"].(string); ok {
-						toolArgs.WriteString(args)
-					}
-				}
-			}
-		case "response.function_call_arguments.delta":
-			if d, ok := ev["delta"].(string); ok {
-				toolArgs.WriteString(d)
-			}
-		case "error":
-			msg, _ := ev["message"].(string)
-			code, _ := ev["code"].(string)
-			return Turn{}, classifyResponsesStreamError(code, msg)
-		case "response.completed":
-			if resp, ok := ev["response"].(map[string]any); ok {
-				if u, ok := resp["usage"].(map[string]any); ok {
-					if v, ok := u["input_tokens"].(float64); ok {
-						usage.InputTokens = int(v)
-					}
-					if v, ok := u["output_tokens"].(float64); ok {
-						usage.OutputTokens = int(v)
-					}
-				}
-				if status, ok := resp["status"].(string); ok && status == "incomplete" {
-					truncated = true
-				}
-			}
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return Turn{}, err
-	}
-	if toolName != "" {
-		args := toolArgs.String()
-		if args == "" {
-			args = "{}"
-		}
-		return Turn{ToolCall: &ToolCallRequest{ID: toolID, Name: toolName, Arguments: args}, Usage: usage}, nil
-	}
-	if text.Len() == 0 {
-		return Turn{}, fmt.Errorf("%w: empty text response", ErrContentRefusal)
-	}
-	return Turn{Text: text.String(), Usage: usage, Truncated: truncated}, nil
 }
 
 // classifyResponsesStreamError maps an in-stream "error" event's code onto the
