@@ -13,7 +13,7 @@ import (
 // layout of docs/architecture/database-and-rls.md) — and the zero value of
 // the facts means "no problem known", so unknown never stops.
 func TestDecideRolesDatabaseReadiness(t *testing.T) {
-	present := rolesProbe{owner: true, app: true, dbOwner: "alice"}
+	present := rolesProbe{owner: true, app: true, ownerBypassRLS: true, dbOwner: "alice"}
 	with := func(p rolesProbe, schemaMissing, ownerCantCreate bool) rolesProbe {
 		p.schemaMissing, p.ownerCantCreate = schemaMissing, ownerCantCreate
 		return p
@@ -31,7 +31,7 @@ func TestDecideRolesDatabaseReadiness(t *testing.T) {
 		{"schema missing and the owner cannot create it", with(present, true, true), false, false, rolesNotReady},
 		{"a terminal does not turn the stop into a prompt", with(present, true, true), true, false, rolesNotReady},
 		{"--create-roles does not change a database owner", with(present, true, true), true, true, rolesNotReady},
-		{"the stop needs no privilege to explain", with(rolesProbe{owner: true, app: true}, true, true), false, false, rolesNotReady},
+		{"the stop needs no privilege to explain", with(rolesProbe{owner: true, app: true, ownerBypassRLS: true}, true, true), false, false, rolesNotReady},
 		{"a lone role still stops the old way", with(rolesProbe{owner: true, canTry: true}, true, true), true, true, rolesStop},
 		{"missing roles still go the provisioning way", with(rolesProbe{canTry: true}, true, true), false, true, rolesCreate},
 	} {

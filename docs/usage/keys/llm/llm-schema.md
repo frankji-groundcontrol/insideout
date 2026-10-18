@@ -1,7 +1,7 @@
 # llm-schema
 
-`INSIDEOUT_LLM_SCHEMA` — the wire format of the coach's model calls.
-Config companion of [llm-api-key](llm-api-key.md).
+`INSIDEOUT_LLM_SCHEMA` selects the wire protocol used for provider-backed coach
+calls: `messages` or `responses`. Blank means `messages`.
 
 ## 1. Where the `.key` file is
 
@@ -10,27 +10,51 @@ Config companion of [llm-api-key](llm-api-key.md).
 
 ## 2. How it is propagated
 
-`.env` → `dev.sh` export → the coach's client construction; deployed
-value in the provider's variable store.
+The value moves through `.env` and `dev.sh` into the coach streamer. The
+server appends `/messages` and sends `x-api-key` for `messages`; it appends
+`/responses` and sends `Authorization: Bearer` for `responses`.
 
 ## 3. How to set it
 
-Exactly one of `messages` (Anthropic wire: `x-api-key` header,
-`/v1/messages`) or `responses` (OpenAI wire: `Authorization: Bearer`,
-`/v1/responses`). It must match what `llm-base-url` actually serves —
-a mismatch shows as 404s on model calls.
+1. Choose `messages` for an Anthropic Messages endpoint, or `responses` for an
+   OpenAI-compatible Responses endpoint. Match the provider documentation and
+   the base URL; do not infer one from the model name.
+2. Run `./scripts/env.sh edit`, choose `INSIDEOUT_LLM_SCHEMA`, and enter exactly
+   `messages` or `responses`.
+3. Initialize/fill the host key store:
+
+   ```bash
+   INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py init
+   INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py fill
+   ```
 
 ## 4. How to test it
 
-The provider ping uses the schema's URL and header; 200 proves the
-choice matches the endpoint.
+`insideout setup --check --llm` is a legacy compatibility probe for a schema
+named `openai`; both current `messages` and `responses` values report a
+skipped live probe. Finish with one real coach turn for either lane.
+
+**Expected result:** the selected endpoint accepts the matching header and
+request shape, and the SSE stream reaches `message_end`.
+
+**If it fails:** 404/400 errors usually indicate that the schema and base URL
+belong to different provider protocols. Correct them as a pair, restart the
+server, and repeat the app-level turn. A skipped `messages` probe is expected;
+it is not a failure or a successful live test.
+
+The automated placement check is:
+
+```bash
+cd scripts && python3 -m unittest discover -s tests/keys -t . -p 'test_llm-schema.py' -v
+```
 
 ## 5. How it is used
 
-Selects request/response codecs for every coach model call; offline
-mode ignores it.
+It chooses the request codec, endpoint suffix, and authentication header for
+every provider-backed coach call. Offline mode ignores it.
 
 ## 6. Installation guide
 
-This file is the detail — [SETENV.md](../../../SETENV.md) Step 3
-links here. Contract row in [environment.md](../../environment.md).
+Follow the [coach setup tutorial](../../key-setup-tutorial.md#4-choose-the-coach-mode),
+the [coach testing tutorial](../../key-testing-tutorial.md#5-prove-the-coach-configuration),
+and the [own-server installation path](../../installation.md#your-own-server).

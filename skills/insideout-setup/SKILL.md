@@ -29,8 +29,10 @@ stop, say it is unsupported, and offer the manual docs instead.
 - **Idempotent re-runs are safe**: `install.sh`, `env.sh init`,
   `keys.py init` can be run again; prefer re-running over improvising.
 - Sign-in, invites, and admin promotion need **the human's email and
-  password** — you never invent either. Passwords are typed by the
-  human; only the resulting token is printed.
+  password** — you never invent either. Passwords, codes, and magic links are
+  entered through hidden prompts. `insideout setup` saves the resulting
+  credentials to its `0600` client config; the plain `insideout login` verb
+  prints only its access token for an explicit caller to capture.
 
 ## Step 0 — platform and destination
 
@@ -98,7 +100,9 @@ insideout setup --local --postgres bundled    # Docker on 127.0.0.1:5442; writes
 # or: insideout setup --local --postgres own  # URL arrives on stdin, never echoed
 export INSIDEOUT_API=http://127.0.0.1:8080/api/v1   # or the CLI keeps calling hosted
 ./scripts/dev.sh -C server go run ./cmd/insideout   # start the server
-./scripts/dev.sh -C server go run ./cmd/insideout promote-admin <human-email>   # first admin
+./scripts/dev.sh -C server go run ./cmd/insideout seed   # disposable local DB only
+./scripts/dev.sh -C server go run ./cmd/insideout promote-admin demo@insideout.local   # first local admin
+insideout setup   # sign in and save the local token through hidden prompts
 ```
 
 Pre-binary fallback (identical flags): `./scripts/setup.sh --local
@@ -144,14 +148,17 @@ Never-absent rule: every mapped kind gets a `.key` file — blank means
 "default in effect", missing means broken.
 
 ```bash
-INSIDEOUT_KEYS_HOST=<hostname> python3 scripts/keys.py init    # placeholders for every kind
+export KEY_HOST='your-host-name'
+INSIDEOUT_KEYS_HOST="$KEY_HOST" python3 scripts/keys.py init    # placeholders for every kind
 ./scripts/env.sh init                                          # real values into .env (human supplies)
-INSIDEOUT_KEYS_HOST=<hostname> python3 scripts/keys.py fill    # env values into EMPTY .key files
-INSIDEOUT_KEYS_HOST=<hostname> python3 scripts/keys.py audit   # report only; never prints values
+INSIDEOUT_KEYS_HOST="$KEY_HOST" python3 scripts/keys.py fill    # env values into EMPTY .key files
+INSIDEOUT_KEYS_HOST="$KEY_HOST" python3 scripts/keys.py audit   # report only; never prints values
 ```
 
 Per-key detail (where / set / tested / used):
-[docs/usage/keys/README.md](../../docs/usage/keys/README.md); the full
+[docs/usage/key-setup-tutorial.md](../../docs/usage/key-setup-tutorial.md),
+[docs/usage/key-testing-tutorial.md](../../docs/usage/key-testing-tutorial.md),
+and the detailed [key index](../../docs/usage/keys/README.md); the full
 sequence with failure signals:
 [practice record](../../docs/practices/2026-10-05-setting-up-a-key.md).
 On the hosted path this step is optional — no local secrets are
@@ -164,7 +171,7 @@ success. Report failures honestly with the command output.
 
 | Gate | Command | Where |
 | --- | --- | --- |
-| Health probes (API 401 / DB / GitHub / LLM) | `insideout setup --check` (add `--llm` for one live provider request) | any shell, once the binary exists |
+| Health probes (API / DB / GitHub / LLM shape) | `insideout setup --check` (add `--llm` for the legacy `openai` compatibility probe; finish current provider keys with the testing tutorial) | any shell, once the binary exists |
 | Environment valid | `./scripts/env.sh check` | repo root, always |
 | CLI installed | `insideout whoami` (401/authentication-required is a **pass**) | any shell |
 | Unit tests | `go test ./...` | `server/` |

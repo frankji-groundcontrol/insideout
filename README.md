@@ -57,7 +57,7 @@ From a checkout of this repository (needs Go 1.26+):
 ./scripts/install.sh
 ```
 
-默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。装好后 CLI 与 MCP 直接调用托管 API，不必设置环境变量；`./scripts/default-api.sh` 打印该地址。自建服务（含 PostgreSQL）用 `./scripts/setup.sh`，完整步骤见 [docs/usage/installation.md](docs/usage/installation.md)。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
+默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。装好后 CLI 与 MCP 直接调用托管 API，不必设置环境变量；`./scripts/default-api.sh` 打印该地址。自建服务（含 PostgreSQL）用 `insideout setup`，没有二进制时才使用 `./scripts/setup.sh`，完整步骤见 [docs/usage/installation.md](docs/usage/installation.md)。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
 
 Installs both binaries into `~/.local/bin` by default (override with the
 first argument or `INSIDEOUT_INSTALL_DIR`) and, when that directory is not
@@ -195,6 +195,8 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 | 文档总地图 / Doc map | [`docs/index.md`](docs/index.md) |
 | CLI / MCP / GitHub 证据环 / CLI, MCP, evidence loop | [`docs/usage/cli-mcp-and-guidance.md`](docs/usage/cli-mcp-and-guidance.md) |
 | 安装 / Installation | [`docs/usage/installation.md`](docs/usage/installation.md) |
+| 密钥设置教程 / Key setup tutorial | [`docs/usage/key-setup-tutorial.md`](docs/usage/key-setup-tutorial.md) |
+| 密钥测试教程 / Key testing tutorial | [`docs/usage/key-testing-tutorial.md`](docs/usage/key-testing-tutorial.md) |
 | 本地开发 / Local development | [`docs/usage/local-development.md`](docs/usage/local-development.md) |
 | 环境变量 / Environment variables | [`docs/usage/environment.md`](docs/usage/environment.md) · [`docs/SETENV.md`](docs/SETENV.md) |
 | 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |

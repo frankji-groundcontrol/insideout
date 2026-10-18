@@ -7,17 +7,20 @@ recorded: '2026-10-05'
 # The PEM is consumed via INSIDEOUT_GH_PRIVATE_KEY_FILE pointing at
 # the .key itself — never a single-line env-file bridge. Metadata only.
 secrets:
-  gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value }
+  gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value, optional: true }
   gh-app-private-key:
     var: INSIDEOUT_GH_PRIVATE_KEY
     kind: value
+    optional: true
     note: multi-line PEM (1702 B); read via INSIDEOUT_GH_PRIVATE_KEY_FILE
   gh-client-secret:
     var: INSIDEOUT_GH_CLIENT_SECRET
     kind: value
+    optional: true
     note: no server reader yet (tracked for the invite-link flow)
   gh-private-key-file:
     var: INSIDEOUT_GH_PRIVATE_KEY_FILE
     kind: path
+    optional: true
     note: pointer to the canonical PEM .key above — the _FILE consumer
       reads it raw, which is why the store keeps the multi-line form

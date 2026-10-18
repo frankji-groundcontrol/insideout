@@ -19,8 +19,11 @@ class TestGhClientSecret(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
+            if _helpers.is_optional_blank(raw):
+                continue  # blank = unused future OAuth consumer
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw)
             self.assertGreaterEqual(len(raw), 20, f"{host}: implausibly short")
-            self.assertNotIn(b"\n", raw, f"{host}: must be one line")
 
 
 if __name__ == "__main__":

@@ -63,11 +63,16 @@ type Persister interface {
 	Save(clientconfig.Config) error
 }
 
+// SecretPrompt collects the method-specific secret after the API has been
+// probed and, for email methods, after the request has been sent.
+type SecretPrompt func(method string) (string, error)
+
 // Deps carries the capabilities Run needs.
 type Deps struct {
 	Prober         Prober
 	Client         LoginClient
 	Persister      Persister
+	PromptSecret   SecretPrompt
 	DefaultBaseURL string // used when Inputs.BaseURL is empty
 	// LocalSetup is the join hook for the interactive UI's local
 	// branch: ui.Run calls it with "bundled"|"own" instead of Run
@@ -139,13 +144,10 @@ func Run(ctx context.Context, inputs Inputs, deps Deps) (Result, error) {
 	if inputs.Email == "" {
 		return Result{}, ErrEmailRequired{}
 	}
-	if inputs.Secret == "" {
-		return Result{}, ErrSecretRequired{}
-	}
 	if err := deps.Prober.ProbeAPI(ctx, base); err != nil {
 		return Result{}, &ProbeError{BaseURL: base, Err: err}
 	}
-	if err := signIn(inputs, deps.Client); err != nil {
+	if err := signIn(inputs, deps.Client, deps.PromptSecret); err != nil {
 		return Result{}, err
 	}
 	if err := deps.Persister.Save(clientconfig.Config{APIBase: base, Token: deps.Client.Token()}); err != nil {
@@ -162,23 +164,52 @@ func validateBaseURL(base string) error {
 	return nil
 }
 
-func signIn(inputs Inputs, client LoginClient) error {
+func signIn(inputs Inputs, client LoginClient, prompt SecretPrompt) error {
 	switch inputs.AuthMethod {
 	case AuthPassword:
-		return client.Login(inputs.Email, inputs.Secret)
+		secret, err := secretFor(inputs, prompt)
+		if err != nil {
+			return err
+		}
+		return client.Login(inputs.Email, secret)
 	case AuthCode:
 		if err := client.RequestLoginCode(inputs.Email); err != nil {
 			return err
 		}
-		return client.VerifyLoginCode(inputs.Email, inputs.Secret)
+		secret, err := secretFor(inputs, prompt)
+		if err != nil {
+			return err
+		}
+		return client.VerifyLoginCode(inputs.Email, secret)
 	case AuthMagic:
 		if err := client.RequestMagicLink(inputs.Email); err != nil {
 			return err
 		}
-		return client.ConsumeMagicLink(tokenFromLink(inputs.Secret))
+		secret, err := secretFor(inputs, prompt)
+		if err != nil {
+			return err
+		}
+		return client.ConsumeMagicLink(tokenFromLink(secret))
 	default:
 		return fmt.Errorf("insideout setup: unknown sign-in method %q", inputs.AuthMethod)
 	}
+}
+
+func secretFor(inputs Inputs, prompt SecretPrompt) (string, error) {
+	if inputs.Secret != "" {
+		return inputs.Secret, nil
+	}
+	if prompt == nil {
+		return "", ErrSecretRequired{}
+	}
+	secret, err := prompt(inputs.AuthMethod)
+	if err != nil {
+		return "", err
+	}
+	if secret == "" {
+		return "", ErrSecretRequired{}
+	}
+	return secret, nil
 }
 
 // tokenFromLink accepts either a pasted URL (…?token=abc…) or a raw

@@ -5,15 +5,17 @@ setting: app
 recorded: '2026-10-05'
 # The GitHub App installation: identity + authenticating material.
 secrets:
-  gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value }
+  gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value, optional: true }
   gh-app-private-key:
     var: INSIDEOUT_GH_PRIVATE_KEY
     kind: value
+    optional: true
     note: multi-line PEM; the server also accepts
       INSIDEOUT_GH_PRIVATE_KEY_FILE pointing at the .key itself
   gh-client-secret:
     var: INSIDEOUT_GH_CLIENT_SECRET
     kind: value
+    optional: true
     note: no server reader yet (tracked for the invite-link flow)
   gh-private-key-file:
     var: INSIDEOUT_GH_PRIVATE_KEY_FILE

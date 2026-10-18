@@ -11,6 +11,7 @@ secrets:
   mail-api-key:
     var: INSIDEOUT_MAIL_API_KEY
     kind: value
+    optional: true
     note: copied 2026-10-05 from the primary host's store; rotate if
       transcripts ever leave either machine.
   mail-from:

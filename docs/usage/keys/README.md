@@ -53,6 +53,16 @@ a var can be defaulted doesn't mean it is left out.
 into these files from its per-key steps; the detail lives here, not
 there.
 
+## Guided setup and verification
+
+Start with the [key setup tutorial](../key-setup-tutorial.md), then run the
+[key testing tutorial](../key-testing-tutorial.md). Those tutorials connect
+the installation decision, the `.env` writer, the host key store, and the
+provider capability checks. The [installation guide](../installation.md)
+remains the front door; its [own-server setup](../installation.md#your-own-server)
+and [repeatable health check](../installation.md#re-verify-any-time) sections
+are the operator checkpoints referenced by the per-key files.
+
 ## Shared flow (not repeated per file)
 
 Every key lands the same way — the full sequence, with verification and
@@ -61,10 +71,10 @@ failure signals, is the practice record
 
 1. `./scripts/env.sh edit` — value into the root `.env` (the only file
    processes read; never printed).
-2. `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py init` — an
+2. `INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py init` — an
    empty `.key` placeholder (0600) for every mapped kind, so the kind
    is never absent even when a default is in effect.
-3. `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py fill` —
+3. `INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py fill` —
    empty-only copy of env-present values into `.secrets/<name>.key`.
 4. Scoped `audit` + `./scripts/env.sh check` + the key's own probe
    (each file's "how to test").
@@ -95,11 +105,14 @@ Two layers, both required before a key counts as set up:
    escaped-form PEM, 0755 secrets dirs, and a wrong-case host folder
    on the other machine.
 2. **Live probe** (each file's part 4) — the key actually working:
-   `migrate` for the owner DSN, a bad-login 401 for the app DSN, the
-   absent offline-coach notice for the LLM key, a magic-link request
-   for mail, signed deliveries answered 200 for the webhook secret.
-   A boot that only *warns* about an unusable key is a failure, not a
-   pass — grep for the warning's absence.
+   `env.sh check --db` plus the real-DB authorization suite for the
+   runtime DSN, `migrate` for the owner DSN, a real coach turn for the
+   LLM settings, the admin provider probe plus redemption for mail,
+   private-guide evidence for the GitHub App, and signed deliveries
+   answered 200 for the webhook secret. A boot that only *warns* about
+   an unusable key is a failure, not a pass — grep for the warning's
+   absence. A `401` from an unauthenticated API route proves routing
+   and auth enforcement only.
 
 ## Per-host state (2026-10-06)
 

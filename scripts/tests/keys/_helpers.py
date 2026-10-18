@@ -9,6 +9,7 @@ value is never printed, logged, or compared to a literal.
 """
 
 import os
+import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -66,3 +67,34 @@ def never_absent_cases(key_name):
 def read_bytes(path):
     with open(path, "rb") as fh:
         return fh.read()
+
+
+def without_terminal_newline(raw):
+    """Return a key value with one conventional final LF removed.
+
+    ``keys.py fill`` writes values without a final LF, while an operator may
+    edit a single-line key with a text editor that adds one.  A second LF, or
+    an LF anywhere else, remains in the returned value and is rejected by
+    ``is_single_line``.
+    """
+    return raw[:-1] if raw.endswith(b"\n") else raw
+
+
+def is_single_line(raw):
+    """Whether ``raw`` has no embedded LF and at most one terminal LF."""
+    return b"\n" not in without_terminal_newline(raw)
+
+
+def is_optional_blank(raw):
+    """Whether an optional key is empty, allowing one editor-added final LF."""
+    return without_terminal_newline(raw) == b""
+
+
+def assert_single_line(testcase, raw, message):
+    """Assert line shape without letting unittest render the secret operand."""
+    testcase.assertTrue(is_single_line(raw), message)
+
+
+def assert_regex(testcase, pattern, value, message):
+    """Assert a pattern without unittest rendering ``value`` on failure."""
+    testcase.assertTrue(re.search(pattern, value) is not None, message)

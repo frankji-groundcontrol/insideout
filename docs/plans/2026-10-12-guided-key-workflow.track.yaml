@@ -1,0 +1,44 @@
+version: 2
+task: Complete guided key setup and verification
+coordinator: codex
+main:
+  owner: codex
+  status: completed
+  outcome: Connected tutorials for every mapped key with honest live checks.
+  next_evidence: None; provider-backed proofs remain operator-owned by design.
+side_tracks:
+  - id: local_keys
+    owner: pending
+    status: completed
+    evidence: App/auth/compose/database key docs now include actionable set steps, shape-suite commands, safe live probes with expected output and remedies, correct SETENV/installation/environment links; module READMEs and SETENV Steps 4–5 updated. The own-URL role preflight now blocks an existing owner without BYPASSRLS before migration and prints safe NOSUPERUSER remediation; targeted Go tests, go vet, and a fresh PostgreSQL 18 setup walk pass. The shape suite passes 49 tests; docs-truth, redaction, and diff checks pass.
+    dependencies: [plan_review]
+    scope: docs/usage/keys/{app,auth,compose,database}
+  - id: provider_keys
+    owner: codex/provider_key_docs
+    status: completed
+    evidence: GitHub, LLM, and mail references now link the central tutorials and use consumer-specific live proofs; blank GitHub App/LLM/mail lanes are documented as supported disabled/offline choices; unused OAuth secret is placement-only.
+    dependencies: [plan_review]
+    scope: docs/usage/keys/{github,llm,mail}
+  - id: safe_key_tests
+    owner: pending
+    status: completed
+    evidence: Secret-safe assertions, terminal-LF semantics, optional capability lanes, and a red-first nested-unittest leak regression; 49 key tests pass.
+    dependencies: [plan_review]
+    scope: scripts/tests/keys
+plan:
+  - id: plan_review
+    status: completed
+    evidence: Three independent reviews confirmed command/consumer contracts, distinguished routing from DB health and LLM schema proof, and identified the raw-secret assertion plus terminal-newline fixture failure.
+  - id: central_workflow
+    status: completed
+    evidence: Central setup/testing tutorials connect installation, SETENV, the skill, key index, all 31 references, local API binding, owner/app role contract, optional lanes, and provider-specific proofs.
+    dependencies: [plan_review]
+  - id: live_walk
+    status: completed
+    evidence: Fresh PostgreSQL 18 cluster with synthetic owner BYPASSRLS/app NOBYPASSRLS roles migrated all 38 files; TestAuthz passed. A deliberately incomplete owner without BYPASSRLS reproduced 42P17 and is now covered by setup preflight.
+    dependencies: [central_workflow]
+  - id: review_and_closure
+    status: completed
+    evidence: Final review repaired stale health wording, first-admin bootstrap, local API binding, shell placeholder hazards, mail smoke prerequisites, and TCP password probing; 31 docs/31 tests with six sections, docs truth, redaction, diff, environment, key, Go, and real-PostgreSQL gates pass.
+    dependencies: [local_keys, provider_keys, safe_key_tests, live_walk]
+updated_at: 2026-10-12

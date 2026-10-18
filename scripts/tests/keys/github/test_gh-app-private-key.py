@@ -20,13 +20,17 @@ class TestGhAppPrivateKey(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
+            if _helpers.is_optional_blank(raw):
+                continue  # blank = GitHub App integration disabled
             self.assertTrue(raw.startswith(b"-----BEGIN"),
                             f"{host}: PEM must open with a BEGIN line")
-            self.assertIn(b"PRIVATE KEY-----", raw, f"{host}: PEM header malformed")
+            self.assertTrue(b"PRIVATE KEY-----" in raw,
+                            f"{host}: PEM header malformed")
             self.assertTrue(raw.rstrip().endswith(b"-----END PRIVATE KEY-----")
                             or raw.rstrip().endswith(b"-----END RSA PRIVATE KEY-----"),
                             f"{host}: PEM must close with an END line")
-            self.assertIn(b"\n", raw, f"{host}: the PEM is multi-line by design")
+            self.assertTrue(b"\n" in raw,
+                            f"{host}: the PEM is multi-line by design")
             self.assertGreater(len(raw), 800, f"{host}: implausibly small PEM")
 
 

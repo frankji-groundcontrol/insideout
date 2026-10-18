@@ -20,11 +20,15 @@ class TestCorsOrigins(unittest.TestCase):
             self.assertTrue(os.path.exists(path),
                             f"{host}: cors-origins.key missing (run keys.py init)")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-            raw = _helpers.read_bytes(path).strip()
+            raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw).strip()
             if raw:
                 for origin in raw.decode().split(","):
-                    self.assertRegex(origin.strip(), r"^https?://[^/]+$",
-                                     f"{host}: origin entries are scheme://host[:port]")
+                    _helpers.assert_regex(
+                        self, r"^https?://[^/]+$", origin.strip(),
+                        f"{host}: origin entries are scheme://host[:port]",
+                    )
 
 
 if __name__ == "__main__":

@@ -133,7 +133,7 @@ func runSetupCommand(rest []string) (bool, int) {
 	noStart := fs.Bool("no-start", false, "with --local --postgres bundled: prepare only, do not start")
 	createRoles := fs.Bool("create-roles", false, "with --local --postgres own: create the insideout_owner/insideout_app roles if missing, without asking")
 	check := fs.Bool("check", false, "re-run the health probes against the current config")
-	llm := fs.Bool("llm", false, "with --check: also make one live LLM request")
+	llm := fs.Bool("llm", false, "with --check: probe the legacy openai schema; current schemas need a coach turn")
 	if err := fs.Parse(rest); err != nil {
 		return true, 2
 	}

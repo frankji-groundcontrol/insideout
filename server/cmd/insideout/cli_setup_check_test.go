@@ -127,6 +127,16 @@ func TestCheckLLMLanes(t *testing.T) {
 			t.Fatalf("non-openai live probe must skip, got (%v, %d)", handled, code)
 		}
 	})
+	t.Run("default messages schema skips the legacy live probe", func(t *testing.T) {
+		pinnedNoRepo(t)
+		t.Setenv("INSIDEOUT_API", srv.URL+"/api/v1")
+		t.Setenv("INSIDEOUT_LLM_API_KEY", strings.Repeat("k", 40))
+		t.Setenv("INSIDEOUT_LLM_BASE_URL", srv.URL)
+		t.Setenv("INSIDEOUT_LLM_SCHEMA", "")
+		if handled, code := runSetupCommand([]string{"--check", "--llm"}); !handled || code != 0 {
+			t.Fatalf("default messages schema must skip the legacy live probe, got (%v, %d)", handled, code)
+		}
+	})
 }
 
 func TestCheckFlagExclusivity(t *testing.T) {

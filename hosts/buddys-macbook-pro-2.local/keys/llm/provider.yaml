@@ -10,6 +10,7 @@ secrets:
   llm-api-key:
     var: INSIDEOUT_LLM_API_KEY
     kind: value
+    optional: true
     note: present in this machine's .env (offline coach when empty)
   llm-base-url:
     var: INSIDEOUT_LLM_BASE_URL

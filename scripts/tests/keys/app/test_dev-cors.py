@@ -19,9 +19,11 @@ class TestDevCors(unittest.TestCase):
             self.assertTrue(os.path.exists(path),
                             f"{host}: dev-cors.key missing (run keys.py init)")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-            raw = _helpers.read_bytes(path).strip()
-            self.assertIn(raw, (b"", b"1"),
-                          f"{host}: only blank (off) or exactly 1 (on)")
+            raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw).strip()
+            self.assertTrue(raw in (b"", b"1"),
+                            f"{host}: only blank (off) or exactly 1 (on)")
 
 
 if __name__ == "__main__":

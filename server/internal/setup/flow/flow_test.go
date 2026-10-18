@@ -28,6 +28,7 @@ func (f *fakeProber) ProbeAPI(ctx context.Context, baseURL string) error {
 // per-method call sequences.
 type fakeClient struct {
 	calls      []string
+	events     *[]string
 	token      string
 	loginErr   error
 	requestErr error
@@ -35,28 +36,35 @@ type fakeClient struct {
 	consumeErr error
 }
 
+func (f *fakeClient) record(call string) {
+	f.calls = append(f.calls, call)
+	if f.events != nil {
+		*f.events = append(*f.events, call)
+	}
+}
+
 func (f *fakeClient) Login(email, password string) error {
-	f.calls = append(f.calls, "login:"+email+":"+password)
+	f.record("login:" + email + ":" + password)
 	return f.loginErr
 }
 
 func (f *fakeClient) RequestLoginCode(email string) error {
-	f.calls = append(f.calls, "requestCode:"+email)
+	f.record("requestCode:" + email)
 	return f.requestErr
 }
 
 func (f *fakeClient) VerifyLoginCode(email, code string) error {
-	f.calls = append(f.calls, "verifyCode:"+email+":"+code)
+	f.record("verifyCode:" + email + ":" + code)
 	return f.verifyErr
 }
 
 func (f *fakeClient) RequestMagicLink(email string) error {
-	f.calls = append(f.calls, "requestMagic:"+email)
+	f.record("requestMagic:" + email)
 	return f.requestErr
 }
 
 func (f *fakeClient) ConsumeMagicLink(token string) error {
-	f.calls = append(f.calls, "consume:"+token)
+	f.record("consume:" + token)
 	return f.consumeErr
 }
 
@@ -124,13 +132,21 @@ func TestRunPasswordHappyPath(t *testing.T) {
 }
 
 func TestRunCodeHappyPath(t *testing.T) {
-	client := &fakeClient{token: "tok-code"}
+	events := []string{}
+	client := &fakeClient{token: "tok-code", events: &events}
 	pers := &fakePersister{}
 	res, err := runRemote(t, func(i *Inputs, d *Deps) {
 		i.AuthMethod = AuthCode
-		i.Secret = "654321"
+		i.Secret = ""
 		d.Client = client
 		d.Persister = pers
+		d.PromptSecret = func(method string) (string, error) {
+			if method != AuthCode {
+				t.Fatalf("prompt method = %q, want %q", method, AuthCode)
+			}
+			events = append(events, "prompt:"+method)
+			return "654321", nil
+		}
 	})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -145,14 +161,30 @@ func TestRunCodeHappyPath(t *testing.T) {
 	if got := pers.saved[0].Token; got != "tok-code" {
 		t.Fatalf("saved token = %q, want %q", got, "tok-code")
 	}
+	wantCalls := []string{"requestCode:user@example.test", "verifyCode:user@example.test:654321"}
+	if strings.Join(client.calls, ",") != strings.Join(wantCalls, ",") {
+		t.Fatalf("client calls = %v, want %v", client.calls, wantCalls)
+	}
+	wantEvents := []string{"requestCode:user@example.test", "prompt:code", "verifyCode:user@example.test:654321"}
+	if strings.Join(events, ",") != strings.Join(wantEvents, ",") {
+		t.Fatalf("events = %v, want %v", events, wantEvents)
+	}
 }
 
 func TestRunMagicHappyPath(t *testing.T) {
-	client := &fakeClient{token: "tok-magic"}
+	events := []string{}
+	client := &fakeClient{token: "tok-magic", events: &events}
 	res, err := runRemote(t, func(i *Inputs, d *Deps) {
 		i.AuthMethod = AuthMagic
-		i.Secret = "https://example.test/magic?token=abc123&next=/"
+		i.Secret = ""
 		d.Client = client
+		d.PromptSecret = func(method string) (string, error) {
+			if method != AuthMagic {
+				t.Fatalf("prompt method = %q, want %q", method, AuthMagic)
+			}
+			events = append(events, "prompt:"+method)
+			return "https://example.test/magic?token=abc123&next=/", nil
+		}
 	})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
@@ -164,6 +196,10 @@ func TestRunMagicHappyPath(t *testing.T) {
 	want := []string{"requestMagic:user@example.test", "consume:abc123"}
 	if strings.Join(client.calls, ",") != strings.Join(want, ",") {
 		t.Fatalf("client calls = %v, want %v", client.calls, want)
+	}
+	wantEvents := []string{"requestMagic:user@example.test", "prompt:magic", "consume:abc123"}
+	if strings.Join(events, ",") != strings.Join(wantEvents, ",") {
+		t.Fatalf("events = %v, want %v", events, wantEvents)
 	}
 }
 

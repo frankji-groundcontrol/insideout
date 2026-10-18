@@ -19,9 +19,12 @@ class TestGhWebhookSecret(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
+            if _helpers.is_optional_blank(raw):
+                continue  # blank = signed GitHub webhook receiver disabled
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw)
             self.assertGreaterEqual(len(raw), 32,
                                     f"{host}: below openssl-rand-hex-32 strength")
-            self.assertNotIn(b"\n", raw, f"{host}: must be one line")
 
 
 if __name__ == "__main__":

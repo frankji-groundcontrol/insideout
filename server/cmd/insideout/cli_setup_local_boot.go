@@ -37,7 +37,8 @@ func offerBoot(repoRoot, envPath string) (bool, int) {
 	}
 	fmt.Fprintln(os.Stderr, "Start the API:")
 	fmt.Fprintln(os.Stderr, "  ./scripts/dev.sh -C server go run ./cmd/insideout")
-	fmt.Fprintln(os.Stderr, "First admin: ./scripts/dev.sh -C server go run ./cmd/insideout promote-admin you@example.com")
+	fmt.Fprintln(os.Stderr, "First admin on a shared server: promote an existing account with the owner DSN")
+	fmt.Fprintln(os.Stderr, "Disposable local database: run `insideout seed`, then promote demo@insideout.local")
 	return true, 0
 }
 

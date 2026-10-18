@@ -19,10 +19,12 @@ class TestAddr(unittest.TestCase):
             self.assertTrue(os.path.exists(path),
                             f"{host}: addr.key missing (run keys.py init)")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-            raw = _helpers.read_bytes(path).strip()
+            raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw).strip()
             if raw:
-                self.assertRegex(raw.decode(), r"^(\d+\.\d+\.\d+\.\d+)?:\d+$",
-                                 f"{host}: addr is host:port or :port")
+                _helpers.assert_regex(self, r"^(\d+\.\d+\.\d+\.\d+)?:\d+$",
+                                      raw.decode(), f"{host}: addr is host:port or :port")
 
 
 if __name__ == "__main__":

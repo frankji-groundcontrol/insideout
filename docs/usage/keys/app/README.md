@@ -6,6 +6,12 @@ propagation, setting, testing, use, and the installation-guide
 pointer). The module table, shared flow, and per-host state live in
 the [keys README](../README.md).
 
+For the guided local lane, set the required database and JWT keys first, then
+choose only the app behavior you need. Set each value with
+`./scripts/env.sh edit`, run `./scripts/env.sh check server`, and execute the
+live probe in that key's section after restarting the server. The installation
+sequence is [SETENV Step 4](../../../SETENV.md#step-4--local-dev-toggles).
+
 - [addr.md](addr.md) — `INSIDEOUT_ADDR` (manifest `app/runtime.yaml`)
 - [cookie-secure.md](cookie-secure.md) — `INSIDEOUT_COOKIE_SECURE`
   (`app/runtime.yaml`)

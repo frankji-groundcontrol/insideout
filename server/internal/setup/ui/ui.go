@@ -1,6 +1,6 @@
 // Package ui renders the setup flow's remote branch with huh: mode
 // select, API base with the hosted default prefilled, sign-in method,
-// email plus a masked secret, and the MCP-registration confirm. All
+// email, a staged masked secret prompt, and the MCP-registration confirm. All
 // behavior (probe, sign-in, persistence) stays in the pure flow
 // package; rendering is thin by design so flow logic tests headless.
 package ui
@@ -67,6 +67,9 @@ func Run(ctx context.Context, deps flow.Deps) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	deps.PromptSecret = func(method string) (string, error) {
+		return askSecret(ctx, method)
+	}
 	res, err := flow.Run(ctx, inputs, deps)
 	return Result{Result: res, RegisterMCP: registerMCP}, err
 }
@@ -129,17 +132,11 @@ func askRemote(ctx context.Context, defaultBase string) (flow.Inputs, bool, erro
 
 	var (
 		email       string
-		secret      string // hidden input: password, code or pasted link
 		registerMCP bool
 	)
 	if err := huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().Title("Email").Value(&email),
-			huh.NewInput().
-				Title(secretTitle(method)).
-				Description("Hidden as you type.").
-				EchoMode(huh.EchoModePassword).
-				Value(&secret),
 		),
 		huh.NewGroup(
 			huh.NewConfirm().
@@ -156,8 +153,21 @@ func askRemote(ctx context.Context, defaultBase string) (flow.Inputs, bool, erro
 		BaseURL:    baseURL,
 		AuthMethod: method,
 		Email:      email,
-		Secret:     secret,
 	}, registerMCP, nil
+}
+
+func askSecret(ctx context.Context, method string) (string, error) {
+	var secret string
+	if err := huh.NewForm(huh.NewGroup(
+		huh.NewInput().
+			Title(secretTitle(method)).
+			Description("Check your email if requested; hidden as you type.").
+			EchoMode(huh.EchoModePassword).
+			Value(&secret),
+	)).RunWithContext(ctx); err != nil {
+		return "", fmt.Errorf("insideout setup: %w", err)
+	}
+	return secret, nil
 }
 
 func secretTitle(method string) string {

@@ -25,9 +25,10 @@ func TestDecideRoles(t *testing.T) {
 		terminal, create bool
 		want             rolesAction
 	}{
-		{"both present proceeds untouched", rolesProbe{owner: true, app: true}, false, false, rolesProceed},
-		{"both present ignores the flag", rolesProbe{owner: true, app: true, canTry: true}, true, true, rolesProceed},
-		{"both present needs no privilege", rolesProbe{owner: true, app: true}, true, false, rolesProceed},
+		{"both present proceeds untouched", rolesProbe{owner: true, app: true, ownerBypassRLS: true}, false, false, rolesProceed},
+		{"both present ignores the flag", rolesProbe{owner: true, app: true, ownerBypassRLS: true, canTry: true}, true, true, rolesProceed},
+		{"both present needs no privilege", rolesProbe{owner: true, app: true, ownerBypassRLS: true}, true, false, rolesProceed},
+		{"owner without bypass RLS stops before migration", rolesProbe{owner: true, app: true}, false, false, rolesMisconfigured},
 		{"flag creates", absent, false, true, rolesCreate},
 		{"terminal asks", absent, true, false, rolesAsk},
 		{"flag beats the prompt", absent, true, true, rolesCreate},
@@ -216,6 +217,27 @@ func TestStopMessages(t *testing.T) {
 	}
 }
 
+func TestMisconfiguredRoleMessage(t *testing.T) {
+	out := captureStderr(t, func() {
+		explainRoleMisconfigured(rolesProbe{owner: true, app: true, database: "appdb"})
+	})
+	for _, want := range []string{
+		"insideout_owner exists but lacks BYPASSRLS",
+		"ALTER ROLE insideout_owner NOSUPERUSER BYPASSRLS;",
+		"NOSUPERUSER",
+		"Nothing in the database was changed",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %q:\n%s", want, out)
+		}
+	}
+	for _, bad := range []string{"PASSWORD", "postgres://", "ownerSynthetic"} {
+		if strings.Contains(out, bad) {
+			t.Errorf("output must not mention %q:\n%s", bad, out)
+		}
+	}
+}
+
 // The terminal offer: only an explicit yes consents (EOF, enter and anything
 // else decline), and the text names what will change before it asks.
 func TestConfirmCreateRoles(t *testing.T) {
@@ -293,9 +315,10 @@ func checkProbeRoles(t *testing.T, pool *pgxpool.Pool) {
 		t.Fatalf("read the connected role: %v", err)
 	}
 	const nobody = "insideout_probe_no_such_role"
-	want := func(owner, app, ownerCantCreate bool) rolesProbe {
+	want := func(owner, app, ownerCantCreate, ownerBypass bool) rolesProbe {
 		return rolesProbe{
-			owner: owner, app: app, canTry: super || (createRole && bypass), database: db,
+			owner: owner, app: app, ownerBypassRLS: ownerBypass,
+			canTry: super || (createRole && bypass), database: db,
 			schemaMissing: !haveSchema, ownerCantCreate: ownerCantCreate, dbOwner: dbOwner,
 		}
 	}
@@ -304,10 +327,10 @@ func checkProbeRoles(t *testing.T, pool *pgxpool.Pool) {
 		owner, app string
 		want       rolesProbe
 	}{
-		{"connected role in the owner slot", me, nobody, want(true, false, !meCanCreate)},
-		{"connected role in the app slot", nobody, me, want(false, true, false)},
-		{"neither exists", nobody, nobody + "_2", want(false, false, false)},
-		{"both exist", me, me, want(true, true, !meCanCreate)},
+		{"connected role in the owner slot", me, nobody, want(true, false, !meCanCreate, bypass)},
+		{"connected role in the app slot", nobody, me, want(false, true, false, false)},
+		{"neither exists", nobody, nobody + "_2", want(false, false, false, false)},
+		{"both exist", me, me, want(true, true, !meCanCreate, bypass)},
 	} {
 		got, err := probeRoles(ctx, pool, tt.owner, tt.app)
 		if err != nil {

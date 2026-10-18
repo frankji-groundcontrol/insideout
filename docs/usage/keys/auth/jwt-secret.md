@@ -1,38 +1,56 @@
 # jwt-secret
 
-`INSIDEOUT_JWT_SECRET` — HMAC signing secret for access/refresh JWTs.
+`INSIDEOUT_JWT_SECRET` — the HMAC signing secret for access and refresh JWTs.
+The server refuses to start when it is empty or shorter than 32 characters.
 
 ## 1. Where the `.key` file is
 
 `hosts/<host>/keys/auth/.secrets/jwt-secret.key` (manifest
-`auth/jwt.yaml`). One line, no `KEY=` prefix, 0600.
+`auth/jwt.yaml`). Store one line with no `KEY=` prefix and mode `0600`.
 
 ## 2. How it is propagated
 
-The root `.env` is the consumer — `scripts/dev.sh` exports it before
-every command; `docker-compose` passes it through to the server. The
-store copy is the backup; `keys.py fill` bridges env→empty-key.
+The root `.env` is exported by `scripts/dev.sh`, and compose passes the value
+directly into the API container. `keys.py fill` copies it only into an empty
+host key; the key store is a backup, not a second runtime source.
 
 ## 3. How to set it
 
-Self-minted: `openssl rand -hex 32` (64 hex chars). **One per
-environment** — local, each deployment — never reuse across them; ≥32
-characters is fail-fast in `server/internal/config`.
+Run `./scripts/env.sh init` and choose the generate option when it asks for
+`INSIDEOUT_JWT_SECRET`. This creates a fresh value without displaying it.
+For an existing value, use `./scripts/env.sh edit`, select the variable, and
+paste it without quotes. Generate a different secret for every environment.
 
 ## 4. How to test it
 
-`./scripts/env.sh check` (masked), then boot the server — a missing or
-short secret aborts at config load with a named error. Issued tokens
-are accepted on every request of the same server instance.
+Before the live check, run the placement and shape suite from the repository root:
+
+```bash
+python3 -m unittest discover -s scripts/tests/keys -t . -p 'test_*.py'
+```
+
+It reports the key kind and never prints secret values.
+
+Run the masked validation first:
+
+```bash
+./scripts/env.sh check server
+```
+
+Expected output contains `INSIDEOUT_JWT_SECRET ... set (N chars)` with no
+secret text. Start the server through `scripts/dev.sh`; a usable secret lets
+it boot, while a missing or short value fails before it opens the API. If the
+check reports a short or placeholder value, generate a new one with
+`./scripts/env.sh init`; never paste the secret into a command argument or log.
 
 ## 5. How it is used
 
-Signs access and refresh JWTs for every authenticated surface (web,
-CLI, MCP — they all ride the same tokens).
+The API signs access and refresh tokens for the web client, CLI, and MCP
+server. Every process that must accept the tokens needs the same secret for
+that environment.
 
 ## 6. Installation guide
 
-This file is the detail — [SETENV.md](../../../SETENV.md) Step 2
-links here. The variable's contract row (`INSIDEOUT_JWT_SECRET`,
-required, min 32 chars) is in
-[environment.md](../../environment.md).
+The required local-server step is [Installation — Your own server](../../installation.md#your-own-server).
+The key-by-key setup is [SETENV Step 2](../../../SETENV.md#step-2--insideout_jwt_secret-required),
+and the variable contract is [environment.md](../../environment.md#go-backend).

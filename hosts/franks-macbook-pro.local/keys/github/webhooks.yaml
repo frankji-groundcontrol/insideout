@@ -4,4 +4,4 @@ module: github
 setting: webhooks
 recorded: '2026-10-05'
 secrets:
-  gh-webhook-secret: { var: INSIDEOUT_GH_WEBHOOK_SECRET, kind: value }
+  gh-webhook-secret: { var: INSIDEOUT_GH_WEBHOOK_SECRET, kind: value, optional: true }

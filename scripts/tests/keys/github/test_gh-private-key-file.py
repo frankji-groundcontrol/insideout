@@ -19,7 +19,9 @@ class TestGhPrivateKeyFile(unittest.TestCase):
             self.assertEqual(var, "INSIDEOUT_GH_PRIVATE_KEY_FILE",
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-            target = _helpers.read_bytes(path).decode().strip()
+            raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            target = _helpers.without_terminal_newline(raw).decode().strip()
             if not target:
                 continue  # blank = env-embedded PEM lane on this host
             self.assertTrue(os.path.exists(target),

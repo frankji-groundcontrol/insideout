@@ -116,9 +116,15 @@ for CI or checking a fresh database.
 
 **Registration is invitation-only on a fresh database** (migrations seed
 `signup_mode = invitation_only`; `register` returns 403 without an invite
-code). Bootstrap the first admin with `insideout promote-admin <email>`
-(server subcommand, owner DSN) and mint per-email invites — or, for local
-dev only, `insideout signup-mode open`. See
+code). On a shared or hosted server, create an existing account through the
+operator's registration path, promote it with `insideout promote-admin
+<email>` (server subcommand, owner DSN), and mint per-email invites. For a
+disposable local database, run `./scripts/dev.sh -C server go run ./cmd/insideout
+seed`, promote `demo@insideout.local`, set
+`INSIDEOUT_API=http://127.0.0.1:8080/api/v1`, and sign in through
+`insideout setup` before optionally running `insideout signup-mode open`.
+Restore
+`invitation_only` afterward. See
 [cli-mcp-and-guidance.md](cli-mcp-and-guidance.md).
 
 **Transaction poolers:** if `DATABASE_URL` contains `pgbouncer=true`

@@ -6,6 +6,16 @@ propagation, setting, testing, use, and the installation-guide
 pointer). The module table, shared flow, and per-host state live in
 the [keys README](../README.md).
 
+## Guided provider flow
+
+Follow the [setup tutorial](../../key-setup-tutorial.md#4-choose-the-coach-mode)
+from the [installation guide](../../installation.md#your-own-server). Finish
+with the [testing tutorial](../../key-testing-tutorial.md#5-prove-the-coach-configuration)
+and one real coach turn. An empty API key is an intentional offline lane. A
+provider lane requires the key, base URL, model, and schema to agree; the
+concurrency and queue settings are runtime backpressure knobs rather than
+provider credentials.
+
 - [llm-api-key.md](llm-api-key.md) — `INSIDEOUT_LLM_API_KEY`
   (manifest `llm/provider.yaml`)
 - [llm-base-url.md](llm-base-url.md) — `INSIDEOUT_LLM_BASE_URL`

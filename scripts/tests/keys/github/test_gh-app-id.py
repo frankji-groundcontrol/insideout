@@ -19,6 +19,10 @@ class TestGhAppId(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
+            if _helpers.is_optional_blank(raw):
+                continue  # blank = GitHub App integration disabled
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw)
             self.assertTrue(raw.strip().isdigit(),
                             f"{host}: the App id is numeric")
             self.assertGreater(len(raw.strip()), 0)

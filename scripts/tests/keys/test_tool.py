@@ -117,8 +117,9 @@ class TestKeys(unittest.TestCase):
             keys.fill(str(self.root), "testhost", str(env), dry_run=False)
         a = self.root / "hosts/testhost/keys/db/.secrets/a-dsn.key"
         b = self.root / "hosts/testhost/keys/db/.secrets/b-key.key"
-        self.assertEqual(a.read_text(), "value-of-a-dsn", "filled keys must never be overwritten")
-        self.assertEqual(b.read_text(), "fresh-value")
+        self.assertTrue(a.read_text() == "value-of-a-dsn",
+                        "filled keys must never be overwritten")
+        self.assertTrue(b.read_text() == "fresh-value")
         self.assertEqual(stat.S_IMODE(b.stat().st_mode), 0o600)
         self.assertNotIn("fresh-value", out.getvalue(), "fill must never print a value")
 
@@ -128,7 +129,7 @@ class TestKeys(unittest.TestCase):
         env.write_text("A_DSN=keep\nB_KEY=changeme-please\n")
         keys.fill(str(self.root), "testhost", str(env), dry_run=False)
         b = self.root / "hosts/testhost/keys/db/.secrets/b-key.key"
-        self.assertEqual(b.read_text(), "", "placeholders must not be written")
+        self.assertTrue(b.read_text() == "", "placeholders must not be written")
 
     def test_audit_flagsUnmappedSecretShapedEnvNames(self):
         self.build_default()
@@ -158,10 +159,11 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         a = self.root / "hosts/testhost/keys/db/.secrets/a-dsn.key"
         b = self.root / "hosts/testhost/keys/db/.secrets/b-key.key"
-        self.assertEqual(a.read_text(), "value-of-a-dsn",
-                         "init must never touch a filled key")
+        self.assertTrue(a.read_text() == "value-of-a-dsn",
+                        "init must never touch a filled key")
         self.assertTrue(b.exists(), "the never-absent rule: every mapped kind gets a file")
-        self.assertEqual(b.read_text(), "", "placeholder starts empty (fallback in effect)")
+        self.assertTrue(b.read_text() == "",
+                        "placeholder starts empty (fallback in effect)")
         self.assertEqual(stat.S_IMODE(b.stat().st_mode), 0o600)
         # idempotent
         r2 = subprocess.run(
@@ -170,7 +172,7 @@ class TestKeys(unittest.TestCase):
             capture_output=True, text=True, env=env,
         )
         self.assertEqual(r2.returncode, 0, r2.stderr)
-        self.assertEqual(a.read_text(), "value-of-a-dsn")
+        self.assertTrue(a.read_text() == "value-of-a-dsn")
 
     def test_cli_audit_end_to_end(self):
         self.build_default()
@@ -237,8 +239,9 @@ class TestMultiHostScoping(unittest.TestCase):
                          "a scoped fill must never name another host's paths")
         a = (self.root / "hosts/hosta/keys/db/.secrets/a-dsn.key").read_text()
         b = (self.root / "hosts/hostb/keys/db/.secrets/b-dsn.key").read_text()
-        self.assertEqual(a, "value-of-a-dsn", "filled keys are kept, not rewritten")
-        self.assertEqual(b, "value-of-b-dsn", "the other host's values are untouched")
+        self.assertTrue(a == "value-of-a-dsn", "filled keys are kept, not rewritten")
+        self.assertTrue(b == "value-of-b-dsn",
+                        "the other host's values are untouched")
 
 
 if __name__ == "__main__":

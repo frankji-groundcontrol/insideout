@@ -3,7 +3,8 @@ package main
 // The own-URL precondition (docs/issues/2026-10-07-own-url-fresh-db-bootstrap.md):
 // migrations need the two NOSUPERUSER roles that
 // docker/postgres-init/001-create-app-role.sh provisions for the bundled
-// database, and a fresh own-URL database does not have them. Before the first
+// database (`insideout_owner` with BYPASSRLS and `insideout_app` without it),
+// and a fresh own-URL database does not have them. Before the first
 // migration setup probes the target through pg_roles, then proceeds, provisions
 // with the user's consent, or stops with the SQL to run. No DSN or password is
 // ever printed: generated passwords exist only in the CREATE ROLE statement
@@ -32,7 +33,8 @@ const (
 
 // rolesProbe is what one catalog round trip tells the decision.
 type rolesProbe struct {
-	owner, app bool // the role exists
+	owner, app     bool // the role exists
+	ownerBypassRLS bool // insideout_owner can read through FORCE RLS in DEFINER helpers
 	// canTry: the connecting role may be able to create them — a superuser, or
 	// CREATEROLE with BYPASSRLS (only a BYPASSRLS role may hand it out). A guess
 	// that only spares an ordinary role a pointless prompt; the attempt itself
@@ -56,6 +58,7 @@ func probeRoles(ctx context.Context, pool *pgxpool.Pool, owner, app string) (rol
 	err := pool.QueryRow(ctx, `
 		SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $1),
 		       EXISTS (SELECT 1 FROM pg_roles WHERE rolname = $2),
+		       COALESCE((SELECT rolbypassrls FROM pg_roles WHERE rolname = $1), false),
 		       r.rolsuper OR (r.rolcreaterole AND r.rolbypassrls),
 		       current_database(),
 		       NOT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'insideout'),
@@ -64,18 +67,19 @@ func probeRoles(ctx context.Context, pool *pgxpool.Pool, owner, app string) (rol
 		       pg_get_userbyid(d.datdba)
 		FROM pg_roles r, pg_database d
 		WHERE r.rolname = current_user AND d.datname = current_database()`, owner, app).
-		Scan(&p.owner, &p.app, &p.canTry, &p.database, &p.schemaMissing, &p.ownerCantCreate, &p.dbOwner)
+		Scan(&p.owner, &p.app, &p.ownerBypassRLS, &p.canTry, &p.database, &p.schemaMissing, &p.ownerCantCreate, &p.dbOwner)
 	return p, err
 }
 
 type rolesAction int
 
 const (
-	rolesProceed  rolesAction = iota // both present: migrate exactly as before
-	rolesCreate                      // provision without asking (--create-roles)
-	rolesAsk                         // provision if the user confirms (terminal)
-	rolesStop                        // print the SQL and stop before migrating
-	rolesNotReady                    // both present, but the migration cannot create the schema here
+	rolesProceed       rolesAction = iota // both present: migrate exactly as before
+	rolesCreate                           // provision without asking (--create-roles)
+	rolesAsk                              // provision if the user confirms (terminal)
+	rolesStop                             // print the SQL and stop before migrating
+	rolesNotReady                         // both present, but the migration cannot create the schema here
+	rolesMisconfigured                    // both present, but the owner cannot bypass FORCE RLS
 )
 
 // decideRoles is the whole policy. A piped run never prompts (its stdin is the
@@ -88,6 +92,8 @@ const (
 // the operator's call, not a side effect of --create-roles.
 func decideRoles(p rolesProbe, terminal, create bool) rolesAction {
 	switch {
+	case p.owner && p.app && !p.ownerBypassRLS:
+		return rolesMisconfigured
 	case p.owner && p.app && p.schemaMissing && p.ownerCantCreate:
 		return rolesNotReady
 	case p.owner && p.app:
@@ -130,6 +136,9 @@ func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL
 	case rolesNotReady:
 		explainNotReady(p)
 		return "", false
+	case rolesMisconfigured:
+		explainRoleMisconfigured(p)
+		return "", false
 	}
 	appURL, newOwnerURL, err := provisionRoles(ctx, pool, dsn, envPath, p.database)
 	if errors.Is(err, errNotPermitted) {
@@ -145,6 +154,15 @@ func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL
 	fmt.Fprintf(os.Stderr, "setup: wrote DATABASE_URL → %s (%s)\n", catalog.RedactDSN(appURL), appRole)
 	fmt.Fprintf(os.Stderr, "setup: wrote DATABASE_OWNER_URL → %s (%s)\n", catalog.RedactDSN(newOwnerURL), ownerRole)
 	return newOwnerURL, true
+}
+
+// explainRoleMisconfigured stops before any migration or env write when an
+// existing owner role lacks the BYPASSRLS attribute required by the
+// SECURITY DEFINER membership helpers under FORCE ROW LEVEL SECURITY.
+func explainRoleMisconfigured(p rolesProbe) {
+	fmt.Fprintf(os.Stderr, "setup: %s exists but lacks BYPASSRLS; migrations cannot safely rewrite membership RLS policies\n", ownerRole)
+	fmt.Fprintf(os.Stderr, "setup: run this as a database administrator, then re-run setup:\n  ALTER ROLE %s NOSUPERUSER BYPASSRLS;\n", ownerRole)
+	fmt.Fprintln(os.Stderr, "setup: Nothing in the database was changed")
 }
 
 // confirmCreateRoles asks at a terminal, saying what will change: on a shared

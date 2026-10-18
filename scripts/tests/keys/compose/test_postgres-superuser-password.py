@@ -22,10 +22,12 @@ class TestPostgresSuperuserPassword(unittest.TestCase):
                             f"{host}: postgres-superuser-password.key missing "
                             "(run keys.py init)")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-            raw = _helpers.read_bytes(path).strip()
+            raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw).strip()
             if raw:
-                self.assertIsNone(keys.PLACEHOLDER.search(raw.decode()),
-                                   f"{host}: placeholder text is not a password")
+                self.assertTrue(keys.PLACEHOLDER.search(raw.decode()) is None,
+                                f"{host}: placeholder text is not a password")
 
 
 if __name__ == "__main__":

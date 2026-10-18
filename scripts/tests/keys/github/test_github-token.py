@@ -21,6 +21,7 @@ class TestGithubToken(unittest.TestCase):
             raw = _helpers.read_bytes(path)
             if len(raw) == 0:
                 continue  # the sanctioned empty placeholder (optional key)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
 
 
 if __name__ == "__main__":

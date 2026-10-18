@@ -72,9 +72,16 @@ Cursor reads `~/.cursor/mcp.json` (global) or `.cursor/mcp.json`
 (this project). Merge the `insideout` entry. Claude Code reads
 `.mcp.json`. Reload MCP servers after writing the file.
 
-Signup on the hosted service is invitation-only. Use an invite code,
-or an emailed code or magic link (`insideout login --code`,
-`insideout login --magic`).
+Signup on the hosted service is invitation-only. Register with an invite
+code, then sign in with a password, emailed code, or magic link:
+
+```bash
+export INVITE_CODE='invite-code'
+export ACCOUNT_EMAIL='you@example.test'
+insideout register --invite "$INVITE_CODE" "$ACCOUNT_EMAIL"
+insideout login --code "$ACCOUNT_EMAIL"
+insideout login --magic "$ACCOUNT_EMAIL"
+```
 
 Confirm the hosted path without installing again:
 
@@ -84,7 +91,11 @@ Confirm the hosted path without installing again:
 
 ## Your own server
 
-You need PostgreSQL 14+ and, for the bundled database, Docker. The
+You need PostgreSQL 14+ and, for the bundled database, Docker. After the
+binary/local server path is selected, use the complete
+[key setup tutorial](key-setup-tutorial.md) and
+[key testing tutorial](key-testing-tutorial.md) to configure and prove each
+setting. The
 two values the server refuses to boot without are `DATABASE_URL` and
 `INSIDEOUT_JWT_SECRET` (at least 32 characters). Full variable
 reference: [environment.md](environment.md). Day-to-day commands:
@@ -111,9 +122,10 @@ insideout setup --local --postgres bundled --no-start   # write .env only
 ```
 
 A **fresh** database needs the two NOSUPERUSER roles that
-`docker/postgres-init/001-create-app-role.sh` creates for the bundled path
-(`insideout_owner` with BYPASSRLS owning the database, `insideout_app` with
-CONNECT). The own-URL path asks PostgreSQL before it migrates: with both roles
+`docker/postgres-init/001-create-app-role.sh` creates for the bundled path:
+`insideout_owner` must own the database and have BYPASSRLS, while
+`insideout_app` has CONNECT and does not bypass RLS. The own-URL path asks
+PostgreSQL before it migrates: with both roles
 present it migrates; with both missing and a connecting role that can create
 them it offers to (a prompt at a terminal, `--create-roles` otherwise),
 generates the passwords into `.env` without printing them and rewrites the
@@ -129,14 +141,25 @@ export INSIDEOUT_API=http://127.0.0.1:8080/api/v1
 ./scripts/dev.sh -C server go run ./cmd/insideout
 ```
 
-Registration is invitation-only on a fresh database. Create the first
-admin, then mint invites. For a local development database only, you
-can open signup:
+Registration is invitation-only on a fresh database. On a shared or hosted
+server, create an existing user through the operator's normal registration
+path, promote that account, and mint invites. For a disposable local
+development database, use the documented seed account instead of trying to
+promote an address that does not exist yet:
 
 ```bash
-./scripts/dev.sh -C server go run ./cmd/insideout promote-admin you@example.com
-./scripts/dev.sh -C server go run ./cmd/insideout signup-mode open
+./scripts/dev.sh -C server go run ./cmd/insideout seed
+./scripts/dev.sh -C server go run ./cmd/insideout promote-admin demo@insideout.local
+export INSIDEOUT_API=http://127.0.0.1:8080/api/v1
+insideout setup                 # sign in to the seeded account; password is hidden
+insideout signup-mode open      # optional, local disposable DB only
 ```
+
+The seed command is strictly for a disposable local database; it creates the
+public development demo account described in
+[local development](local-development.md) and must never run against a
+shared or production database. Restore `insideout signup-mode invitation_only`
+after any local open-signup exercise.
 
 `./scripts/env.sh init` is the same environment setup as a scrollable
 prompt, if you would rather not use setup. `./scripts/env.sh check`
@@ -146,7 +169,7 @@ validates without printing values.
 
 ```bash
 insideout setup --check        # API (401 = pass), database (pgx), GitHub token, LLM key shape
-insideout setup --check --llm  # additionally one live provider request (GET /models)
+insideout setup --check --llm  # legacy openai compatibility probe; current schemas need a coach turn
 ```
 
 Unreachable targets are reported as `skip` with a reason (offline-safe);
@@ -174,7 +197,8 @@ Do not print secret values, tokens, or database URLs.
    (or the interactive `insideout setup` on a terminal). Merge
    `./scripts/mcp-config.sh -q` into the agent MCP config. Do not
    set `INSIDEOUT_API`. Do not invent a token. Sign-in is
-   `insideout login <email>` with the password on stdin.
+   `ACCOUNT_EMAIL='you@example.test'; insideout login "$ACCOUNT_EMAIL"` with
+   the password on stdin.
 3. Own server: ask bundled Docker Postgres, or a URL they already have.
    - Bundled: `insideout setup --local --postgres bundled`
    - Existing URL: `insideout setup --local --postgres own` with the
@@ -185,8 +209,10 @@ Do not print secret values, tokens, or database URLs.
 4. After a local server exists, set
    `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI still calls
    the hosted API.
-5. First admin:
-   `./scripts/dev.sh -C server go run ./cmd/insideout promote-admin <email>`.
+5. First admin: on a disposable local database, run `insideout seed`, then
+   promote `demo@insideout.local`; on a shared or hosted server, promote an
+   existing account with
+   `ACCOUNT_EMAIL='you@example.test'; ./scripts/dev.sh -C server go run ./cmd/insideout promote-admin "$ACCOUNT_EMAIL"`.
 6. Verify everything with `insideout setup --check`.
 
 Non-interactive `setup.sh` with no flags exits 2 and points here.

@@ -19,10 +19,12 @@ class TestLlmSchema(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw).strip()
             if not raw.strip():
                 continue  # blank = catalog default schema in effect
-            self.assertIn(raw, (b"messages", b"responses"),
-                          f"{host}: schema is exactly messages|responses")
+            self.assertTrue(raw in (b"messages", b"responses"),
+                            f"{host}: schema is exactly messages|responses")
 
 
 if __name__ == "__main__":

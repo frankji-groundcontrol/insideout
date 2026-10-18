@@ -19,8 +19,9 @@ class TestMailFrom(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
-            self.assertIn(b"@", raw, f"{host}: a sender carries an address")
-            self.assertNotIn(b"\n", raw, f"{host}: must be one line")
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw)
+            self.assertTrue(b"@" in raw, f"{host}: a sender carries an address")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
 # LLM provider key
 
-`INSIDEOUT_LLM_API_KEY` — the PRD coach's model key.
+`INSIDEOUT_LLM_API_KEY` authenticates the PRD coach with the selected model
+provider. The key, base URL, model, and wire schema are one configuration
+quartet.
 
 ## 1. Where the `.key` file is
 
@@ -9,52 +11,69 @@
 
 ## 2. How it is propagated
 
-`.env` → `dev.sh` export → the coach at conversation time; the
-deployed value rides the provider's variable store. Its three config
-companions are first-class key kinds of their own —
-[llm-base-url](llm-base-url.md), [llm-model](llm-model.md),
-[llm-schema](llm-schema.md) — each store-backed like this key.
+The value moves from `.env` through `dev.sh` into the coach streamer. The
+provider key is never sent to the browser or printed by setup. The companion
+references are [llm-base-url](llm-base-url.md),
+[llm-model](llm-model.md), and [llm-schema](llm-schema.md).
 
 ## 3. How to set it
 
-The key comes from your model provider's console — but it is one of
-**four values that must agree**: this key plus its companions
-[llm-base-url](llm-base-url.md) (relay/proxy URLs fine; any `/v1`
-suffix is yours to add), [llm-model](llm-model.md), and
-[llm-schema](llm-schema.md) (`messages` = Anthropic wire,
-`responses` = OpenAI wire). Set all four in the same `.env`; since
-2026-10-06 all four are store-backed, so a `.env` loss recovers from
-the store. **Empty key is a valid choice**: it selects the offline
-template-reply coach, the default local dev experience. Rotation is a
-plain paste-over in `.env` + provider store.
+1. Create a key in the model provider's console with only the permissions and
+   spending limit needed for this environment. Keep the provider's key format
+   intact; do not put it in a shell argument.
+2. Run `./scripts/env.sh edit`, choose `INSIDEOUT_LLM_API_KEY`, and enter the
+   key at the hidden prompt. Set the three companions in the same session.
+3. Initialize/fill the host key store:
+
+   ```bash
+   INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py init
+   INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py fill
+   ```
+
+An empty value is a supported offline lane: the server uses the template coach
+and does not call a provider. Do not create a key only to silence the offline
+notice.
 
 ## 4. How to test it
 
-Three rungs, each proving more:
+Start with the status-only checks:
 
-1. **Key is read** — boot the server: the
-   `INSIDEOUT_LLM_API_KEY not set — using offline template-reply
-   coach` notice must **not** appear.
-2. **Key + endpoint + format + model agree** — an authenticated
-   provider ping, status-only (never print the key or body): POST
-   `$BASE_URL/v1/responses` with `Authorization: Bearer` for schema
-   `responses` (or `$BASE_URL/v1/messages` with `x-api-key` for
-   `messages`) and the real model id → expect 200.
-3. **App-level** — one coach reply in a real conversation.
+```bash
+insideout setup --check
+insideout setup --check --llm
+```
 
-Caveat learned the hard way: a relay behind a tunnel (ngrok and
-friends) transiently refuses connections — a `000`/connection-failure
-on rung 2 means retry before blaming the key.
+The first command runs the normal API/database/GitHub checks and includes the
+LLM key-shape check. The `--llm` request performs an authenticated `GET
+{INSIDEOUT_LLM_BASE_URL}/models` only for the legacy `openai` schema. The
+current `messages` and `responses` schemas report a skipped live probe; that
+is expected and is not a coach proof. Finish with one real coach turn through
+the app or the provider leg of `cd server && ./scripts/smoke.sh` (the smoke
+flow uses a disposable database account and prints only status markers).
+
+**Expected result:** the server does not log the offline-coach notice, the
+provider status check is accepted where supported, and the coach SSE stream
+ends with `message_end`.
+
+**If it fails:** distinguish a rejected key (401/403) from a base URL or schema
+mismatch (404/400). Confirm the model is served at that endpoint, include any
+required `/v1` segment in the base URL, and rerun through `scripts/dev.sh` so
+the edited environment is loaded. Never paste a provider response body into a
+report.
+
+The automated placement check is:
+
+```bash
+cd scripts && python3 -m unittest discover -s tests/keys -t . -p 'test_llm-api-key.py' -v
+```
 
 ## 5. How it is used
 
-Authenticates the coach's model calls (clarify/draft/critique/
-finalize turns). Without it the coach answers from templates — honest,
-offline, and never a crash.
+The key authenticates clarify, draft, critique, and finalize model calls. If it
+is empty, those turns use the explicit offline template implementation.
 
 ## 6. Installation guide
 
-This file is the detail — [SETENV.md](../../../SETENV.md) Step 3
-("a choice, not a gap") links here. Contract rows for the key and its
-`INSIDEOUT_LLM_*` companions are in
-[environment.md](../../environment.md).
+Follow the [coach setup tutorial](../../key-setup-tutorial.md#4-choose-the-coach-mode),
+the [coach testing tutorial](../../key-testing-tutorial.md#5-prove-the-coach-configuration),
+and the [health-check section](../../installation.md#re-verify-any-time).

@@ -6,6 +6,11 @@ is, propagation, setting, testing, use, and the installation-guide
 pointer). The module table, shared flow, and per-host state live in
 the [keys README](../README.md).
 
+These keys apply only to the bundled Docker lane. Set a port or bootstrap
+password with `./scripts/env.sh edit`, run `docker compose config --quiet`, and
+use the key's probe after the relevant service is healthy. The installation
+sequence is [SETENV Step 5](../../../SETENV.md#step-5--only-if-you-run-docker-compose).
+
 - [server-port.md](server-port.md) — `SERVER_PORT`
   (manifest `compose/stack.yaml`)
 - [postgres-port.md](postgres-port.md) — `POSTGRES_PORT`

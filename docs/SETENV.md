@@ -22,6 +22,9 @@ fresh `.env` still goes through `env.sh init`; paste from the `.key` files.
 The six-part reference for that store (where / propagated / set / tested /
 used / install guide, one standalone file per kind) starts at
 [usage/keys/](usage/keys/README.md).
+The complete operator walkthrough is
+[key-setup-tutorial.md](usage/key-setup-tutorial.md), followed by its
+[key-testing-tutorial.md](usage/key-testing-tutorial.md).
 
 ## Layout
 
@@ -73,9 +76,13 @@ git check-ignore .env
 
 **Registration is invitation-only on a fresh database.** Migrations seed
 `signup_mode = invitation_only`, so `register` returns 403 without an invite
-code. Bootstrap the first admin out-of-band with `insideout promote-admin
-<email>` (server subcommand, owner DSN), then mint per-email invites — or, for
-local dev only, open signup with `insideout signup-mode open`. Full detail:
+code. On a shared or hosted server, create an existing user through the
+operator's registration path, then bootstrap that account with
+`insideout promote-admin <email>` (server subcommand, owner DSN) and mint
+per-email invites. For a disposable local database, run the documented
+`insideout seed` command first, promote `demo@insideout.local`, and sign in
+through `insideout setup` before optionally opening signup. Restore
+`invitation_only` afterward. Full detail:
 [usage/cli-mcp-and-guidance.md](usage/cli-mcp-and-guidance.md).
 
 ## The skeleton is the schema
@@ -194,11 +201,13 @@ Per-key detail:
 ## Step 4 — Local-dev toggles
 
 - `INSIDEOUT_COOKIE_SECURE=0` — set this when browsing over plain http, or the
-  browser drops the auth cookies. Only the exact value `0` turns it off.
+  browser drops the auth cookies. Only the exact value `0` turns it off. See
+  [cookie-secure](usage/keys/app/cookie-secure.md).
 - `INSIDEOUT_DEV_CORS=1` — usually unnecessary. Hosted Flutter is
   same-origin via nginx; local Flutter web needs
   `INSIDEOUT_CORS_ORIGINS=localhost`. Only the exact value `1` turns
-  permissive CORS on.
+  permissive CORS on. See [dev-cors](usage/keys/app/dev-cors.md) and
+  [cors-origins](usage/keys/app/cors-origins.md).
 - `INSIDEOUT_MAIL_API_KEY` — leave it empty for **mail dev mode**: the server
   delivers no email, it only logs sign-in links, sign-in codes and
   password-reset mails (`mail dev mode — not sent`), and the sign-in screens
@@ -207,26 +216,32 @@ Per-key detail:
   table of [usage/environment.md](usage/environment.md#go-backend). Per-key
   detail for the body toggle:
   [usage/keys/mail/mail-dev-body.md](usage/keys/mail/mail-dev-body.md).
-- `INSIDEOUT_ADDR` and the two TTLs rarely need changing.
+- `INSIDEOUT_ADDR` and the two TTLs rarely need changing. If you do change
+  them, follow [addr](usage/keys/app/addr.md),
+  [access-ttl](usage/keys/app/access-ttl.md), and
+  [refresh-ttl](usage/keys/app/refresh-ttl.md), then run their live probes.
 
 ## Step 5 — Only if you run docker compose
 
 Skip for bare `go run` / `dev.sh` use.
 
 - `POSTGRES_APP_PASSWORD` / `POSTGRES_OWNER_PASSWORD` — for setup (b) only,
-  and no longer strictly required: compose carries dev-only defaults
-  (`insideout_app_dev_password` / `insideout_owner_dev_password`) so
+  and no longer strictly required: compose carries dev-only defaults so
   `docker compose config` also parses for remote-DSN setups that never start
   the bundled service. Whatever you set must match the password embedded in
   `DATABASE_URL` / `DATABASE_OWNER_URL`. The skeleton leaves both commented
   because a flat "required" would cry wolf for everyone on a remote DSN — a
   conditional requirement belongs in the checker, and `check` enforces it
   exactly when the bundled setup is in use. Override both in `.env` for any
-  real deployment.
+  real deployment. See [postgres-app-password](usage/keys/database/postgres-app-password.md)
+  and [postgres-owner-password](usage/keys/database/postgres-owner-password.md).
 - `POSTGRES_SUPERUSER_PASSWORD` — bootstrap only; the app never connects with it.
-- `SERVER_PORT` / `POSTGRES_PORT` — host-side mappings. Inside the containers
-  the ports are fixed at `8080` / `5432`. Postgres binds to `127.0.0.1` on the
-  host.
+  See [postgres-superuser-password](usage/keys/compose/postgres-superuser-password.md).
+- `SERVER_PORT` / `POSTGRES_PORT` / `CLIENT_PORT` — host-side mappings. Inside
+  the containers the ports are fixed at `8080` / `5432`; Postgres binds to
+  `127.0.0.1` on the host. See [server-port](usage/keys/compose/server-port.md),
+  [postgres-port](usage/keys/compose/postgres-port.md), and
+  [client-port](usage/keys/compose/client-port.md).
 
 Per-key detail:
 [usage/keys/database/postgres-app-password.md](usage/keys/database/postgres-app-password.md),

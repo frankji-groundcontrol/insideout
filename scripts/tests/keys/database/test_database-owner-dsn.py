@@ -20,16 +20,19 @@ class TestDatabaseOwnerDsn(unittest.TestCase):
                              f"{host}: wrong env var mapped")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
             raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw)
             self.assertTrue(raw.startswith((b"postgres://", b"postgresql://")),
                             f"{host}: not a Postgres DSN")
             userinfo = raw.split(b"://", 1)[1].split(b"@", 1)[0]
             user = userinfo.split(b":", 1)[0]
             self.assertTrue(user.startswith(b"insideout_owner"),
                             f"{host}: DSN must authenticate as the owner role")
-            self.assertIn(user[len(b"insideout_owner"):len(b"insideout_owner") + 1],
-                          (b":", b"."),
-                          f"{host}: role must end or take a pooler suffix here")
-            self.assertNotIn(b"\n", raw, f"{host}: must be one line")
+            self.assertTrue(
+                user[len(b"insideout_owner"):len(b"insideout_owner") + 1]
+                in (b":", b"."),
+                f"{host}: role must end or take a pooler suffix here",
+            )
 
 
 if __name__ == "__main__":

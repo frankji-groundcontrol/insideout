@@ -115,8 +115,11 @@ func checkLLM(ctx context.Context, live bool) []checkOutcome {
 		return []checkOutcome{{"llm", "ok", "key shape ok (live probe: add --llm)"}}
 	}
 	base := repoEnvValue("INSIDEOUT_LLM_BASE_URL")
-	schema := repoEnvValue("INSIDEOUT_LLM_SCHEMA")
-	if schema != "" && schema != "openai" {
+	schema := strings.TrimSpace(repoEnvValue("INSIDEOUT_LLM_SCHEMA"))
+	if schema == "" {
+		schema = "messages" // config.Load's default
+	}
+	if schema != "openai" {
 		return []checkOutcome{{"llm", "skip", fmt.Sprintf("live probe not implemented for schema %q; shape ok", schema)}}
 	}
 	if base == "" {

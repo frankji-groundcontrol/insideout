@@ -1,41 +1,61 @@
 # database-app-dsn
 
-`DATABASE_URL` — the runtime Postgres DSN, `insideout_app` role, for
-the shared deployment instance (Supabase is today's host; the kind is
-just Postgres).
+`DATABASE_URL` — the runtime PostgreSQL DSN for the `insideout_app` role.
+The role is a non-superuser and is subject to the app's RLS policies.
 
 ## 1. Where the `.key` file is
 
 `hosts/<host>/keys/database/.secrets/database-app-dsn.key` (manifest
-`database/postgres.yaml`, sibling key
-[database-owner-dsn.md](database-owner-dsn.md)). The DSN embeds the
-role's password — treat the file as a password.
+`database/postgres.yaml`). The DSN embeds a password; keep the file mode
+`0600` and never print its value.
 
 ## 2. How it is propagated
 
-`.env` → `dev.sh` export → the server's pool at boot. Deployed value
-rides the hosting provider's variable store.
+The root `.env` is exported by `scripts/dev.sh`; the Go server opens its
+runtime pool from `DATABASE_URL`. Compose passes it into the server container.
+`DATABASE_OWNER_URL` is separate and is used for migrations when present.
 
 ## 3. How to set it
 
-From the managed instance's connection string for the `insideout_app`
-role (the repo creates it; keep its password distinct from the owner
-role's). Rotating means changing it at the database **and** in both
-consumers (`.env` + provider store) together.
+For a new local stack, use `insideout setup --local --postgres bundled` so the
+app DSN, owner DSN, and role passwords stay matched. For an existing instance,
+run `insideout setup --local --postgres own` and enter the DSN at the hidden
+prompt, or use `./scripts/env.sh edit` and paste it there. Preserve
+`pgbouncer=true` when the provider requires transaction pooling; the DSN's
+role must be `insideout_app`.
 
 ## 4. How to test it
 
-Boot the server and hit any authenticated route — 401 (not 500)
-proves the pool is live and the role answers.
+Before the live check, run the placement and shape suite from the repository root:
+
+```bash
+python3 -m unittest discover -s scripts/tests/keys -t . -p 'test_*.py'
+```
+
+It reports the key kind and never prints secret values.
+
+These checks use the value without displaying it:
+
+```bash
+./scripts/env.sh check --db
+insideout setup --check
+./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v
+```
+
+Expected output includes `database ... accepts connections` and the real
+authorization tests pass. A plain HTTP `401` from an unauthenticated route
+proves only API routing; it is not a database check. If the DB probe fails,
+confirm the host, role, SSL mode, and password at the database, then update
+the DSN and rerun the checks. A role or RLS failure belongs to the database
+owner or migration setup, not to the API URL alone.
 
 ## 5. How it is used
 
-The runtime, RLS-subject connection — every request runs as
-`insideout_app`. It must never own the schema; that is the owner
-DSN's job.
+Every authenticated request uses this pool. Migrations must not run as this
+role; keep DDL and `SECURITY DEFINER` ownership on `insideout_owner`.
 
 ## 6. Installation guide
 
-This file is the detail — [SETENV.md](../../../SETENV.md) Step 1
-links here. Contract row in
-[environment.md](../../environment.md).
+The two database paths are [Installation — Database choices](../../installation.md#database-choices).
+The key-by-key setup is [SETENV Step 1](../../../SETENV.md#step-1--database_url-required),
+and the variable contract is [environment.md](../../environment.md#database-setups).

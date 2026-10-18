@@ -7,6 +7,7 @@ secrets:
   llm-api-key:
     var: INSIDEOUT_LLM_API_KEY
     kind: value
+    optional: true
     note: exists only in Railway variables plus this store
   llm-base-url:
     var: INSIDEOUT_LLM_BASE_URL

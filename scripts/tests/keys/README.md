@@ -8,7 +8,7 @@ cross-cutting suites sit at this root: the tool behaviors
 (`keys.py` parsing, init, fill, audit, multi-host scoping) and the
 store-wide invariants (perms, never-absent, emptiness only with a
 fallback/optional/operator_fills field, git-blindness, host.yml
-naming).
+naming), plus secret-safe diagnostic regressions.
 
 | Module | File | Key (env var) |
 | --- | --- | --- |
@@ -45,14 +45,17 @@ naming).
 | [mail/](mail/) | [test_mail-dev-body.py](mail/test_mail-dev-body.py) | mail-dev-body (blank or exactly `1`) |
 | — | [test_tool.py](test_tool.py) | `keys.py` behaviors incl. init + multi-host scoping |
 | — | [test_store.py](test_store.py) | store-wide invariants incl. never-absent (real tree, CI-safe) |
+| — | [test_safety.py](test_safety.py) | secret-safe assertion output and single-line newline semantics |
 
 Every per-key test asserts **placement and shape only** — the file
 exists (never-absent: blank is legal, absent is not), mode 0600, the
 right env var mapped, and a kind-specific shape (PEM framing, `re_`
 prefix, DSN role, numeric id, Go duration, positive integer, port
-range). Values are never printed, logged, or compared to literals. On
-a machine without a host's `.secrets/` (CI checkouts), the per-key
-suites skip cleanly.
+range). Values are never printed, logged, or compared to literals. A
+single terminal newline is accepted for human-edited single-line keys;
+embedded or repeated newlines fail without rendering the value. On a
+machine without a host's `.secrets/` (CI checkouts), the per-key suites
+skip cleanly.
 
 Run from `scripts/`:
 

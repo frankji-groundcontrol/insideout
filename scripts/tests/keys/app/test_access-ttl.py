@@ -22,10 +22,12 @@ class TestAccessTtl(unittest.TestCase):
             self.assertTrue(os.path.exists(path),
                             f"{host}: access-ttl.key missing (run keys.py init)")
             self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
-            raw = _helpers.read_bytes(path).strip()
+            raw = _helpers.read_bytes(path)
+            _helpers.assert_single_line(self, raw, f"{host}: must be one line")
+            raw = _helpers.without_terminal_newline(raw).strip()
             if raw:
-                self.assertRegex(raw.decode(), DURATION,
-                                 f"{host}: Go duration string (default 15m)")
+                _helpers.assert_regex(self, DURATION, raw.decode(),
+                                      f"{host}: Go duration string (default 15m)")
 
 
 if __name__ == "__main__":

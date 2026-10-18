@@ -7,6 +7,7 @@ secrets:
   mail-api-key:
     var: INSIDEOUT_MAIL_API_KEY
     kind: value
+    optional: true
     note: Resend; rotate if transcripts ever leave this machine
   mail-from:
     var: INSIDEOUT_MAIL_FROM
