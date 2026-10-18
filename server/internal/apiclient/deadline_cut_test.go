@@ -121,6 +121,9 @@ func TestDeadlineForClassifiesByMethodAndRoute(t *testing.T) {
 		{http.MethodPost, "/prds/p1/build", true},
 		{http.MethodPost, "/prds/a%2Fb/build", true}, // an escaped id stays one segment
 		{http.MethodPost, "/prds/%2E%2E/build", true},
+		{http.MethodPost, "/roadmap/n1/expand", true},
+		{http.MethodPost, "/roadmap/n1/expand/confirm", false},
+		{http.MethodGet, "/roadmap/n1/expand", false},
 		{http.MethodGet, "/prds/p1/build", false},          // only the POST drafts
 		{http.MethodPost, "/prds/p1/build/confirm", false}, // writes the tree the caller holds
 		{http.MethodPost, "/prds/p1/build/", false},

@@ -29,7 +29,8 @@ var (
 // neither is anything else: a new route that calls the model has to be added
 // here, or it gets the quick deadline.
 var aiRoutes = []string{
-	"/prds/*/build", // PlanMVP drafts a whole roadmap from a PRD
+	"/prds/*/build",     // PlanMVP drafts a whole roadmap from a PRD
+	"/roadmap/*/expand", // ExpandNode drafts a node's sub-tasks
 }
 
 // deadlineFor returns how long a method + relative path may run.
