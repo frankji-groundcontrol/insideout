@@ -12,27 +12,83 @@ is the ordered fix list; this record tracks the nine Highs, the red test on
 Review IDs restart per review, so cite these as `rv4-USER-01` outside the
 review folder (review 3 also has a `USER-01`).
 
-Status 2026-10-18: wave 0 of the plan (rows 0.1 to 0.4) is integrated on the
-local branch `rv4/integration` (base `d53035a`, head `97d7529`, then the
-records commit) and recorded in the
+Status 2026-10-18: waves 0 and 1 of the plan (rows 0.1 to 1.18) are integrated
+on the local branch `rv4/integration` (base `d53035a`; wave 0 head `97d7529`,
+wave 1 integration head `a079404`, then the records commits; nothing pushed)
+and recorded in the
 [remediation changelog](../changelogs/2026-10-18-rv4-remediation/index.md).
-Waves 1 to 3 have not started. The Disposition column is filled by each wave's
-integrator with `FIXED` (red and fix commits), `NOT_REAL`, `DEFERRED_OWNER`,
-`PARTIAL` or `BLOCKED`, plus the reason.
+Of the ten Highs wave 1 closed three (rv4-USER-01, rv4-TEST-01, rv4-COMP-02);
+the other seven are wave 2. Waves 2 and 3 have not started. The Disposition
+column is filled by each wave's integrator with `FIXED` (red and fix commits),
+`NOT_REAL`, `DEFERRED_OWNER`, `PARTIAL` or `BLOCKED`, plus the reason.
 
 ## Highs and the red test (priority order)
 
 | Register ID | Sev | Priority | Owner | Plan row | Done when | Disposition |
 |---|---|---|---|---|---|---|
-| rv4-USER-01 | High | P0 | engineering | 1.1 | On a fresh invitation-only database, `promote-admin` creates or promotes the first admin and admin settings answer 200; the red test is in the suite. | Open, wave 1. |
-| rv4-TEST-01 | High | P0 | engineering | 1.5 | `release.yml` runs `go test ./... -race` (or requires a green `ci` run for the tag SHA) before it publishes. | Open, wave 1. |
-| rv4-L1 (ARCH-04, QUAL-05, PM-02) | Medium | P0 | engineering | 1.3, 1.4 | `TestProjectQuietFlagged` passes on any date; `ci.yml` has a weekly schedule; HANDOFF cites a dated SHA. | Open, wave 1. The test is red on the wave-0 base too (gate note below). |
+| rv4-USER-01 | High | P0 | engineering | 1.1 | On a fresh invitation-only database, `promote-admin` creates or promotes the first admin and admin settings answer 200; the red test is in the suite. | `FIXED` (wave 1): red `f30001c`, fix `c913e8e`. |
+| rv4-TEST-01 | High | P0 | engineering | 1.5 | `release.yml` runs `go test ./... -race` (or requires a green `ci` run for the tag SHA) before it publishes. | `FIXED` (wave 1): red `0baafaf`, fix `b7db11d`. The release runner has no PostgreSQL service (R1-05) and the step is pending first CI run after push (R1-17). rv4-PM-05 stays `PARTIAL` (Owner decisions). |
+| rv4-L1 (ARCH-04, QUAL-05, PM-02) | Medium | P0 | engineering | 1.3, 1.4 | `TestProjectQuietFlagged` passes on any date; `ci.yml` has a weekly schedule; HANDOFF cites a dated SHA. | `FIXED` (wave 1): L1 red `01d64c3`, fix `0a6b5c3`; ARCH-04 red `14dc369`, fix `6172113`; QUAL-05 red `524716a`, fix `6172113`; PM-02 red `8b9cd0b`, fix `57fa71e`, and the dated SHA (`9f0b1c7`) in HANDOFF since `7091e14`. The schedule is pending first CI run (R1-17). The wave-0 baseline failure is gone (gate note below). |
 | rv4-FULL-02, rv4-USER-04 | High | P1 | engineering | 2.2 | A CLI login older than the access TTL still runs `whoami`; plain `login` persists its token. | Open, wave 2. |
 | rv4-ARCH-01 | High | P1 | engineering | 2.1 | Each verb honours `--api` over config; the MCP binary reads the config `api_base`; one resolver remains. | Open, wave 2. |
 | rv4-FEAT-01, rv4-AIDEV-04 | High | P1 | engineering | 2.5 | An agent-scoped token is refused at `commit` and `proposal_decide` server-side; the MCP profile omits `signup_mode`, `invite_*` and deletes. | Open, wave 2. |
 | rv4-FEAT-02 | High | P1 | engineering | 2.3 | Accepting a proposal with apply twice leaves one set of roadmap nodes; apply errors surface as 500. | Open, wave 2. |
 | rv4-FULL-01 | High | P1 | engineering | 2.4 | Web Expand with AI creates children; a real-shape contract test pins the response. | Open, wave 2. |
-| rv4-COMP-02, rv4-COMP-01 | High, Medium | P1 | engineering | 1.16, 1.17 | A deadline picked as 2026-10-18 still reads 2026-10-18 under `TZ=Asia/Shanghai`; a 67-character Chinese title is accepted on every field that has a character limit. | Open, wave 1. |
+| rv4-COMP-02, rv4-COMP-01 | High, Medium | P1 | engineering | 1.16, 1.17 | A deadline picked as 2026-10-18 still reads 2026-10-18 under `TZ=Asia/Shanghai`; a 67-character Chinese title is accepted on every field that has a character limit. | `FIXED` (wave 1): COMP-02 red `5a47205`, fix `137d6f5` (CI runs in UTC; the Shanghai-zone step is R1-01); COMP-01 red `0129059`, fix `e129f02`. |
+
+## Wave 1 dispositions (integrator, 2026-10-18)
+
+One row for each of the 34 findings wave 1 touched: 30 `FIXED`, 4 `PARTIAL`
+(rv4-PM-05, rv4-TEST-08, rv4-SEC-06, rv4-USER-09), no `NOT_REAL`, no `BLOCKED`;
+the owner halves of rv4-PM-05 and rv4-COMP-02 are `DEFERRED_OWNER`. SHAs are on
+`rv4/integration` (the cluster fragments cite the worker-branch SHAs). A
+CI-config property can only be checked locally here (`actionlint` is not
+installed), so those rows end with "pending first CI run after push" (R1-17). Run
+state and the clusters are in the
+[remediation changelog](../changelogs/2026-10-18-rv4-remediation/index.md#wave-1);
+what each cluster left open is the residue table below.
+
+| Register ID | Row | Disposition | Red | Fix | Reason or what is left |
+|---|---|---|---|---|---|
+| rv4-USER-01 | 1.1 | `FIXED` | `f30001c` | `c913e8e` | `promote-admin` creates the account when it is absent (password from stdin, never argv). The password minimum counts bytes: R1-11. |
+| rv4-USER-02 | 1.2 | `FIXED` | `e0908b3` | `abc19a0` | `help`, `-h`, `--help`, `version`, `--version` exit 0 and an unknown verb exits 2, all before `config.Load()`. |
+| rv4-FULL-03 | 1.2 | `FIXED` | `e0908b3` | `abc19a0` | Same commits as USER-02 (the verb table and its drift test). |
+| rv4-PM-04 | 1.2 | `FIXED` | `e0908b3`, `0baafaf` | `abc19a0`, `b7db11d` | `insideout version` prints the tag that `release.yml` stamps into `main.version`. The container image and `scripts/install.sh` print `dev`: R1-04. |
+| rv4-TEST-01 | 1.5 | `FIXED` | `0baafaf` | `b7db11d` | `release.yml` runs `go test ./... -race -count=1` before any build or upload. The release runner has no PostgreSQL service: R1-05. Pending first CI run: R1-17. |
+| rv4-PM-05 | 1.5 | `PARTIAL` | `0baafaf` | `b7db11d` | The test gate is done with TEST-01 and [releasing](../usage/releasing.md) records the process (`7091e14`). `DEFERRED_OWNER`: the version policy, the rollback rule, a stronger gate (R1-05, R1-16). |
+| rv4-PM-02 | 1.4 | `FIXED` | `8b9cd0b` | `57fa71e`, `5f52381` | A weekly `schedule` runs `go test ./... -race -shuffle=on`; HANDOFF cites `9f0b1c7` (2026-10-11) since `7091e14`, which closed the clause the worker had reported `PARTIAL`. Pending first CI run: R1-17. |
+| rv4-TEST-08 | 1.4 | `PARTIAL` | `735ba99`, `4609a63` | `adf2177`, `cc534e7` | In-progress runs are cancelled for pull requests only; every other run has a group of its own. The client image job did not fit (`ci.yml` 346 of 350 lines): R1-01, [ci-yml-split](2026-10-18-ci-yml-split.md). |
+| rv4-PM-01 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | The `env-suites` job runs every `scripts/tests/check_*.py` with `python3 -I`. Pending first CI run: R1-17. |
+| rv4-CLOSE-01 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | Same step as PM-01 (the guard loop). |
+| rv4-TEST-05 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | Same step as PM-01 (the guard loop). |
+| rv4-PUB-08 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | Same step as PM-01 (the guard loop). |
+| rv4-PM-12 | 1.11 | `FIXED` | `1f3c74a` | `b2aa936` | The Ubuntu install lane's Go check accepts 1.26 and newer, as `go.mod` does. Pending first CI run: R1-17. |
+| rv4-PM-07 | 1.11 | `FIXED` | `3ad4022` | `acf57c0` | The register's "0 analyzer infos" does not reproduce (14 measured, three independent measurements). The real defect was a ratchet that allowed 16; `INFO_BASELINE` is now 14. |
+| rv4-PM-10 | 1.15 | `FIXED` | `c47e3ec`, `622bf58`, `4c55a55` | `5b642bd`, `7951036`, `3996134` | `huh` is direct in `go.mod`, `go.sum` is tidy and the server job fails on an untidy module (`ci-gates` reported its half `PARTIAL` until `misc-correctness` tidied `go.sum`). The step is pending first CI run: R1-17. |
+| rv4-L1 | 1.3 | `FIXED` | `01d64c3` | `0a6b5c3` | The project views read `Server.now()`, so `TestProjectQuietFlagged` passes on any date. `flagged` on detail responses is judged from `createdAt` alone: R1-10. |
+| rv4-ARCH-04 | 1.3 | `FIXED` | `14dc369` | `6172113` | A guard fails on a raw `time.Now()` in the `internal/api` view builders (the clock itself is `0a6b5c3`). |
+| rv4-QUAL-05 | 1.3 | `FIXED` | `524716a` | `6172113` | The roadmap node and progress views read the server clock. |
+| rv4-COMP-01 | 1.17 | `FIXED` | `0129059` | `e129f02` | One `tooLong` helper counts characters on the 18 capped fields; 67 Chinese characters pass. Byte caps outside the sweep (the coach message, `firstLine`): R1-12. |
+| rv4-SEC-01 | 1.9 | `FIXED` | `b4edce1` | `4df79d6` | A login-code guess is charged and compared in one atomic `UPDATE`, so a concurrent burst is capped at 5. |
+| rv4-USER-07 | 1.10 | `FIXED` | `bee99f7` | `a7f9519` | Create-invitation returns `mailSent` and the dialog says when nothing was e-mailed. The `invite_create` MCP description does not name it yet: R1-03. |
+| rv4-QUAL-02 | 1.13 | `FIXED` | `8765fed` | `5cf5bc2` | The resend cooldown keys on `clientIP`, not a drifted copy, so a trailing-empty `X-Forwarded-For` no longer puts every client in one bucket. |
+| rv4-QUAL-03 | 1.13 | `FIXED` | `e45229e` | `868e49f` | Every apiclient path segment and query value is escaped (39 rows under a completeness test). `Client.Cursor` passes a nil reply target: R1-13. |
+| rv4-SEC-06 | 1.14 | `PARTIAL` | `e646d8e` | `cbd9fe8` | The code half is fixed: dot-only repo segments and foreign hosts are refused and the canonical URL is stored. The token half (a per-installation token, a case-insensitive lookup with a canonicalising migration, `FetchGuideFile` dot names) goes to `w3-github-evidence`, row 3.10: R1-08. |
+| rv4-USER-11 | 1.12 | `FIXED` | `b17641a` | `bed39fb` | The Edit-project description field is labelled as a description. |
+| rv4-COMP-02 | 1.16 | `FIXED` | `5a47205` | `137d6f5` | The picked deadline is sent as noon UTC of its calendar day, so 2026-10-18 reads 2026-10-18 under `TZ=Asia/Shanghai`. CI runs in UTC and cannot see the bug until the Shanghai-zone step lands: R1-01. Date-typed deadlines and viewer-zone timestamps are `DEFERRED_OWNER`: R1-15. |
+| rv4-USER-06 | 1.7 | `FIXED` | `a875428` | `7b6f4c0` | The README `prd update` example puts the id after the flags; root `SKILL.md` was corrected in `7091e14`. The guard does not scan `SKILL.md`: R1-02. |
+| rv4-REL-05 | 1.8 | `FIXED` | `092f7f1` | `3a8defb` | The compose `server` has `stop_grace_period: 35s`, explained in the deployment architecture. `docker compose config -q` has not run anywhere: R1-17. |
+| rv4-USER-09 | 1.12 | `PARTIAL` | `8161369` | `6f32133` | The installer's closing message no longer offers `setup --local`. `README.md:86` (R1-06) and the `setup --hosted` hint at `cli_setup.go:168` (R1-07) still do; both are wave 3. |
+| rv4-COMP-07 | 1.18 | `FIXED` | `ef63477` | `074d4e0` | The backup dump is written 0600 (umask and chmod) and the usage doc says what it holds. `sh scripts/backup-db.sh` fails under dash: R1-14. |
+| rv4-AIDEV-10 | 1.15 | `FIXED` | `4d04a6d` | `9da2086` | The `propose` tool schema declares `items`. |
+| rv4-QUAL-01 | 1.15 | `FIXED` | `9deac14` | `d40c64b` | One blank-section helper serves readiness and the coach context; the `openQuestions` order is stable. |
+| rv4-FULL-06 | 1.15 | `FIXED` | `4fe72b2` | `ded3836` | An empty `DATABASE_OWNER_URL` fails `env.sh check` on the bundled PostgreSQL. |
+| rv4-DATA-05 | 1.15 | `FIXED` | `174c764` | `d671860` | The timeline cursor is a `(created_at, id)` position, so a deleted cursor row no longer empties the next page. |
+
+Incidental: `promote-admin` now trims and lowercases the address, the
+promote-admin half of the Low finding rv4-DATA-10. Its test arrived with the fix
+and has no red of its own, so DATA-10 is not claimed; it stays with the
+hygiene batch.
 
 ## Wave 1 open residue (integrator, 2026-10-18)
 
@@ -77,6 +133,26 @@ green. Source: `coordinator-w0.json` in the remediation reports directory
 (outside the repository); the wave record is in the
 [changelog index](../changelogs/2026-10-18-rv4-remediation/index.md).
 
+## Gate note (wave 1, integrator, 2026-10-18)
+
+At `a079404` (74 cherry-picked commits and one fix-up, no conflicts) every gate
+was green with no baseline failure: `gofmt`, `go build`, `go vet` and
+`go mod tidy -diff` clean; `go test ./... -race -count=1` 27 packages ok, the
+only skip `TestReadSecretTerminal`, and `TestProjectQuietFlagged` passing, so
+the wave-0 failure above is fixed by row 1.3; Flutter `analyze` 14 infos (equal
+to `INFO_BASELINE`) and 466 tests, also under `TZ=Asia/Shanghai`; all nine
+`scripts/tests/check_*.py` guards, `sh scripts/check-redaction.sh` and
+`sh scripts/check-docs-recorded.sh` exit 0. The CI-config properties are
+pending first CI run after push (R1-17). The full list is in the
+[changelog index](../changelogs/2026-10-18-rv4-remediation/index.md#gates-integrator-at-a079404).
+
+**Coordinator note (do not redo).** The integrator already applied this
+fix-up in `a079404`:
+
+```json
+[{"item":"w1-misc-correctness r1 backend-layout patch","path":"docs/architecture/backend.md","what":"added the modtidy/ Layout line between mcpserver/ and presence/ so check_docs_truth.py stays green"}]
+```
+
 ## Owner decisions (no engineering action until decided)
 
 Dispositions of the first six rows are wave 0's and the last two are wave 1's;
@@ -97,7 +173,9 @@ SHAs are on `rv4/integration`, and the privacy halves are written out in
 ## What closes this record
 
 Rows 0.1 to 2.6 of the plan are done and their checks pass, or each remaining
-row has its own dated record. Rows 0.1 to 0.4 are recorded (wave 0); their
-owner halves stay open in [the owner record](2026-10-18-rv4-owner-privacy-decisions.md).
+row has its own dated record. Rows 0.1 to 1.18 are recorded (waves 0 and 1);
+the owner halves of 0.1 to 0.4 stay open in
+[the owner record](2026-10-18-rv4-owner-privacy-decisions.md), and the wave-1
+residue stays open above until each R1 item is done or decided by the owner.
 The Medium and Low rows stay in the register and the plan; they do not get
 issue files unless a wave opens one.
