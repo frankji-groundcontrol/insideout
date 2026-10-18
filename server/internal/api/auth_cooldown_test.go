@@ -245,8 +245,15 @@ func TestEmailAuthCooldownEndToEnd(t *testing.T) {
 
 	const ipA, ipB, ipC = "192.0.2.1", "198.51.100.7", "203.0.113.9"
 
+	// Mail leaves from the mail queue after the response (rv4-REL-07), so a
+	// count is only meaningful once the queue has drained.
+	sends := func() int {
+		s.mail.Wait()
+		return countDevModeSends(&mailLog)
+	}
+
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/magic-link", u1.Email, ipA))
-	if got := countDevModeSends(&mailLog); got != 1 {
+	if got := sends(); got != 1 {
 		t.Fatalf("after first request: sends = %d, want 1", got)
 	}
 
@@ -256,7 +263,7 @@ func TestEmailAuthCooldownEndToEnd(t *testing.T) {
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/magic-link", u2.Email, ipA))
 	// Same email, different IP: blocked by the email key, still 200.
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/magic-link", u1.Email, ipB))
-	if got := countDevModeSends(&mailLog); got != 1 {
+	if got := sends(); got != 1 {
 		t.Fatalf("after cooldown-blocked repeats: sends = %d, want 1", got)
 	}
 
@@ -264,7 +271,7 @@ func TestEmailAuthCooldownEndToEnd(t *testing.T) {
 	// clock jumps.
 	clock.advance(authResendCooldown + time.Second)
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/magic-link", u1.Email, ipB))
-	if got := countDevModeSends(&mailLog); got != 2 {
+	if got := sends(); got != 2 {
 		t.Fatalf("after window expiry: sends = %d, want 2", got)
 	}
 
@@ -272,14 +279,14 @@ func TestEmailAuthCooldownEndToEnd(t *testing.T) {
 	// magic link a moment ago, so both other endpoints must stay quiet.
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/forgot-password", u1.Email, ipC))
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/login-code", u1.Email, ipC))
-	if got := countDevModeSends(&mailLog); got != 2 {
+	if got := sends(); got != 2 {
 		t.Fatalf("cross-endpoint cooldown: sends = %d, want 2", got)
 	}
 
 	// And once the window passes, the login-code send path itself works.
 	clock.advance(authResendCooldown + time.Second)
 	assertUniformOK(t, postAuthSend(s, "/api/v1/auth/login-code", u1.Email, ipC))
-	if got := countDevModeSends(&mailLog); got != 3 {
+	if got := sends(); got != 3 {
 		t.Fatalf("login-code after window expiry: sends = %d, want 3", got)
 	}
 }

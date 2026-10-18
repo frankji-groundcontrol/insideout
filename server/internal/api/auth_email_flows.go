@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,6 +28,11 @@ type emailOnlyRequest struct {
 // uniform 200 whether or not the account exists or the resend cooldown
 // blocked the send — the endpoint must not leak account enumeration, and
 // a mail-provider failure is logged, not surfaced, for the same reason.
+//
+// The uniformity covers time as well as the body (rv4-SEC-03): the lookup is
+// the only account-dependent work on the request path, and everything after it
+// (the token, its row, the mail) runs on the mail queue, so a known address
+// answers as fast as an unknown one and a slow provider never holds a request.
 func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) {
 	email, ok := s.decodeEmail(w, r)
 	if !ok {
@@ -50,13 +56,13 @@ func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := s.sendEmailLink(r, user.ID, user.Email, store.AuthTokenMagicLink, magicLinkTTL, "/magic-link",
-		"Your InsideOut sign-in link",
-		"Sign in to InsideOut with this link (valid for 15 minutes):",
-		"Sign in to InsideOut",
-	); err != nil {
-		s.log.Error("magic link: send", "error", err)
-	}
+	s.mail.Enqueue("magic link", func(ctx context.Context) error {
+		return s.sendEmailLink(ctx, user.ID, user.Email, store.AuthTokenMagicLink, magicLinkTTL, "/magic-link",
+			"Your InsideOut sign-in link",
+			"Sign in to InsideOut with this link (valid for 15 minutes):",
+			"Sign in to InsideOut",
+		)
+	})
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -103,7 +109,8 @@ func (s *Server) handleMagicLinkConsume(w http.ResponseWriter, r *http.Request) 
 }
 
 // handleForgotPassword emails a one-time password-reset link. Same
-// uniform-200 contract as the magic-link request, including on cooldown.
+// uniform-200 contract as the magic-link request, including on cooldown and
+// in how long the answer takes.
 func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	email, ok := s.decodeEmail(w, r)
 	if !ok {
@@ -125,13 +132,13 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.sendEmailLink(r, user.ID, user.Email, store.AuthTokenPasswordReset, passwordResetTTL, "/reset-password",
-		"Reset your InsideOut password",
-		"Set a new InsideOut password with this link (valid for 60 minutes):",
-		"Reset your InsideOut password",
-	); err != nil {
-		s.log.Error("forgot password: send", "error", err)
-	}
+	s.mail.Enqueue("forgot password", func(ctx context.Context) error {
+		return s.sendEmailLink(ctx, user.ID, user.Email, store.AuthTokenPasswordReset, passwordResetTTL, "/reset-password",
+			"Reset your InsideOut password",
+			"Set a new InsideOut password with this link (valid for 60 minutes):",
+			"Reset your InsideOut password",
+		)
+	})
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -191,7 +198,8 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleLoginCodeRequest emails a 6-digit sign-in code. Same uniform-200
-// no-enumeration contract as the magic-link request, including on cooldown.
+// no-enumeration contract as the magic-link request, including on cooldown and
+// in how long the answer takes.
 func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) {
 	email, ok := s.decodeEmail(w, r)
 	if !ok {
@@ -213,9 +221,9 @@ func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := s.sendEmailCode(r, user.ID, user.Email); err != nil {
-		s.log.Error("login code: send", "error", err)
-	}
+	s.mail.Enqueue("login code", func(ctx context.Context) error {
+		return s.sendEmailCode(ctx, user.ID, user.Email)
+	})
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -287,34 +295,35 @@ func (s *Server) decodeEmail(w http.ResponseWriter, r *http.Request) (string, bo
 
 // sendEmailLink mints a one-time token of the given kind, stores its hash
 // (superseding any prior unused token of that kind for the user), and
-// emails a link to the Flutter app's route for it.
-func (s *Server) sendEmailLink(r *http.Request, userID uuid.UUID, to, kind string, ttl time.Duration, path, subject, textIntro, heading string) error {
+// emails a link to the Flutter app's route for it. It runs as a mail-queue
+// job, so ctx is the job's, not a request's.
+func (s *Server) sendEmailLink(ctx context.Context, userID uuid.UUID, to, kind string, ttl time.Duration, path, subject, textIntro, heading string) error {
 	token, hash, err := auth.GenerateOneTimeToken()
 	if err != nil {
 		return fmt.Errorf("generate token: %w", err)
 	}
-	if err := s.store.CreateAuthToken(r.Context(), userID, kind, hash, time.Now().Add(ttl)); err != nil {
+	if err := s.store.CreateAuthToken(ctx, userID, kind, hash, time.Now().Add(ttl)); err != nil {
 		return fmt.Errorf("store token: %w", err)
 	}
 	link := s.cfg.PublicURL + path + "?token=" + token
 	text := fmt.Sprintf("%s\n\n%s\n\nIf you didn't request this, you can ignore this email.", textIntro, link)
 	html := simpleEmailHTML(heading, textIntro, link, linkExpiryPhrase(ttl))
-	return s.mail.Send(r.Context(), to, subject, text, html)
+	return s.mail.Send(ctx, to, subject, text, html)
 }
 
 // sendEmailCode mints a 6-digit sign-in code, stores its hash (superseding
 // the user's prior live code), and emails the digits — the typeable
 // counterpart of sendEmailLink for clients that can't follow a link.
-func (s *Server) sendEmailCode(r *http.Request, userID uuid.UUID, to string) error {
+func (s *Server) sendEmailCode(ctx context.Context, userID uuid.UUID, to string) error {
 	code, hash, err := auth.GenerateLoginCode()
 	if err != nil {
 		return fmt.Errorf("generate code: %w", err)
 	}
-	if err := s.store.CreateAuthToken(r.Context(), userID, store.AuthTokenLoginCode, hash, time.Now().Add(loginCodeTTL)); err != nil {
+	if err := s.store.CreateAuthToken(ctx, userID, store.AuthTokenLoginCode, hash, time.Now().Add(loginCodeTTL)); err != nil {
 		return fmt.Errorf("store code: %w", err)
 	}
 	text := fmt.Sprintf("Your InsideOut sign-in code is %s. It works once and expires in %d minutes. If you didn't request it, you can ignore this email.",
 		code, int(loginCodeTTL.Minutes()))
 	html := codeEmailHTML(code, int(loginCodeTTL.Minutes()))
-	return s.mail.Send(r.Context(), to, "Your InsideOut sign-in code", text, html)
+	return s.mail.Send(ctx, to, "Your InsideOut sign-in code", text, html)
 }

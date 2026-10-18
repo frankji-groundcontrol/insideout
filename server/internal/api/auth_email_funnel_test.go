@@ -60,6 +60,7 @@ type sentMail struct {
 // test can get to what a hosted provider would receive.
 func (m *mailWorld) lastMail(t *testing.T) sentMail {
 	t.Helper()
+	m.mail.Wait() // the emailed requests answer first and send from the mail queue (rv4-REL-07)
 	var last sentMail
 	for _, line := range strings.Split(m.buf.String(), "\n") {
 		if !strings.Contains(line, `"mail dev mode`) {
