@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/session/appearance.dart';

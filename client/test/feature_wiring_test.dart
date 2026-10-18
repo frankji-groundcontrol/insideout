@@ -20,7 +20,8 @@ void main() {
       final roadmap =
           read('lib/features/project/roadmap_page.dart') +
           read('lib/features/project/roadmap_node_card.dart') +
-          read('lib/features/project/roadmap_node_menu.dart');
+          read('lib/features/project/roadmap_node_menu.dart') +
+          read('lib/features/project/roadmap_expand_draft.dart');
       final prd =
           read('lib/features/prd/prd_page.dart') +
           read('lib/features/prd/coach_panel.dart');
@@ -47,6 +48,7 @@ void main() {
       expect(roadmap.contains('moveRoadmapNode'), isTrue);
       expect(roadmap.contains('deleteRoadmapNode'), isTrue);
       expect(roadmap.contains('expandRoadmapNode'), isTrue);
+      expect(roadmap.contains('confirmExpandRoadmapNode'), isTrue);
       expect(roadmap.contains('parentId: node.id'), isTrue);
       expect(prd.contains('updatePrdStatus'), isTrue);
       expect(prd.contains('buildFromPrd'), isTrue);

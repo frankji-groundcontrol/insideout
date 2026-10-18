@@ -58,6 +58,25 @@ class RoadmapNode {
   );
 }
 
+/// One sub-task the AI drafted for a node (the 200 body of POST
+/// /roadmap/{id}/expand). A draft writes nothing: the person reviews these and
+/// only confirming sends them back to be created.
+class DraftSubtask {
+  const DraftSubtask({required this.title, this.description = ''});
+
+  final String title;
+  final String description;
+
+  /// The server omits an empty description, so it is optional here.
+  factory DraftSubtask.fromJson(Map<String, dynamic> j) => DraftSubtask(
+    title: j['title'] as String,
+    description: (j['description'] as String?) ?? '',
+  );
+
+  /// The shape the confirm route reads back.
+  Map<String, dynamic> toJson() => {'title': title, 'description': description};
+}
+
 class PresenceEntry {
   PresenceEntry({
     required this.sessionId,

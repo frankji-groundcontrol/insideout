@@ -15,6 +15,7 @@ import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 
+part 'roadmap_expand_draft.dart';
 part 'roadmap_node_menu.dart';
 
 class RoadmapNodeCard extends StatelessWidget {

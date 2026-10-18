@@ -224,8 +224,28 @@ mixin _ProjectVerbs on _ApiCore {
     await _parse(await _exec(req.deleteRoadmapNode(nodeId)), (d) => d);
   }
 
-  Future<List<RoadmapNode>> expandRoadmapNode(String nodeId) async {
+  /// Asks the AI to draft sub-tasks for a node. The server writes nothing: the
+  /// 200 body is `{children: [...]}`. Show the draft, and send what the person
+  /// keeps to [confirmExpandRoadmapNode], the only call that creates them.
+  Future<List<DraftSubtask>> expandRoadmapNode(String nodeId) async {
     final res = await _exec(req.expandRoadmapNode(nodeId));
+    return _parse(
+      res,
+      (d) => ((d as Map<String, dynamic>)['children'] as List? ?? const [])
+          .map((e) => DraftSubtask.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  /// Creates the confirmed [draft] under the node; the server answers 201 with
+  /// the created nodes in order.
+  Future<List<RoadmapNode>> confirmExpandRoadmapNode(
+    String nodeId,
+    List<DraftSubtask> draft,
+  ) async {
+    final res = await _exec(
+      req.confirmExpandRoadmapNode(nodeId, [for (final c in draft) c.toJson()]),
+    );
     return _parse(
       res,
       (d) => (d as List)

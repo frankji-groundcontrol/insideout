@@ -87,11 +87,7 @@ class _NodeMenu extends StatelessWidget {
       );
       if (done && context.mounted) await onReload();
     } else if (value == 'expand') {
-      final done = await guardWrite(
-        context,
-        () => api.expandRoadmapNode(node.id),
-      );
-      if (done && context.mounted) await onReload();
+      await _expandWithAI(context, node, onReload);
     } else if (value == 'observe') {
       await _observe(context, l10n);
     } else if (value == 'validate') {

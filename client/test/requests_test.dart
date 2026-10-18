@@ -77,6 +77,16 @@ void main() {
     expect(expandRoadmapNode('n1').method, 'POST');
     expect(expandRoadmapNode('n1').path, '/roadmap/n1/expand');
     expect(expandRoadmapNode('n1').body, isNull);
+    final confirm = confirmExpandRoadmapNode('n1', [
+      {'title': 'T', 'description': ''},
+    ]);
+    expect(confirm.method, 'POST');
+    expect(confirm.path, '/roadmap/n1/expand/confirm');
+    expect(confirm.body, {
+      'children': [
+        {'title': 'T', 'description': ''},
+      ],
+    });
   });
 
   test('GET idea and conversation use /ideas/{id}, /conversations/{id}', () {

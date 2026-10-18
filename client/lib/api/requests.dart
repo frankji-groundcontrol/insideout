@@ -114,8 +114,18 @@ ApiCall moveRoadmapNode(
 ApiCall deleteRoadmapNode(String nodeId) =>
     ApiCall('DELETE', '/roadmap/$nodeId');
 
+/// Drafts sub-tasks for a node with the AI. Nothing is written: the response
+/// is `{children: [{title, description?}]}`, to be sent on through
+/// [confirmExpandRoadmapNode].
 ApiCall expandRoadmapNode(String nodeId) =>
     ApiCall('POST', '/roadmap/$nodeId/expand');
+
+/// Writes the [children] a person confirmed from the draft under the node
+/// (`/expand` only drafts); the server answers 201 with the created nodes.
+ApiCall confirmExpandRoadmapNode(
+  String nodeId,
+  List<Map<String, dynamic>> children,
+) => ApiCall('POST', '/roadmap/$nodeId/expand/confirm', {'children': children});
 
 ApiCall postPrdStatus(String id, String status) {
   return ApiCall('POST', '/prds/$id/status', {'status': status});
