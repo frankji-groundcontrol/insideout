@@ -66,24 +66,38 @@ func TestSingletonGuardErrorsWhenASecondServerRuns(t *testing.T) {
 	}
 	t.Cleanup(st.Close)
 
+	// The guard waits out a rolling deploy's overlap (rv4-REL-04) before it
+	// calls a held lock a second replica; shorten that wait for the test.
+	every, window := singletonRetryEvery, singletonRetryWindow
+	singletonRetryEvery, singletonRetryWindow = 20*time.Millisecond, 200*time.Millisecond
+	t.Cleanup(func() { singletonRetryEvery, singletonRetryWindow = every, window })
+
 	// The incumbent replica: its guard takes the singleton advisory lock on
 	// a connection of its own and holds it, exactly like a running process.
-	var incumbentLog bytes.Buffer
+	var incumbentLog syncBuffer
 	incumbent := newSingletonLogServer(st, &incumbentLog)
 	t.Cleanup(incumbent.stopSingletonGuard)
 	_ = incumbent.Handler()
 
-	// The second replica against the same database must say so, loudly.
-	var secondLog bytes.Buffer
+	// The second replica against the same database must say so, loudly, once
+	// the holder has outlasted the retry window.
+	var secondLog syncBuffer
 	second := newSingletonLogServer(st, &secondLog)
 	t.Cleanup(second.stopSingletonGuard)
 	_ = second.Handler()
 
-	// The incumbent guarantees the conflict; anything else holding the lock
-	// only makes it more certain, so this stays deterministic in-suite.
-	out := secondLog.String()
-	if !strings.Contains(out, "second replica") || !strings.Contains(out, "level=ERROR") {
-		t.Fatalf("a second server process must announce itself with an ERROR log (the review's 'loud instead of silent'); got logs:\n%s", out)
+	// Something holds the lock for the whole test (the incumbent, or a guard
+	// an earlier test left running), so the ERROR is certain and deterministic.
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		out := secondLog.String()
+		if strings.Contains(out, "second replica") && strings.Contains(out, "level=ERROR") {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("a second server process must announce itself with an ERROR log once the holder outlasts the retry window (the review's 'loud instead of silent'); got logs:\n%s", out)
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
 
