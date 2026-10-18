@@ -66,14 +66,17 @@ func client(api string) *apiclient.Client {
 	if err != nil {
 		return apiclient.Failing(err)
 	}
-	c := creds.Client()
 	session.Lock()
 	inProcess := session.token
 	session.Unlock()
 	if inProcess != "" {
+		// This process's own login is not the saved session: it neither
+		// renews itself with the saved refresh token nor overwrites the file.
+		c := apiclient.New(creds.Base)
 		c.SetToken(inProcess)
+		return c
 	}
-	return c
+	return creds.Client()
 }
 
 // reqStr reads a required string argument; MCP validation already

@@ -15,18 +15,19 @@ import (
 	"time"
 )
 
+// A Client serves one caller at a time.
 type Client struct {
 	base    string
 	token   string
 	refresh string
+	renew   *Renewal // nil: a 401 is final (see SetRenewal)
 	hc      *http.Client
 }
 
 func New(base string) *Client {
-	return &Client{
-		base: strings.TrimRight(base, "/"),
-		hc:   &http.Client{Timeout: 20 * time.Second},
-	}
+	c := &Client{base: strings.TrimRight(base, "/")}
+	c.hc = &http.Client{Timeout: 20 * time.Second, Transport: renewTransport{c}}
+	return c
 }
 
 // SetToken installs a previously obtained access token (INSIDEOUT_TOKEN).
@@ -104,9 +105,9 @@ func (c *Client) do(method, path string, body any, out any) error {
 	if err != nil {
 		return fmt.Errorf("apiclient: read response: %w", err)
 	}
-	if resp.StatusCode == http.StatusUnauthorized {
-		return fmt.Errorf("apiclient: %s %s: unauthorized (check INSIDEOUT_TOKEN or login)", method, path)
-	}
+	if resp.StatusCode == http.StatusUnauthorized && !strings.Contains(path, "/auth/") {
+		return c.unauthorized(method + " " + path)
+	} // on /auth/* a 401 is the flow's verdict (wrong password), shown with the server's words below
 	if resp.StatusCode >= 300 {
 		return fmt.Errorf("apiclient: %s %s: %s: %s", method, path, resp.Status, strings.TrimSpace(string(raw)))
 	}
@@ -144,6 +145,9 @@ func (c *Client) getBytes(path string) ([]byte, error) {
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
 	if err != nil {
 		return nil, fmt.Errorf("apiclient: read %s: %w", path, err)
+	}
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, c.unauthorized("GET " + path)
 	}
 	if resp.StatusCode >= 300 {
 		return nil, fmt.Errorf("apiclient: GET %s: %s: %s", path, resp.Status, strings.TrimSpace(string(raw)))
