@@ -211,3 +211,34 @@ func TestProposalApply_FailureRollsBackEveryNode(t *testing.T) {
 	}
 	f.wantTitles(t, st, "Intake", poison, "Handoff")
 }
+
+// Green-only guard (the applied_at column did not exist at the base). A
+// workspace admin who does not own the project is a plan writer, so their
+// accept must apply the proposal, and the items they applied stay applied for
+// the owner who accepts next. The claim is an RLS-filtered UPDATE: lose the
+// admin arm of item_applier_update and it matches no row for the admin, which
+// reads as "already applied", so the accept would answer 200 and build nothing.
+func TestProposalApply_ANonOwnerWorkspaceAdminAppliesOnceAcrossActors(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	f := newApplyFixture(t, st, ProposalItem{Title: "Intake"}, ProposalItem{Title: "Handoff"})
+	admin := mkUser(t, st)
+	if _, err := st.JoinWorkspace(ctx, admin.ID, f.ws.Code); err != nil {
+		t.Fatalf("join: %v", err)
+	}
+	if err := st.UpdateMemberRole(ctx, f.owner.ID, f.ws.ID, admin.ID, "admin"); err != nil {
+		t.Fatalf("make admin: %v", err)
+	}
+
+	_, ids, err := st.DecideAndApplyProposal(ctx, admin.ID, f.upd.ID, "accepted", "", true)
+	if err != nil || len(ids) != 2 {
+		t.Fatalf("admin accept: %d nodes, %v, want both items applied", len(ids), err)
+	}
+	f.wantTitles(t, st, "Intake", "Handoff")
+
+	_, ids, err = st.DecideAndApplyProposal(ctx, f.owner.ID, f.upd.ID, "accepted", "", true)
+	if err != nil || len(ids) != 0 {
+		t.Fatalf("owner accept after the admin's: %d nodes, %v, want 0 (applied once across actors)", len(ids), err)
+	}
+	f.wantTitles(t, st, "Intake", "Handoff")
+}
