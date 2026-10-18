@@ -32,7 +32,8 @@ stop, say it is unsupported, and offer the manual docs instead.
   password** — you never invent either. Passwords, codes, and magic links are
   entered through hidden prompts. `insideout setup` saves the resulting
   credentials to its `0600` client config; the plain `insideout login` verb
-  prints only its access token for an explicit caller to capture.
+  saves the same file (path on stderr) and prints only its access token on
+  stdout for an explicit caller to capture.
 
 ## Step 0 — platform and destination
 
@@ -85,7 +86,7 @@ still needed for `--local` (migrations, compose, `.env.example`).
 ./scripts/install.sh          # builds both binaries into ~/.local/bin, PATH handled
 insideout setup --hosted      # confirms the hosted path (agent form)
 # or: insideout setup         # interactive form on a terminal: sign-in + save
-insideout whoami              # "authentication required" before sign-in = finished install
+insideout whoami              # "not signed in" before sign-in = finished install
 ```
 
 Do not set `INSIDEOUT_API` on this path. Sign-in (password, emailed

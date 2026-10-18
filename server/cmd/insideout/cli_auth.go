@@ -4,7 +4,8 @@ package main
 // password (default), emailed 6-digit code, or magic link, plus register
 // and the password-reset pair. Prompts go to stderr; stdout stays
 // token-only for login/register (the `insideout login` contract), so
-// `INSIDEOUT_TOKEN="$(insideout login …)"` keeps working.
+// `INSIDEOUT_TOKEN="$(insideout login …)"` keeps working. A successful
+// login/register also saves the session (saveLogin).
 
 import (
 	"bufio"
@@ -38,9 +39,9 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 
 	switch cmd {
 	case "login":
-		return loginCommand(c, positional, *useCode, *useMagic)
+		return loginCommand(c, creds.Base, positional, *useCode, *useMagic)
 	case "register":
-		return registerCommand(c, positional, *invite)
+		return registerCommand(c, creds.Base, positional, *invite)
 	case "forgot-password":
 		email := argAt(positional, 0)
 		if email == "" {
@@ -78,7 +79,7 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 	return false, 0
 }
 
-func loginCommand(c *apiclient.Client, positional []string, useCode, useMagic bool) (bool, int) {
+func loginCommand(c *apiclient.Client, base string, positional []string, useCode, useMagic bool) (bool, int) {
 	email := argAt(positional, 0)
 	if email == "" {
 		fmt.Fprintln(os.Stderr, "usage: insideout login [--code|--magic] <email>  (secrets are read from stdin)")
@@ -131,11 +132,12 @@ func loginCommand(c *apiclient.Client, positional []string, useCode, useMagic bo
 		fmt.Fprintln(os.Stderr, err)
 		return true, 1
 	}
+	saveLogin(base, c)
 	fmt.Println(c.Token())
 	return true, 0
 }
 
-func registerCommand(c *apiclient.Client, positional []string, inviteCode string) (bool, int) {
+func registerCommand(c *apiclient.Client, base string, positional []string, inviteCode string) (bool, int) {
 	email := argAt(positional, 0)
 	if email == "" {
 		fmt.Fprintln(os.Stderr, "usage: insideout register [--invite code] <email> [display-name]  (password is read from stdin)")
@@ -158,8 +160,27 @@ func registerCommand(c *apiclient.Client, positional []string, inviteCode string
 		fmt.Fprintln(os.Stderr, err)
 		return true, 1
 	}
+	saveLogin(base, c)
 	fmt.Println(c.Token())
 	return true, 0
+}
+
+// saveLogin keeps the session a sign-in just returned as the one saved login
+// (replacing any other: a token belongs to the server that issued it), so the
+// next command is signed in without an export line; `insideout setup` saves
+// the same file. stdout stays the bare token for scripts, the path goes to
+// stderr. A save that fails is a warning, not a failed sign-in: the token is
+// still printed and good.
+func saveLogin(base string, c *apiclient.Client) {
+	path, err := clientconfig.DefaultPath()
+	if err == nil {
+		err = clientconfig.Save(path, clientconfig.Config{APIBase: base, Token: c.Token(), RefreshToken: c.RefreshToken()})
+	}
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "insideout: signed in, but could not save the login (%v); set INSIDEOUT_TOKEN to the printed token to use it\n", err)
+		return
+	}
+	fmt.Fprintf(os.Stderr, "insideout: signed in to %s; login saved to %s\n", base, path)
 }
 
 // stdin is shared by every prompt in one command run: a per-call

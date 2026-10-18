@@ -33,7 +33,7 @@ insideout setup                       # interactive (needs a terminal)
 insideout setup --hosted              # confirm the hosted path
 insideout setup --local --postgres bundled|own [--no-start]
 insideout setup --check [--llm]       # re-run the health probes now
-insideout whoami                      # authentication required until sign-in
+insideout whoami                      # "not signed in" until sign-in
 ```
 
 `./scripts/setup.sh` remains the pre-binary fallback (before
@@ -52,10 +52,15 @@ for common clients — the same snippet ports across Claude Code, Cursor,
 and anything speaking the standard shape.
 
 `login` prompts for the password on stderr; the token is the only
-stdout. Without `INSIDEOUT_TOKEN`, read verbs answer 401 with a hint.
+stdout. A successful `login` or `register` also saves the session
+(server, access token, refresh token) to the 0600 config file and
+prints its path on stderr, so the next verb is signed in; a saved
+session renews itself once when its access token expires. Without a
+saved session or `INSIDEOUT_TOKEN`, read verbs fail with `not signed in`
+and say how to sign in.
 
 Every way the web can sign in works here too (prompts on stderr, token
-on stdout):
+on stdout, session saved):
 
 ```bash
 insideout register you@example.com "Display Name"   # password prompt

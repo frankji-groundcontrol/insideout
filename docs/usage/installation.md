@@ -57,8 +57,13 @@ insideout login you@example.com   # or the plain verb; password on stdin
 insideout whoami
 ```
 
-`insideout whoami` with no token returns `authentication required`.
-That is a finished install, not a missing server.
+`insideout login` saves the same 0600 config file as the form (the
+server it signed in to, the access token, and the refresh token that
+renews it) and prints the file's path on stderr; stdout stays the bare
+access token, so `INSIDEOUT_TOKEN="$(insideout login you@example.com)"`
+still works. `insideout whoami` before any sign-in exits non-zero with
+`unauthorized: not signed in; run insideout login`. That is a finished
+install, not a missing server.
 
 Register MCP. The snippet omits the token until you have one; the
 `auth_*` tools can sign the process in afterwards:

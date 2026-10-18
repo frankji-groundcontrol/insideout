@@ -45,7 +45,7 @@ var cliVerbs = []cliVerb{
 	{groupSetup, "version", "print the build version (also --version)"},
 
 	{groupAccount, "register", "create an account (password on stdin; --invite when signup is invitation-only)"},
-	{groupAccount, "login", "sign in and print a token (--code or --magic for emailed sign-in)"},
+	{groupAccount, "login", "sign in, save the login and print the token (--code or --magic for emailed sign-in)"},
 	{groupAccount, "forgot-password", "email a password-reset link"},
 	{groupAccount, "reset-password", "finish a reset: paste the link, then the new password"},
 	{groupAccount, "whoami", "show the signed-in user"},

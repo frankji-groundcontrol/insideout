@@ -164,7 +164,7 @@ A CLI taste (the token lives in your environment, never in a transcript):
 
 ```bash
 insideout whoami                       # hosted API; no INSIDEOUT_API required
-insideout login you@example.com        # password on stdin, token on stdout
+insideout login you@example.com        # password on stdin; saves the login, token on stdout
 insideout workspaces                   # 工作区列表 / list workspaces
 insideout ideas <ws-id>                # 想法箱 / the inbox
 insideout prd update --section goals="Ship the MVP" <prd-id>

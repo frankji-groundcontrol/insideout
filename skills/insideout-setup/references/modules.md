@@ -211,6 +211,6 @@ the module view:
 | Database schema | `./scripts/dev.sh -C server go run ./cmd/insideout migrate` (bundled path runs it via `setup.sh`) | embedded SQL in `server/db/migrations/`, inside the `insideout` schema only |
 | MCP registration | `./scripts/mcp-config.sh` | standard `mcpServers` JSON to merge into the user's agent config |
 
-Verify: `insideout whoami` — `authentication required` is the
+Verify: `insideout whoami` — `not signed in` is the
 finished-install signal on the hosted path; on a local server,
 `curl -s http://127.0.0.1:8080/healthz` answers once the server runs.

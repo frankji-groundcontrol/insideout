@@ -24,7 +24,7 @@ installation record — is its own skill:
 ./scripts/install.sh          # binaries into ~/.local/bin; hosted API, no env vars
 insideout setup               # the front door: interactive remote/local, or flags —
                               #   --hosted | --local --postgres bundled|own [--no-start] | --check
-insideout whoami              # authentication required until you sign in
+insideout whoami              # "not signed in" until you sign in
 ```
 
 `insideout setup` signs in (password / emailed code / magic link,
