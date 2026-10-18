@@ -1,0 +1,54 @@
+[
+  {
+    "id": "8ecc1acc-84df-482f-bc1f-977bf1d71656",
+    "projectId": "a019eba9-cfcc-4948-81a5-39181c97f88b",
+    "parentId": "abd49bd7-325e-440b-bccf-b28d5bbf59d8",
+    "title": "明确验收标准",
+    "description": "写清楚怎样算完成",
+    "status": "pending",
+    "position": 0,
+    "createdAt": "2026-10-19T01:15:41+08:00",
+    "updatedAt": "2026-10-19T01:15:41+08:00",
+    "acceptance": "",
+    "validationReason": ""
+  },
+  {
+    "id": "04a92124-4aaa-4ee0-a956-491ed5d65083",
+    "projectId": "a019eba9-cfcc-4948-81a5-39181c97f88b",
+    "parentId": "abd49bd7-325e-440b-bccf-b28d5bbf59d8",
+    "title": "拆出第一步并实现",
+    "description": "最小可验证的一步",
+    "status": "pending",
+    "position": 1,
+    "createdAt": "2026-10-19T01:15:41+08:00",
+    "updatedAt": "2026-10-19T01:15:41+08:00",
+    "acceptance": "",
+    "validationReason": ""
+  },
+  {
+    "id": "937a598a-2006-4a45-a969-cf810e458646",
+    "projectId": "a019eba9-cfcc-4948-81a5-39181c97f88b",
+    "parentId": "abd49bd7-325e-440b-bccf-b28d5bbf59d8",
+    "title": "自测并修正",
+    "description": "跑一遍，修掉问题",
+    "status": "pending",
+    "position": 2,
+    "createdAt": "2026-10-19T01:15:41+08:00",
+    "updatedAt": "2026-10-19T01:15:41+08:00",
+    "acceptance": "",
+    "validationReason": ""
+  },
+  {
+    "id": "3db03d88-3120-4e80-9e7e-9f42294237c8",
+    "projectId": "a019eba9-cfcc-4948-81a5-39181c97f88b",
+    "parentId": "abd49bd7-325e-440b-bccf-b28d5bbf59d8",
+    "title": "标记完成并同步进展",
+    "description": "更新状态，记录进展",
+    "status": "pending",
+    "position": 3,
+    "createdAt": "2026-10-19T01:15:41+08:00",
+    "updatedAt": "2026-10-19T01:15:41+08:00",
+    "acceptance": "",
+    "validationReason": ""
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "children": [
+    {
+      "title": "明确验收标准",
+      "description": "写清楚怎样算完成"
+    },
+    {
+      "title": "拆出第一步并实现",
+      "description": "最小可验证的一步"
+    },
+    {
+      "title": "自测并修正",
+      "description": "跑一遍，修掉问题"
+    },
+    {
+      "title": "标记完成并同步进展",
+      "description": "更新状态，记录进展"
+    }
+  ]
+}
