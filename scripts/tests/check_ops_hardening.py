@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Pin the operator and first-run hardening of review-4 wave 1 (rv4-USER-06,
-rv4-REL-05, rv4-USER-09).
+rv4-REL-05, rv4-USER-09, rv4-COMP-07).
 
 Usage: python3 -I scripts/tests/check_ops_hardening.py
 
@@ -148,8 +148,42 @@ def bootstrap_closing_message_omits_setup_local(failures):
             fail(failures, f"scripts/bootstrap.sh: the closing message lost its `{needle}` line")
 
 
+def schema_holds_credential_hashes():
+    """True while a migration stores password, token or code hashes the dump would carry."""
+    return any(re.search(r"\b(password|token|code)_hash\b", path.read_text(encoding="utf-8"))
+               for path in (ROOT / "server/db/migrations").glob("*.sql"))
+
+
+def backup_dump_is_owner_only(failures):
+    """COMP-07: the dump carries password, refresh-token, emailed-token and
+    invitation-code hashes plus workspace join codes, and pg_dump creates its
+    file with the caller's umask (0644 under the usual 022). The script must
+    set umask 077 before the dump, re-assert chmod 600 after it, and the
+    runbook must say what the file holds."""
+    if not schema_holds_credential_hashes():
+        return  # nothing sensitive in the schema; the default umask is fine
+    code = "\n".join(line for line in read("scripts/backup-db.sh").splitlines()
+                     if not line.lstrip().startswith("#"))
+    dump = re.search(r"^\s*pg_dump\b", code, re.M)
+    if not dump:
+        print("no pg_dump call in scripts/backup-db.sh", file=sys.stderr)
+        sys.exit(2)
+    umask = re.search(r"^\s*umask\s+0*77\s*(?:#.*)?$", code, re.M)
+    if not umask or umask.start() > dump.start():
+        fail(failures, "scripts/backup-db.sh: no `umask 077` before the pg_dump call, so the dump is "
+                       "written with the shell's umask (mode 0644 under the usual 022)")
+    if not re.search(r'^\s*chmod\s+0?600\s+"?\$\{?file\}?"?\s*(?:#.*)?$', code[dump.start():], re.M):
+        fail(failures, 'scripts/backup-db.sh: no `chmod 600 "$file"` after the pg_dump call')
+    doc = read("docs/usage/backup-restore.md")
+    for needle, claim in ((r"password hashes", "holds password hashes"),
+                          (r"refresh-token hashes", "holds refresh-token hashes"),
+                          (r"\b0600\b", "is written with mode 0600")):
+        if not re.search(needle, doc, re.I):
+            fail(failures, f"docs/usage/backup-restore.md does not say the dump {claim}")
+
+
 CHECKS = [readme_prd_update_flags_precede_id, compose_grace_outlives_shutdown,
-          bootstrap_closing_message_omits_setup_local]
+          bootstrap_closing_message_omits_setup_local, backup_dump_is_owner_only]
 
 if __name__ == "__main__":
     failures = []
