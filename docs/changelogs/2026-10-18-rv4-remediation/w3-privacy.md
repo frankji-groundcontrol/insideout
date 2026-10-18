@@ -78,7 +78,7 @@ route nor a response time.
 |---|---|
 | Red `d39aff2`, `flutter test test/auth_door_privacy_link_test.dart` | `+0 -7`: the link is absent for login and register in en and zh (4), the tap test, the constant scan and the PRIVACY.md checks fail. Output kept in `/private/tmp/insideout-rv4/reports/w3-privacy-red-PUB-02.txt`. |
 | Green at `e225bed` and at HEAD, same command | `+7: All tests passed!` (`w3-privacy-green-PUB-02.txt`). The test file is byte-identical to the red commit. |
-| Chrome lane, `flutter test --platform chrome test/web/open_url_web_test.dart` | `+2`: an https address clicks an anchor with `target=_blank` and `noopener noreferrer`; `javascript:`, `data:`, `http:`, a path and the empty string are refused and nothing is clicked. |
+| Chrome lane, `flutter test --platform chrome test/web/open_url_web_test.dart` | `+2`: an https address clicks an anchor with `target=_blank` and `noopener noreferrer`; `javascript:`, `data:`, `http:`, a path and the empty string are refused and nothing is clicked. The whole CI lane, `flutter test --platform chrome test/web` (`ci.yml`, line 273), is `+8: All tests passed!`. |
 | Mutation: drop the `footer:` argument in `landing_page.dart` | `+2 -5` (the four link tests and the tap test go red; the constant scan and the PRIVACY.md checks stay green). Restored; the tree is clean. |
 | `flutter pub get --enforce-lockfile` | Ok; `client/pubspec.lock` and `pubspec.yaml` are untouched. |
 | `flutter analyze --no-fatal-infos` | 14 infos, the CI baseline; none in a touched file. |
@@ -87,7 +87,7 @@ route nor a response time.
 | PRIVACY.md address gate, `sh scripts/check-redaction.sh` | Clean; prints nothing. |
 | `sh scripts/check-docs-recorded.sh` | Prints nothing. |
 | Every `scripts/tests/check_*.py` | 9 scripts, 0 failed. They print their own `ok` summary lines; no failure output. |
-| Files over 350 lines among the changed `.go` and `.dart` | None (`auth_door.dart` is 215 lines). |
+| Files over 350 lines among the changed `.go` and `.dart` | None: the 8 changed files run from 4 to 285 lines (the largest is `landing_page.dart`; `auth_door.dart` is 216). |
 | Layout | A throwaway golden render of the door at 900 by 900, both prompts (the test font draws blocks for glyphs): the link sits centered at the bottom of the card below the switch line, no overflow. The scratch files were deleted and never committed. |
 
 ## What was not exercised
