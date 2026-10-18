@@ -10,15 +10,17 @@
 
 ## 这是什么？ / What is this?
 
-InsideOut 把一个想法一路带到可交付：**想法收集箱**随手记录念头 → 转化为 **PRD**（八个章节，可按受众导出）→ 长成 **路线图**（带截止日期的项目树）→ 由**人类提交（Commit）**定格为版本。绑定 GitHub 仓库后，提交、PR 和部署会作为**证据**自动挂到对应的路线图节点上——进展有据可查，而不是靠嘴说。协作是实时的：画布上能看到谁在线、光标在哪。
+InsideOut 把一个想法一路带到可交付：**想法收集箱**随手记录念头 → 转化为 **PRD**（八个章节，可按受众导出）→ 长成 **路线图**（带截止日期的项目树）→ 由**人类提交（Commit）**定格为版本。绑定 GitHub 仓库、在仓库根目录提交 `insideout.yaml` 匹配指引并安装 GitHub App（由其 webhook 投递推送）后，匹配到的提交、PR 和部署会作为**证据**挂到对应的路线图叶子节点上——进展有据可查，而不是靠嘴说。协作是实时的：画布上能看到谁在线、光标在哪。
 
 InsideOut walks an idea all the way to shipped: capture sparks in the
 **idea inbox** → convert them into a **PRD** (eight sections, exportable per
 audience) → grow a **roadmap** (a project tree with deadlines) → pin it as a
-version with a human-only **Commit**. Bind a GitHub repository and commits,
-PRs, and deployments attach themselves to roadmap nodes as **evidence** —
-progress you can verify, not claims you have to trust. Collaboration is
-live: presence and cursors on the canvas, and a time-first progress view.
+version with a human-only **Commit**. Bind a GitHub repository, commit its
+`insideout.yaml` matching guide and install the GitHub App (its webhook
+delivers the pushes), and the commits, PRs, and deployments that match attach
+to roadmap leaves as **evidence** — progress you can verify, not claims you
+have to trust. Collaboration is live: presence and cursors on the canvas, and
+a time-first progress view.
 
 三个使用面，同一套 `/api/v1` 契约：
 
