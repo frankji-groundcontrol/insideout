@@ -81,53 +81,8 @@ func planGuideEvidence(event string, ev *webhookEvent, repoName string) (guideEv
 		} else {
 			p.detail = "push to " + p.branch
 		}
-	} else if event == "deployment" {
-		// CC-01 (review 2): PRODUCT.md and the generated guide both promise
-		// "a deployment may show release" — map it into the same evidence
-		// pipeline with the release kind. GitHub fires `deployment` at
-		// creation; success/failure refinement belongs to a later
-		// deployment_status slice.
-		p.branch = strings.TrimPrefix(ev.Deployment.Ref, "refs/heads/")
-		p.kind = "release"
-		env := ev.Deployment.Environment
-		if env == "" {
-			env = "unknown environment"
-		}
-		if ev.Deployment.SHA != "" {
-			sha := ev.Deployment.SHA
-			if len(sha) > 7 {
-				sha = sha[:7]
-			}
-			p.detail = fmt.Sprintf("deploy %s @ %s", env, sha)
-			p.source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, ev.Deployment.SHA)
-		} else {
-			p.detail = fmt.Sprintf("deploy %s", env)
-		}
-	} else if event == "deployment_status" {
-		// FEAT-07 (the deferred CC-01 slice): GitHub reports a deployment's
-		// outcome only in this later delivery. A failure appends its own
-		// activity row — PRODUCT.md: "failed deployments append evidence;
-		// they do not erase history" — so the release row from creation is
-		// never rewritten, and (node, kind, detail) dedupe makes GitHub's
-		// redeliveries free. Any other state refines nothing.
-		if state := ev.DeploymentStatus.State; state != "failure" && state != "error" {
-			return guideEvidence{}, false
-		}
-		p.branch = strings.TrimPrefix(ev.Deployment.Ref, "refs/heads/")
-		env := ev.Deployment.Environment
-		if env == "" {
-			env = "unknown environment"
-		}
-		if ev.Deployment.SHA != "" {
-			sha := ev.Deployment.SHA
-			if len(sha) > 7 {
-				sha = sha[:7]
-			}
-			p.detail = fmt.Sprintf("deploy failed: %s @ %s", env, sha)
-			p.source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, ev.Deployment.SHA)
-		} else {
-			p.detail = fmt.Sprintf("deploy failed: %s", env)
-		}
+	} else if event == "deployment" || event == "deployment_status" {
+		return planDeployment(event, ev, repoName)
 	} else { // pull_request
 		p.branch = ev.PullRequest.Head.Ref
 		for _, l := range ev.PullRequest.Labels {
@@ -141,6 +96,42 @@ func planGuideEvidence(event string, ev *webhookEvent, repoName string) (guideEv
 		}
 		p.detail = fmt.Sprintf("PR %s", firstLine(ev.PullRequest.Title))
 		p.source = ev.PullRequest.HTMLURL
+	}
+	return p, true
+}
+
+// planDeployment maps a deployment or deployment_status delivery (rv4-FEAT-07).
+// GitHub fires `deployment` when a deployment is created, before anyone knows
+// whether it worked, so creation is plain activity. PRODUCT.md promises a
+// deployment "may show release", so `release` is recorded only when a
+// deployment_status reports success. A failure appends its own activity row
+// ("failed deployments append evidence; they do not erase history"), and the
+// (node, kind, detail) idempotency key makes GitHub's redeliveries free. Any
+// other state (queued, pending, in_progress, inactive) refines nothing.
+func planDeployment(event string, ev *webhookEvent, repoName string) (guideEvidence, bool) {
+	what, kind := "deploy started", "activity"
+	if event == "deployment_status" {
+		switch ev.DeploymentStatus.State {
+		case "success":
+			what, kind = "deploy succeeded", "release"
+		case "failure", "error":
+			what = "deploy failed"
+		default:
+			return guideEvidence{}, false
+		}
+	}
+	env := ev.Deployment.Environment
+	if env == "" {
+		env = "unknown environment"
+	}
+	p := guideEvidence{kind: kind, branch: strings.TrimPrefix(ev.Deployment.Ref, "refs/heads/"), detail: what + ": " + env}
+	if sha := ev.Deployment.SHA; sha != "" {
+		short := sha
+		if len(short) > 7 {
+			short = short[:7]
+		}
+		p.detail += " @ " + short
+		p.source = fmt.Sprintf("https://github.com/%s/commit/%s", repoName, sha)
 	}
 	return p, true
 }

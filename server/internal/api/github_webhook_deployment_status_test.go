@@ -15,8 +15,9 @@ import (
 
 // FEAT-07: PRODUCT.md promises "Reverts and failed deployments append
 // evidence; they do not erase history", but GitHub reports a deployment's
-// outcome in a deployment_status delivery fired after the creation event —
-// which the webhook drops today.
+// outcome in a deployment_status delivery fired after the creation event.
+// The creation and success mappings live in github_webhook_release_test.go
+// (rv4-FEAT-07); this file keeps the failure mapping and the routing.
 
 const deploymentStatusPayload = `{
   "action": "created",
@@ -35,8 +36,8 @@ func mustEvent(t *testing.T, payload string) *webhookEvent {
 }
 
 // A failed deployment appends its own activity row ("deploy failed: …"),
-// keyed by the (node, kind, detail) idempotency index — the release row
-// from the creation event is never rewritten.
+// keyed by the (node, kind, detail) idempotency index — nothing already
+// recorded is rewritten.
 func TestPlanGuideEvidenceDeploymentStatusFailure(t *testing.T) {
 	p, ok := planGuideEvidence("deployment_status", mustEvent(t, deploymentStatusPayload), "own/repo")
 	if !ok {
@@ -53,30 +54,6 @@ func TestPlanGuideEvidenceDeploymentStatusFailure(t *testing.T) {
 	}
 	if p.branch != "main" {
 		t.Errorf("branch = %q, want main (the deployment's ref)", p.branch)
-	}
-}
-
-// Success (and in-flight) statuses refine nothing: the release row the
-// creation event appended already stands, so no second row may appear.
-func TestPlanGuideEvidenceDeploymentStatusNonFailureAppendsNothing(t *testing.T) {
-	for _, state := range []string{"success", "queued", "in_progress"} {
-		payload := `{"deployment_status":{"state":"` + state + `"},"deployment":{"ref":"refs/heads/main","environment":"production","sha":"abc1234567"}}`
-		if _, ok := planGuideEvidence("deployment_status", mustEvent(t, payload), "own/repo"); ok {
-			t.Errorf("state %q: ok = true, want no evidence for a non-failure status", state)
-		}
-	}
-}
-
-// The creation event keeps mapping to the release row exactly as before
-// (CC-01) — guards the extraction that made the status mapping testable.
-func TestPlanGuideEvidenceDeploymentCreationStillRelease(t *testing.T) {
-	payload := `{"deployment":{"ref":"refs/heads/main","environment":"production","sha":"abc1234567"}}`
-	p, ok := planGuideEvidence("deployment", mustEvent(t, payload), "own/repo")
-	if !ok {
-		t.Fatal("ok = false, want the creation event to append evidence")
-	}
-	if p.kind != "release" || p.detail != "deploy production @ abc1234" {
-		t.Errorf("creation event: kind=%q detail=%q, want release / deploy production @ abc1234", p.kind, p.detail)
 	}
 }
 
