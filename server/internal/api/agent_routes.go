@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/agentcontext"
+	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
@@ -19,6 +20,7 @@ func (s *Server) registerAgentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/agent/checkpoint", s.requireAuth(s.handleAgentCheckpoint))
 	mux.HandleFunc("POST /api/v1/agent/propose", s.requireAuth(s.handleAgentPropose))
 	mux.HandleFunc("POST /api/v1/agent/proposals/{uid}/decision", s.requireAuth(s.handleProposalDecision))
+	mux.HandleFunc("POST /api/v1/agent/token", s.requireAuth(s.handleAgentToken))
 }
 
 func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
@@ -213,6 +215,14 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 // handleProposalDecision is the human accept/reject of an agent
 // proposal (the proposal acceptance workflow). Owner or admin only.
 func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) {
+	// An agent files its proposals under the user's own id, so a decision under
+	// that id would be the author deciding its own proposal. requireAuth already
+	// refuses an agent token here (agentRoutePolicy); this keeps the rule beside
+	// the decision should the table ever be edited the wrong way (rv4-FEAT-01).
+	if ScopeOf(r.Context()) == auth.ScopeAgent {
+		writeAgentScopeDenied(w)
+		return
+	}
 	userID, _ := UserID(r.Context())
 	uid, ok := pathUUID(w, r, "uid")
 	if !ok {

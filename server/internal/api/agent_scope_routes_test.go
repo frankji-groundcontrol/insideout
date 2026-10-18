@@ -24,7 +24,7 @@ import (
 // through then fails inside (a recovered 500); only the scope verdict matters.
 //
 // The two lists below are the classification a reviewer signs off on. They are
-// deliberately spelled out here as well as in routePolicy (agent_scope.go): a
+// deliberately spelled out here as well as in agentRoutePolicy (agent_scope.go): a
 // route added to the package without a decision in both places fails this
 // test, and a decision that disagrees with the table fails the sweep.
 
@@ -179,7 +179,7 @@ func TestEveryRouteHasAnAgentScopeDecision(t *testing.T) {
 		case inAllowed && inHuman:
 			t.Errorf("%q is in both lists of agent_scope_routes_test.go", pattern)
 		case !inAllowed && !inHuman:
-			t.Errorf("%q has no agent-scope decision: add it to agentAllowedRoutes or humanOnlyRoutes here, and to routePolicy in agent_scope.go (an agent token is refused on it until you do)", pattern)
+			t.Errorf("%q has no agent-scope decision: add it to agentAllowedRoutes or humanOnlyRoutes here, and to agentRoutePolicy in agent_scope.go (an agent token is refused on it until you do)", pattern)
 		}
 	}
 	for _, listed := range slices.Concat(agentAllowedRoutes, humanOnlyRoutes) {
@@ -246,5 +246,22 @@ func TestAnUnknownScopeIsNotASession(t *testing.T) {
 		if status != http.StatusUnauthorized {
 			t.Errorf("scope %q on GET /me: status %d body %s, want 401", scope, status, body)
 		}
+	}
+}
+
+// The decision handler turns an agent-scope request away by itself, whatever
+// the route table says: an agent never decides, and that rule sits beside the
+// decision as well as in the table.
+func TestTheDecisionHandlerRefusesAnAgentScopeOnItsOwn(t *testing.T) {
+	r := httptest.NewRequest(http.MethodPost, "/api/v1/agent/proposals/x/decision", strings.NewReader(`{"decision":"accepted","apply":true}`))
+	r.SetPathValue("uid", uuid.NewString())
+	ctx := newUserHolderContext(r.Context())
+	setUserID(ctx, uuid.New())
+	setScope(ctx, auth.ScopeAgent)
+
+	rec := httptest.NewRecorder()
+	scopeServer().handleProposalDecision(rec, r.WithContext(ctx)) // the store is nil: reaching it would panic
+	if !scopeRefused(rec.Code, rec.Body.String()) {
+		t.Errorf("agent scope on the decision handler: status %d body %s, want 403 agent_scope_denied", rec.Code, rec.Body)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 )
 
@@ -85,6 +86,9 @@ func (s *Server) withLogging(next http.Handler) http.Handler {
 		if userID, ok := UserID(r.Context()); ok {
 			attrs = append(attrs, "user_id", userID.String())
 		}
+		if ScopeOf(r.Context()) == auth.ScopeAgent {
+			attrs = append(attrs, "scope", string(auth.ScopeAgent))
+		}
 		s.log.Info("request", attrs...)
 	})
 }
@@ -154,7 +158,11 @@ func (s *Server) withDevCORS(next http.Handler) http.Handler {
 }
 
 // requireAuth resolves the access token (cookie or bearer), verifies it,
-// and injects the user id into the request context — or writes 401.
+// and injects the user id and the token's scope into the request context — or
+// writes 401. An agent-scope token is then held to agentRoutePolicy: a route
+// that is not marked agent-allowed answers 403 agent_scope_denied (rv4-FEAT-01).
+// This is the one place an access token is verified, so the rule covers every
+// authenticated route, requireAdmin's included.
 func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := bearerOrCookie(r)
@@ -162,12 +170,17 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			httpx.WriteError(w, http.StatusUnauthorized, "authentication required", "", nil)
 			return
 		}
-		userID, err := s.tokens.VerifyAccessToken(token)
+		userID, scope, err := s.tokens.VerifyToken(token)
 		if err != nil {
 			httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired session", "", nil)
 			return
 		}
 		setUserID(r.Context(), userID)
+		setScope(r.Context(), scope)
+		if scope == auth.ScopeAgent && !agentMayCall(r) {
+			writeAgentScopeDenied(w)
+			return
+		}
 		next.ServeHTTP(w, r)
 	}
 }

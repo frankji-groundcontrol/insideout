@@ -35,7 +35,9 @@ func TestAnAgentTokenMaySubmitAPrdForReviewAndNothingMore(t *testing.T) {
 		{"key in another case", `{"STATUS":"approved"}`, false},
 		{"approved after reviewing", `{"status":"reviewing","status":"approved"}`, false},
 		{"reviewing after approved", `{"status":"approved","status":"reviewing"}`, true}, // the handler's decoder also keeps the last
-		{"large body", `{"status":"reviewing","note":"` + strings.Repeat("x", 16<<10) + `"}`, false},
+		{"unknown field", `{"status":"reviewing","note":"x"}`, false},                    // the handler's decoder rejects it
+		{"a second value", `{"status":"reviewing"} {"status":"approved"}`, false},
+		{"padded past the body cap", `{"status":"reviewing"}` + strings.Repeat(" ", 2<<20), false}, // cut mid-read by withMaxBody
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

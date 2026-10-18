@@ -5,6 +5,7 @@ package api
 import (
 	"context"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -23,8 +24,9 @@ const userHolderKey contextKey = iota
 // handler nested deeper in the chain unless they share mutable state like
 // this holder.
 type userHolder struct {
-	id uuid.UUID
-	ok bool
+	id    uuid.UUID
+	ok    bool
+	scope auth.Scope
 }
 
 func newUserHolderContext(ctx context.Context) context.Context {
@@ -36,6 +38,22 @@ func setUserID(ctx context.Context, id uuid.UUID) {
 		h.id = id
 		h.ok = true
 	}
+}
+
+// setScope records the verified token's scope next to the user id.
+func setScope(ctx context.Context, scope auth.Scope) {
+	if h, ok := ctx.Value(userHolderKey).(*userHolder); ok {
+		h.scope = scope
+	}
+}
+
+// ScopeOf returns the scope of the token requireAuth verified: auth.ScopeFull
+// for a full session and for a request that never authenticated.
+func ScopeOf(ctx context.Context) auth.Scope {
+	if h, ok := ctx.Value(userHolderKey).(*userHolder); ok {
+		return h.scope
+	}
+	return auth.ScopeFull
 }
 
 // UserID returns the authenticated user id resolved by requireAuth, and

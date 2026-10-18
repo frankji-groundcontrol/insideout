@@ -151,3 +151,33 @@ func TestEveryRouteRequiresAuthUnlessPublic(t *testing.T) {
 		t.Fatalf("scanned only %d routes that need a session; the registration scan is broken or the routes moved out of this package", checked)
 	}
 }
+
+// rv4-FEAT-01: the agent-scope twin of the test above. Every authenticated
+// route needs an explicit entry in agentRoutePolicy (agent_scope.go), because
+// the zero value means "human only" and a missing entry would read the same as
+// a deliberate one. A route added without a decision, an entry whose route is
+// gone, and a policy that disagrees with the signed-off lists all fail here.
+func TestAgentRoutePolicyCoversEveryRoute(t *testing.T) {
+	registered := map[string]bool{}
+	for _, pattern := range registeredRoutes(t) {
+		registered[pattern] = true
+		_, path, _ := strings.Cut(pattern, " ")
+		if strings.HasPrefix(path, publicPrefix) || slices.Contains(publicRoutes, pattern) {
+			continue
+		}
+		if _, ok := agentRoutePolicy[pattern]; !ok {
+			t.Errorf("%q has no entry in agentRoutePolicy (agent_scope.go): decide whether an agent token may call it", pattern)
+		}
+	}
+	for pattern, access := range agentRoutePolicy {
+		if !registered[pattern] {
+			t.Errorf("agentRoutePolicy lists %q but no such route is registered; drop the stale entry", pattern)
+		}
+		if open, signedOff := access != humanOnly, slices.Contains(agentAllowedRoutes, pattern); open != signedOff {
+			t.Errorf("agentRoutePolicy opens %q = %v but agentAllowedRoutes (agent_scope_routes_test.go) says %v; change both only on purpose", pattern, open, signedOff)
+		}
+	}
+	if len(agentRoutePolicy) < 70 {
+		t.Fatalf("agentRoutePolicy has %d entries; expected one per authenticated route", len(agentRoutePolicy))
+	}
+}
