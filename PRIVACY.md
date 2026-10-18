@@ -12,8 +12,9 @@ services below are the ones you configure, and you are the contact.
 
 ## What is stored
 
-Everything is kept in one PostgreSQL schema (`insideout`) behind row-level
-security. The operator runs the database and can technically read all of it.
+Everything is kept in one PostgreSQL schema (`insideout`); row-level security
+limits which signed-in user can read which rows. The operator runs the
+database and can read all of it.
 
 | Data | What exactly |
 | --- | --- |
@@ -26,11 +27,11 @@ security. The operator runs the database and can technically read all of it.
 
 Held only in server memory, never in the database: while you have a project
 open, your display name and pointer position are visible to the other members
-viewing it, and are dropped when you leave; and sign-in throttling keeps your
-IP address and the e-mail address you typed for the length of the throttle
-window. The web server (nginx) and the hosting platform keep their own
-standard access logs, which include IP addresses; this repository sets no
-retention for them.
+viewing it, and are dropped when you leave or your tab goes quiet; and sign-in
+throttling keeps your IP address and the e-mail address you typed for the
+length of the throttle window. The web server (nginx) and the hosting platform
+keep their own standard access logs, which include IP addresses; this
+repository sets no retention for them.
 
 ## Who can see it inside the service
 
@@ -60,19 +61,22 @@ configured that service. The code can reach these:
 The variables are described in [docs/usage/environment.md](docs/usage/environment.md).
 The client and the server contain no analytics or advertising code. The
 server sets two HttpOnly cookies, `insideout_access` and `insideout_refresh`,
-only to keep you signed in; the web client also keeps its sign-in tokens and
-your language and theme choice in the browser's local storage.
+only to keep you signed in. The client also keeps its sign-in tokens and your
+language and theme choice on your device: in the browser's local storage on
+the web, in the system's secure storage in a native build.
 
 ## Retention
 
 Today, as built:
 
-- **Your account and everything you create** are kept until you delete the
-  item. There is no automatic purge and no expiry for accounts, ideas,
-  projects, PRDs or roadmaps.
+- **Your account** is kept until the operator deletes it by hand. Nothing
+  expires it and no route deletes it.
+- **What you create** (ideas, projects, PRDs, roadmaps, project updates) is
+  kept until the item or its workspace is deleted. Dropping an idea only marks
+  it dropped; its text stays.
 - **Coach conversations** (messages and summaries) have no automatic purge and
-  no retention window. They go when the PRD or the workspace they belong to is
-  deleted.
+  no retention window. They go only when their workspace is deleted; no route
+  deletes a single conversation or PRD.
 - **Run records** (your prompt and the reply) and **usage telemetry** are
   deleted 30 days after they were created, by a routine in the server that
   runs every five minutes.
@@ -83,10 +87,10 @@ Today, as built:
 
 ## Deleting your data
 
-You can edit your profile, delete your ideas, projects and project updates,
-leave a workspace, and delete a workspace you created, which deletes
-everything in it, conversations included. A single PRD can be exported as
-Markdown from its export page.
+You can edit your profile, delete the project updates you wrote, drop your
+ideas, leave a workspace, and delete a workspace you created, which deletes
+everything in it: its ideas, projects, PRDs, coach conversations and run
+records. A single PRD can be exported as Markdown from its export page.
 
 There is no self-service account deletion and no export of a whole account.
 Ask at the contact below; this notice promises neither a route nor a response
