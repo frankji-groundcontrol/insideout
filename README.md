@@ -49,6 +49,40 @@ Open your deployment's URL (signup is **invitation-only** by default — see
 Quick start below). For self-hosting, see
 [docs/usage/deployment.md](docs/usage/deployment.md).
 
+托管实例的地址是 `./scripts/default-api.sh` 所打印 API 基址去掉 `/api/v1` 的部分。没有邀请码？在本仓库开一个标题为 “Invite request” 的 issue（不要贴邮箱），或像 [SECURITY.md](SECURITY.md) 那样通过 GitHub 联系仓库所有者。
+
+The hosted instance is the host in the API base `./scripts/default-api.sh`
+prints (without `/api/v1`). No invite code? Open an issue titled "Invite
+request" on this repository (do not paste an email address into it), or reach
+the repository owner through GitHub, the contact [SECURITY.md](SECURITY.md)
+lists.
+
+**无账号试用 / Try it without an account.** 在本仓库检出里运行 `insideout setup --local --postgres bundled`，用 Docker 在本机起一套自己的服务（需要检出和 Docker，只装预编译二进制不够）。
+
+In a checkout of this repository, run `insideout setup --local --postgres
+bundled` for a server of your own on this machine (it needs Docker and the
+checkout; the prebuilt binary alone is not enough).
+
+### CLI 与 MCP（预编译二进制 / prebuilt binaries）
+
+`v0.1.0`（2026-10-11）发布了四个目标平台的 tarball、校验和与安装
+脚本；仓库已于同日转为公开，下面这条命令已验证可用（bootstrap、
+tarball 与校验和均以匿名请求 200 通过）。
+
+`v0.1.0` (2026-10-11) publishes tarballs, checksums, and the installer
+for all four targets; the repository went public the same day, and the
+one-liner below is verified working (bootstrap, tarball, and checksum
+all answered 200 anonymously).
+
+仅支持 macOS 与 Linux（x86_64 / arm64）；不支持 Windows（网页端在任何浏览器都能用）。
+
+macOS and Linux only (x86_64 and arm64). Windows is not supported (the web app
+works in any browser).
+
+```bash
+curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
+```
+
 ### CLI 与 MCP（从源码构建 / from source）
 
 在一份仓库检出里执行（需要 Go 1.26+）：
@@ -72,6 +106,8 @@ PostgreSQL, is `./scripts/setup.sh`. The full walk-through is
 [docs/usage/installation.md](docs/usage/installation.md).
 Manual fallback without the script: `cd server && go build -o
 /usr/local/bin/insideout ./cmd/insideout` (same for `insideout-mcp`).
+
+### 装好之后：向导与 MCP / After installing: the wizard and MCP
 
 装好后，一条命令就是安装向导：交互式表单选择远程（托管/自建，密码、邮箱验证码或
 magic link 登录，密钥隐藏输入）或本地（PostgreSQL 引导配置、迁移、健康探测），
@@ -107,21 +143,6 @@ and token of the saved `insideout login`. Claude Code can also use
 
 ```json
 { "mcpServers": { "insideout": { "command": "insideout-mcp" } } }
-```
-
-### CLI 与 MCP（预编译二进制 / prebuilt binaries）
-
-`v0.1.0`（2026-10-11）发布了四个目标平台的 tarball、校验和与安装
-脚本；仓库已于同日转为公开，下面这条命令已验证可用（bootstrap、
-tarball 与校验和均以匿名请求 200 通过）。
-
-`v0.1.0` (2026-10-11) publishes tarballs, checksums, and the installer
-for all four targets; the repository went public the same day, and the
-one-liner below is verified working (bootstrap, tarball, and checksum
-all answered 200 anonymously).
-
-```bash
-curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
 ```
 
 ### 本地开发 / Local development
