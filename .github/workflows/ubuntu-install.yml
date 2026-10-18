@@ -55,12 +55,12 @@ jobs:
 
       # A clean PATH, so a Go already on the runner cannot satisfy the verify
       # step: it must be the tarball the skill installs.
-      - name: Module 3, Go 1.25+ (the skill's Ubuntu block)
+      - name: Module 3, Go 1.26+ (the skill's Ubuntu block)
         run: |
           blocks=$(python3 -I scripts/tests/skill_blocks.py 3)
           env -i HOME="$HOME" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             bash -euo pipefail -c "$blocks
-          go version | tee /dev/stderr | grep -E 'go1\.(2[5-9]|[3-9][0-9])'"
+          go version | tee /dev/stderr | grep -E 'go1\.(2[6-9]|[3-9][0-9])'"
           echo /usr/local/go/bin >> "$GITHUB_PATH"
 
       - name: Module 4, the Docker packages the skill names exist on 24.04
