@@ -175,9 +175,14 @@ validates without printing values.
 ## Re-verify any time
 
 ```bash
-insideout setup --check        # API (401 = pass), database (pgx), GitHub token, LLM key shape
+insideout setup --check        # API, database (pgx), GitHub token, LLM key shape
 insideout setup --check --llm  # legacy openai compatibility probe; current schemas need a coach turn
 ```
+
+The API line asks as the user who is signed in (the saved login, which
+renews itself like any verb, or `INSIDEOUT_TOKEN`): `signed in` passes, and
+an expired or revoked login fails the check with the fix (`insideout login`).
+Signed out, the probe is anonymous and a 401 is the pass.
 
 Unreachable targets are reported as `skip` with a reason (offline-safe);
 configured targets that answer wrongly fail the check.

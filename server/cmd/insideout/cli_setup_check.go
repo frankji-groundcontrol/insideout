@@ -1,9 +1,12 @@
 package main
 
 // `insideout setup --check` (slice 3): re-run the health probes
-// against the CURRENT configuration — API base + token from
-// clientconfig (env > config file > hosted default), the database
-// and GitHub/LLM keys from the repo .env when a checkout is present.
+// against the CURRENT configuration — API base + credential from
+// clientconfig.Resolve, the database and GitHub/LLM keys from the
+// repo .env when a checkout is present. With a credential (the saved
+// login or INSIDEOUT_TOKEN) the API is asked as that user, renewing
+// an expired saved login like every verb; with none it is the
+// anonymous probe, where a 401 is the pass.
 // Offline-safe: a probe whose target is unreachable reports SKIP
 // with a message instead of failing the run; a configured target
 // that answers wrongly (a rejected token, a 5xx) fails it.
@@ -13,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -61,6 +65,9 @@ func checkAPI(ctx context.Context) checkOutcome {
 		return checkOutcome{"api", "fail", err.Error()}
 	}
 	base := creds.Base
+	if creds.Token != "" {
+		return checkSignedIn(creds)
+	}
 	res, err := probe.APIProbe(ctx, nil, base)
 	switch {
 	case err == nil && res.AuthRequired:
@@ -69,6 +76,23 @@ func checkAPI(ctx context.Context) checkOutcome {
 		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable and already authenticated", redactBase(base))}
 	case errors.Is(err, probe.ErrUnreachable):
 		return checkOutcome{"api", "skip", fmt.Sprintf("%s unreachable (offline?) — not failed", redactBase(base))}
+	default:
+		return checkOutcome{"api", "fail", err.Error()}
+	}
+}
+
+// checkSignedIn asks the API as the user who is signed in: the only answer
+// that tells a working sign-in from an expired or revoked one. The error of a
+// rejected login already says what to do about it.
+func checkSignedIn(creds clientconfig.Creds) checkOutcome {
+	base := redactBase(creds.Base)
+	_, err := creds.Client().Whoami()
+	var netErr *url.Error
+	switch {
+	case err == nil:
+		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable, signed in", base)}
+	case errors.As(err, &netErr):
+		return checkOutcome{"api", "skip", fmt.Sprintf("%s unreachable (offline?) — not failed", base)}
 	default:
 		return checkOutcome{"api", "fail", err.Error()}
 	}
