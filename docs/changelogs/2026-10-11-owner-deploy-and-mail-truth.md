@@ -127,7 +127,7 @@ Delivery facts learned: the verified sender domain
 (`INSIDEOUT_MAIL_FROM`) delivers to any address; the Resend account's own
 address delivers; the first rehearsal address bounces (provider-side), and
 a suppressed send is visible in the provider's events. The flow account is
-`gapclosure@scihill.com` (a member on the owner's domain; its password is
+`<owner-email>` (a member on the owner's domain; its password is
 not recorded anywhere); the first rehearsal account was demoted back to
 member after its admin leg — sole-admin posture holds.
 
@@ -184,5 +184,5 @@ and every mailed flow run live; the sentence below predates that close.*
 
 Nothing new to apply — the deploy is live. The one open step is the Resend
 re-key in [HANDOFF](../HANDOFF.md); the rehearsal account
-(`gapclosure261011`) stays as a plain member with its workspace, and its
+(`<rehearsal-account>`) stays as a plain member with its workspace, and its
 password is not recorded anywhere.
