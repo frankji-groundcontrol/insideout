@@ -149,10 +149,11 @@ func (c *Client) SyncGithub(projectID string) (json.RawMessage, error) {
 // Guide returns the scaffolded insideout.yaml matching guide
 // (GET /projects/{id}/guide, text/yaml) for the user to commit.
 func (c *Client) Guide(projectID string) ([]byte, error) {
-	req, err := c.newRequest(http.MethodGet, apiPath("projects", projectID, "guide"), nil)
+	req, cancel, err := c.newRequest(http.MethodGet, apiPath("projects", projectID, "guide"), nil)
 	if err != nil {
 		return nil, err
 	}
+	defer cancel()
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}

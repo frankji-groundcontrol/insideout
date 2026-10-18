@@ -13,7 +13,6 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"time"
 )
 
 // A Client serves one caller at a time.
@@ -28,7 +27,9 @@ type Client struct {
 
 func New(base string) *Client {
 	c := &Client{base: strings.TrimRight(base, "/")}
-	c.hc = &http.Client{Timeout: 20 * time.Second, Transport: renewTransport{c}}
+	// No Timeout here: every request carries the deadline of its route (see
+	// deadlineFor), which a client-wide number can not do.
+	c.hc = &http.Client{Transport: renewTransport{c}}
 	return c
 }
 
@@ -47,14 +48,18 @@ func (c *Client) Context() context.Context {
 	return c.ctx
 }
 
-// newRequest builds a request for path on the client's context. Every request
-// the client makes starts here.
-func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequestWithContext(c.Context(), method, c.base+path, body)
+// newRequest builds a request for path on the client's context, bounded by the
+// deadline its route needs (deadlineFor). Every request the client makes starts
+// here. The caller defers cancel once it has read the response body, so the
+// deadline covers the body too and its timer is released.
+func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request, context.CancelFunc, error) {
+	ctx, cancel := context.WithTimeout(c.Context(), deadlineFor(method, path))
+	req, err := http.NewRequestWithContext(ctx, method, c.base+path, body)
 	if err != nil {
-		return nil, fmt.Errorf("apiclient: build request: %w", err)
+		cancel()
+		return nil, nil, fmt.Errorf("apiclient: build request: %w", err)
 	}
-	return req, nil
+	return req, cancel, nil
 }
 
 // SetToken installs a previously obtained access token (INSIDEOUT_TOKEN).
@@ -113,10 +118,11 @@ func (c *Client) do(method, path string, body any, out any) error {
 		}
 		reader = bytes.NewReader(encoded)
 	}
-	req, err := c.newRequest(method, path, reader)
+	req, cancel, err := c.newRequest(method, path, reader)
 	if err != nil {
 		return err
 	}
+	defer cancel()
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -157,10 +163,11 @@ func errSuffix(msg string) string {
 // getBytes GETs a path whose answer is not JSON (export markdown/HTML)
 // and returns the body verbatim.
 func (c *Client) getBytes(path string) ([]byte, error) {
-	req, err := c.newRequest(http.MethodGet, path, nil)
+	req, cancel, err := c.newRequest(http.MethodGet, path, nil)
 	if err != nil {
 		return nil, err
 	}
+	defer cancel()
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)
 	}
