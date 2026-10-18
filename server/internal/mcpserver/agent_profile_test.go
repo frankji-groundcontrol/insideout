@@ -236,3 +236,40 @@ func TestSigningInWithTheAuthToolsWithdrawsTheHumanOnlyTools(t *testing.T) {
 		"POST /agent/token Bearer <human>", "GET /me Bearer <agent a1>",
 	})
 }
+
+// The auth tools open, close and recover the login, so they run on the login
+// itself: a server that cannot trade agent tokens must not stop a process from
+// signing in again.
+func TestAuthToolsRunOnTheLoginNotOnAnAgentToken(t *testing.T) {
+	pinConfigHome(t)
+	t.Setenv("INSIDEOUT_TOKEN", humanJWT())
+	api, seen := routedAPI(t, nil)
+
+	if r := callTool(t, Build(api.URL), 1, "auth_login_code_request", `{"email":"a@example.com"}`); r.Result.IsError {
+		t.Fatalf("auth_login_code_request: %+v", r)
+	}
+
+	wantSeen(t, seen(), []string{"POST /auth/login-code "}) // no trade, and no bearer on a public route
+}
+
+// Signing out drops the token traded for the login with it: the next call
+// trades again instead of riding a token the sign-out was meant to end.
+func TestSigningOutForgetsTheAgentToken(t *testing.T) {
+	pinConfigHome(t)
+	t.Cleanup(func() { setSessionToken("") })
+	human := humanJWT()
+	t.Setenv("INSIDEOUT_TOKEN", human)
+	first := agentGrant("first", time.Now(), 15*time.Minute)
+	second := agentGrant("second", time.Now(), 15*time.Minute)
+	api, seen := routedAPI(t, mintsAs(first, second))
+	s := Build(api.URL)
+
+	callTool(t, s, 1, "whoami", `{}`)
+	callTool(t, s, 2, "auth_logout", `{}`)
+	callTool(t, s, 3, "whoami", `{}`)
+
+	wantSeen(t, seen(human, "<human>", first.token, "<first>", second.token, "<second>"), []string{
+		"POST /agent/token Bearer <human>", "GET /me Bearer <first>",
+		"POST /agent/token Bearer <human>", "GET /me Bearer <second>",
+	})
+}

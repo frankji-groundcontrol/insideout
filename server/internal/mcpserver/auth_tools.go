@@ -30,6 +30,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 	// signedIn confirms the freshly stored session via /me and reports the
 	// user — proof the login worked without echoing the token.
 	signedIn := func() (string, error) {
+		applyAgentProfile(s, api) // a process holding a login does not offer the human-only tools
 		me, err := client(api).Whoami()
 		if err != nil {
 			return "", err
@@ -45,7 +46,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool := func(name, desc string, opts []mcp.ToolOption, call func(c *apiclient.Client, req mcp.CallToolRequest) (string, error)) {
 		all := append([]mcp.ToolOption{mcp.WithDescription(desc)}, opts...)
 		s.AddTool(mcp.NewTool(name, all...), func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			out, err := call(client(api), req)
+			// The user's own client: these tools open, close and recover the
+			// login, so none of them runs on an agent-scope token.
+			out, err := call(humanClient(api), req)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

@@ -25,22 +25,49 @@ import (
 // The base is settled here, once: the process's tokens belong to it, so a
 // later change to the saved login (another terminal's `insideout login --api`)
 // cannot send this process's session to another server (review-4 SEC-05).
+//
+// A process that holds a login (a JWT) does not hold it for the tools: they run
+// on an agent-scope token traded for it, and the tools a human must run are not
+// offered (applyAgentProfile, docs/architecture/agent-token-scope.md).
 func Build(api string) *server.MCPServer {
 	if creds, err := clientconfig.Resolve(api); err == nil {
 		api = creds.Base
 	} // else every tool call re-resolves and fails with the same error
 	s := server.NewMCPServer("insideout", "0.1.0",
-		server.WithToolCapabilities(false),
+		server.WithToolCapabilities(true), // the registry narrows when a login arrives
 		server.WithInstructions("InsideOut: ideas → PRDs → roadmaps. `guide` scaffolds the "+
 			"repo-side insideout.yaml matching guide; roadmap_* manage branches; build/expand "+
 			"run the agent planner. Auth: INSIDEOUT_TOKEN env, or the auth_* tools — "+
 			"prefer auth_login_code_request/auth_login_code_verify (the human supplies the "+
-			"emailed digits; no password in the conversation)."))
+			"emailed digits; no password in the conversation). Once signed in, the tools run on "+
+			"an agent-scope token: Commit, proposal decisions, deletes, admin and password tools "+
+			"are the human's (web app or CLI) and are not offered here."))
 
 	addAuthTools(s, api)
 	addProductTools(s, api)
 	addAdminTools(s, api)
+	applyAgentProfile(s, api)
 	return s
+}
+
+// withheldFromAgents are the tools an agent-scope token cannot use, because the
+// server refuses their routes (Commit, the proposal decision, the instance
+// switches, every delete), and the password tools, which would put a password
+// in the conversation.
+var withheldFromAgents = []string{
+	"commit", "proposal_decide", "signup_mode", "invite_create", "invite_list", "invite_revoke",
+	"idea_delete", "roadmap_delete", "auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
+}
+
+// applyAgentProfile removes withheldFromAgents once the process holds a login (a
+// JWT: the saved login, INSIDEOUT_TOKEN or an in-process sign-in). Without one the
+// registry stays whole so a process can still sign in or register, and a token
+// that is not a JWT cannot carry a scope. This is advice to the model; the
+// server's 403 for an agent-scope token is what holds.
+func applyAgentProfile(s *server.MCPServer, api string) {
+	if _, ok := apiclient.ParseTokenClaims(humanClient(api).Token()); ok {
+		s.DeleteTools(withheldFromAgents...)
+	}
 }
 
 // session holds the token acquired by an auth tool so subsequent tool
@@ -51,17 +78,21 @@ var session struct {
 	token string
 }
 
+// setSessionToken installs (or, with "", clears) the in-process login. The agent
+// token minted for the previous login goes with it.
 func setSessionToken(tok string) {
 	session.Lock()
 	session.token = tok
 	session.Unlock()
+	apiclient.ForgetAgentToken()
 }
 
-// client resolves the saved credentials like every other surface
-// (clientconfig.Resolve) and lets this process's own login win over them.
-// Credentials that cannot be resolved (an unreadable config file) give a
-// client that fails every call with that error.
-func client(api string) *apiclient.Client {
+// humanClient resolves the saved credentials like every other surface
+// (clientconfig.Resolve) and lets this process's own login win over them. It
+// carries the user's own login, so only the auth tools and the agent-token
+// exchange use it. Credentials that cannot be resolved (an unreadable config
+// file) give a client that fails every call with that error.
+func humanClient(api string) *apiclient.Client {
 	creds, err := clientconfig.Resolve(api)
 	if err != nil {
 		return apiclient.Failing(err)
@@ -78,6 +109,12 @@ func client(api string) *apiclient.Client {
 	}
 	return creds.Client()
 }
+
+// client is what every product tool calls with: humanClient's login traded for
+// an agent-scope token (apiclient.AgentScoped), never the login itself. A failed
+// trade is a client that fails every call, so no tool falls back to the full
+// session.
+func client(api string) *apiclient.Client { return apiclient.AgentScoped(humanClient(api)) }
 
 // reqStr reads a required string argument; MCP validation already
 // guarantees presence, so a miss degrades to "" and the API answers 4xx.
