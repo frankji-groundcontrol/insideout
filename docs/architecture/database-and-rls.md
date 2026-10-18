@@ -13,7 +13,7 @@ inside `_is_member`; see
 | --- | --- | --- | --- |
 | bootstrap (`postgres` image user) | yes | init only | `CREATE ROLE`; never owns `insideout` objects |
 | `insideout_owner` | **no** (`BYPASSRLS`) | migrate (`DATABASE_OWNER_URL`) | Owns the `insideout` schema, tables, and DEFINER functions |
-| `insideout_app` | no | runtime (`DATABASE_URL`) | DML only; subject to RLS |
+| `insideout_app` | no (nor `BYPASSRLS`) | runtime (`DATABASE_URL`) | DML only; subject to RLS; the server refuses to serve on a role that is not |
 
 Two PostgreSQL topologies, same roles and the same migration set:
 
@@ -24,7 +24,9 @@ Two PostgreSQL topologies, same roles and the same migration set:
    as the instance bootstrap superuser, then `REASSIGN OWNED` into
    `insideout_owner`. Migrations never touch `public`.
 
-The Go server **connects as `insideout_app`**. DDL/migrate uses
+The Go server **connects as `insideout_app`** and refuses to start on a role
+with `BYPASSRLS` or superuser (see
+[Membership and user writes](#membership-and-user-writes)). DDL/migrate uses
 `DATABASE_OWNER_URL` (`insideout_owner`). If a superuser is used to apply
 migrations, the runner `SET LOCAL ROLE insideout_owner` first so DEFINER
 functions are never superuser-owned.
@@ -89,6 +91,17 @@ exactly what is described above. A new RLS table, or a new policy (on any
 command) that trusts an unset user, fails it until a reviewer decides which way
 it goes.
 
+That walk only reads, and a policy that lets the wrong `INSERT` or `UPDATE`
+through is invisible to its `SELECT` counts. Its write twin,
+`server/internal/store/rls_write_walk_test.go` (`TestRLSWriteWalk_*`,
+rv4-DATA-02), runs as `insideout_app` in transactions that are always rolled
+back: the membership `INSERT` matrix (a bare self-insert as admin is the first
+case), an `UPDATE` of every `users` column (the list comes from the catalog, so
+a new column fails the walk until it is classified) and an `INSERT` that sets
+each privileged one, and an `UPDATE` and a `DELETE` on every RLS table as an
+outsider and as an actor-less session, which must change no row, with a
+member's run as the control that statements can change rows at all.
+
 Authorship is not membership (SEC-11). The author branches of `ideas_select`,
 `ideas_update` and `prds_insert` also require
 `insideout._is_member(<table>.workspace_id, current_user_id())` (migration
@@ -114,6 +127,61 @@ under the runtime role, by `server/internal/store/ideas_exmember_test.go` and
 `authored_exmember_test.go`; the Go layer, by running the same store on the
 `BYPASSRLS` owner pool, by the `GoLayerDenies` tests in the first and in
 `authored_exmember_golayer_test.go`.
+
+## Membership and user writes
+
+Migration `20261018140000` closes the two write paths the policies left open
+(rv4-DATA-01, rv4-DATA-03): any signed-in session could insert itself as
+`admin` of a workspace whose id it knew, and one statement could make an
+account an admin.
+
+**A membership row needs a reason.** `workspace_memberships_insert` used to
+check only `user_id = current_user_id()`. It now also requires
+`insideout._may_insert_membership(workspace_id, current_user_id(), role)`: an
+`admin` row only for the workspace's creator (what `createWorkspaceTx` writes
+right after the workspace itself), a `member` row only while the workspace is
+active and `app.join_code` holds its code (what `JoinWorkspace` sets, as
+`workspaces_select` already reads it). The helper is `SECURITY DEFINER` so that
+reading `workspaces` from inside a `workspace_memberships` policy cannot recurse
+through `workspaces_select`. A caller therefore cannot add anyone but
+themselves, cannot self-promote, and a join code buys `member` and nothing more.
+
+**`users` columns are an allow-list.** `insideout_app` held table-wide `INSERT`
+and `UPDATE` on `insideout.users` while `users_insert` is `WITH CHECK (true)`
+and `users_update` only pins the row to its owner, so a session could register
+as `system_role = 'admin'` or rewrite its own `role`, `system_role`, `email`,
+`email_verified_at` or `meta`.
+
+- `INSERT` is cut down by column grants to `(email, password_hash, username)`,
+  all that `CreateUser` writes. Any other column, one added later included, is
+  refused with SQLSTATE 42501 before a row exists. The table-level `REVOKE`
+  comes first, because a table-level privilege masks column grants.
+- `UPDATE` is limited by the `users_pin_columns` trigger
+  (`insideout._pin_user_columns`), not by column grants. A column privilege is
+  checked before any row is read, so `promote-admin` run without
+  `DATABASE_OWNER_URL` (an `UPDATE` of someone else's `system_role` on the app
+  pool) would stop answering "no row", which the CLI turns into its "set
+  `DATABASE_OWNER_URL`" hint, and fail with "permission denied" instead. The
+  trigger only sees rows RLS already let through. It compares `NEW` with `OLD`
+  after removing the columns a profile edit really changes (`username`,
+  `avatar_url`, `bio`, `keywords`, `password_hash`; `updated_at` belongs to
+  `set_updated_at`) and raises 42501 on any difference, so a column added later
+  stays pinned until someone adds it to that list. A role RLS does not apply to
+  (`BYPASSRLS` or superuser: `insideout_owner`, which runs migrations and
+  `promote-admin`) is trusted with every column, the same line RLS draws.
+
+**The server refuses to serve on a role that skips RLS** (rv4-DATA-04).
+`BYPASSRLS` and superuser ignore every policy above, `FORCE ROW LEVEL SECURITY`
+included. `runServe` calls `Store.CheckServeRole`
+(`server/internal/store/serve_role.go`) first thing, before the startup
+migrations: it reads `rolsuper` and `rolbypassrls` for the pool's own role from
+`pg_roles` and exits 1 with a plain error that names the attribute and
+`DATABASE_URL`. The error never carries the role name or the DSN, since it
+reaches CI and hosted logs. Only the request pool is checked: `migrate`, `seed`
+and `promote-admin` do not go through `runServe`, and the migrate pool is meant
+to be `insideout_owner`. Every documented setup (compose, `scripts/setup.sh`,
+`.env.example`, CI) already serves as `insideout_app`; the dashboard `postgres`
+user of a managed instance is the case this catches.
 
 ## Known PostgreSQL/RLS gotchas
 
@@ -147,13 +215,21 @@ policies needs to route around any of these again:
   policy check into small `SECURITY DEFINER` helper functions
   (`insideout._is_member`, `_is_admin`, `_project_workspace`,
   `_prd_workspace`, `_prd_author`, `_shares_workspace`,
-  `_conversation_owner`) — a function call introduces no alias into the
-  outer query at all. A related, easy-to-repeat mistake: a **bare**,
+  `_conversation_owner`, `_may_insert_membership`) — a function call
+  introduces no alias into the outer query at all. A related,
+  easy-to-repeat mistake: a **bare**,
   unqualified column name passed as that function's argument is *still*
   ambiguous if the outer query joins another table with the same column
   name (the argument is resolved in the outer query's scope, not the
   function's) — every argument must be the fully table-qualified form
   (`insideout.projects.workspace_id`, not `workspace_id`).
+- Column privileges and row security answer at different moments. A column
+  privilege is checked before any row is read, so narrowing `UPDATE` with a
+  column `GRANT` turns "RLS hid the row, 0 rows changed" into "permission
+  denied"; a `BEFORE UPDATE` trigger only sees the rows RLS let through. Also,
+  `GRANT INSERT (cols)` is masked by a table-level `INSERT`, so `REVOKE` the
+  table-level privilege first (a table-level `REVOKE` clears column grants too,
+  which is what makes the migration re-runnable).
 - `jsonb` columns bound from Go `map`/`[]byte` values fail under
   `pgx.QueryExecModeSimpleProtocol` (required for PgBouncer/Supavisor
   transaction-pooling connections — see [deployment](deployment.md)): Go
