@@ -61,10 +61,7 @@ void main() {
   ) async {
     await _pump(tester, [_resolved, _overridden]);
 
-    expect(
-      find.textContaining('marks this finding resolved'),
-      findsOneWidget,
-    );
+    expect(find.textContaining('marks this finding resolved'), findsOneWidget);
     expect(find.textContaining('no problem stated'), findsOneWidget);
     expect(find.textContaining('overrides this finding'), findsOneWidget);
     expect(find.textContaining('no goal given'), findsOneWidget);

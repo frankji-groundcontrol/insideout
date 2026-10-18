@@ -6,7 +6,7 @@ import 'coach_column.dart';
 
 /// The severities agent/critic.go emits. Anything else prints no severity: a
 /// raw token would be English in every locale.
-const _severities = {'blocking', 'major', 'minor'};
+const coachSeverities = {'blocking', 'major', 'minor'};
 
 /// One critic finding as a pull-quote: the issue, a localized
 /// "severity / label" line, and the critic's suggestion when it gave one.
@@ -26,7 +26,7 @@ class CoachFinding extends StatelessWidget {
     final label = t('coach.finding.label');
     return CoachQuote(
       text: issue,
-      role: _severities.contains(severity)
+      role: coachSeverities.contains(severity)
           ? '${t('coach.finding.severity.$severity')} / $label'
           : label,
       note: suggestion is String && suggestion.isNotEmpty

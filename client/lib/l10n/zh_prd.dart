@@ -104,6 +104,8 @@ const zhPrd = <String, String>{
   'coach.criticReason.contention': '服务器繁忙',
   'coach.criticReason.critic-output-failure': '评审员没有返回可用结果',
   'coach.criticReason.other': '原因未知',
+  'coach.resolution.resolved': '确认后将此问题标记为已解决（{where}）：{issue}',
+  'coach.resolution.overridden': '确认后将忽略此问题（{where}）：{issue}',
   'prd.pageTitle': '产品需求',
   'prd.workingVersion': '工作版本',
   'prd.requestReview': '请求审阅',

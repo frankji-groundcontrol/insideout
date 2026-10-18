@@ -82,6 +82,7 @@ class Conversation {
     this.pendingStage,
     this.criticSkipped,
     this.criticRounds = 0,
+    this.pendingResolutions = const [],
   });
 
   final String id;
@@ -94,6 +95,10 @@ class Conversation {
   /// gate, so the confirm card says so (rv4-AIDEV-02).
   final String? criticSkipped;
   final int criticRounds;
+
+  /// The finding resolutions the coach parked: confirming the stage applies
+  /// them, so the confirm card lists them (rv4-AIDEV-03).
+  final List<PendingResolution> pendingResolutions;
 
   /// The coach's stage proposal, parked by the server until the member
   /// confirms it (POST /conversations/{id}/stage). It only reaches the
@@ -115,6 +120,7 @@ class Conversation {
             : pendingStage as String?,
         criticSkipped: criticSkipped,
         criticRounds: criticRounds,
+        pendingResolutions: pendingResolutions,
       );
 
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(
@@ -125,7 +131,35 @@ class Conversation {
     pendingStage: j['pendingStage'] as String?,
     criticSkipped: j['criticSkipped'] as String?,
     criticRounds: (j['criticRounds'] as num?)?.toInt() ?? 0,
+    pendingResolutions: [
+      for (final r in (j['pendingResolutions'] as List?) ?? const [])
+        PendingResolution.fromJson(r as Map<String, dynamic>),
+    ],
   );
+}
+
+/// One resolve_finding request the coach parked, joined to its finding.
+/// [status] (resolved | overridden) is what Confirm will set.
+class PendingResolution {
+  PendingResolution({
+    required this.section,
+    required this.severity,
+    required this.issue,
+    required this.status,
+  });
+
+  final String section;
+  final String severity;
+  final String issue;
+  final String status;
+
+  factory PendingResolution.fromJson(Map<String, dynamic> j) =>
+      PendingResolution(
+        section: j['section'] as String? ?? '',
+        severity: j['severity'] as String? ?? '',
+        issue: j['issue'] as String? ?? '',
+        status: j['status'] as String? ?? '',
+      );
 }
 
 class ChatMessage {

@@ -37,6 +37,10 @@ type conversationView struct {
 	// review ran rather than imply one (rv4-AIDEV-02).
 	CriticSkipped string `json:"criticSkipped,omitempty"`
 	CriticRounds  int    `json:"criticRounds"`
+	// PendingResolutions are the finding resolutions the coach parked: the
+	// person's confirmation applies them, so the confirm card lists them
+	// (rv4-AIDEV-03).
+	PendingResolutions []pendingResolutionView `json:"pendingResolutions,omitempty"`
 }
 
 func conversationResponse(c store.AgentConversation) conversationView {

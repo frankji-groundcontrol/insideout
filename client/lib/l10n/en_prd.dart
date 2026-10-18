@@ -120,6 +120,10 @@ const enPrd = <String, String>{
   'coach.criticReason.critic-output-failure':
       'the reviewer returned no usable result',
   'coach.criticReason.other': 'unknown reason',
+  'coach.resolution.resolved':
+      'Confirming marks this finding resolved ({where}): {issue}',
+  'coach.resolution.overridden':
+      'Confirming overrides this finding ({where}): {issue}',
   'prd.pageTitle': 'Product requirements',
   'prd.workingVersion': 'Working version',
   'prd.requestReview': 'Request review',
