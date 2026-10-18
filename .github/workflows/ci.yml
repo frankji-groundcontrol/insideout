@@ -62,6 +62,10 @@ jobs:
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
+      # rv4-PM-10: fails when go.mod or go.sum is not what `go mod tidy` writes
+      # (a direct dependency marked indirect was the case that got through).
+      - name: go.mod and go.sum are tidy
+        run: go mod tidy -diff
       # Mirror docker/postgres-init/001-create-app-role.sh: the app role is
       # RLS-subject, the owner role owns the insideout schema. Throwaway
       # passwords — this database lives only for this job run.
