@@ -4,6 +4,10 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    # rv4-PM-02: weekly, so a clock-pinned or order-dependent test cannot sit
+    # red between pushes. Off the :00 mark, where scheduled runs queue.
+    - cron: "41 3 * * 1"
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -76,12 +80,16 @@ jobs:
           test -z "$(gofmt -l .)" || { gofmt -l .; echo "::error::gofmt drift"; exit 1; }
           go build ./... && go vet ./...
       - name: Test (integration suite must run, not skip)
+        env:
+          # rv4-PM-02: only the weekly schedule shuffles; pushes and pull
+          # requests keep the fixed order, so a failure replays as it ran.
+          SHUFFLE: ${{ github.event_name == 'schedule' && '-shuffle=on' || '-shuffle=off' }}
         run: |
           set -o pipefail
           # TEST-12/REL-22: -race, because the suite owns the shared state the
           # detector is for (auth throttle, resend cooldown, presence, turn
           # locks, SSE writers). It needs cgo; the runner image has gcc.
-          go test ./... -race -count=1 -v -timeout 20m 2>&1 | tee /tmp/gotest.log
+          go test ./... -race -count=1 -v -timeout 20m "$SHUFFLE" 2>&1 | tee /tmp/gotest.log
           # TEST-02/TEST-09: a skipped test anywhere — store, api, agent — is
           # a red build: every DATABASE_URL-gated test skips itself when the
           # variable is unset, and the postgres service above is the point of
