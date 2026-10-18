@@ -6,7 +6,7 @@ Usage: python3 -I scripts/tests/check_docs_truth_rv4.py
 Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
-offending claim (rv4-FULL-09, rv4-USER-08).
+offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08).
 """
 import pathlib
 import re
@@ -88,10 +88,30 @@ def offline_coach_not_overclaimed(failures):
                        "needs a set INSIDEOUT_LLM_API_KEY")
 
 
+def readme_scopes_github_evidence(failures):
+    """rv4-FEAT-08: evidence attaches only to roadmap leaves a committed
+    insideout.yaml matches, and only once the GitHub App's webhook delivers.
+    While the guide matcher and the webhook route exist, every README
+    paragraph that says GitHub evidence attaches must name both conditions."""
+    if not (ROOT / "server/internal/guide/guide.go").exists() \
+            or "/hooks/github" not in read("server/internal/api/github_webhook.go"):
+        return  # no guide matcher or no webhook; nothing to qualify
+    for block in re.split(r"\n\s*\n", read("README.md")):
+        if "GitHub" in block and re.search(r"(?i)evidence|证据", block) \
+                and re.search(r"(?i)attach|挂到", block):
+            if "insideout.yaml" not in block:
+                fail(failures, "README.md says GitHub evidence attaches without naming the "
+                               f"insideout.yaml guide: {block[:48]!r}")
+            if not re.search(r"(?i)webhook|GitHub App", block):
+                fail(failures, "README.md says GitHub evidence attaches without naming the "
+                               f"GitHub App webhook: {block[:48]!r}")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     env_variables_documented(facts, failures)
     offline_coach_not_overclaimed(failures)
+    readme_scopes_github_evidence(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
