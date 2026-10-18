@@ -94,9 +94,9 @@ func (c *Client) authPost(path string, body any) (authBody, error) {
 	if err != nil {
 		return authBody{}, fmt.Errorf("apiclient: encode body: %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, c.base+path, bytes.NewReader(encoded))
+	req, err := c.newRequest(http.MethodPost, path, bytes.NewReader(encoded))
 	if err != nil {
-		return authBody{}, fmt.Errorf("apiclient: build request: %w", err)
+		return authBody{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := c.hc.Do(req)

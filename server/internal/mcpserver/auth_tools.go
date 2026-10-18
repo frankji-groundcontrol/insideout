@@ -29,9 +29,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 
 	// signedIn confirms the freshly stored session via /me and reports the
 	// user — proof the login worked without echoing the token.
-	signedIn := func() (string, error) {
+	signedIn := func(ctx context.Context) (string, error) {
 		applyAgentProfile(s, api) // a process holding a login does not offer the human-only tools
-		me, err := client(api).Whoami()
+		me, err := clientCtx(ctx, api).Whoami()
 		if err != nil {
 			return "", err
 		}
@@ -48,7 +48,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 		s.AddTool(mcp.NewTool(name, all...), func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			// The user's own client: these tools open, close and recover the
 			// login, so none of them runs on an agent-scope token.
-			out, err := call(humanClient(api), req)
+			out, err := call(humanClientCtx(ctx, api), req)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}
@@ -64,7 +64,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 				return "", err
 			}
 			setSessionToken(c.Token())
-			return signedIn()
+			return signedIn(c.Context())
 		})
 	addTool("auth_login", "Password login for this MCP server process (password appears in the conversation — prefer auth_login_code_request for humans-in-the-loop)",
 		[]mcp.ToolOption{strReq("email", "account email"), strReq("password", "account password")},
@@ -73,7 +73,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 				return "", err
 			}
 			setSessionToken(c.Token())
-			return signedIn()
+			return signedIn(c.Context())
 		})
 	addTool("auth_login_code_request", "Email a 6-digit sign-in code to the account (uniform ok — never reveals whether it exists). Then ask the human for the digits and call auth_login_code_verify",
 		[]mcp.ToolOption{strReq("email", "account email")},
@@ -90,7 +90,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 				return "", err
 			}
 			setSessionToken(c.Token())
-			return signedIn()
+			return signedIn(c.Context())
 		})
 	addTool("auth_magic_link_request", "Email a one-time sign-in link (uniform ok). Then ask the human for the link (or just the token after token=) and call auth_magic_link_consume",
 		[]mcp.ToolOption{strReq("email", "account email")},
@@ -107,7 +107,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 				return "", err
 			}
 			setSessionToken(c.Token())
-			return signedIn()
+			return signedIn(c.Context())
 		})
 	addTool("auth_forgot_password", "Email a one-time password-reset link (uniform ok — never reveals whether it exists)",
 		[]mcp.ToolOption{strReq("email", "account email")},

@@ -7,6 +7,7 @@ package apiclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,7 +21,8 @@ type Client struct {
 	base    string
 	token   string
 	refresh string
-	renew   *Renewal // nil: a 401 is final (see SetRenewal)
+	renew   *Renewal        // nil: a 401 is final (see SetRenewal)
+	ctx     context.Context // nil: context.Background (see SetContext)
 	hc      *http.Client
 }
 
@@ -28,6 +30,31 @@ func New(base string) *Client {
 	c := &Client{base: strings.TrimRight(base, "/")}
 	c.hc = &http.Client{Timeout: 20 * time.Second, Transport: renewTransport{c}}
 	return c
+}
+
+// SetContext binds ctx to every request this client makes from now on, the
+// renewal of an expired session and the agent-token trade included: cancelling
+// it (a cancelled MCP call, a Ctrl-C in the CLI) ends the request in flight. It
+// is set in place, not copied: a Client serves one caller at a time, so there is
+// no second view to fall out of step with the first one's session.
+func (c *Client) SetContext(ctx context.Context) { c.ctx = ctx }
+
+// Context returns the context SetContext bound, or context.Background.
+func (c *Client) Context() context.Context {
+	if c.ctx == nil {
+		return context.Background()
+	}
+	return c.ctx
+}
+
+// newRequest builds a request for path on the client's context. Every request
+// the client makes starts here.
+func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequestWithContext(c.Context(), method, c.base+path, body)
+	if err != nil {
+		return nil, fmt.Errorf("apiclient: build request: %w", err)
+	}
+	return req, nil
 }
 
 // SetToken installs a previously obtained access token (INSIDEOUT_TOKEN).
@@ -86,9 +113,9 @@ func (c *Client) do(method, path string, body any, out any) error {
 		}
 		reader = bytes.NewReader(encoded)
 	}
-	req, err := http.NewRequest(method, c.base+path, reader)
+	req, err := c.newRequest(method, path, reader)
 	if err != nil {
-		return fmt.Errorf("apiclient: build request: %w", err)
+		return err
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
@@ -130,9 +157,9 @@ func errSuffix(msg string) string {
 // getBytes GETs a path whose answer is not JSON (export markdown/HTML)
 // and returns the body verbatim.
 func (c *Client) getBytes(path string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, c.base+path, nil)
+	req, err := c.newRequest(http.MethodGet, path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("apiclient: build request: %w", err)
+		return nil, err
 	}
 	if c.token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.token)

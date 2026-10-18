@@ -36,6 +36,7 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 		return true, 1
 	}
 	c := apiclient.New(creds.Base)
+	c.SetContext(cliCtx)
 
 	switch cmd {
 	case "login":

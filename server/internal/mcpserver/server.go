@@ -5,6 +5,7 @@
 package mcpserver
 
 import (
+	"context"
 	"encoding/json"
 	"sync"
 
@@ -112,11 +113,24 @@ func humanClient(api string) *apiclient.Client {
 	return creds.Client()
 }
 
-// client is what every product tool calls with: humanClient's login traded for
-// an agent-scope token (apiclient.AgentScoped), never the login itself. A failed
-// trade is a client that fails every call, so no tool falls back to the full
-// session.
-func client(api string) *apiclient.Client { return apiclient.AgentScoped(humanClient(api)) }
+// humanClientCtx is humanClient bound to a tool call's context, so a cancelled
+// call ends the request it made (review-4 QUAL-04).
+func humanClientCtx(ctx context.Context, api string) *apiclient.Client {
+	c := humanClient(api)
+	c.SetContext(ctx)
+	return c
+}
+
+// clientCtx is what every product tool calls with: humanClient's login traded
+// for an agent-scope token (apiclient.AgentScoped), never the login itself. A
+// failed trade is a client that fails every call, so no tool falls back to the
+// full session. The call's context rides both the trade and the client.
+func clientCtx(ctx context.Context, api string) *apiclient.Client {
+	return apiclient.AgentScoped(humanClientCtx(ctx, api))
+}
+
+// client is clientCtx for a caller that has no context to give.
+func client(api string) *apiclient.Client { return clientCtx(context.Background(), api) }
 
 // reqStr reads a required string argument; MCP validation already
 // guarantees presence, so a miss degrades to "" and the API answers 4xx.

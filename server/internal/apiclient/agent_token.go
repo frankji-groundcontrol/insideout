@@ -78,6 +78,7 @@ func AgentScoped(login *Client) *Client {
 	}
 	scoped := New(login.base)
 	scoped.token = token // never renews: this token is not the saved session
+	scoped.ctx = login.ctx
 	return scoped
 }
 

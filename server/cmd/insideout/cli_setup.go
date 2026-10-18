@@ -43,16 +43,24 @@ type setupClient struct {
 func (s *setupClient) rebind(base string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.c = apiclient.New(base)
+	s.c = newSetupAPIClient(base)
 }
 
 func (s *setupClient) client() *apiclient.Client {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.c == nil {
-		s.c = apiclient.New(apiclient.DefaultBase)
+		s.c = newSetupAPIClient(apiclient.DefaultBase)
 	}
 	return s.c
+}
+
+// newSetupAPIClient is apiclient.New bound to the running command's context, so
+// an interrupted setup ends the sign-in request it is waiting on.
+func newSetupAPIClient(base string) *apiclient.Client {
+	c := apiclient.New(base)
+	c.SetContext(cliCtx)
+	return c
 }
 
 func (s *setupClient) Login(email, password string) error {
@@ -184,7 +192,7 @@ func runInteractiveSetup() (bool, int) {
 			return fmt.Errorf("local setup exited with code %d", code)
 		},
 	}
-	res, err := ui.Run(context.Background(), deps)
+	res, err := ui.Run(cliCtx, deps)
 	var noTTY ui.ErrNoTTY
 	if errors.As(err, &noTTY) {
 		fmt.Fprintln(os.Stderr, err)

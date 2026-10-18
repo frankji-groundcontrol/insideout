@@ -38,7 +38,7 @@ func main() {
 
 	// Product CLI commands need no server env or DB — dispatch them
 	// before any config/store setup (docs/plans/2026-08-21-cli-mcp-parity.md).
-	if handled, code := runClientCommand(os.Args[1:]); handled {
+	if handled, code := runInterruptible(os.Args[1:]); handled {
 		os.Exit(code)
 	}
 	// help, version and a mistyped verb answer here too: none of them may

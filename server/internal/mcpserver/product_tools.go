@@ -21,7 +21,7 @@ func addProductTools(s *server.MCPServer, api string) {
 	addTextTool := func(name, desc string, opts []mcp.ToolOption, call func(c *apiclient.Client, req mcp.CallToolRequest) (string, error)) {
 		all := append([]mcp.ToolOption{mcp.WithDescription(desc)}, opts...)
 		s.AddTool(mcp.NewTool(name, all...), func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			out, err := call(client(api), req)
+			out, err := call(clientCtx(ctx, api), req)
 			if err != nil {
 				return mcp.NewToolResultError(err.Error()), nil
 			}

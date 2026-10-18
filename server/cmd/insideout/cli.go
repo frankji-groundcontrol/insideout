@@ -8,10 +8,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
@@ -81,6 +85,57 @@ var cliVerbs = []cliVerb{
 	{groupAdmin, "invite", "invite one email address (invite revoke <id> cancels)"},
 	{groupAdmin, "invites", "list invitations"},
 	{groupAdmin, "signup-mode", "show or set invitation_only | open | closed"},
+}
+
+// cliCtx is the context of the command now running. Ctrl-C or SIGTERM cancels
+// it (runInterruptible) and every client a verb builds is bound to it, so the
+// request in flight ends with the command. It is context.Background when no
+// command is running through runInterruptible, as in a test that calls a verb.
+var cliCtx = context.Background()
+
+// interruptGrace is how long an interrupted command gets to wind down (its
+// request aborts, its error prints) before the process ends anyway. A command
+// that waits at a prompt has no request to abort.
+var interruptGrace = 400 * time.Millisecond
+
+// runInterruptible is runClientCommand under cliCtx. The first Ctrl-C (or
+// SIGTERM) cancels the context and the command ends with status 130, the
+// shell's code for an interrupted command; a command still running after
+// interruptGrace, or a second signal, ends the process at once. Before, the
+// default signal action killed the process wherever it stood, even between the
+// server rotating a refresh token and the CLI saving the new pair (review-4
+// QUAL-04).
+func runInterruptible(args []string) (handled bool, exitCode int) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(context.Background())
+	cliCtx = ctx
+	finished := make(chan struct{})
+	go func() {
+		select {
+		case <-sigs:
+			cancel()
+			signal.Stop(sigs) // the next signal takes the default action
+			select {
+			case <-finished:
+			case <-time.After(interruptGrace):
+				fmt.Fprintln(os.Stderr, "\ninsideout: interrupted")
+				os.Exit(130)
+			}
+		case <-finished:
+		}
+	}()
+	handled, exitCode = runClientCommand(args)
+	interrupted := ctx.Err() != nil
+	close(finished)
+	signal.Stop(sigs)
+	cancel()
+	cliCtx = context.Background()
+	if handled && interrupted && exitCode != 0 {
+		fmt.Fprintln(os.Stderr, "insideout: interrupted")
+		return true, 130
+	}
+	return handled, exitCode
 }
 
 // runClientCommand handles login/whoami/workspaces/projects/prd and
@@ -176,7 +231,9 @@ func clientFromFlag(flagAPI string) *apiclient.Client {
 	if err != nil {
 		return apiclient.Failing(err)
 	}
-	return creds.Client()
+	c := creds.Client()
+	c.SetContext(cliCtx)
+	return c
 }
 
 func credentials(args []string) (string, string, error) {

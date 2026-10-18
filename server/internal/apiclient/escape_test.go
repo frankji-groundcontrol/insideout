@@ -245,7 +245,7 @@ func TestHostileValuesStayOneSegmentOrOneQueryValue(t *testing.T) {
 // method without a row, or a row naming a method that is gone, fails here.
 func TestSweepCoversEveryClientMethod(t *testing.T) {
 	typ := reflect.TypeOf(&Client{})
-	covered := map[string]bool{"SetToken": true, "Token": true, "RefreshToken": true, "SetRenewal": true} // accessors, no request
+	covered := map[string]bool{"SetToken": true, "Token": true, "RefreshToken": true, "SetRenewal": true, "SetContext": true, "Context": true} // accessors, no request
 	for _, tc := range sweep {
 		covered[tc.name] = true
 		if _, ok := typ.MethodByName(tc.name); !ok {
