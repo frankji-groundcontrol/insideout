@@ -2,6 +2,31 @@ part of 'client.dart';
 
 /// Server-sent-event verbs: Coach replies, canvas presence, roadmap progress.
 mixin _StreamVerbs on _ApiCore {
+  /// The browser's fetch transport, swapped by tests: the real one exists only
+  /// on web (on the VM it throws). Setting it also selects the fetch path for
+  /// the presence and progress streams, which `kIsWeb` selects in a browser.
+  @visibleForTesting
+  Future<SseAttempt> Function(
+    String url,
+    Map<String, String> headers, {
+    Future<void>? stop,
+  })?
+  fetchAttemptForTests;
+
+  /// A GET stream over the browser's fetch.
+  Stream<List<int>> _fetchGetStream(
+    String url,
+    Map<String, String> headers,
+    Future<void>? stop,
+  ) async* {
+    final fetch = fetchAttemptForTests ?? fetchSseAttempt;
+    final attempt = await fetch(url, headers, stop: stop);
+    if (attempt.status >= 400) {
+      throw ApiException('stream failed', status: attempt.status);
+    }
+    yield* attempt.chunks;
+  }
+
   /// Sends [content] and applies the reply's frames to [handlers]. A turn
   /// holds a model call open for as long as it runs, so completing [stop]
   /// aborts the connection and ends the call.
@@ -102,11 +127,11 @@ mixin _StreamVerbs on _ApiCore {
       'Accept': 'text/event-stream',
     };
     Stream<List<int>> chunks;
-    if (kIsWeb) {
-      chunks = fetchSseStream(
+    if (kIsWeb || fetchAttemptForTests != null) {
+      chunks = _fetchGetStream(
         '$baseUrl/projects/$projectId/presence/stream?client=${Uri.encodeQueryComponent(clientId)}',
         headers,
-        stop: stop,
+        stop,
       );
     } else {
       final res = await _dio.get<ResponseBody>(
@@ -160,11 +185,11 @@ mixin _StreamVerbs on _ApiCore {
       'Accept': 'text/event-stream',
     };
     Stream<List<int>> chunks;
-    if (kIsWeb) {
-      chunks = fetchSseStream(
+    if (kIsWeb || fetchAttemptForTests != null) {
+      chunks = _fetchGetStream(
         '$baseUrl/projects/$projectId/roadmap/progress/stream',
         headers,
-        stop: stop,
+        stop,
       );
     } else {
       final res = await _dio.get<ResponseBody>(
