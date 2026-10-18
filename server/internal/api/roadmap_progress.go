@@ -108,7 +108,7 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID) (roadma
 	for _, n := range nodes {
 		in = append(in, roadmaptime.Node{ID: n.ID.String(), Title: n.Title, Status: n.Status, Deadline: n.Deadline, Leaf: !parents[n.ID.String()], Acceptance: n.Acceptance, OwnerName: n.OwnerName})
 	}
-	return roadmaptime.Assemble(in, time.Now()), nil
+	return roadmaptime.Assemble(in, s.now()), nil
 }
 
 func (s *Server) writeRoadmapProgressError(w http.ResponseWriter, err error) {

@@ -114,5 +114,5 @@ func (s *Server) handleValidateNode(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n))
+	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
 }

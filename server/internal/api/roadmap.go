@@ -54,7 +54,9 @@ type roadmapNodeView struct {
 	EditorName  *string `json:"editorName,omitempty"`
 }
 
-func roadmapNodeResponse(n store.RoadmapNode) roadmapNodeView {
+// roadmapNodeResponse takes the instant a deadline is measured against;
+// handlers pass s.now() so the view never reads the wall clock (QUAL-05).
+func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	v := roadmapNodeView{
 		ID: n.ID.String(), ProjectID: n.ProjectID.String(), Title: n.Title,
 		Description: n.Description, Status: n.Status, Position: n.Position,
@@ -67,7 +69,7 @@ func roadmapNodeResponse(n store.RoadmapNode) roadmapNodeView {
 	if n.Deadline != nil {
 		dl := n.Deadline.Format(time.RFC3339)
 		v.Deadline = &dl
-		v.Pressure = roadmaptime.Pressure(*n.Deadline, time.Now())
+		v.Pressure = roadmaptime.Pressure(*n.Deadline, now)
 	}
 	v.CreatorName = n.CreatorName
 	v.EditorName = n.EditorName
@@ -106,9 +108,10 @@ func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
+	now := s.now()
 	views := make([]roadmapNodeView, len(nodes))
 	for i, n := range nodes {
-		views[i] = roadmapNodeResponse(n)
+		views[i] = roadmapNodeResponse(n, now)
 	}
 	httpx.WriteJSON(w, http.StatusOK, views)
 }
@@ -158,7 +161,7 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusCreated, roadmapNodeResponse(*n))
+	httpx.WriteJSON(w, http.StatusCreated, roadmapNodeResponse(*n, s.now()))
 }
 
 type updateRoadmapNodeRequest struct {
@@ -251,7 +254,7 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n))
+	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
 }
 
 type moveRoadmapNodeRequest struct {
@@ -299,7 +302,7 @@ func (s *Server) handleMoveRoadmapNode(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n))
+	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
 }
 
 func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request) {

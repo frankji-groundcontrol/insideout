@@ -278,9 +278,10 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
+	now := s.now()
 	views := make([]roadmapNodeView, len(created))
 	for i, n := range created {
-		views[i] = roadmapNodeResponse(n)
+		views[i] = roadmapNodeResponse(n, now)
 	}
 	httpx.WriteJSON(w, http.StatusCreated, views)
 }
