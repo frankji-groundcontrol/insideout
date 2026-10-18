@@ -6,9 +6,9 @@ main:
   outcome: "A fourth whole-tree review over the public, released product: every High skeptic-reviewed, the top findings reproduced, a completeness critic closed, the report written and indexed, and an ordered 4-wave remediation plan ready to run as dynamic workflows."
   owner: claude
   status: in_progress
-  next_evidence: "Review delivered (145 findings: 0 Critical, 10 High, 88 Medium, 47 Low) in docs/review/2026-10-18-multirole-4/. Remediation is under way on the local branch rv4/integration (base d53035a, nothing pushed): wave 0 (w0-privacy, rows 0.1-0.4) integrated at 97d7529 with follow-ups in 3d65d50, owner halves DEFERRED_OWNER; wave 1 (nine clusters, rows 1.1-1.18) integrated at a079404 (74 cherry-picked commits plus one fix-up), follow-ups in 7091e14, dispositions in the commit docs(rv4): wave 1 dispositions: 30 of 34 findings FIXED, 4 PARTIAL (rv4-PM-05, rv4-TEST-08, rv4-SEC-06, rv4-USER-09), owner halves of PM-05 and COMP-02 DEFERRED_OWNER; gates green including the formerly red TestProjectQuietFlagged (27 Go packages with -race, 466 Flutter tests in two time zones, 9 contract guards); wave 1 residue R1-01..R1-17 sits in the open-findings record and every CI-config item is pending the first CI run after push. Waves 2-3 not started. Record: docs/changelogs/2026-10-18-rv4-remediation/index.md."
+  next_evidence: "Review delivered (145 findings: 0 Critical, 10 High, 88 Medium, 47 Low) in docs/review/2026-10-18-multirole-4/. Remediation is under way on the local branch rv4/integration (base d53035a, nothing pushed): wave 0 (w0-privacy, rows 0.1-0.4) integrated at 97d7529 with follow-ups in 3d65d50, owner halves DEFERRED_OWNER; wave 1 (nine clusters, rows 1.1-1.18) integrated at a079404 (74 cherry-picked commits plus one fix-up), follow-ups in 7091e14, dispositions in the commit docs(rv4): wave 1 dispositions: 30 of 34 findings FIXED, 4 PARTIAL (rv4-PM-05, rv4-TEST-08, rv4-SEC-06, rv4-USER-09), owner halves of PM-05 and COMP-02 DEFERRED_OWNER; gates green including the formerly red TestProjectQuietFlagged (27 Go packages with -race, 466 Flutter tests in two time zones, 9 contract guards); wave 1 residue R1-01..R1-17 sits in the open-findings record and every CI-config item is pending the first CI run after push. Wave 2 (four clusters, rows 2.1-2.6) integrated at e6bc637 (55 cherry-picked commits, no fix-ups), follow-ups in 7696b08, dispositions in the commit docs(rv4): wave 2 dispositions: 21 of 23 rows FIXED, 2 PARTIAL (FEAT-02-CLIENT-APPLY, rv4-DATA-03), R1-03 and R1-09 closed, DEFERRED_OWNER whether an agent token may decide a proposal, the release variable name and two operator actions; gates green (every Go package with -race, 483 Flutter tests in two time zones, 9 contract guards) and a live check of 7 behaviours; wave 2 residue R2-01..R2-15 sits in the open-findings record. Wave 3 not started. Record: docs/changelogs/2026-10-18-rv4-remediation/index.md."
 side_tracks: []
-updated_at: "2026-10-18T16:28:54Z"
+updated_at: "2026-10-18T22:34:08Z"
 plan:
 - step: "Scout: product is main, clean worktree at 9f0b1c7, 18 leads with run results"
   owner: claude
@@ -40,10 +40,10 @@ plan:
 - step: "Wave 1: 9 clusters (rows 1.1-1.18) accepted (one repair round for w1-misc-correctness), 74 commits cherry-picked to a079404 with one fix-up, follow-ups in 7091e14, dispositions in the changelog index and the open-findings record: 30 FIXED, 4 PARTIAL, owner halves of PM-05 and COMP-02 DEFERRED_OWNER; the full suite is green including TestProjectQuietFlagged"
   owner: claude
   status: completed
-- step: "Wave 2: 4 clusters (rows 2.1-2.6)"
+- step: "Wave 2: 4 clusters (rows 2.1-2.6) accepted round 1, 55 commits cherry-picked to e6bc637 with no fix-ups, follow-ups in 7696b08, dispositions in the changelog wave-2 record and the open-findings record: 21 FIXED, 2 PARTIAL (FEAT-02-CLIENT-APPLY, rv4-DATA-03), R1-03 and R1-09 closed; the full suite is green and a live check passed; w3-client-apply and w3-users-read-grant added to wave 3"
   owner: claude
-  status: pending
-- step: "Wave 3: 11 clusters (rows 3.1-3.11); w3-docs-truth refreshes the HANDOFF and plans-board claims"
+  status: completed
+- step: "Wave 3: 11 clusters (rows 3.1-3.11) plus w3-client-apply and w3-users-read-grant; w3-docs-truth refreshes the HANDOFF and plans-board claims"
   owner: claude
   status: pending
 - step: "Whole-change adversarial review of d53035a..rv4/integration (correctness, security, PRODUCT.md regression), then the full gates once more"

@@ -210,6 +210,13 @@ completeness test lists every exported `*Client` method).
   `-X ...apiclient.DefaultBase=<repository variable>` to both builds, guarded
   against an empty variable.
 
+**Closed (integrator follow-up, wave 2).** The architecture and operator pages
+state the contract (`docs/architecture/backend.md`,
+`docs/usage/environment.md`) and the shared indexes are done. Still open, as
+residue in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-2-open-residue-integrator-2026-10-19):
+the `scripts/setup.sh` blurb (R2-06), the `release.yml` link flag (R2-07) and
+the ceilings above (R2-10 to R2-13).
+
 ## Verification
 
 Gates on `3d33ea8` (the fragment is documentation only):

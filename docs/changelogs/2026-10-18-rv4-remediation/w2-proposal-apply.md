@@ -179,6 +179,14 @@ No code is waiting except the patch above.
   rv4-LEAD-PROPOSE-VALIDATE; this folder's `index.md` wave-2 row; the changelog
   index files.
 
+**Closed (integrator follow-up, wave 2).** The two architecture sentences
+(`docs/architecture/database-and-rls.md`, `docs/architecture/product-subsystems.md`)
+and the stale line citation are done, and the dispositions are in the
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-2-open-residue-integrator-2026-10-19).
+Still open there: the web feed's own re-apply, the `PARTIAL` patch above (R2-01,
+`w3-client-apply`), the three store functions with no production caller (R2-14)
+and the expand route's lock and gate (R2-04, a final-review lead).
+
 ## Verification
 
 Run against a private PostgreSQL 18 cluster on a port of its own, migrated from

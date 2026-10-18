@@ -225,6 +225,13 @@ DATA-03 read half above.
   as a new low item; this folder's `index.md` wave-2 row; the changelog index
   files.
 
+**Closed (integrator follow-up, wave 2).** The operator pages and `.env.example`
+carry the serve-role sentence (`docs/usage/environment.md`, `docs/SETENV.md`,
+`docs/usage/deployment.md`), and the dispositions are in the
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-2-open-residue-integrator-2026-10-19).
+Still open there: the `password_hash` read half (R2-02, `w3-users-read-grant`)
+and the re-pointable seat (R2-03).
+
 ## Verification
 
 Run against a private PostgreSQL 18 cluster on a port of its own (roles

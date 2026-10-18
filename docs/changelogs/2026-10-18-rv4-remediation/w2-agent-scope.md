@@ -321,6 +321,11 @@ Code edits outside this cluster (INTEGRATOR TODO, both small):
 - The CLI `context` and `evidence` verbs could print through the same fence if the
   owner wants the CLI covered (`cmd/insideout`, outside this cluster).
 
+**Closed (integrator follow-up, wave 2).** The documentation edits above are in
+`7696b08`; the dispositions are in the
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md).
+Still open there: R2-05, R2-08, R2-09 and the accepted limits R2-15.
+
 ## Verification
 
 Gates, all green at `41d34dd` (the fragment's own commit changes documentation

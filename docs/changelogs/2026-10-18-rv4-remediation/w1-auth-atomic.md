@@ -133,9 +133,10 @@ Documentation, comment and index edits only; no code is waiting.
 
 **Closed (integrator follow-up, wave 1).** The `mailSent` sentences are in
 `docs/usage/cli-mcp-and-guidance.md` and `SKILL.md`, and the comment in
-`server/internal/apiclient/auth.go` names `mailSent`. Still open: the
+`server/internal/apiclient/auth.go` names `mailSent`. Still open at wave 1: the
 `invite_create` tool description in `product_tools.go` (R1-03 in the
-[open-findings record](../../issues/2026-10-18-review-4-open-findings.md)).
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md);
+closed in wave 2 by `f9e9894`).
 
 ## Verification
 

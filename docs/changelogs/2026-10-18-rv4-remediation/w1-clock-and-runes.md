@@ -165,7 +165,7 @@ that builders take the instant and that limits count characters through
 `tooLong`, and the learning note carries a "Fixed in" line and the shipped
 shape (the `clock` field plus `now()`). The four observations above are
 residue in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md): R1-09 (the proposal written
-before it is validated), R1-10 (`flagged` on the detail responses), R1-11 (the
+before it is validated; closed in wave 2 by `bfe019e`), R1-10 (`flagged` on the detail responses), R1-11 (the
 byte-counted password minimum) and R1-12 (the 10,000-byte message cap and
 `firstLine`).
 
