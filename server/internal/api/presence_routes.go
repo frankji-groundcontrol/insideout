@@ -160,6 +160,10 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 				flusher.Flush()
 			}
 		case <-heartbeat.C:
+			if !s.streamStillAllowed(r, userID, pid) {
+				s.presence.Leave(pid.String(), key)
+				return
+			}
 			// The ping doubles as this session's heartbeat refresh.
 			s.presence.Touch(pid.String(), key, userID.String(), name)
 			httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)

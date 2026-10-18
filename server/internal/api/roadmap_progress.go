@@ -85,12 +85,18 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 				return
 			}
 			next, err := s.roadmapProgress(r, userID, pid)
+			if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
+				return // the viewer's membership ended
+			}
 			if err != nil {
 				s.log.Error("roadmap progress stream", "error", err)
 				continue
 			}
 			write(next)
 		case <-heartbeat.C:
+			if !s.streamStillAllowed(r, userID, pid) {
+				return
+			}
 			httpx.ArmWriteDeadline(w, httpx.SSEWriteTimeout)
 			fmt.Fprint(w, ": ping\n\n")
 			flusher.Flush()
