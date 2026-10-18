@@ -38,6 +38,10 @@ func TestHealthz_AnswersWithinItsBudgetWhenTheDatabaseStalls(t *testing.T) {
 		t.Fatalf("open store through the relay: %v", err)
 	}
 	t.Cleanup(st.Close)
+	// Cleanups run last-in first-out, so this closes the relay's sockets before
+	// st.Close: a pool closing a black-holed connection otherwise waits 15s for
+	// pgx's cancel request to be answered.
+	t.Cleanup(proxy.close)
 
 	tokens := auth.NewTokenIssuer("a-32-byte-or-longer-test-secret!", time.Hour)
 	srv := NewServer(st, tokens, &config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)

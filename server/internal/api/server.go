@@ -130,7 +130,7 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("GET /healthz", s.handleHealthz)
 
-	var h http.Handler = mux
+	var h http.Handler = s.withRequestDeadline(mux)
 	h = s.withMaxBody(h)
 	// Auth-endpoint rate limiting sits inside recover/logging so throttled
 	// requests are still logged and a throttle bug can't 500 the server.
