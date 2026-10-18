@@ -8,7 +8,7 @@ the CI workflow, git tags, the MCP tool registry, prds.go's section keys)
 and then asserts the doc agrees, so the prose cannot silently re-drift when
 reality moves: when the premise disappears the demand disappears with it.
 Exits 1 naming every offending claim (review-3 PM-02, PM-03, ARCH-04,
-ARCH-05/FEAT-08, USER-05, COMP-02, COMP-04, REL-04).
+ARCH-05/FEAT-08, USER-05, COMP-02, COMP-04, REL-04; review-4 COMP-08).
 """
 import pathlib
 import re
@@ -176,6 +176,46 @@ def backup_doc_states_reality(failures):
         fail(failures, "backup-restore.md does not state the operator's dump cadence duty")
 
 
+# Living docs checked for a PostgreSQL floor claim. docs/PLAN.md and skills/ sit
+# outside the docs-truth cluster's files, so they get a ceiling that may only
+# shrink until the integrator repairs them (rv4-COMP-08).
+PG_LIVING = ("README.md", "PRODUCT.md", "CONTRIBUTING.md", "SKILL.md", ".env.example",
+             "docs/SETENV.md", "docs/usage/", "docs/architecture/")
+PG_LEGACY_CEILING = {"docs/PLAN.md": 1, "skills/": 3}
+PG_CLAIM = re.compile(r"(?i)postgres(?:ql)?\W{0,6}(\d+)\+")
+
+
+def postgres_claims_match_ci(failures):
+    """rv4-COMP-08: CI starts one PostgreSQL major; a living doc may not promise
+    an older floor ("any PostgreSQL 14+") that no lane tests."""
+    majors = {int(m) for wf in (ROOT / ".github/workflows").glob("*.yml")
+              for m in re.findall(r"image:\s*postgres:(\d+)", wf.read_text(encoding="utf-8"))}
+    if not majors:
+        return  # no CI database lane; nothing to compare against
+    floor = min(majors)
+    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True,
+                             text=True, check=True).stdout.split()
+    legacy = dict.fromkeys(PG_LEGACY_CEILING, 0)
+    for name in tracked:
+        if not (name.endswith(".md") or name == ".env.example"):
+            continue
+        bucket = next((p for p in PG_LEGACY_CEILING if name.startswith(p)), None)
+        if bucket is None and not name.startswith(PG_LIVING):
+            continue
+        for m in PG_CLAIM.finditer(read(name)):
+            if int(m.group(1)) >= floor:
+                continue
+            if bucket:
+                legacy[bucket] += 1
+            else:
+                fail(failures, f"{name} promises 'PostgreSQL {m.group(1)}+' but CI only "
+                               f"starts PostgreSQL {floor}")
+    for bucket, count in legacy.items():
+        if count > PG_LEGACY_CEILING[bucket]:
+            fail(failures, f"{bucket}: {count} stale PostgreSQL floor claims, over the "
+                           f"ceiling of {PG_LEGACY_CEILING[bucket]}")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     client_readme_matches_handoff(failures)
@@ -187,6 +227,7 @@ if __name__ == "__main__":
     product_baseline_scopes_sections(failures)
     handoff_records_mail_state(failures)
     backup_doc_states_reality(failures)
+    postgres_claims_match_ci(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
