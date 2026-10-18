@@ -12,6 +12,12 @@ check_release_gate.py.
   PUB-04  every release archive carries LICENSE, THIRD_PARTY_NOTICES.md and
           the MPL-2.0 section 3.2 source offer, and the notices name every
           module server/go.mod requires (so a new dependency forces an entry).
+  PUB-07  every workflow narrows the token with a top-level `permissions:`
+          (no write at the top level); dependabot covers gomod, pub and
+          github-actions; security.yml runs govulncheck and gitleaks, each
+          pinned to an exact release and installed by `go install` (no
+          third-party Action), gitleaks redacting and seeing full history;
+          .gitignore keeps *.pem, *.key and *.p12 out of commits.
 
 CI-config properties: the first real proof is the first tag run after push.
 """
@@ -89,7 +95,88 @@ def pub04():
     return out
 
 
-CHECKS = [pub04]
+def top_permissions(text):
+    """(inline value, indented block) of the workflow-level `permissions:`, or None."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith("permissions:"):
+            block = []
+            for nxt in lines[i + 1 :]:
+                if not (nxt.startswith((" ", "\t")) or not nxt.strip()):
+                    break
+                block.append(nxt)
+            return line.split(":", 1)[1].split("#")[0].strip(), "\n".join(block)
+    return None
+
+
+def workflow_permissions():
+    out = []
+    for path in sorted((ROOT / ".github/workflows").glob("*.yml")):
+        found = top_permissions(path.read_text(encoding="utf-8"))
+        if found is None:
+            out.append(f"{path.name}: no top-level `permissions:` (the token keeps the repository default) (PUB-07, SEC-07)")
+            continue
+        inline, block = found
+        wide = [f"{k}: {v}" for k, v in re.findall(r"^\s+([\w-]+):\s*([\w-]+)", block, re.M) if v not in ("read", "none")]
+        if inline in ("write-all", "read-all") or wide:
+            out.append(f"{path.name}: the top-level permissions grant {inline or ', '.join(wide)}; grant write per job instead")
+    return out
+
+
+def dependabot():
+    text = read(".github/dependabot.yml")
+    if text is None:
+        return [".github/dependabot.yml does not exist (PUB-07)"]
+    out = [] if re.search(r"^version:\s*2\b", text, re.M) else ["dependabot.yml: no `version: 2`"]
+    seen = {}
+    for block in re.split(r"^\s*- package-ecosystem:", text, flags=re.M)[1:]:
+        eco = block.split("\n", 1)[0].strip().strip("\"'")
+        directory = re.search(r"directory:\s*[\"']?([^\"'\s#]+)", block)
+        interval = re.search(r"interval:\s*[\"']?(\w+)", block)
+        seen[eco] = (directory and directory.group(1), interval and interval.group(1))
+    for eco, directory in (("gomod", "/server"), ("pub", "/client"), ("github-actions", "/")):
+        if seen.get(eco, (None, None))[0] != directory:
+            out.append(f"dependabot.yml: no `{eco}` update for directory {directory}")
+        elif seen[eco][1] != "weekly":
+            out.append(f"dependabot.yml: the `{eco}` update is not scheduled weekly")
+    return out
+
+
+def security_workflow():
+    raw = read(".github/workflows/security.yml")
+    if raw is None:
+        return [".github/workflows/security.yml does not exist: no govulncheck, no secret scan (PUB-07)"]
+    text, out = joined(raw), []
+    for event in ("push", "pull_request", "schedule"):
+        if not re.search(rf"^  {event}:", text, re.M):
+            out.append(f"security.yml: not triggered by {event} (a new advisory needs the weekly schedule, a leak needs push and pull_request)")
+    for tool, install in (("govulncheck", r"go install golang\.org/x/vuln/cmd/govulncheck@v\d+\.\d+\.\d+\b"),
+                          ("gitleaks", r"go install github\.com/zricethezav/gitleaks/v8@v\d+\.\d+\.\d+\b")):
+        if not re.search(install, text):
+            out.append(f"security.yml: {tool} is not installed with `go install ...@vX.Y.Z` (pin an exact release, no @latest, no third-party Action)")
+    if re.search(r"@latest\b", text):
+        out.append("security.yml: `@latest` is not a pin")
+    if not re.search(r"govulncheck\s+\./\.\.\.", text):
+        out.append("security.yml: govulncheck does not scan ./...")
+    scans = [l for l in text.splitlines() if "--log-opts" in l]  # the gitleaks range scan
+    if not scans or not all("--redact" in l for l in scans):
+        out.append("security.yml: the gitleaks scan (`gitleaks git --log-opts=...`) must pass --redact: an unredacted finding prints the secret into a public log")
+    if "fetch-depth: 0" not in text:
+        out.append("security.yml: the secret scan needs `fetch-depth: 0` to see the commits it scans")
+    return out
+
+
+def gitignore_keys():
+    lines = {l.strip() for l in (read(".gitignore") or "").splitlines()}
+    return [f".gitignore does not ignore {pat} (PUB-07)" for pat in ("*.pem", "*.key", "*.p12") if pat not in lines]
+
+
+def pub07():
+    """PUB-07: least-privilege tokens, dependency and secret scanning, key files ignored."""
+    return workflow_permissions() + dependabot() + security_workflow() + gitignore_keys()
+
+
+CHECKS = [pub04, pub07]
 
 
 def main():
