@@ -110,7 +110,7 @@ func TestSendCooldownEndpointsReturnUniform200(t *testing.T) {
 			cd := newSendCooldown(authResendCooldown)
 			// Prime: stand in for the first request's send so the HTTP
 			// request below lands inside the window. httptest requests
-			// carry RemoteAddr 192.0.2.1:1234, which cooldownClientIP
+			// carry RemoteAddr 192.0.2.1:1234, which clientIP
 			// reduces to 192.0.2.1.
 			cd.allow(ep.email, "192.0.2.1")
 

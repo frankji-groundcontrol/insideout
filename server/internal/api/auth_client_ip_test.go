@@ -19,6 +19,13 @@ func TestClientIPPrefersRightmostXForwardedFor(t *testing.T) {
 		t.Fatalf("got %q, want 9.9.9.9", got)
 	}
 
+	// A trailing empty entry must not hide the client behind RemoteAddr: the
+	// resend cooldown and the auth throttle both key on this one helper.
+	r.Header.Set("X-Forwarded-For", "9.9.9.9, ")
+	if got := clientIP(r); got != "9.9.9.9" {
+		t.Fatalf("got %q with a trailing empty entry, want 9.9.9.9", got)
+	}
+
 	r.Header.Del("X-Forwarded-For")
 	if got := clientIP(r); got != "10.0.0.1" {
 		t.Fatalf("got %q, want RemoteAddr host 10.0.0.1", got)

@@ -2,9 +2,6 @@ package api
 
 import (
 	"maps"
-	"net"
-	"net/http"
-	"strings"
 	"sync"
 	"time"
 )
@@ -17,10 +14,12 @@ import (
 const authResendCooldown = 60 * time.Second
 
 // sendCooldown is a fixed-window resend gate keyed twice: per email and
-// per client IP. A send proceeds only when BOTH keys have been quiet for
-// the whole window, and the window anchors at the last actual send — a
-// blocked attempt never re-stamps the keys, so re-requesting every 59
-// seconds cannot freeze a victim's cooldown indefinitely.
+// per client IP (clientIP, shared with the auth throttle: one extraction,
+// so the two gates cannot disagree about who the caller is). A send
+// proceeds only when BOTH keys have been quiet for the whole window, and the
+// window anchors at the last actual send — a blocked attempt never
+// re-stamps the keys, so re-requesting every 59 seconds cannot freeze a
+// victim's cooldown indefinitely.
 type sendCooldown struct {
 	mu     sync.Mutex
 	window time.Duration
@@ -71,23 +70,4 @@ func (c *sendCooldown) sweepLocked(now time.Time) {
 	expired := func(_ string, t time.Time) bool { return now.Sub(t) >= c.window }
 	maps.DeleteFunc(c.emails, expired)
 	maps.DeleteFunc(c.ips, expired)
-}
-
-// cooldownClientIP identifies the requesting client for the resend gate.
-// The app is served behind a proxy that appends the client address to
-// X-Forwarded-For, so the rightmost entry is the trustworthy one; the
-// host part of RemoteAddr covers direct local traffic. It mirrors the
-// throttle middleware's IP extraction on purpose — a spoofed leftmost
-// XFF hop must not buy a fresh cooldown budget.
-func cooldownClientIP(r *http.Request) string {
-	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-		parts := strings.Split(xff, ",")
-		if ip := strings.TrimSpace(parts[len(parts)-1]); ip != "" {
-			return ip
-		}
-	}
-	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-		return host
-	}
-	return r.RemoteAddr
 }
