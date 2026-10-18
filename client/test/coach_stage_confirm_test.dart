@@ -66,6 +66,7 @@ class _StageApi extends ApiClient {
   final declinedStages = <(String, String)>[];
   bool declineFails = false;
 
+  @override
   Future<Conversation> declineConversationStage(
     String conversationId,
     String stage,

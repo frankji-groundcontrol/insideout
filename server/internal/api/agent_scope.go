@@ -105,6 +105,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"GET /api/v1/conversations/{id}/messages":            humanOnly,
 	"POST /api/v1/conversations/{id}/messages":           humanOnly,
 	"POST /api/v1/conversations/{id}/stage":              humanOnly,
+	"POST /api/v1/conversations/{id}/stage/decline":      humanOnly,
 	"GET /api/v1/prds/{id}/conversation":                 humanOnly,
 	"POST /api/v1/prds/{id}/conversation":                humanOnly,
 	"GET /api/v1/ideas/{iid}":                            humanOnly,

@@ -110,6 +110,19 @@ mixin _PrdVerbs on _ApiCore {
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
   }
 
+  /// Declines the coach's proposed stage (rv4-CLOSE-03); the answer is the
+  /// conversation with the proposal, and what was parked with it, cleared.
+  Future<Conversation> declineConversationStage(
+    String conversationId,
+    String stage,
+  ) async {
+    final res = await _dio.post(
+      '/conversations/$conversationId/stage/decline',
+      data: {'stage': stage},
+    );
+    return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));
+  }
+
   Future<Conversation> getConversation(String id) async {
     final res = await _exec(req.getConversation(id));
     return _parse(res, (d) => Conversation.fromJson(d as Map<String, dynamic>));

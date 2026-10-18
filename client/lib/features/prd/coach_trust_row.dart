@@ -8,9 +8,9 @@ import 'coach_stage_proposal.dart';
 import 'coach_trust_notes.dart';
 
 /// The stage proposal under the masthead, with the trust notes the stored
-/// conversation carries. [busy] holds the confirm button while a turn streams:
-/// the notes come from the conversation view, which the page refreshes when the
-/// turn ends, so a confirm in the middle of a turn would be an uninformed one.
+/// conversation carries. [busy] holds both buttons while a turn streams: the
+/// notes come from the conversation view, which the page refreshes when the
+/// turn ends, so an answer in the middle of a turn would be an uninformed one.
 class CoachProposalRow extends StatelessWidget {
   const CoachProposalRow({
     super.key,
@@ -33,7 +33,7 @@ class CoachProposalRow extends StatelessWidget {
       child: CoachStageProposal(
         proposed: conversation.pendingStage!,
         notes: coachTrustNotes(l10n, conversation),
-        canConfirm: !busy,
+        enabled: !busy,
         onConfirm: onConfirm,
         onDecline: onDecline,
       ),

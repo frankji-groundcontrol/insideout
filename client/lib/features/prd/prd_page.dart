@@ -198,17 +198,37 @@ class _PrdPageState extends State<PrdPage> {
 
   // The server writes the stage only on confirm (POST /conversations/{id}
   // /stage); its answer is the conversation with the proposal cleared.
-  Future<void> _confirmStage() async {
+  Future<void> _confirmStage() =>
+      _answerStage((api, id, stage) => api.confirmConversationStage(id, stage));
+
+  // Declining is a write too (rv4-CLOSE-03): the server clears the proposal and
+  // what was parked with it, so a reload cannot bring the card back. A decline
+  // it did not record leaves the card up.
+  Future<void> _declineStage() =>
+      _answerStage((api, id, stage) => api.declineConversationStage(id, stage));
+
+  bool _answering = false;
+
+  Future<void> _answerStage(
+    Future<Conversation> Function(ApiClient api, String id, String stage)
+    answer,
+  ) async {
     final conv = conversation;
     final pending = conv?.pendingStage;
-    if (conv == null || pending == null) return;
-    await guardWrite(context, () async {
-      final confirmed = await context
-          .read<Session>()
-          .api
-          .confirmConversationStage(conv.id, pending);
-      if (mounted) setState(() => conversation = confirmed);
-    });
+    if (conv == null || pending == null || _answering) return;
+    _answering = true; // a second tap would meet the 409 the first one made
+    try {
+      await guardWrite(context, () async {
+        final settled = await answer(
+          context.read<Session>().api,
+          conv.id,
+          pending,
+        );
+        if (mounted) setState(() => conversation = settled);
+      });
+    } finally {
+      _answering = false;
+    }
   }
 
   // The stored conversation carries what the confirm card must be honest
@@ -221,14 +241,6 @@ class _PrdPageState extends State<PrdPage> {
       final fresh = await context.read<Session>().api.getConversation(conv.id);
       if (mounted) setState(() => conversation = fresh);
     } catch (_) {}
-  }
-
-  // Decline stays local — the endpoint expresses confirm only — so the
-  // confirmed stage stands and the coach may propose again later.
-  void _declineStage() {
-    final conv = conversation;
-    if (conv == null) return;
-    setState(() => conversation = conv.copyWith(pendingStage: null));
   }
 
   Future<void> _requestReview() async {

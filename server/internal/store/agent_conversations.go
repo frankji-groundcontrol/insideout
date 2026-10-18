@@ -221,6 +221,29 @@ func (s *Store) ConfirmConversationStage(ctx context.Context, actorID, conversat
 	})
 }
 
+// DeclineConversationStage is the person's "not yet" to a stage the coach
+// proposed (rv4-CLOSE-03): the proposal and the finding resolutions parked with
+// it go together, and the stage and the findings stay as they were. A missing
+// or different proposal is ErrNotFound, as for ConfirmConversationStage. The
+// two keys are the agent package's (stage_confirm_apply.go consumes the same).
+func (s *Store) DeclineConversationStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
+	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		tag, err := tx.Exec(ctx, `
+			UPDATE insideout.agent_conversations
+			SET meta = meta - 'pendingStage' - 'pendingFindingResolutions'
+			WHERE id = $1 AND user_id = $2 AND meta->>'pendingStage' = $3`,
+			conversationID, actorID, stage,
+		)
+		if err != nil {
+			return err
+		}
+		if tag.RowsAffected() == 0 {
+			return ErrNotFound
+		}
+		return nil
+	})
+}
+
 func (s *Store) UpdateConversationMeta(ctx context.Context, actorID, conversationID uuid.UUID, meta json.RawMessage) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		_, err := tx.Exec(ctx, `UPDATE insideout.agent_conversations SET meta = $2::jsonb WHERE id = $1`, conversationID, jsonParam(meta))

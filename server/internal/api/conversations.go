@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
 
 func (s *Server) registerConversationRoutes(mux *http.ServeMux) {
@@ -15,6 +17,7 @@ func (s *Server) registerConversationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/conversations/{id}/messages", s.requireAuth(s.handleListConversationMessages))
 	mux.HandleFunc("POST /api/v1/conversations/{id}/messages", s.requireAuth(s.handleSendConversationMessage))
 	mux.HandleFunc("POST /api/v1/conversations/{id}/stage", s.requireAuth(s.handleConfirmConversationStage))
+	mux.HandleFunc("POST /api/v1/conversations/{id}/stage/decline", s.requireAuth(s.handleDeclineConversationStage))
 	mux.HandleFunc("POST /api/v1/prds/{id}/conversation", s.requireAuth(s.handleStartPrdConversation))
 }
 
@@ -218,6 +221,24 @@ type confirmStageRequest struct {
 // handleConfirmConversationStage writes a stage the coach proposed and
 // the person accepted. Declining never calls this, so the row stays.
 func (s *Server) handleConfirmConversationStage(w http.ResponseWriter, r *http.Request) {
+	// A closure, not the method value: a nil coach must still answer 400 to a
+	// bad body before it is reached.
+	s.answerStage(w, r, "confirm", func(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
+		return s.coach.ConfirmStage(ctx, actorID, conversationID, stage)
+	})
+}
+
+// handleDeclineConversationStage is the person's "not yet" to a proposed
+// stage. It clears the proposal and what was parked with it, so a reload does
+// not bring the card back and no later confirm applies it (rv4-CLOSE-03).
+func (s *Server) handleDeclineConversationStage(w http.ResponseWriter, r *http.Request) {
+	s.answerStage(w, r, "decline", s.store.DeclineConversationStage)
+}
+
+// answerStage is what confirm and decline share: the body names the proposed
+// stage, a stage that is not waiting is a 409, and the answer is the
+// conversation as stored.
+func (s *Server) answerStage(w http.ResponseWriter, r *http.Request, verb string, answer func(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error) {
 	userID, _ := UserID(r.Context())
 	cid, ok := pathUUID(w, r, "id")
 	if !ok {
@@ -233,19 +254,19 @@ func (s *Server) handleConfirmConversationStage(w http.ResponseWriter, r *http.R
 		httpx.WriteError(w, http.StatusBadRequest, "stage is required", "", nil)
 		return
 	}
-	err := s.coach.ConfirmStage(r.Context(), userID, cid, req.Stage)
+	err := answer(r.Context(), userID, cid, req.Stage)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusConflict, "that stage is not waiting for confirmation", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("confirm conversation stage", "error", err)
+		s.log.Error(verb+" conversation stage", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
 	conv, err := s.store.GetConversationForOwner(r.Context(), cid, userID)
 	if err != nil {
-		s.log.Error("get conversation after confirm", "error", err)
+		s.log.Error("get conversation after "+verb, "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}

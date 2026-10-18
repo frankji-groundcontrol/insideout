@@ -7,10 +7,10 @@ import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
 
 /// The coach's stage proposal, parked until the member ratifies it. Confirm
-/// asks the page to write the stage server-side; decline keeps the confirmed
-/// stage and drops the proposal locally (the API expresses confirm only).
-/// [notes] are the lines a person should read before confirming
-/// (coach_trust_notes.dart).
+/// asks the page to write the stage server-side; decline asks it to clear the
+/// proposal server-side (rv4-CLOSE-03), keeping the confirmed stage. [notes]
+/// are the lines a person should read before answering
+/// (coach_trust_notes.dart); [enabled] is false while they may still change.
 class CoachStageProposal extends StatefulWidget {
   const CoachStageProposal({
     super.key,
@@ -18,12 +18,12 @@ class CoachStageProposal extends StatefulWidget {
     required this.onConfirm,
     required this.onDecline,
     this.notes = const [],
-    this.canConfirm = true,
+    this.enabled = true,
   });
 
   final String proposed;
   final List<String> notes;
-  final bool canConfirm;
+  final bool enabled;
   final Future<void> Function() onConfirm;
   final VoidCallback onDecline;
 
@@ -86,12 +86,12 @@ class _CoachStageProposalState extends State<CoachStageProposal> {
               CoachPrompt(
                 key: const Key('coach-stage-confirm'),
                 label: l10n.t('coach.stageConfirm'),
-                onTap: confirming || !widget.canConfirm ? null : _confirm,
+                onTap: confirming || !widget.enabled ? null : _confirm,
               ),
               CoachPrompt(
                 key: const Key('coach-stage-decline'),
                 label: l10n.t('coach.stageDecline'),
-                onTap: widget.onDecline,
+                onTap: widget.enabled ? widget.onDecline : null,
               ),
             ],
           ),
