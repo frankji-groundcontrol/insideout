@@ -199,8 +199,17 @@ class _NodeMenu extends StatelessWidget {
                       ),
                     );
                     if (picked != null) {
+                      // A deadline is a calendar day. Noon UTC on that day
+                      // reads as the picked date wherever the instant is
+                      // formatted (isoDate shows the UTC date) and never
+                      // lands before the picked day's local midnight.
                       setLocal(
-                        () => deadline = picked.toUtc().toIso8601String(),
+                        () => deadline = DateTime.utc(
+                          picked.year,
+                          picked.month,
+                          picked.day,
+                          12,
+                        ).toIso8601String(),
                       );
                     }
                   },

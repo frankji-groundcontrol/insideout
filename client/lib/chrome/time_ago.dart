@@ -1,5 +1,7 @@
 /// YYYY-MM-DD prefix of an ISO timestamp, or the input unchanged when too
-/// short — display code must never RangeError on a partial date.
+/// short — display code must never RangeError on a partial date. It reads the
+/// date as written (the UTC date of the server's Z timestamps); deadlines are
+/// sent at noon UTC so that date is the picked day in every zone.
 String isoDate(String iso) => iso.length >= 10 ? iso.substring(0, 10) : iso;
 
 String timeAgo(
