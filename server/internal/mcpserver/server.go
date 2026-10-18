@@ -21,7 +21,14 @@ import (
 // all through clientconfig.Resolve — or sign the process in at runtime with
 // the auth_* tools (2026-08-24: all four surfaces must agree on auth ways; a
 // login tool's token is process state, never conversation output).
+//
+// The base is settled here, once: the process's tokens belong to it, so a
+// later change to the saved login (another terminal's `insideout login --api`)
+// cannot send this process's session to another server (review-4 SEC-05).
 func Build(api string) *server.MCPServer {
+	if creds, err := clientconfig.Resolve(api); err == nil {
+		api = creds.Base
+	} // else every tool call re-resolves and fails with the same error
 	s := server.NewMCPServer("insideout", "0.1.0",
 		server.WithToolCapabilities(false),
 		server.WithInstructions("InsideOut: ideas → PRDs → roadmaps. `guide` scaffolds the "+
