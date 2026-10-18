@@ -243,11 +243,12 @@ jobs:
       # Infos are the accepted baseline (see docs/plans board) but the count
       # only goes down: warnings and errors stay fatal in the analyzer itself,
       # and this step fails once the infos pass INFO_BASELINE (TEST-14). Lower
-      # the number whenever infos are fixed; never raise it.
+      # the number whenever infos are fixed; never raise it. rv4-PM-07: 14 is
+      # what the pinned 3.44 prints; check_ci_gates.py holds the ceiling.
       - name: Analyze (info count may not grow)
         shell: bash # pipefail on, so an analyzer failure is not hidden by tee
         env:
-          INFO_BASELINE: "16"
+          INFO_BASELINE: "14"
         run: |
           flutter analyze --no-fatal-infos | tee /tmp/analyze.log
           infos=$(grep -c -E '^ +info • ' /tmp/analyze.log || true)
