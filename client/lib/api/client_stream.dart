@@ -13,18 +13,25 @@ mixin _StreamVerbs on _ApiCore {
   })?
   fetchAttemptForTests;
 
-  /// A GET stream over the browser's fetch.
-  Stream<List<int>> _fetchGetStream(
-    String url,
-    Map<String, String> headers,
-    Future<void>? stop,
-  ) async* {
+  /// A GET stream over the browser's fetch. Fetch bypasses dio, and with it
+  /// the 401 refresh, so this applies the coach's policy (FULL-04): on a 401,
+  /// one single-flight refresh and a reopen, and the session cleared when that
+  /// fails too, instead of an expired access token ending the stream for good.
+  /// The opener re-reads the access token, so the reopen carries the rotated
+  /// bearer.
+  Stream<List<int>> _fetchGetStream(String url, Future<void>? stop) {
     final fetch = fetchAttemptForTests ?? fetchSseAttempt;
-    final attempt = await fetch(url, headers, stop: stop);
-    if (attempt.status >= 400) {
-      throw ApiException('stream failed', status: attempt.status);
-    }
-    yield* attempt.chunks;
+    return coachSseWithRefresh(
+      () async {
+        final token = await _readAccess();
+        return fetch(url, {
+          if (token != null) 'Authorization': 'Bearer $token',
+          'Accept': 'text/event-stream',
+        }, stop: stop);
+      },
+      _refreshSingleFlight,
+      _clearTokens,
+    );
   }
 
   /// Sends [content] and applies the reply's frames to [handlers]. A turn
@@ -130,7 +137,6 @@ mixin _StreamVerbs on _ApiCore {
     if (kIsWeb || fetchAttemptForTests != null) {
       chunks = _fetchGetStream(
         '$baseUrl/projects/$projectId/presence/stream?client=${Uri.encodeQueryComponent(clientId)}',
-        headers,
         stop,
       );
     } else {
@@ -188,7 +194,6 @@ mixin _StreamVerbs on _ApiCore {
     if (kIsWeb || fetchAttemptForTests != null) {
       chunks = _fetchGetStream(
         '$baseUrl/projects/$projectId/roadmap/progress/stream',
-        headers,
         stop,
       );
     } else {
