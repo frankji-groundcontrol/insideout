@@ -85,15 +85,16 @@ By hand, because the guard only reads text:
 - **USER-09.** The real `scripts/bootstrap.sh` ran under `env -i` with a
   throwaway home against a local file-based release (checksum verified, both
   binaries installed): the closing message has no `setup --local`. The built
-  CLI's `setup --local` outside a checkout exits 2 ("no repository checkout
-  found").
+  CLI's `setup --local --postgres bundled` outside a checkout exits 2 ("no
+  repository checkout found"), the refusal the removed line led into.
 - **COMP-07.** Against a private PostgreSQL 18 cluster (migrated, torn down
   afterwards), with fake credential rows seeded in the `insideout` schema only:
   the base script wrote the dump 0644 under umask 022 and 0664 under 002; the
-  fixed script writes it 0600 under 022, 002 and 000 when run as
-  `sh scripts/backup-db.sh` or with `bash`, a new output directory is 0700, an
-  existing 0755 directory is left alone, and the dump still carries every
-  seeded row the runbook names.
+  fixed script writes it 0600 under 022, 002 and 000 with
+  `sh scripts/backup-db.sh` (and under 022 with `bash`), into a new output
+  directory of mode 0700, and the dump still carries a seeded row in each of
+  the five credential tables the runbook names. An existing output directory
+  keeps its mode (`mkdir -p` does not touch it).
 
 **Pending first CI run after push.** Nothing here has run on a runner. The
 guard runs in CI only once the `check_*.py` loop from row 1.6 lands, and
