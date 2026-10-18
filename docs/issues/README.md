@@ -25,6 +25,11 @@ backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md
 "Open product slices" below — open by design, they track promises the
 running system does not implement yet.
 
+**Update 2026-10-18:** one record is open for a reason other than design —
+[review 4's open findings](2026-10-18-review-4-open-findings.md) (ten Highs, a
+red test on `main`, owner decisions); the full register lives in the
+[review folder](../review/2026-10-18-multirole-4/01-findings-register.md).
+
 ## Open product slices (2026-10-11)
 
 PRODUCT.md promises with no end-to-end implementation, one dated record per
@@ -227,4 +232,5 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 
 ### Reviews
 
+- [2026-10-18 — Review 4 open findings](2026-10-18-review-4-open-findings.md) — the ten Highs, the red `TestProjectQuietFlagged` on `main` and the owner decisions from [multirole review 4](../review/2026-10-18-multirole-4/README.md), each linked to a register ID and a plan row. Open; no `BUG-NNN` number consumed.
 - [2026-10-04 — Multirole review findings register](../review/2026-10-04-multirole/01-findings-register.md) — 75 verified findings (12 High confirmed) with a five-wave remediation plan; the review of record for prioritization. A second pass is in [multirole-2](../review/2026-10-04-multirole-2/01-findings-register.md).

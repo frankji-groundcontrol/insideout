@@ -1,0 +1,36 @@
+version: 2
+task: "Multirole review 4 and the remediation handoff"
+coordinator: claude
+history_file: 2026-10-18-multirole-4.track.history.jsonl
+main:
+  outcome: "A fourth whole-tree review over the public, released product: every High skeptic-reviewed, the top findings reproduced, a completeness critic closed, the report written and indexed, and an ordered 4-wave remediation plan ready to run as dynamic workflows."
+  owner: claude
+  status: in_progress
+  next_evidence: "Review delivered (145 findings: 0 Critical, 10 High, 88 Medium, 47 Low) in docs/review/2026-10-18-multirole-4/; changelog, issue record, learning note, board row and HANDOFF written, uncommitted. Remediation goal prompt is with the owner; no workflow launched."
+side_tracks: []
+updated_at: "2026-10-18T06:55:00Z"
+plan:
+- step: "Scout: product is main, clean worktree at 9f0b1c7, 18 leads with run results"
+  owner: claude
+  status: completed
+- step: "Fan out 13 briefs on one schema (137 unique findings)"
+  owner: claude
+  status: completed
+- step: "Skeptics on the 23 Highs: 9 confirmed, 14 downgraded, 0 refuted"
+  owner: claude
+  status: completed
+- step: "Reproduce the top findings (R1-R13, then R14-R15 after the critic)"
+  owner: claude
+  status: completed
+- step: "Completeness critic: 8 missed findings, score reconciliation, 10 clusters"
+  owner: claude
+  status: completed
+- step: "Write, redact and index docs/review/2026-10-18-multirole-4/"
+  owner: claude
+  status: completed
+- step: "Close records: changelog, issue record, learning note, board row, HANDOFF"
+  owner: claude
+  status: completed
+- step: "Remediation: owner approves the goal prompt, then one workflow per wave"
+  owner: claude
+  status: pending

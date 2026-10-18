@@ -10,6 +10,17 @@ path and current warnings, never history.
 
 ## What to do next
 
+**2026-10-18: multirole review 4 is delivered and the next engineering step
+is its remediation.** [The report](review/2026-10-18-multirole-4/README.md)
+(145 findings, 10 High) says the core held but the front door and the gates
+did not; start at [row 0.1 and row 1.1 of the plan](review/2026-10-18-multirole-4/40-remediation-plan.md).
+`main` has a red test (`TestProjectQuietFlagged`, wall clock, red since
+2026-10-16) and CI has no schedule, so do not read "the head run is green"
+below as true until plan row 1.4 lands; do not tag a release before row 1.5.
+Board row: [plan](plans/2026-10-18-multirole-4.md); open records:
+[issues](issues/2026-10-18-review-4-open-findings.md). Nothing from this
+review is committed yet.
+
 **Everything engineering is closed; the owner's account actions below are
 all that remain.** The 2026-10-11 docs-order pass (survey, folder READMEs,
 index consistency, Marksman cross-references — zero orphan docs) landed
@@ -24,6 +35,10 @@ restart — the restart ritual below is dropped), and one real LLM coach turn
 ran on the hosted box (model answered, 45 deltas, clean `message_end`).
 The review-3 remediation and its records are
 [on `main`](changelogs/2026-10-11-rv3-remediation/index.md).
+The 2026-10-12 guided key workflow is complete in the local worktree:
+[plan](plans/2026-10-12-guided-key-workflow.md), [setup tutorial](usage/key-setup-tutorial.md),
+[testing tutorial](usage/key-testing-tutorial.md), and
+[changelog](changelogs/2026-10-12-guided-key-workflow.md).
 
 1. ~~Re-key Resend~~ **Done 2026-10-11** — the owner's fresh send-scoped
    key is synced to Railway + `.env` + both hosts' stores; the admin mail

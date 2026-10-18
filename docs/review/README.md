@@ -19,6 +19,15 @@ remediation plan.
 
 ## Records
 
+- [2026-10-18 — Multirole review 4 (whole tree)](2026-10-18-multirole-4/README.md)
+  — main @ 9f0b1c7, after the public release; 13 reviewers + 8 skeptic
+  clusters + critic; 145 findings (0 Critical, 10 High — 9 skeptic-confirmed,
+  14 more downgraded, 0 refuted, 1 added by the critic). Verdict: the hardened
+  core held; the front door and the gates did not — no first account on a
+  fresh install, `--help` fails, a 15-minute CLI login, four client base
+  resolvers, `main` red since 2026-10-16 with no CI schedule, and a release
+  workflow with no test. Four waves in
+  [40-remediation-plan.md](2026-10-18-multirole-4/40-remediation-plan.md).
 - [2026-10-10 — Multirole review 3 (whole tree)](2026-10-10-multirole-3/README.md)
   — main @ 754c502, after the close-open-gaps wave; 10 reviewers + 3 skeptic
   clusters + critic in one dynamic workflow; 83 findings (0 Critical, 17 High —

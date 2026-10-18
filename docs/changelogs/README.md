@@ -28,6 +28,8 @@ carry the one-line descriptions:
 
 ### 2026-10
 
+- [2026-10-18-multirole-review-4.md](2026-10-18-multirole-review-4.md)
+- [2026-10-12-guided-key-workflow.md](2026-10-12-guided-key-workflow.md)
 - [2026-10-11-owner-deploy-and-mail-truth.md](2026-10-11-owner-deploy-and-mail-truth.md)
 - [2026-10-11-docs-order-marksman.md](2026-10-11-docs-order-marksman.md)
 - [2026-10-11-rv3-remediation/](2026-10-11-rv3-remediation/index.md)

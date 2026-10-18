@@ -6,6 +6,8 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-18 | [A wall-clock test turns red by date, and a push-only CI never sees it](2026-10-18-a-wall-clock-test-needs-a-scheduled-run.md) | [multirole review 4](../changelogs/2026-10-18-multirole-review-4.md) |
+| 2026-10-12 | [Key test failures must never render secret operands](2026-10-12-key-tests-must-not-render-secrets.md) | [guided key workflow](../changelogs/2026-10-12-guided-key-workflow.md) |
 | 2026-10-11 | [A truncated gate snapshot can mislabel its sections](2026-10-11-truncated-gate-snapshots-mislabel-sections.md) | [docs-order final audit D](../changelogs/2026-10-11-docs-order-marksman.md) |
 | 2026-10-11 | [A duplicate source entry masquerades as a rewrite](2026-10-11-a-duplicate-source-entry-masquerades-as-a-rewrite.md) | [docs-order C2 review-fix](../changelogs/2026-10-11-docs-order-marksman.md) |
 | 2026-10-11 | [Rerun the gate after a workflow's last repair round](2026-10-11-rerun-gates-after-a-workflows-last-repair.md) | [docs-order C1](../changelogs/2026-10-11-docs-order-marksman.md) |

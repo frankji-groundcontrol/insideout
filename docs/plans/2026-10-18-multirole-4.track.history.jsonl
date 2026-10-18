@@ -1,0 +1,2 @@
+{"at": "2026-10-18T06:45:00Z", "action": "critic-returned", "changes": {"next_evidence": "8 missed findings (COMP-01..08, COMP-02 High), score reconciliation 6.69 to 6.24, 10 clusters; register 137 to 145"}}
+{"at": "2026-10-18T06:55:00Z", "action": "delivered", "changes": {"status": "in_progress", "next_evidence": "review folder, plan and records written, uncommitted; COMP-01 and COMP-02 reproduced by the coordinator; remediation awaits owner go-ahead"}}
