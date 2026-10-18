@@ -6,10 +6,11 @@ Usage: python3 -I scripts/tests/check_docs_truth_rv4.py
 Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
-offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08).
+offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08).
 """
 import pathlib
 import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -107,11 +108,41 @@ def readme_scopes_github_evidence(failures):
                                f"GitHub App webhook: {block[:48]!r}")
 
 
+def readme_first_run_path(failures):
+    """rv4-PM-08: a stranger's first success must not dead-end. Once a release
+    exists the Install section leads with the prebuilt one-liner; the installer
+    refusing other OSes is stated; invitation-only signup comes with a way to
+    ask for an invite and a no-account try-out."""
+    readme = read("README.md")
+    start = readme.index("## 安装 / Install")
+    end = re.search(r"^## ", readme[start + 1:], re.M)
+    section = readme[start:start + 1 + end.start()] if end else readme[start:]
+    tags = subprocess.run(["git", "-C", str(ROOT), "tag", "--list", "v*"],
+                          capture_output=True, text=True, check=True).stdout.split()
+    heads = re.findall(r"^### (.*)$", section, re.M)
+    pre = next((i for i, h in enumerate(heads) if "prebuilt" in h), None)
+    src = next((i for i, h in enumerate(heads) if "from source" in h), None)
+    if tags and (pre is None or src is None or pre > src):
+        fail(failures, "README's Install section does not put the prebuilt-binaries "
+                       "subsection before building from source")
+    if "unsupported OS" in read("scripts/bootstrap.sh"):
+        for needle in ("macOS and Linux only", "Windows is not supported"):
+            if needle not in section:
+                fail(failures, f"README's Install section lacks '{needle}' "
+                               "(scripts/bootstrap.sh refuses other OSes)")
+    if "invitation_only" in read("server/db/migrations/20260825120000_invitation_signup.sql"):
+        if not re.search(r"(?i)invite request", readme):
+            fail(failures, "README says signup is invitation-only but names no way to ask for an invite")
+        if "Try it without an account" not in section:
+            fail(failures, "README's Install section has no 'Try it without an account' line")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     env_variables_documented(facts, failures)
     offline_coach_not_overclaimed(failures)
     readme_scopes_github_evidence(failures)
+    readme_first_run_path(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
