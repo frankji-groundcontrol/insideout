@@ -10,6 +10,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
+	"golang.org/x/term"
 )
 
 // rv4-USER-01: signup is invitation-only by default and only an admin can
@@ -146,5 +147,89 @@ func TestPromoteAdminLeavesAnExistingPasswordAlone(t *testing.T) {
 	}
 	if ok, err := auth.VerifyPassword(u.PasswordHash, "the original passphrase"); err != nil || !ok {
 		t.Fatalf("promotion replaced the existing password (ok=%v err=%v)", ok, err)
+	}
+}
+
+// readNewPassword on a pipe: one line, held to the register handler's floor.
+func TestReadNewPasswordPiped(t *testing.T) {
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		t.Skip("stdin is a terminal; the non-TTY path is not exercised here")
+	}
+	for script, wantErr := range map[string]bool{
+		"a long passphrase\n": false,
+		"short\n":             true,
+		"":                    true,
+	} {
+		restore := swapStdin(script)
+		got, err := readNewPassword()
+		restore()
+		if (err != nil) != wantErr {
+			t.Errorf("readNewPassword(%q) err=%v, want error=%v", script, err, wantErr)
+		}
+		if err == nil && got != "a long passphrase" {
+			t.Errorf("readNewPassword(%q) = %q", script, got)
+		}
+	}
+}
+
+func askNever(t *testing.T) func() (string, error) {
+	return func() (string, error) {
+		t.Helper()
+		t.Error("the password was asked for although the account exists")
+		return "", errors.New("unexpected prompt")
+	}
+}
+
+// Without the owner pool the new account exists but cannot be promoted: the
+// error says so, and the re-run (owner pool attached) promotes it without
+// asking for a password again — no half-made state to clean up by hand.
+func TestPromoteAdminWithoutOwnerPoolSaysSoAndRecovers(t *testing.T) {
+	url, owner := dbEnv(t)
+	st := openTestStore(t, url)
+	ctx := context.Background()
+	email := "no-owner-" + uuid.NewString() + "@example.com"
+	ask := func() (string, error) { return "a long passphrase", nil }
+
+	created, err := promoteAdmin(ctx, st, email, ask)
+	if err == nil || !strings.Contains(err.Error(), "DATABASE_OWNER_URL") {
+		t.Fatalf("want an error naming DATABASE_OWNER_URL, got created=%v err=%v", created, err)
+	}
+	if _, gerr := st.GetUserByEmail(ctx, email); gerr != nil {
+		t.Fatalf("the account should exist after the blocked promotion: %v", gerr)
+	}
+
+	if aerr := st.AttachMigratePool(ctx, owner); aerr != nil {
+		t.Fatal(aerr)
+	}
+	created, err = promoteAdmin(ctx, st, email, askNever(t))
+	if err != nil || created {
+		t.Fatalf("re-run: created=%v err=%v, want created=false and no error", created, err)
+	}
+	if u, _ := st.GetUserByEmail(ctx, email); u == nil || u.SystemRole != "admin" {
+		t.Fatalf("re-run did not promote: %+v", u)
+	}
+}
+
+// Accounts are stored lowercase; a mixed-case, padded argument must land on
+// that row instead of minting a second, unreachable one.
+func TestPromoteAdminNormalisesTheAddress(t *testing.T) {
+	url, owner := dbEnv(t)
+	st := openTestStore(t, url)
+	ctx := context.Background()
+	if err := st.AttachMigratePool(ctx, owner); err != nil {
+		t.Fatal(err)
+	}
+	lower := "mixed-" + uuid.NewString() + "@example.com"
+	typed := "  " + strings.ToUpper(lower[:1]) + lower[1:len(lower)-3] + "COM \n"
+
+	created, err := promoteAdmin(ctx, st, typed, func() (string, error) { return "a long passphrase", nil })
+	if err != nil || !created {
+		t.Fatalf("created=%v err=%v", created, err)
+	}
+	if u, gerr := st.GetUserByEmail(ctx, lower); gerr != nil || u.SystemRole != "admin" {
+		t.Fatalf("the lowercase account is not the admin: %+v %v", u, gerr)
+	}
+	if _, err := promoteAdmin(ctx, st, "not-an-address", askNever(t)); err == nil {
+		t.Fatal("an address without @ must be refused before any prompt")
 	}
 }

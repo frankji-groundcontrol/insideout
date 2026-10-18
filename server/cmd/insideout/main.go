@@ -4,7 +4,7 @@
 //	insideout migrate     apply pending SQL migrations and exit
 //	insideout seed        create demo data for local development
 //	insideout health      container HEALTHCHECK: probe /healthz over loopback
-//	insideout promote-admin  grant admin to one account (owner pool)
+//	insideout promote-admin <email>  grant admin (owner pool); creates the account, password on stdin, when absent
 //
 // The product CLI verbs (login, ideas, prd, roadmap, setup, …) dispatch
 // from runClientCommand in cli.go before any server env or DB is touched;
@@ -67,9 +67,9 @@ func main() {
 	case "seed":
 		runSeed(ctx, log, st)
 	case "promote-admin":
-		if len(os.Args) < 3 {
-			log.Error("usage: insideout promote-admin <email>")
-			os.Exit(1)
+		if len(os.Args) != 3 {
+			log.Error("usage: insideout promote-admin <email>  (a new account's password is read from stdin, never argv)")
+			os.Exit(2)
 		}
 		runPromoteAdmin(ctx, log, st, os.Args[2])
 	case "":
@@ -78,20 +78,6 @@ func main() {
 		log.Error("unknown subcommand", "command", cmd)
 		os.Exit(1)
 	}
-}
-
-// runPromoteAdmin sets system_role='admin' for one account — the only
-// path to admin (there is deliberately no self-promotion API). Cross-user
-// updates on users are RLS-blocked for the app role, so this needs the
-// owner pool (DATABASE_OWNER_URL).
-func runPromoteAdmin(ctx context.Context, log *slog.Logger, st *store.Store, email string) {
-	if err := st.SetSystemRole(ctx, email, "admin"); err != nil {
-		log.Error("promote-admin", "error", err)
-		os.Exit(1)
-	}
-	// The operator typed the address; the log may end up in CI or hosted
-	// log storage, so it states the fact without echoing it.
-	log.Info("promote-admin: done", "role", "admin")
 }
 
 func args() string {
