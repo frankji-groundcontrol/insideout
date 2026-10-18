@@ -1,6 +1,7 @@
 package agentcontext
 
 import (
+	"slices"
 	"testing"
 	"time"
 )
@@ -73,13 +74,14 @@ func TestBrainstormingModeEmphasizesArgument(t *testing.T) {
 		t.Errorf("argument shape wrong: %v", arg)
 	}
 	open := out["openQuestions"].([]string)
-	// risks is blank, so the assembled open questions must carry at least
-	// one blank-section entry — an empty list is the failure mode this
-	// test exists to catch (TEST-05: it used to log and pass).
-	if len(open) == 0 {
-		t.Errorf("open questions = %v, want a blank-section entry (risks is blank)", open)
-	} else if open[0] != "risks" && open[0] != "users" && open[0] != "nonGoals" && open[0] != "constraints" && open[0] != "requirements" && open[0] != "stories" {
-		t.Errorf("open questions = %v, want a blank-section key first", open)
+	// An exact, ordered list (rv4-QUAL-01; TEST-05 first made an empty list
+	// fail, but "any of six keys first" could not tell a wrong list from a
+	// right one). Blank means what readiness means: background and goals are
+	// written, risks is present but empty, and the other five are absent, so
+	// all six are open, in readiness order.
+	want := []string{"constraints", "nonGoals", "requirements", "risks", "stories", "users"}
+	if !slices.Equal(open, want) {
+		t.Errorf("open questions = %v, want %v", open, want)
 	}
 	if _, has := out["leaves"]; has {
 		t.Error("brainstorming should not carry leaves")
