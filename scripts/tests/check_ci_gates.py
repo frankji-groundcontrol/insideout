@@ -24,6 +24,8 @@ one, so the first CI run after a push is what proves the behavior.
   floor, and no step name announces an older one.
 - rv4-PM-07: the analyzer ratchet (INFO_BASELINE in the client job) never
   allows more infos than the pinned toolchain measures (INFO_CEILING below).
+- rv4-PM-10 (CI half): the server job fails on `go mod tidy -diff`, so a direct
+  dependency marked indirect or a stale go.sum cannot sit in go.mod unseen.
 """
 import pathlib
 import re
@@ -84,6 +86,11 @@ def script_of(step):
             body.append(nxt)
         return textwrap.dedent("\n".join(body))
     return None
+
+
+def code(step):
+    """A step without its comment-only lines (a comment may name a command)."""
+    return "\n".join(l for l in step.splitlines() if not l.lstrip().startswith("#"))
 
 
 def weekly_schedule():
@@ -213,8 +220,31 @@ def analyzer_ratchet():
     ]
 
 
+def mod_tidy_checked():
+    """PM-10: a step runs `go mod tidy -diff` where go.mod is, after setup-go."""
+    block = job(read(CI), "server")
+    chunks = [code(c) for c in steps(block)]
+    tidy = next((i for i, c in enumerate(chunks) if "go mod tidy -diff" in c), None)
+    if tidy is None:
+        return [
+            f"{CI}: no server-job step runs `go mod tidy -diff` - a direct "
+            "dependency can sit marked indirect, and a stale go.sum stay, "
+            "unseen (rv4-PM-10)"
+        ]
+    where, problems = workdir(block, chunks[tidy]), []
+    if not (ROOT / where / "go.mod").is_file():
+        problems.append(f"{CI}: `go mod tidy -diff` runs from {where!r}, which holds no go.mod (rv4-PM-10)")
+    setup = next((i for i, c in enumerate(chunks) if "actions/setup-go" in c), None)
+    if setup is None or setup > tidy:
+        problems.append(f"{CI}: `go mod tidy -diff` runs before actions/setup-go (rv4-PM-10)")
+    if re.search(r"\|\|\s*(true|:)(\s|$)", chunks[tidy]):
+        problems.append(f"{CI}: the `go mod tidy -diff` step swallows its failure (rv4-PM-10)")
+    return problems
+
+
 CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests,
-          contract_guards_run, guards_see_the_tags, ubuntu_go_floor, analyzer_ratchet]
+          contract_guards_run, guards_see_the_tags, ubuntu_go_floor,
+          analyzer_ratchet, mod_tidy_checked]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
