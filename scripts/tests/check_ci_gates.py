@@ -13,6 +13,8 @@ one, so the first CI run after a push is what proves the behavior.
 - rv4-PM-02: ci.yml runs on a weekly schedule, off the :00 and :30 marks, and
   the scheduled run shuffles test order, so a clock-pinned or order-dependent
   test cannot sit red between pushes.
+- rv4-TEST-08: only a pull request's older run is cancelled; a quick follow-up
+  push to main must not cancel the previous commit's only verdict.
 """
 import pathlib
 import re
@@ -66,7 +68,19 @@ def scheduled_shuffle():
     ]
 
 
-CHECKS = [weekly_schedule, scheduled_shuffle]
+def cancel_only_pull_requests():
+    """TEST-08: cancel-in-progress is an expression on the pull_request event."""
+    value = re.search(r"cancel-in-progress:\s*(.*)", top(read(CI), "concurrency"))
+    if value and "github.event_name == 'pull_request'" in value.group(1):
+        return []
+    return [
+        f"{CI}: concurrency cancels in-progress runs on every event - a quick "
+        "follow-up push to main cancels the previous commit's only verdict; "
+        "scope cancel-in-progress to pull_request (rv4-TEST-08)"
+    ]
+
+
+CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
