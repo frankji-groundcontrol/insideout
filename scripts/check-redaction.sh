@@ -27,7 +27,7 @@ set -u
 root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 2
 cd "$root" || exit 2
 base=server/internal/apiclient/default_base.go
-host=$(sed -n 's#^const DefaultBase = "https\{0,1\}://\([^/"]*\).*#\1#p' "$base" 2>/dev/null)
+host=$(sed -n 's#^[a-z]* DefaultBase = "https\{0,1\}://\([^/"]*\).*#\1#p' "$base" 2>/dev/null)
 if [ -z "$host" ]; then
   echo "check-redaction: cannot read the hosted host from $base" >&2
   exit 2

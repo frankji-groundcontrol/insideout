@@ -5,7 +5,7 @@ default_api_base() {
   local here repo line
   here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
   repo=$(cd "$here/.." && pwd)
-  line=$(sed -n 's/^const DefaultBase = "\(.*\)"$/\1/p' "$repo/server/internal/apiclient/default_base.go")
+  line=$(sed -n 's/^[a-z]* DefaultBase = "\(.*\)"$/\1/p' "$repo/server/internal/apiclient/default_base.go")
   if [ -z "$line" ]; then
     echo "error: DefaultBase missing from server/internal/apiclient/default_base.go" >&2
     return 1
