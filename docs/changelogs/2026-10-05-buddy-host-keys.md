@@ -11,8 +11,8 @@ deployed. Plan:
 ## What changed (slice 1 — jwt)
 
 - **`hosts/buddys-macbook-pro-2.local/`** — new host folder: `host.yml`
-  (metadata only; name and `ssh_alias: MBP2` match agents_home's record
-  for the same machine), `README.md`, `keys/README.md` (live state
+  (metadata only; the name matches agents_home's record for the same
+  machine and the ssh alias is a placeholder), `README.md`, `keys/README.md` (live state
   table), and the first manifest `keys/auth/jwt.yaml`. Manifests land
   key-by-key as each key is actually set here, so the tracked tree
   always reflects verified state.

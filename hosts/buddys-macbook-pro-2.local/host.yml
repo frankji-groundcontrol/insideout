@@ -1,6 +1,7 @@
 # Metadata only. No passwords, tokens, or addresses.
+# checkout and ssh_alias hold placeholders; the real values stay on the machine, not in git.
 name: buddys-macbook-pro-2.local
-ssh_alias: MBP2
+ssh_alias: <ssh-alias>
 description: Secondary macOS development workstation; local dev against the shared deployment database.
 os: darwin-arm64
-checkout: /Users/frankji/Projects/insideout
+checkout: <repo-checkout>

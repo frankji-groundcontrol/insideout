@@ -91,7 +91,7 @@ Nothing deploys.
 ## Decisions
 
 - Folder name `buddys-macbook-pro-2.local` matches agents_home's host
-  for the same machine; `ssh_alias: MBP2` likewise.
+  for the same machine; the manifest's ssh alias is a placeholder (rv4-PUB-10).
 - Manifests land key-by-key with the user (not front-loaded), so the
   tracked tree always reflects verified state; the store's six parts
   are satisfied per key by: manifest+`.key` (1), `dev.sh`/`env.sh`
