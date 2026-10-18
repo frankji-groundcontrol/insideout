@@ -8,7 +8,7 @@ the same day.
 - Durable account `<dogfood-account>` (credentials in the
   local untracked `~/.zcode-tracks/insideout-dogfood-credentials.txt`).
 - Real workspace → idea → PRD ("InsideOut 自举") → agent `build` →
-  project `d8d6ab41-8048-49ba-ab2e-72b3ed43341f`, repo-bound to
+  project `<project-id>`, repo-bound to
   `frankji-groundcontrol/insideout`.
 - `insideout.yaml` regenerated from that project (no more scratch node
   ids) with three matchers: `拆解核心需求` ← branch `main`;

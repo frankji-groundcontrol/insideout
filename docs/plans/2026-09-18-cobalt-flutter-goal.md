@@ -29,7 +29,7 @@ on live surfaces.
    [`docs/design-qa/2026-09-17-cobalt-layouts.md`](../design-qa/2026-09-17-cobalt-layouts.md),
    [`docs/design-qa/2026-09-17-cobalt-shade.md`](../design-qa/2026-09-17-cobalt-shade.md).
 4. HTML prototype (if present on the host): OpenDesign project
-   `5b906e39-d7e4-481e-a94f-4242e9fafac1`, files
+   `<project-id>`, files
    `DESIGN_LANGUAGE.md`, `brand-spec-cobalt.md`,
    `cobalt-language.html`, `insideout-cobalt.html`.
 
