@@ -18,17 +18,17 @@ counts and file locations only. Cite the findings as `rv4-PUB-01` and so on
 
 | Row | Register IDs | The owner decides | Already done | Holds until decided | Closes when |
 |---|---|---|---|---|---|
-| 0.1 | rv4-PUB-01, rv4-PM-11 | Rotate the hosted admin address and the owner-domain account address, both of which were public in dated records. | Scrubbed to `<admin-email>` / `<owner-email>`: 3 spots in 2 records, and 2 spots in 1 record. The guard now rejects any other address. | Keep both addresses. | The owner writes "keep" or "rotated" in this row. |
+| 0.1 | rv4-PUB-01, rv4-PM-11 | Rotate the hosted admin address and the owner-domain account address, both of which were public in dated records. | Scrubbed to `<admin-email>` / `<owner-email>`: 3 spots in 2 records, and 2 spots in 1 record; the truncated stems and the owner mail domain left the handoff, the plans board and one review quote (follow-up). The guard now rejects any other address. | Keep both addresses. | The owner writes "keep" or "rotated" in this row. |
 | 0.2 | rv4-PUB-05 | In the hosting dashboard of the legacy database project, confirm the Data API exposes no schema, then rotate or disable its publishable key. | The `.gitignore` exception for the legacy env file is deleted; `.env.*` ignores that name again. | Project and key untouched. | The owner records "exposed schemas empty" and "key rotated, disabled or accepted". |
-| 0.3 | rv4-PUB-10 | Ship `hosts/` as an example tree (`hosts/example/`) and keep the real one untracked, or keep today's layout. | Both `host.yml` files carry `<repo-checkout>` and `<ssh-alias>`; two records stopped quoting the alias; no `hosts/` directory was renamed, moved or deleted. | Keep the layout. | The owner records "example tree" (then run the prompt below) or "keep". |
+| 0.3 | rv4-PUB-10 | Ship `hosts/` as an example tree (`hosts/example/`) and keep the real one untracked, or keep today's layout. | Both `host.yml` files carry `<repo-checkout>` and `<ssh-alias>`; two records stopped quoting the alias; no `hosts/` directory was renamed, moved or deleted; the OS user left two older docs and the setup skill's host-record sentence now matches (follow-up). | Keep the layout. | The owner records "example tree" (then run the prompt below) or "keep". |
 | 0.4 | rv4-PUB-06 | Accept the author identities in history, or rewrite history. | Nothing; this row is a decision only. | Accept; do not rewrite. | The owner records "accept" or "rewrite" here. |
 
 ## 0.1 Addresses
 
 Rotating changes a live account on the hosted instance, so it is the owner's.
-Leftovers outside this wave's file list are under Residue below. The release
-tag embeds a tagger address (rv4-PM-11); tags are history, so that falls under
-0.4.
+The leftovers outside this wave's file list were closed by the wave-0
+follow-up (see Residue below). The release tag embeds a tagger address
+(rv4-PM-11); tags are history, so that falls under 0.4.
 
 ## 0.2 The legacy project
 
@@ -66,21 +66,31 @@ is a lock-step mailmap rewrite plus a force-push of `main`: every clone is
 re-cloned, the release tag is re-pointed, and the third party must agree
 first. Without a recorded decision nobody rewrites; no wave touches history.
 
-## Residue the guard cannot see
+## Residue the guard cannot see (closed by the wave-0 follow-up)
 
-The address rule sees whole addresses. These spots hold truncated stems, the
-owner's mail domain or a real OS user, in files outside this wave's file list
-(the handoff and the plans board are integrator-owned); they are engineering
-work, not owner decisions:
+The address rule sees whole addresses. These spots held truncated stems, the
+owner's mail domain or a real OS user, in files outside the cluster's file
+list (the handoff and the plans board are integrator-owned). They were
+engineering work, not owner decisions, and the integrator's follow-up commit
+closed them with the same placeholder swap, then re-ran
+`sh scripts/check-redaction.sh` (clean):
 
-- `docs/HANDOFF.md:52-53` — address stems with ellipses and the owner's mail
-  domain.
-- `docs/plans/README.md:45` — an address stem with an ellipsis.
-- `docs/review/2026-10-18-multirole-4/26-public-release.md:44` — address
-  stems with ellipses inside a quoted finding.
-- `docs/history/nuxt-migration.md` (5 lines) and
-  `docs/plans/2026-07-21-prd-agent-harness/research.md` (1 line) — a
-  `/Users/<name>/` path with the real OS user.
+- `docs/HANDOFF.md` (2 lines) — address stems with ellipses and the owner's
+  mail domain, now `<admin-email>`, `<rehearsal-account>` and `<owner-domain>`.
+- `docs/plans/README.md` (1 line) — an address stem with an ellipsis, now
+  `<admin-email>`.
+- `docs/review/2026-10-18-multirole-4/26-public-release.md` (1 line) — the
+  same stems inside a quoted finding, now the same placeholders, marked as
+  redacted after the review.
+- `docs/history/nuxt-migration.md` (6 paths on 5 lines) and
+  `docs/plans/2026-07-21-prd-agent-harness/research.md` (1 line) — the real OS
+  user in a path, now `/Users/<os-user>/`.
+- `skills/insideout-setup/SKILL.md` and the comment in
+  `config/git-hooks/pre-commit` — prose that still said `host.yml` holds a
+  checkout path and that the guard covers one address; both now match the code
+  (a comment-only change to the hook).
 
-Closing them takes the same placeholder swap as the rest, then a re-run of
-`sh scripts/check-redaction.sh`.
+The ceiling stays: a truncated stem or a bare domain added later is invisible
+to the rule, and a person has to catch it in review. The OS-user part has a
+generic check, `git grep -n -I -E '/Users/[A-Za-z0-9._-]+/'`, which prints
+nothing on the tracked tree today.

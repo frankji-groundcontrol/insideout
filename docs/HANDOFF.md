@@ -49,8 +49,8 @@ The 2026-10-12 guided key workflow is complete in the local worktree:
    Note for the future: the key is send-scoped (`/domains` answers 401 —
    that is the restriction, not a dead key), and the verified sender
    domain delivers to any address; the Resend account's own address
-   (`frank.ji@…`) and `scihill.com` addresses deliver, the old rehearsal
-   address `dingjue.ji@…` bounces.
+   (`<admin-email>`) and `<owner-domain>` addresses deliver, the old
+   rehearsal address `<rehearsal-account>` bounces.
 2. **Still the owner's, console-only:** the Supabase automated-backup
    toggle (dashboard — a schema-scoped snapshot was taken 2026-10-11
    before the purge) and a store-signed Android bundle (needs the

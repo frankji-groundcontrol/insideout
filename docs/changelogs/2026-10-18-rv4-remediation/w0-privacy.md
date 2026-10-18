@@ -91,6 +91,11 @@ Known ceilings, recorded on purpose:
 
 ## Left for the integrator
 
+**Closed.** The integrator's wave-0 follow-up carried out every documentation
+and comment item below, and the wave-0 section of this folder's `index.md`
+lists the records; the paragraphs here are what the cluster handed over, kept
+as the record. The one judgment call (the deployed host) stays as decided.
+
 The guard passes on the whole tracked tree, but truncated stems and one real
 OS user path remain in files outside this cluster:
 `docs/HANDOFF.md` lines 52 and 53, `docs/plans/README.md` line 45, the review

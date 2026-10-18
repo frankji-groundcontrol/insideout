@@ -12,7 +12,7 @@ agent should follow this spec today.*
 ## 0. Scope, Locations, and Global Rules
 
 - **Target:** Nuxt 4, Universal SSR (`ssr: true`).
-- **Project root (Nuxt rootDir):** `/Users/frankji/Projects/juanleme/app` — the existing Vite app is **replaced in place**. `pnpm-lock.yaml` already lives here; this is the package root.
+- **Project root (Nuxt rootDir):** `/Users/<os-user>/Projects/juanleme/app` — the existing Vite app is **replaced in place**. `pnpm-lock.yaml` already lives here; this is the package root.
 - **Package manager:** pnpm.
 - **Source layout decision — KEEP `src/` AND set `srcDir: "src"`.** The current code uses the `@/` alias mapped to `./src/*` pervasively (verified across `@/components`, `@/stores`, `@/services`, `@/types`, `@/utils`, `@/i18n`, `@/lib`, `@/views`). To avoid touching hundreds of import statements, we set Nuxt `srcDir: "src"` so Nuxt's app dirs (`pages/`, `layouts/`, `middleware/`, `plugins/`, `components/`, `composables/`, `app.vue`, `error.vue`, `assets/`) live **inside `src/`**, and we keep an explicit `@` → `./src` alias. `server/`, `public/`, `modules/`, `nuxt.config.ts`, `tailwind.config.js`, `package.json` stay at the **rootDir** (`app/`).
   - This deviates from the prompt's `srcDir: "."` wording but achieves the same goal (no `app/app/` nesting) with **strictly less churn** — the `@/*` → `src/*` mapping that every file already uses is preserved unchanged. The prompt's intent ("keep source files where the `@` alias already points, avoid ugly nesting, document the choice") is satisfied. If a future agent insists on literal `srcDir: "."`, they must additionally set `serverDir`, `dir.public`, and rewrite the `@` alias to root — explicitly NOT done here.
@@ -30,7 +30,7 @@ agent should follow this spec today.*
 
 ## 1. Exact `package.json`
 
-Path: `/Users/frankji/Projects/juanleme/app/package.json`.
+Path: `/Users/<os-user>/Projects/juanleme/app/package.json`.
 
 ### Remove these (Nuxt provides them transitively; manual Vite/router tooling is obsolete)
 
@@ -77,7 +77,7 @@ Keep: `@supabase/supabase-js`, `@heroicons/vue`, all `@tiptap/*`, `vue`, `happy-
 
 ## 2. Exact `nuxt.config.ts`
 
-Path: `/Users/frankji/Projects/juanleme/app/nuxt.config.ts` (create).
+Path: `/Users/<os-user>/Projects/juanleme/app/nuxt.config.ts` (create).
 
 ```ts
 import { fileURLToPath } from 'node:url'
@@ -139,7 +139,7 @@ Nuxt overrides any `runtimeConfig` value from a matching `NUXT_*` env var at **r
 
 ### `.env` migration (also see §2b file plan)
 
-Nuxt only auto-loads `.env` (not `.env.supabase`). Create `/Users/frankji/Projects/juanleme/app/.env` and `/Users/frankji/Projects/juanleme/app/.env.example`. **Full env name mapping:**
+Nuxt only auto-loads `.env` (not `.env.supabase`). Create `/Users/<os-user>/Projects/juanleme/app/.env` and `/Users/<os-user>/Projects/juanleme/app/.env.example`. **Full env name mapping:**
 
 | Old (Vite) | New (Nuxt runtime env) | runtimeConfig path |
 |---|---|---|
@@ -212,7 +212,7 @@ Not applicable — we use **custom plugins**, not `@nuxtjs/supabase` / `@nuxtjs/
 
 ## 4. File Plan (every source file)
 
-Base dir for all paths: `/Users/frankji/Projects/juanleme/app/`. After migration, Nuxt app dirs live under `src/`.
+Base dir for all paths: `/Users/<os-user>/Projects/juanleme/app/`. After migration, Nuxt app dirs live under `src/`.
 
 ### 4a. Entry / config — delete & create
 

@@ -185,8 +185,9 @@ success. Report failures honestly with the command output.
 The install is not done until it is written down:
 
 1. **Host record**: create `hosts/<hostname>/` — `README.md` (one
-   paragraph: what this machine is for), `host.yml` (name, os,
-   checkout path — metadata only, no secrets, no addresses; copy the
+   paragraph: what this machine is for), `host.yml` (name, os, and the
+   `<repo-checkout>` and `<ssh-alias>` placeholders — metadata only, no
+   secrets, no addresses, no machine paths or ssh aliases; copy the
    shape of [an existing host](../../hosts/franks-macbook-pro.local/host.yml)),
    and the `keys/` store from Step 5. Add the host to the
    [hosts table](../../hosts/README.md).
