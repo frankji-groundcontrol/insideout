@@ -183,6 +183,17 @@ to be `insideout_owner`. Every documented setup (compose, `scripts/setup.sh`,
 `.env.example`, CI) already serves as `insideout_app`; the dashboard `postgres`
 user of a managed instance is the case this catches.
 
+**Proposal items are immutable apart from one stamp** (rv4-FEAT-02, migration
+`20261018120000`). `proposal_items.applied_at` (NULL = not applied, which is
+every row that existed before) is what makes accepting a proposal with `apply`
+idempotent: the apply claims an item with `UPDATE ... WHERE applied_at IS NULL`
+in the transaction that creates its node, so a repeat, a race or a rolled-back
+apply cannot build it twice. The app role's table-wide `UPDATE`, which the
+default privileges of migration `20260819190000` had granted, is revoked and
+re-granted on that one column, and the policy `item_applier_update` lets only
+the project owner or a workspace admin stamp. `DELETE` stays granted by the
+default privileges, but no `DELETE` policy exists, so RLS denies it.
+
 ## Known PostgreSQL/RLS gotchas
 
 Found only by running real migrations and real queries against a live

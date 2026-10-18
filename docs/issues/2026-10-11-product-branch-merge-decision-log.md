@@ -24,9 +24,9 @@ slice 1 of the [promise-gap set](2026-10-11-product-promise-gaps.md)).
 - The 36 migrations hold no branch or merge table; PRD versions are a linear
   revision list (`server/internal/store/prd_revisions.go`).
 - The Decision Log exists only as the Commit note's free text
-  (`server/cmd/insideout/cli_version.go:124`,
-  `server/internal/mcpserver/product_tools.go:123`) plus agent-proposal
-  accept/reject rows (`server/internal/store/proposal_decisions.go:13`);
+  (`server/cmd/insideout/cli_version.go:123`,
+  `server/internal/mcpserver/product_tools.go:125`) plus agent-proposal
+  accept/reject rows (`server/internal/store/proposal_decisions.go:17`);
   the version card renders the note
   (`client/lib/features/prd/versions_commit_details.dart:13`) — no
   who/why/evidence/alternatives surface.

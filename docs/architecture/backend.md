@@ -16,12 +16,16 @@ server/
   db/                  embed.go (go:embed migrations), migrations/*.sql
   internal/
     agent/             PRD Coach: prompts, tools, SSE, the Anthropic client
-    agentcontext/      the compact, focus-scoped context agent-context briefs from
+    agentcontext/      the compact, focus-scoped context agent-context briefs from,
+                       with an `untrusted` block and the one fence rule (FenceData)
     api/               HTTP routes, middleware, per-domain handlers
-    apiclient/         the shared HTTP client every non-web surface speaks
+    apiclient/         the shared HTTP client every non-web surface speaks: renews
+                       the saved session once on 401, trades a full token for an agent token
     audienceview/      audience projections of one PRD
-    auth/              password hashing, JWT, refresh-token helpers
-    clientconfig/      single source for CLI credentials: env overrides the 0600 config
+    auth/              password hashing, JWT (with the scope claim), refresh-token helpers
+    clientconfig/      one Resolve(flagAPI) for CLI and MCP: base from --api, INSIDEOUT_API,
+                       the 0600 config, then the hosted default; a saved token (and refresh
+                       token) only for the base it was saved for
     config/            environment parsing and fail-fast validation
     export/            on-demand PRD markdown/HTML rendering
     github/            linked-repo commit fetch feeding project progress
@@ -29,7 +33,8 @@ server/
     httpx/             JSON request/response helpers, the error contract
     linebudget/        the ~350-line file-budget guard the server tree runs
     mail/              transactional email through the Resend HTTP API
-    mcpserver/         the MCP surface: one tool per CLI verb
+    mcpserver/         the MCP surface: one tool per CLI verb, an agent profile that
+                       withholds twelve tools, and the result fence (fence.go)
     modtidy/           the module tidiness guard: `go mod tidy -diff` must print nothing
     presence/          in-memory who-is-here registry behind live canvas presence
     progresshub/       in-memory fan-out for the live roadmap progress view
@@ -58,6 +63,18 @@ that proxies `/api/v1/**` to this server same-origin (see
 [deployment](deployment.md)), so browser cookies work without CORS; local
 Flutter web dev is cross-origin and uses the `INSIDEOUT_CORS_ORIGINS`
 allow-list (`dev.sh` defaults it to the `localhost` token).
+
+An access token may also carry a `scope` claim. `scope: agent` is minted by
+`POST /agent/token` (authenticated, itself human-only; one access-token life,
+no cookie, no refresh token) and is what `insideout-mcp` sends instead of the
+user's own token. `requireAuth` is the only code that verifies a token: it
+looks up the route's mux pattern in `agentRoutePolicy`
+(`internal/api/agent_scope.go`) and answers 403 `agent_scope_denied` for an
+agent token on every human-only route (the proposal decision, Commit, the
+admin routes, the deletes). A pattern missing from the table is human-only,
+and a route-table test fails the build for a route with no entry. A token with
+no claim is full scope, so nothing issued earlier changes. See
+[agent token scope](agent-token-scope.md).
 
 Beyond email+password, emailed one-time-credential flows share the same
 session issuance: magic-link login (`POST /auth/magic-link` then

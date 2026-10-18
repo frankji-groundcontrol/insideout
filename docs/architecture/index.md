@@ -20,6 +20,9 @@ and the bug records it links to.
   version control (Commit + readiness + audience views), the agent
   vocabulary (with proposal application), the time-first roadmap,
   real-time presence/cursors, and the GitHub evidence loop.
+- [Agent token scope](agent-token-scope.md) — the signed `scope` claim, the
+  route policy that refuses an agent token on human-only routes, the MCP
+  profile and token exchange, and the fencing of user-written text.
 - [Deployment](deployment.md) — docker-compose topology, environment
   configuration, the two supported database-provisioning models; the
   hosted Railway instance is documented in

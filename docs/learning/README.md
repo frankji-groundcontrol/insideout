@@ -6,6 +6,8 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-18 | [A route policy keys on the mux pattern and treats the zero value as denied](2026-10-18-a-route-policy-keys-on-the-pattern-and-fails-closed.md) | [wave 2, agent scope](../changelogs/2026-10-18-rv4-remediation/w2-agent-scope.md) |
+| 2026-10-18 | [A column grant turns "RLS hid the row" into "permission denied"](2026-10-18-a-column-grant-turns-zero-rows-into-permission-denied.md) | [wave 2, RLS](../changelogs/2026-10-18-rv4-remediation/w2-rls.md) |
 | 2026-10-18 | [A wall-clock test turns red by date, and a push-only CI never sees it](2026-10-18-a-wall-clock-test-needs-a-scheduled-run.md) | [multirole review 4](../changelogs/2026-10-18-multirole-review-4.md) |
 | 2026-10-12 | [Key test failures must never render secret operands](2026-10-12-key-tests-must-not-render-secrets.md) | [guided key workflow](../changelogs/2026-10-12-guided-key-workflow.md) |
 | 2026-10-11 | [A truncated gate snapshot can mislabel its sections](2026-10-11-truncated-gate-snapshots-mislabel-sections.md) | [docs-order final audit D](../changelogs/2026-10-11-docs-order-marksman.md) |

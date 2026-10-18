@@ -40,7 +40,7 @@ Required — compose fails fast (`:?`) without them:
 
 | Variable | Used by | Notes |
 |----------|---------|-------|
-| `DATABASE_URL` | server | No derived default (compose can't nest `${...}` in `:-`). For the bundled DB: `postgres://insideout_app:<POSTGRES_APP_PASSWORD>@postgres:5432/insideout?sslmode=disable` |
+| `DATABASE_URL` | server | No derived default (compose can't nest `${...}` in `:-`). For the bundled DB: `postgres://insideout_app:<POSTGRES_APP_PASSWORD>@postgres:5432/insideout?sslmode=disable`. Must be the `insideout_app` role: the server exits 1 at boot, before migrating, on a role with `BYPASSRLS` or `SUPERUSER` (a managed dashboard user, for one) |
 | `INSIDEOUT_JWT_SECRET` | server | Min 32 chars; server refuses to start otherwise |
 
 Optional, with defaults:

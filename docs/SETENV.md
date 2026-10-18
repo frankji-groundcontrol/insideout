@@ -308,6 +308,11 @@ Fail-fast errors from `config.Load` (the server refuses to start):
 | `config: INSIDEOUT_JWT_SECRET must be at least 32 characters` | Use a longer secret. |
 | `config: invalid INSIDEOUT_ACCESS_TTL "xyz": …` | Use a valid Go duration (`15m`, `720h`) or unset it. Same shape for `INSIDEOUT_REFRESH_TTL`. |
 
+One more refusal comes after the pool opens, not from `config.Load`: `serve`
+exits 1 when the `DATABASE_URL` role has `BYPASSRLS` or is a superuser (it
+would skip every row-level security policy). Use the `insideout_app` role
+there and keep the privileged role in `DATABASE_OWNER_URL`.
+
 See [usage/environment.md § Troubleshooting](usage/environment.md#troubleshooting)
 for the full list.
 

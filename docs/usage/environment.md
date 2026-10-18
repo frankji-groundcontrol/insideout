@@ -87,12 +87,16 @@ Read by [`server/internal/config/config.go`](../../server/internal/config/config
 (`GITHUB_TOKEN` is read ad hoc in `server/internal/github/github.go` and by
 `insideout setup --check` in
 [`server/cmd/insideout/cli_setup_check.go`](../../server/cmd/insideout/cli_setup_check.go)).
+That check also resolves the saved login through `clientconfig.Resolve`
+(`INSIDEOUT_TOKEN`, else the 0600 config, for the base it was saved for) and
+asks the API as that user: a rejected login fails the check, an unreachable
+server is a skip.
 The real-DB integration tests also read `DATABASE_URL` directly and skip
 themselves when it is unset.
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
-| `DATABASE_URL` | **yes** | — | PostgreSQL DSN for the **runtime** role `insideout_app` (DML, subject to RLS). May carry `?pgbouncer=true` (see [Database setups](#database-setups)). |
+| `DATABASE_URL` | **yes** | — | PostgreSQL DSN for the **runtime** role `insideout_app` (DML, subject to RLS). `serve` exits 1 when this role has `BYPASSRLS` or is a superuser (see [Troubleshooting](#troubleshooting)). May carry `?pgbouncer=true` (see [Database setups](#database-setups)). |
 | `DATABASE_OWNER_URL` | no | empty | DSN for `insideout_owner` (NOSUPERUSER) used only to apply migrations. Empty = migrate uses `DATABASE_URL`, which must already be that owner. Required on the bundled postgres, whose `DATABASE_URL` is the app role: `env.sh check` fails when it is empty there. |
 | `INSIDEOUT_JWT_SECRET` | **yes** | — | HMAC signing secret for access/refresh JWTs. **Min 32 characters** (fail-fast). |
 | `INSIDEOUT_ADDR` | no | `:8080` | HTTP listen address (host:port). |
@@ -242,6 +246,16 @@ Fail-fast errors from `config.Load` (the server refuses to start):
 | `config: invalid INSIDEOUT_ACCESS_TTL "xyz": time: invalid duration "xyz"` | Use a valid Go duration (e.g. `15m`, `720h`) or unset it to take the default. Same shape for `INSIDEOUT_REFRESH_TTL`. |
 | `config: INSIDEOUT_LLM_SCHEMA must be messages or responses` | Set `INSIDEOUT_LLM_SCHEMA` to `messages` or `responses`, or unset it to take `messages`. |
 | `config: INSIDEOUT_DEV_CORS=1 reflects any Origin with credentials, so it is only allowed with a localhost INSIDEOUT_PUBLIC_URL` | Unset `INSIDEOUT_DEV_CORS` (never set it on a hosted deployment). Needs a LAN or hosted browser origin? List it in `INSIDEOUT_CORS_ORIGINS` instead. |
+
+**`serve` exits 1: "the role in DATABASE_URL has BYPASSRLS ... would skip
+every row-level security policy".** This refusal is raised after the pool
+opens (before the startup migrations), not by `config.Load`, so it is not in
+the table above. A role with `BYPASSRLS` or `SUPERUSER` ignores every policy,
+`FORCE` included, and the check will not let the server run tenant isolation
+silently off. Point `DATABASE_URL` at the `insideout_app` role and keep the
+privileged role in `DATABASE_OWNER_URL`; `migrate`, `seed` and
+`promote-admin` do not go through `serve` and are not affected. The message
+names the attribute and the variable, never the role or the DSN.
 
 **The browser drops auth cookies over http.** That is the `Secure` attribute
 doing its job. Set `INSIDEOUT_COOKIE_SECURE=0` for plain-http local dev.

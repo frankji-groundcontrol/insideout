@@ -30,17 +30,27 @@ views (PRODUCT.md principle 3).
 - `GET /api/v1/agent/context?project_id&mode&focus` — compact,
   focus-scoped context (`internal/agentcontext`): brainstorming /
   implementation / review shapes, never the whole graph; every response
-  embeds the vocabulary contract.
+  embeds the vocabulary contract and an `untrusted` block naming the
+  fields that hold text people wrote (data, not instructions).
 - `POST /agent/checkpoint` and `POST /agent/propose` write typed
-  timeline records (`agent_checkpoint`, `agent_proposal` kinds).
+  timeline records (`agent_checkpoint`, `agent_proposal` kinds); a propose
+  that fails validation writes nothing, because every item is checked
+  before the first write.
   Agents never apply strategic changes and never Commit versions —
-  `version` is surfaced from commits, human-only.
+  `version` is surfaced from commits, human-only. The server enforces it:
+  an agent-scope token is refused (403 `agent_scope_denied`) on the
+  decision route, Commit, the admin routes and every delete, whichever
+  client sends it ([agent token scope](agent-token-scope.md)).
 - Proposals may carry structured `items` (`proposal_items`: add_node
   with optional parent hint). `POST /agent/proposals/{uid}/decision`
   records the human accept/reject (`proposal_decisions`, the decision
-  log; reversal allowed, history in the timeline) and `apply: true` on
-  acceptance creates the items as real roadmap nodes, executed as the
-  deciding human under their RLS context.
+  log: the row holds the latest decision, reversal allowed, history in
+  the timeline) and `apply: true` on acceptance creates the items as real
+  roadmap nodes, executed as the deciding human under their RLS context.
+  The apply runs in the decision's own transaction and once per item
+  (`proposal_items.applied_at`): a second accept builds nothing, a failed
+  apply answers 500 and records no decision, and the response carries
+  `appliedNodes`, always a list (empty on a repeat).
 
 ## Time-first roadmap
 

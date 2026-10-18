@@ -12,7 +12,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding FEAT-06; slice 8 of the
 ## What exists today
 
 - Focus exists only as an optional input of the agent-context briefing:
-  `server/internal/agentcontext/agentcontext.go:19`
+  `server/internal/agentcontext/agentcontext.go:41`
   `FocusNodeID string // optional; scopes the assembly`.
 - No focus route or store: `focus` matches nothing in the API route
   inventory or `server/internal/store/roadmap.go` (checked 2026-10-11);

@@ -341,7 +341,9 @@ An Agent receives compact, Focus-scoped context rather than the entire graph:
 
 Agents can checkpoint work and propose structure, scope, or priority changes.
 They cannot directly apply strategic changes, Commit a product version, or
-Merge a Product Branch.
+Merge a Product Branch. The server enforces the first two for any token issued
+to an agent (there is no Product Branch to merge yet): see
+[agent token scope](docs/architecture/agent-token-scope.md).
 
 ## Completion and learning
 

@@ -94,7 +94,8 @@ Flags precede positional ids (Go convention). Statuses are
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same
 verbs as tools (ask `tools/list` for the current set — a count written
-here drifted twice). It resolves the server and the token exactly like
+here drifted twice, and the set now depends on the login, see "Agent
+scope" below). It resolves the server and the token exactly like
 the CLI (`--api`, `INSIDEOUT_API`, the saved `insideout login`, then the
 hosted API; `INSIDEOUT_TOKEN` or the saved token), so the entry needs
 no `env`:
@@ -117,11 +118,49 @@ no `env`:
   pin a server other than the saved login's; an `INSIDEOUT_TOKEN` in
   `env` is an explicit credential and is never renewed.
 
+### Agent scope
+
+An MCP process is an agent, and an agent must not be able to do what only
+the human should. When the credential it holds is a JWT (the saved login,
+`INSIDEOUT_TOKEN` or an in-process sign-in), `insideout-mcp` trades it for a
+short-lived **agent-scope token** (`POST /agent/token`, one access-token
+life, cached and minted again before it expires) and sends every tool call
+with that token alone. The server refuses an agent token on the human-only
+routes with 403 `agent_scope_denied` (the proposal decision, Commit, the
+admin routes and every delete), so the limit holds for any client, not just
+this binary ([design](../architecture/agent-token-scope.md)). The registry
+follows the login: twelve tools are not offered while the process holds a JWT
+login — `commit`, `proposal_decide`, `signup_mode`, `invite_create`,
+`invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete` and the four
+password tools (`auth_register`, `auth_login`, `auth_forgot_password`,
+`auth_reset_password`, so a password never enters the conversation). Run
+those from the CLI or the web. Before any sign-in the whole registry is
+listed, so a process can still sign in; the first sign-in narrows it.
+
+- A failed exchange is a tool error and never falls back to the full token.
+  An `INSIDEOUT_TOKEN` that already carries a scope is sent as it is (the
+  server decides); one that is not a JWT is passed through and the registry
+  stays whole.
+- Deploy the server before the MCP binary: a new binary against a server
+  without `POST /agent/token` fails every tool with a hint to update the
+  server.
+- Tool results arrive under a one-line label and inside one `<prd_data>`
+  fence: text people wrote (PRD sections, titles, notes) is data, not
+  instructions. The `agent-context` response carries an `untrusted` block
+  naming those fields; the CLI's `context` and `evidence` verbs print the
+  JSON as it is and do not fence.
+- The scope defends an agent confined to MCP tools. It does not protect
+  against an agent that can read your saved config file or environment,
+  which holds the full credential.
+
 Signup policy: registration is invitation-only by default
 (`GET /auth/config`); admins mint per-email invitations (`invite` /
 `invite_create`, revoke with `invite revoke` / `invite_revoke`) and
 switch the mode (`signup-mode` / `signup_mode`, the web admin panel
-on the profile page). `invite` and `invite_create` print the whole
+on the profile page). The four MCP admin tools (`invite_create`,
+`invite_list`, `invite_revoke`, `signup_mode`) are CLI and web only once
+the MCP holds a JWT login (see "Agent scope"): the server refuses an agent
+token on `/admin/*`. `invite` and `invite_create` print the whole
 response, including `mailSent`: true only when the provider accepted the
 e-mail, so when it is false (dev mode, or a provider refusal) nothing was
 e-mailed and you send the `signupUrl` to the invitee yourself. The first
@@ -136,7 +175,9 @@ Auth can also happen at runtime: the `auth_*` tools
 `auth_magic_link_consume`, `auth_forgot_password`,
 `auth_reset_password`, `auth_logout`) sign the server **process** in —
 the token is kept in memory and never echoed into the conversation, and
-every later tool call rides that session. The code flow is the
+every later tool call rides that session. Once the process holds a JWT
+login, the four password tools are no longer offered (see "Agent scope");
+the code and magic-link tools stay. The code flow is the
 agent-friendly one: the human gets the email and supplies the digits, so
 no password ever appears in a transcript. (Until 2026-08-24 there was
 deliberately no login tool; the all-surfaces-agree product call reversed
