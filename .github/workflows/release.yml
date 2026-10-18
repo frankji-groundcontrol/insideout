@@ -29,6 +29,11 @@ jobs:
         with:
           go-version-file: server/go.mod
           cache-dependency-path: server/go.sum
+      - name: Test with the race detector before anything is built or published
+        # Fails closed: a red test stops the release. This runner has no
+        # Postgres service, so the DATABASE_URL-gated suites skip here; the
+        # full suite runs in ci.yml on the same commit.
+        run: go test ./... -race -count=1
       - name: Build, tar, and checksum the four targets
         run: |
           set -euo pipefail
