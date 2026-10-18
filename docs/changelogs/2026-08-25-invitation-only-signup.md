@@ -1,6 +1,6 @@
 # 2026-08-25 — Invitation-only signup + first admin
 
-The user registered `frank.ji@aya.yale.edu`, asked for it to be the only
+The user registered `<admin-email>`, asked for it to be the only
 user and admin, and requested an invitation-only registration switch like
 `~/Projects/qwenimage`. Reality found on inspection: the users table
 holds 582 rows (legacy migration from the old juanleme/auth table) —

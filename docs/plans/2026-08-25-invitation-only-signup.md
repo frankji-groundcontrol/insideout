@@ -10,7 +10,7 @@ purged after a snapshot, with the keep-set enumerated
 
 ## Why
 
-The user registered `frank.ji@aya.yale.edu` and asked for (a) this user
+The user registered `<admin-email>` and asked for (a) this user
 to be the only user and admin, and (b) an invitation-only registration
 switch like `~/Projects/qwenimage`. Reality check: the users table holds
 582 rows (legacy migration from the old juanleme/auth table) — deleting
@@ -69,6 +69,6 @@ touching existing rows; the purge decision stays with the user.
 - [x] go build/vet/test green; flutter analyze/test green
 - [x] Live exercise (local): closed/invitation/open matrix, invite→
       register, wrong code, revoke
-- [x] Deploy: server + app; promote frank.ji in prod; verify prod gate
+- [x] Deploy: server + app; promote <admin-email> in prod; verify prod gate
       (config invitation_only, no-code register 403 via the domain)
 - [x] Changelog + backend.md + usage doc + HANDOFF/board closure
