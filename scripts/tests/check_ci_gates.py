@@ -15,10 +15,18 @@ one, so the first CI run after a push is what proves the behavior.
   test cannot sit red between pushes.
 - rv4-TEST-08: only a pull request's older run is cancelled; a quick follow-up
   push to main must not cancel the previous commit's only verdict.
+- rv4-PM-01, CLOSE-01, TEST-05, PUB-08: the env-suites job runs every
+  scripts/tests/check_*.py with `python3 -I` from the repo root and a failing
+  guard fails the step (the step's own script runs against a made-up tree), so
+  a guard written red-first is not left for nobody to run. Its checkout fetches
+  the tags, because check_docs_truth.py asks git for them.
 """
 import pathlib
 import re
+import subprocess
 import sys
+import tempfile
+import textwrap
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 CI = ".github/workflows/ci.yml"
@@ -43,6 +51,30 @@ def job(yml, name):
 def steps(block):
     """The steps of a job block, one text chunk per `      - ` item."""
     return re.split(r"^(?=      - )", block, flags=re.M)[1:]
+
+
+def workdir(block, step):
+    """Where a step runs: its own working-directory, else the job default."""
+    own = re.search(r"^\s+working-directory:\s*(\S+)", step, re.M)
+    default = re.search(r"^    defaults:\n      run:\n        working-directory:\s*(\S+)", block, re.M)
+    found = own or default
+    return found.group(1) if found else "."
+
+
+def script_of(step):
+    """The `run: |` body of a step, dedented; None when it has none."""
+    lines = step.splitlines()
+    for i, line in enumerate(lines):
+        match = re.match(r"^(\s*)run:\s*\|\s*$", line)
+        if not match:
+            continue
+        body = []
+        for nxt in lines[i + 1:]:
+            if nxt.strip() and len(nxt) - len(nxt.lstrip()) <= len(match.group(1)):
+                break
+            body.append(nxt)
+        return textwrap.dedent("\n".join(body))
+    return None
 
 
 def weekly_schedule():
@@ -80,7 +112,63 @@ def cancel_only_pull_requests():
     ]
 
 
-CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests]
+def contract_guards_run():
+    """PM-01, CLOSE-01, TEST-05, PUB-08: one glob step runs every guard and a
+    failing guard fails it. The step's own script runs against a made-up tree,
+    since a gate that cannot fail is the very bug this row closes."""
+    block = job(read(CI), "env-suites")
+    loop = next((s for s in steps(block) if "check_*.py" in s and "python3 -I" in s), None)
+    if loop is None:
+        return [
+            f"{CI}: no env-suites step runs scripts/tests/check_*.py with "
+            "`python3 -I` - the contract guards pass by hand and run in no CI "
+            "job (rv4-PM-01, CLOSE-01, TEST-05, PUB-08)"
+        ]
+    script, where = script_of(loop), workdir(block, loop)
+    if script is None or "${{" in script:
+        return [f"{CI}: the guard step has no plain `run: |` script to exercise (rv4-PM-01)"]
+    with tempfile.TemporaryDirectory() as tmp:
+        tests = pathlib.Path(tmp, "scripts", "tests")
+        tests.mkdir(parents=True)
+        for name in ("one", "two"):
+            (tests / f"check_{name}.py").write_text(f"print('ran {name}')\n")
+        cwd = pathlib.Path(tmp, where)
+        # bash -e is what an Actions `run:` gets when no shell is named.
+        green = subprocess.run(["bash", "-e", "-c", script], cwd=cwd, capture_output=True, text=True)
+        (tests / "check_two.py").write_text("import sys\nsys.exit(1)\n")
+        red = subprocess.run(["bash", "-e", "-c", script], cwd=cwd, capture_output=True, text=True)
+    problems = []
+    if green.returncode != 0 or not all(f"ran {n}" in green.stdout for n in ("one", "two")):
+        problems.append(
+            f"{CI}: from {where!r} the guard step does not run every "
+            "scripts/tests/check_*.py - the job's default directory is scripts/, "
+            "so set `working-directory: .` (rv4-PM-01)"
+        )
+    if red.returncode == 0:
+        problems.append(f"{CI}: a failing guard does not fail the guard step (rv4-PM-01)")
+    return problems
+
+
+def guards_see_the_tags():
+    """PM-01: a default checkout has no tags, so CI would judge a different
+    premise than a clone when a guard lists them (check_docs_truth.py does)."""
+    me = pathlib.Path(__file__).name
+    wants = any(
+        re.search(r'"tag",\s*"--list"', p.read_text(encoding="utf-8"))
+        for p in (ROOT / "scripts/tests").glob("check_*.py")
+        if p.name != me
+    )
+    checkout = steps(job(read(CI), "env-suites"))[0]
+    if not wants or "fetch-tags: true" in checkout or "fetch-depth: 0" in checkout:
+        return []
+    return [
+        f"{CI}: a guard lists git tags but the env-suites checkout fetches none "
+        "(`fetch-tags: true`) - CI would judge a different premise than a clone (rv4-PM-01)"
+    ]
+
+
+CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests,
+          contract_guards_run, guards_see_the_tags]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
