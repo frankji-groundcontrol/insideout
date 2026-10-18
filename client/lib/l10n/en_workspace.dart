@@ -33,6 +33,7 @@ const enWorkspace = <String, String>{
   'project.title': 'Projects',
   'project.newProject': 'New project',
   'project.namePlaceholder': 'Project name',
+  'project.descPlaceholder': 'Project description',
   'project.create': 'Create',
   'project.empty': 'No projects yet. Start tracking one.',
   'project.quiet': 'gone quiet',

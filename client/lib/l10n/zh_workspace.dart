@@ -31,6 +31,7 @@ const zhWorkspace = <String, String>{
   'project.title': '项目',
   'project.newProject': '新项目',
   'project.namePlaceholder': '项目名称',
+  'project.descPlaceholder': '项目描述',
   'project.create': '创建',
   'project.empty': '还没有项目。开始跟踪一个吧。',
   'project.quiet': '安静了',

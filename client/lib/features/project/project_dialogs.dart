@@ -33,10 +33,7 @@ Future<({String title, String description, String status})?> showProjectEdit(
             label: t('project.namePlaceholder'),
           ),
           const SizedBox(height: Cobalt.space4),
-          BlockField(
-            controller: descCtrl,
-            label: t('project.updatePlaceholder'),
-          ),
+          BlockField(controller: descCtrl, label: t('project.descPlaceholder')),
           const SizedBox(height: Cobalt.space4),
           BlockSelect<String>(
             label: t('project.statusLabel'),
