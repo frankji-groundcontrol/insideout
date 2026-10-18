@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pin the operator and first-run hardening of review-4 wave 1 (rv4-USER-06,
-rv4-REL-05, rv4-USER-09, rv4-COMP-07).
+rv4-REL-05, rv4-USER-09, rv4-COMP-07) and the compose side of wave 3's
+client-address fix (rv4-SEC-02).
 
 Usage: python3 -I scripts/tests/check_ops_hardening.py
 
@@ -182,8 +183,29 @@ def backup_dump_is_owner_only(failures):
             fail(failures, f"docs/usage/backup-restore.md does not say the dump {claim}")
 
 
+def compose_server_port_is_loopback(failures):
+    """SEC-02: the throttle and the resend cooldown key on the client address,
+    and the one place a client can write X-Forwarded-For itself is the server's
+    own port. Compose publishes the client (nginx) as the front door, so the
+    server's port stays on loopback for local tooling. The hop count the
+    server trusts (INSIDEOUT_TRUSTED_PROXY_HOPS) must reach the container
+    whenever the server reads it."""
+    server = compose_service("server")
+    block = re.search(r"^    ports:\n((?:      - .*\n?)+)", server, re.M)
+    for entry in re.findall(r'^      - "?([^"\n#]+?)"?\s*(?:#.*)?$', block.group(1) if block else "", re.M):
+        if not re.match(r"(127\.0\.0\.1|\[::1\]):", entry.strip()):
+            fail(failures, f"docker-compose.yml: the server publishes {entry.strip()!r} on every interface, "
+                           "so any host on the network can reach it directly and write X-Forwarded-For "
+                           "itself; bind it to 127.0.0.1")
+    if "INSIDEOUT_TRUSTED_PROXY_HOPS" in read("server/internal/config/config.go") \
+            and "INSIDEOUT_TRUSTED_PROXY_HOPS" not in server:
+        fail(failures, "docker-compose.yml: the server service does not pass INSIDEOUT_TRUSTED_PROXY_HOPS, "
+                       "so a hop count set in .env never reaches the container")
+
+
 CHECKS = [readme_prd_update_flags_precede_id, compose_grace_outlives_shutdown,
-          bootstrap_closing_message_omits_setup_local, backup_dump_is_owner_only]
+          bootstrap_closing_message_omits_setup_local, backup_dump_is_owner_only,
+          compose_server_port_is_loopback]
 
 if __name__ == "__main__":
     failures = []
