@@ -160,7 +160,7 @@ func (c *Client) ListInvitations() (json.RawMessage, error) {
 
 // RevokeInvitation kills a still-usable invitation.
 func (c *Client) RevokeInvitation(id string) error {
-	_, err := c.postRaw("/admin/invitations/"+id+"/revoke", map[string]any{})
+	_, err := c.postRaw(apiPath("admin", "invitations", id, "revoke"), map[string]any{})
 	return err
 }
 

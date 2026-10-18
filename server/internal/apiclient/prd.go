@@ -9,7 +9,7 @@ import (
 // IdeaCreate captures a new idea (POST /workspaces/{id}/ideas).
 func (c *Client) IdeaCreate(workspaceID, title, content string) (json.RawMessage, error) {
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/workspaces/"+workspaceID+"/ideas",
+	if err := c.do(http.MethodPost, apiPath("workspaces", workspaceID, "ideas"),
 		map[string]string{"title": title, "content": content}, &out); err != nil {
 		return nil, err
 	}
@@ -20,18 +20,18 @@ func (c *Client) IdeaCreate(workspaceID, title, content string) (json.RawMessage
 // (POST /ideas/{id}/convert).
 func (c *Client) IdeaConvert(ideaID string) (json.RawMessage, error) {
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/ideas/"+ideaID+"/convert", map[string]any{}, &out); err != nil {
+	if err := c.do(http.MethodPost, apiPath("ideas", ideaID, "convert"), map[string]any{}, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
 // Prd returns GET /prds/{id}.
-func (c *Client) Prd(id string) (json.RawMessage, error) { return c.get("/prds/" + id) }
+func (c *Client) Prd(id string) (json.RawMessage, error) { return c.get(apiPath("prds", id)) }
 
 // PrdRevisions lists a PRD's revision snapshots (GET /prds/{id}/revisions).
 func (c *Client) PrdRevisions(prdID string) (json.RawMessage, error) {
-	return c.get("/prds/" + prdID + "/revisions")
+	return c.get(apiPath("prds", prdID, "revisions"))
 }
 
 // SnapshotPrd records a revision snapshot with an optional note
@@ -42,7 +42,7 @@ func (c *Client) SnapshotPrd(prdID, note string) (json.RawMessage, error) {
 		body["note"] = note
 	}
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/prds/"+prdID+"/revisions", body, &out); err != nil {
+	if err := c.do(http.MethodPost, apiPath("prds", prdID, "revisions"), body, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -59,7 +59,7 @@ func (c *Client) CommitPrd(prdID, name, audience, summary string, unresolved []s
 		"unresolved": unresolved, "decisionNote": decisionNote,
 	}
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/prds/"+prdID+"/commit", body, &out); err != nil {
+	if err := c.do(http.MethodPost, apiPath("prds", prdID, "commit"), body, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -68,19 +68,19 @@ func (c *Client) CommitPrd(prdID, name, audience, summary string, unresolved []s
 // PrdVersions lists a PRD's commits, newest first
 // (GET /prds/{id}/commits).
 func (c *Client) PrdVersions(prdID string) (json.RawMessage, error) {
-	return c.get("/prds/" + prdID + "/commits")
+	return c.get(apiPath("prds", prdID, "commits"))
 }
 
 // PrdReadiness returns the per-audience gap disclosure
 // (GET /prds/{id}/readiness) for "form a version now".
 func (c *Client) PrdReadiness(prdID string) (json.RawMessage, error) {
-	return c.get("/prds/" + prdID + "/readiness")
+	return c.get(apiPath("prds", prdID, "readiness"))
 }
 
 // PrdView returns an audience's projection of the PRD core
 // (GET /prds/{id}/view?audience=…).
 func (c *Client) PrdView(prdID, audience string) (json.RawMessage, error) {
-	return c.get("/prds/" + prdID + "/view?audience=" + audience)
+	return c.get(withQuery(apiPath("prds", prdID, "view"), "audience", audience))
 }
 
 // PrdExport downloads a PRD export (GET /prds/{id}/export) as raw bytes.
@@ -94,26 +94,26 @@ func (c *Client) PrdExport(prdID, format, audience string) ([]byte, error) {
 	if audience != "" {
 		q.Set("audience", audience)
 	}
-	return c.getBytes("/prds/" + prdID + "/export?" + q.Encode())
+	return c.getBytes(apiPath("prds", prdID, "export") + "?" + q.Encode())
 }
 
 // PrdExportAudience returns an audience-projected markdown export
 // (GET /prds/{id}/export?format=markdown&audience=…) as raw bytes.
 func (c *Client) PrdExportAudience(prdID, audience string) ([]byte, error) {
-	return c.getBytes("/prds/" + prdID + "/export?format=markdown&audience=" + audience)
+	return c.getBytes(withQuery(apiPath("prds", prdID, "export"), "format", "markdown", "audience", audience))
 }
 
 // AgentContext returns the compact, focus-scoped agent context
 // (GET /agent/context).
 func (c *Client) AgentContext(projectID, mode, focus string) (json.RawMessage, error) {
-	q := "/agent/context?project_id=" + projectID
+	kv := []string{"project_id", projectID}
 	if mode != "" {
-		q += "&mode=" + mode
+		kv = append(kv, "mode", mode)
 	}
 	if focus != "" {
-		q += "&focus=" + focus
+		kv = append(kv, "focus", focus)
 	}
-	return c.get(q)
+	return c.get(withQuery(apiPath("agent", "context"), kv...))
 }
 
 // AgentCheckpoint records agent work (POST /agent/checkpoint).
@@ -157,7 +157,7 @@ func (c *Client) AgentPropose(projectID, kind, summary, detail string, items []P
 // items on acceptance.
 func (c *Client) DecideProposal(updateID, decision, reason string, apply bool) (json.RawMessage, error) {
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, "/agent/proposals/"+updateID+"/decision",
+	if err := c.do(http.MethodPost, apiPath("agent", "proposals", updateID, "decision"),
 		map[string]any{"decision": decision, "reason": reason, "apply": apply}, &out); err != nil {
 		return nil, err
 	}

@@ -64,7 +64,7 @@ func (c *Client) Workspaces() (json.RawMessage, error) { return c.get("/workspac
 
 // Projects returns GET /workspaces/{id}/projects.
 func (c *Client) Projects(workspaceID string) (json.RawMessage, error) {
-	return c.get("/workspaces/" + workspaceID + "/projects")
+	return c.get(apiPath("workspaces", workspaceID, "projects"))
 }
 
 func (c *Client) get(path string) (json.RawMessage, error) {

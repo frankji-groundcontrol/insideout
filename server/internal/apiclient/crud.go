@@ -15,13 +15,13 @@ import (
 // Ideas lists the caller's own ideas in a workspace, full content included
 // (ideas are private to their author).
 func (c *Client) Ideas(workspaceID string) (json.RawMessage, error) {
-	return c.getRaw("/workspaces/" + workspaceID + "/ideas")
+	return c.getRaw(apiPath("workspaces", workspaceID, "ideas"))
 }
 
 // UpdateIdea rewrites an idea's title and content (title is required by
 // the API on update).
 func (c *Client) UpdateIdea(id, title, content string) (json.RawMessage, error) {
-	return c.requestJSON(http.MethodPatch, "/ideas/"+id, map[string]string{
+	return c.requestJSON(http.MethodPatch, apiPath("ideas", id), map[string]string{
 		"title":   title,
 		"content": content,
 	})
@@ -31,7 +31,7 @@ func (c *Client) UpdateIdea(id, title, content string) (json.RawMessage, error) 
 // Ideas no longer returns it.
 func (c *Client) DeleteIdea(id string) error {
 	var discard json.RawMessage
-	return c.do(http.MethodDelete, "/ideas/"+id, nil, &discard)
+	return c.do(http.MethodDelete, apiPath("ideas", id), nil, &discard)
 }
 
 // UpdatePrd patches a PRD's title (nil = unchanged) and/or sections;
@@ -44,18 +44,18 @@ func (c *Client) UpdatePrd(id string, title *string, sections map[string]string)
 	if len(sections) > 0 {
 		body["sections"] = sections
 	}
-	return c.requestJSON(http.MethodPatch, "/prds/"+id, body)
+	return c.requestJSON(http.MethodPatch, apiPath("prds", id), body)
 }
 
 // SetPrdStatus transitions a PRD's status.
 func (c *Client) SetPrdStatus(id, status string) (json.RawMessage, error) {
-	return c.requestJSON(http.MethodPost, "/prds/"+id+"/status", map[string]string{"status": status})
+	return c.requestJSON(http.MethodPost, apiPath("prds", id, "status"), map[string]string{"status": status})
 }
 
 // NodeEvidence returns the GitHub evidence attached to a roadmap node —
 // the read half of the bind → sync → checkpoint loop.
 func (c *Client) NodeEvidence(nodeID string) (json.RawMessage, error) {
-	return c.getRaw("/roadmap/" + nodeID + "/evidence")
+	return c.getRaw(apiPath("roadmap", nodeID, "evidence"))
 }
 
 // CreateWorkspace bootstraps a workspace (creator becomes owner).
@@ -71,7 +71,7 @@ func (c *Client) JoinWorkspace(code string) (json.RawMessage, error) {
 
 // CreateProject bootstraps a project inside a workspace.
 func (c *Client) CreateProject(workspaceID, title, description string) (json.RawMessage, error) {
-	return c.postRaw("/workspaces/"+workspaceID+"/projects", map[string]string{
+	return c.postRaw(apiPath("workspaces", workspaceID, "projects"), map[string]string{
 		"title": title, "description": description,
 	})
 }
