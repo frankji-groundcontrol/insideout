@@ -62,6 +62,11 @@ func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	if !s.cursors.allow(userID, s.now()) {
+		w.Header().Set("Retry-After", "1")
+		httpx.WriteError(w, http.StatusTooManyRequests, "too many cursor updates", "APP_THROTTLE", nil)
+		return
+	}
 	if _, err := s.store.GetProjectForMember(r.Context(), pid, userID); err != nil {
 		presenceProjectError(w, err)
 		return
@@ -92,6 +97,11 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 		presenceProjectError(w, err)
 		return
 	}
+	release, ok := s.takeStreamSlot(w, userID, pid)
+	if !ok {
+		return
+	}
+	defer release()
 	key := presenceKey(userID, r.URL.Query().Get("client"))
 	name := userID.String()[:8]
 	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {

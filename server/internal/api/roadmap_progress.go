@@ -51,6 +51,11 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 		s.writeRoadmapProgressError(w, err)
 		return
 	}
+	release, ok := s.takeStreamSlot(w, userID, pid)
+	if !ok {
+		return
+	}
+	defer release()
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 

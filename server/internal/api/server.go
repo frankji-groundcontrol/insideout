@@ -52,6 +52,10 @@ type Server struct {
 	// handler contexts.
 	streamsCtx    context.Context
 	cancelStreams context.CancelFunc
+	// streams and cursors bound the open passive SSE streams and the cursor
+	// posts (stream_caps.go); their zero values are ready to use.
+	streams streamSlots
+	cursors cursorLimiter
 	// authCooldown spaces the emailed auth sends (magic link, password
 	// reset, login code) per email and per IP; see auth_cooldown.go.
 	authCooldown *sendCooldown

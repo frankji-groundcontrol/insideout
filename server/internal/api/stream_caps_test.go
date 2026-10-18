@@ -25,6 +25,14 @@ import (
 // not a fatal error. A 200 stream stays open until the test ends.
 func tryOpenSSE(t *testing.T, ts *httptest.Server, token, path string) int {
 	t.Helper()
+	code, _ := openSSEWithCancel(t, ts, token, path)
+	return code
+}
+
+// openSSEWithCancel is tryOpenSSE that also returns the func that closes the
+// stream, the way a tab does.
+func openSSEWithCancel(t *testing.T, ts *httptest.Server, token, path string) (int, context.CancelFunc) {
+	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ts.URL+path, nil)
@@ -38,7 +46,7 @@ func tryOpenSSE(t *testing.T, ts *httptest.Server, token, path string) int {
 		t.Fatalf("open %s: %v", path, err)
 	}
 	t.Cleanup(func() { resp.Body.Close() })
-	return resp.StatusCode
+	return resp.StatusCode, cancel
 }
 
 func (f *streamFixture) progressPath() string {
@@ -167,5 +175,34 @@ func TestStreamCaps_CursorPostsAreRateLimitedPerUser(t *testing.T) {
 	mu.Unlock()
 	if code := post(fx.tokenA, first+1); code != http.StatusNoContent {
 		t.Fatalf("cursor post after the window = %d, want 204: the limit must lift", code)
+	}
+}
+
+// A slot is only worth a ceiling if it comes back: a closed tab must make room
+// for the next one, or every reconnect would count against the user forever.
+func TestStreamCaps_ClosingAStreamFreesItsSlot(t *testing.T) {
+	fx := newStreamFixture(t)
+	var open []context.CancelFunc
+	for i := 0; i < 100; i++ { // far past the per-user ceiling
+		code, cancel := openSSEWithCancel(t, fx.ts, fx.tokenA, fx.progressPath())
+		if code == http.StatusTooManyRequests {
+			break
+		}
+		open = append(open, cancel)
+	}
+	if len(open) == 0 || len(open) == 100 {
+		t.Fatalf("opened %d streams before the first refusal, want a ceiling between 1 and 99", len(open))
+	}
+
+	open[0]() // one tab closes
+	deadline := time.Now().Add(3 * time.Second)
+	for {
+		if code, _ := openSSEWithCancel(t, fx.ts, fx.tokenA, fx.progressPath()); code == http.StatusOK {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("a stream closed 3s ago but the ceiling still counts it: the slot was never released")
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
