@@ -7,6 +7,7 @@ package agentcontext
 import (
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/readiness"
 	"github.com/frankji-groundcontrol/insideout/server/internal/roadmaptime"
 )
 
@@ -67,7 +68,7 @@ func Assemble(in Inputs) map[string]any {
 	switch in.Mode {
 	case "brainstorming":
 		out["productArgument"] = pickSections(in.PrdSections, "background", "users", "nonGoals")
-		out["openQuestions"] = blankSections(in.PrdSections)
+		out["openQuestions"] = readiness.BlankSections(in.PrdSections)
 	case "review":
 		out["prdCore"] = pickSections(in.PrdSections, "background", "goals", "nonGoals", "risks", "requirements")
 	default: // implementation
@@ -169,16 +170,6 @@ func pickSections(sections map[string]string, keys ...string) map[string]string 
 	for _, k := range keys {
 		if v, ok := sections[k]; ok && v != "" {
 			out[k] = v
-		}
-	}
-	return out
-}
-
-func blankSections(sections map[string]string) []string {
-	var out []string
-	for k, v := range sections {
-		if v == "" {
-			out = append(out, k)
 		}
 	}
 	return out

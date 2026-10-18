@@ -109,10 +109,29 @@ func Assess(sections map[string]string) map[string]AudienceReadiness {
 func blankSections(sections map[string]string) map[string]bool {
 	blank := map[string]bool{}
 	for _, s := range allSections() {
-		v, ok := sections[s]
-		blank[s] = !ok || trimLen(v) == 0
+		blank[s] = isBlank(sections, s)
 	}
 	return blank
+}
+
+// BlankSections lists the PRD sections a section map leaves blank, in the
+// fixed order of allSections. Everything that discloses what a PRD still
+// lacks goes through here or through Assess, so the blank rule and the
+// order are defined once: the agent coach's open questions use this.
+func BlankSections(sections map[string]string) []string {
+	var out []string
+	for _, s := range allSections() {
+		if isBlank(sections, s) {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// isBlank is the one blank rule: a section is blank when it is absent or
+// holds only whitespace.
+func isBlank(sections map[string]string, name string) bool {
+	return trimLen(sections[name]) == 0
 }
 
 func allSections() []string {
