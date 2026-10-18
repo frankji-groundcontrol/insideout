@@ -187,7 +187,7 @@ environment. A skipped database test counts as red; none skipped.
 
 | Finding | Red, at the red commit | Green, at the fix commit |
 | --- | --- | --- |
-| rv4-FEAT-02 | store: second apply "created 3 nodes, want 0"; 5 concurrent applies "created 15 nodes in total, want 3"; a failing item 2 left `["Intake"]` instead of `[]`. API: a second accept applied 2 nodes; 4 racing accepts applied 4 nodes, want 1; an accept while the database refused item 2 answered 200 with the decision recorded, want 500 | all six pass under `-race`; the two concurrency tests passed 30 of 30 runs. Guards that came with the fix: a member who may not apply is refused (`ErrForbidden`), and through the app role only the plan writer can stamp `applied_at` while no other column of an item changes |
+| rv4-FEAT-02 | store: second apply "created 3 nodes, want 0"; 5 concurrent applies "created 15 nodes in total, want 3"; a failing item 2 left `["Intake"]` instead of `[]`. API: a second accept applied 2 nodes; 4 racing accepts applied 4 nodes, want 1; an accept while the database refused item 2 answered 200 with the decision recorded, want 500 | all six pass under `-race`; the two concurrency tests passed 30 of 30 runs. Guards that came with the fix: a member who may not apply is refused (`ErrForbidden`), a workspace admin who does not own the project applies the proposal and the owner's later accept applies nothing, and through the app role only the plan writer can stamp `applied_at` while no other column of an item changes |
 | rv4-FEAT-09 | "proposal_decisions.go still calls the decision row immutable" | passes: accept then reject leaves `rejected` and two timeline notes, and the comment says "latest" |
 | rv4-LEAD-PROPOSE-VALIDATE | "blank title: the 400 left 1 agent_proposal row(s) in the project timeline, want none" | passes for all five refusals (blank title, 201 characters, unknown action, a bad item after a good one, eleven items); `TestAddProposal_AnItemTheDatabaseRefusesLeavesNoProposal` is a green-only atomicity guard |
 | rv4-FULL-01 | the contract test fails with the `_Map` is not a `List` cast error at `client_project.dart:231`; the flow tests find no draft text, no empty-draft message and no zh-CN confirm label; the confirm tests do not compile (`confirmExpandRoadmapNode` not found). The Go shape test is green at the red commit by design: the server was right, and it keeps the fixtures honest | eight expand tests pass; the 19 tests across the five touched Dart test files pass |
@@ -209,6 +209,14 @@ Mutation checks a verifier can run; each was undone afterwards:
   server that would be a quiet `appliedNodes: []`, which is why the policy lives
   in the same migration file as the column and the grant, and why the tests
   listed above drive the owner's own accept.
+- rv4-FEAT-02: re-create that policy with the owner branch only (the
+  `_is_admin` arm dropped). Across the whole store and API suites exactly one
+  test goes red,
+  `TestProposalApply_ANonOwnerWorkspaceAdminAppliesOnceAcrossActors`
+  ("admin accept: 0 nodes, <nil>, want both items applied"): a workspace admin
+  passes the authority check, the claim matches no row for them, and the accept
+  answers 200 with nothing built. Every other apply test accepts as the project
+  owner, so without this guard that edit would pass unnoticed.
 - rv4-FULL-01: make the dialog skip the confirm call and
   'the draft is shown, and confirming adds exactly the draft' goes red
   ("Expected: expand, expand/confirm; Actual: expand").
@@ -229,7 +237,7 @@ admin and never prints a secret. The binary built from this branch passes 20 of
 Gates, all green on this branch: `gofmt -l` prints nothing; `go build ./...` and
 `go vet ./...`; `go test ./... -race -count=1` (27 packages ok, 3 without test
 files, 0 failed); `go test ./internal/store ./internal/api -race -count=1 -v`
-(229 top-level tests passed, 0 failed, 0 skipped);
+(230 top-level tests passed, 0 failed, 0 skipped);
 `flutter pub get --enforce-lockfile` with `client/pubspec.lock` byte-identical;
 `dart format --output=none --set-exit-if-changed lib test` (269 files, 0
 changed); `flutter analyze --no-fatal-infos` (exit 0; the same 14 infos as the
