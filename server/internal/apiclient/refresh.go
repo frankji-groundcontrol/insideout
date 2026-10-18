@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 // ErrUnauthorized is what a request refused with 401 wraps, after the session
@@ -91,13 +92,41 @@ func (c *Client) renewSession(ctx context.Context) (string, error) {
 		c.renew.Save(access, refresh)
 		return access, nil
 	case status == http.StatusUnauthorized || status == http.StatusForbidden:
-		if a, r, ok := c.renew.Reload(); ok && r != used { // a concurrent renewal got the one-time token first
+		// The one-time token is gone: another command won it, and its rotated
+		// pair reaches the store a moment after the server answered it.
+		if a, r, ok := c.awaitRotation(ctx, used); ok {
 			c.token, c.refresh = a, r
 			return a, nil
 		}
 		c.renew = nil // rejected for good: later requests of this client must not retry it
 	}
 	return "", nil
+}
+
+// renewalGrace is how long a renewal that lost the race waits for the winner's
+// pair to be stored before it takes the refusal for the session's end. A var
+// so tests can shorten it.
+// ponytail: polls the store instead of locking across processes; if the server
+// ever revokes a token family on reuse, or bursts still lose, serialize
+// renewals with a lock file beside the config.
+var renewalGrace = 500 * time.Millisecond
+
+// awaitRotation polls the store until it holds a pair other than used, or the
+// grace is over.
+func (c *Client) awaitRotation(ctx context.Context, used string) (access, refresh string, ok bool) {
+	for deadline := time.Now().Add(renewalGrace); ; {
+		if a, r, ok := c.renew.Reload(); ok && r != used {
+			return a, r, true
+		}
+		if !time.Now().Before(deadline) {
+			return "", "", false
+		}
+		select {
+		case <-ctx.Done():
+			return "", "", false
+		case <-time.After(25 * time.Millisecond):
+		}
+	}
 }
 
 // postRefresh trades a refresh token for a new pair (POST /auth/refresh takes

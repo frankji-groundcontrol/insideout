@@ -37,3 +37,23 @@ func TestLoserOfTheRenewalRaceAdoptsTheWinnersPair(t *testing.T) {
 		t.Errorf("calls = %s\nwant   %s", got, want)
 	}
 }
+
+// A refresh token that really is dead (revoked, expired) must still end the
+// session once the grace is over, not wait forever.
+func TestWaitForTheWinnersPairEndsWhenNothingArrives(t *testing.T) {
+	was := renewalGrace
+	renewalGrace = 60 * time.Millisecond
+	t.Cleanup(func() { renewalGrace = was })
+	base, _ := sessionAPI(t, func(w http.ResponseWriter, _ string) { w.WriteHeader(http.StatusUnauthorized) })
+	f := &file{access: "old", refresh: "ref-1"}
+
+	begin := time.Now()
+	_, err := armed(base, f).Whoami()
+
+	if err == nil {
+		t.Fatal("a dead refresh token must end the session")
+	}
+	if took := time.Since(begin); took < 60*time.Millisecond || took > 2*time.Second {
+		t.Errorf("gave up after %v, want about the %v grace", took, renewalGrace)
+	}
+}
