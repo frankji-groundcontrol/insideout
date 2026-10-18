@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"regexp"
@@ -201,6 +202,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	hash := auth.HashRefreshToken(raw)
 	sess, err := s.store.GetActiveSessionByHash(r.Context(), hash)
 	if errors.Is(err, store.ErrNotFound) {
+		s.endLineageOnReuse(r.Context(), hash)
 		s.clearAuthCookies(w)
 		httpx.WriteError(w, http.StatusUnauthorized, "refresh token expired or already used", "", nil)
 		return
@@ -243,6 +245,31 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 
 	s.setAuthCookies(w, accessToken, newToken, s.cfg.AccessTTL, s.cfg.RefreshTTL)
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"ok": true, "accessToken": accessToken, "refreshToken": newToken})
+}
+
+// refreshReuseGrace is how long after a rotation its spent token may be offered
+// again without being taken for theft (rv4-SEC-04). Two CLI or MCP processes
+// sharing one credentials file, two tabs, or a retried request legitimately
+// present the same one-time token moments apart, and the loser must not take the
+// winner's fresh pair down with it. The clients wait 500 ms for the winner's pair
+// to land (apiclient renewalGrace); 10 s covers that, the request's own latency
+// and a stall with room to spare, and is still short next to the time a thief
+// who replays a copied token needs. A starting value, not measured: raise it if
+// legitimate users are being signed out, lower it to tighten.
+const refreshReuseGrace = 10 * time.Second
+
+// endLineageOnReuse runs when a presented refresh token is not live. If it is a
+// spent one offered again after the grace, every live session of its lineage
+// ends (see store.RevokeFamilyOnReuse). The caller's answer is the same 401 an
+// unknown token gets, so the replayer learns nothing about what was noticed.
+func (s *Server) endLineageOnReuse(ctx context.Context, tokenHash string) {
+	userID, ended, err := s.store.RevokeFamilyOnReuse(ctx, tokenHash, refreshReuseGrace)
+	switch {
+	case err != nil:
+		s.log.Error("refresh reuse: revoke session family", "error", err)
+	case ended > 0:
+		s.log.Warn("refresh token reuse: session family revoked", "user_id", userID, "sessions", ended)
+	}
 }
 
 func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
