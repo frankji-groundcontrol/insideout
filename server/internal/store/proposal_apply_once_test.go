@@ -20,6 +20,7 @@ import (
 // applyFixture is a project whose owner filed an agent proposal carrying items.
 type applyFixture struct {
 	owner *User
+	ws    *Workspace
 	proj  *Project
 	upd   *ProjectUpdate
 }
@@ -46,7 +47,7 @@ func newApplyFixture(t *testing.T, st *Store, items ...ProposalItem) *applyFixtu
 	if err := st.AddProposalItems(ctx, owner.ID, upd.ID, items); err != nil {
 		t.Fatalf("add items: %v", err)
 	}
-	return &applyFixture{owner: owner, proj: proj, upd: upd}
+	return &applyFixture{owner: owner, ws: ws, proj: proj, upd: upd}
 }
 
 // nodes returns the project's roadmap nodes keyed by title, failing on a title

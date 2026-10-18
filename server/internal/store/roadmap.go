@@ -111,52 +111,59 @@ func nodeWorkspace(ctx context.Context, tx pgx.Tx, nodeID uuid.UUID) (uuid.UUID,
 func (s *Store) CreateRoadmapNode(ctx context.Context, actorID, projectID uuid.UUID, parentID *uuid.UUID, title, description string) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
-			return err
-		}
-
-		// Same per-project advisory lock as MoveRoadmapNode: serializes the
-		// MAX(position)+1 read-modify-write so concurrent sibling creates
-		// can't land on the same position.
-		if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, projectID.String()); err != nil {
-			return err
-		}
-
-		if parentID != nil {
-			// The parent must live in the same project, else the tree could
-			// silently span projects.
-			var parentProject uuid.UUID
-			err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, *parentID).Scan(&parentProject)
-			if errors.Is(err, pgx.ErrNoRows) {
-				return ErrNotFound
-			}
-			if err != nil {
-				return err
-			}
-			if parentProject != projectID {
-				return ErrConflict
-			}
-		}
-
-		// IS NOT DISTINCT FROM matches parent_id = $2 including NULL = NULL.
-		row := tx.QueryRow(ctx, `
-			INSERT INTO insideout.roadmap_nodes (project_id, parent_id, title, description, position, created_by, updated_by)
-			SELECT $1, $2, $3, $4,
-			       COALESCE(MAX(position) + 1, 0), $5, $5
-			FROM insideout.roadmap_nodes
-			WHERE project_id = $1 AND parent_id IS NOT DISTINCT FROM $2
-			RETURNING `+roadmapNodeColumns,
-			projectID, parentID, title, description, actorID,
-		)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
+		var err error
+		n, err = createRoadmapNodeTx(ctx, tx, actorID, projectID, parentID, title, description)
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 	s.noteRoadmapChange(n.ProjectID)
 	return n, nil
+}
+
+// createRoadmapNodeTx is CreateRoadmapNode inside the caller's transaction
+// (and RLS context), so a caller that creates several nodes — applying a
+// proposal — can make them all land or none. The caller announces the change
+// with noteRoadmapChange once its transaction has committed.
+func createRoadmapNodeTx(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID, parentID *uuid.UUID, title, description string) (*RoadmapNode, error) {
+	if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		return nil, err
+	}
+
+	// Same per-project advisory lock as MoveRoadmapNode: serializes the
+	// MAX(position)+1 read-modify-write so concurrent sibling creates
+	// can't land on the same position.
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, projectID.String()); err != nil {
+		return nil, err
+	}
+
+	if parentID != nil {
+		// The parent must live in the same project, else the tree could
+		// silently span projects.
+		var parentProject uuid.UUID
+		err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, *parentID).Scan(&parentProject)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		if err != nil {
+			return nil, err
+		}
+		if parentProject != projectID {
+			return nil, ErrConflict
+		}
+	}
+
+	// IS NOT DISTINCT FROM matches parent_id = $2 including NULL = NULL.
+	return scanRoadmapNode(tx.QueryRow(ctx, `
+		INSERT INTO insideout.roadmap_nodes (project_id, parent_id, title, description, position, created_by, updated_by)
+		SELECT $1, $2, $3, $4,
+		       COALESCE(MAX(position) + 1, 0), $5, $5
+		FROM insideout.roadmap_nodes
+		WHERE project_id = $1 AND parent_id IS NOT DISTINCT FROM $2
+		RETURNING `+roadmapNodeColumns,
+		projectID, parentID, title, description, actorID,
+	))
 }
 
 // ListRoadmap returns every node of a project, roots first then grouped by

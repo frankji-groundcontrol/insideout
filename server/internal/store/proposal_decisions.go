@@ -25,12 +25,28 @@ type ProposalDecision struct {
 // row is upserted (latest state) and a timeline note makes the decision
 // visible in the project history.
 func (s *Store) DecideProposal(ctx context.Context, actorID, updateID uuid.UUID, decision, reason string) (*ProposalDecision, error) {
+	d, _, err := s.decideProposal(ctx, actorID, updateID, decision, reason, false)
+	return d, err
+}
+
+// DecideAndApplyProposal is DecideProposal that, for an acceptance with apply
+// set, also applies the proposal's items (ApplyProposalItems) in the same
+// transaction: the decision and the nodes it created land together or not at
+// all, so a failed apply leaves the proposal open to accept again instead of
+// decided with nothing built. Rejections ignore apply. Returns the ids of the
+// nodes this call created: none when every item was already applied.
+func (s *Store) DecideAndApplyProposal(ctx context.Context, actorID, updateID uuid.UUID, decision, reason string, apply bool) (*ProposalDecision, []uuid.UUID, error) {
+	return s.decideProposal(ctx, actorID, updateID, decision, reason, apply && decision == "accepted")
+}
+
+func (s *Store) decideProposal(ctx context.Context, actorID, updateID uuid.UUID, decision, reason string, apply bool) (*ProposalDecision, []uuid.UUID, error) {
 	if decision != "accepted" && decision != "rejected" {
-		return nil, errors.New("decision must be accepted or rejected")
+		return nil, nil, errors.New("decision must be accepted or rejected")
 	}
 	var out *ProposalDecision
+	var created []uuid.UUID
+	var projectID uuid.UUID
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		var projectID uuid.UUID
 		var kind string
 		var content string
 		if err := tx.QueryRow(ctx,
@@ -79,10 +95,22 @@ func (s *Store) DecideProposal(ctx context.Context, actorID, updateID uuid.UUID,
 			"[proposal "+decision+"] "+firstLine(content)+noteSuffix(reason)); err != nil {
 			return err
 		}
+		if apply {
+			var err error
+			if created, err = applyProposalItemsTx(ctx, tx, actorID, projectID, updateID); err != nil {
+				return err
+			}
+		}
 		out = &d
 		return nil
 	})
-	return out, err
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(created) > 0 {
+		s.noteRoadmapChange(projectID)
+	}
+	return out, created, nil
 }
 
 func isWorkspaceAdmin(ctx context.Context, tx pgx.Tx, workspaceID, userID uuid.UUID) (bool, error) {

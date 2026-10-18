@@ -225,7 +225,8 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 		Decision string `json:"decision"`
 		Reason   string `json:"reason"`
 		// Apply executes the proposal's structured items on acceptance
-		// (proposal→structure application). Rejected decisions ignore it.
+		// (proposal→structure application), once: a repeat applies only
+		// what is still unapplied. Rejected decisions ignore it.
 		Apply bool `json:"apply"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
@@ -236,7 +237,10 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusBadRequest, "decision must be \"accepted\" or \"rejected\"", "", nil)
 		return
 	}
-	d, err := s.store.DecideProposal(r.Context(), userID, uid, req.Decision, strings.TrimSpace(req.Reason))
+	// Decide and apply are one transaction: an apply that fails answers 500 and
+	// records no decision, so the proposal stays open to accept again; items
+	// already applied by an earlier accept are skipped, never created twice.
+	d, nodeIDs, err := s.store.DecideAndApplyProposal(r.Context(), userID, uid, req.Decision, strings.TrimSpace(req.Reason), req.Apply)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "proposal not found", "", nil)
 		return
@@ -250,17 +254,9 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	applied := []string{}
-	if req.Apply && req.Decision == "accepted" {
-		// Items are applied as the deciding human, under their RLS
-		// context (the store resolves the project inside it).
-		nodeIDs, err := s.store.ApplyProposalItemsForUpdate(r.Context(), userID, uid)
-		if err != nil {
-			s.log.Error("apply proposal items", "error", err)
-		}
-		for _, id := range nodeIDs {
-			applied = append(applied, id.String())
-		}
+	applied := make([]string, 0, len(nodeIDs))
+	for _, id := range nodeIDs {
+		applied = append(applied, id.String())
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{
 		"updateId": d.UpdateID, "decision": d.Decision, "reason": d.Reason,

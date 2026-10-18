@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -74,41 +75,102 @@ func (s *Store) ApplyProposalItemsForUpdate(ctx context.Context, actorID, update
 }
 
 // ApplyProposalItems creates the proposal's add_node items as real
-// roadmap nodes, executed as the deciding human (actorID). parentHint
-// matches a node title in the project (first match); empty → root.
-// Returns the created node ids.
+// roadmap nodes, executed as the deciding human (actorID), all in one
+// transaction (see applyProposalItemsTx). parentHint matches a node
+// title in the project (first match); empty → root. Returns the created
+// node ids: only the items not applied before, none on a repeat.
 func (s *Store) ApplyProposalItems(ctx context.Context, actorID, projectID, updateID uuid.UUID) ([]uuid.UUID, error) {
-	items, err := s.ListProposalItems(ctx, actorID, updateID)
+	var created []uuid.UUID
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		var err error
+		created, err = applyProposalItemsTx(ctx, tx, actorID, projectID, updateID)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
-	created := make([]uuid.UUID, 0, len(items))
-	for _, it := range items {
-		if it.Action != "add_node" {
-			continue
+	if len(created) > 0 {
+		s.noteRoadmapChange(projectID)
+	}
+	return created, nil
+}
+
+// applyProposalItemsTx applies the proposal's not-yet-applied add_node items
+// inside the caller's transaction. Each item is claimed before its node is
+// created (applied_at stamped WHERE applied_at IS NULL), and the claim and the
+// node commit or roll back together, so an item is applied once however many
+// accepts repeat or race (a racer blocks on the claimed row, then finds it
+// stamped and skips it), and a failure part-way leaves nothing applied. The
+// caller announces the roadmap change once its transaction has committed.
+func applyProposalItemsTx(ctx context.Context, tx pgx.Tx, actorID, projectID, updateID uuid.UUID) ([]uuid.UUID, error) {
+	// Authority before the claim: the claim is an RLS-filtered UPDATE, which for
+	// someone who may not apply would match no row and read as "already applied".
+	if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		return nil, err
+	}
+	rows, err := tx.Query(ctx, `
+		SELECT id, title, parent_hint FROM insideout.proposal_items
+		WHERE update_id = $1 AND action = 'add_node' AND applied_at IS NULL
+		ORDER BY position, created_at, id`, updateID)
+	if err != nil {
+		return nil, err
+	}
+	var todo []ProposalItem
+	for rows.Next() {
+		var it ProposalItem
+		if err := rows.Scan(&it.ID, &it.Title, &it.ParentHint); err != nil {
+			rows.Close()
+			return nil, err
 		}
-		node, err := s.CreateRoadmapNode(ctx, actorID, projectID, resolveParent(ctx, s, actorID, projectID, it.ParentHint), it.Title, "proposed: "+it.Title)
+		todo = append(todo, it)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	created := make([]uuid.UUID, 0, len(todo))
+	for _, it := range todo {
+		claim, err := tx.Exec(ctx,
+			`UPDATE insideout.proposal_items SET applied_at = now() WHERE id = $1 AND applied_at IS NULL`, it.ID)
 		if err != nil {
-			return created, err
+			return nil, err
+		}
+		if claim.RowsAffected() == 0 {
+			continue // a racing accept stamped it between our read and our claim
+		}
+		parent, err := resolveParentTx(ctx, tx, projectID, it.ParentHint)
+		if err != nil {
+			return nil, err
+		}
+		node, err := createRoadmapNodeTx(ctx, tx, actorID, projectID, parent, it.Title, "proposed: "+it.Title)
+		if err != nil {
+			return nil, err
 		}
 		created = append(created, node.ID)
 	}
 	return created, nil
 }
 
-func resolveParent(ctx context.Context, s *Store, actorID, projectID uuid.UUID, hint string) *uuid.UUID {
+// resolveParentTx finds the node a parentHint names: the first node of the
+// project with that title, in the order ListRoadmap lists them. It reads inside
+// the apply's transaction so a node created by an earlier item of the same
+// apply can be a later item's parent. No match (or no hint) → root.
+func resolveParentTx(ctx context.Context, tx pgx.Tx, projectID uuid.UUID, hint string) (*uuid.UUID, error) {
 	if hint == "" {
-		return nil
+		return nil, nil
 	}
-	nodes, err := s.ListRoadmap(ctx, actorID, projectID)
+	var id uuid.UUID
+	err := tx.QueryRow(ctx, `
+		SELECT id FROM insideout.roadmap_nodes
+		WHERE project_id = $1 AND title = $2
+		ORDER BY parent_id NULLS FIRST, position, created_at, id
+		LIMIT 1`, projectID, hint).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
 	if err != nil {
-		return nil
+		return nil, err
 	}
-	for _, n := range nodes {
-		if n.Title == hint {
-			id := n.ID
-			return &id
-		}
-	}
-	return nil
+	return &id, nil
 }

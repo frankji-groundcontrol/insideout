@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 // Applying a proposal must create its nodes in the order they were
@@ -125,4 +127,67 @@ func TestRoadmap_MemberCannotWrite(t *testing.T) {
 	}
 	// keep the import honest if a future assertion needs it
 	_ = uuid.Nil
+}
+
+// rv4-FEAT-02, the migration's two guards (green-only: the column did not exist
+// at the base). applied_at is the one thing a proposal item lets the app role
+// change, and only the people who may apply the proposal may change it.
+func TestProposalItems_OnlyThePlanWriterStampsAppliedAtAndNothingElseChanges(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	f := newApplyFixture(t, st, ProposalItem{Title: "Intake"})
+	member := mkUser(t, st)
+	if _, err := st.JoinWorkspace(ctx, member.ID, f.ws.Code); err != nil {
+		t.Fatalf("join: %v", err)
+	}
+	items, err := st.ListProposalItems(ctx, f.owner.ID, f.upd.ID)
+	if err != nil || len(items) != 1 {
+		t.Fatalf("list items: %d, %v", len(items), err)
+	}
+	itemID := items[0].ID
+	run := func(actor uuid.UUID, sql string) (int64, error) {
+		var n int64
+		err := st.withUserContext(ctx, actor, func(tx pgx.Tx) error {
+			tag, err := tx.Exec(ctx, sql, itemID)
+			n = tag.RowsAffected()
+			return err
+		})
+		return n, err
+	}
+
+	// Another column is not writable, whoever asks (table-level UPDATE was revoked).
+	var pgErr *pgconn.PgError
+	if _, err := run(f.owner.ID, `UPDATE insideout.proposal_items SET title = 'rewritten' WHERE id = $1`); !errors.As(err, &pgErr) || pgErr.Code != "42501" {
+		t.Errorf("owner rewriting an item title: want permission denied (42501), got %v", err)
+	}
+	// A member who may not apply sees the row but updates none of it.
+	if n, err := run(member.ID, `UPDATE insideout.proposal_items SET applied_at = now() WHERE id = $1`); err != nil || n != 0 {
+		t.Errorf("member stamping applied_at: want 0 rows and no error, got %d, %v", n, err)
+	}
+	// The owner may.
+	if n, err := run(f.owner.ID, `UPDATE insideout.proposal_items SET applied_at = now() WHERE id = $1 AND applied_at IS NULL`); err != nil || n != 1 {
+		t.Errorf("owner stamping applied_at: want 1 row, got %d, %v", n, err)
+	}
+}
+
+// A person who may not apply must be refused, not told the proposal is
+// already applied: the claim is an RLS-filtered UPDATE that matches no row for
+// them, which would otherwise read as "applied by someone else".
+func TestProposalApply_AMemberWhoMayNotApplyIsRefused(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	f := newApplyFixture(t, st, ProposalItem{Title: "Intake"}, ProposalItem{Title: "Handoff"})
+	member := mkUser(t, st)
+	if _, err := st.JoinWorkspace(ctx, member.ID, f.ws.Code); err != nil {
+		t.Fatalf("join: %v", err)
+	}
+
+	if ids, err := st.ApplyProposalItemsForUpdate(ctx, member.ID, f.upd.ID); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("member apply: want ErrForbidden, got %v (created %d)", err, len(ids))
+	}
+	f.wantTitles(t, st)
+	ids, err := st.ApplyProposalItemsForUpdate(ctx, f.owner.ID, f.upd.ID)
+	if err != nil || len(ids) != 2 {
+		t.Fatalf("owner apply after the refused attempt: %d nodes, %v, want both items (the refusal must not claim them)", len(ids), err)
+	}
 }
