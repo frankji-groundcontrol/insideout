@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insideout/api/client.dart';
+import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/prd/coach_panel.dart';
@@ -55,6 +56,26 @@ class _StageApi extends ApiClient {
       id: conversationId,
       prdId: 'prd-1',
       stage: stage,
+      status: 'active',
+    );
+  }
+
+  /// The (conversationId, stage) pairs decline posted (rv4-CLOSE-03), and
+  /// whether the server should refuse them. The answer is the conversation as
+  /// the server stores it: the stage unchanged, the proposal gone.
+  final declinedStages = <(String, String)>[];
+  bool declineFails = false;
+
+  Future<Conversation> declineConversationStage(
+    String conversationId,
+    String stage,
+  ) async {
+    declinedStages.add((conversationId, stage));
+    if (declineFails) throw ApiException('offline');
+    return Conversation(
+      id: conversationId,
+      prdId: 'prd-1',
+      stage: 'clarify',
       status: 'active',
     );
   }
@@ -176,12 +197,31 @@ void main() {
     await tester.pump();
 
     await tester.tap(find.byKey(const Key('coach-stage-decline')));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    // Declining is local: the endpoint expresses confirm only.
+    // rv4-CLOSE-03: declining is a write, so a reload cannot bring the card
+    // back. It is not a confirm.
+    expect(api.declinedStages, [('c1', 'draft')]);
     expect(api.confirmedStages, isEmpty);
     expect(find.byKey(const Key('coach-stage-confirm')), findsNothing);
     expect(find.text('Clarifying'), findsOneWidget);
     expect(find.text('Proposed: Drafting'), findsNothing);
+  });
+
+  testWidgets('a decline the server did not record leaves the card up', (
+    tester,
+  ) async {
+    final api = await _pumpPage(tester);
+    api.declineFails = true;
+    _stageCallback(tester)('draft');
+    await tester.pump();
+
+    await tester.tap(find.byKey(const Key('coach-stage-decline')));
+    await tester.pumpAndSettle();
+
+    // Dropping the card here would only hide a proposal the server still holds.
+    expect(api.declinedStages, [('c1', 'draft')]);
+    expect(find.byKey(const Key('coach-stage-confirm')), findsOneWidget);
+    expect(find.text('Proposed: Drafting'), findsOneWidget);
   });
 }

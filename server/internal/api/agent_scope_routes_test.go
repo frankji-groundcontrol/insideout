@@ -91,6 +91,7 @@ var humanOnlyRoutes = []string{
 	"GET /api/v1/conversations/{id}/messages",
 	"POST /api/v1/conversations/{id}/messages",
 	"POST /api/v1/conversations/{id}/stage",
+	"POST /api/v1/conversations/{id}/stage/decline",
 	"GET /api/v1/prds/{id}/conversation",
 	"POST /api/v1/prds/{id}/conversation",
 	"GET /api/v1/ideas/{iid}",
