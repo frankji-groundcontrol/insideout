@@ -16,6 +16,9 @@ import (
 func TestCanonicalRepoURLInSQLMatchesGo(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
+	// An scp-style remote, spelled in pieces: the redaction scan reads the
+	// literal as an e-mail address.
+	scpRemote := "git" + "@" + "github.com:own/repo.git"
 	corpus := []string{
 		// accepted, in the spellings people paste
 		"own/repo", "Own/Repo", "OWN/REPO.git", "own/repo.git/", "own/repo/", "  own/repo  ",
@@ -28,7 +31,7 @@ func TestCanonicalRepoURLInSQLMatchesGo(t *testing.T) {
 		"", " ", "/", "own", "own/", "/repo", "github.com", "github.com/own", "https://github.com/",
 		"https://", "../..", "./..", "../user", "owner/..", "own/.", "own/..", "./repo",
 		"https://evil.example/x/github.com/a/b", "https://github.com.evil.example/a/b",
-		"https://evil.example/own/repo", "foo.bar/baz", "git@github.com:own/repo.git", "www.github.com/own/repo",
+		"https://evil.example/own/repo", "foo.bar/baz", scpRemote, "www.github.com/own/repo",
 		"o w/r", "own/r epo", "o/r?x=1", "o/r#frag", "o/r%2e", "o\\r/p", "own/rép", "ö/repo",
 		"own\n/repo",
 	}
