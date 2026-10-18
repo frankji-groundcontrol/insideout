@@ -12,6 +12,7 @@ its own tree.
 """
 import os
 import pathlib
+import re
 import subprocess
 import tempfile
 import unittest
@@ -122,6 +123,31 @@ class TrackedTree(unittest.TestCase):
         lines = [l.strip() for l in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()]
         reallowed = [l for l in lines if l.startswith("!.env") and l != "!.env.example"]
         self.assertEqual(reallowed, [])
+
+    def test_host_manifests_hold_placeholders_not_machine_details(self):
+        # rv4-PUB-10: host.yml published the OS user in a checkout path and the
+        # ssh alias. The folder name stays (scripts/keys.py keys on it, and the
+        # manifest must still name its own folder); the contents are placeholders.
+        # The messages never carry the value, so a red run does not echo it.
+        manifests = sorted(ROOT.glob("hosts/*/host.yml"))
+        self.assertTrue(manifests, "no host manifest found")
+        for path in manifests:
+            text = path.read_text(encoding="utf-8")
+            fields = dict(re.findall(r"^(\w+):[ \t]*(.*?)[ \t]*$", text, re.M))
+            with self.subTest(host=path.parent.name):
+                self.assertEqual(fields.get("name"), path.parent.name)
+                for key in ("checkout", "ssh_alias"):
+                    self.assertIsNotNone(
+                        re.fullmatch(r"<[a-z-]+>", fields.get(key, "")),
+                        f"{key} in {path.relative_to(ROOT)} is not a <placeholder>",
+                    )
+
+    def test_no_record_quotes_an_ssh_alias_value(self):
+        # rv4-PUB-10: two dated records quoted the alias value of a host manifest.
+        pattern = "ssh_alias:[[:space:]]*[^<[:space:]]"
+        r = run(["git", "grep", "-n", "-I", "-E", pattern, "--", "docs", "hosts"], ROOT)
+        where = [":".join(line.split(":", 2)[:2]) for line in r.stdout.splitlines()]
+        self.assertEqual(where, [], "ssh_alias carries a value at these path:line spots")
 
 
 if __name__ == "__main__":
