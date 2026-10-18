@@ -1,7 +1,11 @@
-// Package github fetches recent commits for a linked repo so a project's
-// progress timeline can sync real development activity. Public repos need no
-// credentials (GitHub's unauthenticated rate limit is plenty for a manual
-// sync); set GITHUB_TOKEN to raise it. See docs/plans/2026-07-22-idea-to-reality.md.
+// Package github reads a linked repo for a project: recent commits for the
+// progress timeline (this file) and the insideout.yaml guide plus the GitHub
+// App credentials that make a private repo readable (appauth.go). A public repo
+// reads without a credential, but GitHub's anonymous rate limit is 60 requests
+// an hour per server address, so a deployment that holds the App reads every
+// repo it is installed on through that repo's installation token. There is no
+// server-wide token: it would be one credential any member could aim at any
+// repo it can name (rv4-FEAT-04). See docs/plans/2026-07-22-idea-to-reality.md.
 package github
 
 import (
@@ -11,7 +15,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -124,11 +128,16 @@ func retryAfterSeconds(h http.Header) int {
 // force-push rewrote history and the old SHA no longer exists) we stop at the
 // page cap and return what we have; the cursor then advances past the gap.
 //
+// token is the credential to read the repo with: the installation token of the
+// repo (InstallationTokens.RepoToken), or "" for an anonymous read of a public
+// repo. It is sent to the GitHub API host only: a rel="next" link that points
+// anywhere else ends the walk with an error instead of being followed.
+//
 // ponytail: maxPages bounds the walk (default 5 pages × perPage). A repo that
 // somehow lands more than that between two manual syncs loses the overflow —
 // acceptable for a human-triggered sync; raise maxPages or background the sync
 // if it ever matters.
-func FetchCommitsSince(ctx context.Context, repoURL, sinceSHA string, perPage, maxPages int) ([]Commit, error) {
+func FetchCommitsSince(ctx context.Context, token, repoURL, sinceSHA string, perPage, maxPages int) ([]Commit, error) {
 	owner, repo, err := ParseRepoURL(repoURL)
 	if err != nil {
 		return nil, err
@@ -140,10 +149,13 @@ func FetchCommitsSince(ctx context.Context, repoURL, sinceSHA string, perPage, m
 		maxPages = 5
 	}
 
-	url := fmt.Sprintf("%s/repos/%s/%s/commits?per_page=%d", apiBaseURL, owner, repo, perPage)
+	next := fmt.Sprintf("%s/repos/%s/%s/commits?per_page=%d", apiBaseURL, owner, repo, perPage)
 	var out []Commit
-	for page := 0; page < maxPages && url != ""; page++ {
-		commits, next, err := fetchCommitPage(ctx, url)
+	for page := 0; page < maxPages && next != ""; page++ {
+		if page > 0 && !onAPIHost(next) {
+			return nil, fmt.Errorf("github: refusing a next page on another host")
+		}
+		commits, link, err := fetchCommitPage(ctx, token, next)
 		if err != nil {
 			return nil, err
 		}
@@ -156,25 +168,29 @@ func FetchCommitsSince(ctx context.Context, repoURL, sinceSHA string, perPage, m
 		if sinceSHA == "" {
 			return out, nil // first sync: one page is plenty
 		}
-		url = next
+		next = link
 	}
 	return out, nil
 }
 
+// onAPIHost reports whether u is on the GitHub API origin the walk started on.
+func onAPIHost(u string) bool {
+	got, err := url.Parse(u)
+	api, apiErr := url.Parse(apiBaseURL)
+	return err == nil && apiErr == nil && got.Scheme == api.Scheme && strings.EqualFold(got.Host, api.Host)
+}
+
 // fetchCommitPage GETs one commits page and returns its commits plus the
 // rel="next" URL ("" on the last page).
-func fetchCommitPage(ctx context.Context, url string) ([]Commit, string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+func fetchCommitPage(ctx context.Context, token, pageURL string) ([]Commit, string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pageURL, nil)
 	if err != nil {
 		return nil, "", fmt.Errorf("github: build request: %w", err)
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "insideout-app") // GitHub rejects UA-less requests
-	// ponytail: one server-wide token for every linked repo, so a member can
-	// aim it at any repo it can see. Per-installation tokens (the GitHub App
-	// credential in appauth.go) are the upgrade: rv4-SEC-06, plan row 3.10.
-	if tok := os.Getenv("GITHUB_TOKEN"); tok != "" {
-		req.Header.Set("Authorization", "Bearer "+tok)
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
 	}
 
 	client := &http.Client{Timeout: 15 * time.Second}

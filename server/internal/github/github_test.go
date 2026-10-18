@@ -65,7 +65,7 @@ func TestFetchCommitsSince_CursorOnFirstPage(t *testing.T) {
 	apiBaseURL = srv.URL
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
-	got, err := FetchCommitsSince(context.Background(), "owner/repo", "C", 3, 5)
+	got, err := FetchCommitsSince(context.Background(), "", "owner/repo", "C", 3, 5)
 	if err != nil {
 		t.Fatalf("fetch: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestFetchCommitsSince_CrossesPages(t *testing.T) {
 	apiBaseURL = srv.URL
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
-	got, err := FetchCommitsSince(context.Background(), "owner/repo", "E", 3, 5)
+	got, err := FetchCommitsSince(context.Background(), "", "owner/repo", "E", 3, 5)
 	if err != nil {
 		t.Fatalf("fetch: %v", err)
 	}
@@ -99,7 +99,7 @@ func TestFetchCommitsSince_FirstSyncOnePage(t *testing.T) {
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
 	// Empty cursor (first-ever sync): just the first page, no history walk.
-	got, err := FetchCommitsSince(context.Background(), "owner/repo", "", 3, 5)
+	got, err := FetchCommitsSince(context.Background(), "", "owner/repo", "", 3, 5)
 	if err != nil {
 		t.Fatalf("fetch: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestFetchCommitsSince_CursorNeverFoundBounded(t *testing.T) {
 
 	// A cursor that no longer exists (force-push) must not loop forever: it
 	// stops at maxPages and returns what it walked.
-	got, err := FetchCommitsSince(context.Background(), "owner/repo", "ZZZ", 3, 3)
+	got, err := FetchCommitsSince(context.Background(), "", "owner/repo", "ZZZ", 3, 3)
 	if err != nil {
 		t.Fatalf("fetch: %v", err)
 	}
@@ -156,7 +156,7 @@ func TestFetchCommitsSince_RepoNotFound(t *testing.T) {
 	apiBaseURL = srv.URL
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
-	_, err := FetchCommitsSince(context.Background(), "owner/repo", "", 3, 5)
+	_, err := FetchCommitsSince(context.Background(), "", "owner/repo", "", 3, 5)
 	if !errors.Is(err, ErrRepoNotFound) {
 		t.Fatalf("want ErrRepoNotFound, got %v", err)
 	}
@@ -168,7 +168,7 @@ func TestFetchCommitsSince_RateLimited(t *testing.T) {
 	apiBaseURL = srv.URL
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
-	_, err := FetchCommitsSince(context.Background(), "owner/repo", "", 3, 5)
+	_, err := FetchCommitsSince(context.Background(), "", "owner/repo", "", 3, 5)
 	var rle *RateLimitError
 	if !errors.As(err, &rle) {
 		t.Fatalf("want *RateLimitError, got %v", err)
@@ -190,7 +190,7 @@ func TestFetchCommitsSince_SubjectTruncatedByRune(t *testing.T) {
 	apiBaseURL = srv.URL
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
-	got, err := FetchCommitsSince(context.Background(), "owner/repo", "", 3, 5)
+	got, err := FetchCommitsSince(context.Background(), "", "owner/repo", "", 3, 5)
 	if err != nil {
 		t.Fatalf("fetch: %v", err)
 	}

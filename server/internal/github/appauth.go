@@ -11,6 +11,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -132,6 +133,68 @@ func (t *InstallationTokens) Token(ctx context.Context, installationID int64) (s
 	}
 	t.tokens[installationID] = cachedToken{token: out.Token, expiry: out.ExpiresAt}
 	return out.Token, nil
+}
+
+// ErrNotInstalled means the GitHub App has no installation covering the repo.
+// GitHub answers the same 404 for a private repo and for one that does not exist.
+var ErrNotInstalled = errors.New("github: app is not installed on this repo")
+
+// InstallationForRepo asks GitHub which installation of this App covers
+// owner/repo (GET /repos/{o}/{r}/installation, authenticated by the App JWT).
+// The id comes from GitHub for the repo itself, never from the caller, so a
+// token minted from it reads only what that installation was granted.
+// ErrNotInstalled when none does.
+func (t *InstallationTokens) InstallationForRepo(ctx context.Context, owner, repo string) (int64, error) {
+	// The App JWT rides on this request: nothing but a plain owner/repo pair
+	// may shape its path.
+	if !isRepoSegment(owner) || !isRepoSegment(repo) {
+		return 0, fmt.Errorf("github: %q/%q is not a repo name", owner, repo)
+	}
+	jwt, err := MintAppJWT(t.appID, t.key, time.Now())
+	if err != nil {
+		return 0, err
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet,
+		fmt.Sprintf("%s/repos/%s/%s/installation", apiBaseURL, owner, repo), nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	req.Header.Set("Accept", "application/vnd.github+json")
+	resp, err := t.hc.Do(req)
+	if err != nil {
+		return 0, fmt.Errorf("github: installation lookup: %w", err)
+	}
+	defer resp.Body.Close()
+	switch resp.StatusCode {
+	case http.StatusOK:
+	case http.StatusNotFound:
+		return 0, ErrNotInstalled
+	case http.StatusForbidden, http.StatusTooManyRequests:
+		return 0, &RateLimitError{RetryAfterSeconds: retryAfterSeconds(resp.Header)}
+	default:
+		return 0, fmt.Errorf("github: installation lookup: %s", resp.Status)
+	}
+	var out struct {
+		ID int64 `json:"id"`
+	}
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&out); err != nil || out.ID == 0 {
+		return 0, fmt.Errorf("github: installation lookup: decode")
+	}
+	return out.ID, nil
+}
+
+// RepoToken is the installation token that can read owner/repo, or "" when the
+// App is not installed on it (a public repo still reads anonymously).
+func (t *InstallationTokens) RepoToken(ctx context.Context, owner, repo string) (string, error) {
+	id, err := t.InstallationForRepo(ctx, owner, repo)
+	if errors.Is(err, ErrNotInstalled) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return t.Token(ctx, id)
 }
 
 // FetchGuideFile downloads insideout.yaml from the repo at a ref.

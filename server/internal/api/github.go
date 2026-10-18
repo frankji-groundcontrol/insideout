@@ -72,7 +72,7 @@ func (s *Server) handleSyncGithub(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	added, repoURL, err := s.syncGithubProject(r.Context(), userID, pid)
+	added, repoURL, err := s.syncGithubProject(r.Context(), userID, pid, 0)
 	if errors.Is(err, errNoRepoLinked) {
 		httpx.WriteError(w, http.StatusBadRequest, "no GitHub repo linked to this project yet", "", nil)
 		return

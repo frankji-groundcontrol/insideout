@@ -65,9 +65,14 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusInternalServerError, "lookup failed", "", nil)
 			return
 		}
+		// The delivery names the installation that covers this repo (the body is
+		// HMAC-verified), so the sync can borrow its token without asking GitHub.
+		// A body that does not decode leaves it 0 and the sync looks it up.
+		var ev webhookEvent
+		_ = json.Unmarshal(body, &ev)
 		commits := 0
 		for _, po := range targets {
-			added, _, err := s.syncGithubProject(r.Context(), po.OwnerID, po.ProjectID)
+			added, _, err := s.syncGithubProject(r.Context(), po.OwnerID, po.ProjectID, ev.Installation.ID)
 			if err != nil {
 				// One project's failure must not block the others; GitHub
 				// retries the whole delivery only on 5xx.
@@ -156,8 +161,9 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 // user-triggered route and the webhook: pull commits since the stored
 // cursor and append them to the project timeline in one transaction.
 // userID is the acting owner (the requesting user, or the owner the
-// webhook resolved).
-func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.UUID) (added int, repoURL string, err error) {
+// webhook resolved). installationID is the authenticated installation of a
+// webhook delivery, or 0 when the caller is the manual route.
+func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.UUID, installationID int64) (added int, repoURL string, err error) {
 	repoURL, lastSHA, err := s.store.ProjectRepoSync(ctx, userID, projectID)
 	if err != nil {
 		return 0, "", err
@@ -165,7 +171,11 @@ func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.U
 	if repoURL == "" {
 		return 0, "", errNoRepoLinked
 	}
-	fresh, err := github.FetchCommitsSince(ctx, repoURL, lastSHA, 20, 5)
+	token, err := s.commitToken(ctx, repoURL, installationID)
+	if err != nil {
+		return 0, repoURL, err
+	}
+	fresh, err := github.FetchCommitsSince(ctx, token, repoURL, lastSHA, 20, 5)
 	if err != nil {
 		return 0, repoURL, err
 	}
@@ -186,6 +196,25 @@ func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.U
 		return 0, repoURL, err
 	}
 	return added, repoURL, nil
+}
+
+// commitToken is the credential a commit sync reads repoURL with: the
+// installation token of the repo when the server holds the GitHub App and the
+// App is installed on it, and nothing otherwise, which reads a public repo
+// anonymously (rv4-FEAT-04). The repo is the one stored on the project, never a
+// name the caller supplies.
+func (s *Server) commitToken(ctx context.Context, repoURL string, installationID int64) (string, error) {
+	if s.ghTokens == nil {
+		return "", nil
+	}
+	if installationID != 0 {
+		return s.ghTokens.Token(ctx, installationID)
+	}
+	owner, repo, err := github.ParseRepoURL(repoURL)
+	if err != nil {
+		return "", err
+	}
+	return s.ghTokens.RepoToken(ctx, owner, repo)
 }
 
 var errNoRepoLinked = errors.New("no repo linked")

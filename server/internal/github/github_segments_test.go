@@ -80,7 +80,6 @@ func TestParseRepoURLReadsEveryRealForm(t *testing.T) {
 // before any request is built: GitHub sees nothing, and neither does anyone
 // who could read what it was sent.
 func TestFetchCommitsSinceSendsNothingForAHostileRepo(t *testing.T) {
-	t.Setenv("GITHUB_TOKEN", "not-a-real-token")
 	var mu sync.Mutex
 	var seen []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +93,7 @@ func TestFetchCommitsSinceSendsNothingForAHostileRepo(t *testing.T) {
 	defer func() { apiBaseURL = "https://api.github.com" }()
 
 	for _, raw := range []string{"../..", "./..", "../user", "https://evil.example/x/github.com/a/b"} {
-		if _, err := FetchCommitsSince(context.Background(), raw, "", 3, 5); err == nil {
+		if _, err := FetchCommitsSince(context.Background(), "not-a-real-token", raw, "", 3, 5); err == nil {
 			t.Errorf("FetchCommitsSince(%q) = no error, want the repo refused", raw)
 		}
 	}
