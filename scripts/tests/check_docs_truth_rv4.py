@@ -6,7 +6,7 @@ Usage: python3 -I scripts/tests/check_docs_truth_rv4.py
 Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
-offending claim (rv4-FULL-09).
+offending claim (rv4-FULL-09, rv4-USER-08).
 """
 import pathlib
 import re
@@ -52,9 +52,46 @@ def env_variables_documented(facts, failures):
             fail(failures, f".env.example does not list {name} (the server reads it at {where})")
 
 
+# Living docs a reader follows; dated records (changelogs, plans, review) are history.
+LIVING_FILES = ("README.md", "PRODUCT.md", "docs/SETENV.md", ".env.example")
+LIVING_TREES = ("docs/usage", "docs/architecture")
+OFFLINE_OVERCLAIM = re.compile(r"(?i)end[- ]to[- ]end|canned|stages, tools|whole PRD flow|recommended default")
+
+
+def living_docs():
+    found = [ROOT / name for name in LIVING_FILES]
+    for tree in LIVING_TREES:
+        found += sorted((ROOT / tree).rglob("*.md"))
+    return found
+
+
+def offline_coach_not_overclaimed(failures):
+    """rv4-USER-08: the offline template coach echoes the member's last message
+    and does nothing else (no stages, no sections, no tool calls). While the
+    code does that, no living doc may call it end-to-end, canned or the
+    recommended default, and the offline-mode section must say "echo" and what
+    real coaching needs."""
+    if "onDelta(lastUser)" not in read("server/internal/agent/template.go"):
+        return  # the streamer no longer echoes; the wording may change
+    for path in living_docs():
+        for block in re.split(r"\n\s*\n", path.read_text(encoding="utf-8")):
+            hit = OFFLINE_OVERCLAIM.search(block)
+            if hit and re.search(r"(?i)offline", block):
+                fail(failures, f"{path.relative_to(ROOT)} calls the offline coach "
+                               f"'{hit.group(0)}', but it only echoes the last message")
+    section = re.search(r"### Offline AI mode\n(.*?)(?=\n###? )", read("docs/usage/local-development.md"), re.S)
+    text = section.group(1) if section else ""
+    if not re.search(r"(?i)\becho", text):
+        fail(failures, "local-development.md's Offline AI mode section does not say the coach echoes")
+    if not re.search(r"\bset `INSIDEOUT_LLM_API_KEY`", text):
+        fail(failures, "local-development.md's Offline AI mode section does not say coaching "
+                       "needs a set INSIDEOUT_LLM_API_KEY")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     env_variables_documented(facts, failures)
+    offline_coach_not_overclaimed(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
