@@ -25,6 +25,15 @@ AT = "@"
 DEFAULT_BASE = "server/internal/apiclient/default_base.go"
 DEFAULT_BASE_TEXT = 'package apiclient\n\nconst DefaultBase = "https://hosted.example.test/api/v1"\n'
 
+# rv4-PUB-12: dated records that quoted provider-side ids (Railway deployments,
+# a project row, a design-tool project). The ids add nothing for a reader.
+UUID = re.compile(r"(?<![0-9a-f])[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}(?![0-9a-f])", re.I)
+RECORDS_WITHOUT_PROVIDER_IDS = (
+    "docs/changelogs/2026-08-18-flutter-web-host.md",
+    "docs/changelogs/2026-08-21-dogfood-and-cleanup.md",
+    "docs/plans/2026-09-18-cobalt-flutter-goal.md",
+)
+
 
 def addr(local, domain):
     return f"{local}{AT}{domain}"
@@ -148,6 +157,14 @@ class TrackedTree(unittest.TestCase):
         r = run(["git", "grep", "-n", "-I", "-E", pattern, "--", "docs", "hosts"], ROOT)
         where = [":".join(line.split(":", 2)[:2]) for line in r.stdout.splitlines()]
         self.assertEqual(where, [], "ssh_alias carries a value at these path:line spots")
+
+    def test_dated_records_carry_no_provider_ids(self):
+        # Line numbers only, so a red run does not echo the ids.
+        for name in RECORDS_WITHOUT_PROVIDER_IDS:
+            lines = (ROOT / name).read_text(encoding="utf-8").splitlines()
+            where = [n for n, line in enumerate(lines, 1) if UUID.search(line)]
+            with self.subTest(record=name):
+                self.assertEqual(where, [], "provider ids at these line numbers")
 
 
 if __name__ == "__main__":
