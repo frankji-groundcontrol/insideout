@@ -30,6 +30,7 @@ server/
     linebudget/        the ~350-line file-budget guard the server tree runs
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb
+    modtidy/           the module tidiness guard: `go mod tidy -diff` must print nothing
     presence/          in-memory who-is-here registry behind live canvas presence
     progresshub/       in-memory fan-out for the live roadmap progress view
     prdcommit/         the human-only Commit that pins a PRD version
