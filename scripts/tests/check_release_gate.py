@@ -17,6 +17,20 @@ no YAML parser) and requires:
      and server/cmd/insideout/version.go declares `var version` (the
      linker silently ignores -X for a symbol that does not exist).
 
+The publish path is also gated and cannot overwrite (rv4-PUB-03, SEC-07):
+
+  4. a gate step before any test or build proves the tagged commit is an
+     ancestor of the default branch and that a successful `ci` run exists
+     for that exact SHA (the full DATABASE_URL-gated suites run there, not
+     on this runner); it exits non-zero and cannot fail open;
+  5. no `--clobber` and no `gh release upload`: a published release is
+     never rewritten, and `gh release create` uses `--verify-tag`;
+  6. an `actions/attest-build-provenance` step runs after the build and
+     before the publish, so no unattested archive is ever published;
+  7. the job grants what 4 to 6 need (`actions: read`,
+     `contents: write`, `id-token: write`, `attestations: write`) and its
+     checkout fetches full history, which the ancestor check reads.
+
 Exits 1 naming every failed property, 2 when the workflow shape cannot be
 read. CI-config property: the first real proof is the first tag run.
 """
@@ -66,10 +80,64 @@ def first(all_steps, pattern):
     return next((i for i, s in enumerate(all_steps) if re.search(pattern, commands(s))), None)
 
 
+def uncommented(text):
+    return "\n".join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+
+
+def job_permissions(text):
+    """The release job's `permissions:` mapping ({} when it has none)."""
+    found = re.search(r"^    permissions:\n((?:      \S.*\n)+)", uncommented(text) + "\n", re.M)
+    return dict(re.findall(r"(\S+):\s*(\S+)", found.group(1))) if found else {}
+
+
+def publish_path(text, all_steps):
+    """rv4-PUB-03, SEC-07: gated on the default branch and a green ci run,
+    never overwriting, attested before it is published."""
+    code = uncommented(text)
+    failures = []
+    gate = first(all_steps, r"merge-base\s+--is-ancestor")
+    firsts = [i for i in (first(all_steps, r"\bgo test\b"), first(all_steps, r"\bgo build\b"),
+                          first(all_steps, r"\bgh release\b")) if i is not None]
+    if gate is None:
+        failures.append("no step proves the tagged commit is an ancestor of the default branch (`git merge-base --is-ancestor`): "
+                        "a tag on any pushed commit publishes (PUB-03)")
+    else:
+        body = commands(all_steps[gate])
+        for needle in ("actions/workflows/ci.yml/runs", "head_sha", "status=success", "exit 1"):
+            if needle not in body:
+                failures.append(f"the gate step lacks `{needle}`: it must require a successful ci run for the tagged SHA (PUB-03, PM-05)")
+        if re.search(r"continue-on-error|\|\|\s*(true|:)", "\n".join(all_steps[gate])):
+            failures.append("the gate step can fail open (continue-on-error or `|| true`)")
+        if firsts and gate > min(firsts):
+            failures.append("the gate step runs after a test/build/publish step; it must come first")
+    if re.search(r"--clobber|\bgh release upload\b", code):
+        failures.append("release.yml overwrites assets (`--clobber` or `gh release upload`): a published tag must stay immutable (PUB-03, SEC-07)")
+    create = next((l for l in re.sub(r"\\\n\s*", " ", code).splitlines() if "gh release create" in l), None)
+    if create is None:
+        failures.append("no `gh release create` publishes the release")
+    elif "--verify-tag" not in create:
+        failures.append("`gh release create` lacks --verify-tag: a missing tag would be created from the default branch tip")
+    attest = next((i for i, s in enumerate(all_steps) if re.search(r"uses:\s*actions/attest-build-provenance@", "\n".join(s))), None)
+    build = first(all_steps, r"\bgo build\b")
+    publish = first(all_steps, r"\bgh release create\b")
+    if attest is None:
+        failures.append("no actions/attest-build-provenance step: the archives carry no provenance (PUB-03, SEC-07)")
+    elif (build is not None and attest < build) or (publish is not None and attest > publish):
+        failures.append("the attestation step must run after the build and before the publish")
+    perms = job_permissions(text)
+    for scope, level in (("actions", "read"), ("contents", "write"), ("id-token", "write"), ("attestations", "write")):
+        if perms.get(scope) != level:
+            failures.append(f"the release job lacks `permissions: {scope}: {level}` (needed by the gate, publish or attestation)")
+    checkout = next((s for s in all_steps if "actions/checkout" in "\n".join(s)), [])
+    if "fetch-depth: 0" not in "\n".join(checkout):
+        failures.append("the checkout does not fetch full history: `git merge-base --is-ancestor` cannot see the default branch")
+    return failures
+
+
 def main():
     text = WORKFLOW.read_text(encoding="utf-8")
     all_steps = steps(text)
-    failures = []
+    failures = publish_path(text, all_steps)
 
     test = next(
         (i for i, s in enumerate(all_steps) if "go test" in commands(s) and "-race" in commands(s)),
@@ -97,7 +165,7 @@ def main():
         print(f"release.yml: {failure}", file=sys.stderr)
     if failures:
         sys.exit(1)
-    print("release gate ok: go test -race runs first, fails closed; insideout is version-stamped")
+    print("release gate ok: gated on a green ci run, go test -race, no clobber, attested, version-stamped")
 
 
 if __name__ == "__main__":
