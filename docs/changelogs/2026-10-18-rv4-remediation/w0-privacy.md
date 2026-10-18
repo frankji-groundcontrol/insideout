@@ -26,10 +26,11 @@ No value, name or address is spelled in this fragment.
   (`git check-ignore -v` now reports the `.env.*` rule). Nothing reads that
   file; one historical record mentions it.
 - **Host manifests hold placeholders** (rv4-PUB-10, red `c905aa3`, fix
-  `e253503`): `checkout:` is `<repo-checkout>` and `ssh_alias:` is
-  `<ssh-alias>` in both `host.yml`; the two dated records that quoted the
-  alias value say it is a placeholder. `name:` is untouched (it must equal the
-  folder), and no `hosts/` directory was renamed, moved or deleted.
+  `e253503`): the `checkout` field is `<repo-checkout>` and the `ssh_alias`
+  field is `<ssh-alias>` in both `host.yml`; the two dated records that quoted
+  the alias value say it is a placeholder. The `name` field is untouched (it
+  must equal the folder), and no `hosts/` directory was renamed, moved or
+  deleted.
 - **Provider ids left the dated records** (rv4-PUB-12, red `9ecc5ec`, fix
   `530eac6`): two deployment ids, one project row id and one design-tool
   project id became `<deployment-id>`, `<prior-deployment-id>` and
@@ -64,6 +65,9 @@ Known ceilings, recorded on purpose:
   under BSD and GNU `grep` and under `dash`. Checked locally under `/bin/dash`
   and bash 3.2 as `sh` with BSD `grep`; **pending first CI run after push**
   (`ci.yml` already runs `sh check-redaction.sh`, owned by `w1-ci-gates`).
+- The rv4-PUB-10 test flags any `ssh_alias` followed by a colon and then
+  anything but a `<placeholder>` in `docs/` or `hosts/`, including a code
+  span; in prose, write the field name without the colon.
 - No UUID rule was added. Dozens of legitimate ids live in test fixtures, seed
   SQL and the project's own config, so the rule would fire on later clusters'
   work for no gain; rv4-PUB-12 is pinned to the three named records instead.
