@@ -112,7 +112,7 @@ def publish_path(text, all_steps):
             failures.append("the gate step runs after a test/build/publish step; it must come first")
     if re.search(r"--clobber|\bgh release upload\b", code):
         failures.append("release.yml overwrites assets (`--clobber` or `gh release upload`): a published tag must stay immutable (PUB-03, SEC-07)")
-    create = next((l for l in re.sub(r"\\\n\s*", " ", code).splitlines() if "gh release create" in l), None)
+    create = next((l for l in re.sub(r"\\\n\s*", " ", code).splitlines() if re.match(r"\s*(?:if\s+(?:!\s+)?)?gh release create\b", l)), None)
     if create is None:
         failures.append("no `gh release create` publishes the release")
     elif "--verify-tag" not in create:
