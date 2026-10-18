@@ -15,8 +15,9 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
 import 'coach_finding.dart';
-import 'coach_stage_proposal.dart';
 import 'coach_start.dart';
+import 'coach_trust_notices.dart';
+import 'coach_trust_row.dart';
 
 class CoachPanel extends StatefulWidget {
   const CoachPanel({
@@ -29,6 +30,7 @@ class CoachPanel extends StatefulWidget {
     this.onStart,
     this.onConfirmStage,
     this.onDeclineStage,
+    this.onTurnDone,
   });
 
   final String prdId;
@@ -44,6 +46,10 @@ class CoachPanel extends StatefulWidget {
   /// the conversation state both move.
   final Future<void> Function()? onConfirmStage;
   final VoidCallback? onDeclineStage;
+
+  /// Runs when a turn ends, however it ended: the page refreshes the stored
+  /// conversation the proposal's trust notes come from.
+  final Future<void> Function()? onTurnDone;
 
   @override
   State<CoachPanel> createState() => _CoachPanelState();
@@ -129,22 +135,14 @@ class _CoachPanelState extends State<CoachPanel> {
             widget.onStageChanged(stage);
           },
           onFactRecorded: (fact) {
-            // The payload is {id, kind, text, status}: show the text alone.
-            final text = fact['text'];
-            if (!mounted || text is! String || text.isEmpty) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  context.read<Appearance>().t('coach.factRecorded', {
-                    'fact': text,
-                  }),
-                ),
-              ),
-            );
+            if (mounted) noticeFactRecorded(context, fact);
           },
           onCriticFindings: (next) {
             if (!mounted) return;
             setState(() => findings = next);
+          },
+          onCriticSkipped: (reason, rounds) {
+            if (mounted) noticeCriticSkipped(context, reason, rounds);
           },
         ),
         stop: gone.future,
@@ -164,8 +162,10 @@ class _CoachPanelState extends State<CoachPanel> {
       if (mounted) {
         // A failed send gives the text back, unless they have typed since.
         if (fromDraft && !delivered && draft.text.isEmpty) draft.text = text;
-        setState(() => sending = false);
+        // Refresh before the confirm button frees up (see CoachProposalRow).
+        await widget.onTurnDone?.call();
       }
+      if (mounted) setState(() => sending = false);
     }
   }
 
@@ -223,13 +223,11 @@ class _CoachPanelState extends State<CoachPanel> {
             // confirmed stage, this row hands the member the decision.
             if (widget.conversation?.pendingStage != null &&
                 widget.onConfirmStage != null)
-              Padding(
-                padding: const EdgeInsets.only(bottom: Cobalt.space3),
-                child: CoachStageProposal(
-                  proposed: widget.conversation!.pendingStage!,
-                  onConfirm: widget.onConfirmStage!,
-                  onDecline: widget.onDeclineStage ?? () {},
-                ),
+              CoachProposalRow(
+                conversation: widget.conversation!,
+                busy: sending,
+                onConfirm: widget.onConfirmStage!,
+                onDecline: widget.onDeclineStage ?? () {},
               ),
             if (widget.conversation == null)
               CoachStart(

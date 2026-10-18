@@ -80,12 +80,20 @@ class Conversation {
     required this.stage,
     required this.status,
     this.pendingStage,
+    this.criticSkipped,
+    this.criticRounds = 0,
   });
 
   final String id;
   final String prdId;
   final String stage;
   final String status;
+
+  /// Why a critic pass did not run (contention, critic-output-failure), when
+  /// one was skipped; [criticRounds] is how many did. A skip opens the finalize
+  /// gate, so the confirm card says so (rv4-AIDEV-02).
+  final String? criticSkipped;
+  final int criticRounds;
 
   /// The coach's stage proposal, parked by the server until the member
   /// confirms it (POST /conversations/{id}/stage). It only reaches the
@@ -105,6 +113,8 @@ class Conversation {
         pendingStage: pendingStage == _unset
             ? this.pendingStage
             : pendingStage as String?,
+        criticSkipped: criticSkipped,
+        criticRounds: criticRounds,
       );
 
   factory Conversation.fromJson(Map<String, dynamic> j) => Conversation(
@@ -113,6 +123,8 @@ class Conversation {
     stage: j['stage'] as String,
     status: j['status'] as String,
     pendingStage: j['pendingStage'] as String?,
+    criticSkipped: j['criticSkipped'] as String?,
+    criticRounds: (j['criticRounds'] as num?)?.toInt() ?? 0,
   );
 }
 

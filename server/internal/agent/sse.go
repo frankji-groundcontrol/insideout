@@ -75,6 +75,12 @@ func (s *sseWriter) criticFindings(findings []CriticFinding) error {
 	}
 	return s.event("critic_findings", map[string]any{"findings": findings})
 }
+
+// criticSkipped tells the person a critic pass did not run (rv4-AIDEV-02);
+// rounds is how many did, so 0 means nothing has been reviewed.
+func (s *sseWriter) criticSkipped(reason string, rounds int) error {
+	return s.event("critic_skipped", map[string]any{"reason": reason, "rounds": rounds})
+}
 func (s *sseWriter) stageChanged(stage string) {
 	s.event("stage_changed", map[string]string{"stage": stage})
 }

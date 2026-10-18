@@ -37,14 +37,7 @@ func (c *Coach) maybeRunCritic(ctx context.Context, actorID, prdID, conversation
 	}
 
 	markSkipped := func(reason string) {
-		if cs.Skipped != "" {
-			return // already recorded this round's skip — don't keep re-writing
-		}
-		cs.Skipped = reason
-		saveCriticState(extra, cs)
-		if metaJSON, err := saveLedger(lm, extra); err == nil {
-			_ = c.store.UpdateConversationMeta(ctx, actorID, conversationID, metaJSON)
-		}
+		c.recordCriticSkip(ctx, actorID, conversationID, lm, extra, cs, reason, sse)
 	}
 
 	if waited {
@@ -79,6 +72,7 @@ func (c *Coach) maybeRunCritic(ctx context.Context, actorID, prdID, conversation
 	merged := append(loadCriticFindings(extra), findings...)
 	saveCriticFindings(extra, merged)
 	cs.RoundCount++
+	cs.Skipped = "" // a round that ran supersedes an earlier skip: the card reads this marker
 	saveCriticState(extra, cs)
 	metaJSON, err := saveLedger(lm, extra)
 	if err != nil {

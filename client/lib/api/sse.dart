@@ -51,6 +51,7 @@ class CoachHandlers {
     this.onStageChanged,
     this.onFactRecorded,
     this.onCriticFindings,
+    this.onCriticSkipped,
   });
 
   /// The turn's opening frame: {id, model, offline}. offline marks the
@@ -62,6 +63,10 @@ class CoachHandlers {
   final void Function(String stage)? onStageChanged;
   final void Function(Map<String, dynamic> fact)? onFactRecorded;
   final void Function(List<Map<String, dynamic>> findings)? onCriticFindings;
+
+  /// A critic pass did not run: {reason, rounds}. rounds is how many did, so 0
+  /// means nothing has been reviewed (rv4-AIDEV-02).
+  final void Function(String reason, int rounds)? onCriticSkipped;
 }
 
 /// One Coach POST that must stream on web via fetch (BUG-014), not dio/XHR.
@@ -248,6 +253,13 @@ void applyCoachFrame(SseFrame frame, CoachHandlers handlers) {
         if (item is Map) Map<String, dynamic>.from(item),
     ];
     handlers.onCriticFindings?.call(findings);
+  } else if (frame.event == 'critic_skipped' &&
+      parsed is Map &&
+      parsed['reason'] is String) {
+    handlers.onCriticSkipped?.call(
+      parsed['reason'] as String,
+      (parsed['rounds'] as num?)?.toInt() ?? 0,
+    );
   } else if (frame.event == 'error' && parsed is Map) {
     throw toApiError(null, Map<String, dynamic>.from(parsed));
   }

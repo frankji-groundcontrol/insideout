@@ -113,6 +113,13 @@ const enPrd = <String, String>{
   'coach.finding.severity.major': 'Major',
   'coach.finding.severity.minor': 'Minor',
   'coach.finding.suggestion': 'Suggestion: {text}',
+  'coach.criticNone': 'No critic review ran ({reason}).',
+  'coach.criticPartial':
+      'The critic did not re-review your latest changes ({reason}).',
+  'coach.criticReason.contention': 'the server was busy',
+  'coach.criticReason.critic-output-failure':
+      'the reviewer returned no usable result',
+  'coach.criticReason.other': 'unknown reason',
   'prd.pageTitle': 'Product requirements',
   'prd.workingVersion': 'Working version',
   'prd.requestReview': 'Request review',

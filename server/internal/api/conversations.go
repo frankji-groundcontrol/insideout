@@ -1,7 +1,6 @@
 package api
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
@@ -32,6 +31,12 @@ type conversationView struct {
 	// at creation; the agent package selects its prompts from it.
 	Locale    string `json:"locale"`
 	UpdatedAt string `json:"updatedAt"`
+	// CriticSkipped is why a critic pass did not run, when one was skipped
+	// (contention, critic-output-failure); CriticRounds is how many did. A skip
+	// opens the finalize gate, so the confirm card reads these to say that no
+	// review ran rather than imply one (rv4-AIDEV-02).
+	CriticSkipped string `json:"criticSkipped,omitempty"`
+	CriticRounds  int    `json:"criticRounds"`
 }
 
 func conversationResponse(c store.AgentConversation) conversationView {
@@ -39,14 +44,7 @@ func conversationResponse(c store.AgentConversation) conversationView {
 		ID: c.ID.String(), WorkspaceID: c.WorkspaceID.String(), PrdID: c.PrdID.String(),
 		Stage: c.Stage, Status: c.Status, Locale: c.Locale, UpdatedAt: c.UpdatedAt.Format(timeLayout),
 	}
-	if len(c.Meta) > 0 {
-		var meta struct {
-			PendingStage string `json:"pendingStage"`
-		}
-		if json.Unmarshal(c.Meta, &meta) == nil {
-			view.PendingStage = meta.PendingStage
-		}
-	}
+	applyConversationMeta(&view, c.Meta)
 	return view
 }
 

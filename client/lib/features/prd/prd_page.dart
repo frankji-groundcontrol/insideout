@@ -211,6 +211,18 @@ class _PrdPageState extends State<PrdPage> {
     });
   }
 
+  // The stored conversation carries what the confirm card must be honest
+  // about (a skipped critic review); fetch it when a turn ends. A failed
+  // refresh keeps what the page has: the next turn asks again.
+  Future<void> _refreshConversation() async {
+    final conv = conversation;
+    if (conv == null) return;
+    try {
+      final fresh = await context.read<Session>().api.getConversation(conv.id);
+      if (mounted) setState(() => conversation = fresh);
+    } catch (_) {}
+  }
+
   // Decline stays local — the endpoint expresses confirm only — so the
   // confirmed stage stands and the coach may propose again later.
   void _declineStage() {
@@ -281,6 +293,7 @@ class _PrdPageState extends State<PrdPage> {
       },
       onConfirmStage: _confirmStage,
       onDeclineStage: _declineStage,
+      onTurnDone: _refreshConversation,
     );
   }
 
