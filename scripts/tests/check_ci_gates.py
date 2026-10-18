@@ -14,7 +14,9 @@ one, so the first CI run after a push is what proves the behavior.
   the scheduled run shuffles test order, so a clock-pinned or order-dependent
   test cannot sit red between pushes.
 - rv4-TEST-08: only a pull request's older run is cancelled; a quick follow-up
-  push to main must not cancel the previous commit's only verdict.
+  push to main must not cancel the previous commit's only verdict. With
+  cancel-in-progress off a run still waits behind the running one, and a third
+  run then replaces the waiting one, so non-PR runs get a group of their own.
 - rv4-PM-01, CLOSE-01, TEST-05, PUB-08: the env-suites job runs every
   scripts/tests/check_*.py with `python3 -I` from the repo root and a failing
   guard fails the step (the step's own script runs against a made-up tree), so
@@ -138,6 +140,22 @@ def cancel_only_pull_requests():
     ]
 
 
+def pushes_get_their_own_group():
+    """TEST-08: GitHub replaces a run that is waiting in a concurrency group
+    when another is queued behind the running one, even without
+    cancel-in-progress; a push to main needs a group no other run shares."""
+    group = re.search(r"group:\s*(.*)", top(read(CI), "concurrency"))
+    expr = group.group(1) if group else ""
+    if ("github.run_id" in expr or "github.sha" in expr) and "github.ref" in expr:
+        return []
+    return [
+        f"{CI}: concurrency group {expr!r}: key a pull request on github.ref and "
+        "every other run on github.run_id - a group shared by pushes lets a third "
+        "quick push replace the second one's waiting run, though nothing is "
+        "cancelled in progress (rv4-TEST-08)"
+    ]
+
+
 def contract_guards_run():
     """PM-01, CLOSE-01, TEST-05, PUB-08: one glob step runs every guard and a
     failing guard fails it. The step's own script runs against a made-up tree,
@@ -253,8 +271,8 @@ def mod_tidy_checked():
 
 
 CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests,
-          contract_guards_run, guards_see_the_tags, ubuntu_go_floor,
-          analyzer_ratchet, mod_tidy_checked]
+          pushes_get_their_own_group, contract_guards_run, guards_see_the_tags,
+          ubuntu_go_floor, analyzer_ratchet, mod_tidy_checked]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
