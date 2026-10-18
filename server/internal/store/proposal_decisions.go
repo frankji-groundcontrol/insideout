@@ -10,8 +10,10 @@ import (
 )
 
 // ProposalDecision is the human decision on an agent proposal — the
-// Decision Log entry (immutable; re-deciding appends, see
-// DecideProposal's timeline note).
+// Decision Log entry. The row holds the latest decision: deciding again
+// overwrites it (a decision may be reversed). History is the project
+// timeline, where every decide appends a "[proposal accepted]" or
+// "[proposal rejected]" note (see DecideProposal).
 type ProposalDecision struct {
 	UpdateID  uuid.UUID `json:"updateId"`
 	Decision  string    `json:"decision"`
