@@ -37,12 +37,12 @@ func (s *Server) handleAddObservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Detail = strings.TrimSpace(req.Detail)
-	if req.Detail == "" || len(req.Detail) > 2000 {
+	if req.Detail == "" || tooLong(req.Detail, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "detail is required (max 2000 characters)", "", nil)
 		return
 	}
 	req.SourceURL = strings.TrimSpace(req.SourceURL)
-	if len(req.SourceURL) > 2000 {
+	if tooLong(req.SourceURL, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "sourceUrl is too long (max 2000 characters)", "", nil)
 		return
 	}
@@ -92,7 +92,7 @@ func (s *Server) handleValidateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Reason = strings.TrimSpace(req.Reason)
-	if req.Reason == "" || len(req.Reason) > 2000 {
+	if req.Reason == "" || tooLong(req.Reason, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "reason is required (max 2000 characters)", "", nil)
 		return
 	}

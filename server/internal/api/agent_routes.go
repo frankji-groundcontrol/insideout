@@ -101,7 +101,7 @@ func (s *Server) handleAgentCheckpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Summary = strings.TrimSpace(req.Summary)
-	if req.Summary == "" || len(req.Summary) > 2000 {
+	if req.Summary == "" || tooLong(req.Summary, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "summary is required (max 2000 characters)", "", nil)
 		return
 	}
@@ -156,7 +156,7 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Summary = strings.TrimSpace(req.Summary)
-	if req.Summary == "" || len(req.Summary) > 2000 {
+	if req.Summary == "" || tooLong(req.Summary, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "summary is required (max 2000 characters)", "", nil)
 		return
 	}
@@ -185,7 +185,7 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	items := make([]store.ProposalItem, 0, len(req.Items))
 	for _, it := range req.Items {
 		title := strings.TrimSpace(it.Title)
-		if title == "" || len(title) > 200 {
+		if title == "" || tooLong(title, 200) {
 			httpx.WriteError(w, http.StatusBadRequest, "item title is required (max 200 characters)", "", nil)
 			return
 		}

@@ -105,7 +105,7 @@ func (s *Server) handleUpdatePrd(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Title != nil {
 		trimmed := strings.TrimSpace(*req.Title)
-		if trimmed == "" || len(trimmed) > 200 {
+		if trimmed == "" || tooLong(trimmed, 200) {
 			httpx.WriteError(w, http.StatusBadRequest, "title must be 1-200 characters when provided", "", nil)
 			return
 		}

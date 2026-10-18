@@ -60,9 +60,9 @@ type runeLimit struct {
 	limit int
 	// msg is what the handler answers when the value is too long.
 	msg string
-	// ok: an accepted value must come back 2xx. False for routes with later
-	// gates (a closed signup, a PRD commit's checks), where only the length
-	// check is under test.
+	// ok: an accepted value must come back 2xx. False only for register,
+	// whose signup policy (invitation-only by default) answers 403 after the
+	// length check has passed.
 	ok   bool
 	send func(t *testing.T, w *routeWorld, v string) (int, string)
 }
@@ -100,7 +100,7 @@ func runeLimits() []runeLimit {
 		{"prd update title", 200, "1-200 characters", true, func(t *testing.T, w *routeWorld, v string) (int, string) {
 			return owner(t, w, "PATCH", "/api/v1/prds/"+w.prd(t), map[string]any{"title": v})
 		}},
-		{"prd commit name", 200, title, false, func(t *testing.T, w *routeWorld, v string) (int, string) {
+		{"prd commit name", 200, title, true, func(t *testing.T, w *routeWorld, v string) (int, string) {
 			return owner(t, w, "POST", "/api/v1/prds/"+w.prd(t)+"/commit", map[string]any{"name": v, "primaryAudience": "decision"})
 		}},
 		{"roadmap node create title", 200, title, true, func(t *testing.T, w *routeWorld, v string) (int, string) {
@@ -167,5 +167,26 @@ func TestFieldLimitsCountCharactersNotBytes(t *testing.T) {
 				}
 			})
 		})
+	}
+}
+
+// tooLong is the one place the character count lives.
+func TestTooLongCountsRunes(t *testing.T) {
+	for _, tc := range []struct {
+		s    string
+		n    int
+		want bool
+	}{
+		{"", 0, false},
+		{"abc", 3, false},
+		{"abcd", 3, true},
+		{cjk(67), 200, false}, // 201 bytes
+		{cjk(200), 200, false},
+		{cjk(201), 200, true},
+		{"héllo", 5, false}, // 6 bytes
+	} {
+		if got := tooLong(tc.s, tc.n); got != tc.want {
+			t.Errorf("tooLong(%d runes, %d) = %v, want %v", utf8.RuneCountInString(tc.s), tc.n, got, tc.want)
+		}
 	}
 }

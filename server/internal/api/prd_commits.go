@@ -36,7 +36,7 @@ func (s *Server) handleCommitPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Name = strings.TrimSpace(req.Name)
-	if req.Name == "" || len(req.Name) > 200 {
+	if req.Name == "" || tooLong(req.Name, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "name is required (max 200 characters)", "", nil)
 		return
 	}

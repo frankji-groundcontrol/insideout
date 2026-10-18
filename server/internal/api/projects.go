@@ -146,7 +146,7 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Title = strings.TrimSpace(req.Title)
-	if req.Title == "" || len(req.Title) > 200 {
+	if req.Title == "" || tooLong(req.Title, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}
@@ -228,7 +228,7 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Title = strings.TrimSpace(req.Title)
-	if req.Title == "" || len(req.Title) > 200 {
+	if req.Title == "" || tooLong(req.Title, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}

@@ -134,7 +134,7 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	req.Title = strings.TrimSpace(req.Title)
-	if req.Title == "" || len(req.Title) > 200 {
+	if req.Title == "" || tooLong(req.Title, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}
@@ -197,7 +197,7 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	}
 	if req.Title != nil {
 		*req.Title = strings.TrimSpace(*req.Title)
-		if *req.Title == "" || len(*req.Title) > 200 {
+		if *req.Title == "" || tooLong(*req.Title, 200) {
 			httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 			return
 		}

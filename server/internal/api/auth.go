@@ -75,7 +75,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "password must be at least 8 characters", "", nil)
 		return
 	}
-	if req.Username == "" || len(req.Username) > 60 {
+	if req.Username == "" || tooLong(req.Username, 60) {
 		httpx.WriteError(w, http.StatusBadRequest, "username is required (max 60 characters)", "", nil)
 		return
 	}

@@ -64,7 +64,7 @@ func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req.Username = strings.TrimSpace(req.Username)
-	if req.Username == "" || len(req.Username) > 60 {
+	if req.Username == "" || tooLong(req.Username, 60) {
 		httpx.WriteError(w, http.StatusBadRequest, "username is required (max 60 characters)", "", nil)
 		return
 	}
