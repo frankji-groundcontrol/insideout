@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Pin the operator and first-run hardening of review-4 wave 1 (rv4-USER-06).
+"""Pin the operator and first-run hardening of review-4 wave 1 (rv4-USER-06,
+rv4-REL-05).
 
 Usage: python3 -I scripts/tests/check_ops_hardening.py
 
@@ -71,11 +72,62 @@ def readme_prd_update_flags_precede_id(failures):
                            "and the CLI prints only its usage line")
 
 
+def server_shutdown_seconds():
+    """The Shutdown window runServe grants (its `shutdownCtx` timeout), in seconds."""
+    src = read("server/cmd/insideout/main.go")
+    match = re.search(r"shutdownCtx, cancel := context\.WithTimeout\([^,]+, (\d+)\*time\.Second\)", src)
+    if not match:
+        print("no shutdownCtx timeout in server/cmd/insideout/main.go", file=sys.stderr)
+        sys.exit(2)
+    return int(match.group(1))
+
+
+def compose_service(name):
+    """Text of one service of docker-compose.yml. The file is a flat services
+    map, so a cut at the next two-space key needs no YAML parser."""
+    match = re.search(rf"^  {re.escape(name)}:\n(.*?)(?=^  [A-Za-z_][\w-]*:|\Z)",
+                      read("docker-compose.yml"), re.M | re.S)
+    if not match:
+        print(f"no `{name}` service in docker-compose.yml", file=sys.stderr)
+        sys.exit(2)
+    return match.group(1)
+
+
+def compose_seconds(value):
+    """A compose duration (`35s`, `1m30s`) in seconds, or None when malformed."""
+    if not re.fullmatch(r"(\d+[hms])+", value):
+        return None
+    unit = {"h": 3600, "m": 60, "s": 1}
+    return sum(int(n) * unit[u] for n, u in re.findall(r"(\d+)([hms])", value))
+
+
+def compose_grace_outlives_shutdown(failures):
+    """REL-05: runServe gives Shutdown a fixed window (a 20 s drain plus the
+    coach's 10 s terminal writes), but Docker SIGKILLs a stopping container
+    after its 10 s default. Compose must set stop_grace_period past the window
+    and the architecture doc must say why."""
+    window = server_shutdown_seconds()
+    match = re.search(r"^    stop_grace_period:\s*(\S+)\s*(?:#.*)?$", compose_service("server"), re.M)
+    if not match:
+        fail(failures, "docker-compose.yml: the server service has no stop_grace_period, so Docker's "
+                       f"10 s default SIGKILLs it inside runServe's {window} s Shutdown window")
+    else:
+        grace = compose_seconds(match.group(1).strip("\"'"))
+        if grace is None or grace <= window:
+            fail(failures, f"docker-compose.yml: the server's stop_grace_period ({match.group(1)}) "
+                           f"must exceed runServe's {window} s Shutdown window")
+    if "stop_grace_period" not in read("docs/architecture/deployment.md"):
+        fail(failures, "docs/architecture/deployment.md does not mention the server's stop_grace_period")
+
+
+CHECKS = [readme_prd_update_flags_precede_id, compose_grace_outlives_shutdown]
+
 if __name__ == "__main__":
     failures = []
-    readme_prd_update_flags_precede_id(failures)
+    for check in CHECKS:
+        check(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
         sys.exit(1)
-    print("ops hardening ok: README prd update example parses")
+    print(f"ops hardening ok: {len(CHECKS)} checks")
