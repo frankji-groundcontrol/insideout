@@ -140,3 +140,85 @@ func TestLoginCodeBurstCappedAtMaxAttempts(t *testing.T) {
 			attempts, retired, LoginCodeMaxAttempts)
 	}
 }
+
+// The cap counts guesses, not luck: the correct code queued as the
+// LoginCodeMaxAttempts-th guess still verifies inside a burst, and every
+// guess queued after it is rejected because that guess consumed the code.
+func TestLoginCodeBurstLastAllowedGuessStillWins(t *testing.T) {
+	setup := newTestStore(t)
+	ctx := context.Background()
+	u := mkUser(t, setup)
+	good := freshHash(t)
+	mustCreateAuthToken(t, setup, u.ID, AuthTokenLoginCode, good, 10*time.Minute)
+
+	hashes := make([]string, 0, LoginCodeMaxAttempts+10)
+	for i := 0; i < LoginCodeMaxAttempts-1; i++ {
+		hashes = append(hashes, freshHash(t))
+	}
+	hashes = append(hashes, good)
+	for i := 0; i < 10; i++ {
+		hashes = append(hashes, freshHash(t))
+	}
+
+	errs := burstGuesses(t, openSingleConnStore(t), u.ID, hashes)
+
+	for i, err := range errs {
+		switch {
+		case i == LoginCodeMaxAttempts-1 && err != nil:
+			t.Errorf("correct code as guess %d (inside the cap): err = %v, want nil", i+1, err)
+		case i != LoginCodeMaxAttempts-1 && !errors.Is(err, ErrNotFound):
+			t.Errorf("guess %d: err = %v, want ErrNotFound", i+1, err)
+		}
+	}
+
+	var attempts int
+	var retired bool
+	if err := setup.Pool.QueryRow(ctx, `
+		SELECT attempts, used_at IS NOT NULL
+		FROM insideout.auth_tokens WHERE user_id = $1 AND kind = $2`,
+		u.ID, AuthTokenLoginCode).Scan(&attempts, &retired); err != nil {
+		t.Fatalf("read token row: %v", err)
+	}
+	if attempts != LoginCodeMaxAttempts || !retired {
+		t.Errorf("attempts = %d retired = %v, want attempts = %d retired = true",
+			attempts, retired, LoginCodeMaxAttempts)
+	}
+}
+
+// Single-use survives the one-statement rewrite under real contention:
+// racing submissions of the correct code on the full-size pool yield exactly
+// one success.
+func TestLoginCodeConcurrentCorrectCodeSingleUse(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	u := mkUser(t, st)
+	good := freshHash(t)
+	mustCreateAuthToken(t, st, u.ID, AuthTokenLoginCode, good, 10*time.Minute)
+
+	errs := make([]error, 8)
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := range errs {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			errs[i] = st.VerifyLoginCode(ctx, u.ID, good)
+		}()
+	}
+	close(start)
+	wg.Wait()
+
+	wins := 0
+	for i, err := range errs {
+		switch {
+		case err == nil:
+			wins++
+		case !errors.Is(err, ErrNotFound):
+			t.Errorf("racer %d: err = %v, want nil or ErrNotFound", i, err)
+		}
+	}
+	if wins != 1 {
+		t.Errorf("%d of %d concurrent submissions of the correct code verified, want exactly 1", wins, len(errs))
+	}
+}

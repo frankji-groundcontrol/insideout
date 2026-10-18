@@ -71,35 +71,39 @@ func (s *Store) ConsumeAuthToken(ctx context.Context, kind, tokenHash string) (u
 	return userID, nil
 }
 
-// VerifyLoginCode checks a 6-digit sign-in code for a user. The exact hash
-// consumes the code atomically (single-use + expiry, like ConsumeAuthToken).
-// A miss charges the user's still-live code: LoginCodeMaxAttempts misses
-// retire it, so a low-entropy code cannot be brute-forced within its TTL.
-// Miss, exhausted, expired, and never-requested are all ErrNotFound — the
-// caller cannot tell them apart, and neither can a probing client.
+// VerifyLoginCode checks a 6-digit sign-in code for a user. Every guess is
+// charged and compared in ONE statement: it takes an attempt on the user's
+// still-live code and reports whether the hash matched, so the attempt slot
+// is reserved before the answer exists. The exact hash consumes the code
+// (single-use + expiry, like ConsumeAuthToken); the LoginCodeMaxAttempts-th
+// guess, right or wrong, retires it, so a low-entropy code cannot be
+// brute-forced within its TTL. Two statements (compare, then charge) would let
+// a burst of concurrent guesses all be compared before the first charge
+// landed; here Postgres re-checks the WHERE clause on the latest row version
+// once a concurrent guess releases the row lock, so racing guesses serialise
+// and the (cap+1)-th finds no live code. Miss, exhausted, expired, and
+// never-requested are all ErrNotFound — the caller cannot tell them apart,
+// and neither can a probing client.
 func (s *Store) VerifyLoginCode(ctx context.Context, userID uuid.UUID, codeHash string) error {
-	tag, err := s.Pool.Exec(ctx, `
-		UPDATE insideout.auth_tokens
-		SET used_at = now()
-		WHERE user_id = $1 AND kind = $2 AND token_hash = $3 AND used_at IS NULL AND expires_at > now()`,
-		userID, AuthTokenLoginCode, codeHash)
-	if err != nil {
-		return err
-	}
-	if tag.RowsAffected() == 1 {
-		return nil
-	}
-
-	_, err = s.Pool.Exec(ctx, `
+	var matched bool
+	err := s.Pool.QueryRow(ctx, `
 		UPDATE insideout.auth_tokens
 		SET attempts = attempts + 1,
-		    used_at = CASE WHEN attempts + 1 >= $2 THEN now() ELSE used_at END
-		WHERE user_id = $1 AND kind = $3 AND used_at IS NULL AND expires_at > now()`,
-		userID, LoginCodeMaxAttempts, AuthTokenLoginCode)
+		    used_at = CASE WHEN token_hash = $3 OR attempts + 1 >= $4 THEN now() ELSE used_at END
+		WHERE user_id = $1 AND kind = $2 AND used_at IS NULL AND expires_at > now() AND attempts < $4
+		RETURNING token_hash = $3`,
+		userID, AuthTokenLoginCode, codeHash, LoginCodeMaxAttempts,
+	).Scan(&matched)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
 	if err != nil {
 		return err
 	}
-	return ErrNotFound
+	if !matched {
+		return ErrNotFound
+	}
+	return nil
 }
 
 // RevokeUserSessions kills every live refresh session for a user — called
