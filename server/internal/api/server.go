@@ -55,6 +55,21 @@ type Server struct {
 	// authCooldown spaces the emailed auth sends (magic link, password
 	// reset, login code) per email and per IP; see auth_cooldown.go.
 	authCooldown *sendCooldown
+	// clock is the time source of the response views (the board's quiet
+	// flag, roadmap deadline pressure). Nil reads the wall clock, so a
+	// Server built as a literal needs no setup; a test that pins a date sets
+	// it. Views read it through now(), never time.Now (ARCH-04).
+	clock func() time.Time
+}
+
+// now is the instant the response views measure against. A view builder takes
+// it from here, or as a parameter; view_clock_guard_test.go fails on a raw
+// time.Now in this package.
+func (s *Server) now() time.Time {
+	if s.clock != nil {
+		return s.clock()
+	}
+	return time.Now()
 }
 
 func NewServer(st *store.Store, tokens *auth.TokenIssuer, cfg *config.Config, log *slog.Logger, coach Coach, planner RoadmapPlanner) *Server {

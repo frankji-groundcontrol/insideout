@@ -51,7 +51,7 @@ func TestProjectQuietFlagged(t *testing.T) {
 			if got := projectQuietFlagged(p, now); got != tc.flagged {
 				t.Fatalf("projectQuietFlagged(%s) = %v, want %v", tc.status, got, tc.flagged)
 			}
-			v := projectResponse(p)
+			v := projectResponse(p, now)
 			if v.Flagged != tc.flagged {
 				t.Fatalf("view.Flagged = %v, want %v", v.Flagged, tc.flagged)
 			}
@@ -80,8 +80,9 @@ func TestProjectQuietFlaggedThresholdBoundary(t *testing.T) {
 // line. The board response now carries a short preview; the full text stays
 // in the updates feed.
 func TestProjectResponseBoardNotePreview(t *testing.T) {
+	now := time.Date(2026, 10, 4, 12, 0, 0, 0, time.UTC)
 	preview := func(content string) string {
-		got := projectResponse(store.ProjectWithLatest{LatestUpdateContent: &content}).LatestUpdateContent
+		got := projectResponse(store.ProjectWithLatest{LatestUpdateContent: &content}, now).LatestUpdateContent
 		if got == nil {
 			t.Fatal("a present note must keep a preview")
 		}
@@ -116,7 +117,7 @@ func TestProjectResponseBoardNotePreview(t *testing.T) {
 		if got := preview(short); got != short {
 			t.Fatalf("a short note must pass unchanged, got %q", got)
 		}
-		if got := projectResponse(store.ProjectWithLatest{}).LatestUpdateContent; got != nil {
+		if got := projectResponse(store.ProjectWithLatest{}, now).LatestUpdateContent; got != nil {
 			t.Fatalf("a missing note must stay nil, got %q", *got)
 		}
 	})

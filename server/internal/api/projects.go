@@ -77,11 +77,13 @@ func previewRunes(s *string) *string {
 	return s
 }
 
-func projectResponse(p store.ProjectWithLatest) projectView {
+// projectResponse takes the instant to judge quietness against; handlers pass
+// s.now() so the view never reads the wall clock itself (L1).
+func projectResponse(p store.ProjectWithLatest, now time.Time) projectView {
 	v := projectView{
 		ID: p.ID.String(), WorkspaceID: p.WorkspaceID.String(), Title: p.Title, Description: p.Description,
 		Status: p.Status, RepoURL: p.RepoURL, CreatedAt: p.CreatedAt.Format(timeLayout),
-		Flagged:             projectQuietFlagged(p, time.Now()),
+		Flagged:             projectQuietFlagged(p, now),
 		LatestUpdateKind:    p.LatestUpdateKind,
 		LatestUpdateContent: previewRunes(p.LatestUpdateContent),
 	}
@@ -119,9 +121,10 @@ func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
+	now := s.now()
 	views := make([]projectView, len(list))
 	for i, p := range list {
-		views[i] = projectResponse(p)
+		views[i] = projectResponse(p, now)
 	}
 	httpx.WriteJSON(w, http.StatusOK, views)
 }
@@ -158,7 +161,7 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusCreated, projectResponse(store.ProjectWithLatest{Project: *p}))
+	httpx.WriteJSON(w, http.StatusCreated, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
 }
 
 func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +200,7 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 		projectView
 		Updates    []projectUpdateView `json:"updates"`
 		NextCursor *string             `json:"nextCursor"`
-	}{projectView: projectResponse(store.ProjectWithLatest{Project: *p}), Updates: make([]projectUpdateView, len(updates)), NextCursor: nextCursor}
+	}{projectView: projectResponse(store.ProjectWithLatest{Project: *p}, s.now()), Updates: make([]projectUpdateView, len(updates)), NextCursor: nextCursor}
 	for i, u := range updates {
 		resp.Updates[i] = projectUpdateResponse(u)
 	}
@@ -254,7 +257,7 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, projectResponse(store.ProjectWithLatest{Project: *p}))
+	httpx.WriteJSON(w, http.StatusOK, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
 }
 
 func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {

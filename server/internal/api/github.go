@@ -54,7 +54,7 @@ func (s *Server) handleSetProjectRepo(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, projectResponse(store.ProjectWithLatest{Project: *p}))
+	httpx.WriteJSON(w, http.StatusOK, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
 }
 
 // handleSyncGithub pulls recent commits from the project's linked repo into
