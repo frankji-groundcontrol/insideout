@@ -115,6 +115,13 @@ func runMigrate(ctx context.Context, log *slog.Logger, st *store.Store) {
 var shutdownDrain = 20 * time.Second
 
 func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *config.Config) {
+	// Before anything runs on the pool, including the migrations: a role that
+	// skips row-level security must not serve (rv4-DATA-04). migrate and
+	// promote-admin never reach here and keep using the owner role.
+	if err := st.CheckServeRole(ctx); err != nil {
+		log.Error("refusing to serve", "error", err)
+		os.Exit(1)
+	}
 	if _, err := st.Migrate(ctx); err != nil {
 		log.Error("migrate on startup", "error", err)
 		os.Exit(1)
