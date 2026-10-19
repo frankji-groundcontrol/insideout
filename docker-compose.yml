@@ -107,14 +107,14 @@ services:
       # tokens (PRIVATE_KEY is the .pem with \n-escaped newlines;
       # PRIVATE_KEY_FILE wins when set). All empty = webhook disabled
       # (503), guide loads unauthenticated (public repos only). Commit sync
-      # reads a private repo with the App's installation token and a public
-      # one anonymously; the server ignores GITHUB_TOKEN (rv4-FEAT-04), which
-      # only `insideout setup --check` reads.
+      # reads a private repo with the App's installation token (the App has to
+      # be installed on it) and a public one anonymously. GITHUB_TOKEN is not
+      # passed: no server code reads it (rv4-FEAT-04); only the host-side
+      # `insideout setup --check` does.
       INSIDEOUT_GH_WEBHOOK_SECRET: ${INSIDEOUT_GH_WEBHOOK_SECRET:-}
       INSIDEOUT_GH_APP_ID: ${INSIDEOUT_GH_APP_ID:-}
       INSIDEOUT_GH_PRIVATE_KEY: ${INSIDEOUT_GH_PRIVATE_KEY:-}
       INSIDEOUT_GH_PRIVATE_KEY_FILE: ${INSIDEOUT_GH_PRIVATE_KEY_FILE:-}
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
     ports:
       # Loopback only (rv4-SEC-02): the server's own port is the one place a
       # client can write X-Forwarded-For itself. The client service below is

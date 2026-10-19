@@ -15,12 +15,14 @@ Whether to retire the key is residue R3-27 in the
 
 ## 2. How it is propagated
 
-When present, `dev.sh` exports it and compose passes it through, but the server
-does not read it: the commit sync takes its credential from the GitHub App
-([gh-app-id.md](gh-app-id.md)). `insideout setup --check` reads it from the
-environment or the repository's env file and calls the GitHub API to validate
-it. It is not used by webhook signature verification or App installation-token
-minting.
+`dev.sh` exports it with the rest of `.env`, but `docker-compose.yml` does not
+pass it to the container and the server reads it nowhere, so a token in the
+server's environment changes nothing. The commit sync takes its credential from
+the GitHub App ([gh-app-id.md](gh-app-id.md)): a private repository needs the
+App installed on it, a public one syncs anonymously. Only
+`insideout setup --check` reads the token, from the environment or the
+repository's env file, and calls the GitHub API to validate it. It is not used
+by webhook signature verification or App installation-token minting.
 
 ## 3. How to set it
 

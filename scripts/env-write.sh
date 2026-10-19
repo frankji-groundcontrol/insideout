@@ -263,9 +263,9 @@ do_init() {
       if [ -n "${INSIDEOUT_LLM_API_KEY:-}" ]; then stage INSIDEOUT_LLM_API_KEY ""; fi
       echo "offline mode — template-reply coach" ;;
   esac
-  # (d) GITHUB_TOKEN — optional / 可选
+  # (d) GITHUB_TOKEN — optional; only 'insideout setup --check' reads it / 可选，仅 setup --check 读取
   echo ""
-  printf 'GITHUB_TOKEN (optional, enter skips): '
+  printf 'GITHUB_TOKEN (optional, read only by insideout setup --check; enter skips): '
   IFS= read -r -s tok; echo
   if [ -n "$tok" ]; then GITHUB_TOKEN="$tok"; stage GITHUB_TOKEN "$tok"; echo "saved — $(mask_secret "$tok")"
   else echo "skipped"; fi

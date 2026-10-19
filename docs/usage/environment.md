@@ -110,7 +110,7 @@ themselves when it is unset.
 | `INSIDEOUT_MAIL_DEV_BODY` | no | off | Dev mode only: exactly `1` includes full message bodies in the not-sent mail log (`scripts/dev.sh` sets it locally). Never set on a deployed host. |
 | `INSIDEOUT_MAIL_FROM` | no | `InsideOut <onboarding@resend.dev>` | From address for auth email; must be a Resend-verified sender. The default is Resend's sandbox address, which only delivers to the Resend account's own email. |
 | `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed invite/magic/reset link. Set to the hosted domain in production. Locally, run the web dev server on this port (`flutter run --web-port=5173`) or set this to the port in use. |
-| `GITHUB_TOKEN` | no | — | Optional GitHub PAT, read only by `insideout setup --check`, which validates it against the GitHub API. The server does not use it: commit sync reads a private repo with the GitHub App's installation token (a project holding the repo's one binding) and a public repo anonymously (rv4-FEAT-04). |
+| `GITHUB_TOKEN` | no | — | Optional GitHub PAT, read only by `insideout setup --check`, which validates it against the GitHub API. The server never reads it and `docker-compose.yml` does not pass it, so a token in the server's environment changes nothing: commit sync reads a private repo with the GitHub App's installation token (the App installed on it, `INSIDEOUT_GH_APP_ID` plus a private key, and a project holding the repo's one binding) and a public repo anonymously (rv4-FEAT-04). |
 | `INSIDEOUT_GH_APP_ID` | no | — | Numeric id of the GitHub App; with the App's private key it mints installation access tokens (server-to-server evidence sync). Authenticates nothing alone. |
 | `INSIDEOUT_GH_PRIVATE_KEY` | no | — | The App's `.pem` with newlines escaped as literal `\n` on a single line. Ignored when `INSIDEOUT_GH_PRIVATE_KEY_FILE` is set. |
 | `INSIDEOUT_GH_PRIVATE_KEY_FILE` | no | — | Path to the App's `.pem` on disk; wins over the escaped inline var when set — the file is read raw, no `\n` unescaping. |
@@ -162,7 +162,8 @@ provider set, `INSIDEOUT_AI_MAX_CONCURRENT` / `INSIDEOUT_AI_QUEUE_WAIT`,
 the `INSIDEOUT_MAIL_*` set with `INSIDEOUT_PUBLIC_URL`, the browser knobs
 (`INSIDEOUT_CORS_ORIGINS`, `INSIDEOUT_DEV_CORS`, `INSIDEOUT_COOKIE_SECURE`,
 `INSIDEOUT_ACCESS_TTL`, `INSIDEOUT_REFRESH_TTL`), and the GitHub
-integration (`INSIDEOUT_GH_*`; `GITHUB_TOKEN` is passed through but the server ignores it).
+integration (`INSIDEOUT_GH_*`). `GITHUB_TOKEN` is not among them: compose does
+not pass it and the server never reads it.
 The first two carry `:?` guards (see above); the LLM key defaults to empty,
 while model/schema/base take the same fallbacks `config.Load` applies.
 `DATABASE_URL` deliberately has no

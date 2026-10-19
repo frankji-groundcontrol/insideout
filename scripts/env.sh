@@ -192,9 +192,9 @@ do_check() {
   else
     ok INSIDEOUT_LLM_API_KEY "$(mask_secret "$INSIDEOUT_LLM_API_KEY") (Go server)"
   fi
-  # GITHUB_TOKEN — optional; empty keeps GitHub sync at the unauthenticated rate limit / 可选
-  if [ -n "${GITHUB_TOKEN:-}" ]; then ok GITHUB_TOKEN "$(mask_secret "$GITHUB_TOKEN") (Go server)"
-  else info GITHUB_TOKEN "empty — GitHub sync runs at the unauthenticated rate limit (Go server, optional)"; fi
+  # GITHUB_TOKEN — optional; only 'insideout setup --check' reads it, the server never does / 可选，仅 setup --check 读取
+  if [ -n "${GITHUB_TOKEN:-}" ]; then ok GITHUB_TOKEN "$(mask_secret "$GITHUB_TOKEN") (optional; read only by insideout setup --check)"
+  else info GITHUB_TOKEN "empty — optional; read only by insideout setup --check (the server ignores it)"; fi
   # POSTGRES_APP_PASSWORD — required ONLY for the bundled-postgres setup, which
   # is why .env.example leaves it commented: a flat 'required' would cry wolf
   # for everyone on a remote DSN. Conditional requirements belong in the

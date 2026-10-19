@@ -166,13 +166,17 @@ func checkDB(ctx context.Context) []checkOutcome {
 	return []checkOutcome{{"db", "ok", "database accepts connections"}}
 }
 
+// checkGitHub validates the optional GITHUB_TOKEN. Only this check reads it:
+// the server's commit sync reads a private repository with the GitHub App's
+// installation token and a public one anonymously (rv4-FEAT-04), so an absent
+// token leaves nothing to validate and degrades nothing.
 func checkGitHub(ctx context.Context) []checkOutcome {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
 		token = repoEnvValue("GITHUB_TOKEN")
 	}
 	if token == "" {
-		return []checkOutcome{{"github", "skip", "no GITHUB_TOKEN — evidence sync runs unauthenticated"}}
+		return []checkOutcome{{"github", "skip", "no GITHUB_TOKEN — nothing to validate (optional; only this check reads it)"}}
 	}
 	login, err := probe.GitHubProbe(ctx, nil, token)
 	switch {
