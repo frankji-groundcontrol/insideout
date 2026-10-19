@@ -256,3 +256,52 @@ func tail(b *bytes.Buffer) string {
 	}
 	return s
 }
+
+// remoteDSN is a database on another machine for the tests that prove the
+// guard. .invalid never resolves (RFC 6761), so a test that gets past the guard
+// fails to connect instead of reaching a real database.
+const remoteDSN = "postgres://app:secret@db.example.invalid:5432/app?sslmode=disable"
+
+// AssertRefuses proves that each named test of the calling test binary refuses,
+// under INSIDEOUT_TEST_STRICT, a DATABASE_URL and a DATABASE_OWNER_URL that are
+// not on this machine (rv4-FR-F195). It starts the binary again to run only
+// that test with both set to remoteDSN and requires the child to fail with the
+// guard's message and without the host. A test whose helper never calls the
+// guard goes on to connect, and fails here. The named tests must read
+// DATABASE_URL, or the child skips instead of refusing.
+func AssertRefuses(t *testing.T, tests ...string) {
+	t.Helper()
+	for _, test := range tests {
+		t.Run(test, func(t *testing.T) {
+			if err := refuses(test); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+// refuses reports why the named test of this binary did not refuse remoteDSN in
+// strict mode, or nil when it failed with the guard's refusal.
+func refuses(test string) error {
+	exe, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("locate the test binary: %w", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+	var out bytes.Buffer
+	cmd := exec.CommandContext(ctx, exe, "-test.run=^"+test+"$", "-test.count=1", "-test.v", "-test.timeout=60s")
+	cmd.Env = append(os.Environ(), strictEnv+"=1", "DATABASE_URL="+remoteDSN, "DATABASE_OWNER_URL="+remoteDSN)
+	cmd.Stdout, cmd.Stderr = &out, &out
+	runErr := cmd.Run()
+	want := localOnly(true, "db.example.invalid").Error()
+	switch {
+	case runErr == nil:
+		return fmt.Errorf("%s passed against a database on another machine: nothing in it refuses\n%s", test, tail(&out))
+	case !strings.Contains(out.String(), want):
+		return fmt.Errorf("%s failed, but not with the refusal %q\n%s", test, want, tail(&out))
+	case strings.Contains(out.String(), "example.invalid"):
+		return fmt.Errorf("%s printed the host it refused\n%s", test, tail(&out))
+	}
+	return nil
+}
