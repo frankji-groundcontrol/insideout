@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/netip"
 	"os"
 	"os/exec"
 	"strings"
@@ -50,6 +51,64 @@ const (
 		  AND a.application_name = $2`
 )
 
+// strictEnv, when set, makes RequireLocalHost refuse a database on another
+// machine. It is opt-in: CI and the shared-instance workflows leave it unset.
+const strictEnv = "INSIDEOUT_TEST_STRICT"
+
+// strict reports whether INSIDEOUT_TEST_STRICT asks for the local-only guard.
+// Empty, 0, false, no and off mean off; anything else means on.
+func strict() bool {
+	switch strings.ToLower(os.Getenv(strictEnv)) {
+	case "", "0", "false", "no", "off":
+		return false
+	}
+	return true
+}
+
+// RequireLocalHost fails the test when INSIDEOUT_TEST_STRICT is set and the
+// pool is aimed at a database that is not on this machine (review-4 TEST-06:
+// the integration tests write rows, flip global settings and assume a seeded
+// database, and DATABASE_URL may hold a shared instance). Acquire calls it;
+// tests that open a pool of their own call it too. It checks the pool's
+// configuration, so it never connects, and it never prints the host.
+func RequireLocalHost(t testing.TB, pool *pgxpool.Pool) {
+	t.Helper()
+	cfg := pool.Config().ConnConfig
+	hosts := []string{cfg.Host}
+	for _, fb := range cfg.Fallbacks {
+		hosts = append(hosts, fb.Host)
+	}
+	if err := localOnly(strict(), hosts...); err != nil {
+		t.Fatalf("%v", err)
+	}
+}
+
+// localOnly is RequireLocalHost's decision apart from the pool and the
+// environment: with strict off everything passes, with it on every host must be
+// this machine. The error leaves the host out so a log never carries it.
+func localOnly(strict bool, hosts ...string) error {
+	if !strict {
+		return nil
+	}
+	for _, h := range hosts {
+		if !isLocal(h) {
+			return fmt.Errorf("%s is set: refusing to run against a database that is not on this machine (allowed: localhost, a loopback address, a unix socket); the host is not printed", strictEnv)
+		}
+	}
+	return nil
+}
+
+// isLocal is true for the hosts a database on this machine answers on. pgx
+// keeps a unix socket's directory in Host, and an empty Host means the default
+// socket.
+func isLocal(host string) bool {
+	if host == "" || strings.HasPrefix(host, "/") || strings.EqualFold(host, "localhost") {
+		return true
+	}
+	ip, err := netip.ParseAddr(host)
+	return err == nil && ip.IsLoopback()
+}
+
 // SignupMode takes the signup_mode lock for the rest of the test. Call it
 // before the test reads or saves the setting, so the restore a test registers
 // with t.Cleanup (which runs first, last-registered-first) happens while the
@@ -64,6 +123,7 @@ func SignupMode(t testing.TB, pool *pgxpool.Pool) {
 // safe to call more than once.
 func Acquire(t testing.TB, pool *pgxpool.Pool, name string) (release func()) {
 	t.Helper()
+	RequireLocalHost(t, pool)
 	ctx, cancel := context.WithTimeout(context.Background(), waitLimit)
 	defer cancel()
 	release, err := hold(ctx, pool, name)
