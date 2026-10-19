@@ -232,9 +232,14 @@ func (t *InstallationTokens) RepoToken(ctx context.Context, owner, repo string) 
 // RepoVisible reports whether this server can read owner/repo at all: the App
 // is installed on it, or it is public. GitHub answers the same 404 for a
 // private repo and a missing one, so false means "not to us", and a lookup
-// that fails is an error, never false. Binding a repo to a project asks this
-// first, because the link is what later hands the repo's installation token to
-// the project's syncs (rv4-COMP-05).
+// that fails is an error, never false.
+//
+// That is all it says. It takes no caller, so it cannot tell whether the person
+// linking may read the repo: a private repo covered by any installation of the
+// App passes for every member, and the first project to bind it is handed that
+// installation's token by its syncs. Who may bind such a repo is an open owner
+// decision (rv4-FR-F171, rv4-FR-F174; the w3-github-evidence changelog, "Owner
+// decision"); this check does not settle it.
 func (t *InstallationTokens) RepoVisible(ctx context.Context, owner, repo string) (bool, error) {
 	_, err := t.InstallationForRepo(ctx, owner, repo)
 	if err == nil {
