@@ -248,6 +248,11 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
 		return
 	}
+	if errors.Is(err, store.ErrHandoverNeedsAdmin) {
+		// An owner's edit sends the owner it keeps; leaving ownerId out clears it.
+		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can give the project to someone else or leave it without an owner (send the current ownerId to keep it)", "", nil)
+		return
+	}
 	if errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can do this", "", nil)
 		return

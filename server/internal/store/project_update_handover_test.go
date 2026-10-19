@@ -75,8 +75,23 @@ func TestRvHandoverANonAdminOwnerCannotGiveTheProjectAway(t *testing.T) {
 			f := rvHandoverFields(w.project, to)
 			f.Title = "Sneaked"
 			p, err := w.st.UpdateProject(context.Background(), w.owner.ID, w.project.ID, f)
-			if !errors.Is(err, ErrForbidden) {
-				t.Fatalf("hand-over %s = %+v, %v; want ErrForbidden", name, p, err)
+			if !errors.Is(err, ErrHandoverNeedsAdmin) || !errors.Is(err, ErrForbidden) {
+				t.Fatalf("hand-over %s = %+v, %v; want ErrHandoverNeedsAdmin (an ErrForbidden)", name, p, err)
+			}
+			rvHandoverUnchanged(t, w)
+		})
+	}
+}
+
+// Only the project's owner is told it was a hand-over they may not make; a
+// member who owns nothing here keeps the plain refusal, whatever they send.
+func TestRvHandoverAMemberWhoDoesNotOwnTheProjectKeepsThePlainRefusal(t *testing.T) {
+	w := newRvHandoverWorld(t)
+	for name, to := range map[string]*uuid.UUID{"keeping the owner": &w.owner.ID, "to themselves": &w.other.ID, "to nobody": nil} {
+		t.Run(name, func(t *testing.T) {
+			_, err := w.st.UpdateProject(context.Background(), w.other.ID, w.project.ID, rvHandoverFields(w.project, to))
+			if !errors.Is(err, ErrForbidden) || errors.Is(err, ErrHandoverNeedsAdmin) {
+				t.Fatalf("a non-owner's edit %s = %v; want the plain ErrForbidden", name, err)
 			}
 			rvHandoverUnchanged(t, w)
 		})
