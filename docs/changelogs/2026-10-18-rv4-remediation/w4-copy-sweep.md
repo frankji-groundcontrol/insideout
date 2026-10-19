@@ -9,7 +9,7 @@ pair. No address, host, secret or token is spelled in this fragment.
 | --- | --- | --- | --- |
 | `rv4-USER-10` | FIXED (the two names; an invitation that also joins a workspace was not this change) | `39e540b5` | `1d5f68a3` |
 | `rv4-PM-08` | FIXED (the hosted blurb and the join line; the README install order was already true on this base) | `39e540b5` | `1d5f68a3` |
-| `rv4-FR-F70` | FIXED (CLI half; `reset-password` also drops the saved login) | `654f297b` | this fragment's commit |
+| `rv4-FR-F70` | FIXED (CLI half; `reset-password` also drops the saved login) | `654f297b` | `ce674f43` |
 | `rv4-USER-12` | DEFERRED_OWNER | — | — |
 | `rv4-FEAT-05` | NOT_REAL on this base (convert half already repaired; export headings are not this cluster's files) | — | — |
 
