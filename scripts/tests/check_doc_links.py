@@ -23,10 +23,12 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LINK = re.compile(r"\]\((?!https?:|#|mailto:)([^)#\s]+)")
 
-# Broken links tolerated per dated-record prefix (measured at rv4 wave 3).
+# Broken links tolerated per dated-record prefix. Measured at rv4 wave 3 as 24
+# and 18 (every one a path the Nuxt app or Ink & Seal theme once had), then
+# repaired; the buckets stay so a future dated record cannot start a debt.
 DATED_CEILING = {
-    "docs/changelogs/": 24,
-    "docs/design-system/CHANGELOG.md": 18,
+    "docs/changelogs/": 0,
+    "docs/design-system/CHANGELOG.md": 0,
 }
 
 

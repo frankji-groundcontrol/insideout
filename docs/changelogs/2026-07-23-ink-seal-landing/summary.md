@@ -11,16 +11,16 @@ uncommitted detour. Reverted to the committed Ink & Seal world while keeping
 yesterday's real product work (roadmap tree, GitHub sync, AI MVP builder,
 semantic-token component migration).
 
-- [`app/src/assets/tokens.css`](../../../app/src/assets/tokens.css) — restored the
+- `app/src/assets/tokens.css` — restored the
   HEAD Ink & Seal values (celadon/ink ground, vermilion `seal`, `carve`,
   ink `btn`/`btn-fg` that inverts to paper on dark, the five `status-*` ramps).
   Token _keys_ unchanged — one revert re-themes every semantic consumer.
-- [`app/tailwind.config.js`](../../../app/tailwind.config.js) — `fontFamily.serif`
+- `app/tailwind.config.js` — `fontFamily.serif`
   leads with **Noto Serif SC** (the Song/Mincho display face); sans stays on
   self-hosted **Alibaba PuHuiTi**.
-- [`app/src/style.css`](../../../app/src/style.css) — kept the PuHuiTi `@font-face`;
+- `app/src/style.css` — kept the PuHuiTi `@font-face`;
   dropped the Prisma noise utilities + stale comments.
-- [`app/nuxt.config.ts`](../../../app/nuxt.config.ts) — the FOUC default reverted from
+- `app/nuxt.config.ts` — the FOUC default reverted from
   forced-dark back to `prefers-color-scheme`; kept the Go-proxy, tokens.css-load
   and InsideOut-title work; added the Noto Serif SC display link.
 
@@ -48,7 +48,7 @@ under `app/src/components/landing/`:
 - `StepPeek.vue` — the 1:1 call-out box: an honest skeleton peek at the real
   artifact each step produces (idea inbox card, coach interview, branched
   roadmap with live statuses, GitHub-commit seal timeline).
-- [`app/src/pages/index.vue`](../../../app/src/pages/index.vue) — assembles hero + four
+- `app/src/pages/index.vue` — assembles hero + four
   steps + a "press your first seal" close; `definePageMeta({ public: true })`.
 - i18n — all copy in `app/src/i18n/locales/{en-US,zh-CN}.ts` under `landing.*`.
 

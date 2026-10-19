@@ -111,10 +111,10 @@ plan [`docs/plans/2026-08-19-restore-ink-seal.md`](../plans/2026-08-19-restore-i
 
 ### Changed — token consumer (keys/values unchanged)
 
-- [`client/lib/theme/ink_seal.dart`](../../client/lib/theme/ink_seal.dart) —
+- `client/lib/theme/ink_seal.dart` —
   light + dark palettes matching last live `app/src/assets/tokens.css`
   (`f897fb4`).
-- [`client/lib/theme/ink_seal_theme.dart`](../../client/lib/theme/ink_seal_theme.dart) —
+- `client/lib/theme/ink_seal_theme.dart` —
   ThemeData: celadon scaffold, ink primary button, vermilion focus/accent,
   Song display / Gothic body, control/card/hero radii.
 - [`client/assets/seals/yin.webp`](../../client/assets/seals/yin.webp) —
@@ -129,18 +129,18 @@ Reverted the `0.3.0` Prisma cinematic detour back to the committed **国风留�
 
 ### Changed — palette re-theme, reverted (token _keys_ unchanged; only values)
 
-- [`app/src/assets/tokens.css`](../../app/src/assets/tokens.css) — restored the HEAD **Ink & Seal** values in both `:root` and `.dark`: celadon/ink ground, vermilion `seal`, paper `carve`, the ink `btn`/`btn-fg` that inverts to paper on dark, and the five `status-*` ramps. The `0.3.0` pure-black + cream re-value is discarded; dark is no longer the forced default.
-- [`app/nuxt.config.ts`](../../app/nuxt.config.ts) — the FOUC default reverted from forced-dark to `prefers-color-scheme`; added the Noto Serif SC display link.
+- `app/src/assets/tokens.css` — restored the HEAD **Ink & Seal** values in both `:root` and `.dark`: celadon/ink ground, vermilion `seal`, paper `carve`, the ink `btn`/`btn-fg` that inverts to paper on dark, and the five `status-*` ramps. The `0.3.0` pure-black + cream re-value is discarded; dark is no longer the forced default.
+- `app/nuxt.config.ts` — the FOUC default reverted from forced-dark to `prefers-color-scheme`; added the Noto Serif SC display link.
 
 ### Changed — typography back to Ink & Seal
 
-- [`app/tailwind.config.js`](../../app/tailwind.config.js) — `fontFamily.serif` leads with **Noto Serif SC** (the Song/Mincho display face); `fontFamily.sans` stays on self-hosted **Alibaba PuHuiTi**. The `0.3.0` PuHuiTi-for-everything + Impeccable-display mapping is removed.
-- [`app/src/style.css`](../../app/src/style.css) — kept the PuHuiTi `@font-face`; dropped the Prisma `.noise-overlay`/`.bg-noise` utilities.
+- `app/tailwind.config.js` — `fontFamily.serif` leads with **Noto Serif SC** (the Song/Mincho display face); `fontFamily.sans` stays on self-hosted **Alibaba PuHuiTi**. The `0.3.0` PuHuiTi-for-everything + Impeccable-display mapping is removed.
+- `app/src/style.css` — kept the PuHuiTi `@font-face`; dropped the Prisma `.noise-overlay`/`.bg-noise` utilities.
 
 ### Added — landing surface (「The Assembly」)
 
-- [`app/src/pages/index.vue`](../../app/src/pages/index.vue) + `app/src/components/landing/{AssemblyHero,AssemblyStep,AssemblyDiagram,StepPeek}.vue` — the public landing rebuilt as an ink build-instruction narrative (idea spark → PRD → branched roadmap → shipped seal), fully on semantic tokens in light + dark.
-- [`app/src/components/common/BaseButton.vue`](../../app/src/components/common/BaseButton.vue) — new `to` prop renders a single styled `NuxtLink` (so CTA links stay one interactive element, never `<a><button>`).
+- `app/src/pages/index.vue` + `app/src/components/landing/{AssemblyHero,AssemblyStep,AssemblyDiagram,StepPeek}.vue` — the public landing rebuilt as an ink build-instruction narrative (idea spark → PRD → branched roadmap → shipped seal), fully on semantic tokens in light + dark.
+- `app/src/components/common/BaseButton.vue` — new `to` prop renders a single styled `NuxtLink` (so CTA links stay one interactive element, never `<a><button>`).
 
 > **License note retired:** the Impeccable display font (personal-use) is no longer referenced after this revert; the `0.3.0` license caveat applies only to that version's usage.
 
@@ -150,16 +150,16 @@ Re-themed the semantic token palette from **国风留白 / Ink & Seal** to **Pri
 
 ### Changed — palette re-theme (token _keys_ unchanged; only values)
 
-- [`app/src/assets/tokens.css`](../../app/src/assets/tokens.css) — both `:root` and `.dark` re-valued: `surface-*` celadon/ink-night→pure black + `#101010`/`#1c1c1c` (dark) and warm cream paper (light); `fg-*`→warm cream ink on dark, ink on paper light; `seal`/`brand` vermilion→cream (dark) / ink (light); `carve`→black on cream fills; `btn`/`btn-fg`→cream button (dark) / ink button (light); the five `status-*` ramps re-harmonized to the warm palette.
+- `app/src/assets/tokens.css` — both `:root` and `.dark` re-valued: `surface-*` celadon/ink-night→pure black + `#101010`/`#1c1c1c` (dark) and warm cream paper (light); `fg-*`→warm cream ink on dark, ink on paper light; `seal`/`brand` vermilion→cream (dark) / ink (light); `carve`→black on cream fills; `btn`/`btn-fg`→cream button (dark) / ink button (light); the five `status-*` ramps re-harmonized to the warm palette.
 
 ### Added — Prisma typography + texture + motion
 
-- [`app/src/style.css`](../../app/src/style.css) — `@font-face` for **Alibaba PuHuiTi** (self-hosted from `app/public/fonts/`, weights 400/500/700/800) — the universal font covering Latin + full CJK, so no external font CDN and no CJK fallback gap. Also `@font-face` for **Impeccable** (Latin-only monoline handwritten script) as the elegant display/accent face. Also `.noise-overlay` + `.bg-noise` SVG fractal-noise (feTurbulence) texture utilities.
-- [`app/tailwind.config.js`](../../app/tailwind.config.js) — `fontFamily.sans` and `fontFamily.serif` both → **Alibaba PuHuiTi** (display headings render PuHuiTi heavy weights; no separate serif face); `fontFamily.display` → **Impeccable** (Latin accent only — no Han glyphs, so never on CJK text).
-- [`app/nuxt.config.ts`](../../app/nuxt.config.ts) — all external font links removed (fully self-hosted); the FOUC script's default theme is now **dark**.
-- [`app/src/components/layout/NavBar.vue`](../../app/src/components/layout/NavBar.vue) — brand wordmark uses `font-display` (Impeccable script).
+- `app/src/style.css` — `@font-face` for **Alibaba PuHuiTi** (self-hosted from `app/public/fonts/`, weights 400/500/700/800) — the universal font covering Latin + full CJK, so no external font CDN and no CJK fallback gap. Also `@font-face` for **Impeccable** (Latin-only monoline handwritten script) as the elegant display/accent face. Also `.noise-overlay` + `.bg-noise` SVG fractal-noise (feTurbulence) texture utilities.
+- `app/tailwind.config.js` — `fontFamily.sans` and `fontFamily.serif` both → **Alibaba PuHuiTi** (display headings render PuHuiTi heavy weights; no separate serif face); `fontFamily.display` → **Impeccable** (Latin accent only — no Han glyphs, so never on CJK text).
+- `app/nuxt.config.ts` — all external font links removed (fully self-hosted); the FOUC script's default theme is now **dark**.
+- `app/src/components/layout/NavBar.vue` — brand wordmark uses `font-display` (Impeccable script).
 - `motion-v` dependency — cinematic pull-up / fade / scale reveals (landing page so far).
-- [`app/src/pages/index.vue`](../../app/src/pages/index.vue) — landing hero + journey pillars rebuilt with motion-v reveals and the noise texture.
+- `app/src/pages/index.vue` — landing hero + journey pillars rebuilt with motion-v reveals and the noise texture.
 
 > **License note:** Impeccable is a **personal-use / demo** font (author: Paily
 > Studio). The full/commercial license must be purchased before InsideOut is
@@ -171,12 +171,12 @@ Re-themed the semantic token palette to **国风留白 / Ink & Seal** — a soft
 
 ### Changed — palette re-theme (token _keys_ unchanged; only values + a few additions)
 
-- [`app/src/assets/tokens.css`](../../app/src/assets/tokens.css) — both `:root` and `.dark` re-valued: `brand` indigo→vermilion; `surface-*` gray→celadon / ink-night; `stroke-*`→ink hairlines; `fg-*`→ink / body / meta on light, rice-paper on dark; the five `status-*` `-bg`/`-fg` ramps recolored to seal/grey/amber/sage washes (dark `-bg` pre-composited solid). `--radius-control` 0.5rem→0.625rem.
+- `app/src/assets/tokens.css` — both `:root` and `.dark` re-valued: `brand` indigo→vermilion; `surface-*` gray→celadon / ink-night; `stroke-*`→ink hairlines; `fg-*`→ink / body / meta on light, rice-paper on dark; the five `status-*` `-bg`/`-fg` ramps recolored to seal/grey/amber/sage washes (dark `-bg` pre-composited solid). `--radius-control` 0.5rem→0.625rem.
 
 ### Added — Ink & Seal signature tokens
 
 - `app/src/assets/tokens.css` — `--color-seal` / `-strong` / `-locked` (the 印泥 chop + its hover + the grey locked chop), `--color-carve` (paper color drawn on a seal/ink fill), and `--color-btn` / `--color-btn-fg` (the **ink** primary-action surface that inverts to **paper** on dark).
-- [`app/tailwind.config.js`](../../app/tailwind.config.js) — `colors.seal.{DEFAULT,strong,locked}`, `colors.carve`, `colors.btn.{DEFAULT,fg}`; `fontFamily.serif` (Noto Serif SC display). Ma Shan Zheng brush face is still an open self-hosting item (§11).
+- `app/tailwind.config.js` — `colors.seal.{DEFAULT,strong,locked}`, `colors.carve`, `colors.btn.{DEFAULT,fg}`; `fontFamily.serif` (Noto Serif SC display). Ma Shan Zheng brush face is still an open self-hosting item (§11).
 
 ### Adoption note (not yet codemodded)
 
@@ -189,8 +189,8 @@ The token substrate, the full primitive set, the a11y floor, and the brand asset
 ### Added — token foundation (Phase 1)
 
 - `app/src/assets/tokens.css` — `:root` + `.dark` semantic tokens as **channel triplets** (surface/stroke/fg/brand/status `-bg`/`-fg`, radius). Dark status `-bg` values are pre-composited so `bg-status-*-bg` flips cleanly with no alpha.
-- [`app/tailwind.config.js`](../../app/tailwind.config.js) — `theme.extend` maps the semantic keys via `rgb(var(--x) / <alpha-value>)` (colors `brand/surface/stroke/fg/status`, `borderRadius` control/card/pill/hero, `boxShadow` card/popover/modal, `zIndex` ladder, `fontFamily.sans`). Stale `./src/views/**` content glob removed.
-- [`app/src/style.css`](../../app/src/style.css) — `font-family` → Inter + Noto Sans SC + system-ui fallback (self-hosting via `@nuxt/fonts` is the open delivery decision §11).
+- `app/tailwind.config.js` — `theme.extend` maps the semantic keys via `rgb(var(--x) / <alpha-value>)` (colors `brand/surface/stroke/fg/status`, `borderRadius` control/card/pill/hero, `boxShadow` card/popover/modal, `zIndex` ladder, `fontFamily.sans`). Stale `./src/views/**` content glob removed.
+- `app/src/style.css` — `font-family` → Inter + Noto Sans SC + system-ui fallback (self-hosting via `@nuxt/fonts` is the open delivery decision §11).
 - Cleanups: deleted the dead `HelloWorld.vue`; `BaseModal` magic `z-50` → `z-modal`; `<html lang>` follows locale (`app/src/app.vue` reactive `useHead`); document title template `%s · 卷了么`.
 - Guard test: i18n key parity (`app/src/i18n/__tests__/localeParity.test.ts`); eslint config now ignores build output (`.nuxt`/`.output`) + Nuxt single-word filenames + `^_` arg convention.
 

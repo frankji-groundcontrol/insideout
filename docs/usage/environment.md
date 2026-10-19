@@ -100,6 +100,7 @@ themselves when it is unset.
 | `DATABASE_OWNER_URL` | no | empty | DSN for `insideout_owner` (NOSUPERUSER) used only to apply migrations. Empty = migrate uses `DATABASE_URL`, which must already be that owner. Required on the bundled postgres, whose `DATABASE_URL` is the app role: `env.sh check` fails when it is empty there. |
 | `INSIDEOUT_JWT_SECRET` | **yes** | — | HMAC signing secret for access/refresh JWTs. **Min 32 characters** (fail-fast). |
 | `INSIDEOUT_ADDR` | no | `:8080` | HTTP listen address (host:port). |
+| `INSIDEOUT_TRUSTED_PROXY_HOPS` | no | `0` | How many reverse proxies in front of the server append to `X-Forwarded-For`. `0` keys the per-client throttles on the TCP peer (`RemoteAddr`) and ignores the header (logged once if it is sent); `N` takes the address `N` hops from the right. A non-integer or negative value fails startup. `docker-compose.yml` passes it through. |
 | `INSIDEOUT_ACCESS_TTL` | no | `15m` | Access-token lifetime (Go `time.Duration`). |
 | `INSIDEOUT_REFRESH_TTL` | no | `720h` | Refresh-token lifetime (Go `time.Duration`). |
 | `INSIDEOUT_DEV_CORS` | no | off | Permissive-CORS toggle for dev; on only when the value is exactly `1`. |
@@ -179,6 +180,7 @@ Test affordances; none is needed for a normal install.
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
 | `INSIDEOUT_ENV_FILE` | no | `<repo>/.env` | Env file that `env.sh`, `setup.sh`, `insideout setup --local` and `setup --check` read and write instead of the root `.env`. Point it at a scratch file so a test never touches the real one. |
+| `INSIDEOUT_TEST_STRICT` | no | off | Test-only. When set (any value but empty, `0`, `false`, `no`, `off`), the `DATABASE_URL`-gated Go tests refuse a database on another machine (`server/internal/testlock`), because they write rows and flip global settings. CI and shared-instance workflows leave it unset. |
 | `INSIDEOUT_SETUP_REPO_ROOT` | no | walk up from the working directory | Checkout `insideout setup` treats as the repo root. It must hold `docker-compose.yml`, `.env.example` and `server/go.mod`, else the command stops. |
 | `INSIDEOUT_ROLELESS_URL` | no | `postgres://postgres@127.0.0.1:5612/postgres?sslmode=disable` | `-tags roleless` Go tests only (CI sets it): a superuser DSN of a throwaway cluster that has no `insideout_*` roles; the suite refuses a cluster that already has them. Never aim it at a shared instance. |
 

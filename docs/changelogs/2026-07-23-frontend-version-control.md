@@ -8,17 +8,17 @@ this change tracks the frontend and infra — completing the cutover so
 
 ## What changed
 
-- **Staged all of [`app/`](../../app/)**: the workshop → prd/projects/workspace
+- **Staged all of `app/`**: the workshop → prd/projects/workspace
   feature migration, the 「Assembly」 landing (Ink & Seal), the detachable PRD
   coach sidebar with markdown rendering, and the idea-shaping copy reframe.
-- **Removed [`supabase/`](../../supabase/)**: the old Supabase edge functions,
+- **Removed `supabase/`**: the old Supabase edge functions,
   migrations, and tests — superseded by the Go backend. This completes the
   2026-07-20 RLS cutover; the new frontend talks to the Go API via
   `services/api/`, and no `supabase`/`workshop` imports remain in `src/`.
 - **Added deployment infra**: [`docker-compose.yml`](../../docker-compose.yml)
   (postgres + server + app), [`docker/postgres-init/`](../../docker/postgres-init/)
   (non-superuser `insideout_app` role provisioning), and
-  [`app/Dockerfile`](../../app/Dockerfile) + `.dockerignore`.
+  `app/Dockerfile` + `.dockerignore`.
 - **Self-hosted fonts**: `app/public/fonts/` — 4 weights of Alibaba PuHuiTi
   (Latin + full CJK), all referenced by `@font-face` in `src/style.css`.
 

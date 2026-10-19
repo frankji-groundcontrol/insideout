@@ -8,9 +8,9 @@ milestone-definition**, not coding.
 ## What changed
 
 - **Markdown rendering for coach messages.** New
-  [`renderMarkdown`](../../app/src/utils/markdown.ts) util — `marked` (GFM,
+  `renderMarkdown` util — `marked` (GFM,
   `breaks: true` for chat-style newlines) parses to HTML, then `dompurify`
-  sanitizes it. New [`MarkdownBody.vue`](../../app/src/components/common/MarkdownBody.vue)
+  sanitizes it. New `MarkdownBody.vue`
   renders the sanitized HTML via `v-html` (with an eslint justification) and
   styles the generated tags through `:deep()` against the existing
   `--color-*` design tokens: `color: inherit` so emphasis stays legible on
@@ -20,7 +20,7 @@ milestone-definition**, not coding.
   server, so it degrades to escaped plain text; coach/user messages only
   render client-side (history loads in `onMounted`, streaming is
   interactive), so the sanitized path is the one that runs in practice.
-  [`CoachPanel.vue`](../../app/src/components/prd/CoachPanel.vue) now renders
+  `CoachPanel.vue` now renders
   both the message history and the live streaming bubble through
   `MarkdownBody` (caret kept alongside the stream).
 - **Copy reframe: the app shapes ideas, it does not code.** Grounded in the
@@ -29,8 +29,8 @@ milestone-definition**, not coding.
   roadmap tree and writes no code. An adversarial copy audit (workflow)
   separated genuinely-misleading claims from honest "your team builds / the
   app tracks" attribution. Five strings reframed per locale
-  ([`en-US.ts`](../../app/src/i18n/locales/en-US.ts),
-  [`zh-CN.ts`](../../app/src/i18n/locales/zh-CN.ts), parity preserved):
+  (`en-US.ts`,
+  `zh-CN.ts`, parity preserved):
   - `heroTitle`: "Build your idea…" → "Shape your idea, piece by piece."
   - `ctaPrimary` / `ctaCloseButton`: "Start building" → "Start shaping"
   - `buildMVP`: "Build the MVP" → "Draft the roadmap" (zh: 规划路线图)

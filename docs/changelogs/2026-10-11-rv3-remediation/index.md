@@ -2,8 +2,10 @@
 
 Execution of the [review-3 remediation plan](../../review/2026-10-10-multirole-3/40-remediation-plan.md)
 ([plan record](../../plans/2026-10-10-rv3-remediation.md)): all 83 register
-rows dispositioned — 73 closed by code (70 Fixed + 3 code-halves), 3 satisfied
-by the report, 1 parked, 6 owner-blocked. Every finding's trace is in the
+rows dispositioned — 63 closed by code (60 Fixed + 3 code-halves), 10 recorded
+(the fix commit changed only `docs/`), 3 satisfied by the report, 1 parked, 6
+owner-blocked (recomputed 2026-10-18, rv4-CLOSE-04: the first header counted
+those ten as closed by code, 73). Every finding's trace is in the
 [disposition ledger](../../review/2026-10-10-disposition-ledger/04-multirole-3.md).
 
 Each cluster worked red-test-first in its own worktree; an independent
@@ -32,8 +34,8 @@ mutation-checked before acceptance. All 32 clusters were accepted in round 1.
   [learning record](../../learning/2026-10-11-create-or-replace-with-a-new-signature-overloads.md)).
   Nothing calls the old zero-arg forms.
 - The conversation locale (`20261011110000`) and roadmap validation
-  (`20261011140000`) columns are additive; existing rows default to `en` and
-  no validation state respectively.
+  (`20261011140000`) columns are additive; existing rows default to `zh` (the
+  only language they have coached in) and no validation state respectively.
 - Nothing here is deployed. Shipping remains the owner's explicit step
   ([HANDOFF](../../HANDOFF.md)); the six owner rows are enumerated in the
   [promise register](../../review/2026-10-10-multirole-3/50-promise-register.md).

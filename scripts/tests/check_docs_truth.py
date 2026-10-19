@@ -176,12 +176,9 @@ def backup_doc_states_reality(failures):
         fail(failures, "backup-restore.md does not state the operator's dump cadence duty")
 
 
-# Living docs checked for a PostgreSQL floor claim. docs/PLAN.md and skills/ sit
-# outside the docs-truth cluster's files, so they get a ceiling that may only
-# shrink until the integrator repairs them (rv4-COMP-08).
+# Living docs checked for a PostgreSQL floor claim (rv4-COMP-08).
 PG_LIVING = ("README.md", "PRODUCT.md", "CONTRIBUTING.md", "SKILL.md", ".env.example",
-             "docs/SETENV.md", "docs/usage/", "docs/architecture/")
-PG_LEGACY_CEILING = {"docs/PLAN.md": 1, "skills/": 3}
+             "docs/SETENV.md", "docs/usage/", "docs/architecture/", "docs/PLAN.md", "skills/")
 PG_CLAIM = re.compile(r"(?i)postgres(?:ql)?\W{0,6}(\d+)\+")
 
 
@@ -195,25 +192,13 @@ def postgres_claims_match_ci(failures):
     floor = min(majors)
     tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True,
                              text=True, check=True).stdout.split()
-    legacy = dict.fromkeys(PG_LEGACY_CEILING, 0)
     for name in tracked:
-        if not (name.endswith(".md") or name == ".env.example"):
-            continue
-        bucket = next((p for p in PG_LEGACY_CEILING if name.startswith(p)), None)
-        if bucket is None and not name.startswith(PG_LIVING):
+        if not (name.endswith(".md") or name == ".env.example") or not name.startswith(PG_LIVING):
             continue
         for m in PG_CLAIM.finditer(read(name)):
-            if int(m.group(1)) >= floor:
-                continue
-            if bucket:
-                legacy[bucket] += 1
-            else:
+            if int(m.group(1)) < floor:
                 fail(failures, f"{name} promises 'PostgreSQL {m.group(1)}+' but CI only "
                                f"starts PostgreSQL {floor}")
-    for bucket, count in legacy.items():
-        if count > PG_LEGACY_CEILING[bucket]:
-            fail(failures, f"{bucket}: {count} stale PostgreSQL floor claims, over the "
-                           f"ceiling of {PG_LEGACY_CEILING[bucket]}")
 
 
 if __name__ == "__main__":

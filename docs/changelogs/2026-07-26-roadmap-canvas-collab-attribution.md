@@ -41,7 +41,7 @@ model. All changes stay inside the `insideout` schema.
 node view exposes `creatorName`/`editorName` (omitempty), populated from
 the joined names.
 
-**Frontend** — [RoadmapCanvasNode.vue](../../app/src/components/roadmap/RoadmapCanvasNode.vue):
+**Frontend** — `RoadmapCanvasNode.vue`:
 each card shows a neutral roundel (`bg-surface-sunken text-fg-secondary`,
 never vermilion — One Seal Rule) with the last editor's initial, or `?`
 when unknown. `editorInitial` prefers `editorName`, falls back to

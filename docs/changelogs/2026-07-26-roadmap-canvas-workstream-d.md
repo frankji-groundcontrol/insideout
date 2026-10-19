@@ -3,7 +3,7 @@
 Closes the collaborative-canvas plan
 ([2026-07-24](../plans/2026-07-24-roadmap-canvas-collab.md)): Workstream D was
 its last open workstream. Four frontend changes, all in
-[`RoadmapCanvas.vue`](../../app/src/components/roadmap/RoadmapCanvas.vue) and
+`RoadmapCanvas.vue` and
 its neighborhood, plus one routing correctness fix they depended on and one
 stacking fix the adversarial pass surfaced.
 
@@ -21,7 +21,7 @@ stacking fix the adversarial pass surfaced.
   parallel track — neutral `surface-raised` fill + `stroke-strong` hairline,
   light and dark. **One Seal Rule holds:** bands carry no vermilion; only status
   seals are colored.
-- **Minimap** ([`RoadmapMinimap.vue`](../../app/src/components/roadmap/RoadmapMinimap.vue)).
+- **Minimap** (`RoadmapMinimap.vue`).
   Full-route only (`v-if="!embedded"`), a 176×120 overview that renders the whole
   tree, frames the current viewport, and click/drags to `centerOn`. Honest
   `role="img"` + localized `aria-label` (小地图 / Minimap); deliberately

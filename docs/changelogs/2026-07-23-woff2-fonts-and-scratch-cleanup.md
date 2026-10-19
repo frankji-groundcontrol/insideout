@@ -10,7 +10,7 @@ removal of scratch left over from the Prisma detour.
   TTFs (~32 MB total) in the
   [frontend VC commit](2026-07-23-frontend-version-control.md). They are now
   WOFF2 (~16.4 MB total, ≈49–51% smaller per weight). `@font-face` in
-  [`app/src/style.css`](../../app/src/style.css) now points at the `.woff2`
+  `app/src/style.css` now points at the `.woff2`
   files and the TTFs are deleted.
   - **Full glyph coverage kept — no CJK subsetting.** Users type arbitrary
     Chinese into ideas/PRDs, so dropping glyphs would risk tofu on

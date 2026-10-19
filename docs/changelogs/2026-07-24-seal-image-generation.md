@@ -25,11 +25,11 @@ paper, so each mark is self-contained ink that reads on any background.
   carved luminance texture. Exported as 320px WebP with alpha (~22–40 KB
   each, ~172 KB total).
 - **Wired into three touchpoints.**
-  - The four [`AssemblyStep`](../../app/src/components/landing/AssemblyStep.vue)
+  - The four `AssemblyStep`
     chops, via a new `seal` prop fed from
-    [`index.vue`](../../app/src/pages/index.vue).
-  - The CTA-close seal in [`index.vue`](../../app/src/pages/index.vue).
-  - The navbar brand in [`NavBar.vue`](../../app/src/components/layout/NavBar.vue),
+    `index.vue`.
+  - The CTA-close seal in `index.vue`.
+  - The navbar brand in `NavBar.vue`,
     which now pairs the 内外 mark with the "InsideOut" wordmark (the brand
     string is "InsideOut" in both locales, so there is no duplicated text).
 

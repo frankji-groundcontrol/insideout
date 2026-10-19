@@ -44,6 +44,8 @@ server/
     roadmaptime/       the time-first deadline and pressure rules
     setup/             the guided-setup flow engine behind `insideout setup`
     store/             all pgx queries; files grouped by domain resource (Store layer below)
+    testlock/          cross-process advisory locks and the strict-mode host guard shared by the
+                       DATABASE_URL-gated tests (imported by tests only)
 ```
 
 The non-web clients (`cmd/insideout-mcp`, `apiclient`, `clientconfig`, `mcpserver`,
@@ -142,7 +144,10 @@ Domain handlers live in `internal/api`, grouped by resource:
 
 - wiring: `server.go` (routes), `middleware.go`, `context.go`, `cors.go`,
   `cookies.go`, `util.go`, `url_scheme.go`, `healthz.go`, `single_replica.go`
-  (the second-process guard, see the client doc below)
+  (the second-process guard, see the client doc below); `client_ip.go` (the
+  trusted-proxy client address), `stream_caps.go` and `stream_recheck.go` (the
+  SSE per-user/per-project caps and the heartbeat membership recheck),
+  `request_deadline.go` (the per-request deadline on non-stream routes)
 - accounts: `auth*.go` (sign-in, the emailed one-time flows and their
   templates, the throttle and resend cooldown), `me.go`, `admin.go`
   (invitations and the signup-mode switch)
@@ -150,7 +155,8 @@ Domain handlers live in `internal/api`, grouped by resource:
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
   `project_updates.go`, `ideas.go`, `guide.go`
 - PRDs: `prd*.go` (PRDs, audience views, readiness, Commit), `conversations.go`
-  (the coach's SSE turns)
+  (the coach's SSE turns), `conversations_trust.go` (parked finding resolutions
+  on the confirm card)
 - roadmap: `roadmap*.go` (nodes, drafting, evidence, progress, validation),
   `presence_routes.go`
 - GitHub: `github*.go` (repo sync, the webhook and its evidence)

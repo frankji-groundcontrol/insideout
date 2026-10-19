@@ -13,8 +13,8 @@ Versions that matter (this repo's own pins — do not guess):
   directive is the minimum; newer releases are fine). Never assume a
   version — the directive moves.
 - **Flutter**: 3.44.x — CI and `client/Dockerfile` pin **3.44.0**.
-- **PostgreSQL**: 14+ for a server you bring yourself; the bundled
-  Docker path runs the `postgres:18` image.
+- **PostgreSQL**: 18 for a server you bring yourself (older majors are
+  untested); the bundled Docker path runs the `postgres:18` image.
 - **Docker**: Engine + Compose **v2** (`docker compose`, not the old
   `docker-compose` binary).
 
@@ -138,7 +138,7 @@ Verify: `docker version && docker compose version` — Compose must
 report v2.x. Then prove the daemon actually runs containers:
 `docker run --rm hello-world`.
 
-## 5. PostgreSQL 14+ (own-instance path only)
+## 5. PostgreSQL 18 (own-instance path only)
 
 Needed by: B only when the human chose *their own* Postgres instead of
 the bundled Docker one. On a shared multi-tenant instance the app role
@@ -163,8 +163,10 @@ sudo apt-get install -y postgresql
 sudo systemctl enable --now postgresql
 ```
 
-Verify: `psql --version` (14+); a cluster is running (`pg_lsclusters`
-on Ubuntu, `brew services list` on macOS).
+Verify: `psql --version` reads 18 (older majors are untested; if the Ubuntu
+package is older, use the bundled Docker path or the PostgreSQL project's apt
+repository); a cluster is running (`pg_lsclusters` on Ubuntu,
+`brew services list` on macOS).
 
 ## 6. Flutter 3.44.x + Chrome
 

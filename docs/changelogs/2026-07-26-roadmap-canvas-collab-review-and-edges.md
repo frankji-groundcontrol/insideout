@@ -8,8 +8,8 @@ no operator action.
 
 ## What changed
 
-**B1 — review/present mode ([RoadmapCanvas.vue](../../app/src/components/roadmap/RoadmapCanvas.vue),
-[RoadmapCanvasNode.vue](../../app/src/components/roadmap/RoadmapCanvasNode.vue)).**
+**B1 — review/present mode (`RoadmapCanvas.vue`,
+`RoadmapCanvasNode.vue`).**
 A toolbar eye toggle (on both the embedded map and the full route) flips a
 `reviewing` ref; `?review=1` seeds it on mount as a shareable view-only
 deep-link (a view state, *not* an access boundary — every invite-code member
@@ -21,7 +21,7 @@ so it leaves the DOM and the tab order. A quiet, non-vermilion "Reviewing ·
 read-only" chip persists while active (One Seal Rule). Zoom/pan/fit/open-full
 stay enabled (read operations).
 
-**B2 — i18n freshness ([useTimeAgo.ts](../../app/src/composables/useTimeAgo.ts),
+**B2 — i18n freshness (`useTimeAgo.ts`,
 both locales).** The card shows "updated X ago" via a new locale-aware
 `useTimeAgo()` composable backed by `time.*` keys (today / yesterday / Nd /
 Nmo / Ny) in `en-US` + `zh-CN`, so the label follows the active locale; the

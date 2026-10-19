@@ -45,7 +45,7 @@ stop, say it is unsupported, and offer the manual docs instead.
 | Destination | Gives the user | Needs |
 | --- | --- | --- |
 | **A. Hosted API** (default) | CLI + MCP driving the hosted service | git, Go, python3, curl — no database, no env vars |
-| **B. Own server** | A PostgreSQL-backed server on this machine | A + Docker (or their own Postgres 14+) + `.env` + migrations |
+| **B. Own server** | A PostgreSQL-backed server on this machine | A + Docker (or their own Postgres 18) + `.env` + migrations |
 | **C. Full development** | B + the Flutter client (web/iOS/Android) | B + Flutter 3.44.x + Chrome (and Xcode/Android Studio for those targets) |
 
 If the user cannot choose, pick A — it is reversible (B/C build on the
