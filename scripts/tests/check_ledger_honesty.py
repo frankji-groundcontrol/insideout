@@ -11,9 +11,14 @@ ledger table itself:
             whose fix commits all changed only files under docs/ fails, and a
             Recorded row whose fix commit changed anything outside docs/
             fails, so the label matches the diff in both directions. The
-            ledger cites pre-integration commit ids that exist only where the
-            worker branches do; a commit git cannot see is skipped and
-            counted in the summary, never failed.
+            ledger cites pre-integration (worker-branch) commit ids; a CI
+            clone holds only their `git cherry-pick -x` copies, so an id git
+            cannot show is looked up through the "cherry picked from commit"
+            trailer. A commit still unseen is counted in the summary and the
+            success line says the arm did NOT run on it; under CI (the CI
+            variable set) an unseen commit fails the guard, because a
+            depth-1 checkout would otherwise leave the arm dark while the
+            guard stays green (rv4-FR-F45) - check out with fetch-depth: 0.
   counts  - the ledger's `Counts ...: N rows = a Status + b Status` line must
             state the tally the table has, so the header cannot drift from
             the rows again. This arm needs no git, so it holds on a clone
@@ -27,6 +32,7 @@ ledger table itself:
 
 Run: python3 -I scripts/tests/check_ledger_honesty.py
 """
+import os
 import re
 import subprocess
 import sys
@@ -47,15 +53,27 @@ RESTATING = (
 BYCODE = re.compile(r"(?<!first count )\b(\d+)(?:/83 rows| of 83 rows| closed) by code")
 
 
-def changed_files(sha):
-    """Files the commit changed, or None when git cannot see it here."""
+def git(*args):
     try:
-        r = subprocess.run(["git", "-C", str(ROOT), "show", "--name-only", "--format=", sha + "^{commit}"],
-                           capture_output=True, text=True)
+        r = subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
     except OSError:
-        return None
-    files = [f for f in r.stdout.split("\n") if f]
-    return files if r.returncode == 0 and files else None
+        return ""
+    return r.stdout if r.returncode == 0 else ""
+
+
+def names(rev):
+    return [f for f in git("show", "--name-only", "--format=", rev).split("\n") if f]
+
+
+def changed_files(sha):
+    """Files the commit changed, or None when git cannot see it here. A worker-branch
+    id this history does not hold is found through the trailer `git cherry-pick -x`
+    left on its integrated copy."""
+    files = names(sha + "^{commit}")
+    if not files:
+        copy = git("log", "-1", "--format=%H", "--fixed-strings", "--grep", "cherry picked from commit " + sha, "HEAD").strip()
+        files = names(copy) if copy else []
+    return files or None
 
 
 def main():
@@ -118,11 +136,16 @@ def main():
                                 f"the {recorded} Recorded rows changed only docs/ and are not closed by code")
         if claims and not re.search(rf"\b{recorded}\s+recorded\b", text):
             problems.append(f"{rel} restates the by-code tally without the {recorded} Recorded rows")
+    if os.environ.get("CI") and seen < cited:
+        problems.append(f"the history arm saw {seen} of {cited} cited fix commits; the CI checkout must hold them "
+                        f"(fetch-depth: 0 on the checkout step) or the Fixed/Recorded labels go unchecked")
     if problems:
         print("\n".join("FAIL: " + p for p in problems))
         sys.exit(1)
-    print(f"ledger honesty ok: {len(rows)} rows, Counts line matches the table; "
-          f"{seen} of {cited} cited fix commits visible to git, labels match their diffs; "
+    history = (f"{seen} of {cited} cited fix commits visible to git, labels match their diffs" if seen == cited else
+               f"history arm NOT run on {cited - seen} of {cited} cited fix commits (git cannot see them here, "
+               f"e.g. a shallow clone)" + (f"; the {seen} it saw match their diffs" if seen else ""))
+    print(f"ledger honesty ok: {len(rows)} rows, Counts line matches the table; {history}; "
           f"{restated} restatements agree")
 
 
