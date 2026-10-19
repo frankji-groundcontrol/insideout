@@ -17,7 +17,8 @@ import '_auth_test_helpers.dart';
 // rv4-PUB-02: the hosted service keeps an account, projects and coach
 // conversations, and the sign-up screen said nothing about it. The notice is
 // PRIVACY.md at the repository root (the web build does not bundle it); the
-// sign-up screen links to that copy.
+// sign-up screen links to that copy. A tap copies the address: the client has
+// no URL launcher, so the link does not open a tab.
 
 Future<void> _mount(
   WidgetTester tester, {
@@ -79,9 +80,7 @@ void main() {
     }
   }
 
-  testWidgets('with no browser to open, the link copies the notice address', (
-    tester,
-  ) async {
+  testWidgets('a tap copies the notice address and says so', (tester) async {
     String? copied;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
