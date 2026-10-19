@@ -3,7 +3,12 @@
     <!-- rv4-COMP-06: no build type allows cleartext HTTP by default. Debug and
          profile (never shipped) add a network security config that allows it
          for the loopback dev server only: src/debug and src/profile, under
-         res/xml/network_security_config.xml. -->
+         res/xml/network_security_config.xml.
+         rv4-FR-F212: this flag and that config govern the platform (Java) HTTP
+         stack only. The client's dio runs on dart:io sockets, which ignore
+         both, so they do not stop a release build from sending tokens over
+         http. The guard that does is checkApiBase in
+         client/lib/session/session.dart. -->
     <application
         android:label="InsideOut"
         android:name="${applicationName}"

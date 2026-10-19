@@ -10,17 +10,52 @@ const defaultApiBase = String.fromEnvironment(
   defaultValue: 'http://127.0.0.1:8080/api/v1',
 );
 
+// Names that mean this device, or the Android emulator's alias for its host.
+const _loopbackHosts = {'localhost', '127.0.0.1', '::1', '10.0.2.2'};
+
+/// A release build must not send the bearer and refresh tokens in clear text
+/// (rv4-FR-F212, F209, F11). android:usesCleartextTraffic and a network
+/// security config govern the platform HTTP stack only; dio runs on dart:io
+/// sockets and never reads them, so a manifest alone left
+/// `--dart-define=API_BASE=http://<lan host>/...` working. This is the guard:
+/// it throws unless [base] is https, a plain path (the web build, same origin
+/// behind nginx) or http to this device. Debug and profile builds keep every
+/// base for the dev loop. [releaseMode] is injectable because `flutter test`
+/// is always a debug build. The message leaves [base] out: it may hold a login.
+void checkApiBase(String base, {bool releaseMode = kReleaseMode}) {
+  if (!releaseMode) return;
+  final uri = Uri.tryParse(base);
+  final ok =
+      uri != null &&
+      switch (uri.scheme) {
+        'https' => true,
+        'http' => _loopbackHosts.contains(uri.host),
+        '' => !uri.hasAuthority,
+        _ => false,
+      };
+  if (ok) return;
+  throw StateError(
+    'API_BASE must be an https URL in a release build (or http to localhost, '
+    '127.0.0.1, ::1 or 10.0.2.2). dart:io ignores android:usesCleartextTraffic, '
+    'so nothing else keeps the bearer and refresh tokens off the network in '
+    'clear text. Rebuild with --dart-define=API_BASE=https://<server>/api/v1.',
+  );
+}
+
 class Session extends ChangeNotifier {
   Session({
     TokenStore? store,
     String? apiBase,
     Future<UserProfile> Function()? fetchMe,
     Future<void> Function()? refreshSession,
+    bool releaseMode = kReleaseMode,
   }) : _store = store ?? SecureTokenStore() {
     _fetchMe = fetchMe;
     _refreshSession = refreshSession;
+    final base = apiBase ?? defaultApiBase;
+    checkApiBase(base, releaseMode: releaseMode);
     api = ApiClient(
-      baseUrl: apiBase ?? defaultApiBase,
+      baseUrl: base,
       readAccess: _store.readAccess,
       readRefresh: _store.readRefresh,
       writeTokens: saveTokens,
