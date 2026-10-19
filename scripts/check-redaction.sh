@@ -8,8 +8,8 @@
 #   c. any other e-mail address in a tracked text file (rv4-PUB-01). Allowed:
 #      a noreply local part; the reserved documentation and test names
 #      (example.*, *.example, *.test, *.invalid, *.localhost, *.local);
-#      resend.dev, the mail provider's sandbox; x.com, x.co and b.co, the
-#      fixture domains of the Go auth tests; and image names such as
+#      resend.dev, the mail provider's sandbox; the fixture addresses listed
+#      below, inside a Go test under server/; and image names such as
 #      icon@2x.png. Write <admin-email> or <owner-email> in docs. The report
 #      names file:line only, so the log never echoes the address.
 #
@@ -33,6 +33,37 @@ if [ -z "$host" ]; then
   exit 2
 fi
 
+# The fixture addresses (rv4-FR-F43). x.com, x.co and b.co are live, registrable
+# domains, so a person's address on them must fail like any other: the domains
+# are NOT exempt, only these exact addresses and only inside a Go test under
+# server/. One address per line as `<local part> <domain>`, the Go test that
+# needs it as the comment; the at sign is left out so this file holds no
+# address the guard would flag. A new fixture takes a reserved name such as
+# @example.test; a line here is the exception, and the list only shrinks when
+# the tests move to reserved names.
+fixture_addresses() {
+  cat <<'FIXTURES'
+fresh   x.co   # server/internal/api/auth_cooldown_sweep_test.go
+live    x.co   # server/internal/api/auth_cooldown_sweep_test.go
+other   x.co   # server/internal/api/auth_cooldown_sweep_test.go
+trigger x.co   # server/internal/api/auth_cooldown_sweep_test.go
+user%d  x.co   # server/internal/api/auth_cooldown_sweep_test.go
+user0   x.co   # server/internal/api/auth_cooldown_sweep_test.go
+victim  x.co   # server/internal/api/auth_cooldown_sweep_test.go
+a       x.co   # server/internal/api/auth_cooldown_test.go
+b       x.co   # server/internal/api/auth_cooldown_test.go
+a       b.co   # server/internal/api/auth_email_flows_test.go
+a       x.com  # server/internal/api/auth_throttle_test.go
+b       x.com  # server/internal/api/auth_throttle_test.go
+new     x.com  # server/internal/api/auth_throttle_test.go
+user3   x.com  # server/internal/api/auth_throttle_test.go
+victim  x.com  # server/internal/api/auth_throttle_test.go
+FIXTURES
+}
+# One ERE alternation of local@domain, dots escaped, for the rule below.
+fixtures=$(fixture_addresses | sed -e 's/[[:space:]]*#.*//' -e '/^[[:space:]]*$/d' \
+  -e 's/[.+]/\\&/g' -e 's/^\([^[:space:]]*\)[[:space:]][[:space:]]*/\1@/' | paste -sd'|' -)
+
 status=0
 report() { # report <what> <lines>
   [ -n "$2" ] || return 0
@@ -48,14 +79,14 @@ report "the production host is in a live surface; write <prod-domain>" \
     docs/usage docs/architecture README.md client/README.md)"
 # (c): git grep -o prints path:line:match, so each allow rule below is a grep
 # -v pattern anchored on the match itself; sed keeps only path:line.
-report "an e-mail address that is not a placeholder is in a tracked file (value not printed); write <admin-email> or <owner-email>" \
+report "an e-mail address that is not a placeholder is in a tracked file (value not printed); write <admin-email> or <owner-email>, or in a Go test a reserved name such as @example.test" \
   "$(git grep -n -I -o -i -E -e '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}' -- |
     grep -v -i -E \
       -e ':[0-9]+:noreply@' \
       -e '@([a-z0-9-]+\.)*example\.[a-z]+$' \
       -e '@[^@]*\.(example|test|invalid|localhost|local)$' \
       -e '@([a-z0-9-]+\.)*resend\.dev$' \
-      -e '@(x\.com|x\.co|b\.co)$' \
+      -e "^server/[^:]*_test\\.go:[0-9]+:($fixtures)\$" \
       -e '@[a-z0-9-]+\.(png|jpe?g|gif|webp|svg|ico)$' |
     sed -E 's/^([^:]+:[0-9]+):.*/\1/' | uniq)"
 exit "$status"
