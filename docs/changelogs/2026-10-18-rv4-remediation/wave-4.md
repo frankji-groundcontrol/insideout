@@ -6,7 +6,8 @@ or deployed.
 ## What landed
 
 21 clusters, 174 cherry-picks, no conflicts, then two pre-gate fixups.
-Head `97cf4c06`. That is 499 commits above `main` @ `d53035a`.
+The tested code head is `97cf4c06` (499 commits above `main` @ `d53035a`).
+The branch tip adds this record on top of that head.
 
 The first 18 clusters were accepted by the earlier verifier rounds
 (reports `verdict-w4-*-rN.json`). The Claude run stopped on an API 503
