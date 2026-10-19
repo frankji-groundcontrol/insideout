@@ -159,35 +159,33 @@ func TestProjectEditsFollowTheirRoles(t *testing.T) {
 	}
 }
 
-// KNOWN DEFECT, found by rv4-TEST-03 and not fixed here (the fix is a WITH CHECK
-// on the projects_update policy or a refusal in store.UpdateProject, neither in
-// this cluster's files). The policy has a USING clause and no WITH CHECK, so
-// Postgres judges the NEW row by it too: an owner who is not a workspace admin
-// cannot give the project away or leave it ownerless. The store lets the edit
-// through, the database refuses the new row (SQLSTATE 42501) and the handler
-// answers 500, where its own rule says the owner may edit. This pins today's
-// behaviour so that whoever fixes it (the call succeeding, or a 403) has to
-// revisit this test: the answer is 500 and the project is as it was.
-func TestProjectOwnerWhoIsNotAnAdminCannotGiveTheProjectAway_KnownDefect(t *testing.T) {
+// Giving a project to someone else, or leaving it without an owner, is for a
+// workspace admin even when the caller owns the project (an owner decision,
+// PROJECT-HANDOVER-POLICY: the policy is kept as it is). The projects_update
+// policy has a USING clause and no WITH CHECK, so Postgres judges the NEW row
+// by it too and would refuse such an owner (SQLSTATE 42501); the store says so
+// before it writes, and the answer is a 403, never a 500 (rv4-TEST-03). A
+// refusal leaves the project exactly as it was.
+func TestProjectOwnerWhoIsNotAnAdminCannotGiveTheProjectAway(t *testing.T) {
 	w := newCoverageWorld(t)
 	other := w.newMember(t, "other")
 	owned := func(by routeUser) string {
-		return fmt.Sprintf(`{"title":"Handed down","status":"active","ownerId":%q}`, by.ID.String())
+		return fmt.Sprintf(`{"title":"Sneaked","status":"active","ownerId":%q}`, by.ID.String())
 	}
-	w.must(t, w.owner, "PATCH", w.proj(), owned(w.member), http.StatusOK) // an admin may; the member now owns it
+	w.must(t, w.owner, "PATCH", w.proj(), `{"title":"Handed down","status":"active","ownerId":"`+w.member.ID.String()+`"}`, http.StatusOK) // an admin may; the member now owns it
 
 	for name, payload := range map[string]string{
 		"to another member": owned(other),
-		"to nobody":         `{"title":"Handed down","status":"active"}`,
+		"to nobody":         `{"title":"Sneaked","status":"active"}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			status, body := w.call(w.member, "PATCH", w.proj(), payload)
-			if status != http.StatusInternalServerError {
-				t.Fatalf("the hand-over answered %d %s: the known defect (500) has changed, update this pin, the changelog and the issue", status, body)
+			if status != http.StatusForbidden {
+				t.Fatalf("the hand-over answered %d %s, want 403", status, body)
 			}
 			got := decodeAs[projectView](t, w.must(t, w.owner, "GET", w.proj(), "", http.StatusOK))
-			if got.OwnerID == nil || *got.OwnerID != w.member.ID.String() {
-				t.Fatalf("a refused hand-over left the owner as %v, want it unchanged", got.OwnerID)
+			if got.OwnerID == nil || *got.OwnerID != w.member.ID.String() || got.Title != "Handed down" {
+				t.Fatalf("a refused hand-over left the project as %+v, want the owner and the title unchanged", got)
 			}
 		})
 	}
