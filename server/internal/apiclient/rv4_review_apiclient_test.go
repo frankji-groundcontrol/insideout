@@ -25,6 +25,19 @@ func rvApiClientHas[T any](t *testing.T, c *Client, what string) T {
 
 type rvApiClientHinter interface{ SetUnauthorizedHint(string) }
 
+// escape_test.go keeps the list of every exported Client method; a method added
+// in review 4 registers itself here instead of in that file.
+func init() {
+	sweep = append(sweep, sweepCase{
+		name: "SetUnauthorizedHint", method: "GET", shape: "/me",
+		call: func(c *Client, h string) error {
+			c.SetUnauthorizedHint(h) // whatever its text, a hint never reaches the request line
+			defer c.SetUnauthorizedHint("")
+			return drop(c.Whoami())
+		},
+	})
+}
+
 const rvApiClientHint = "your sign-in ended: call the auth_login tool again"
 
 // rv4-FR-F152: the final 401 tells the user to run `insideout login`, which

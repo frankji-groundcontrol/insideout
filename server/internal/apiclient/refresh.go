@@ -27,13 +27,39 @@ type Renewal struct {
 	// Save stores a rotated pair and reports its own failure: the old
 	// refresh token is already dead on the server by then.
 	Save func(access, refresh string)
+
+	hint string // what a final 401 says to do instead of the default (SetUnauthorizedHint)
 }
+
+// armed reports whether r can renew a session. A Renewal without both hooks is
+// only a carrier of the hint.
+func (r *Renewal) armed() bool { return r != nil && r.Reload != nil && r.Save != nil }
 
 // SetRenewal arms refresh-on-401 for a client that carries the saved session;
 // refresh is that session's refresh token. A client holding any other
-// credential (INSIDEOUT_TOKEN, an in-process login) is never armed: renewing
-// it with the saved session would swap one identity for another.
-func (c *Client) SetRenewal(refresh string, r Renewal) { c.refresh, c.renew = refresh, &r }
+// credential (INSIDEOUT_TOKEN, an in-process login) is never armed with the
+// saved session: renewing it with that would swap one identity for another. A
+// holder of its own refresh token (an in-process login) may arm it with hooks
+// over its own storage: apiclient never touches a file, only the hooks do.
+func (c *Client) SetRenewal(refresh string, r Renewal) {
+	if c.renew != nil {
+		r.hint = c.renew.hint // a hint set before stays
+	}
+	c.refresh, c.renew = refresh, &r
+}
+
+// SetUnauthorizedHint replaces the advice a final 401 gives this client, which
+// is to run `insideout login`: advice that cannot cure a client whose credential
+// is not the saved login (an in-process sign-in in the MCP server). hint is the
+// whole advice, "" restores the default. It belongs to this client only:
+// AgentScoped does not copy it, so set it on the client AgentScoped returns
+// (rv4-FR-F152).
+func (c *Client) SetUnauthorizedHint(hint string) {
+	if c.renew == nil {
+		c.renew = &Renewal{}
+	}
+	c.renew.hint = hint
+}
 
 // renewing serializes renewals in a process. The refresh token is one-time,
 // so a burst of calls that all found the access token expired renews once and
@@ -49,7 +75,7 @@ func (t renewTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	resp, err := http.DefaultTransport.RoundTrip(req)
 	c := t.c
 	replayable := req.Body == nil || req.Body == http.NoBody || req.GetBody != nil
-	if err != nil || resp.StatusCode != http.StatusUnauthorized || c.renew == nil || !replayable ||
+	if err != nil || resp.StatusCode != http.StatusUnauthorized || !c.renew.armed() || !replayable ||
 		req.Header.Get("Authorization") == "" || strings.Contains(req.URL.Path, "/auth/") {
 		return resp, err
 	}
@@ -99,7 +125,7 @@ func (c *Client) renewSession(ctx context.Context) (string, error) {
 			c.token, c.refresh = a, r
 			return a, nil
 		}
-		c.renew = nil // rejected for good: later requests of this client must not retry it
+		c.renew.Reload, c.renew.Save = nil, nil // rejected for good: later requests of this client must not retry it
 		return "", nil
 	}
 	// The per-IP throttle (429), a deploy in progress (503), any 5xx: nothing
@@ -165,6 +191,9 @@ func (c *Client) postRefresh(ctx context.Context, refresh string) (access, next 
 // unauthorized is the final answer to a 401: what it means for this client's
 // credential, and what to do about it.
 func (c *Client) unauthorized(what string) error {
+	if c.renew != nil && c.renew.hint != "" {
+		return fmt.Errorf("apiclient: %s: %w: %s", what, ErrUnauthorized, c.renew.hint)
+	}
 	if c.token == "" {
 		return fmt.Errorf("apiclient: %s: %w: not signed in; run `insideout login`, or set INSIDEOUT_TOKEN", what, ErrUnauthorized)
 	}
