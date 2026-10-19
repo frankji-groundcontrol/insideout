@@ -221,3 +221,33 @@ func TestRvExpandAndCreateNeverShareASiblingPosition(t *testing.T) {
 		t.Errorf("%d of %d siblings share a position with another sibling, e.g. %s", shared, len(kids), example)
 	}
 }
+
+// rv4-FR-F120, store half. ReplaceRoadmapTree is "build the MVP" confirmed: it
+// deletes the project's whole roadmap and writes a new one, and it checked
+// membership only. A plain member is refused every single-node write, so the
+// bulk write that deletes all of them takes the same rule.
+func TestRvExpandReplaceTreeNeedsAPlanWriter(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	w := rvExpandNewWorld(t, st)
+	for _, title := range []string{"a", "b"} {
+		if _, err := st.CreateRoadmapNode(ctx, w.owner.ID, w.project.ID, &w.parent.ID, title, ""); err != nil {
+			t.Fatalf("seed %s: %v", title, err)
+		}
+	}
+	live := 3 // the parent and its two children
+	tree := RoadmapPlanNode{Title: "Replaced", Children: []RoadmapPlanNode{{Title: "only child"}}}
+
+	if n, err := st.ReplaceRoadmapTree(ctx, w.member.ID, w.project.ID, &live, tree); !errors.Is(err, ErrForbidden) {
+		t.Fatalf("member ReplaceRoadmapTree: want ErrForbidden, got %d nodes written and err %v", n, err)
+	}
+	if nodes, err := st.ListRoadmap(ctx, w.owner.ID, w.project.ID); err != nil || len(nodes) != live {
+		t.Fatalf("after the refused replace: want the %d original nodes, got %d (err %v)", live, len(nodes), err)
+	}
+	if _, err := st.ReplaceRoadmapTree(ctx, w.stranger.ID, w.project.ID, &live, tree); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("stranger ReplaceRoadmapTree: want ErrNotFound (existence not disclosed), got %v", err)
+	}
+	if n, err := st.ReplaceRoadmapTree(ctx, w.owner.ID, w.project.ID, &live, tree); err != nil || n != 2 {
+		t.Fatalf("owner ReplaceRoadmapTree: want 2 nodes written, got %d (err %v)", n, err)
+	}
+}

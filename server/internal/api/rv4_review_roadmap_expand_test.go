@@ -87,3 +87,35 @@ func TestRvExpandConfirmCapsWhatItWrites(t *testing.T) {
 	code, out = w.call(w.owner, http.MethodPost, confirm, many(40))
 	expect(t, "40 subtasks", code, out, http.StatusCreated)
 }
+
+// rv4-FR-F120, the member half: POST /prds/{pid}/build/confirm deletes the
+// project's whole roadmap and writes the tree the caller sends, and answered a
+// plain member who is refused DELETE /roadmap/{nid}. The expected count is a
+// staleness guard, not an authorisation, so the member sends the right one.
+func TestRvExpandBuildConfirmRefusesAPlainMember(t *testing.T) {
+	w := newRouteWorld(t)
+	confirm := "/api/v1/prds/" + w.prd(t) + "/build/confirm"
+
+	code, out := w.call(w.owner, http.MethodPost, confirm, `{"tree":{"title":"MVP","children":[{"title":"Core"},{"title":"Polish"}]}}`)
+	expect(t, "owner builds", code, out, http.StatusCreated)
+	built := decodeAs[struct {
+		ProjectID string
+		NodeCount int
+	}](t, out)
+	list := "/api/v1/projects/" + built.ProjectID + "/roadmap"
+	replace := fmt.Sprintf(`{"expectedCount":%d,"tree":{"title":"Wiped"}}`, built.NodeCount)
+
+	code, out = w.call(w.member, http.MethodPost, confirm, replace)
+	expect(t, "member replaces the roadmap", code, out, http.StatusForbidden)
+	if !strings.Contains(out, "project owner or a workspace admin") {
+		t.Errorf("the refusal reads %s, want the plan-writer rule", out)
+	}
+	code, out = w.call(w.owner, http.MethodGet, list, "")
+	expect(t, "list roadmap", code, out, http.StatusOK)
+	if got := len(decodeAs[[]roadmapNodeView](t, out)); got != built.NodeCount {
+		t.Fatalf("the roadmap holds %d nodes after the refused replace, want the %d built", got, built.NodeCount)
+	}
+
+	code, out = w.call(w.owner, http.MethodPost, confirm, replace)
+	expect(t, "owner replaces the roadmap", code, out, http.StatusCreated)
+}
