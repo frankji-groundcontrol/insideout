@@ -83,10 +83,53 @@ class LedgerHistoryArm(unittest.TestCase):
         git(["clone", "-q", "--depth", "1", origin.as_uri(), str(shallow)], tmp)
         return full, shallow
 
+    def integrated_clone(self, tmp, labels=("Fixed", "Recorded")):
+        """What a full CI checkout holds: the ledger cites worker-branch commits,
+        the worker branch was never pushed, and main carries `cherry-pick -x`
+        copies of them. Cloned over file:// so unreachable objects stay behind."""
+        origin = pathlib.Path(tmp, "origin")
+        origin.mkdir()
+        git(["init", "-q", "-b", "main"], origin)
+        commit(origin, {"README.md": "base\n"}, "base")
+        git(["checkout", "-q", "-b", "worker"], origin)
+        code = commit(origin, {"src/app.go": "package app\n"}, "code")
+        docs = commit(origin, {"docs/note.md": "note\n"}, "docs only")
+        git(["checkout", "-q", "main"], origin)
+        git(["cherry-pick", "-x", code, docs], origin)
+        guard = (ROOT / LEDGER_GUARD).read_text(encoding="utf-8")
+        commit(origin, {LEDGER_GUARD: guard,
+                        LEDGER: ledger([("T-1", labels[0], code), ("T-2", labels[1], docs)])}, "ledger")
+        git(["branch", "-q", "-D", "worker"], origin)
+        clone = pathlib.Path(tmp, "ci")
+        git(["clone", "-q", origin.as_uri(), str(clone)], tmp)
+        for sha in (code, docs):  # the premise: this checkout cannot see them directly
+            with self.assertRaises(RuntimeError):
+                git(["cat-file", "-e", sha + "^{commit}"], clone)
+        return clone
+
     def guard(self, repo, ci=False):
         extra = {"CI": "1"} if ci else {}
         return subprocess.run([sys.executable, "-I", LEDGER_GUARD], cwd=repo,
                               capture_output=True, text=True, env=env(**extra))
+
+    def test_a_worker_branch_id_is_checked_through_its_cherry_pick_copy(self):
+        # The ledger cites pre-integration ids; only the -x copies reach a CI clone.
+        # Without this, "fail in CI when a cited commit is unseen" is red forever.
+        with tempfile.TemporaryDirectory() as tmp:
+            clone = self.integrated_clone(tmp)
+            for ci in (False, True):
+                with self.subTest(ci=ci):
+                    r = self.guard(clone, ci)
+                    self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+                    self.assertIn("2 of 2 cited fix commits visible to git, labels match their diffs", r.stdout)
+
+    def test_a_mislabelled_row_is_caught_through_its_cherry_pick_copy(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            clone = self.integrated_clone(tmp, labels=("Recorded", "Fixed"))
+            r = self.guard(clone, ci=True)
+            self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+            self.assertIn("T-1 is Recorded but", r.stdout)
+            self.assertIn("T-2 is Fixed but", r.stdout)
 
     def test_full_clone_checks_the_labels(self):
         with tempfile.TemporaryDirectory() as tmp:
