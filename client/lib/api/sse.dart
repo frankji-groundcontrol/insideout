@@ -289,6 +289,11 @@ bool refreshEndsSession(Object error) =>
 /// refresh the server rejects ([refreshEndsSession]) or a still-401 retry
 /// clears the session so the router lands on the auth door instead of
 /// looping "stream failed" until a manual page reload.
+///
+/// 401 is reserved for those cleared-session paths (rv4-FR-F01): callers such
+/// as the roadmap page's retry loop take it for "signed out" and stop for
+/// good. A refresh that merely failed keeps the session, so it throws a
+/// status they retry: its own (429 reads as throttled), else 503.
 Stream<List<int>> coachSseWithRefresh(
   Future<SseAttempt> Function() open,
   Future<void> Function() refresh,
@@ -299,8 +304,14 @@ Stream<List<int>> coachSseWithRefresh(
     try {
       await refresh();
     } catch (e) {
-      if (refreshEndsSession(e)) await clearTokens();
-      throw ApiException('stream failed', status: attempt.status);
+      if (refreshEndsSession(e)) {
+        await clearTokens();
+        throw ApiException('stream failed', status: attempt.status);
+      }
+      throw ApiException(
+        'stream failed',
+        status: (e is ApiException ? e.status : null) ?? 503,
+      );
     }
     attempt = await open();
     if (attempt.status == 401) {
