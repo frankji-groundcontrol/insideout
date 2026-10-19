@@ -37,11 +37,11 @@ const (
 	// many times as long as its quote, in the same letter equivalents. The review
 	// began the bar at the quote's own length (or cut text off at 1.5 times); I begin
 	// it at two, because the payload fact that tools_fence_test.go records is 1.6
-	// times its quote at a support of 0.49 and an earlier start refuses it. The
-	// honest longer texts I wrote are at most 1.4 times and every padded probe 2.2
-	// times or more, so two sits between them. A text up to twice its quote can
-	// therefore still carry an invented addition as long as the quote itself. Where
-	// to begin is the owner's call.
+	// times its quote at a support of 0.49 and an earlier start refuses it. The one
+	// honest longer text among my pairs, a pronoun swap, is 1.2 times its quote and
+	// every padded probe is 2.2 times or more, so two sits between them. A text up to
+	// twice its quote can therefore still carry an invented addition as long as the
+	// quote itself. Where to begin is the owner's call.
 	longTextRatio = 2
 
 	// minWholeAnswerRunes is the shortest quote, in the same letter equivalents,
