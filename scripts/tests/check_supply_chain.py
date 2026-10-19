@@ -201,9 +201,15 @@ def edit(pattern, repl, count=0):
 # Each mutation rewrites a protected file the way a hurried edit would; its guard
 # must call the result red. A mutation that stops applying (the file changed
 # shape) fails too: the proof would pass vacuously. (what, file, rewrite, guard)
+JOB = r"^(    runs-on:.*)$"  # the first job's runner line, a place to add a job-level key
 MUTATIONS = [
     ("`|| true` after govulncheck", SECURITY, edit(r"(govulncheck \./\.\.\.)$", r"\1 || true"), security_workflow),
+    ("`|| true` after the govulncheck install", SECURITY, edit(r"(govulncheck@v[\d.]+)$", r"\1 || true"), security_workflow),
     ("gitleaks replaced by echo, flags kept", SECURITY, edit(r"^( *)gitleaks git ", r"\1echo gitleaks git "), security_workflow),
+    ("gitleaks --exit-code 0", SECURITY, edit(r"--exit-code 1", "--exit-code 0"), security_workflow),
+    ("continue-on-error on the first job", SECURITY, edit(JOB, r"\1\n    continue-on-error: true", 1), security_workflow),
+    ("`if: false` on the first job", SECURITY, edit(JOB, r"\1\n    if: false", 1), security_workflow),
+    ("govulncheck run from the repository root", SECURITY, edit(r"^ *working-directory: server\n", ""), security_workflow),
 ]
 
 
