@@ -2,8 +2,11 @@ package apiclient
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
+	"os"
+	"strings"
 )
 
 // IdeaCreate captures a new idea (POST /workspaces/{id}/ideas).
@@ -17,13 +20,59 @@ func (c *Client) IdeaCreate(workspaceID, title, content string) (json.RawMessage
 }
 
 // IdeaConvert turns an idea into a PRD + coach conversation
-// (POST /ideas/{id}/convert).
+// (POST /ideas/{id}/convert). It names no coaching language, so the server
+// keeps its default (zh); the CLI and the MCP server call IdeaConvertWithLocale.
 func (c *Client) IdeaConvert(ideaID string) (json.RawMessage, error) {
+	return c.IdeaConvertWithLocale(ideaID, "")
+}
+
+// IdeaConvertWithLocale is IdeaConvert with the language the coach speaks
+// ("en" or "zh", see ConvertLocale); an empty locale sends none.
+func (c *Client) IdeaConvertWithLocale(ideaID, locale string) (json.RawMessage, error) {
+	body := map[string]any{}
+	if locale != "" {
+		body["locale"] = locale
+	}
 	var out json.RawMessage
-	if err := c.do(http.MethodPost, apiPath("ideas", ideaID, "convert"), map[string]any{}, &out); err != nil {
+	if err := c.do(http.MethodPost, apiPath("ideas", ideaID, "convert"), body, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
+}
+
+// ConvertLocale picks the language a convert request asks the coach to speak.
+// explicit (the --locale flag or the tool's locale argument, "" when absent)
+// must be en or zh, written plainly or as a locale tag such as en-US. With
+// none, the first of LC_ALL, LC_MESSAGES and LANG that is set decides (zh is
+// zh) and everything else, or no variable at all, is en. The narrowing
+// happens here because the server turns every tag that is not English into
+// zh: a typo or an unsupported language would otherwise open a Chinese
+// conversation.
+func ConvertLocale(explicit string) (string, error) {
+	if explicit = strings.TrimSpace(explicit); explicit != "" {
+		if l := languageOf(explicit); l == "en" || l == "zh" {
+			return l, nil
+		}
+		return "", fmt.Errorf("locale %q is not supported: use en or zh", explicit)
+	}
+	for _, k := range []string{"LC_ALL", "LC_MESSAGES", "LANG"} {
+		if v := strings.TrimSpace(os.Getenv(k)); v != "" {
+			if languageOf(v) == "zh" {
+				return "zh", nil
+			}
+			break // the first variable that is set decides
+		}
+	}
+	return "en", nil
+}
+
+// languageOf is the primary language of a locale tag, lower-cased:
+// "zh_CN.UTF-8" and "zh-Hans" are both "zh".
+func languageOf(tag string) string {
+	if i := strings.IndexAny(tag, "_-.@"); i >= 0 {
+		tag = tag[:i]
+	}
+	return strings.ToLower(tag)
 }
 
 // Prd returns GET /prds/{id}.

@@ -170,10 +170,15 @@ func addProductTools(s *server.MCPServer, api string) {
 			content, _ := req.GetArguments()["content"].(string)
 			return call(c.IdeaCreate(reqStr(req, "workspace_id"), reqStr(req, "title"), content))
 		})
-	addTextTool("idea_convert", "Turn an idea into a PRD and open the coach conversation",
-		[]mcp.ToolOption{strReq("idea_id", "idea id")},
+	addTextTool("idea_convert", "Turn an idea into a PRD and open the coach conversation. The coach speaks the locale you pass (en or zh): pass the language the idea is written in",
+		[]mcp.ToolOption{strReq("idea_id", "idea id"), strOpt("locale", "language the coach speaks, en or zh (default: this server's LC_ALL, LC_MESSAGES or LANG, else en)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.IdeaConvert(reqStr(req, "idea_id")))
+			explicit, _ := req.GetArguments()["locale"].(string)
+			locale, err := apiclient.ConvertLocale(explicit)
+			if err != nil {
+				return "", err
+			}
+			return call(c.IdeaConvertWithLocale(reqStr(req, "idea_id"), locale))
 		})
 	addTextTool("proposal_decide", "Human accept/reject of an agent proposal (owner or admin; the Decision Log entry)",
 		[]mcp.ToolOption{strReq("update_id", "proposal update id"), strReq("decision", "accepted|rejected"), strOpt("reason", "why"), mcp.WithBoolean("apply", mcp.Description("apply the proposal structured items on acceptance"))},

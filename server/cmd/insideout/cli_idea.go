@@ -7,6 +7,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
 func runIdeaCommand(args []string) (bool, int) {
@@ -46,11 +48,17 @@ func runIdeaCommand(args []string) (bool, int) {
 	case "convert":
 		fs := flag.NewFlagSet("idea convert", flag.ContinueOnError)
 		api := apiFlag(fs)
+		locale := fs.String("locale", "", "language the coach speaks, en or zh (default: LC_ALL, LC_MESSAGES or LANG, else en)")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout idea convert <idea-id>")
+			fmt.Fprintln(os.Stderr, "usage: insideout idea convert [--locale en|zh] <idea-id>")
 			return true, 2
 		}
-		return printJSON(clientFromFlag(*api).IdeaConvert(fs.Args()[0]))
+		lang, err := apiclient.ConvertLocale(*locale)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "idea convert:", err)
+			return true, 2
+		}
+		return printJSON(clientFromFlag(*api).IdeaConvertWithLocale(fs.Args()[0], lang))
 	}
 	fmt.Fprintln(os.Stderr, "unknown idea subcommand:", sub)
 	return true, 2
