@@ -136,12 +136,14 @@ func planDeployment(event string, ev *webhookEvent, repoName string) (guideEvide
 	return p, true
 }
 
+// firstLine is the subject of a commit message or PR title: up to the first
+// newline, at most 120 characters. The cap counts characters, not bytes, so it
+// never cuts a multibyte one in two (R1-12): PostgreSQL rejects the invalid
+// UTF-8 that leaves in the evidence detail.
 func firstLine(s string) string {
-	if i := strings.IndexByte(s, '\n'); i >= 0 {
-		return s[:i]
-	}
-	if len(s) > 120 {
-		return s[:120]
+	s, _, _ = strings.Cut(s, "\n")
+	if r := []rune(s); len(r) > 120 {
+		return string(r[:120])
 	}
 	return s
 }
