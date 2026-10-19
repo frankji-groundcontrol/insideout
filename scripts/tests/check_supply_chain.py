@@ -224,6 +224,8 @@ MUTATIONS = [
     ("continue-on-error on the first job", SECURITY, edit(JOB, r"\1\n    continue-on-error: true", 1), security_workflow),
     ("`if: false` on the first job", SECURITY, edit(JOB, r"\1\n    if: false", 1), security_workflow),
     ("govulncheck run from the repository root", SECURITY, edit(r"^ *working-directory: server\n", ""), security_workflow),
+    ("`exit 0` after gitleaks", SECURITY, edit(r"(gitleaks git .*)$", r"\1\n          exit 0"), security_workflow),
+    ("`set +e` instead of `set -euo pipefail`", SECURITY, edit(r"^( *)set -euo pipefail$", r"\1set +e"), security_workflow),
 ]
 
 
