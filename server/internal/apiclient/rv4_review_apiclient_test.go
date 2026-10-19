@@ -1,10 +1,13 @@
 package apiclient
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // Review-4 (multirole, apiclient cluster). The findings are pinned where they
@@ -93,5 +96,43 @@ func TestRvApiClientHintSurvivesARejectedRenewal(t *testing.T) {
 				t.Errorf("a rejected refresh token was offered %d times", n)
 			}
 		})
+	}
+}
+
+// rv4-FR-F66: the server rotates the refresh token as it reads the renewal, so
+// a call cancelled while the answer is on its way must still save the new pair:
+// dropping the request leaves the stored login dead (the old token is spent and
+// the new one never arrived).
+func TestRvApiClientCancelledRenewalKeepsTheRotatedPair(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	var rotated atomic.Bool
+	answered := make(chan struct{})
+	base, _ := sessionAPI(t, func(w http.ResponseWriter, body string) {
+		defer close(answered)
+		cancel()                           // the caller gives up as the request lands...
+		time.Sleep(300 * time.Millisecond) // ...and the answer takes a moment
+		rotated.Store(strings.Contains(body, `"ref-1"`))
+		swap(w, body)
+	})
+	f := &file{access: "old", refresh: "ref-1"}
+	c := armed(base, f)
+	c.SetContext(ctx)
+
+	_, err := c.Whoami()
+
+	select {
+	case <-answered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("the stub never answered the renewal")
+	}
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want the call to end as cancelled", err)
+	}
+	if !rotated.Load() {
+		t.Fatal("the stub did not rotate ref-1: the test set nothing up")
+	}
+	if f.access != "new" || f.refresh != "ref-2" || f.saved != 1 {
+		t.Errorf("stored session = %+v, want the pair the server rotated to (new/ref-2) saved once", *f)
 	}
 }
