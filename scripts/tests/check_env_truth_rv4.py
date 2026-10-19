@@ -19,9 +19,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 SETUP_VERBS = re.compile(r"^cli_setup\w*\.go$")
 NAME = r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b"  # an environment variable name
 TOKEN_CLAIM = re.compile(r"(?i)unauthenticated|rate[- ]?limit|\bGo server\b")
+# "docker-compose.yml does not interpolate X": X (or "it", the row's variable) is the object.
 NOT_INTERPOLATED = re.compile(
-    r"(?i)compose(?:\.ya?ml)?[`'\"*]*\s+(?:does\s+not|doesn't|do\s+not|don't)\s+(?:yet\s+)?"
-    r"(?:interpolate|pass|forward|carry)")
+    r"(?i:compose(?:\.ya?ml)?[`'\"*]*\s+(?:does\s+not|doesn't|do\s+not|don't)\s+(?:yet\s+)?"
+    r"(?:interpolate|pass|forward|carry))\s+"
+    rf"(?P<object>`?{NAME}`?(?:\s*(?:,|/|and|or)\s*`?{NAME}`?)*|(?i:it|them)\b)")
 # Living docs a reader follows; dated records (changelogs, plans, review) are history.
 LIVING_FILES = ("README.md", "PRODUCT.md", "docs/SETENV.md", ".env.example")
 LIVING_TREES = ("docs/usage", "docs/architecture")
@@ -150,15 +152,15 @@ def units(text):
             if line.lstrip().startswith("|"):
                 yield line
             else:
-                prose.append(line.strip())
+                prose.append(line.strip().lstrip("#").strip())  # `#` of a wrapped comment
         if prose:
             yield " ".join(prose)
 
 
 def docs_do_not_deny_what_compose_does(facts, failures):
     """rv4-FULL-09 (R3-35): no living doc may say compose does not interpolate a
-    variable that docker-compose.yml interpolates. A table row's subject is the
-    variable in its first cell ("... does not interpolate it yet")."""
+    variable that docker-compose.yml interpolates. In a table row "it" is the
+    variable of the first cell ("... does not interpolate it yet")."""
     interpolated = set(re.findall(r"\$\{([A-Z][A-Z0-9_]*)", read("docker-compose.yml")))
     if not interpolated:
         cannot_derive("docker-compose.yml interpolates no variable")
@@ -166,11 +168,9 @@ def docs_do_not_deny_what_compose_does(facts, failures):
     for path in living_docs():
         for unit in units(path.read_text(encoding="utf-8")):
             subject = set(re.findall(NAME, unit.split("|")[1])) if unit.lstrip().startswith("|") else set()
-            for sentence in re.split(r"(?<=[.;])\s+", unit):
-                if NOT_INTERPOLATED.search(sentence):
-                    for name in sorted((subject | set(re.findall(NAME, sentence))) & interpolated):
-                        fail(failures, f"{rel(path)} says docker-compose.yml does not interpolate {name}, "
-                                       "but it does")
+            for claim in NOT_INTERPOLATED.finditer(unit):
+                for name in sorted((set(re.findall(NAME, claim.group("object"))) or subject) & interpolated):
+                    fail(failures, f"{rel(path)} says docker-compose.yml does not interpolate {name}, but it does")
 
 
 if __name__ == "__main__":
