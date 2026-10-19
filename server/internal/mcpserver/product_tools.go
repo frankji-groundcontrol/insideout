@@ -105,7 +105,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			return "deleted", nil
 		})
 	addDraftTools(addTextTool, strReq)
-	addTextTool("guide", "Scaffold the repo-side insideout.yaml matching guide for a project's roadmap; commit it at the repo root",
+	addTextTool("guide", "Scaffold the repo-side insideout.yaml matching guide for a project's roadmap; the file content to commit at the repo root is the text between the <prd_data> tags",
 		[]mcp.ToolOption{strReq("project_id", "project id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			g, err := c.Guide(reqStr(req, "project_id"))
@@ -310,7 +310,7 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.JoinWorkspace(reqStr(req, "code")))
 		})
-	addTextTool("prd_export", "Export a PRD as text (MCP has no filesystem — the content is the result): markdown by default, or print HTML; an optional audience projects the sections first",
+	addTextTool("prd_export", "Export a PRD as text (MCP has no filesystem). The file content is the text between the <prd_data> tags: markdown by default, or print HTML; an optional audience projects the sections first",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("format", "markdown|print (default markdown)"),
 			strOpt("audience", "decision|management|delivery|validation (markdown only)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
