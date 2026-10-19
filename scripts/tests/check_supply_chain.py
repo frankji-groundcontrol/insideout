@@ -17,11 +17,11 @@ check_release_gate.py.
           github-actions; security.yml runs govulncheck and gitleaks, each
           pinned to an exact release and installed by `go install` (no
           third-party Action), gitleaks redacting and seeing full history;
-          .gitignore keeps *.pem, *.key and *.p12 out of commits.
-          Neither scan may be muted: each scanner is one exact command line
-          (govulncheck ./... from server/), and no `||` list, continue-on-error
-          or `if:` skip may swallow a finding. pub07_mutations proves it by
-          running that check on muted copies of security.yml.
+          .gitignore keeps *.pem, *.key and *.p12 out of commits. Neither scan
+          may be muted: one exact command line each (govulncheck ./... from
+          server/), no `||`, continue-on-error, `set +e`, `exit 0` or `if:`
+          skip. pub07_floor holds server/go.mod at the toolchain and x/text
+          that clear govulncheck; pub07_mutations runs both on muted copies.
   SEC-07  every `uses:` in every workflow is pinned to a full 40-hex commit
           SHA with the release tag kept in a trailing `# vX.Y.Z` comment, so
           a moved or hijacked tag cannot change what runs (Dependabot reads
@@ -157,9 +157,8 @@ def dependabot():
 
 
 SECURITY = ".github/workflows/security.yml"
-# The scanners, each as the one command line it may have: a flag, pipe, redirect or
-# `||` list on these lines changes what a scan reports. --redact keeps a finding from
-# printing the secret into a public log.
+# The scanners, each as the one command line it may have: a flag, pipe or `||` list on
+# these lines changes what a scan reports (--redact keeps a leak out of a public log).
 SCANS = {"govulncheck": "govulncheck ./...",
          "gitleaks": 'gitleaks git --redact --verbose --no-banner --exit-code 1 --log-opts="$range" .'}
 # What lets a failing step pass; no step of a file whose job is to fail may carry it.
@@ -187,7 +186,7 @@ def security_workflow(raw=None):
         found = [c for c in commands if c.split(None, 1)[:1] == [tool]]
         if found != [line]:
             out.append(f"security.yml: the one `{tool}` command must be exactly `{line}`, found {found or 'none'}: "
-                       "a flag, pipe, `||` list or echo in its place mutes the scan")
+                       "a flag, pipe, `||` or echo in its place mutes the scan")
     if not re.search(r"(?m)^\s*working-directory: server\n\s*run: govulncheck \./\.\.\.$", text):
         out.append("security.yml: govulncheck must run from server/, where go.mod is (`working-directory: server` just above its `run:`)")
     out += [f"security.yml: {what} lets a failing scan pass" for pat, what in MUTES if re.search(pat, text)]
@@ -208,14 +207,45 @@ def pub07():
     return workflow_permissions() + dependabot() + security_workflow() + gitignore_keys()
 
 
+# The go.mod floors that close the advisories the last govulncheck run reported (v1.9.0,
+# go1.26.3, 19 affecting): GO-2026-6603, 6605, 6607, 6608, 6610 to 6613 and 6617 in the
+# standard library, the newest fixed by go1.26.9 (nine older ones by go1.26.4 to .6), and
+# GO-2026-6629 in golang.org/x/text, fixed by v0.41.0. govulncheck is the authority on
+# what is vulnerable; these constants only make an edit that drops a floor fail offline.
+# When a security run goes red on a newer advisory, bump them on purpose.
+TOOLCHAIN_FLOOR, XTEXT_FLOOR = "1.26.9", "0.41.0"
+
+
+def version(text):
+    """(major, minor, patch) from 'v0.41.0', 'go1.26.9' or '1.26'; a missing part is 0."""
+    return tuple((list(map(int, re.findall(r"\d+", text))) + [0, 0])[:3])
+
+
+def pub07_floor(go_mod=None):
+    """PUB-07: server/go.mod keeps the toolchain and x/text floors (text given or the file)."""
+    text = read("server/go.mod") if go_mod is None else go_mod
+    if text is None:
+        return ["server/go.mod does not exist (PUB-07)"]
+    out = []
+    # The go command runs the newer of the `go` and `toolchain` lines.
+    lines = re.findall(r"(?m)^(?:go |toolchain go)(\d+\.\d+(?:\.\d+)?)\s*$", text)
+    if max(map(version, lines), default=(0, 0, 0)) < version(TOOLCHAIN_FLOOR):
+        out.append(f"server/go.mod: neither `go` nor `toolchain` reaches go{TOOLCHAIN_FLOOR}: add `toolchain go{TOOLCHAIN_FLOOR}` (PUB-07)")
+    xtext = re.search(r"(?m)^\s*(?:require\s+)?golang\.org/x/text\s+(v\S+)", text)
+    if not xtext:
+        out.append("server/go.mod no longer requires golang.org/x/text: drop XTEXT_FLOOR")
+    elif version(xtext.group(1)) < version(XTEXT_FLOOR):
+        out.append(f"server/go.mod: golang.org/x/text {xtext.group(1)} is below v{XTEXT_FLOOR} (GO-2026-6629) (PUB-07)")
+    return out
+
+
 def edit(pattern, repl, count=0):
     """A mutation: re.sub over the file text (`^` and `$` match at every line)."""
     return lambda text: re.sub(pattern, repl, text, count=count, flags=re.M)
 
 
-# Each mutation rewrites a protected file the way a hurried edit would; its guard
-# must call the result red. A mutation that stops applying (the file changed
-# shape) fails too: the proof would pass vacuously. (what, file, rewrite, guard)
+# (what, file, rewrite, guard): each rewrite edits a protected file the way a hurried edit
+# would and its guard must go red; one that stops applying fails too (never vacuously green).
 JOB = r"^(    runs-on:.*)$"  # the first job's runner line, a place to add a job-level key
 MUTATIONS = [
     ("`|| true` after govulncheck", SECURITY, edit(r"(govulncheck \./\.\.\.)$", r"\1 || true"), security_workflow),
@@ -227,6 +257,8 @@ MUTATIONS = [
     ("govulncheck run from the repository root", SECURITY, edit(r"^ *working-directory: server\n", ""), security_workflow),
     ("`exit 0` after gitleaks", SECURITY, edit(r"(gitleaks git .*)$", r"\1\n          exit 0"), security_workflow),
     ("`set +e` instead of `set -euo pipefail`", SECURITY, edit(r"^( *)set -euo pipefail$", r"\1set +e"), security_workflow),
+    ("the go.mod toolchain line dropped", "server/go.mod", edit(r"^toolchain .*\n", ""), pub07_floor),
+    ("golang.org/x/text back at v0.40.0", "server/go.mod", edit(r"(golang\.org/x/text )v\S+", r"\1v0.40.0"), pub07_floor),
 ]
 
 
@@ -300,7 +332,7 @@ def pub09():
     return out
 
 
-CHECKS = [pub04, pub07, pub07_mutations, sec07, pub09]
+CHECKS = [pub04, pub07, pub07_floor, pub07_mutations, sec07, pub09]
 
 
 def main():
