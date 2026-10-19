@@ -254,8 +254,9 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusBadRequest, "drafted subtasks are required", "", nil)
 		return
 	}
-	// The caps every other node write has, counted in characters (COMP-01): the
-	// planner returns at most 40 subtasks, a node title is at most 200.
+	// The planner's own bounds (40 subtasks, 200-character titles), so no honest
+	// draft is refused, and the 2000 the other free-text fields carry. Counted in
+	// characters, like every cap (COMP-01).
 	const maxChildren, maxTitle, maxDescription = 40, 200, 2000
 	if len(req.Children) > maxChildren {
 		httpx.WriteError(w, http.StatusBadRequest, "too many drafted subtasks (max 40)", "", nil)
