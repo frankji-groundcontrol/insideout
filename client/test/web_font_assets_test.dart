@@ -35,7 +35,11 @@ void main() {
         .where((f) => f.path.endsWith('.css'))
         .map((f) => f.path)
         .toList();
-    expect(sheets, isEmpty, reason: 'a stylesheet under web/ may declare faces');
+    expect(
+      sheets,
+      isEmpty,
+      reason: 'a stylesheet under web/ may declare faces',
+    );
   });
 }
 
