@@ -31,6 +31,16 @@ The publish path is also gated and cannot overwrite (rv4-PUB-03, SEC-07):
      `contents: write`, `id-token: write`, `attestations: write`) and its
      checkout fetches full history, which the ancestor check reads.
 
+The other recipes that build `insideout` for someone to run stamp it too
+(rv4-PM-04 residual, R1-04), so `insideout version` does not print `dev` from
+an installed or containerised build:
+
+  8. scripts/install.sh builds ./cmd/insideout with `-X main.version=` and
+     takes the value from `git describe` (it runs in a checkout);
+     server/Dockerfile does the same from a `VERSION` build argument declared
+     after the stage's FROM (its context, server/, has no .git, and an ARG
+     before FROM is empty inside the stage).
+
 Exits 1 naming every failed property, 2 when the workflow shape cannot be
 read. CI-config property: the first real proof is the first tag run.
 """
@@ -134,6 +144,33 @@ def publish_path(text, all_steps):
     return failures
 
 
+# Build recipes other than release.yml, and what supplies the stamp's value in each.
+OTHER_BUILDS = {
+    "scripts/install.sh": "git describe",
+    "server/Dockerfile": "ARG VERSION",
+}
+
+
+def other_builds():
+    """rv4-PM-04 residual (R1-04): install.sh and the Dockerfile stamp `insideout` too."""
+    failures = []
+    for rel, source in OTHER_BUILDS.items():
+        path = ROOT / rel
+        text = re.sub(r"\\\n\s*", " ", uncommented(path.read_text(encoding="utf-8") if path.is_file() else ""))
+        build = next((l for l in text.splitlines() if "go build" in l and re.search(r"\./cmd/insideout(?![-\w])", l)), None)
+        if build is None:
+            failures.append(f"{rel}: no `go build ... ./cmd/insideout` line found")
+            continue
+        if "-X main.version=" not in build:
+            failures.append(f"{rel}: the ./cmd/insideout build is not stamped with -ldflags \"-X main.version=...\": "
+                            "`insideout version` prints dev (R1-04, PM-04)")
+        if source not in text:
+            failures.append(f"{rel}: nothing supplies the stamp's value (`{source}` is missing)")
+        elif source == "ARG VERSION" and text.index(source) < text.index("FROM "):
+            failures.append(f"{rel}: `ARG VERSION` sits before FROM, so it is empty inside the build stage")
+    return failures
+
+
 def main():
     text = WORKFLOW.read_text(encoding="utf-8")
     all_steps = steps(text)
@@ -161,11 +198,15 @@ def main():
     if not VERSION_GO.is_file() or not re.search(r"^var version\s*=", VERSION_GO.read_text(encoding="utf-8"), re.M):
         failures.append("server/cmd/insideout/version.go does not declare `var version`: the -X stamp would be ignored")
 
+    others = other_builds()
     for failure in failures:
         print(f"release.yml: {failure}", file=sys.stderr)
-    if failures:
+    for failure in others:
+        print(failure, file=sys.stderr)
+    if failures or others:
         sys.exit(1)
-    print("release gate ok: gated on a green ci run, go test -race, no clobber, attested, version-stamped")
+    print("release gate ok: gated on a green ci run, go test -race, no clobber, attested, "
+          "version-stamped (release.yml, install.sh, Dockerfile)")
 
 
 if __name__ == "__main__":
