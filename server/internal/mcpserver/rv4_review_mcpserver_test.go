@@ -207,3 +207,73 @@ func TestRvMcpLogoutRestoresPasswordTools(t *testing.T) {
 		t.Fatal("auth_logout left auth_login withdrawn, and nothing re-adds it")
 	}
 }
+
+// TestRvMcpHeldLoginRefusesSessionSwap is F176. The agent profile keeps
+// auth_login_code_verify, auth_magic_link_consume and auth_logout on the list
+// (withholding them is an owner decision). Calling a swap tool while a login is
+// held must not replace the session; auth_logout must demand confirm=true.
+func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
+	pinConfigHome(t)
+	t.Cleanup(func() { setSessionToken("") })
+	human := humanJWT()
+	attacker := fakeJWT("", "attacker", time.Now(), 15*time.Minute)
+	t.Setenv("INSIDEOUT_TOKEN", human)
+	owner := agentGrant("owner", time.Now(), 15*time.Minute)
+	stolen := agentGrant("stolen", time.Now(), 15*time.Minute)
+	api, seen := routedAPI(t, func(w http.ResponseWriter, r *http.Request, nth int) bool {
+		switch {
+		case r.URL.Path == "/auth/magic-link/consume":
+			fmt.Fprintf(w, `{"email":"attacker@example.com","username":"Atk","accessToken":%q,"refreshToken":"ref-atk"}`, attacker)
+			return true
+		case r.URL.Path == "/auth/login-code/verify":
+			fmt.Fprintf(w, `{"email":"attacker@example.com","username":"Atk","accessToken":%q,"refreshToken":"ref-atk"}`, attacker)
+			return true
+		case r.Method == http.MethodPost && r.URL.Path == "/agent/token":
+			if r.Header.Get("Authorization") == "Bearer "+attacker {
+				w.Write([]byte(stolen.body()))
+				return true
+			}
+			w.Write([]byte(owner.body()))
+			return true
+		}
+		return mintsAs(owner)(w, r, nth)
+	})
+	s := Build(api.URL)
+	names := offeredTools(t, s)
+	for _, tool := range []string{"auth_login_code_verify", "auth_magic_link_consume", "auth_logout"} {
+		if !slices.Contains(names, tool) {
+			t.Errorf("%s left the tool list; refuse the call instead of hiding the tool", tool)
+		}
+	}
+
+	swap := callTool(t, s, 1, "auth_magic_link_consume", `{"token":"attacker-link"}`)
+	if !swap.Result.IsError || !strings.Contains(rvMcpText(t, swap), "auth_logout") {
+		t.Fatalf("auth_magic_link_consume while a login is held: %s", rvMcpText(t, swap))
+	}
+	code := callTool(t, s, 2, "auth_login_code_verify", `{"email":"a@example.com","code":"999999"}`)
+	if !code.Result.IsError || !strings.Contains(rvMcpText(t, code), "auth_logout") {
+		t.Fatalf("auth_login_code_verify while a login is held: %s", rvMcpText(t, code))
+	}
+	if out := callTool(t, s, 3, "auth_logout", `{}`); !out.Result.IsError || !strings.Contains(rvMcpText(t, out), "confirm") {
+		t.Fatalf("auth_logout without confirm: %s", rvMcpText(t, out))
+	}
+
+	who := callTool(t, s, 4, "whoami", `{}`)
+	if who.Result.IsError {
+		t.Fatalf("whoami: %s", rvMcpText(t, who))
+	}
+	got := seen(human, "<human>", attacker, "<attacker>", owner.token, "<owner>", stolen.token, "<stolen>")
+	for _, line := range got {
+		if strings.Contains(line, "<attacker>") || strings.Contains(line, "<stolen>") || strings.Contains(line, "/auth/magic-link/consume") || strings.Contains(line, "/auth/login-code/verify") {
+			t.Fatalf("the held login was replaced: %q", got)
+		}
+	}
+
+	if out := callTool(t, s, 5, "auth_logout", `{"confirm":true}`); out.Result.IsError {
+		t.Fatalf("auth_logout confirm=true: %s", rvMcpText(t, out))
+	}
+	again := callTool(t, s, 6, "auth_magic_link_consume", `{"token":"attacker-link"}`)
+	if again.Result.IsError || !strings.Contains(rvMcpText(t, again), "attacker@example.com") {
+		t.Fatalf("after auth_logout, a sign-in must work: %s", rvMcpText(t, again))
+	}
+}
