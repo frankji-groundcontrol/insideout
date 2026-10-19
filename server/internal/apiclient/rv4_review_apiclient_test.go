@@ -136,3 +136,59 @@ func TestRvApiClientCancelledRenewalKeepsTheRotatedPair(t *testing.T) {
 		t.Errorf("stored session = %+v, want the pair the server rotated to (new/ref-2) saved once", *f)
 	}
 }
+
+// A caller that has gone before the renewal starts must not spend a refresh
+// token on it: with the answer no longer waited for, the POST would otherwise be
+// sent and rotate the stored login for nobody.
+func TestRvApiClientCancelledBeforeTheRenewalSendsNothing(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
+	base, calls := sessionAPI(t, swap)
+	f := &file{access: "old", refresh: "ref-1"}
+	r := f.renewal()
+	reload := r.Reload
+	r.Reload = func() (string, string, bool) { cancel(); return reload() } // the user gives up as the renewal begins
+	c := New(base)
+	c.SetToken(f.access)
+	c.SetRenewal(f.refresh, r)
+	c.SetContext(ctx)
+
+	_, err := c.Whoami()
+
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want the call to end as cancelled", err)
+	}
+	if strings.Contains(paths(calls()), "/auth/refresh") {
+		t.Errorf("calls = %s: a refresh token was spent for a caller that had gone", paths(calls()))
+	}
+	if f.refresh != "ref-1" || f.saved != 0 {
+		t.Errorf("stored session = %+v, want it untouched", *f)
+	}
+}
+
+func TestRvApiClientWaitForRenewal(t *testing.T) {
+	was := renewalDrain
+	renewalDrain = 100 * time.Millisecond // the bound is twice this
+	t.Cleanup(func() { renewalDrain = was })
+
+	waited := func() time.Duration {
+		start := time.Now()
+		WaitForRenewal()
+		return time.Since(start)
+	}
+	if d := waited(); d > 50*time.Millisecond {
+		t.Errorf("with no renewal in flight it waited %v", d)
+	}
+
+	renewing.Lock() // a renewal in flight, finishing after 60 ms
+	time.AfterFunc(60*time.Millisecond, renewing.Unlock)
+	if d := waited(); d < 50*time.Millisecond || d > 190*time.Millisecond {
+		t.Errorf("it waited %v for a renewal that ends after 60 ms", d)
+	}
+
+	renewing.Lock() // one that never ends: the wait is bounded, and does not take the lock
+	defer renewing.Unlock()
+	if d := waited(); d < 190*time.Millisecond || d > time.Second {
+		t.Errorf("it waited %v for a renewal that never ends, want about 200 ms", d)
+	}
+}

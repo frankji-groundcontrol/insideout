@@ -163,11 +163,49 @@ func (c *Client) awaitRotation(ctx context.Context, used string) (access, refres
 	}
 }
 
+// renewalDrain is how long a renewal in flight may outlive the cancellation of
+// the call that started it. The server rotates the refresh token as it reads the
+// request, so dropping the request before its answer is in hand leaves the
+// stored login holding a spent token and the user signed out (rv4-FR-F66). A var
+// so tests can change it.
+// ponytail: a ceiling, not a guarantee: an answer slower than this is still lost.
+// Only a two-step rotation on the server (confirm before the old token dies)
+// removes it.
+var renewalDrain = 750 * time.Millisecond
+
+// WaitForRenewal returns when no session renewal is in flight in this process,
+// or after 2*renewalDrain (a cancelled renewal ends within renewalDrain, the rest
+// is its save). A process about to exit calls it so it does not end between the
+// server rotating the refresh token and the new pair being stored.
+func WaitForRenewal() {
+	for end := time.Now().Add(2 * renewalDrain); time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+		if renewing.TryLock() {
+			renewing.Unlock()
+			return
+		}
+	}
+}
+
 // postRefresh trades a refresh token for a new pair (POST /auth/refresh takes
-// it in the body when there is no cookie). status is 0 when err is set.
+// it in the body when there is no cookie). status is 0 when err is set. A caller
+// that is cancelled mid-way waits renewalDrain for the answer instead of
+// dropping it; one that is cancelled before the request is sent sends nothing,
+// so no token is spent for a caller that has gone.
 func (c *Client) postRefresh(ctx context.Context, refresh string) (access, next string, status int, err error) {
+	if err := ctx.Err(); err != nil {
+		return "", "", 0, fmt.Errorf("apiclient: POST /auth/refresh: %w", err)
+	}
+	dl, ok := ctx.Deadline()
+	if !ok {
+		dl = time.Now().Add(deadlineFor(http.MethodPost, "/auth/refresh"))
+	}
+	rctx, cancel := context.WithDeadline(context.WithoutCancel(ctx), dl)
+	defer cancel()
+	drain := renewalDrain // read here: the callback below runs on a goroutine of its own
+	stop := context.AfterFunc(ctx, func() { time.AfterFunc(drain, cancel) })
+	defer stop()
 	body, _ := json.Marshal(map[string]string{"refreshToken": refresh})
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.base+"/auth/refresh", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(rctx, http.MethodPost, c.base+"/auth/refresh", bytes.NewReader(body))
 	if err != nil {
 		return "", "", 0, fmt.Errorf("apiclient: build request: %w", err)
 	}

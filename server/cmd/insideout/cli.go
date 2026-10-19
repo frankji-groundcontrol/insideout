@@ -101,10 +101,13 @@ var interruptGrace = 400 * time.Millisecond
 // runInterruptible is runClientCommand under cliCtx. The first Ctrl-C (or
 // SIGTERM) cancels the context and the command ends with status 130, the
 // shell's code for an interrupted command; a command still running after
-// interruptGrace, or a second signal, ends the process at once. Before, the
-// default signal action killed the process wherever it stood, even between the
-// server rotating a refresh token and the CLI saving the new pair (review-4
-// QUAL-04).
+// interruptGrace, or a second signal, ends the process at once. The one thing
+// an interrupt must not cut is the renewal of an expired session: the server
+// rotates the refresh token as it reads the request, so a process that ends
+// before the new pair is saved leaves the saved login holding a spent token.
+// apiclient lets a renewal in flight finish (renewalDrain) and the forced exit
+// waits for it (WaitForRenewal); only an answer slower than that, or a second
+// signal, can still lose the pair (review-4 QUAL-04, rv4-FR-F66).
 func runInterruptible(args []string) (handled bool, exitCode int) {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
@@ -119,6 +122,7 @@ func runInterruptible(args []string) (handled bool, exitCode int) {
 			select {
 			case <-finished:
 			case <-time.After(interruptGrace):
+				apiclient.WaitForRenewal()
 				fmt.Fprintln(os.Stderr, "\ninsideout: interrupted")
 				os.Exit(130)
 			}
