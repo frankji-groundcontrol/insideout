@@ -121,7 +121,7 @@ drive the same door with flags:
 
 ```bash
 insideout setup                       # 交互式 / interactive
-insideout setup --local --postgres bundled   # 本地服务 / own server
+insideout setup --local --postgres bundled   # 本地服务，需仓库检出和 Docker / own server, needs a repository checkout and Docker
 insideout setup --check               # 健康探测 / re-run health probes
 ```
 
@@ -204,12 +204,13 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 `proposal-decide` (a human accepts or rejects). Full verb table:
 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
 
-> 注册默认「仅限邀请」：全新数据库播种 `signup_mode = invitation_only`，无邀请码注册返回 403。本地首跑先用 `insideout promote-admin <your-email>` 提升管理员、再生成邀请码（本地开发可 `insideout signup-mode open`）。
+> 注册默认「仅限邀请」：全新数据库播种 `signup_mode = invitation_only`，无邀请码注册返回 403。本地首跑先用 `insideout promote-admin <your-email>` 提升管理员（该邮箱还没有账号时会先创建账号，密码从标准输入读取）、再生成邀请码（本地开发可 `insideout signup-mode open`）。
 > Registration is **invitation-only by default**: a fresh database seeds
 > `signup_mode = invitation_only`; registering without an invite code
 > returns 403. For a local first run, bootstrap with `insideout
-> promote-admin <your-email>` then mint invites (`insideout signup-mode
-> open` for local dev only).
+> promote-admin <your-email>` (it creates the account first when the
+> address has none, reading the password from stdin) then mint invites
+> (`insideout signup-mode open` for local dev only).
 
 ## 了解更多 / Learn more
 
