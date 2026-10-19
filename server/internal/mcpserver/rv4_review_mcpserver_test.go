@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
@@ -278,5 +281,53 @@ func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 	again := callTool(t, s, 6, "auth_magic_link_consume", `{"token":"attacker-link"}`)
 	if again.Result.IsError || !strings.Contains(rvMcpText(t, again), "attacker@example.com") {
 		t.Fatalf("after auth_logout, a sign-in must work: %s", rvMcpText(t, again))
+	}
+}
+
+// rvMcpStripFence returns the text inside the one <prd_data> fence a tool result carries.
+func rvMcpStripFence(t *testing.T, text string) string {
+	t.Helper()
+	_, body, ok := strings.Cut(text, "\n")
+	if !ok || !strings.HasPrefix(body, "<prd_data>") || !strings.HasSuffix(body, "</prd_data>") {
+		t.Fatalf("result is not a label plus one fence: %.160q", text)
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(body, "<prd_data>"), "</prd_data>")
+}
+
+// TestRvMcpGuideFileIsTheTextBetweenTheTags is F184. The fence stays (it is the
+// injection defence). guide and prd_export have to say the file content is the
+// text between the tags, and that text has to be the YAML or the document.
+func TestRvMcpGuideFileIsTheTextBetweenTheTags(t *testing.T) {
+	pinConfigHome(t)
+	t.Setenv("INSIDEOUT_TOKEN", "opaque-token") // not a JWT: guide stays offered and the token rides as is
+	const guideYAML = "version: 1\nproject: p\nmatch:\n  - roadmap: alpha\n"
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/guide") {
+			w.Write([]byte(guideYAML))
+			return
+		}
+		w.Write([]byte("# The PRD\n"))
+	}))
+	t.Cleanup(api.Close)
+	s := Build(api.URL)
+	for _, tool := range listTools(t, s) {
+		if tool.Name != "guide" && tool.Name != "prd_export" {
+			continue
+		}
+		if !strings.Contains(tool.Description, "between the <prd_data> tags") {
+			t.Errorf("%s description does not say the file content is the text between the <prd_data> tags: %q", tool.Name, tool.Description)
+		}
+	}
+	r := callTool(t, s, 1, "guide", `{"project_id":"p"}`)
+	if r.Result.IsError {
+		t.Fatalf("guide: %s", rvMcpText(t, r))
+	}
+	var doc map[string]any
+	inner := rvMcpStripFence(t, rvMcpText(t, r))
+	if err := yaml.Unmarshal([]byte(inner), &doc); err != nil {
+		t.Fatalf("guide YAML once the fence is stripped: %v\n%s", err, inner)
+	}
+	if doc["project"] != "p" || fmt.Sprint(doc["version"]) != "1" {
+		t.Fatalf("guide YAML = %#v, want version 1 and project p", doc)
 	}
 }
