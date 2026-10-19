@@ -48,10 +48,19 @@ Hosted path. No environment variables are required.
 
   $api
 
-Sign in (the password is read from the terminal; only the token is printed):
+Sign in (the password is read from the terminal; the login is saved for the
+CLI and the MCP server):
 
-  export INSIDEOUT_TOKEN="\$(insideout login you@example.com)"
+  insideout login you@example.com
   insideout whoami
+
+No account yet? Signing up on the hosted service takes an invitation code:
+ask the server's administrator for one, then
+
+  insideout register --invite <invitation-code> you@example.com
+
+Headless or CI: set INSIDEOUT_TOKEN to an access token instead of signing in.
+It wins over the saved login and is never renewed.
 
 A local server is a different API. Set INSIDEOUT_API=http://127.0.0.1:8080/api/v1
 only after ./scripts/setup.sh --local has finished.

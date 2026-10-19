@@ -129,6 +129,11 @@ interactive flow, or go straight there:
   insideout setup --hosted                         # use the hosted API
   insideout setup --check                          # verify the current setup
 
+No account yet? Signing up on the hosted service takes an invitation code:
+ask the server's administrator for one, then
+
+  insideout register --invite <invitation-code> you@example.com
+
 Docs: docs/usage/installation.md in the $repo repository.
 Build from source instead: scripts/install.sh in a repository checkout.
 EOF

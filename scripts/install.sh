@@ -75,6 +75,10 @@ echo "Sign in (password is read from the terminal; the login is saved for the CL
 echo "  insideout login you@example.com"
 echo "  insideout whoami"
 echo
+echo "No account yet? Signing up on the hosted service takes an invitation code:"
+echo "ask the server's administrator for one, then"
+echo "  insideout register --invite <invitation-code> you@example.com"
+echo
 echo "Own server, including PostgreSQL: ./scripts/setup.sh"
 echo "Full guide: docs/usage/installation.md"
 echo "MCP registration: add {\"command\": \"insideout-mcp\"} under mcpServers (docs/usage/cli-mcp-and-guidance.md)"
