@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -12,6 +13,14 @@ import (
 // (rv4-COMP-05): a repo binds to one project at a time, so a second project is
 // refused instead of sharing the first one's commit sync and webhook deliveries.
 var ErrRepoTaken = errors.New("store: repository is already linked to another project")
+
+// ErrRepoHeldOutOfReach is ErrRepoTaken for a holder the caller cannot read (a
+// project of a workspace the caller is not in). It wraps ErrRepoTaken, so
+// errors.Is(err, ErrRepoTaken) still holds, and it lets the API answer a
+// stranger as it answers a repo GitHub does not show instead of confirming that
+// the repo is linked somewhere on the instance: _projects_by_repo is SECURITY
+// DEFINER and sees every workspace (rv4-FR-F199).
+var ErrRepoHeldOutOfReach = fmt.Errorf("%w (held by a project the caller cannot read)", ErrRepoTaken)
 
 // requireProjectOwnerOrAdmin allows the project owner or a workspace admin —
 // the level the projects_update RLS policy requires before the projects row
@@ -94,10 +103,19 @@ func claimRepo(ctx context.Context, tx pgx.Tx, projectID uuid.UUID, repoURL stri
 	if err != nil {
 		return err
 	}
-	if holder != projectID {
-		return ErrRepoTaken
+	if holder == projectID {
+		return nil
 	}
-	return nil
+	// Under the caller's own RLS: a holder the caller can read is a conflict
+	// they may be told about; one they cannot is not theirs to learn exists.
+	var readable bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM insideout.projects WHERE id = $1)`, holder).Scan(&readable); err != nil {
+		return err
+	}
+	if !readable {
+		return ErrRepoHeldOutOfReach
+	}
+	return ErrRepoTaken
 }
 
 // ProjectRepoSync reads the linked repo URL and the last-synced commit SHA.

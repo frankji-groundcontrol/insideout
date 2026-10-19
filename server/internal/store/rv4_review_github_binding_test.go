@@ -141,3 +141,41 @@ func TestRvGhBindAProjectWhoseOwnerLeftKeepsItsRepoWithNobodyToActAs(t *testing.
 		t.Errorf("the freed repo is not linkable: %v", err)
 	}
 }
+
+// rv4-FR-F199: a refused link says whether the caller may read the project that
+// holds the repo. A holder in a workspace the caller is not in is
+// ErrRepoHeldOutOfReach (still an ErrRepoTaken), so the API can answer as for a
+// repo GitHub does not show; a holder the caller can read is a plain ErrRepoTaken.
+func TestRvGhBindARefusedLinkSaysWhetherTheCallerMayReadTheHolder(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	admin, stranger := mkUser(t, st), mkTenant(t, st)
+	ws, err := st.CreateWorkspace(ctx, admin.ID, "Holder workspace", "")
+	if err != nil {
+		t.Fatalf("create workspace: %v", err)
+	}
+	holder, err := st.CreateProject(ctx, admin.ID, ws.ID, "Holder project", "")
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+	owner, repo := uniqueSlug()
+	url := github.CanonicalRepoURL(owner, repo)
+	if _, err := st.SetProjectRepo(ctx, admin.ID, holder.ID, url); err != nil {
+		t.Fatalf("holder links the repo: %v", err)
+	}
+
+	_, err = st.SetProjectRepo(ctx, stranger.user.ID, stranger.project.ID, url)
+	if !errors.Is(err, ErrRepoHeldOutOfReach) || !errors.Is(err, ErrRepoTaken) {
+		t.Errorf("a stranger's link: err = %v, want ErrRepoHeldOutOfReach, which is also an ErrRepoTaken", err)
+	}
+
+	// Once the stranger is a member of the holder's workspace the holder is
+	// theirs to read, and the conflict is the specific one.
+	if _, err := st.JoinWorkspace(ctx, stranger.user.ID, ws.Code); err != nil {
+		t.Fatalf("stranger joins the holder's workspace: %v", err)
+	}
+	_, err = st.SetProjectRepo(ctx, stranger.user.ID, stranger.project.ID, url)
+	if !errors.Is(err, ErrRepoTaken) || errors.Is(err, ErrRepoHeldOutOfReach) {
+		t.Errorf("a member's link: err = %v, want a plain ErrRepoTaken: they can read the holder", err)
+	}
+}

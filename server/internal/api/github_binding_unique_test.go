@@ -17,7 +17,10 @@ import (
 // owner's timeline received the other's commit lines. Default chosen here, a
 // repo binds to one project at a time: a second link is refused with a clear
 // answer that names nobody, a project can still re-link its own repo, and
-// clearing a link frees the repo.
+// clearing a link frees the repo. A caller who cannot read the holder (another
+// workspace) is answered as for a repo GitHub does not show, so the answer is
+// not a way to ask which repos are linked elsewhere (rv4-FR-F199); a holder the
+// caller can read keeps the specific 409 (rv4_review_github_binding_test.go).
 
 // anotherTenant is a second user with a workspace and a project of their own.
 func anotherTenant(t *testing.T, w *routeWorld) (routeUser, *store.Project) {
@@ -82,10 +85,12 @@ func TestASecondProjectCannotLinkARepoThatIsAlreadyLinked(t *testing.T) {
 	expect(t, "first project links the repo", code, body, http.StatusOK)
 
 	// Same repo in another letter case: GitHub names are not case-sensitive.
+	// The second project is in another workspace, so it is answered as for a
+	// repo GitHub does not show.
 	code, body = putRepoAs(t, w, other, otherProject.ID, strings.ToLower(name))
-	expect(t, "second project links the same repo", code, body, http.StatusConflict)
-	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_ALREADY_LINKED" {
-		t.Errorf("code = %q, want GITHUB_REPO_ALREADY_LINKED; body %s", got, body)
+	expect(t, "second project links the same repo", code, body, http.StatusBadRequest)
+	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_NOT_VISIBLE" {
+		t.Errorf("code = %q, want GITHUB_REPO_NOT_VISIBLE; body %s", got, body)
 	}
 	for _, secret := range []string{w.project.ID.String(), w.owner.ID.String()} {
 		if strings.Contains(body, secret) {
@@ -140,7 +145,7 @@ func TestConcurrentLinksOfOneRepoLetExactlyOneProjectWin(t *testing.T) {
 		switch c {
 		case http.StatusOK:
 			won++
-		case http.StatusConflict:
+		case http.StatusBadRequest: // another workspace holds it: answered as not shown
 			refused++
 		}
 	}

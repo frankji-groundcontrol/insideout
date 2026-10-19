@@ -88,13 +88,18 @@ func (s *Server) requireRepoVisible(ctx context.Context, owner, repo string) err
 }
 
 // writeRepoStoreError answers a failed link of a repo to a project. A refused
-// second link says the repo is taken and not by whom.
+// second link says the repo is taken, and not by whom, to a caller who may read
+// the holder; to anyone else it is answered as a repo GitHub does not show, so
+// the answer does not tell which repos are linked in other workspaces
+// (rv4-FR-F199).
 func (s *Server) writeRepoStoreError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, store.ErrNotFound):
 		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
 	case errors.Is(err, store.ErrForbidden):
 		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can link a repo", "", nil)
+	case errors.Is(err, store.ErrRepoHeldOutOfReach):
+		s.writeGithubError(w, errRepoNotVisible, "")
 	case errors.Is(err, store.ErrRepoTaken):
 		httpx.WriteError(w, http.StatusConflict, "this repository is already linked to another project", "GITHUB_REPO_ALREADY_LINKED", nil)
 	default:
