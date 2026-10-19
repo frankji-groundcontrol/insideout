@@ -1,7 +1,7 @@
 # Wave 3, docs truth — review-4 remediation
 
-Branch `rv4/w3-docs-truth`, base `8c74218`, twenty-four commits (eleven
-red/fix pairs and two touch-ups) and then this fragment. Findings are cited as
+Branch `rv4/w3-docs-truth`, base `8c74218`: twelve red/fix pairs, two touch-ups
+and this fragment (the last pair is repair round 1). Findings are cited as
 `rv4-<ID>` because review IDs restart per review. Row 3.6 and the README hunks
 of row 3.8 of the
 [remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md).
@@ -25,25 +25,24 @@ No secret, DSN, address or hosted hostname is spelled here.
 | rv4-CLOSE-04 | FIXED | `769fa38` | `355ff5a` | ten docs-only ledger rows relabelled Recorded, counts stated and checked |
 | rv4-CLOSE-10 | PARTIAL | | | no commit: the sentence lives in an unowned file; patch only |
 | R1-06 (rv4-USER-09, README half) | FIXED | `e4dde71` | `791374c` | a residue the open-findings record assigns to this cluster |
+| rv4-CLOSE-04 (board, repair 1) | FIXED | `e661895` | `15ed0d8` | the board and the review-3 README restate 63 by code and 10 recorded; a guard arm keeps them equal |
 
 ## What changed
 
 - **A relative-link scan, and the 34 live breaks repaired** (rv4-PM-06, red
   `8dcda81`, fix `a1dda3b`). `scripts/tests/check_doc_links.py` reads every
   tracked `.md` file and fails on a relative link whose target is missing. The
-  base held 76: 34 outside the two prefixes below and 42 inside them (the
-  guard calls the first group "living"; it includes dated review records, which
-  are repaired like any other link). The 34 are fixed in ten files: the
-  2026-07-27 auth-door QA note, one learning record, two plans, the board and
-  five review records. A link to a web-client file that no longer exists
-  became a code span (the record can name the file, not point at it), a wrong
-  depth was retargeted, and the prose example in the relative-links learning
-  record, which used a literal broken link, was reworded. The board's closure
-  claim now says what the scan covers. The 42 are in `docs/changelogs/` (24
-  links in eight files) and `docs/design-system/CHANGELOG.md` (18), which this
-  cluster does not own: the guard holds each prefix under a ceiling (24, 18) so
-  none can be added, and the dated-links patch repairs them and lowers both
-  ceilings to 0. That is the only reason this row is PARTIAL.
+  base held 76: 34 outside the two prefixes below (the guard calls them
+  "living"; they include dated review records) and 42 inside them. The 34 are
+  fixed in ten files: the auth-door QA note, one learning record, two plans,
+  the board and five review records. A link to a web-client file that no
+  longer exists became a code span, a wrong depth was retargeted, and the
+  relative-links learning record's literal broken example was reworded. The
+  board's closure claim now says what the scan covers. The 42 are in
+  `docs/changelogs/` (24 links, eight files) and `docs/design-system/CHANGELOG.md`
+  (18), which this cluster does not own: the guard holds each prefix under a
+  ceiling (24, 18), and the dated-links patch repairs them and lowers both to 0.
+  That is the only reason this row is PARTIAL.
 - **Every PARTIAL promise is a dated issue** (rv4-COMP-08, red `33ad0f8`, fix
   `e34a476`, touch-up `ecc9303`). The
   [promise register](../../review/2026-10-10-multirole-3/50-promise-register.md)
@@ -145,6 +144,17 @@ No secret, DSN, address or hosted hostname is spelled here.
   commit `a49936a` (`single_replica.go`, `auth_throttle.go`, a test), so the
   row cites that first, with `787c8ee` as the docs half and red `242ef57`, and
   stays Fixed. The rv3 plan record's restated total follows (`ff3d747`).
+- **The board and the review-3 README restate the ledger** (rv4-CLOSE-04, repair
+  round 1, red `e661895`, fix `15ed0d8`). The verifier found the rv3 row of the
+  [board](../../plans/README.md) and the review-3 README's outcome line still
+  saying 73 rows closed by code after the ledger said 63 and ten Recorded. Both
+  now say 63 by code, 10 recorded, 3 satisfied by the report, 1 parked, 6
+  owner-blocked. `check_ledger_honesty.py` gained a third arm: a document it
+  lists may not claim more rows closed by code than the table labels Fixed (69)
+  and must name the Recorded rows; a superseded figure may be quoted as "first
+  count N closed by code" (the plan record does). The same figure in the
+  unowned changelog index and the rv3 track file is in the rv3-header patch,
+  which also lists both under the arm.
 - **The rv3 header counts and the locale default** (rv4-CLOSE-10). The rv3
   changelog index says existing rows "default to `en`"; the migration
   `20261011110000_conversation_locale.sql` says `DEFAULT 'zh'`. The sentence is
@@ -154,22 +164,20 @@ No secret, DSN, address or hosted hostname is spelled here.
 
 ## Design spikes
 
-The two "Direction" rows of the register, and the three calls the rows leave
-open.
+The register's two "Direction" rows, and the three calls its rows leave open.
 
 - **PM-03: one board row, not nine.** The direction is a Pending row per
   slice. The enumeration already carries each slice's order and status, and
-  nine rows would copy it to a second place that drifts when the first slice
-  starts. One P1 Pending row links it, HANDOFF links it and states the count,
-  and the guard derives the count from the enumeration: a tenth slice fails
-  HANDOFF until it says ten, and the demand ends if the enumeration is retired.
-  A slice gets its own row when its plan opens, not before.
+  nine rows would copy it to a second place that drifts. One P1 Pending row
+  links it, HANDOFF links it and states the count, and the guard derives the
+  count from the enumeration: a tenth slice fails HANDOFF until it says ten,
+  and the demand ends if the enumeration is retired. A slice gets its own row
+  when its plan opens.
 - **PM-06: scope the claim and add the scan.** Only the first leaves the next
   broken link invisible; only the second leaves "zero broken links"
-  unqualified. Both are done, and dated records get a shrinking allowlist kept
-  as a per-prefix count (24 and 18), not a list of links, because they are
-  history nobody should edit link by link. A ceiling is an upper bound, so
-  headroom would persist after the repairs; the patch sets both to 0.
+  unqualified. Both are done. Dated records get a shrinking allowlist kept as a
+  per-prefix count (24 and 18), not a list of links, because nobody should edit
+  history link by link; a ceiling leaves headroom, so the patch sets both to 0.
 - **COMP-08: tracking is checked on PARTIAL rows only.** A DOCS-ONLY or
   Superseded row can be accurate without a dated issue. "PostgreSQL 14+"
   becomes "18", not a range: CI tests 18.6 alone.
@@ -198,7 +206,7 @@ one-commit export of this HEAD that carries the tag).
 | `check_docs_truth.py` (+PostgreSQL rule) | living docs' PostgreSQL floor matches CI; ceiling for unowned `docs/PLAN.md` and `skills/` (COMP-08) |
 | `check_product_promise_gaps.py` (+1 rule) | a PARTIAL register row links an existing dated issue (COMP-08) |
 | `check_docs_truth_rv4.py` (new, 285 lines) | variables documented (FULL-09); offline coach (USER-08); GitHub evidence (FEAT-08); first run (PM-08); prebuilt users (R1-06); client surface and `backend.md` facts (ARCH-06); open slices (PM-03); Flutter versions (PM-09) |
-| `check_ledger_honesty.py` (new, 98 lines) | the `Counts` line equals the table's tally, and every cited fix commit git can see matches its label (CLOSE-04) |
+| `check_ledger_honesty.py` (new, 130 lines) | the `Counts` line equals the table's tally; every cited fix commit git can see matches its label; the board and records that restate the tally agree with it (CLOSE-04) |
 
 Notes on how they behave:
 
@@ -209,26 +217,24 @@ Notes on how they behave:
   file in `server/internal/store` and `server/internal/api`, a glob token such
   as `ai_*.go` counting for its matches, so the next file added fails until it
   is named.
-- **Two arms in the ledger guard.** The counts arm needs no git and holds on any
-  clone. The history arm asks git about the 65 fix commits the ledger cites; they
-  are pre-integration ids that exist only where the review-3 branches' objects
-  do, so a commit git cannot see is skipped and counted in the summary line,
-  never failed. In CI only the counts arm runs.
+- **Three arms in the ledger guard.** The counts and restated arms need no git
+  and hold on any clone. The history arm asks git about the 65 fix commits the
+  ledger cites; they are pre-integration ids that exist only where the review-3
+  branches' objects do, so a commit git cannot see is skipped and counted in the
+  summary line, never failed. In CI only the git-free arms run. The restated
+  arm cannot derive the six owner-closed rows, so it is a ceiling (69).
 
-Mutation sweep: 68 variants on a scratch export of the tree (never the
-repository), every one returning the expected exit code. 54 fail as expected:
-each rule broken in each direction it guards (a link, a ceiling, a PARTIAL row
-unlinked or linked to nothing, a variable left out of the reference or
-`.env.example`, an offline overclaim in four phrasings, a README condition,
-install step, OS line or invite route dropped, an architecture fact or file
-name missing, HANDOFF's claim, link or count wrong, a Flutter version drifted
-or the pin moved, a ledger row relabelled either way, the `Counts` line edited
-or deleted, the unqualified `setup --local` back). 14 pass by design:
-out-of-scope links, a claim at CI's own major, dated review records, a
-`Superseded` row, each demand ending with its premise (offline echo, guide
-matcher, release tag, retired enumeration, the checkout refusal, `promote-admin`
-creating accounts), a new test file, a zh-only qualifier, and the ledger swap
-on a clone with no history or with an unseen fix id.
+Mutation sweep: 82 variants (68, then 14 in repair round 1) on scratch exports
+and clones of the tree, never the repository, every one returning the expected
+exit code. 63 fail as expected: each rule broken in each direction it guards (a
+link, a ceiling, a PARTIAL row unlinked, a variable or architecture fact left
+out, an offline overclaim, a README condition dropped, HANDOFF's claim or a
+Flutter version drifted, a ledger row relabelled either way, the `Counts` line
+edited, the board back to 73 or without "10 recorded"). 19 pass by design:
+out-of-scope links, dated records, a `Superseded` row, each demand ending with
+its premise (offline echo, guide matcher, release tag, retired enumeration), a
+ledger on a clone with no history, a board claiming 69 (the restated arm is a
+ceiling, not an equality) and a file the arm does not list.
 
 ## Verification
 
@@ -248,6 +254,7 @@ an export of that commit (a scratch repository carrying the `v0.1.0` tag).
 | rv4-PM-03 | four: `says engineering is closed, but 9 product-promise slices are open`, no order link, no count, no board row | ok |
 | rv4-PM-09 | `docs/HANDOFF.md states Flutter 3.47.0, but CI pins 3.44.x` | ok |
 | rv4-CLOSE-04 | 12: no `Counts` line (the table has 83 rows) and 11 `... is Fixed but its fix commit(s) ... changed only docs/` | `ledger honesty ok: 83 rows, Counts line matches the table; 65 of 65 cited fix commits visible to git, labels match their diffs` |
+| rv4-CLOSE-04 (board) | four: the board and the review-3 README `say 73 rows are closed by code, but the ledger labels only 69 Fixed` and omit the 10 Recorded | `... labels match their diffs; 3 restatements agree` |
 
 The full output of each run is in `w3-docs-truth-red-<ID>.txt` and
 `w3-docs-truth-green-<ID>.txt` under `/private/tmp/insideout-rv4/reports/`.
@@ -257,16 +264,14 @@ By hand, because the guards read text:
 - **Link scan.** The cluster gate's scan over `docs/` and the README: base 76
   (plans 13, review 13, design-qa 7, learning 1, changelogs 24, design-system
   18), this branch 42 (changelogs 24, design-system 18). With the three
-  patches applied to a scratch export of this HEAD: 0, every guard green,
-  `scripts/check-redaction.sh` exit 0.
+  patches applied to a clone of this HEAD (re-run in repair round 1): 0, every
+  guard green, `scripts/check-redaction.sh` exit 0.
 - **Architecture facts.** Each claim in the new doc was read off the code it
-  names: `clientconfig.Resolve` and `Save`, the renewal in `apiclient`,
-  `humanClient` and `AgentScoped`, `withheldFromAgents`, the fence,
-  `startSingletonGuard`, `release.yml` and `bootstrap.sh`, `DefaultBase` and
-  the workflow's `-X` flags, the `linebudget` constant, the Bearer-first branch.
+  names (`clientconfig.Resolve`, the `apiclient` renewal, `humanClient` and
+  `AgentScoped`, `withheldFromAgents`, the fence, `startSingletonGuard`,
+  `release.yml`, `bootstrap.sh`, `DefaultBase`, `linebudget`, the Bearer branch).
 - **REL-05.** `git show --stat`: `a49936a` (three Go files under
-  `server/internal/api`), `787c8ee` (`docs/usage/deployment.md` only), `242ef57`
-  (the test).
+  `server/internal/api`), `787c8ee` (`docs/usage/deployment.md` only).
 - **No database, no network.** `needs_db` is false and no port was opened.
 
 **Pending first CI run after push.** Nothing here has run on a runner. The five
@@ -285,8 +290,9 @@ will skip the review-3 commits in a shallow checkout and say so in its summary.
      and two `skills/insideout-setup` files and drops the legacy ceiling
      (1 and 3) from `check_docs_truth.py` (rv4-COMP-08).
    - `w3-docs-truth-rv3-header.patch` recomputes the rv3 changelog index's
-     header and corrects its locale default to `zh` (rv4-CLOSE-10, and the
-     changelog half of CLOSE-04).
+     header and the rv3 track file's outcome line, corrects the index's locale
+     default to `zh` (rv4-CLOSE-10) and lists both files under the ledger
+     guard's restated arm (the unowned half of CLOSE-04).
 2. **Edits that depend on other wave-3 clusters** (INTEGRATOR TODO, pre-gate; the
    guards fail without them):
    - `docs/architecture/backend.md`: a Layout bullet for
@@ -306,9 +312,8 @@ will skip the review-3 commits in a shallow checkout and say so in its summary.
    - `docs/issues/README.md`: index lines for the six `promise-partial-*`
      records; `docs/changelogs/README.md` and `index/2026-10.md` for this folder.
    - HANDOFF and the board: rebase onto this cluster's claims (HANDOFF lines
-     13-27 and board row 12 were left to the integrator). If a cluster closes
-     or adds a promise slice, the count in HANDOFF and the board row follows;
-     the guard derives it from the enumeration.
+     13-27 and board row 12 were left to the integrator); if a cluster closes
+     or adds a promise slice, update the count there (the guard derives it).
 4. **Owner decision (COMP-08-DECISION).** Should moving a roadmap node from
    `in_progress` to `done` require linked evidence or a short reason, recorded
    on the node and enforced server-side in `UpdateRoadmapNode`? Today
@@ -338,7 +343,6 @@ will skip the review-3 commits in a shallow checkout and say so in its summary.
 
 No migration, dependency or configuration change; nothing to deploy. The
 README now says macOS and Linux only and that the local server needs a
-checkout, both already true of the installer and the CLI. Contributors get
-three new guards from the `check_*.py` loop: a new relative link must resolve,
-a new `INSIDEOUT_*` variable needs a row in `environment.md`, and a new store or
-API file needs a name in `backend.md`.
+checkout (already true of the installer and the CLI). Contributors get three
+new checks: a relative link must resolve, a new `INSIDEOUT_*` variable needs a
+row in `environment.md`, a new store or API file needs a name in `backend.md`.
