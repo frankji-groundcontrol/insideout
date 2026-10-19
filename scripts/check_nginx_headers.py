@@ -9,12 +9,17 @@ response headers of
   - /healthz, which nginx answers itself with `return`,
   - /api/ with an upstream that does not resolve, so nginx's own 502 page
     (the headers are set `always`, not only on 2xx/3xx),
+  - /fonts/, once for a mirrored font file and once for one that is not
+    mirrored (a 404, never the SPA shell: the engine would feed index.html to
+    its font parser),
 
 and checks each carries, exactly once, nosniff, a strict Referrer-Policy,
 X-Frame-Options DENY and a Content-Security-Policy that denies plugins,
-framing and base-tag injection and allows no inline or eval'd script. HSTS
-must appear only when the request says it came over https (the edge in front
-of nginx terminates TLS, so nginx itself only ever sees http).
+framing and base-tag injection and allows no inline or eval'd script. The
+policy must also name no host beyond CSP_HOSTS_ALLOWED and give scripts and
+styles to this origin alone (rv4-COMP-03: a first load must not need a CDN).
+HSTS must appear only when the request says it came over https (the edge in
+front of nginx terminates TLS, so nginx itself only ever sees http).
 
 Usage:  python3 scripts/check_nginx_headers.py [--template FILE] [--nginx BIN]
 
@@ -45,6 +50,12 @@ CSP_EXACT = {
     "frame-ancestors": ["'none'"],
 }
 CSP_NEVER_IN_SCRIPT = ("'unsafe-inline'", "'unsafe-eval'")
+# The only hosts the policy may name (rv4-COMP-03). The engine downloads its
+# Roboto and Noto fallback fonts from fontFallbackBaseUrl, which defaults to
+# this host until web/flutter_bootstrap.js points it at /fonts/s/; then this
+# becomes () and the policy is self-only. Keep it equal to engineFontHosts in
+# client/test/web_csp_self_test.dart.
+CSP_HOSTS_ALLOWED = ("https://fonts.gstatic.com",)
 
 
 def fetch(port, path, headers=None):
@@ -94,6 +105,8 @@ def main():
     web = tmp / "web"
     web.mkdir()
     (web / "index.html").write_text("<!doctype html><title>stub</title>\n")
+    (web / "fonts" / "s").mkdir(parents=True)
+    (web / "fonts" / "s" / "stub.woff2").write_bytes(b"wOF2")
     site = render(args.template, f"http://{HOST}:1", f"127.0.0.1:{dns.port}", web_port)
     if ROOT_DIRECTIVE not in site:
         sys.exit(f"{args.template}: no `{ROOT_DIRECTIVE}` to repoint at the stub site")
@@ -162,7 +175,28 @@ def main():
                 bool(policy) and not any(s in script for s in CSP_NEVER_IN_SCRIPT),
                 seen.get("content-security-policy"),
             )
+            hosts = {s for sources in policy.values() for s in sources if s.startswith(("http://", "https://"))}
+            check(
+                f"{label}: CSP names no host beyond {', '.join(CSP_HOSTS_ALLOWED) or 'none'}",
+                bool(policy) and hosts <= set(CSP_HOSTS_ALLOWED),
+                sorted(hosts),
+            )
+            for directive in ("default-src", "script-src", "style-src"):
+                listed = [s for s in policy.get(directive, []) if s.startswith(("http://", "https://"))]
+                check(f"{label}: CSP {directive} lists no host", bool(policy) and not listed, listed)
             check(f"{label}: no HSTS without an https request", "strict-transport-security" not in seen, seen.get("strict-transport-security"))
+
+        for label, path, want in (
+            ("a mirrored font file", "/fonts/s/stub.woff2", 200),
+            ("a font file that is not mirrored", "/fonts/s/missing.woff2", 404),
+        ):
+            status, seen = fetch(web_port, path)
+            check(f"{label} answers {want}, never the SPA shell", status == want, f"status {status}")
+            check(
+                f"{label}: nosniff and one CSP",
+                one(seen, "x-content-type-options") == "nosniff" and one(seen, "content-security-policy") is not None,
+                seen.get("content-security-policy"),
+            )
 
         _, seen = fetch(web_port, "/", {"X-Forwarded-Proto": "https"})
         age = re.match(r"max-age=(\d+)", one(seen, "strict-transport-security") or "")
