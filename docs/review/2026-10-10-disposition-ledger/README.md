@@ -29,11 +29,16 @@ and
 | Fixed in this wave | Proved red, fixed, verified by an independent verifier in this sweep |
 | Fixed before this wave | The triage found the closing change already on `main` |
 | Fixed (code half) | The code half landed and is verified; the remaining half needs an owner action (register 4) |
+| Fixed | Register 4: a commit changed code, config or a script (or the owner closed the live step), and the row names it |
+| Recorded | Register 4: the fix commit changed only `docs/` — the gap or claim is written down, not closed; the row says where it stays open |
 | Satisfied by the report | No code was owed — the report or plan itself answers the row (register 4) |
 | Not a defect | Re-proved at the base and did not reproduce for the stated reason |
 | Parked feature | A product decision parks it (PRODUCT.md / a plan names it) |
 | Owner | Only the owner can close it (credential, deploy, or product call) |
 | UNRESOLVED | Should not exist in the final ledger; the wave is not done while it does |
+
+Register 4's Fixed/Recorded split and its `Counts` line are held by
+`scripts/tests/check_ledger_honesty.py`.
 
 ## Files
 

@@ -19,6 +19,21 @@ exercised live, and `v0.1.0` published — so the table below contains no open
 Owner rows; see [the owner-gap plan](../../plans/2026-10-11-owner-gap-closure.md)
 and [changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
 
+*Corrected 2026-10-18 (rv4-CLOSE-04): ten rows above said **Fixed** while the
+one commit they cite changed only `docs/` — COMP-01, COMP-04, CQ-02, FEAT-05,
+FEAT-06, FULL-03, PM-03, REL-04, SEC-04 and USER-04. Writing a gap down is a
+real disposition but it is not a fix, so they are now **Recorded**, and where
+the gap is still open the row says so; "the only rows not closed by code"
+above counted these ten as closed by code. REL-05 stays **Fixed**: the commit
+it cited was its documentation half, and the code half (the singleton guard,
+`a49936a`) landed under a combined id, so the row now cites it.*
+
+Counts, recomputed 2026-10-18 (rv4-CLOSE-04): 83 rows = 68 Fixed + 1 Fixed (funnel rehearsed to the provider) + 10 Recorded + 3 Satisfied by the report + 1 Parked.
+
+`scripts/tests/check_ledger_honesty.py` keeps this line equal to the table and
+checks, where git can see the cited commits, that no Fixed row's fix changed
+only `docs/` and no Recorded row's fix changed anything outside it.
+
 | ID | Sev | Status | Resolution |
 |---|---|---|---|
 | AIDEV-01 | H | Fixed | wave 1 — fix ec60e5d · red TestCaptureRankedCritique_RestatementCannotEraseStoredFindin… |
@@ -38,11 +53,11 @@ and [changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
 | ARCH-03 | M | Fixed | wave 2 — fix dc1d665 · red server/internal/api/admin_mail_probe_test.go |
 | ARCH-04 | M | Fixed | wave 3 — fix cbc925cab5 · red check_docs_truth.py |
 | ARCH-05 | L | Fixed | wave 3 — fix 27baac002b · red check_docs_truth.py |
-| COMP-01 | H | Fixed | wave 4 — fix 1c26951 · red docs/review/2026-10-10-multirole-3/checks/promise-register.s… |
+| COMP-01 | H | Recorded | wave 4 — fix 1c26951 · red docs/review/2026-10-10-multirole-3/checks/promise-register.s… |
 | COMP-02 | M | Fixed | wave 3 — fix efc16d4ece · red check_docs_truth.py |
-| COMP-04 | L | Fixed | wave 3 — fix 9f76c929a8 · red check_docs_truth.py |
+| COMP-04 | L | Recorded | wave 3 — fix 9f76c929a8 · red check_docs_truth.py |
 | CQ-01 | M | Fixed | wave 3 — fix 34eef9d · red client/test/auth_door_spacing_scan_test.dart |
-| CQ-02 | M | Fixed | wave 4 — fix 5af2c94 |
+| CQ-02 | M | Recorded | wave 4 — fix 5af2c94 — open: [product-branch-merge-decision-log](../../issues/2026-10-11-product-branch-merge-decision-log.md) |
 | CQ-03 | M | Fixed | wave 2 — Fixed by the integrator after the cluster's pure-move gate correctly refused: one showSnapshotRevision flow serves both pages |
 | CQ-05 | L | Fixed | wave 3 — fix 0d55bda |
 | CQ-06 | L | Fixed | wave 3 — fix f209560 |
@@ -50,29 +65,29 @@ and [changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
 | FEAT-01 | H | Fixed | wave 4 — fix 4d79db1 · red server/internal/api/conversations_locale_test.go |
 | FEAT-02 | H | Fixed | wave 1 — fix a5e8bc0 · red TestConvertIdea_PreservesBodyAsFirstMessage |
 | FEAT-04 | H | Fixed | wave 4 — fix 86c15a0 |
-| FEAT-05 | M | Fixed | wave 4 — fix 3bd86f0 |
-| FEAT-06 | M | Fixed | wave 4 — fix 71d884d |
+| FEAT-05 | M | Recorded | wave 4 — fix 3bd86f0 — open: [roadmap-dependency-edges](../../issues/2026-10-11-roadmap-dependency-edges.md) |
+| FEAT-06 | M | Recorded | wave 4 — fix 71d884d — open: [focus-surface](../../issues/2026-10-11-focus-surface.md) |
 | FEAT-07 | L | Fixed | wave 2 — fix a98e298a67 · red TestPlanGuideEvidenceDeploymentStatusFailure |
 | FEAT-08 | L | Fixed | wave 3 — fix 27baac002b |
 | FULL-01 | H | Fixed | wave 1 — fix 83484be · red TestInvitationEmailExpiryCopyAgreesAboveADay |
 | FULL-02 | M | Fixed | wave 2 — fix 5aba17f · red client/test/prd_page_load_dispose_test.dart |
-| FULL-03 | M | Fixed | wave 4 — fix d4598ac |
+| FULL-03 | M | Recorded | wave 4 — fix d4598ac — open: [prd-autosave](../../issues/2026-10-11-prd-autosave.md) |
 | FULL-04 | L | Fixed | wave 3 — fix be9f428 · red client/test/dock_dead_taps_test.dart |
 | FULL-05 | L | Fixed | wave 3 — fix e158aeace6 · red client/test/export_page_title_test.dart |
 | FULL-06 | L | Fixed | wave 1 — fix 01fa61b · red TestSimpleEmailHTMLButtonIsCobaltSquared |
 | FULL-07 | L | Fixed | wave 3 — fix 99221b6 |
 | FULL-08 | L | Fixed | wave 1 — fix a0b961b |
-| PM-03 | M | Fixed | wave 3 — fix 168ca832e7 · red check_docs_truth.py |
+| PM-03 | M | Recorded | wave 3 — fix 168ca832e7 · red check_docs_truth.py |
 | PM-05 | L | Fixed | wave 4 — fix fa57fd66d2 |
 | REL-01 | H | Fixed | wave 1 — fix 573985d · red client/test/coach_stream_timeout_test.dart |
 | REL-02 | M | Fixed | wave 2 — fix 37b4507 · red TestOpen_StatementTimeoutCutsLongQueries |
 | REL-03 | M | Fixed | wave 2 — fix 49a2bfa · red TestReapStaleAIRuns_PurgesRowsPastRetention |
-| REL-04 | M | Fixed | wave 3 — fix fc803f9dd8 · red check_docs_truth.py |
-| REL-05 | L | Fixed | wave 2 — fix 787c8ee |
+| REL-04 | M | Recorded | wave 3 — fix fc803f9dd8 · red check_docs_truth.py — open: nothing schedules `scripts/backup-db.sh`; scheduling it is the owner's call ([backup-restore](../../usage/backup-restore.md)) |
+| REL-05 | L | Fixed | wave 2 — fix a49936a (the singleton guard in `single_replica.go`, SEC-03's 6f6a9cc) · docs 787c8ee · red 242ef57 |
 | REL-07 | L | Fixed | wave 4 — fix 86c15a0 |
 | SEC-02 | M | Fixed | wave 2 — fix 0e860ea51e · red TestFetchGuideFileStopsReadingAtTheCap |
 | SEC-03 | M | Fixed | wave 2 — fix 6f6a9cc · red server/internal/api/single_replica_test.go |
-| SEC-04 | M | Fixed | wave 4 — fix 4a7cb5b |
+| SEC-04 | M | Recorded | wave 4 — fix 4a7cb5b — open: [scoped-feedback-invitations](../../issues/2026-10-11-scoped-feedback-invitations.md) |
 | SEC-06 | L | Fixed | wave 2 — fix 1a436569e7 · red TestParseRepoURLRejectsURLShapingCharacters |
 | SEC-07 | L | Fixed | wave 2 — fix 6c81f73 · red TestUpdateMeAvatarURLSchemeDoor |
 | SEC-08 | L | Fixed | wave 2 — fix 711dcd7 · red TestSharesWorkspaceWith_TrueForCoMembers |
@@ -86,7 +101,7 @@ and [changelog](../../changelogs/2026-10-11-owner-deploy-and-mail-truth.md).*
 | TEST-08 | L | Fixed | wave 4 — fix e02c5c1 · red docs/review/2026-10-10-multirole-3/checks/product-status-loo… |
 | USER-01 | H | Fixed | wave 1 — Fixed in wave 1 + integrator seam: the conversation GET now carries meta.pendingStage, so reload shows the proposal; confirm/decline live in the coach panel |
 | USER-03 | H | Fixed | wave 2 — fix 8d0fd2f |
-| USER-04 | M | Fixed | wave 4 — fix 58ec57b |
+| USER-04 | M | Recorded | wave 4 — fix 58ec57b — open: [tokenized-audience-share-link](../../issues/2026-10-11-tokenized-audience-share-link.md) |
 | USER-06 | L | Fixed | wave 3 — fix 6ecf8e1ded · red client/test/appearance_locale_seed_test.dart |
 | USER-07 | L | Fixed | wave 3 — fix f62f98b27f · red client/test/coach_strapline_test.dart |
 | USER-08 | L | Fixed | wave 2 — Fixed by the integrator across the ownership boundary: the stable '[interrupted]' token renders in the reader's locale |
