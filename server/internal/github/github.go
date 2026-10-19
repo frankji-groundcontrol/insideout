@@ -35,6 +35,8 @@ type Commit struct {
 // owner/repo is a host and must be exactly github.com (rv4-SEC-06): after a
 // scheme, or when the first segment holds a dot, which a GitHub login never
 // does. Segments past owner/repo (a pasted /tree/main) are ignored.
+// www.github.com and a login@ before the host are refused on purpose: the SQL
+// mirror insideout._canonical_repo_url refuses them too, so widen both (F183).
 func ParseRepoURL(raw string) (owner, repo string, err error) {
 	s := strings.TrimSpace(raw)
 	s = strings.TrimSuffix(s, "/")
