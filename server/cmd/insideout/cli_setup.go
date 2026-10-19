@@ -151,10 +151,24 @@ func runSetupCommand(rest []string) (bool, int) {
 			return true, 2
 		}
 		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", apiclient.DefaultBase)
-		fmt.Println("Sign in interactively:  insideout setup")
-		fmt.Println("Or with the plain CLI:  insideout login you@example.com")
-		fmt.Println("A server on this machine: insideout setup --local --postgres bundled|own")
-		fmt.Println("Guide: docs/usage/installation.md")
+		fmt.Print(`Sign in (the password is read from the terminal; the login is saved for the
+CLI and the MCP server):
+
+  insideout login you@example.com
+  insideout whoami
+
+No account yet? Signing up on the hosted service takes an invitation code:
+ask the server's administrator for one, then
+
+  insideout register --invite <invitation-code> you@example.com
+
+Headless or CI: set INSIDEOUT_TOKEN to an access token instead of signing in.
+It wins over the saved login and is never renewed.
+
+A local server is a different API. Set INSIDEOUT_API=http://127.0.0.1:8080/api/v1
+only after ./scripts/setup.sh --local has finished.
+Guide: docs/usage/installation.md
+`)
 		return true, 0
 	case *local:
 		if *postgres != "bundled" && *postgres != "own" {

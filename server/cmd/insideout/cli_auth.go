@@ -141,7 +141,7 @@ func loginCommand(c *apiclient.Client, base string, positional []string, useCode
 func registerCommand(c *apiclient.Client, base string, positional []string, inviteCode string) (bool, int) {
 	email := argAt(positional, 0)
 	if email == "" {
-		fmt.Fprintln(os.Stderr, "usage: insideout register [--invite code] <email> [display-name]  (password is read from stdin)")
+		fmt.Fprintln(os.Stderr, "usage: insideout register [--invite <invitation-code>] <email> [display-name]  (password is read from stdin; the invitation code is required when signup is invitation-only)")
 		return true, 2
 	}
 	username := argAt(positional, 1)

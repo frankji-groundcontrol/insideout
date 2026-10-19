@@ -56,7 +56,9 @@ stdout. A successful `login` or `register` also saves the session
 prints its path on stderr, so the next verb is signed in; a saved
 session renews itself once when its access token expires. Without a
 saved session or `INSIDEOUT_TOKEN`, read verbs fail with `not signed in`
-and say how to sign in.
+and say how to sign in. Signup on the hosted service takes an invitation code
+from the server's administrator:
+`insideout register --invite <invitation-code> you@example.com`.
 
 Every way the web can sign in works here too (prompts on stderr, token
 on stdout, session saved):
@@ -74,7 +76,7 @@ insideout reset-password                            # paste link/token + new pas
 
 | Area | Verbs |
 | --- | --- |
-| Auth | `register [--invite code] <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
+| Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `join <code>`, `projects create --title [--desc] <ws-id>` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |

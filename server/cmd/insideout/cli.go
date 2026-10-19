@@ -55,7 +55,7 @@ var cliVerbs = []cliVerb{
 	{groupAccount, "whoami", "show the signed-in user"},
 
 	{groupWork, "workspaces", "list workspaces (workspaces create --title T)"},
-	{groupWork, "join", "join a workspace with its invite code"},
+	{groupWork, "join", "join a workspace with its workspace code"},
 	{groupWork, "projects", "list a workspace's projects (projects create --title T <workspace-id>)"},
 	{groupWork, "ideas", "list a workspace's ideas"},
 	{groupWork, "idea", "create, update, delete or convert an idea; decide a proposal"},

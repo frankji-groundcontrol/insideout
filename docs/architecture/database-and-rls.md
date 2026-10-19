@@ -88,7 +88,7 @@ credential only through `insideout._credential_for_email`, which answers in that
 same unset-context state and nowhere else (the users read grant, below).
 `ai_runs`: the stale-run
 reaper (`ReapStaleAIRuns`) is a background sweep with no acting user
-(migration `20260721160000`). Joining a workspace by invite code has a
+(migration `20260721160000`). Joining a workspace by its workspace code has a
 similar, narrower exception: `JoinWorkspace` sets a second session variable,
 `app.join_code`, so the one-time "look up a workspace I'm not a member of yet,
 by the code I was given" read can pass RLS without a blanket bypass (see the
