@@ -242,3 +242,109 @@ func TestProposalApply_ANonOwnerWorkspaceAdminAppliesOnceAcrossActors(t *testing
 	}
 	f.wantTitles(t, st, "Intake", "Handoff")
 }
+
+// rv4-FR-F38, F25: 20261018120000 added applied_at with no backfill, so a
+// proposal the old build had applied (nodes built, applied_at NULL) built its
+// nodes a second time on the next accept with apply. The upgrade step stamps an
+// item only when its node demonstrably exists: an accepted decision, and a node
+// of the same project whose description is the apply's own "proposed: <title>",
+// each node credited to one item. The old shape is made the way it came to be,
+// a real accept with apply, and the stamps are then wiped as the owner.
+func TestRvStoreDbBackfill_AppliedBeforeTheColumnReadsAsApplied(t *testing.T) {
+	st := newTestStore(t)
+	owner := rvStoreDbOwnerStore(t)
+	ctx := context.Background()
+	decide := func(f *applyFixture, decision string, apply bool) int {
+		t.Helper()
+		_, ids, err := st.DecideAndApplyProposal(ctx, f.owner.ID, f.upd.ID, decision, "", apply)
+		if err != nil {
+			t.Fatalf("%s (apply=%v): %v", decision, apply, err)
+		}
+		return len(ids)
+	}
+	another := func(f *applyFixture, title string) *applyFixture { // one more proposal in f's project
+		t.Helper()
+		upd, err := st.AddProjectUpdate(ctx, f.owner.ID, f.proj.ID, "agent_proposal", "[agent proposal/structure] "+title)
+		if err != nil {
+			t.Fatalf("add proposal: %v", err)
+		}
+		if err := st.AddProposalItems(ctx, f.owner.ID, upd.ID, []ProposalItem{{Action: "add_node", Title: title}}); err != nil {
+			t.Fatalf("add item: %v", err)
+		}
+		return &applyFixture{owner: f.owner, ws: f.ws, proj: f.proj, upd: upd}
+	}
+
+	// Project 1: the applied proposal; one rejected before it (it would take the
+	// node's credit if the decision were ignored); one accepted after it with no
+	// node of its own (same title, one node: one stamp).
+	applied := newApplyFixture(t, st, ProposalItem{Title: "Intake"}, ProposalItem{Title: "Verification", ParentHint: "Intake"}, ProposalItem{Title: "Handoff"})
+	rejected, lateAccept := another(applied, "Intake"), another(applied, "Intake")
+	decide(rejected, "rejected", false)
+	if n := decide(applied, "accepted", true); n != 3 {
+		t.Fatalf("the accept built %d nodes, want 3", n)
+	}
+	decide(lateAccept, "accepted", false)
+	// Project 2: accepted without apply (nothing built); one title has a node made
+	// by hand, which carries no "proposed:" mark.
+	waiting := newApplyFixture(t, st, ProposalItem{Title: "Later A"}, ProposalItem{Title: "Later B"}, ProposalItem{Title: "Handmade"})
+	if _, err := st.CreateRoadmapNode(ctx, waiting.owner.ID, waiting.proj.ID, nil, "Handmade", ""); err != nil {
+		t.Fatalf("hand-made node: %v", err)
+	}
+	decide(waiting, "accepted", false)
+	// Project 3: another project's applied "Later A", whose mark must not count here.
+	elsewhere := newApplyFixture(t, st, ProposalItem{Title: "Later A"})
+	decide(elsewhere, "accepted", true)
+
+	for _, f := range []*applyFixture{applied, elsewhere} { // the old build never remembered
+		if _, err := owner.Pool.Exec(ctx, `UPDATE insideout.proposal_items SET applied_at = NULL WHERE update_id = $1`, f.upd.ID); err != nil {
+			t.Fatalf("wipe the stamps: %v", err)
+		}
+	}
+	rvStoreDbBackfill(t, owner)
+
+	for _, c := range []struct {
+		what           string
+		f              *applyFixture
+		stamped, total int
+	}{
+		{"applied before the column existed", applied, 3, 3},
+		{"another project's applied proposal", elsewhere, 1, 1},
+		{"rejected, same title as an applied item", rejected, 0, 1},
+		{"accepted later, same title, no node of its own", lateAccept, 0, 1},
+		{"accepted without apply (a hand-made node, another project's mark)", waiting, 0, 3},
+	} {
+		if stamped, total := rvStoreDbStamped(t, owner, c.f.upd.ID); stamped != c.stamped || total != c.total {
+			t.Errorf("%s: %d of %d items stamped, want %d of %d", c.what, stamped, total, c.stamped, c.total)
+		}
+	}
+	var atDecision bool
+	if err := owner.Pool.QueryRow(ctx, `
+		SELECT bool_and(i.applied_at = d.decided_at) FROM insideout.proposal_items i
+		JOIN insideout.proposal_decisions d USING (update_id) WHERE update_id = $1`, applied.upd.ID).Scan(&atDecision); err != nil || !atDecision {
+		t.Errorf("the stamps should carry the decision time (err %v, match %v)", err, atDecision)
+	}
+
+	all := []uuid.UUID{applied.upd.ID, rejected.upd.ID, lateAccept.upd.ID, waiting.upd.ID, elsewhere.upd.ID}
+	before := rvStoreDbAppliedAt(t, owner, all...)
+	rvStoreDbBackfill(t, owner)
+	for id, at := range rvStoreDbAppliedAt(t, owner, all...) {
+		if before[id] != at {
+			t.Errorf("a second run moved item %s: applied_at %q -> %q", id, before[id], at)
+		}
+	}
+
+	// The point of it: accepting again builds only what was never built.
+	for _, f := range []*applyFixture{applied, elsewhere} {
+		if n := decide(f, "accepted", true); n != 0 {
+			t.Errorf("accepting an upgraded proposal again built %d nodes, want 0", n)
+		}
+	}
+	if n := decide(lateAccept, "accepted", true); n != 1 {
+		t.Errorf("the late proposal built %d nodes, want 1 (it never built its own)", n)
+	}
+	applied.wantTitles(t, st, "Intake", "Intake", "Verification", "Handoff")
+	if n := decide(waiting, "accepted", true); n != 3 {
+		t.Errorf("the proposal accepted without apply built %d nodes, want 3", n)
+	}
+	waiting.wantTitles(t, st, "Handmade", "Handmade", "Later A", "Later B")
+}
