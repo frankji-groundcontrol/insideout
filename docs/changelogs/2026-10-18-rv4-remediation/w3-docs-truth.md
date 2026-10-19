@@ -1,7 +1,7 @@
 # Wave 3, docs truth — review-4 remediation
 
 Branch `rv4/w3-docs-truth`, base `8c74218`: twelve red/fix pairs, two touch-ups
-and this fragment (the last pair is repair round 1). Findings are cited as
+and the fragment commits (the last pair is repair round 1). Findings are cited as
 `rv4-<ID>` because review IDs restart per review. Row 3.6 and the README hunks
 of row 3.8 of the
 [remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md).
