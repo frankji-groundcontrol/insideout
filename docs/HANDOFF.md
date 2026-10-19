@@ -85,10 +85,11 @@ Every other thread is closed with its exact status and links on its
   rule and listed in the local manifest `.git/info/untracked-manifest.tsv`.
   **Do not `git add .`** — stage and checkpoint one task at a time, and do not
   revert unrelated edits.
-- **Flutter SDK drift:** MBP runs 3.47.0 and the repo pins 3.44.x, so
-  `flutter pub get` there rewrites `client/pubspec.lock`. CI and the Dockerfile
-  use `pub get --enforce-lockfile`, which fails on a drifted lockfile; on MBP
-  do not commit a rewritten `client/pubspec.lock`.
+- **Flutter SDK pin:** the repo pins Flutter 3.44.x (CI and the Dockerfile run
+  3.44.0); MBP was brought onto 3.44.8 on 2026-10-11 (item 3 above). A host on
+  another SDK rewrites `client/pubspec.lock` on `flutter pub get`; CI and the
+  Dockerfile use `pub get --enforce-lockfile`, which fails on a drifted
+  lockfile, so never commit a rewritten `client/pubspec.lock`.
 - **GitHub Actions billing (2026-10-11):** the repository is now
   **public**, so Actions are free and CI runs normally. Last green `ci`
   run: `9f0b1c7` (2026-10-11); the run on `d53035a` (2026-10-18) is red on
