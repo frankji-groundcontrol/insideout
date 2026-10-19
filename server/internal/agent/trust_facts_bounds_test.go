@@ -7,14 +7,14 @@ import (
 	"testing"
 )
 
-// The two numbers in trust_facts.go are tunables I chose, not measured limits.
+// The numbers in trust_facts.go are tunables I chose, not measured limits.
 // These tests pin them and the pairs they were calibrated on, so moving either
 // is a decision made in a diff rather than by accident.
 
 func TestCheckFactEvidence_TunablesArePinned(t *testing.T) {
-	if minAttestedQuoteRunes != 12 || minTextSupport != 0.2 {
-		t.Fatalf("minAttestedQuoteRunes = %d, minTextSupport = %v: re-run the calibration pairs below and update the changelog before moving them",
-			minAttestedQuoteRunes, minTextSupport)
+	if minAttestedQuoteRunes != 12 || minTextSupport != 0.2 || minLongTextSupport != 0.6 || longTextRatio != 2 {
+		t.Fatalf("minAttestedQuoteRunes = %d, minTextSupport = %v, minLongTextSupport = %v, longTextRatio = %v: re-run the calibration pairs below (and the long-text pairs in rv4_review_agent_facts_test.go) and update the changelog before moving them",
+			minAttestedQuoteRunes, minTextSupport, minLongTextSupport, longTextRatio)
 	}
 }
 

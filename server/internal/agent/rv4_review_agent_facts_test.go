@@ -8,8 +8,9 @@ import (
 // rv4-FR-F90: the support check measured only the share of the text that its
 // quote holds, so a verbatim quote followed by a much longer invented claim
 // cleared it (support 0.27 against a floor of 0.2) and was stored as an attested
-// fact that later prompts and the stage gates take as ground truth. A text that
-// outgrows its quote has to be built mostly from it.
+// fact that later prompts and the stage gates take as ground truth. A text more
+// than twice as long as its quote (longTextRatio) now has to be mostly its words
+// (minLongTextSupport).
 
 const (
 	rvAgentLaunchQuote = "we want to launch before the next cohort starts"
@@ -62,6 +63,29 @@ func TestRvAgentCheckFactEvidence_ALongerTextMostlyFromItsQuoteStillPasses(t *te
 		t.Run(tc.name, func(t *testing.T) {
 			if err := checkFactEvidence(tc.text, tc.quote); err != nil {
 				t.Fatalf("checkFactEvidence(%q, %q) = %v, want accepted", tc.text, tc.quote, err)
+			}
+		})
+	}
+}
+
+// Where "long" starts (longTextRatio, 2): an invented tail a little shorter than
+// the quote passes, one a little longer is refused. The first is the known
+// ceiling, kept so the payload fact in tools_fence_test.go (1.6 times its quote)
+// stays storable; moving the constant moves this pair.
+func TestRvAgentCheckFactEvidence_TheLongTextStartsAtTwiceTheQuote(t *testing.T) {
+	cases := []struct {
+		name, tail string
+		refused    bool
+	}{
+		{"a tail 0.85 of the quote", " and agreed to waive the security review", false},
+		{"a tail 1.05 of the quote", " and agreed to waive the security review entirely", true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			text := rvAgentLaunchQuote + tc.tail
+			err := checkFactEvidence(text, rvAgentLaunchQuote)
+			if tc.refused != (err != nil) || (err != nil && !strings.Contains(err.Error(), "not supported")) {
+				t.Fatalf("checkFactEvidence(%q, quote) = %v, want refused = %v", text, err, tc.refused)
 			}
 		})
 	}
