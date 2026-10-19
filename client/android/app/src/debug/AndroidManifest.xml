@@ -4,4 +4,10 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- rv4-COMP-06: the dev server speaks plain http, so a debug build may
+         use cleartext for the loopback names in the config below and nothing
+         else. Release never gets it (it is not under src/main). Emulator:
+         API_BASE=http://10.0.2.2:8080/api/v1. Physical device: run
+         `adb reverse tcp:8080 tcp:8080` and keep the default API_BASE. -->
+    <application android:networkSecurityConfig="@xml/network_security_config"/>
 </manifest>

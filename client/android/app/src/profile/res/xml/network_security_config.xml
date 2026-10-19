@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- rv4-COMP-06: profile builds only (src/profile is not part of a release
+     build). Everything stays on https except the machine the developer runs
+     the server on: localhost and 127.0.0.1 (a physical device after
+     `adb reverse`) and 10.0.2.2 (the emulator's name for the host). On API 24
+     and up this file overrides android:usesCleartextTraffic. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
