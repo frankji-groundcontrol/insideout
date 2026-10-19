@@ -30,6 +30,13 @@ cd "$(dirname "$0")/.." # run from server/
 # The deployed production set as of 2026-10-08: the last migration the hosted
 # database already has, so everything after it is what this lane exercises
 # before a deploy does. Bump it when production catches up.
+#
+# OPEN OWNER QUESTION (rv4-TEST-07, rv4-CLOSE-09): docs/HANDOFF.md says the
+# hosted database was migrated through 20261011140000 on 2026-10-11, so this pin
+# is probably stale, but only the hosted database knows (SELECT max(filename)
+# FROM insideout.schema_migrations). Bumping it alone turns this lane red: the
+# seed and the rotation assertions below are aimed at 20261010110000, so the
+# same change must re-aim them at the migrations that follow the confirmed cutoff.
 DEPLOYED_THROUGH=20261006120000
 
 # The two invite-code shapes pinned in upgrade-seed.sql; the rotation
