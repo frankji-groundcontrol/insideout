@@ -175,7 +175,8 @@ Needed by: C only. Pins matter — use **3.44.x**; CI pins 3.44.0.
 Download from the [release archive](https://docs.flutter.dev/release/archive)
 (the direct forms below were verified live). The archive is checked against
 the sha256 pinned here **before** it is unpacked; on a mismatch the `&&` chain
-stops and nothing is extracted:
+stops (non-zero exit), nothing is extracted and your shell rc file is left
+alone:
 
 ```bash
 # macOS Apple silicon. Another target: swap the URL and the hash on the lines below —
@@ -183,12 +184,14 @@ stops and nothing is extracted:
 #                2e9efb651b333b201487c2ac213f910c717338483ca24cbf497a067b05f048e5
 #   Ubuntu x64   .../stable/linux/flutter_linux_3.44.0-stable.tar.xz
 #                e1ec95e6c550458a34de93580cb85dac24da0e9bedb9bb42811f050ac5a0c7d5
-#                (check with sha256sum -c, unpack with tar -xJf instead of unzip -q)
+#                (check with sha256sum -c, unpack with tar -xJf instead of unzip -q,
+#                 and append the PATH line to ~/.bashrc instead of ~/.zshrc)
 FLUTTER_SHA256=0d4d1d3f379d18aff392291be6871d63bf090a9e81078d4c4bc84e6208603dca
 curl -fsSL -o /tmp/flutter.zip \
   "https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.44.0-stable.zip"
-echo "$FLUTTER_SHA256  /tmp/flutter.zip" | shasum -a 256 -c - && mkdir -p ~/development && cd ~/development && unzip -q /tmp/flutter.zip   # tar -xJf on Linux
-echo 'export PATH="$PATH:$HOME/development/flutter/bin"' >> ~/.zshrc     # ~/.bashrc on Ubuntu
+echo "$FLUTTER_SHA256  /tmp/flutter.zip" | shasum -a 256 -c - \
+  && mkdir -p ~/development && cd ~/development && unzip -q /tmp/flutter.zip \
+  && echo 'export PATH="$PATH:$HOME/development/flutter/bin"' >> ~/.zshrc
 ```
 
 For another Flutter release, change the version in the URL and the hash
