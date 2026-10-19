@@ -171,7 +171,11 @@ func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.U
 	if repoURL == "" {
 		return 0, "", errNoRepoLinked
 	}
-	token, err := s.commitToken(ctx, repoURL, installationID)
+	owner, repo, err := github.ParseRepoURL(repoURL)
+	if err != nil {
+		return 0, repoURL, err
+	}
+	token, err := s.commitToken(ctx, projectID, owner, repo, installationID)
 	if err != nil {
 		return 0, repoURL, err
 	}
@@ -198,21 +202,28 @@ func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.U
 	return added, repoURL, nil
 }
 
-// commitToken is the credential a commit sync reads repoURL with: the
-// installation token of the repo when the server holds the GitHub App and the
-// App is installed on it, and nothing otherwise, which reads a public repo
-// anonymously (rv4-FEAT-04). The repo is the one stored on the project, never a
-// name the caller supplies.
-func (s *Server) commitToken(ctx context.Context, repoURL string, installationID int64) (string, error) {
+// commitToken is the credential a commit sync reads owner/repo with: the
+// installation token of the repo when the server holds the GitHub App, the App
+// is installed on the repo, and this project is the one the repo is bound to;
+// nothing otherwise, which reads a public repo anonymously (rv4-FEAT-04). The
+// holder test is for rows that predate the one-project rule: a second project
+// that names the same repo must not borrow the credential the first one's
+// binding earned (rv4-COMP-05). The repo is the one stored on the project,
+// never a name the caller supplies. installationID is the authenticated
+// installation of a webhook delivery, or 0 to ask GitHub which one covers it.
+func (s *Server) commitToken(ctx context.Context, projectID uuid.UUID, owner, repo string, installationID int64) (string, error) {
 	if s.ghTokens == nil {
+		return "", nil
+	}
+	holders, err := s.store.ProjectsByRepo(ctx, github.CanonicalRepoURL(owner, repo))
+	if err != nil {
+		return "", err
+	}
+	if len(holders) != 1 || holders[0].ProjectID != projectID {
 		return "", nil
 	}
 	if installationID != 0 {
 		return s.ghTokens.Token(ctx, installationID)
-	}
-	owner, repo, err := github.ParseRepoURL(repoURL)
-	if err != nil {
-		return "", err
 	}
 	return s.ghTokens.RepoToken(ctx, owner, repo)
 }

@@ -16,9 +16,11 @@ type ProjectOwner struct {
 	OwnerID   uuid.UUID
 }
 
-// ProjectsByRepo resolves every project linked to a GitHub repository
-// URL. Runs through the SECURITY DEFINER helper because the webhook has
-// no RLS identity of its own.
+// ProjectsByRepo resolves the project a GitHub repository URL is bound to:
+// none, or the one created first when old rows still share a repo
+// (rv4-COMP-05; the letter case of the URL does not matter). It is a slice so
+// a caller loops over it as it always did. Runs through the SECURITY DEFINER
+// helper because the webhook has no RLS identity of its own.
 func (s *Store) ProjectsByRepo(ctx context.Context, repoURL string) ([]ProjectOwner, error) {
 	rows, err := s.Pool.Query(ctx,
 		`SELECT project_id, owner_id FROM insideout._projects_by_repo($1)`, repoURL)

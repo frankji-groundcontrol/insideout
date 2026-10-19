@@ -173,6 +173,37 @@ func FetchCommitsSince(ctx context.Context, token, repoURL, sinceSHA string, per
 	return out, nil
 }
 
+// RepoIsPublic reports whether anyone can read owner/repo. It asks without a
+// credential: GitHub answers an anonymous request 200 for a public repo and 404
+// for a private one and a missing one alike, so false means "not visible to
+// us", never "missing". A question GitHub cannot answer (rate limit, outage) is
+// an error, not false.
+func RepoIsPublic(ctx context.Context, owner, repo string) (bool, error) {
+	if !isRepoSegment(owner) || !isRepoSegment(repo) {
+		return false, fmt.Errorf("github: %q/%q is not a repo name", owner, repo)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/repos/%s/%s", apiBaseURL, owner, repo), nil)
+	if err != nil {
+		return false, fmt.Errorf("github: build request: %w", err)
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "insideout-app")
+	resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
+	if err != nil {
+		return false, fmt.Errorf("github: repo lookup: %w", err)
+	}
+	defer resp.Body.Close()
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	case http.StatusForbidden, http.StatusTooManyRequests:
+		return false, &RateLimitError{RetryAfterSeconds: retryAfterSeconds(resp.Header)}
+	}
+	return false, fmt.Errorf("github: repo lookup returned status %d", resp.StatusCode)
+}
+
 // onAPIHost reports whether u is on the GitHub API origin the walk started on.
 func onAPIHost(u string) bool {
 	got, err := url.Parse(u)

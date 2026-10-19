@@ -97,10 +97,10 @@ func TestSetProjectRepoRefusesHostileURLsAndStoresNothing(t *testing.T) {
 }
 
 // Clearing the link stays allowed, and does not turn into a canonical URL of
-// nothing.
+// nothing. (A name nobody else links: a repo binds to one project, database-wide.)
 func TestSetProjectRepoStillClears(t *testing.T) {
 	w := newRouteWorld(t)
-	code, body := putRepo(t, w, "own/repo")
+	code, body := putRepo(t, w, uniqueRepo())
 	expect(t, "link", code, body, http.StatusOK)
 	code, body = putRepo(t, w, "")
 	expect(t, "clear", code, body, http.StatusOK)

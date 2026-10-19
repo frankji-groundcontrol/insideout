@@ -197,6 +197,23 @@ func (t *InstallationTokens) RepoToken(ctx context.Context, owner, repo string) 
 	return t.Token(ctx, id)
 }
 
+// RepoVisible reports whether this server can read owner/repo at all: the App
+// is installed on it, or it is public. GitHub answers the same 404 for a
+// private repo and a missing one, so false means "not to us", and a lookup
+// that fails is an error, never false. Binding a repo to a project asks this
+// first, because the link is what later hands the repo's installation token to
+// the project's syncs (rv4-COMP-05).
+func (t *InstallationTokens) RepoVisible(ctx context.Context, owner, repo string) (bool, error) {
+	_, err := t.InstallationForRepo(ctx, owner, repo)
+	if err == nil {
+		return true, nil
+	}
+	if !errors.Is(err, ErrNotInstalled) {
+		return false, err
+	}
+	return RepoIsPublic(ctx, owner, repo)
+}
+
 // FetchGuideFile downloads insideout.yaml from the repo at a ref.
 // token may be empty (public repos work unauthenticated).
 func FetchGuideFile(ctx context.Context, token, owner, repo, ref string) ([]byte, error) {

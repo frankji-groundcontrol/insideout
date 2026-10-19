@@ -8,6 +8,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// ErrRepoTaken means another project already holds the repo being linked
+// (rv4-COMP-05): a repo binds to one project at a time, so a second project is
+// refused instead of sharing the first one's commit sync and webhook deliveries.
+var ErrRepoTaken = errors.New("store: repository is already linked to another project")
+
 // requireProjectOwnerOrAdmin allows the project owner or a workspace admin —
 // the level the projects_update RLS policy requires before the projects row
 // (repo link, sync cursor in meta) may change.
@@ -36,11 +41,19 @@ func requireProjectOwnerOrAdmin(ctx context.Context, tx pgx.Tx, projectID, actor
 }
 
 // SetProjectRepo links (or clears) the GitHub repo a project syncs from.
+// repoURL is the canonical URL (github.CanonicalRepoURL) or "" to clear; a repo
+// another project already holds is refused with ErrRepoTaken. Clearing is
+// always allowed and frees the repo.
 func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID, repoURL string) (*Project, error) {
 	var p *Project
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		if err := requireProjectOwnerOrAdmin(ctx, tx, projectID, actorID); err != nil {
 			return err
+		}
+		if repoURL != "" {
+			if err := claimRepo(ctx, tx, projectID, repoURL); err != nil {
+				return err
+			}
 		}
 		row := tx.QueryRow(ctx, `
 			UPDATE insideout.projects SET repo_url = $2 WHERE id = $1 RETURNING `+projectColumns,
@@ -54,6 +67,36 @@ func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID
 		return nil, err
 	}
 	return p, nil
+}
+
+// claimRepo refuses repoURL when a project other than projectID holds it. The
+// check and the UPDATE after it are one critical section per repo: an advisory
+// lock keyed on the lower-cased URL is held to the end of the transaction, so
+// two projects racing for one repo cannot both pass the check. The holder is
+// whatever _projects_by_repo names, the same answer the webhook delivers by.
+//
+// ponytail: a lock, not a UNIQUE index, because rows that predate the rule may
+// already share a repo (migration 20261018180000) and an index would refuse to
+// build over them. The cost is that the rule holds only for writers that go
+// through here; SetProjectRepo is the only one.
+func claimRepo(ctx context.Context, tx pgx.Tx, projectID uuid.UUID, repoURL string) error {
+	if _, err := tx.Exec(ctx,
+		`SELECT pg_advisory_xact_lock(hashtext('insideout.repo_binding'), hashtext(lower($1)))`, repoURL,
+	); err != nil {
+		return err
+	}
+	var holder uuid.UUID
+	err := tx.QueryRow(ctx, `SELECT project_id FROM insideout._projects_by_repo($1)`, repoURL).Scan(&holder)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if holder != projectID {
+		return ErrRepoTaken
+	}
+	return nil
 }
 
 // ProjectRepoSync reads the linked repo URL and the last-synced commit SHA.
