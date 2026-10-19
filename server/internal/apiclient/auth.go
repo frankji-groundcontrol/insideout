@@ -88,7 +88,8 @@ func (c *Client) authRequest(path string, body any) error {
 // authPost performs the pre-auth POST common to every auth verb: no bearer
 // header, and a >= 300 answer surfaces the API's own error body — a 401
 // here is the flow's verdict ("invalid or expired code"), not a missing
-// INSIDEOUT_TOKEN.
+// INSIDEOUT_TOKEN. A refusal also returns its HTTP status in the authBody,
+// beside the error, for the caller that has to tell statuses apart (Logout).
 func (c *Client) authPost(path string, body any) (authBody, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
@@ -118,7 +119,7 @@ func (c *Client) authPost(path string, body any) (authBody, error) {
 		if msg == "" {
 			msg = strings.TrimSpace(string(raw))
 		}
-		return authBody{}, fmt.Errorf("POST %s: %s: %s", path, resp.Status, msg)
+		return authBody{status: resp.StatusCode}, fmt.Errorf("POST %s: %s: %s", path, resp.Status, msg)
 	}
 	return out, nil
 }
@@ -128,6 +129,8 @@ type authBody struct {
 	RefreshToken string `json:"refreshToken"`
 	Email        string `json:"email"`
 	Error        string `json:"error"`
+
+	status int // authPost sets it on a refusal only
 }
 
 // AuthConfig returns the public signup mode (GET /auth/config) — the
