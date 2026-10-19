@@ -204,7 +204,29 @@ def chain_is_described(failures):
                                 "between the hosted pass-through and the compose append")
 
 
-CHECKS = [template_is_the_switch, hops_follow_nginx, docs_state_the_rules, chain_is_described]
+def rolling_overlap_is_stated(failures):
+    """The users column-grant is not backward compatible, and a rolling deploy
+    overlaps (rv4-FR-F192, F39, F102, F111). The new image migrates at boot,
+    before it listens and before the singleton guard, while the old image is
+    still serving and still selects password_hash. deployment.md must not claim
+    a single instance has no such window, and must state this release's
+    procedure: stop the old instance before the new one boots, and on Railway
+    set the overlap seconds to 0. Splitting the migration is not this guard's
+    job."""
+    text = flat("docs/usage/deployment.md")
+    if re.search(r"(?i)\bno window\b", text):
+        failures.append("docs/usage/deployment.md: claims there is no window in which the previous image "
+                        "serves after the users column-grant migration; a rolling deploy overlaps, and the "
+                        "old image's login, register, /me and profile reads then fail with SQLSTATE 42501")
+    if not re.search(r"(?i)stop the old instance before the new one boots", text):
+        failures.append("docs/usage/deployment.md: does not say to stop the old instance before the new one "
+                        "boots (zero overlap) for this release")
+    if not re.search(r"(?i)overlap seconds to 0", text):
+        failures.append("docs/usage/deployment.md: does not say to set the Railway overlap seconds to 0")
+
+
+CHECKS = [template_is_the_switch, hops_follow_nginx, docs_state_the_rules, chain_is_described,
+          rolling_overlap_is_stated]
 
 if __name__ == "__main__":
     failures = []
@@ -214,4 +236,4 @@ if __name__ == "__main__":
         print(message, file=sys.stderr)
     if failures:
         sys.exit(1)
-    print(f"proxy hops ok: {len(CHECKS)} checks")
+    print(f"deploy truth ok: {len(CHECKS)} checks")
