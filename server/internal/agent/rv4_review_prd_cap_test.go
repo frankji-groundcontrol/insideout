@@ -55,3 +55,49 @@ func TestRvPrdCapCoachWriteOverTheCapIsRefusedAndNamesTheWayOut(t *testing.T) {
 		t.Errorf("background holds %d characters after the refused write, want the 10000 written before it", n)
 	}
 }
+
+// rvPrdCapSurfaces renders the PRD sections into each prompt that carries them:
+// the coach's system prompt, the critic's and the roadmap planner's.
+func rvPrdCapSurfaces() map[string]func(sections map[string]string) string {
+	return map[string]func(sections map[string]string) string{
+		"coach": func(sections map[string]string) string {
+			return systemPrompt(localeEN, StageDraft, "A title", sections, "", "")
+		},
+		"critic": func(sections map[string]string) string {
+			stub := &forcingStub{}
+			runCritic(context.Background(), stub, localeEN, "A title", sections, ledgerMeta{}, nil)
+			return stub.sawSystem
+		},
+		"planner": func(sections map[string]string) string {
+			stub := &forcingStub{}
+			_, _ = NewAnthropicRoadmapPlanner(stub).PlanMVP(context.Background(), localeEN, "A title", sections)
+			if len(stub.sawMsgs) == 0 {
+				return ""
+			}
+			return stub.sawMsgs[0].Content
+		},
+	}
+}
+
+// The prompts clip a section at the cap, and the comment on that clip says it
+// only bites a row stored before the write cap existed. A section the coach
+// itself wrote is rendered back to the coach, the critic and the planner by
+// those prompts, so it must never come back cut.
+func TestRvPrdCapThePromptNeverClipsWhatTheCoachWrote(t *testing.T) {
+	st := newTestStore(t)
+	_, ex := seedConversation(t, st)
+
+	// Whether the tool refuses is the other test's business; this one reads what was stored.
+	_, _ = rvPrdCapWrite(t, ex, "background", 10_500)
+	prd, err := st.GetPrdForMember(context.Background(), ex.prdID, ex.actorID)
+	if err != nil {
+		t.Fatalf("read the PRD back: %v", err)
+	}
+
+	for name, render := range rvPrdCapSurfaces() {
+		prompt := render(prd.Sections)
+		if i := strings.Index(prompt, "[truncated:"); i >= 0 {
+			t.Errorf("%s: the section the coach wrote reaches its own prompt cut (%.60q): the cap that stops this is not on the coach's write path", name, prompt[i:])
+		}
+	}
+}
