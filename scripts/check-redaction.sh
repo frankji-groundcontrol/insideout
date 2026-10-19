@@ -7,7 +7,8 @@
 #      docs/architecture/, README.md, client/README.md;
 #   c. any other e-mail address in a tracked text file (rv4-PUB-01). Allowed:
 #      a noreply local part; the reserved documentation and test names
-#      (example.*, *.example, *.test, *.invalid, *.localhost, *.local);
+#      (example.com, example.net and example.org with their subdomains, and the
+#      *.example, *.test, *.invalid, *.localhost and *.local names);
 #      resend.dev, the mail provider's sandbox; the fixture addresses listed
 #      below, inside a Go test under server/; and image names such as
 #      icon@2x.png. Write <admin-email> or <owner-email> in docs. The report
@@ -83,7 +84,7 @@ report "an e-mail address that is not a placeholder is in a tracked file (value 
   "$(git grep -n -I -o -i -E -e '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}' -- |
     grep -v -i -E \
       -e ':[0-9]+:noreply@' \
-      -e '@([a-z0-9-]+\.)*example\.[a-z]+$' \
+      -e '@([a-z0-9-]+\.)*example\.(com|net|org)$' \
       -e '@[^@]*\.(example|test|invalid|localhost|local)$' \
       -e '@([a-z0-9-]+\.)*resend\.dev$' \
       -e "^server/[^:]*_test\\.go:[0-9]+:($fixtures)\$" \
