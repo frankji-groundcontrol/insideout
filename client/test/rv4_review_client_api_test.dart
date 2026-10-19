@@ -9,9 +9,11 @@ import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/api/sse.dart';
 import 'package:insideout/chrome/loop_focus.dart';
+import 'package:insideout/features/project/project_updates_feed.dart';
 import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
+import 'package:insideout/theme/block_button.dart';
 import 'package:provider/provider.dart';
 
 /// Whole-change review of the client API layer (rv4-FR-F01, F02, F08, F15).
@@ -105,6 +107,87 @@ Future<void> _pumpRoadmap(WidgetTester tester, ApiClient api) async {
   await tester.pump();
 }
 
+// rv4-FR-F02, F08, F15 ---------------------------------------------------------
+// The updates feed had no in-flight guard on Accept/Reject: a double tap sent
+// two decisions, the server adds a history note per decision, and Accept then
+// Reject flipped a decision whose nodes were already built. The buttons stayed
+// live until the reload replaced them. A fake api holds each decision on a
+// completer, so the taps land while it is pending.
+
+class _DecideApi extends ApiClient {
+  _DecideApi()
+    : super(
+        baseUrl: 'http://127.0.0.1:9/api/v1',
+        readAccess: () async => null,
+        readRefresh: () async => null,
+        writeTokens: (a, r) async {},
+        clearTokens: () async {},
+      );
+
+  final calls = <({String id, bool accept})>[];
+  final answers = <Completer<Map<String, dynamic>>>[];
+  int reloads = 0;
+
+  @override
+  Future<Map<String, dynamic>> decideProposal(
+    String updateId, {
+    required bool accept,
+    String reason = '',
+    bool apply = true,
+  }) {
+    calls.add((id: updateId, accept: accept));
+    final answer = Completer<Map<String, dynamic>>();
+    answers.add(answer);
+    return answer.future;
+  }
+}
+
+ProjectUpdate _proposal(String id, {String decision = ''}) => ProjectUpdate(
+  id: id,
+  kind: 'agent_proposal',
+  content: 'Propose $id',
+  createdAt: '2026-10-01T00:00:00Z',
+  authorId: 'agent',
+  decision: decision,
+);
+
+Future<void> _pumpFeed(
+  WidgetTester tester,
+  _DecideApi api,
+  List<ProjectUpdate> updates,
+) async {
+  final session = Session()
+    ..ready = true
+    ..api = api;
+  await tester.pumpWidget(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: session),
+        ChangeNotifierProvider(
+          create: (_) =>
+              Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+        ),
+      ],
+      child: MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ProjectUpdatesFeed(
+              projectId: 'p1',
+              updates: updates,
+              onChanged: () async => api.reloads++,
+              onEdit: (u, content) async {},
+              onRemove: (u) async {},
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+BlockButton _button(WidgetTester tester, String label) =>
+    tester.widget<BlockButton>(find.widgetWithText(BlockButton, label));
+
 void main() {
   group('rv4-FR-F01: a refresh that merely failed does not end the streams', () {
     for (final (name, boom) in <(String, Object Function())>[
@@ -142,5 +225,104 @@ void main() {
         expect(world.cleared, isFalse);
       });
     }
+  });
+
+  group('rv4-FR-F02, F08, F15: a proposal is decided once', () {
+    testWidgets('two taps on Accept before the answer send one decision', (
+      tester,
+    ) async {
+      final api = _DecideApi();
+      await _pumpFeed(tester, api, [_proposal('up1')]);
+
+      // No frame between the taps: the second one reaches a live button.
+      await tester.tap(find.text('Accept'));
+      await tester.tap(find.text('Accept'));
+      await tester.pump();
+
+      expect(
+        api.calls,
+        hasLength(1),
+        reason: 'each decision adds a history note every member reads',
+      );
+    });
+
+    testWidgets('Reject while an Accept is pending is refused', (tester) async {
+      final api = _DecideApi();
+      await _pumpFeed(tester, api, [_proposal('up1')]);
+
+      await tester.tap(find.text('Accept'));
+      await tester.pump();
+      expect(_button(tester, 'Accept').busy, isTrue);
+      expect(_button(tester, 'Reject').onPressed, isNull);
+
+      await tester.tap(find.text('Reject'));
+      await tester.pump();
+
+      expect(api.calls, [(id: 'up1', accept: true)]);
+    });
+
+    testWidgets('a decision that landed keeps the buttons off until the list '
+        'shows it', (tester) async {
+      final api = _DecideApi();
+      await _pumpFeed(tester, api, [_proposal('up1')]);
+      await tester.tap(find.text('Accept'));
+      await tester.pump();
+
+      api.answers.single.complete({'decision': 'accepted'});
+      await tester.pump();
+      await tester.pump();
+
+      // The page reloads, but the list this feed holds is still the old one.
+      expect(api.reloads, 1);
+      expect(_button(tester, 'Accept').onPressed, isNull);
+      expect(_button(tester, 'Reject').onPressed, isNull);
+      await tester.tap(find.text('Reject'));
+      await tester.pump();
+      expect(api.calls, hasLength(1));
+    });
+
+    testWidgets('a refused decision puts the buttons back', (tester) async {
+      final api = _DecideApi();
+      await _pumpFeed(tester, api, [_proposal('up1')]);
+      await tester.tap(find.text('Accept'));
+      await tester.pump();
+
+      api.answers.single.completeError(
+        ApiException('unavailable', status: 503),
+      );
+      await tester.pump();
+      await tester.pump();
+
+      expect(api.reloads, 0);
+      expect(_button(tester, 'Accept').busy, isFalse);
+      expect(_button(tester, 'Accept').onPressed, isNotNull);
+      expect(_button(tester, 'Reject').onPressed, isNotNull);
+      await tester.tap(find.text('Reject'));
+      await tester.pump();
+      expect(api.calls, hasLength(2));
+    });
+
+    testWidgets('deciding one proposal leaves the others live', (tester) async {
+      final api = _DecideApi();
+      await _pumpFeed(tester, api, [_proposal('up1'), _proposal('up2')]);
+
+      await tester.tap(find.text('Accept').first);
+      await tester.pump();
+      await tester.tap(find.text('Accept').last);
+      await tester.pump();
+
+      expect(api.calls.map((c) => c.id), ['up1', 'up2']);
+    });
+
+    testWidgets('a proposal that already carries a decision has no buttons', (
+      tester,
+    ) async {
+      await _pumpFeed(tester, _DecideApi(), [
+        _proposal('up1', decision: 'accepted'),
+      ]);
+
+      expect(find.text('Accept'), findsNothing);
+      expect(find.text('Reject'), findsNothing);
+    });
   });
 }
