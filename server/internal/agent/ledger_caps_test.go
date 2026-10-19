@@ -26,7 +26,7 @@ func TestRecordFact_TruncatesOversizedText(t *testing.T) {
 
 	args, _ := json.Marshal(map[string]string{
 		"kind":  "problem",
-		"text":  oversizedText(maxTextLen + 50),
+		"text":  "we lose customers every week " + oversizedText(maxTextLen+50),
 		"quote": "we lose customers every week",
 	})
 	if _, err := ex.recordFact(ctx, string(args)); err != nil {

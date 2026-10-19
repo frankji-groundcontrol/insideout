@@ -57,8 +57,8 @@ func coachTools() []Tool {
 				"type": "object",
 				"properties": map[string]any{
 					"kind":  map[string]any{"type": "string", "enum": kindEnum},
-					"text":  map[string]any{"type": "string", "description": "the fact, in your own words"},
-					"quote": map[string]any{"type": "string", "description": "the user's verbatim words that support this fact"},
+					"text":  map[string]any{"type": "string", "description": "the fact, restating what the quote says — stay close to its words and add no claim the user did not make"},
+					"quote": map[string]any{"type": "string", "description": "the user's verbatim words that support this fact — a whole clause, not a word or two (quotes that short are refused)"},
 				},
 				"required": []any{"kind", "text", "quote"},
 			},

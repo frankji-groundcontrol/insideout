@@ -113,7 +113,7 @@ func TestStageGate_ClarifyToDraft_RejectsEveryoneSegment(t *testing.T) {
 		"the problem is people forget stuff",
 		"literally everyone has this problem, it's for all users",
 		"they just forget, there's no real alternative today",
-		"we want it now",
+		"we want it now, ideally this month",
 	}
 	must := func(kind, text, quote string) {
 		t.Helper()
@@ -125,7 +125,7 @@ func TestStageGate_ClarifyToDraft_RejectsEveryoneSegment(t *testing.T) {
 	must("problem", "people forget stuff", "the problem is people forget stuff")
 	must("segment", "everyone, all users", "literally everyone has this problem, it's for all users")
 	must("alternative", "nothing today", "they just forget, there's no real alternative today")
-	must("whynow", "wanted now", "we want it now")
+	must("whynow", "wanted now", "we want it now, ideally this month")
 
 	if _, err := ex.advanceStage(ctx, `{"next":"draft"}`); err == nil {
 		t.Fatal("advance with an \"everyone\" segment should be denied by the lint, was allowed")

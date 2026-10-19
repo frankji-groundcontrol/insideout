@@ -248,6 +248,15 @@ func (e *toolExecutor) recordFact(ctx context.Context, argsJSON string) (string,
 	if !grounded {
 		return "", fmt.Errorf("agent: quote %q was not found in anything the user said in this conversation — quote their actual words, don't paraphrase or invent", args.Quote)
 	}
+	// The quote is stored cut at maxQuoteLen, so it is the cut quote that has to
+	// attest the text (rv4-AIDEV-07).
+	quote := args.Quote
+	if len([]rune(quote)) > maxQuoteLen {
+		quote = string([]rune(quote)[:maxQuoteLen])
+	}
+	if err := checkFactEvidence(args.Text, quote); err != nil {
+		return "", err
+	}
 
 	conv, err := e.store.GetConversationForOwner(ctx, e.conversationID, e.actorID)
 	if err != nil {
@@ -256,10 +265,6 @@ func (e *toolExecutor) recordFact(ctx context.Context, argsJSON string) (string,
 	lm, extra := loadLedger(conv.Meta)
 	if countByKind(lm.Facts, args.Kind) >= maxFactsPerKind {
 		return "", fmt.Errorf("agent: already have %d facts of kind %q, the most useful ones — don't add more", maxFactsPerKind, args.Kind)
-	}
-	quote := args.Quote
-	if len([]rune(quote)) > maxQuoteLen {
-		quote = string([]rune(quote)[:maxQuoteLen])
 	}
 	fact := Fact{ID: "f" + uuid.NewString()[:8], Kind: args.Kind, Text: capLedgerText(args.Text), Quote: quote, Status: FactStatusAttested}
 	lm.Facts = append(lm.Facts, fact)
