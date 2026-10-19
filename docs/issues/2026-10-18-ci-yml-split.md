@@ -2,9 +2,11 @@
 
 **Date:** 2026-10-18
 **Kind:** structural debt (line-budget split), blocking two review-4 CI items
-**File:** [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) — 346
+**File:** [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) — 349
 lines against the ~350-line budget (it was 316 before wave 1 of the
-[review-4 remediation](../changelogs/2026-10-18-rv4-remediation/index.md)).
+[review-4 remediation](../changelogs/2026-10-18-rv4-remediation/index.md), 346
+after wave 1; wave 3 added the read-only top-level `permissions` block of
+rv4-PUB-07, net three lines).
 **Found by:** [w1-ci-gates](../changelogs/2026-10-18-rv4-remediation/w1-ci-gates.md),
 which grew the file by 30 lines (weekly schedule, concurrency group, guard
 loop, tidy step) and could not add the two items below.
@@ -13,7 +15,8 @@ loop, tidy step) and could not add the two items below.
 
 `ci.yml` holds seven jobs in one file: `server`, `upgrade-replay`,
 `server-image`, `nginx`, `client`, `android` and `env-suites`. Two additions
-the review asks for do not fit in the four lines that are left:
+the review asks for do not fit in the one line that is left (four after
+wave 1):
 
 - **The client image job** (rv4-TEST-08, second half): `docker build -t
   insideout-client-ci client/` beside `server-image`, so a broken client

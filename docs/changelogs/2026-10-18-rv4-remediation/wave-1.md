@@ -46,8 +46,9 @@ worker SHAs; the integrator ran the whole suite at the head). A CI-config
 property can only be checked locally, because `actionlint` is not installed on
 the author's machines: those rows say **pending first CI run after push**
 (R1-17). The R1 IDs are the rows of the wave-1 residue table in the
-[open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-1-open-residue-integrator-2026-10-18),
-which also carries one line per finding.
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-1-open-residue-integrator-2026-10-18);
+the one-line dispositions are in the
+[dispositions record](../../issues/2026-10-18-review-4-dispositions.md#wave-1-dispositions-integrator-2026-10-18).
 
 | Finding | Cluster | Row | Status | Red | Fix | Left open |
 | --- | --- | --- | --- | --- | --- | --- |

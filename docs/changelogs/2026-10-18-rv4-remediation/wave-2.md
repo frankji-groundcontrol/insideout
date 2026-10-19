@@ -50,8 +50,9 @@ before its fix and passes after it (the verifiers replayed each pair at the
 worker SHAs; the integrator ran the whole suite at the head). No row here is a
 CI-config property, so none says "pending first CI run": no workflow file
 changed. The R2 IDs are the rows of the wave-2 residue table in the
-[open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-2-open-residue-integrator-2026-10-19),
-which also carries one line per finding.
+[open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-2-open-residue-integrator-2026-10-19);
+the one-line dispositions are in the
+[dispositions record](../../issues/2026-10-18-review-4-dispositions.md#wave-2-dispositions-integrator-2026-10-19).
 
 | Finding | Cluster | Row | Status | Red | Fix | Left open |
 | --- | --- | --- | --- | --- | --- | --- |

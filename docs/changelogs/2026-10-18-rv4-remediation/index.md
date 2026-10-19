@@ -1,4 +1,4 @@
-# 2026-10-18 — Review-4 remediation: waves 0 to 2 recorded
+# 2026-10-18 — Review-4 remediation: waves 0 to 3 recorded
 
 Execution of the [review-4 remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md)
 under its [execution contract](../../review/2026-10-18-multirole-4/41-remediation-contract.md):
@@ -18,7 +18,7 @@ line budget; this page is the way in.
 | 0 | `w0-privacy` (rows 0.1 to 0.4) | integrated; one gate failure, proven to be on the base | [wave-0.md](wave-0.md) |
 | 1 | 9 clusters (rows 1.1 to 1.18) | integrated; gates green; 30 of 34 findings `FIXED`, 4 `PARTIAL` | [wave-1.md](wave-1.md) |
 | 2 | 4 clusters (rows 2.1 to 2.6) | integrated at `e6bc637`; gates and a live check green; 23 rows: 21 `FIXED`, 2 `PARTIAL` | [wave-2.md](wave-2.md) |
-| 3 | 11 clusters (rows 3.1 to 3.11), plus `w3-client-apply` and `w3-users-read-grant` added after wave 2 | not started | |
+| 3 | 13 clusters (rows 3.1 to 3.11, plus `w3-client-apply` and `w3-users-read-grant` added after wave 2) | integrated at `3a1c4ac` (171 commits above the wave-2 records head); gates green, workflow properties pending the first CI run; 64 rows: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` | [wave-3.md](wave-3.md), [wave-3-dispositions.md](wave-3-dispositions.md) |
 
 ## Cluster fragments
 
@@ -41,15 +41,40 @@ the ceilings and the integrator's to-do. The wave files hold the dispositions.
 | 2 | `w2-proposal-apply` | 2.3, 2.4 | [w2-proposal-apply.md](w2-proposal-apply.md) |
 | 2 | `w2-agent-scope` | 2.5 | [w2-agent-scope.md](w2-agent-scope.md) |
 | 2 | `w2-rls` | 2.6 | [w2-rls.md](w2-rls.md) |
+| 3 | `w3-coach-trust` | 3.1 | [w3-coach-trust.md](w3-coach-trust.md) |
+| 3 | `w3-stream-bounds` | 3.2 | [w3-stream-bounds.md](w3-stream-bounds.md) |
+| 3 | `w3-auth-network` | 3.3 | [w3-auth-network.md](w3-auth-network.md) |
+| 3 | `w3-release-supply` | 3.4 | [w3-release-supply.md](w3-release-supply.md) |
+| 3 | `w3-privacy` | 3.5 | [w3-privacy.md](w3-privacy.md) |
+| 3 | `w3-docs-truth` | 3.6, README hunks of 3.8 | [w3-docs-truth.md](w3-docs-truth.md) |
+| 3 | `w3-test-hardening` | 3.7 | [w3-test-hardening.md](w3-test-hardening.md) |
+| 3 | `w3-first-run-copy` | 3.8 | [w3-first-run-copy.md](w3-first-run-copy.md) |
+| 3 | `w3-context-deadlines` | 3.9 | [w3-context-deadlines.md](w3-context-deadlines.md) |
+| 3 | `w3-github-evidence` | 3.10 | [w3-github-evidence.md](w3-github-evidence.md) |
+| 3 | `w3-client-assets` | 3.11 | [w3-client-assets.md](w3-client-assets.md) |
+| 3 | `w3-client-apply` | 2.3, 2.4 (R2-01) | [w3-client-apply.md](w3-client-apply.md) |
+| 3 | `w3-users-read-grant` | 2.6 (R2-02) | [w3-users-read-grant.md](w3-users-read-grant.md) |
 
 ## Where the open items are
 
 - Residue with an ID, an owner and a one-line fix prompt: R1-01 to R1-17 (wave
-  1) and R2-01 to R2-15 (wave 2) in the
-  [open-findings record](../../issues/2026-10-18-review-4-open-findings.md).
+  1), R2-01 to R2-15 (wave 2) and R3-01 to R3-50 (wave 3) in the
+  [open-findings record](../../issues/2026-10-18-review-4-open-findings.md);
+  the closed rows of every wave are in its
+  [dispositions sibling](../../issues/2026-10-18-review-4-dispositions.md).
 - Owner decisions (rotations, the version policy, whether an agent token may
-  decide its own proposal, the release variable name) are the last table of
-  that record; the privacy halves are in
-  [the owner record](../../issues/2026-10-18-rv4-owner-privacy-decisions.md).
-- Wave 3 starts after a pause; its carry-forward notes are at the end of
-  [wave-2.md](wave-2.md#carry-forward-into-wave-3).
+  decide its own proposal, the release variable name, the retention and erasure
+  rules, whether a skipped critic may reach finalize, what proves a linker
+  controls a repository) are the last table of that record; the privacy halves
+  are in [the owner record](../../issues/2026-10-18-rv4-owner-privacy-decisions.md).
+- Seven wave-3 items were applied by the integrator before the gates, in
+  `4060d64` (1 to 6) and `3a1c4ac` (7), and are not redone: the
+  `INSIDEOUT_TRUSTED_PROXY_HOPS` entry in `.env.example`, 42 broken dated links
+  (ceilings to 0), PostgreSQL 18 in the unowned files, the review-3 header, the
+  `testlock` line and the new api file names in `docs/architecture/backend.md`,
+  two rows of `docs/usage/environment.md`, and the `go.mod` toolchain and
+  `x/text` bump. See
+  [the coordinator note](wave-3.md#applied-before-the-gates-coordinator-note).
+- What comes next (the proposed `w4-release-version` and `w4-privacy-opener`,
+  the first CI run, the whole-change adversarial review) is at the end of
+  [wave-3.md](wave-3.md#carry-forward-into-wave-4).
