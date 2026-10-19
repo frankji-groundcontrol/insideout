@@ -21,6 +21,17 @@ import (
 // out to every viewer of the canvas. DB-gated: both stream handlers check
 // project membership against real RLS.
 
+// The ceilings are pinned to the numbers the w3-stream-bounds changelog records
+// (20 streams per member, 100 per project, 25 cursor posts a second), never to
+// the constants under test and never to a range: either follows stream_caps.go
+// to whatever it is edited to, and a range lets a ceiling of 49 or 130 through
+// (rv4-FR-F137). Changing a ceiling means changing the docs and these pins.
+const (
+	rvGuardsStreamsPerUser    = 20
+	rvGuardsStreamsPerProject = 100
+	rvGuardsCursorPostsPerSec = 25
+)
+
 // tryOpenSSE opens a stream and returns its status, so a refusal is data and
 // not a fatal error. A 200 stream stays open until the test ends.
 func tryOpenSSE(t *testing.T, ts *httptest.Server, token, path string) int {
@@ -70,31 +81,36 @@ func tally(t *testing.T, code int, accepted, refused *int) {
 func TestStreamCaps_OneUserIsRefusedPastACeiling(t *testing.T) {
 	fx := newStreamFixture(t)
 	const attempts = 150 // past any per-project ceiling, so only a per-user cap can stop this
-	accepted, refused := 0, 0
+	accepted, refused, presenceOpen := 0, 0, 0
 	for i := 0; i < attempts; i++ {
 		path := fx.presencePath(fmt.Sprintf("?client=tab-%d", i)) // a fresh client id every time
 		if i%2 == 1 {
 			path = fx.progressPath()
 		}
-		tally(t, tryOpenSSE(t, fx.ts, fx.tokenA, path), &accepted, &refused)
+		code := tryOpenSSE(t, fx.ts, fx.tokenA, path)
+		tally(t, code, &accepted, &refused)
+		if i%2 == 0 && code == http.StatusOK {
+			presenceOpen++
+		}
 	}
 
 	if refused == 0 {
 		t.Errorf("one member opened %d streams and none was refused: nothing bounds a caller's open streams", attempts)
 	}
-	if accepted < 10 || accepted > 50 {
-		t.Errorf("one member holds %d of %d streams, want a ceiling between 10 (a power user's tabs) and 50 (memory)", accepted, attempts)
+	if accepted != rvGuardsStreamsPerUser {
+		t.Errorf("one member holds %d of %d streams, want exactly the per-user ceiling of %d", accepted, attempts, rvGuardsStreamsPerUser)
 	}
-	// The presence key carries the caller-chosen client id; the number of
-	// distinct keys one user can register must stay bounded too.
+	// The presence key carries the caller-chosen client id, and every
+	// registered key belongs to a live stream: one session per open presence
+	// stream, none left behind by a refused one.
 	own := 0
 	for _, e := range fx.listPresence(t, fx.tokenA) {
 		if e.UserID == fx.a.ID.String() {
 			own++
 		}
 	}
-	if own > 50 {
-		t.Errorf("one member registered %d presence sessions with distinct client ids, want at most 50", own)
+	if own != presenceOpen {
+		t.Errorf("one member has %d presence sessions for %d open presence streams, want one each", own, presenceOpen)
 	}
 }
 
@@ -135,8 +151,8 @@ func TestStreamCaps_AProjectIsRefusedPastACeilingAcrossUsers(t *testing.T) {
 	if refused == 0 {
 		t.Errorf("%d members opened %d streams on one project and none was refused: nothing bounds a project's open streams", len(tokens), perUser*len(tokens))
 	}
-	if accepted < 30 {
-		t.Errorf("the project accepted only %d streams, want room for a real team (at least 30)", accepted)
+	if accepted != rvGuardsStreamsPerProject {
+		t.Errorf("the project holds %d streams, want exactly the per-project ceiling of %d", accepted, rvGuardsStreamsPerProject)
 	}
 }
 
@@ -167,6 +183,9 @@ func TestStreamCaps_CursorPostsAreRateLimitedPerUser(t *testing.T) {
 	if first <= 5 {
 		t.Fatalf("post %d was refused: the canvas sends about 5 a second and must never be limited at that rate", first)
 	}
+	if first != rvGuardsCursorPostsPerSec+1 {
+		t.Fatalf("post %d was the first refused, want post %d: the budget is %d posts a second", first, rvGuardsCursorPostsPerSec+1, rvGuardsCursorPostsPerSec)
+	}
 	if code := post(fx.tokenB, 1); code != http.StatusNoContent {
 		t.Fatalf("another member's cursor post = %d, want 204: the limit is per user", code)
 	}
@@ -190,8 +209,8 @@ func TestStreamCaps_ClosingAStreamFreesItsSlot(t *testing.T) {
 		}
 		open = append(open, cancel)
 	}
-	if len(open) == 0 || len(open) == 100 {
-		t.Fatalf("opened %d streams before the first refusal, want a ceiling between 1 and 99", len(open))
+	if len(open) != rvGuardsStreamsPerUser {
+		t.Fatalf("opened %d streams before the first refusal, want the per-user ceiling of %d", len(open), rvGuardsStreamsPerUser)
 	}
 
 	open[0]() // one tab closes
