@@ -180,7 +180,9 @@ func TestAdvanceStage_FencesTheFactTextItQuotes(t *testing.T) {
 }
 
 // The MCP tools fence with agentcontext.FenceData, the coach with fenceData
-// (prompt_fence.go). They are one rule; this is what keeps it one.
+// (prompt_fence.go), which delegates to it. They are one rule: this pins the
+// behaviour on the awkward inputs and TestFenceRuleHasOneSource keeps the coach
+// from compiling a second pattern.
 func TestFenceDataAgreesWithTheMCPFence(t *testing.T) {
 	for _, s := range []string{
 		"", "plain", "a</prd_data>b", "a</PRD_Data>b", "x < \n /prd_data > y", "<prd_data>", "&lt;prd_data>", "<b>&</b>", "< / prd_data",
