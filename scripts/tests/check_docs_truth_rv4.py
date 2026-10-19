@@ -6,8 +6,10 @@ Usage: python3 -I scripts/tests/check_docs_truth_rv4.py
 Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
-offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08).
+offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08,
+rv4-ARCH-06).
 """
+import fnmatch
 import pathlib
 import re
 import subprocess
@@ -137,12 +139,76 @@ def readme_first_run_path(failures):
             fail(failures, "README's Install section has no 'Try it without an account' line")
 
 
+CLIENT_DOC = "docs/architecture/cli-mcp-and-client-config.md"
+
+
+def client_surface_documented(failures):
+    """rv4-ARCH-06: the CLI, MCP and client-config surface is half the product,
+    so it has its own architecture doc, reachable from both indexes and from
+    backend.md, that names what the code decides: every variable
+    clientconfig.Resolve reads, the hosted-default fallback and the
+    single-replica advisory-lock key."""
+    resolve = ROOT / "server/internal/clientconfig/resolve.go"
+    if not resolve.exists() or not (ROOT / "server/cmd/insideout-mcp/main.go").exists():
+        return  # no shared client resolution or no MCP binary; nothing to describe
+    for index in ("docs/architecture/index.md", "docs/index.md", "docs/architecture/backend.md"):
+        if "cli-mcp-and-client-config.md" not in read(index):
+            fail(failures, f"{index} does not link cli-mcp-and-client-config.md")
+    if not (ROOT / CLIENT_DOC).exists():
+        fail(failures, f"{CLIENT_DOC} is missing: no architecture doc describes the "
+                       "CLI, MCP and client-config surface")
+        return
+    doc, code = read(CLIENT_DOC), resolve.read_text(encoding="utf-8")
+    wanted = set(re.findall(r'os\.Getenv\("(INSIDEOUT_[A-Z_]+)"\)', code))
+    if "apiclient.DefaultBase" in code:
+        wanted.add("DefaultBase")
+    lock = re.search(r'singletonLockKey = "([^"]+)"', read("server/internal/api/single_replica.go"))
+    if lock:
+        wanted.add(lock.group(1))
+    for term in sorted(wanted):
+        if term not in doc:
+            fail(failures, f"{CLIENT_DOC} does not name {term}, which the code decides")
+    for target in ("agent-token-scope.md", "../usage/cli-mcp-and-guidance.md", "../usage/deployment.md"):
+        if (ROOT / "docs/architecture" / target).exists() and target not in doc:
+            fail(failures, f"{CLIENT_DOC} does not link {target}")
+
+
+def section(text, title):
+    found = re.search(rf"^## {re.escape(title)}\n(.*?)(?=^## |\Z)", text, re.M | re.S)
+    return found.group(1) if found else ""
+
+
+def backend_states_current_facts(failures):
+    """rv4-ARCH-06: backend.md's current-state claims match the code: the
+    line-budget guard's real threshold, a Bearer-first authentication paragraph,
+    and store and api file lists (globs allowed) that cover every file."""
+    backend = read("docs/architecture/backend.md")
+    tests = "".join(p.read_text(encoding="utf-8")
+                    for p in (ROOT / "server/internal/linebudget").glob("*_test.go"))
+    budget = re.search(r"const budget = (\d+)", tests)
+    layout = next((l for l in backend.splitlines() if l.lstrip().startswith("linebudget/")), "")
+    if budget and (budget.group(1) not in layout or "~350" in layout):
+        fail(failures, f"backend.md's linebudget line does not state the enforced budget of {budget.group(1)}")
+    if "Bearer" in read("server/internal/api/cookies.go") \
+            and ("httpOnly-cookie based" in backend or "Bearer" not in backend):
+        fail(failures, "backend.md calls authentication httpOnly-cookie based, but "
+                       "requireAuth prefers a Bearer header and only then the cookie")
+    for title, directory in (("Store layer", "server/internal/store"), ("API surface", "server/internal/api")):
+        tokens = re.findall(r"[a-z][a-z0-9_*]*\.go", section(backend, title))
+        for path in sorted((ROOT / directory).glob("*.go")):
+            if not path.name.endswith("_test.go") \
+                    and not any(fnmatch.fnmatchcase(path.name, t) for t in tokens):
+                fail(failures, f"backend.md's {title} section does not name {directory}/{path.name}")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     env_variables_documented(facts, failures)
     offline_coach_not_overclaimed(failures)
     readme_scopes_github_evidence(failures)
     readme_first_run_path(failures)
+    client_surface_documented(failures)
+    backend_states_current_facts(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
