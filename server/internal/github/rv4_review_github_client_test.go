@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -145,5 +146,95 @@ func TestRvGhClient403And429AreToldApartAtEveryCallSite(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// A refusal is its own type, so the API layer can answer it for what it is, and
+// it carries GitHub's message from every call site that can meet one.
+func TestRvGhClientRefusalIsTypedAndKeepsGitHubsWords(t *testing.T) {
+	body := `{"message":"` + rvGhClientRefusal + `"}`
+	for _, q := range rvGhClientQuestions() {
+		t.Run(q.name, func(t *testing.T) {
+			rvGhClientServe(t, q.path, 403, nil, body)
+			err := q.ask(t)
+			var refused *AccessRefusedError
+			if !errors.As(err, &refused) {
+				t.Fatalf("err = %v (%T), want an *AccessRefusedError", err, err)
+			}
+			if refused.Message != rvGhClientRefusal {
+				t.Errorf("Message = %q, want %q", refused.Message, rvGhClientRefusal)
+			}
+			if errors.Is(err, ErrRepoNotFound) || errors.Is(err, ErrNotInstalled) {
+				t.Errorf("a refusal reads as %v: it must not pass for a missing repo", err)
+			}
+		})
+	}
+}
+
+// The message is upstream text on its way into logs and answers: control
+// characters go, the length is bounded, and a body that says nothing usable
+// still leaves a sentence.
+func TestRvGhClientRefusalMessageIsCleaned(t *testing.T) {
+	const fallback = "GitHub refused the request"
+	long := strings.Repeat("\u00e9", 300)
+	cases := []struct{ name, body, want string }{
+		{"plain", `{"message":"Repository access blocked"}`, "Repository access blocked"},
+		{"empty body", ``, fallback},
+		{"not JSON", `<html>Forbidden</html>`, fallback},
+		{"no message", `{"documentation_url":"https://docs.github.com/rest"}`, fallback},
+		{"empty message", `{"message":"   "}`, fallback},
+		{"message that is not text", `{"message":403}`, fallback},
+		{"control characters", `{"message":"one\ntwo\r\n\u0007three\u001b[31m"}`, "one two   three [31m"},
+		{"capped by runes, not bytes", `{"message":"` + long + `"}`, strings.Repeat("\u00e9", 200)},
+		// 4 KiB are read: a message behind more than that is not found.
+		{"message past the read cap", `{"pad":"` + strings.Repeat("x", 5000) + `","message":"late"}`, fallback},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			resp := &http.Response{StatusCode: 403, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(c.body))}
+			var refused *AccessRefusedError
+			if err := limitOrRefusal(resp); !errors.As(err, &refused) {
+				t.Fatalf("limitOrRefusal = %v (%T), want an *AccessRefusedError", err, err)
+			} else if refused.Message != c.want {
+				t.Errorf("Message = %q, want %q", refused.Message, c.want)
+			}
+		})
+	}
+}
+
+// retryAfterSeconds with a fixed clock: the arithmetic without wall-clock slack.
+func TestRvGhClientRetryAfterSeconds(t *testing.T) {
+	now := time.Unix(1_800_000_000, 0)
+	at := func(d int64) string { return strconv.FormatInt(now.Unix()+d, 10) }
+	cases := []struct {
+		name string
+		h    map[string]string
+		want int
+	}{
+		{"nothing", nil, 60},
+		{"Retry-After", map[string]string{"Retry-After": "30"}, 30},
+		{"Retry-After with spaces", map[string]string{"Retry-After": " 30 "}, 30},
+		{"Retry-After of zero", map[string]string{"Retry-After": "0"}, 60},
+		{"negative Retry-After", map[string]string{"Retry-After": "-5"}, 60},
+		{"Retry-After as a date", map[string]string{"Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT"}, 60},
+		{"spent quota", map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": at(90)}, 90},
+		{"spent quota, padded", map[string]string{"X-RateLimit-Remaining": " 0 ", "X-RateLimit-Reset": " " + at(90) + " "}, 90},
+		{"spent quota that refills this second", map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": at(0)}, 1},
+		{"spent quota that should have refilled", map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": at(-600)}, 1},
+		{"spent quota, reset unreadable", map[string]string{"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": "tomorrow"}, 60},
+		{"spent quota, no reset", map[string]string{"X-RateLimit-Remaining": "0"}, 60},
+		{"quota left: the reset is not a wait", map[string]string{"X-RateLimit-Remaining": "5", "X-RateLimit-Reset": at(90)}, 60},
+		{"Retry-After beats the reset", map[string]string{"Retry-After": "7", "X-RateLimit-Remaining": "0", "X-RateLimit-Reset": at(90)}, 7},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			h := http.Header{}
+			for k, v := range c.h {
+				h.Set(k, v)
+			}
+			if got := retryAfterSeconds(h, now); got != c.want {
+				t.Errorf("retryAfterSeconds = %d, want %d", got, c.want)
+			}
+		})
 	}
 }

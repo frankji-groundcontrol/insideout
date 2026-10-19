@@ -98,19 +98,34 @@ const maxSubjectRunes = 280
 // bad owner/repo name. Callers map it to a 404, distinct from an upstream 5xx.
 var ErrRepoNotFound = errors.New("github: repository not found")
 
-// RateLimitError means GitHub answered 403/429 — the (unauthenticated) rate
-// limit is exhausted. RetryAfterSeconds carries the Retry-After hint so the API
-// layer can tell the user when to try again instead of a bare 502 (F20).
+// RateLimitError means GitHub said a rate limit is spent: a 429, or a 403 that
+// carries Retry-After or an X-RateLimit-Remaining of 0 (limitOrRefusal).
+// RetryAfterSeconds is when to ask again, so the API layer can tell the user
+// instead of a bare 502 (F20).
 type RateLimitError struct{ RetryAfterSeconds int }
 
 func (e *RateLimitError) Error() string { return "github: rate limited" }
 
-// retryAfterSeconds reads GitHub's Retry-After hint (whole seconds), defaulting
-// to 60 when absent or unparseable.
-func retryAfterSeconds(h http.Header) int {
-	if v := h.Get("Retry-After"); v != "" {
-		if n, err := strconv.Atoi(strings.TrimSpace(v)); err == nil && n > 0 {
-			return n
+// AccessRefusedError means GitHub answered 403 and gave no sign of a rate limit:
+// it refused the request. A repository it has blocked, a permission the App was
+// not granted ("Resource not accessible by integration") and a suspended
+// installation all say this, and waiting does not help any of them. Message is
+// GitHub's own explanation, stripped of control characters and capped.
+type AccessRefusedError struct{ Message string }
+
+func (e *AccessRefusedError) Error() string { return "github: access refused: " + e.Message }
+
+// retryAfterSeconds is when to ask GitHub again. Its Retry-After wins (whole
+// seconds); for a spent quota it is the time until X-RateLimit-Reset (an epoch
+// second), at least one second; otherwise 60. A secondary limit that leaves
+// quota behind carries no reset worth waiting for, so it gets the 60 as well.
+func retryAfterSeconds(h http.Header, now time.Time) int {
+	if n, err := strconv.Atoi(strings.TrimSpace(h.Get("Retry-After"))); err == nil && n > 0 {
+		return n
+	}
+	if strings.TrimSpace(h.Get("X-RateLimit-Remaining")) == "0" {
+		if reset, err := strconv.ParseInt(strings.TrimSpace(h.Get("X-RateLimit-Reset")), 10, 64); err == nil {
+			return int(max(reset-now.Unix(), 1))
 		}
 	}
 	return 60
@@ -199,7 +214,7 @@ func RepoIsPublic(ctx context.Context, owner, repo string) (bool, error) {
 	case http.StatusNotFound:
 		return false, nil
 	case http.StatusForbidden, http.StatusTooManyRequests:
-		return false, &RateLimitError{RetryAfterSeconds: retryAfterSeconds(resp.Header)}
+		return false, limitOrRefusal(resp)
 	}
 	return false, fmt.Errorf("github: repo lookup returned status %d", resp.StatusCode)
 }
@@ -234,7 +249,7 @@ func fetchCommitPage(ctx context.Context, token, pageURL string) ([]Commit, stri
 	case resp.StatusCode == http.StatusNotFound:
 		return nil, "", ErrRepoNotFound
 	case resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests:
-		return nil, "", &RateLimitError{RetryAfterSeconds: retryAfterSeconds(resp.Header)}
+		return nil, "", limitOrRefusal(resp)
 	case resp.StatusCode != http.StatusOK:
 		return nil, "", fmt.Errorf("github: commits returned status %d", resp.StatusCode)
 	}

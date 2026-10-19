@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 )
 
 // LoadPrivateKey accepts the GitHub App .pem either \n-escaped in one
@@ -139,6 +140,37 @@ func (t *InstallationTokens) Token(ctx context.Context, installationID int64) (s
 // GitHub answers the same 404 for a private repo and for one that does not exist.
 var ErrNotInstalled = errors.New("github: app is not installed on this repo")
 
+// limitOrRefusal is what every call that asks GitHub makes of a 403 or 429
+// (rv4-FR-F170). A 429 is a rate limit. A 403 is one only when GitHub says so,
+// with Retry-After (a secondary limit) or an X-RateLimit-Remaining of 0 (the
+// quota is spent); any other 403 is a refusal and keeps GitHub's words (cleaned,
+// 200 runes at most) instead of telling the user to retry in a minute. It reads
+// resp's body, so the caller returns right after.
+func limitOrRefusal(resp *http.Response) error {
+	h := resp.Header
+	if resp.StatusCode == http.StatusTooManyRequests || h.Get("Retry-After") != "" ||
+		strings.TrimSpace(h.Get("X-RateLimit-Remaining")) == "0" {
+		return &RateLimitError{RetryAfterSeconds: retryAfterSeconds(h, time.Now())}
+	}
+	var body struct {
+		Message string `json:"message"`
+	}
+	_ = json.NewDecoder(io.LimitReader(resp.Body, 4<<10)).Decode(&body)
+	msg := strings.TrimSpace(strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return ' '
+		}
+		return r
+	}, body.Message))
+	if msg == "" {
+		msg = "GitHub refused the request"
+	}
+	if r := []rune(msg); len(r) > 200 {
+		msg = string(r[:200])
+	}
+	return &AccessRefusedError{Message: msg}
+}
+
 // InstallationForRepo asks GitHub which installation of this App covers
 // owner/repo (GET /repos/{o}/{r}/installation, authenticated by the App JWT).
 // The id comes from GitHub for the repo itself, never from the caller, so a
@@ -171,7 +203,7 @@ func (t *InstallationTokens) InstallationForRepo(ctx context.Context, owner, rep
 	case http.StatusNotFound:
 		return 0, ErrNotInstalled
 	case http.StatusForbidden, http.StatusTooManyRequests:
-		return 0, &RateLimitError{RetryAfterSeconds: retryAfterSeconds(resp.Header)}
+		return 0, limitOrRefusal(resp)
 	default:
 		return 0, fmt.Errorf("github: installation lookup: %s", resp.Status)
 	}
