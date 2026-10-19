@@ -6,29 +6,49 @@ paints with by URL: a default Roboto, and, for every glyph Roboto lacks, the
 Noto slice that covers it. Both come from https://fonts.gstatic.com/s/ unless
 the engine is told otherwise (fontFallbackBaseUrl). A network that cannot
 reach Google therefore got an app with no text. These files are the exact
-bytes that host serves, so a first load can stay on this origin:
+bytes that host serves, so a first load can stay on this origin.
 
-  s/roboto/v32/            Roboto latin, regular   SIL OFL 1.1   OFL-Roboto.txt
-  s/notosanssc/v37/        Noto Sans SC, all 101   SIL OFL 1.1   OFL-NotoSansSC.txt
-                           slices (Simplified Chinese; user text can need any)
+What is here: s/ is a copy of https://fonts.gstatic.com/s/ for every file the
+engine can ask for, nothing more and nothing less:
 
-The layout under s/ mirrors https://fonts.gstatic.com/s/, so the one setting
-fontFallbackBaseUrl: "fonts/s/" (in a custom web/flutter_bootstrap.js) makes
-the engine read them here. The files are unmodified; SHA256SUMS lists them.
+  725 files   the 724 entries of the engine's fallback table (144 families:
+              Noto Sans SC/TC/HK/JP/KR, Noto Color Emoji, Noto Sans Symbols,
+              Noto Sans Math, one family per script) and the default Roboto
+  145 families, 21.8 MB, SIL Open Font License 1.1
+
+All of it, not the slice this UI uses, because the engine's choice depends on
+the browser language (zh-TW asks for Noto Sans TC, zh-HK for HK, ja for JP,
+ko for KR; others get the family covering most of the missing characters) and
+on user text (a commit message with an emoji, a project name in Korean). A
+file that is missing is a 404, and after a failed download the engine asks for
+the same file again on the next frame, so a hole in the mirror is a request
+loop, not a quiet fallback. Trimming this directory is a decision to take
+that risk for the dropped families.
+
+Licenses: licenses/<family>.txt, one per family, the OFL.txt that the
+google/fonts repository holds for it. The copyright holders differ: Adobe for
+the five CJK families, Google for Noto Color Emoji, The Roboto Project Authors
+for Roboto, The Noto Project Authors for the other 138. The font files are
+unmodified. SHA256SUMS lists every file (shasum -a 256 -c SHA256SUMS).
+
+The layout under s/ mirrors https://fonts.gstatic.com/s/, so one setting,
+fontFallbackBaseUrl: "fonts/s/" (in a custom web/flutter_bootstrap.js), makes
+the engine read them here.
 
 Status: web/flutter_bootstrap.js does not exist yet, so the engine still reads
 fonts.gstatic.com (client/nginx.conf keeps that one host in connect-src). The
 files and nginx's /fonts/ location are in place for the day it does.
-Other Noto families the engine can pick (emoji, Japanese, Korean, symbols, ...)
-are not mirrored: those glyphs would show as boxes on an offline network.
 
 Source of the list: the engine's fallback table, Flutter 3.44.8 (engine
 0cd610717bde); the table in 3.44.0, the version the Dockerfile builds with,
 is identical.
 
-Refresh after a Flutter upgrade: compare the roboto and notosanssc entries in
-<flutter>/bin/cache/flutter_web_sdk/lib/_engine/engine/font_fallback_data.dart
-(and _robotoUrl in canvaskit/fonts.dart) with SHA256SUMS, download any new path
-from https://fonts.gstatic.com/s/<path>, then
-  cd client/web/fonts && shasum -a 256 $(find s -name '*.woff2' | LC_ALL=C sort) > SHA256SUMS
-and update the slice count in client/test/web_csp_self_test.dart.
+Refresh after a Flutter upgrade: take every url in getFallbackFontList() of
+<flutter>/bin/cache/flutter_web_sdk/lib/_engine/engine/font_fallback_data.dart,
+plus _robotoUrl in canvaskit/fonts.dart, download each missing path from
+https://fonts.gstatic.com/s/<path> into s/<path>, add licenses/<family>.txt
+for any new family (https://github.com/google/fonts/tree/main/ofl), delete
+files the table no longer names, then
+  cd client/web/fonts && find s -name '*.woff2' | LC_ALL=C sort | xargs shasum -a 256 > SHA256SUMS
+and update the two counts (725 files, 145 families) in
+client/test/web_csp_self_test.dart.
