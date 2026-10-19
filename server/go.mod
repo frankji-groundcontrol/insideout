@@ -2,6 +2,8 @@ module github.com/frankji-groundcontrol/insideout/server
 
 go 1.26.0
 
+toolchain go1.26.9
+
 require (
 	github.com/charmbracelet/huh v1.0.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -46,5 +48,5 @@ require (
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 )
