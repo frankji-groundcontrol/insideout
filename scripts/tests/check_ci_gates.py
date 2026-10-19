@@ -22,8 +22,11 @@ one, so the first CI run after a push is what proves the behavior.
   guard fails the step (the step's own script runs against a made-up tree), so
   a guard written red-first is not left for nobody to run. Its checkout fetches
   the tags, because check_docs_truth.py asks git for them.
-- rv4-PM-12: the Ubuntu install lane accepts no Go older than server/go.mod's
-  floor, and no step name announces an older one.
+- rv4-PM-12, PUB-09: the Ubuntu install lane accepts no Go older than
+  server/go.mod's floor - it asks the go command (`GOTOOLCHAIN=local go list
+  -m` in server/) instead of grepping `go version` for a hand-written range,
+  so a floor bump moves the check with it - and no step name announces an
+  older floor.
 - rv4-PM-07: the analyzer ratchet (INFO_BASELINE in the client job) never
   allows more infos than the pinned toolchain measures (INFO_CEILING below).
 - rv4-PM-10 (CI half): the server job fails on `go mod tidy -diff`, so a direct
@@ -212,20 +215,18 @@ def guards_see_the_tags():
 
 
 def ubuntu_go_floor():
-    """PM-12: the premise (go.mod's floor) is read from the tree, so the lane
-    follows a floor bump instead of freezing the number it was written with."""
+    """PM-12, PUB-09: the premise (go.mod's floor) is read from the tree by the go
+    command itself - GOTOOLCHAIN=local makes it refuse an older toolchain - so
+    the lane follows a floor bump instead of freezing the number it was written
+    with (check_go_floor.py bans the hand-written range outright)."""
     yml = read(UBUNTU)
     major, floor = map(int, re.search(r"^go (\d+)\.(\d+)", read("server/go.mod"), re.M).groups())
-    verify = re.search(r"grep -E '([^']*go\d[^']*)'", yml)
-    if not verify:
-        return [f"{UBUNTU}: no `grep -E 'go1...'` verifies the installed Go version (rv4-PM-12)"]
-    oldest = next((m for m in range(100)
-                   if re.search(verify.group(1), f"go version go{major}.{m}.0 linux/amd64")), None)
     problems = []
-    if oldest is None or oldest < floor:
+    if not re.search(r"cd server && GOTOOLCHAIN=local go (?:list|build|vet|test)\b", yml):
         problems.append(
-            f"{UBUNTU}: the Go verify step accepts Go {major}.{oldest}, below the "
-            f"{major}.{floor} floor of server/go.mod (rv4-PM-12)"
+            f"{UBUNTU}: nothing asks the go command whether the installed Go meets "
+            "server/go.mod; run `cd server && GOTOOLCHAIN=local go list -m` after the "
+            "install block (rv4-PM-12, PUB-09)"
         )
     for named in re.findall(rf"Go {major}\.(\d+)\+", yml):
         if int(named) < floor:

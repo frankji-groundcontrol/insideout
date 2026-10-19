@@ -58,13 +58,18 @@ jobs:
           git --version && curl --version | head -1 && jq --version && python3 --version && openssl version
 
       # A clean PATH, so a Go already on the runner cannot satisfy the verify
-      # step: it must be the tarball the skill installs.
-      - name: Module 3, Go 1.26+ (the skill's Ubuntu block)
+      # step: it must be the tarball the skill installs. The floor is not
+      # written down here (rv4-PUB-09): the go command itself compares the
+      # `go` line of server/go.mod with the toolchain on PATH, and
+      # GOTOOLCHAIN=local forbids fetching a newer one, so this check moves
+      # with the module.
+      - name: Module 3, Go at or above the go.mod floor (the skill's Ubuntu block)
         run: |
           blocks=$(python3 -I scripts/tests/skill_blocks.py 3)
           env -i HOME="$HOME" PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
             bash -euo pipefail -c "$blocks
-          go version | tee /dev/stderr | grep -E 'go1\.(2[6-9]|[3-9][0-9])'"
+          go version
+          cd server && GOTOOLCHAIN=local go list -m"
           echo /usr/local/go/bin >> "$GITHUB_PATH"
 
       - name: Module 4, the Docker packages the skill names exist on 24.04
@@ -89,6 +94,25 @@ jobs:
       - name: Module 6, the pinned Flutter archive the skill names exists
         run: |
           curl -fsSIL -o /dev/null -w 'HTTP %{http_code}\n' "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.44.0-stable.tar.xz"
+
+      # rv4-PUB-09: the skill pins the sha256 of each Flutter archive it
+      # unpacks. The archive is too big to download here (~1.5 GB), but the
+      # vendor's release feeds list every archive with its sha256: the pin in
+      # modules.md must be exactly that value, for all three archives.
+      - name: Module 6, the sha256 the skill pins is the vendor's for each archive
+        run: |
+          base=https://storage.googleapis.com/flutter_infra_release/releases
+          for os in linux macos; do
+            curl -fsSL -o "/tmp/releases_$os.json" "$base/releases_$os.json"
+          done
+          for archive in linux/flutter_linux_3.44.0-stable.tar.xz \
+                         macos/flutter_macos_3.44.0-stable.zip \
+                         macos/flutter_macos_arm64_3.44.0-stable.zip; do
+            sha=$(jq -er --arg a "stable/$archive" '.releases[] | select(.archive == $a) | .sha256' "/tmp/releases_${archive%%/*}.json")
+            grep -qF "$sha" skills/insideout-setup/references/modules.md \
+              || { echo "::error::modules.md does not pin the vendor sha256 $sha of $archive"; exit 1; }
+            echo "pinned: $archive $sha"
+          done
 
       # A clean PATH again: the runner already has ~/.local/bin on it, which
       # would send install.sh down its "already on PATH" branch and skip the

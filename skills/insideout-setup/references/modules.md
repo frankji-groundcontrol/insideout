@@ -79,17 +79,26 @@ otherwise install the official tarball:
 
 ```bash
 apt policy golang-go         # use apt only if it offers >= the go.mod floor
-GO_VERSION=1.27.1            # use the newest stable from https://go.dev/dl
+GO_VERSION=1.27.2            # pinned together with the two sha256 values below
 case "$(uname -m)" in
-  x86_64) GO_ARCH=amd64 ;;
-  aarch64|arm64) GO_ARCH=arm64 ;;
+  x86_64) GO_ARCH=amd64; GO_SHA256=ecbadb99091a3f46e31f5f934b068b1864eafa7995211b39eaddf76996045fe5 ;;
+  aarch64|arm64) GO_ARCH=arm64; GO_SHA256=94f3e30b8e374bc285e7dadc11e0865726b9bc6e85b841ccceaabc0214c6b7c8 ;;
   *) echo "unsupported arch"; exit 1 ;;
 esac
-curl -L -o /tmp/go.tgz "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+curl -fsSL -o /tmp/go.tgz "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz"
+echo "${GO_SHA256}  /tmp/go.tgz" | sha256sum -c - || { echo "go.tgz does not match the pinned sha256: not installing" >&2; exit 1; }
 sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf /tmp/go.tgz
 echo 'export PATH=/usr/local/go/bin:$PATH' >> ~/.bashrc    # or ~/.profile / ~/.zshrc
 export PATH=/usr/local/go/bin:$PATH
 ```
+
+The tarball is unpacked as root over `/usr/local/go`, so it is verified first:
+`sha256sum -c` runs before `rm -rf`, and a mismatch stops the block with the
+existing toolchain untouched (`exit 1` rather than `&&`: a script run under
+`set -e` does not stop on a failed command in the middle of an `&&` list). To
+install a newer release, change `GO_VERSION` and both hashes together — take
+them from the sha256 column of <https://go.dev/dl/> — and keep the version at
+or above the `go.mod` floor (`scripts/tests/check_go_floor.py` enforces it).
 
 The directory goes **first** on `PATH`: an older `go` already on the machine
 (the apt `golang-go` 1.22, a preinstalled toolchain) would otherwise win and
@@ -164,17 +173,28 @@ Needed by: C only. Pins matter — use **3.44.x**; CI pins 3.44.0.
 **Both platforms — pinned archive (recommended)**
 
 Download from the [release archive](https://docs.flutter.dev/release/archive)
-(the direct forms below were verified live):
+(the direct forms below were verified live). The archive is checked against
+the sha256 pinned here **before** it is unpacked; on a mismatch the `&&` chain
+stops and nothing is extracted:
 
 ```bash
-# macOS Apple silicon
-curl -L -o /tmp/flutter.zip \
+# macOS Apple silicon. Another target: swap the URL and the hash on the lines below —
+#   macOS Intel  .../stable/macos/flutter_macos_3.44.0-stable.zip
+#                2e9efb651b333b201487c2ac213f910c717338483ca24cbf497a067b05f048e5
+#   Ubuntu x64   .../stable/linux/flutter_linux_3.44.0-stable.tar.xz
+#                e1ec95e6c550458a34de93580cb85dac24da0e9bedb9bb42811f050ac5a0c7d5
+#                (check with sha256sum -c, unpack with tar -xJf instead of unzip -q)
+FLUTTER_SHA256=0d4d1d3f379d18aff392291be6871d63bf090a9e81078d4c4bc84e6208603dca
+curl -fsSL -o /tmp/flutter.zip \
   "https://storage.googleapis.com/flutter_infra_release/releases/stable/macos/flutter_macos_arm64_3.44.0-stable.zip"
-# macOS Intel: flutter_macos_3.44.0-stable.zip — Ubuntu x64:
-#   .../stable/linux/flutter_linux_3.44.0-stable.tar.xz
-mkdir -p ~/development && cd ~/development && unzip -q /tmp/flutter.zip   # tar -xJf on Linux
+echo "$FLUTTER_SHA256  /tmp/flutter.zip" | shasum -a 256 -c - && mkdir -p ~/development && cd ~/development && unzip -q /tmp/flutter.zip   # tar -xJf on Linux
 echo 'export PATH="$PATH:$HOME/development/flutter/bin"' >> ~/.zshrc     # ~/.bashrc on Ubuntu
 ```
+
+For another Flutter release, change the version in the URL and the hash
+together; the hashes are in the release feeds
+(`.../flutter_infra_release/releases/releases_{linux,macos}.json`, field
+`sha256` of the `archive` you download). CI compares them with this file.
 
 **Shortcut installs** — `brew install --cask flutter` (macOS) or
 `snap install flutter --classic` (Ubuntu) install the *latest*
