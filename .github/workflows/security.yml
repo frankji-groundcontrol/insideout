@@ -13,7 +13,8 @@ name: security
 #   gitleaks     secrets in the commits this push or pull request adds, with the
 #                value redacted in the log. It scans the added range, not the
 #                whole history: the old history holds findings that are an owner
-#                decision (see docs/usage/releasing.md).
+#                decision (rv4-PUB-05; the list and the click paths are in
+#                docs/changelogs/2026-10-18-rv4-remediation/w3-release-supply.md).
 # CI-config file: the first real proof is the first run after this lands.
 
 on:
