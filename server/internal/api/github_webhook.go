@@ -173,7 +173,10 @@ func (s *Server) syncGithubProject(ctx context.Context, userID, projectID uuid.U
 	}
 	owner, repo, err := github.ParseRepoURL(repoURL)
 	if err != nil {
-		return 0, repoURL, err
+		// Stored before ParseRepoURL learned to refuse it (a foreign host, a
+		// dot-only name): the owner fixes it by linking the repo again, and
+		// nothing is asked of GitHub for it.
+		return 0, repoURL, fmt.Errorf("%w: %v", errRepoURLInvalid, err)
 	}
 	token, err := s.commitToken(ctx, projectID, owner, repo, installationID)
 	if err != nil {
@@ -228,4 +231,7 @@ func (s *Server) commitToken(ctx context.Context, projectID uuid.UUID, owner, re
 	return s.ghTokens.RepoToken(ctx, owner, repo)
 }
 
-var errNoRepoLinked = errors.New("no repo linked")
+var (
+	errNoRepoLinked   = errors.New("no repo linked")
+	errRepoURLInvalid = errors.New("the stored repo link is not a GitHub repository")
+)

@@ -217,6 +217,13 @@ func (t *InstallationTokens) RepoVisible(ctx context.Context, owner, repo string
 // FetchGuideFile downloads insideout.yaml from the repo at a ref.
 // token may be empty (public repos work unauthenticated).
 func FetchGuideFile(ctx context.Context, token, owner, repo, ref string) ([]byte, error) {
+	// PathEscape leaves "." and ".." alone and an empty segment collapses into
+	// "//": either reshapes the path of a request that carries the installation
+	// token, and the names come from a delivery payload (SEC-06). Other odd
+	// characters stay escaped below.
+	if strings.Trim(owner, ".") == "" || strings.Trim(repo, ".") == "" {
+		return nil, fmt.Errorf("github: %q/%q is not a repo name", owner, repo)
+	}
 	// Escape what gets interpolated: a raw '#' in a segment would start a
 	// fragment and a '&' in the ref would inject query parameters (SEC-06).
 	url := fmt.Sprintf("%s/repos/%s/%s/contents/insideout.yaml?ref=%s",

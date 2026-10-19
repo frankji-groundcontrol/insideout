@@ -113,6 +113,8 @@ func (s *Server) writeGithubError(w http.ResponseWriter, err error, upstreamMsg 
 		httpx.WriteError(w, http.StatusTooManyRequests, "GitHub rate limit hit — try again shortly", "GITHUB_RATE_LIMITED", map[string]any{"retry_after_seconds": rle.RetryAfterSeconds})
 	case errors.Is(err, github.ErrRepoNotFound):
 		httpx.WriteError(w, http.StatusNotFound, "GitHub repository not found — private repo, or check the name", "GITHUB_NOT_FOUND", nil)
+	case errors.Is(err, errRepoURLInvalid):
+		httpx.WriteError(w, http.StatusBadRequest, "the linked repository URL is not a GitHub repository — link the repository again", "GITHUB_REPO_URL_INVALID", nil)
 	case errors.Is(err, errRepoNotVisible):
 		httpx.WriteError(w, http.StatusBadRequest, "GitHub does not show this repository to InsideOut — install the InsideOut GitHub App on it, or link a public repository", "GITHUB_REPO_NOT_VISIBLE", nil)
 	default:
