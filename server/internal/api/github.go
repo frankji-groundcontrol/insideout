@@ -113,9 +113,17 @@ func (s *Server) writeRepoStoreError(w http.ResponseWriter, err error) {
 // do not reach the client (F12); upstreamMsg is what the client sees instead.
 func (s *Server) writeGithubError(w http.ResponseWriter, err error, upstreamMsg string) {
 	var rle *github.RateLimitError
+	var refused *github.AccessRefusedError
 	switch {
 	case errors.As(err, &rle):
 		httpx.WriteError(w, http.StatusTooManyRequests, "GitHub rate limit hit — try again shortly", "GITHUB_RATE_LIMITED", map[string]any{"retry_after_seconds": rle.RetryAfterSeconds})
+	case errors.As(err, &refused):
+		// GitHub said no and waiting will not change it (a blocked repository, a
+		// permission the App was not granted, a suspended installation): not a
+		// gateway failure to retry, so a 400 that carries GitHub's own words
+		// (cleaned and capped by the client) for the user to act on at GitHub.
+		s.log.Warn("github refused access", "error", err)
+		httpx.WriteError(w, http.StatusBadRequest, "GitHub refused access to this repository: "+refused.Message, "GITHUB_ACCESS_REFUSED", nil)
 	case errors.Is(err, github.ErrRepoNotFound):
 		httpx.WriteError(w, http.StatusNotFound, "GitHub repository not found — private repo, or check the name", "GITHUB_NOT_FOUND", nil)
 	case errors.Is(err, errRepoURLInvalid):

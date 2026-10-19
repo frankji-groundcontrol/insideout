@@ -163,20 +163,23 @@ func TestRvGhBindARepoHeldByAnotherWorkspaceIsAnsweredLikeOneGitHubDoesNotShow(t
 	}
 }
 
-// rvGhBindRefuse makes GitHub answer 403 with message, and no rate-limit header,
-// to the requests whose path ends in suffix; everything else goes on to the fake
-// installed before it.
-func rvGhBindRefuse(t *testing.T, suffix, message string) {
+// rvGhBindRefuse makes GitHub answer 403 with message to the requests whose path
+// ends in suffix; everything else goes on to the fake installed before it. The
+// answer carries no rate-limit header unless header/value pairs are given.
+func rvGhBindRefuse(t *testing.T, suffix, message string, headers ...string) {
 	t.Helper()
 	next := http.DefaultTransport
 	http.DefaultTransport = roundTripFunc(func(r *http.Request) (*http.Response, error) {
 		if r.URL.Hostname() != "api.github.com" || !strings.HasSuffix(r.URL.Path, suffix) {
 			return next.RoundTrip(r)
 		}
+		h := http.Header{"Content-Type": {"application/json"}}
+		for i := 0; i+1 < len(headers); i += 2 {
+			h.Set(headers[i], headers[i+1])
+		}
 		return &http.Response{
-			StatusCode: http.StatusForbidden, Status: "403 Forbidden", Request: r,
-			Header: http.Header{"Content-Type": {"application/json"}},
-			Body:   io.NopCloser(strings.NewReader(`{"message":` + strconv.Quote(message) + `}`)),
+			StatusCode: http.StatusForbidden, Status: "403 Forbidden", Request: r, Header: h,
+			Body: io.NopCloser(strings.NewReader(`{"message":` + strconv.Quote(message) + `}`)),
 		}, nil
 	})
 	t.Cleanup(func() { http.DefaultTransport = next })
@@ -222,5 +225,21 @@ func TestRvGhBindAGithubRefusalWhileSyncingIsNotABadGateway(t *testing.T) {
 	got := decodeAs[struct{ Code, Error string }](t, body)
 	if got.Code != "GITHUB_ACCESS_REFUSED" || !strings.Contains(got.Error, why) {
 		t.Errorf("answer = %s, want code GITHUB_ACCESS_REFUSED carrying GitHub's words %q", body, why)
+	}
+}
+
+// The refusal is not a rate limit: the same 403 that carries a spent quota keeps
+// its 429 and its retry hint.
+func TestRvGhBindASpentQuotaIsStillARateLimitNotARefusal(t *testing.T) {
+	f := newFakeGitHub(t)
+	w := appServerWorld(t)
+	name := uniqueRepo()
+	f.addRepo(name, fakeRepo{private: true, install: 77})
+	rvGhBindRefuse(t, "/installation", "API rate limit exceeded", "X-RateLimit-Remaining", "0")
+
+	code, body := putRepo(t, w, name)
+	expect(t, "link while the quota is spent", code, body, http.StatusTooManyRequests)
+	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_RATE_LIMITED" {
+		t.Errorf("code = %q, want GITHUB_RATE_LIMITED; body %s", got, body)
 	}
 }
