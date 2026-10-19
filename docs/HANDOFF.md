@@ -14,12 +14,14 @@ path and current warnings, never history.
 way.** [The report](review/2026-10-18-multirole-4/README.md) (145 findings,
 10 High) says the core held but the front door and the gates did not. The
 fixes are four waves on the local branch `rv4/integration` (base `main` @
-`d53035a`, nothing pushed): waves 0 to 3 are integrated and recorded in the
-[remediation index](changelogs/2026-10-18-rv4-remediation/index.md); resume at
-the proposed wave 4 and the whole-change adversarial review
-([carry-forward](changelogs/2026-10-18-rv4-remediation/wave-3.md#carry-forward-into-wave-4)),
-with the [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
-and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md). `main`
+`d53035a`, nothing pushed). Waves 0 to 4 are integrated. Wave 4 head is
+`97cf4c06` (499 commits above `d53035a`); the gate re-run is in
+[wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). Resume at the
+open prose to-dos and the wave-4b carry-forward in that file. Do not push
+until the owner says so. The
+[execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
+and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md) still
+govern. `main`
 still has the red test (`TestProjectQuietFlagged`, wall clock, red since
 2026-10-16) until that branch lands; do not tag a release from `main` before
 it does (the release test gate is plan row 1.5). The first CI run after a push
