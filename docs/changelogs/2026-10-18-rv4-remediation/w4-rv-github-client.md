@@ -10,8 +10,9 @@ the code these findings sit on is described in
 [w3-github-evidence.md](w3-github-evidence.md).
 
 Server only: two source files (`server/internal/github/github.go` and
-`appauth.go`), two new test files and two existing test files edited by a helper
-call. No route, no migration (slot `20261018220000` stays unused), no dependency,
+`appauth.go`), two new test files and two existing test files edited to clear the
+new memory between cases. No route, no migration (slot `20261018220000` stays
+unused), no dependency,
 no environment variable, no client change, no change to a response shape. Eight
 rows: 3 `FIXED`, 3 `PARTIAL`, 2 `DEFERRED_OWNER`. The only owner decision is
 F171 with F174; it is recorded, not coded. No address, host, secret or token is
@@ -87,13 +88,14 @@ spelled in this fragment.
 link check proves that this server can read the repo, not that the member linking
 it may. It is the open decision 2 of
 [w3-github-evidence.md](w3-github-evidence.md) ("Owner decision"), seen again by
-the whole-change review and now reproduced.
+the whole-change review and now reproduced. Until it is decided nothing changes:
+the first member to link an installed private repo holds it.
 
 **Reproduction.** A scratch test, deleted afterwards (not committed, nothing in
 the tree); real PostgreSQL, real handlers, real RLS, an in-process fake GitHub as
 the HTTP transport with one App installation that covers tenant X's private repo.
-Y is another tenant with no relation to X. Output kept under the reports folder
-named below.
+Y is another tenant with no relation to X. The output is kept as
+`/private/tmp/insideout-rv4/reports/w4-rv-github-client-F171-F174-repro.txt`.
 
 | Step | Answer |
 | --- | --- |
@@ -101,7 +103,8 @@ named below.
 | Y runs a sync | "added 2 commit line(s)"; Y's timeline holds both commit subjects |
 | What the fake GitHub saw | `GET /repos/{o}/{r}/commits` carrying X's installation token |
 | X links its own repo | 409 `GITHUB_REPO_ALREADY_LINKED` (first come wins; X is locked out) |
-| Y links an installed private repo / an uninstalled private repo / a name GitHub never heard of | 200 / 400 `GITHUB_REPO_NOT_VISIBLE` / the same 400 |
+| Y links a private repo the App is not installed on | 400 `GITHUB_REPO_NOT_VISIBLE` |
+| Y links a name GitHub never heard of | the same 400 |
 
 So any member can name an installed private repo, bind it before its owner, and
 read its commit subjects; and the 200, 400 and 409 answers tell any member which
@@ -122,9 +125,9 @@ lists the first, second and fourth):
 4. Approval by an instance administrator. No code to speak of, an operator task per
    link.
 
-No option is decision-free: each one refuses the link of a legitimate owner until
-it is proven, which is the whole private-repo feature. What an operator can do
-today: on an instance with more than one workspace, install the App only on
+None is decision-free: each one refuses a legitimate owner's link until the proof
+is given, which changes the private-repo flow for everyone, so none was coded.
+What an operator can do today: on an instance with more than one workspace, install the App only on
 repositories whose commit subjects every member of the instance may read, or run
 one instance per trust boundary. A single-workspace instance is not exposed.
 
@@ -203,12 +206,12 @@ INTEGRATOR TODO, none in files this cluster owns:
   requests an hour for the whole deployment, and that a link's public check is
   remembered for 5 minutes (1 for a no) (F185).
 - F183: a new migration that mirrors `www.github.com` (and a login before the host,
-  if wanted) in `insideout._canonical_repo_url` and rewrites the stored rows; then
-  move `"www.github.com/own/repo"` out of the refused part of the corpus in
-  `server/internal/store/project_repo_unique_canonical_test.go`, flip the pin in
-  `server/internal/github/github_segments_test.go`, and widen `ParseRepoURL` in the
-  same change. The one place to widen in Go is the `github.com` comparison in
-  `ParseRepoURL`.
+  if wanted) in `insideout._canonical_repo_url` and rewrites the stored rows, and
+  `server/internal/store/project_repo_unique_canonical_test.go`: move
+  `"www.github.com/own/repo"` out of the refused part of the corpus. The Go side
+  (the `github.com` comparison in `ParseRepoURL`, and the pin in
+  `server/internal/github/github_segments_test.go`, both files of this cluster) is
+  left until the migration exists, so that Go and SQL never disagree.
 - F171, F174: when the owner decides, one sentence in
   `docs/architecture/product-subsystems.md`, "GitHub evidence loop": on an instance
   with several workspaces, any member can read the commit subjects of any
@@ -267,8 +270,9 @@ Mutation checks, each restored from git (the tree was clean after each):
 
 ## Verification
 
-Gates at `65d27646` (this fragment is the only commit after it), private
-PostgreSQL 18, a skip would count as red:
+Gates at `65d27646`; only documentation follows it (this fragment). Build, vet,
+gofmt and the github package were run again at the head. Private PostgreSQL 18, a
+skip would count as red:
 
 | Gate | Result |
 | --- | --- |
