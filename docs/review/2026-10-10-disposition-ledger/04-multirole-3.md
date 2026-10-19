@@ -32,7 +32,10 @@ Counts, recomputed 2026-10-18 (rv4-CLOSE-04): 83 rows = 68 Fixed + 1 Fixed (funn
 
 `scripts/tests/check_ledger_honesty.py` keeps this line equal to the table and
 checks, where git can see the cited commits, that no Fixed row's fix changed
-only `docs/` and no Recorded row's fix changed anything outside it.
+only `docs/` and no Recorded row's fix changed anything outside it. It also
+fails the plans board and the review-3 records that restate the tally when
+they claim more rows closed by code than the table labels Fixed, or leave the
+Recorded rows out.
 
 | ID | Sev | Status | Resolution |
 |---|---|---|---|

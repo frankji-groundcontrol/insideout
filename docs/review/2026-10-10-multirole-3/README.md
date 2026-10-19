@@ -89,7 +89,10 @@ throughout; no `.env` content was read.
 ## Reading order
 
 0. **Outcome:** the plan was executed 2026-10-11 — four verified waves
-   (`5c8f54f..4464330`) close 73 of 83 rows by code; every row's disposition
+   (`5c8f54f..4464330`) close 63 of 83 rows by code; the rest are 10 recorded
+   (a docs-only fix; recomputed 2026-10-18, rv4-CLOSE-04), 3 satisfied by the
+   report, 1 parked and 6 owner-blocked (closed by the owner the same day).
+   Every row's disposition
    is in the [ledger](../2026-10-10-disposition-ledger/04-multirole-3.md)
    and the changes in the
    [changelog](../../changelogs/2026-10-11-rv3-remediation/index.md).
