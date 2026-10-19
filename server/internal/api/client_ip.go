@@ -23,9 +23,11 @@ var forwardedIgnoredWarned sync.Map // map[*Server]struct{}
 // Behind N trusted proxies each one appends the address it saw to the right of
 // whatever the client sent, so the Nth entry from the right is the one the
 // outermost trusted proxy appended — the client as that proxy saw it — and
-// every entry to its left is client-controlled and ignored. Hosted, the chain
-// is browser → Railway edge → nginx → server, the edge appends and nginx
-// passes the header through untouched (client/nginx.conf, REL-13): one hop.
+// every entry to its left is client-controlled and ignored. Which proxy appends
+// is NGINX_XFF in client/nginx.conf. Hosted, the chain is browser → Railway
+// edge → nginx → server and NGINX_XFF stays $http_x_forwarded_for: the edge
+// appends, nginx passes the chain through (REL-13), one hop. Compose sets
+// NGINX_XFF to $proxy_add_x_forwarded_for, so nginx itself is that one hop.
 // Fewer entries than hops, or an entry that is not an IP address, falls back
 // to the peer: a shared bucket is the safe-closed answer when the count and
 // the chain disagree.

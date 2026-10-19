@@ -133,6 +133,9 @@ send and logs it), so the 200 is uniform in time as well as in body (rv4-SEC-03,
 rv4-REL-07). Per-client throttles key on the TCP peer, or on the address
 `INSIDEOUT_TRUSTED_PROXY_HOPS` hops from the right of `X-Forwarded-For` when the
 server sits behind proxies (rv4-SEC-02; see [deployment](../usage/deployment.md)).
+`NGINX_XFF` in the nginx template chooses that chain: the hosted image passes
+the edge's header through, and the compose stack ends it in the address nginx
+saw, so both topologies are one hop.
 
 ## Store layer
 

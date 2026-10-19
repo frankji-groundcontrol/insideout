@@ -110,28 +110,40 @@ tokens (`INSIDEOUT_CORS_ORIGINS=localhost` matches loopback). Do not
 publish the server port to the public internet if the nginx proxy is
 the public front door.
 
-Client-IP trust chain (REL-13, rv4-SEC-02): on Railway the request passes
-browser → Railway edge → nginx → server. The edge appends the real
-client IP to `X-Forwarded-For` (client-supplied spoofed values stay to
-its left), and nginx passes that chain through untouched instead of
-appending its own hop. The server takes the Nth entry from the right, N
-being `INSIDEOUT_TRUSTED_PROXY_HOPS`: the hosted value is **1**, so that
-entry is the edge-appended client IP and the per-IP auth throttle stays
-per-client. The default is 0, which ignores the header and keys on the TCP
-peer. A fewer-entries chain, or an entry that is not an IP address, falls back
-to the peer too.
+Client-IP trust chain (REL-13, rv4-SEC-02): the server takes the Nth entry
+from the right of `X-Forwarded-For`, N being `INSIDEOUT_TRUSTED_PROXY_HOPS`.
+An unset server trusts nothing and keys on the TCP peer (the binary default
+is 0). A shorter chain, or an entry that is not an IP address, falls back to
+the peer too. What nginx writes is `NGINX_XFF` in `client/nginx.conf`.
 
-**A deployment behind a proxy must set it.** At 0 every client shares the
-proxy's address and so one throttle bucket: eight failed logins from anyone
-lock everyone out, and sign-in refresh is capped at 30 a minute for the whole
-population. The server logs one WARN naming the variable the first time it
-meets a header it is ignoring. Local compose has no edge in front of nginx, so
-the default 0 is right there (the bundled nginx passes the header through
-untouched, so trusting it would let any client choose its own bucket), and the
-compose `server` port is published on `127.0.0.1` only: that port is the one
-place a client could write the header itself, which makes the advice above, not
-to publish the server port, true by default. Set `INSIDEOUT_TRUSTED_PROXY_HOPS=1`
-on the hosted `server` before it receives this change.
+On Railway the request passes browser → Railway edge → nginx → server. The
+edge appends the real client IP (a client-supplied value stays to its left),
+and the image's `NGINX_XFF` default `$http_x_forwarded_for` passes that chain
+through untouched. The hosted value is **1**, so the counted entry is the
+edge-appended client IP. Set `INSIDEOUT_TRUSTED_PROXY_HOPS=1` on the hosted
+`server` before it receives this change.
+
+The shipped compose stack has nothing in front of nginx. It sets `NGINX_XFF`
+to `$proxy_add_x_forwarded_for` (nginx appends the peer it saw) and defaults
+`INSIDEOUT_TRUSTED_PROXY_HOPS` to **1**, so the rightmost entry is that peer
+and a value the client wrote stays to its left. Add one to
+`INSIDEOUT_TRUSTED_PROXY_HOPS` for every extra appending proxy in front of
+the compose nginx: a proxy that appends the client address moves the client
+one entry left. With `INSIDEOUT_TRUSTED_PROXY_HOPS` at 1 or more, bind the
+published client port (`CLIENT_PORT`) to `127.0.0.1` or firewall it, unless
+nothing else can reach it. A direct connection can then write the entry the
+server counts, because the hop count includes a proxy the caller skipped.
+The compose `server` port is already published on `127.0.0.1` only, which is
+the one place a client could write the header with no nginx in front.
+
+**Leaving the count at 0 behind a proxy shares one bucket.** Eight failed
+logins from anyone lock everyone out for 15 minutes, sign-in refresh is
+capped at 30 a minute for the whole population, and the resend cooldown is
+one shared key: one user's password-reset request makes the next person's
+login-code mail within 60 seconds come back 200 with no email and no log
+line. The server logs one WARN naming the variable the first time it meets a
+header it is ignoring. That WARN does not fire when the proxy sends no
+header, which is why compose appends instead of documenting a shared bucket.
 
 Bounds the server enforces on its own, whatever the proxy does:
 

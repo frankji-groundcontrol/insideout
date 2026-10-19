@@ -95,15 +95,14 @@ services:
       INSIDEOUT_ACCESS_TTL: ${INSIDEOUT_ACCESS_TTL:-15m}
       INSIDEOUT_REFRESH_TTL: ${INSIDEOUT_REFRESH_TTL:-720h}
       # How many reverse proxies in front of the server append the address
-      # they saw to X-Forwarded-For (rv4-SEC-02). 0 trusts no header: the auth
-      # throttle and resend cooldown key on the TCP peer. The bundled nginx
-      # passes the client's header through WITHOUT appending
-      # (client/nginx.conf), so trusting it here would let any client pick its
-      # own bucket; 0 is the only safe value for this stack on its own, and
-      # every client then shares nginx's bucket. Put one proxy that appends
-      # the client address in front of nginx (the hosted Railway edge is one)
-      # and set 1.
-      INSIDEOUT_TRUSTED_PROXY_HOPS: ${INSIDEOUT_TRUSTED_PROXY_HOPS:-0}
+      # they saw to X-Forwarded-For (rv4-SEC-02). The bundled nginx ends the
+      # chain in the peer it saw (client NGINX_XFF below), so 1 is the hop
+      # this stack adds and the rightmost entry is that peer. The server's
+      # own unset default is 0, which trusts no header and is right only when
+      # nothing sits in front. Add one for every further appending proxy in
+      # front of this nginx. The hosted image does not append; the edge is
+      # its one hop, so hosted stays at 1.
+      INSIDEOUT_TRUSTED_PROXY_HOPS: ${INSIDEOUT_TRUSTED_PROXY_HOPS:-1}
       # GitHub integration. The webhook secret verifies HMAC of POST
       # /api/v1/hooks/github; APP_ID + PRIVATE_KEY mint installation access
       # tokens (PRIVATE_KEY is the .pem with \n-escaped newlines;
@@ -148,10 +147,16 @@ services:
       # container start): the compose `server` service, instead of the
       # Dockerfile-baked Railway private hostname.
       NGINX_API_UPSTREAM: http://server:8080
+      # $$ is compose's escape for a literal dollar. nginx appends the peer
+      # it saw: the one hop the server default above counts. The image
+      # default stays the hosted pass-through.
+      NGINX_XFF: $$proxy_add_x_forwarded_for
     ports:
       # nginx-unprivileged listens on 8080 in-container. The 5173 default
       # keeps the server's default INSIDEOUT_PUBLIC_URL
       # (http://localhost:5173) truthful for emailed links on this host.
+      # On every interface: with hops at 1 or more, bind CLIENT_PORT to
+      # 127.0.0.1 or firewall it unless nothing else can reach it.
       - "${CLIENT_PORT:-5173}:8080"
     healthcheck:
       # busybox wget against nginx's /healthz stub (client/nginx.conf).

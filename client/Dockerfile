@@ -20,6 +20,10 @@ FROM nginxinc/nginx-unprivileged:1.27-alpine
 # container start; the baked NGINX_API_UPSTREAM default keeps Railway
 # working, and docker-compose overrides it with the `server` service.
 ENV NGINX_API_UPSTREAM=http://server.railway.internal:8080
+# Hosted default for ${NGINX_XFF} in nginx.conf: pass the edge's
+# X-Forwarded-For through. The backslash stops Docker expanding the
+# variable to empty at build time. Compose overrides it.
+ENV NGINX_XFF=\$http_x_forwarded_for
 # The entrypoint then exports NGINX_LOCAL_RESOLVERS (the nameservers in
 # /etc/resolv.conf) for nginx.conf's `resolver`, so the API upstream is looked
 # up per request and follows a redeployed `server` (BUG-027).

@@ -100,7 +100,7 @@ themselves when it is unset.
 | `DATABASE_OWNER_URL` | no | empty | DSN for `insideout_owner` (NOSUPERUSER) used only to apply migrations. Empty = migrate uses `DATABASE_URL`, which must already be that owner. Required on the bundled postgres, whose `DATABASE_URL` is the app role: `env.sh check` fails when it is empty there. |
 | `INSIDEOUT_JWT_SECRET` | **yes** | — | HMAC signing secret for access/refresh JWTs. **Min 32 characters** (fail-fast). |
 | `INSIDEOUT_ADDR` | no | `:8080` | HTTP listen address (host:port). |
-| `INSIDEOUT_TRUSTED_PROXY_HOPS` | no | `0` | How many reverse proxies in front of the server append to `X-Forwarded-For`. `0` keys the per-client throttles on the TCP peer (`RemoteAddr`) and ignores the header (logged once if it is sent); `N` takes the address `N` hops from the right. A non-integer or negative value fails startup. `docker-compose.yml` passes it through. |
+| `INSIDEOUT_TRUSTED_PROXY_HOPS` | no | `0` | How many reverse proxies in front of the server append to `X-Forwarded-For`. The server's own default is `0` (key the per-client throttles on the TCP peer and ignore the header, logged once if it is sent). The shipped compose stack defaults to `1`, because its nginx appends the peer it saw. `N` takes the address `N` hops from the right. A non-integer or negative value fails startup. |
 | `INSIDEOUT_ACCESS_TTL` | no | `15m` | Access-token lifetime (Go `time.Duration`). |
 | `INSIDEOUT_REFRESH_TTL` | no | `720h` | Refresh-token lifetime (Go `time.Duration`). |
 | `INSIDEOUT_DEV_CORS` | no | off | Permissive-CORS toggle for dev; on only when the value is exactly `1`. |
@@ -115,6 +115,13 @@ themselves when it is unset.
 | `INSIDEOUT_GH_PRIVATE_KEY` | no | — | The App's `.pem` with newlines escaped as literal `\n` on a single line. Ignored when `INSIDEOUT_GH_PRIVATE_KEY_FILE` is set. |
 | `INSIDEOUT_GH_PRIVATE_KEY_FILE` | no | — | Path to the App's `.pem` on disk; wins over the escaped inline var when set — the file is read raw, no `\n` unescaping. |
 | `INSIDEOUT_GH_WEBHOOK_SECRET` | no | — | HMAC-SHA256 shared secret (`X-Hub-Signature-256`) verifying GitHub App webhook deliveries; the same string is configured on the App at github.com. Empty disables `POST /api/v1/hooks/github`. |
+
+Add one to `INSIDEOUT_TRUSTED_PROXY_HOPS` for every extra appending proxy in
+front of the compose nginx. With the value at 1 or more, bind the published
+client port (`CLIENT_PORT`) to `127.0.0.1` or firewall it, unless nothing else
+can reach it: a direct connection can write the entry the server counts when
+a further proxy is also trusted. The hosted image does not append (the edge
+already did), so hosted stays at 1. See [deployment](deployment.md).
 
 ### AI provider
 
