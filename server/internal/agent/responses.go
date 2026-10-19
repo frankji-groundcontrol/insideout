@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -23,6 +26,9 @@ type ResponsesStreamer struct {
 	model       string
 	client      *http.Client
 	idleTimeout time.Duration
+	// noParallelFlag is set the first time the provider refuses
+	// parallel_tool_calls; requests stop carrying it from then on (rv4-FR-F83).
+	noParallelFlag atomic.Bool
 }
 
 func NewResponsesStreamer(baseURL, authToken, model string) (*ResponsesStreamer, error) {
@@ -122,6 +128,7 @@ type responsesRequest struct {
 	// ParallelToolCalls is sent as false whenever tools are offered: the coach
 	// runs one tool call per iteration, so a second call in the same response
 	// could only be dropped (rv4-AIDEV-06). A pointer so false is not omitted.
+	// doStream leaves it out once the provider has refused the field.
 	ParallelToolCalls *bool `json:"parallel_tool_calls,omitempty"`
 }
 
@@ -137,13 +144,33 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 	if forceTool != "" {
 		reqBody.ToolChoice = map[string]any{"type": "function", "name": forceTool}
 	}
-	if len(reqBody.Tools) > 0 {
+	withFlag := len(reqBody.Tools) > 0 && !s.noParallelFlag.Load()
+	turn, refused, err := s.post(ctx, reqBody, withFlag, onDelta)
+	if !refused {
+		return turn, err
+	}
+	// A gateway that does not know parallel_tool_calls answers 400 naming it,
+	// which would otherwise read as a misconfigured provider on every turn
+	// (rv4-FR-F83). Nothing was streamed, so ask again without it and stop
+	// sending it; the notice is logged once, by whichever turn learns it first.
+	if s.noParallelFlag.CompareAndSwap(false, true) {
+		slog.Warn("responses provider rejected parallel_tool_calls; sending requests without it from now on",
+			"provider", responsesProvider, "model", s.model)
+	}
+	turn, _, err = s.post(ctx, reqBody, false, onDelta)
+	return turn, err
+}
+
+// post sends one Responses request and reads its stream into a Turn. refused
+// reports a 400 that names parallel_tool_calls on a request that carried it.
+func (s *ResponsesStreamer) post(ctx context.Context, reqBody responsesRequest, withFlag bool, onDelta func(string)) (Turn, bool, error) {
+	if withFlag {
 		oneCall := false
 		reqBody.ParallelToolCalls = &oneCall
 	}
 	body, err := json.Marshal(reqBody)
 	if err != nil {
-		return Turn{}, fmt.Errorf("agent: marshal responses request: %w", err)
+		return Turn{}, false, fmt.Errorf("agent: marshal responses request: %w", err)
 	}
 
 	parent := ctx
@@ -152,7 +179,7 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, LLMChatURL(s.baseURL, "responses"), bytes.NewReader(body))
 	if err != nil {
-		return Turn{}, fmt.Errorf("agent: build responses request: %w", err)
+		return Turn{}, false, fmt.Errorf("agent: build responses request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 	httpReq.Header.Set("Accept", "text/event-stream")
@@ -161,13 +188,23 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 	resp, err := s.client.Do(httpReq)
 	if err != nil {
 		if ctx.Err() != nil {
-			return Turn{}, ctx.Err()
+			return Turn{}, false, ctx.Err()
 		}
-		return Turn{}, fmt.Errorf("%w: %s", ErrProviderTransient, err.Error())
+		return Turn{}, false, fmt.Errorf("%w: %s", ErrProviderTransient, err.Error())
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return Turn{}, providerHTTPError(responsesProvider, resp)
+		// providerHTTPError words the failure from the body but not from every
+		// member of it (a gateway may name the field only in "param"), so keep
+		// the bytes it reads and look for the field in those.
+		var seen bytes.Buffer
+		resp.Body = struct {
+			io.Reader
+			io.Closer
+		}{io.TeeReader(resp.Body, &seen), resp.Body}
+		refused := withFlag && resp.StatusCode == http.StatusBadRequest
+		httpErr := providerHTTPError(responsesProvider, resp)
+		return Turn{}, refused && strings.Contains(seen.String(), "parallel_tool_calls"), httpErr
 	}
 
 	idle := s.idleTimeout
@@ -180,11 +217,11 @@ func (s *ResponsesStreamer) doStream(ctx context.Context, system string, msgs []
 	turn, err := parseResponsesStream(resp.Body, tick, onDelta)
 	if err != nil && ctx.Err() != nil {
 		if parent.Err() == nil {
-			return Turn{}, ErrUpstreamStall
+			return Turn{}, false, ErrUpstreamStall
 		}
-		return Turn{}, parent.Err()
+		return Turn{}, false, parent.Err()
 	}
-	return turn, err
+	return turn, false, err
 }
 
 func toResponsesInput(msgs []Message) []map[string]any {
