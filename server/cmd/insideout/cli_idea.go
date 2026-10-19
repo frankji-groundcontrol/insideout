@@ -58,7 +58,7 @@ func runIdeaCommand(args []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "idea convert:", err)
 			return true, 2
 		}
-		return printJSON(clientFromFlag(*api).IdeaConvertWithLocale(fs.Args()[0], lang))
+		return printJSON(clientFromFlag(*api).IdeaConvert(fs.Args()[0], lang))
 	}
 	fmt.Fprintln(os.Stderr, "unknown idea subcommand:", sub)
 	return true, 2

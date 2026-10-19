@@ -14,11 +14,16 @@ import (
 // language. These tests pin the client half: the locale rides the request
 // body, and ConvertLocale chooses it the way an operator expects.
 
-func TestIdeaConvertWithLocaleCarriesTheLocaleInTheBody(t *testing.T) {
-	for _, tc := range []struct{ name, locale, wantBody string }{
-		{"en", "en", `{"locale":"en"}`},
-		{"zh", "zh", `{"locale":"zh"}`},
-		{"none keeps the empty body", "", `{}`},
+func TestIdeaConvertCarriesTheLocaleInTheBody(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		locale   []string // the optional trailing argument
+		wantBody string
+	}{
+		{"en", []string{"en"}, `{"locale":"en"}`},
+		{"zh", []string{"zh"}, `{"locale":"zh"}`},
+		{"an empty locale sends none", []string{""}, `{}`},
+		{"no locale keeps the empty body", nil, `{}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var method, path, body string
@@ -29,8 +34,8 @@ func TestIdeaConvertWithLocaleCarriesTheLocaleInTheBody(t *testing.T) {
 			}))
 			t.Cleanup(srv.Close)
 
-			if _, err := New(srv.URL).IdeaConvertWithLocale("i1", tc.locale); err != nil {
-				t.Fatalf("IdeaConvertWithLocale: %v", err)
+			if _, err := New(srv.URL).IdeaConvert("i1", tc.locale...); err != nil {
+				t.Fatalf("IdeaConvert: %v", err)
 			}
 			if method != http.MethodPost || path != "/ideas/i1/convert" || body != tc.wantBody {
 				t.Fatalf("sent %s %s %s, want POST /ideas/i1/convert %s", method, path, body, tc.wantBody)

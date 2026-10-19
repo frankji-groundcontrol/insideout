@@ -178,7 +178,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			if err != nil {
 				return "", err
 			}
-			return call(c.IdeaConvertWithLocale(reqStr(req, "idea_id"), locale))
+			return call(c.IdeaConvert(reqStr(req, "idea_id"), locale))
 		})
 	addTextTool("proposal_decide", "Human accept/reject of an agent proposal (owner or admin; the Decision Log entry)",
 		[]mcp.ToolOption{strReq("update_id", "proposal update id"), strReq("decision", "accepted|rejected"), strOpt("reason", "why"), mcp.WithBoolean("apply", mcp.Description("apply the proposal structured items on acceptance"))},

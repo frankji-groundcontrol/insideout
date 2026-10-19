@@ -20,18 +20,14 @@ func (c *Client) IdeaCreate(workspaceID, title, content string) (json.RawMessage
 }
 
 // IdeaConvert turns an idea into a PRD + coach conversation
-// (POST /ideas/{id}/convert). It names no coaching language, so the server
-// keeps its default (zh); the CLI and the MCP server call IdeaConvertWithLocale.
-func (c *Client) IdeaConvert(ideaID string) (json.RawMessage, error) {
-	return c.IdeaConvertWithLocale(ideaID, "")
-}
-
-// IdeaConvertWithLocale is IdeaConvert with the language the coach speaks
-// ("en" or "zh", see ConvertLocale); an empty locale sends none.
-func (c *Client) IdeaConvertWithLocale(ideaID, locale string) (json.RawMessage, error) {
+// (POST /ideas/{id}/convert). The optional locale is the language the coach
+// speaks ("en" or "zh", see ConvertLocale); without one the body names none
+// and the server keeps its default (zh). It is a trailing variadic rather than
+// a second method so the escape sweep keeps one row per URL shape.
+func (c *Client) IdeaConvert(ideaID string, locale ...string) (json.RawMessage, error) {
 	body := map[string]any{}
-	if locale != "" {
-		body["locale"] = locale
+	if len(locale) > 0 && locale[0] != "" {
+		body["locale"] = locale[0]
 	}
 	var out json.RawMessage
 	if err := c.do(http.MethodPost, apiPath("ideas", ideaID, "convert"), body, &out); err != nil {
