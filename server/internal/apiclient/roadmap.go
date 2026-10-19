@@ -2,10 +2,7 @@ package apiclient
 
 import (
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
-	"strings"
 )
 
 // BuildFromPrd drafts a branched roadmap and writes nothing
@@ -147,29 +144,11 @@ func (c *Client) SyncGithub(projectID string) (json.RawMessage, error) {
 }
 
 // Guide returns the scaffolded insideout.yaml matching guide
-// (GET /projects/{id}/guide, text/yaml) for the user to commit.
+// (GET /projects/{id}/guide, text/yaml) for the user to commit. It rides the
+// shared raw GET, so a 401 is the same actionable ErrUnauthorized as everywhere
+// (rv4-FR-F169).
 func (c *Client) Guide(projectID string) ([]byte, error) {
-	req, cancel, err := c.newRequest(http.MethodGet, apiPath("projects", projectID, "guide"), nil)
-	if err != nil {
-		return nil, err
-	}
-	defer cancel()
-	if c.token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.token)
-	}
-	resp, err := c.hc.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("apiclient: GET guide: %w", err)
-	}
-	defer resp.Body.Close()
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
-	if err != nil {
-		return nil, fmt.Errorf("apiclient: read guide: %w", err)
-	}
-	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("apiclient: GET guide: %s: %s", resp.Status, strings.TrimSpace(string(raw)))
-	}
-	return raw, nil
+	return c.getBytes(apiPath("projects", projectID, "guide"))
 }
 
 // Cursor moves this session's canvas cursor (POST /projects/{id}/cursor).
