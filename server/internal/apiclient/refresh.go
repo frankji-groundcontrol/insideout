@@ -73,8 +73,9 @@ func (t renewTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 // renewSession returns the access token to replay a refused request with, or
-// "" when the refusal stands. An error means the renewal itself could not be
-// asked (network).
+// "" when the refusal stands. An error means the renewal itself did not happen:
+// the request never got through (network), or the server declined to answer it
+// (429, 5xx). Neither is a verdict on the session, so the client stays armed.
 func (c *Client) renewSession(ctx context.Context) (string, error) {
 	renewing.Lock()
 	defer renewing.Unlock()
@@ -99,8 +100,13 @@ func (c *Client) renewSession(ctx context.Context) (string, error) {
 			return a, nil
 		}
 		c.renew = nil // rejected for good: later requests of this client must not retry it
+		return "", nil
 	}
-	return "", nil
+	// The per-IP throttle (429), a deploy in progress (503), any 5xx: nothing
+	// about the session. Say so, rather than let the original 401 read as the
+	// verdict (rv4-FR-F151, rv4-FR-F164). The client stays armed.
+	return "", fmt.Errorf("apiclient: POST /auth/refresh: could not renew the session (HTTP %d): "+
+		"try again; run `insideout login` only if this persists", status)
 }
 
 // renewalGrace is how long a renewal that lost the race waits for the winner's
