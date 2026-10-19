@@ -24,8 +24,11 @@ curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/do
 # or from a checkout: scripts/bootstrap.sh [install-dir]
 ```
 
-`INSIDEOUT_RELEASE_BASE` overrides the download base (self-hosted
-mirrors, testing). This path is live: `v0.1.0` (2026-10-11) publishes
+`INSIDEOUT_RELEASE_BASE` overrides the download base for a self-hosted
+mirror or a test, and must be an `https://` URL: plain http is accepted
+only for a mirror on this machine (`localhost`, `127.0.0.1` or `[::1]`),
+and a redirect to plain http is refused. Anything else stops the script
+before it downloads. This path is live: `v0.1.0` (2026-10-11) publishes
 all four targets and the anonymous one-liner above is verified working
 (the repository went public the same day).
 

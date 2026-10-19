@@ -13,12 +13,50 @@
 #
 #   install-dir    defaults to $INSIDEOUT_INSTALL_DIR, then ~/.local/bin
 #   INSIDEOUT_RELEASE_BASE   overrides the download base URL (e.g. a
-#                            mirror, or a specific release for testing)
+#                            mirror, or a specific release for testing). It
+#                            must be https://; plain http is accepted only
+#                            for a mirror on this machine (localhost,
+#                            127.0.0.1 or [::1]). Redirects must stay https.
 
 set -euo pipefail
 
 repo=frankji-groundcontrol/insideout
 base=${INSIDEOUT_RELEASE_BASE:-https://github.com/$repo/releases/latest/download}
+
+# rv4-SEC-07: the base is where the binaries come from. https, or plain http to
+# a mirror on this machine only, and "on this machine" is decided on the
+# authority (everything before the first /): exactly localhost, 127.0.0.1 or
+# [::1] with an optional all-digit port. A lookalike name (localhost.example)
+# or user-info before an @ (http://localhost@example) is not loopback. Builtins
+# only, so it holds before the first external command runs.
+base_ok() {
+  local host
+  case $1 in
+    https://*) return 0 ;;
+    http://*)
+      host=${1#http://}
+      host=${host%%/*}
+      case $host in
+        localhost|127.0.0.1|'[::1]') return 0 ;;
+        localhost:*|127.0.0.1:*|'[::1]:'*)
+          case ${host##*:} in
+            ''|*[!0-9]*) return 1 ;;
+            *) return 0 ;;
+          esac ;;
+      esac ;;
+  esac
+  return 1
+}
+if ! base_ok "$base"; then
+  echo "error: INSIDEOUT_RELEASE_BASE must be an https:// URL — nothing was downloaded." >&2
+  echo "Plain http is accepted only for a mirror on this machine: http://localhost," >&2
+  echo "http://127.0.0.1 or http://[::1], optionally with a port." >&2
+  exit 1
+fi
+
+# Every request is https, and so is every redirect it meets: a mirror, or
+# anything in the path, cannot step the download down to plain http.
+fetch() { curl -fsSL --proto-redir '=https' -o "$1" "$2"; }
 
 os=$(uname -s)
 case "$os" in
@@ -57,8 +95,8 @@ trap 'rm -rf "$workdir"' EXIT
 
 tarball="insideout-$os-$arch.tar.gz"
 echo "==> Downloading $tarball and checksums.txt"
-curl -fsSL -o "$workdir/$tarball" "$base/$tarball"
-curl -fsSL -o "$workdir/checksums.txt" "$base/checksums.txt"
+fetch "$workdir/$tarball" "$base/$tarball"
+fetch "$workdir/checksums.txt" "$base/checksums.txt"
 
 # Match the line for this tarball; strip any leading path (sha256sum
 # writes plain names here, but "./name" layouts verify the same way).
