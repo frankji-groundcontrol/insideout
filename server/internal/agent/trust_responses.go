@@ -2,7 +2,9 @@ package agent
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -80,7 +82,16 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return Turn{}, err
+		// A read that died because the request was canceled (client gone, idle
+		// watchdog) is not the provider's fault and must keep reading as a cancel.
+		// Any other read failure is a dropped connection: transient, so a turn that
+		// has not streamed yet is retried and the breaker counts it as load
+		// (rv4-FR-F82). classifyStreamReadErr is the Anthropic twin, but it words the
+		// error for that provider.
+		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			return Turn{}, err
+		}
+		return Turn{}, fmt.Errorf("%w: read %s stream: %s", ErrProviderTransient, responsesProvider, err.Error())
 	}
 	if !finished {
 		return Turn{}, fmt.Errorf("%w: %s stream ended before response.completed", ErrProviderTransient, responsesProvider)
