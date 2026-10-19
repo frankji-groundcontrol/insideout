@@ -75,11 +75,17 @@ startup; no separate migration step is needed in the compose flow.
 One migration is not backward compatible with the previous image:
 `20261018200000_users_read_grants.sql` (rv4-DATA-03) takes `SELECT` on
 `insideout.users.password_hash` away from the app role, and the previous image
-reads that column in every user read, so those reads fail once it has run.
-Deploy the new image with the migration (one instance has no window in which
-the old one still serves). To put the previous image back, run once as the
-owner `GRANT SELECT (password_hash) ON insideout.users TO insideout_app;`,
-which reopens the finding until the new image is redeployed. The migration also
+reads that column in every user read. Login, register, `GET /me` and profile
+reads then fail with permission denied (SQLSTATE 42501). The new image applies
+that migration at boot, before it listens and before the singleton guard,
+while a rolling deploy still has the old process serving: the guard retries
+because the old process keeps the lock through its shutdown. The overlap is
+real on a hosted rolling deploy. For this release, stop the old instance
+before the new one boots, so the overlap is zero; on Railway set the overlap
+seconds to 0. A compose recreate has no overlap. To put the previous image
+back afterwards, run once as the owner
+`GRANT SELECT (password_hash) ON insideout.users TO insideout_app;`, which
+reopens the finding until the new image is redeployed. The migration also
 fails loudly if the hosted role inherits that column from another role or from
 `PUBLIC`: check that before the deploy
 ([record](../changelogs/2026-10-18-rv4-remediation/w3-users-read-grant.md)).
