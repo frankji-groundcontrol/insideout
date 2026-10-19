@@ -52,6 +52,12 @@ const enShell = <String, String>{
   'error.forbidden': 'You do not have permission to do that',
   'error.notFound': 'Not found — it may have been deleted',
   'error.conflict': 'Changed elsewhere — refresh and try again',
+  'error.githubRepoNotVisible':
+      'GitHub cannot see that repository — install the InsideOut GitHub App on the repository, then link it again',
+  'error.githubRepoUrlInvalid':
+      'That is not a GitHub repository address — check it, then link the repository again',
+  'error.githubRepoAlreadyLinked':
+      'That repository is already linked to another project',
   'error.throttled': 'Too many attempts — take a breath and retry shortly',
   'error.server': 'Server hiccup — try again',
   'error.network': 'Network problem — check the connection',
