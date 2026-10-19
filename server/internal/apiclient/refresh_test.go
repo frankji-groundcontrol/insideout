@@ -250,7 +250,8 @@ func TestUnauthorizedNamesTheFix(t *testing.T) {
 		c.SetToken(token)
 		_, getErr := c.Whoami()
 		_, rawErr := c.PrdExport("p1", "md", "")
-		for _, err := range []error{getErr, rawErr} {
+		_, guideErr := c.Guide("p1") // rv4-FR-F169: it had a request path of its own, with a bare 401
+		for _, err := range []error{getErr, rawErr, guideErr} {
 			if !errors.Is(err, ErrUnauthorized) || !strings.Contains(err.Error(), "insideout login") || !strings.Contains(err.Error(), "INSIDEOUT_TOKEN") {
 				t.Errorf("%s: err = %v, want ErrUnauthorized naming insideout login and INSIDEOUT_TOKEN", name, err)
 			}
