@@ -3,11 +3,22 @@ package apiclient
 import (
 	"context"
 	"errors"
+	"io"
+	"log/slog"
 	"net/http"
+	"net/http/httptest"
+	"os"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/api"
+	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
+	"github.com/frankji-groundcontrol/insideout/server/internal/config"
+	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
 // Review-4 (multirole, apiclient cluster). The findings are pinned where they
@@ -190,5 +201,64 @@ func TestRvApiClientWaitForRenewal(t *testing.T) {
 	defer renewing.Unlock()
 	if d := waited(); d < 190*time.Millisecond || d > time.Second {
 		t.Errorf("it waited %v for a renewal that never ends, want about 200 ms", d)
+	}
+}
+
+type rvApiClientLogouter interface{ Logout() error }
+
+// rv4-FR-F70 (client half): `insideout logout` only deleted the local file, so a
+// copy of it (a backup, a stolen laptop) kept a refresh token that renews for
+// weeks. Logout revokes the session behind the client's refresh token on the
+// server. The real handlers over real PostgreSQL; DATABASE_URL-gated.
+func TestRvApiClientLogoutRevokesTheServerSession(t *testing.T) {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		t.Skip("DATABASE_URL not set, skipping integration test")
+	}
+	ctx := context.Background()
+	st, err := store.Open(ctx, dsn)
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	t.Cleanup(st.Close)
+	email, password := "logout-"+uuid.NewString()+"@example.org", "pw-for-tests-"+uuid.NewString()
+	hash, err := auth.HashPassword(password)
+	if err != nil {
+		t.Fatalf("hash password: %v", err)
+	}
+	if _, err := st.CreateUser(ctx, email, hash, "logout-user"); err != nil {
+		t.Fatalf("create user: %v", err)
+	}
+	srv := api.NewServer(st, auth.NewTokenIssuer("a-32-byte-or-longer-test-secret!", time.Hour),
+		&config.Config{AccessTTL: time.Hour, RefreshTTL: time.Hour}, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)
+	ts := httptest.NewServer(srv.Handler())
+	t.Cleanup(ts.Close)
+	base := ts.URL + "/api/v1"
+	signIn := func() *Client {
+		c := New(base)
+		if err := c.Login(email, password); err != nil || c.RefreshToken() == "" {
+			t.Fatalf("login: %v (refresh token %q)", err, c.RefreshToken())
+		}
+		return c
+	}
+	renewStatus := func(refresh string) int {
+		resp, err := http.Post(base+"/auth/refresh", "application/json", strings.NewReader(`{"refreshToken":"`+refresh+`"}`))
+		if err != nil {
+			t.Fatalf("refresh: %v", err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	leaving, staying := signIn(), signIn() // two sessions of one user: the one that logs out, and a control
+
+	if err := rvApiClientHas[rvApiClientLogouter](t, leaving, "Logout").Logout(); err != nil {
+		t.Fatalf("Logout: %v", err)
+	}
+
+	if got := renewStatus(leaving.RefreshToken()); got != http.StatusUnauthorized {
+		t.Errorf("after Logout the refresh token still renews: HTTP %d, want 401", got)
+	}
+	if got := renewStatus(staying.RefreshToken()); got != http.StatusOK {
+		t.Errorf("Logout ended another session of the user: HTTP %d, want 200", got)
 	}
 }
