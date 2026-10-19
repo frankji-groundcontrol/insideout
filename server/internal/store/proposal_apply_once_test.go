@@ -262,35 +262,27 @@ func TestRvStoreDbBackfill_AppliedBeforeTheColumnReadsAsApplied(t *testing.T) {
 		}
 		return len(ids)
 	}
-	another := func(f *applyFixture, title string) *applyFixture { // one more proposal in f's project
-		t.Helper()
-		upd, err := st.AddProjectUpdate(ctx, f.owner.ID, f.proj.ID, "agent_proposal", "[agent proposal/structure] "+title)
-		if err != nil {
-			t.Fatalf("add proposal: %v", err)
-		}
-		if err := st.AddProposalItems(ctx, f.owner.ID, upd.ID, []ProposalItem{{Action: "add_node", Title: title}}); err != nil {
-			t.Fatalf("add item: %v", err)
-		}
-		return &applyFixture{owner: f.owner, ws: f.ws, proj: f.proj, upd: upd}
-	}
-
 	// Project 1: the applied proposal; one rejected before it (it would take the
 	// node's credit if the decision were ignored); one accepted after it with no
 	// node of its own (same title, one node: one stamp).
 	applied := newApplyFixture(t, st, ProposalItem{Title: "Intake"}, ProposalItem{Title: "Verification", ParentHint: "Intake"}, ProposalItem{Title: "Handoff"})
-	rejected, lateAccept := another(applied, "Intake"), another(applied, "Intake")
+	rejected := rvStoreDbAnotherProposal(t, st, applied, "Intake")
+	lateAccept := rvStoreDbAnotherProposal(t, st, applied, "Intake")
 	decide(rejected, "rejected", false)
 	if n := decide(applied, "accepted", true); n != 3 {
 		t.Fatalf("the accept built %d nodes, want 3", n)
 	}
 	decide(lateAccept, "accepted", false)
 	// Project 2: accepted without apply (nothing built); one title has a node made
-	// by hand, which carries no "proposed:" mark.
+	// by hand, which carries no "proposed:" mark; "Later A" was then built by a
+	// proposal the new build applied (stamped, never wiped), so that node is spoken for.
 	waiting := newApplyFixture(t, st, ProposalItem{Title: "Later A"}, ProposalItem{Title: "Later B"}, ProposalItem{Title: "Handmade"})
 	if _, err := st.CreateRoadmapNode(ctx, waiting.owner.ID, waiting.proj.ID, nil, "Handmade", ""); err != nil {
 		t.Fatalf("hand-made node: %v", err)
 	}
 	decide(waiting, "accepted", false)
+	built := rvStoreDbAnotherProposal(t, st, waiting, "Later A")
+	decide(built, "accepted", true)
 	// Project 3: another project's applied "Later A", whose mark must not count here.
 	elsewhere := newApplyFixture(t, st, ProposalItem{Title: "Later A"})
 	decide(elsewhere, "accepted", true)
@@ -311,7 +303,8 @@ func TestRvStoreDbBackfill_AppliedBeforeTheColumnReadsAsApplied(t *testing.T) {
 		{"another project's applied proposal", elsewhere, 1, 1},
 		{"rejected, same title as an applied item", rejected, 0, 1},
 		{"accepted later, same title, no node of its own", lateAccept, 0, 1},
-		{"accepted without apply (a hand-made node, another project's mark)", waiting, 0, 3},
+		{"accepted without apply (a hand-made node, another project's mark, a stamped twin)", waiting, 0, 3},
+		{"applied by the new build, never wiped", built, 1, 1},
 	} {
 		if stamped, total := rvStoreDbStamped(t, owner, c.f.upd.ID); stamped != c.stamped || total != c.total {
 			t.Errorf("%s: %d of %d items stamped, want %d of %d", c.what, stamped, total, c.stamped, c.total)
@@ -324,7 +317,7 @@ func TestRvStoreDbBackfill_AppliedBeforeTheColumnReadsAsApplied(t *testing.T) {
 		t.Errorf("the stamps should carry the decision time (err %v, match %v)", err, atDecision)
 	}
 
-	all := []uuid.UUID{applied.upd.ID, rejected.upd.ID, lateAccept.upd.ID, waiting.upd.ID, elsewhere.upd.ID}
+	all := []uuid.UUID{applied.upd.ID, rejected.upd.ID, lateAccept.upd.ID, waiting.upd.ID, built.upd.ID, elsewhere.upd.ID}
 	before := rvStoreDbAppliedAt(t, owner, all...)
 	rvStoreDbBackfill(t, owner)
 	for id, at := range rvStoreDbAppliedAt(t, owner, all...) {
@@ -346,5 +339,5 @@ func TestRvStoreDbBackfill_AppliedBeforeTheColumnReadsAsApplied(t *testing.T) {
 	if n := decide(waiting, "accepted", true); n != 3 {
 		t.Errorf("the proposal accepted without apply built %d nodes, want 3", n)
 	}
-	waiting.wantTitles(t, st, "Handmade", "Handmade", "Later A", "Later B")
+	waiting.wantTitles(t, st, "Handmade", "Handmade", "Later A", "Later A", "Later B")
 }

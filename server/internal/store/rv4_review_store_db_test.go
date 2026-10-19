@@ -320,3 +320,18 @@ func rvStoreDbStamped(t *testing.T, owner *Store, updateID uuid.UUID) (stamped, 
 	}
 	return stamped, total
 }
+
+// rvStoreDbAnotherProposal files one more agent proposal, with one add_node
+// item, in the project of an applyFixture.
+func rvStoreDbAnotherProposal(t *testing.T, st *Store, f *applyFixture, title string) *applyFixture {
+	t.Helper()
+	ctx := context.Background()
+	upd, err := st.AddProjectUpdate(ctx, f.owner.ID, f.proj.ID, "agent_proposal", "[agent proposal/structure] "+title)
+	if err != nil {
+		t.Fatalf("add proposal: %v", err)
+	}
+	if err := st.AddProposalItems(ctx, f.owner.ID, upd.ID, []ProposalItem{{Action: "add_node", Title: title}}); err != nil {
+		t.Fatalf("add item: %v", err)
+	}
+	return &applyFixture{owner: f.owner, ws: f.ws, proj: f.proj, upd: upd}
+}
