@@ -20,7 +20,11 @@ scripts/check_nginx_reresolve.py in the CI nginx job. Fails unless
   3. it proxies to the same variable upstream as location /api/
      (set + proxy_pass $api_upstream: `set` runs per matched location,
      it is not inherited, and a variable keeps the per-request resolve),
-  4. it carries every proxy directive location /api/ has.
+  4. it carries every proxy directive location /api/ has,
+  5. both locations take X-Forwarded-For from ${NGINX_XFF}, the one variable
+     the image decides (hosted: pass the edge's chain through; compose: end it
+     in the address nginx saw) — a literal in either would pin one stack's
+     behaviour on the other (rv4-FR-F61).
 
 Usage:  python3 scripts/check_nginx_webhook_body.py [--template FILE]
 """
@@ -121,6 +125,13 @@ def main():
         "carries every proxy directive location /api/ has",
         not missing,
         f"missing {missing}",
+    )
+
+    xff = [d for d in api_dirs + hook_dirs if d.startswith("proxy_set_header X-Forwarded-For ")]
+    check(
+        "both locations take X-Forwarded-For from ${NGINX_XFF}",
+        len(xff) == 2 and set(xff) == {"proxy_set_header X-Forwarded-For ${NGINX_XFF}"},
+        f"found {xff}",
     )
 
     print("OK" if not failures else f"{len(failures)} check(s) failed")
