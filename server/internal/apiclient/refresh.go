@@ -29,6 +29,11 @@ type Renewal struct {
 	Save func(access, refresh string)
 
 	hint string // what a final 401 says to do instead of the default (SetUnauthorizedHint)
+
+	// rejected is set once the server has refused the refresh token for good. The
+	// hooks never change after SetRenewal, so calls may read armed() while a
+	// renewal runs; only the process-wide lock (renewing) guards this flag.
+	rejected bool
 }
 
 // armed reports whether r can renew a session. A Renewal without both hooks is
@@ -105,6 +110,9 @@ func (t renewTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 func (c *Client) renewSession(ctx context.Context) (string, error) {
 	renewing.Lock()
 	defer renewing.Unlock()
+	if c.renew.rejected {
+		return "", nil // a call that queued behind the rejection: the refusal stands for it too
+	}
 	if a, r, ok := c.renew.Reload(); ok && r != c.refresh {
 		c.token, c.refresh = a, r // another command or call renewed it already
 		return a, nil
@@ -125,7 +133,7 @@ func (c *Client) renewSession(ctx context.Context) (string, error) {
 			c.token, c.refresh = a, r
 			return a, nil
 		}
-		c.renew.Reload, c.renew.Save = nil, nil // rejected for good: later requests of this client must not retry it
+		c.renew.rejected = true // for good: later requests of this client must not retry it
 		return "", nil
 	}
 	// The per-IP throttle (429), a deploy in progress (503), any 5xx: nothing
