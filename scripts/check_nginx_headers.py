@@ -12,6 +12,8 @@ response headers of
   - /fonts/, once for a mirrored font file and once for one that is not
     mirrored (a 404, never the SPA shell: the engine would feed index.html to
     its font parser),
+  - /canvaskit/, a .wasm file, which must come gzip'd (the image bundles
+    CanvasKit itself, and the CDN it replaces compressed it),
 
 and checks each carries, exactly once, nosniff, a strict Referrer-Policy,
 X-Frame-Options DENY and a Content-Security-Policy that denies plugins,
@@ -107,6 +109,8 @@ def main():
     (web / "index.html").write_text("<!doctype html><title>stub</title>\n")
     (web / "fonts" / "s").mkdir(parents=True)
     (web / "fonts" / "s" / "stub.woff2").write_bytes(b"wOF2")
+    (web / "canvaskit").mkdir()
+    (web / "canvaskit" / "stub.wasm").write_bytes(b"\0asm" + bytes(8192))  # compressible
     site = render(args.template, f"http://{HOST}:1", f"127.0.0.1:{dns.port}", web_port)
     if ROOT_DIRECTIVE not in site:
         sys.exit(f"{args.template}: no `{ROOT_DIRECTIVE}` to repoint at the stub site")
@@ -114,7 +118,10 @@ def main():
     (tmp / "site.conf").write_text(site.replace(ROOT_DIRECTIVE, f"root {web};"))
     (tmp / "nginx.conf").write_text(
         f"daemon off;\nworker_processes 1;\npid {tmp}/nginx.pid;\nerror_log {tmp}/error.log info;\n"
-        f"events {{ worker_connections 64; }}\nhttp {{\n  access_log {tmp}/access.log;\n"
+        # The image's nginx.conf includes mime.types, which maps .wasm to
+        # application/wasm (nginx 1.27.0 has the line); only that mapping is
+        # declared here, so gzip_types matching it is what gets tested.
+        f"events {{ worker_connections 64; }}\nhttp {{\n  types {{ application/wasm wasm; }}\n  access_log {tmp}/access.log;\n"
         + "".join(f"  {d}_temp_path {tmp}/{d};\n" for d in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"))
         + f"  include {tmp}/site.conf;\n}}\n"
     )
@@ -197,6 +204,10 @@ def main():
                 one(seen, "x-content-type-options") == "nosniff" and one(seen, "content-security-policy") is not None,
                 seen.get("content-security-policy"),
             )
+
+        status, seen = fetch(web_port, "/canvaskit/stub.wasm", {"Accept-Encoding": "gzip"})
+        check("a bundled CanvasKit .wasm answers 200", status == 200, f"status {status}")
+        check("a bundled CanvasKit .wasm is gzip'd", one(seen, "content-encoding") == "gzip", seen.get("content-encoding"))
 
         _, seen = fetch(web_port, "/", {"X-Forwarded-Proto": "https"})
         age = re.match(r"max-age=(\d+)", one(seen, "strict-transport-security") or "")
