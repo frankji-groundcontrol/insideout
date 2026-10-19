@@ -225,8 +225,35 @@ def rolling_overlap_is_stated(failures):
         failures.append("docs/usage/deployment.md: does not say to set the Railway overlap seconds to 0")
 
 
+def owner_url_is_scoped(failures):
+    """rv4-FR-F75: an empty DATABASE_OWNER_URL is not advice to point
+    DATABASE_URL at the owner. serve calls CheckServeRole before Migrate and
+    refuses a pool role with BYPASSRLS or SUPERUSER, so that advice makes
+    `insideout serve` exit 1. Empty is valid only for migrate and seed run
+    with an owner DSN; serve needs the non-bypass app role, and the owner URL
+    whenever migrations are pending."""
+    row = re.search(r"^\| `DATABASE_OWNER_URL` \|(.*)$", read("docs/usage/environment.md"), re.M)
+    if row is None:
+        failures.append("docs/usage/environment.md: no DATABASE_OWNER_URL row")
+        return
+    body = row.group(1)
+    if re.search(r"(?i)must already be that owner", body):
+        failures.append("docs/usage/environment.md: DATABASE_OWNER_URL still says an empty value means migrate "
+                        "uses DATABASE_URL, which must already be that owner; serve refuses an owner-privileged "
+                        "pool role before it migrates")
+    if not re.search(r"(?i)empty is valid only for `migrate` and `seed`", body):
+        failures.append("docs/usage/environment.md: DATABASE_OWNER_URL does not say an empty owner URL is valid "
+                        "only for migrate and seed run with an owner DSN")
+    if not re.search(r"(?i)non-bypass app role", body):
+        failures.append("docs/usage/environment.md: DATABASE_OWNER_URL does not say serve requires DATABASE_URL "
+                        "to be the non-bypass app role")
+    if not re.search(r"(?i)migrations are pending", body):
+        failures.append("docs/usage/environment.md: DATABASE_OWNER_URL does not say the owner URL is required "
+                        "whenever migrations are pending")
+
+
 CHECKS = [template_is_the_switch, hops_follow_nginx, docs_state_the_rules, chain_is_described,
-          rolling_overlap_is_stated]
+          rolling_overlap_is_stated, owner_url_is_scoped]
 
 if __name__ == "__main__":
     failures = []
