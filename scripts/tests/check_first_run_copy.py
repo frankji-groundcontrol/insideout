@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
-"""Pin the first-run copy that lives in the install and setup scripts
-(review-4 wave 3: rv4-PM-08 code half, LEAD-SETUP-BLURB).
+"""Pin the first-run copy that lives in the install and setup scripts,
+the CLI help and the two docs that still named both codes the same way
+(review-4 wave 3: rv4-PM-08 code half, LEAD-SETUP-BLURB; wave 4:
+rv4-USER-10, the hosted blurb half of rv4-PM-08).
 
 Usage: python3 -I scripts/tests/check_first_run_copy.py
 
@@ -200,6 +202,105 @@ def closing_messages_teach_the_sign_up_route(failures):
         name_invitation(failures, f"{where} closing message", text)
 
 
+def dart_value(path, key):
+    """One single-quoted string from a client l10n map, the vocabulary the
+    screens actually render."""
+    match = re.search(r"'" + re.escape(key) + r"':\s*(?:\n\s*)?'([^']*)'", read(path))
+    if not match or not match.group(1):
+        print(f"no {key} string in {path}", file=sys.stderr)
+        sys.exit(2)
+    return match.group(1)
+
+
+def two_code_names():
+    """USER-10: the workspace share code and the account invitation, as the
+    English catalogue names them. Callers compare case-insensitively."""
+    workspace = dart_value("client/lib/l10n/en_workspace.dart", "workspace.joinCodePlaceholder")
+    invitation = dart_value("client/lib/l10n/en_account.dart", "register.invite")
+    return workspace.lower(), invitation.lower()
+
+
+def verb_summaries():
+    found = dict(re.findall(r'\{group\w+, "([a-z][a-z-]*)", "([^"]*)"\}', read("server/cmd/insideout/cli.go")))
+    if "join" not in found or "register" not in found:
+        print("cannot read join and register from the verb table in server/cmd/insideout/cli.go", file=sys.stderr)
+        sys.exit(2)
+    return found
+
+
+def hosted_case_text():
+    """The `case *hosted:` arm of runSetupCommand, and nothing it prints for
+    the local path."""
+    text = read("server/cmd/insideout/cli_setup.go")
+    start = text.find("case *hosted:")
+    end = text.find("case *local:", start)
+    if start < 0 or end < 0:
+        print("no hosted case in server/cmd/insideout/cli_setup.go", file=sys.stderr)
+        sys.exit(2)
+    return text[start:end]
+
+
+def setup_sh_taught_lines():
+    """The sign-in lines scripts/setup.sh --hosted teaches. Exit 2 when the
+    script no longer has them: the Go blurb is checked against the script,
+    not against a second copy of the words."""
+    match = re.search(r"cat <<EOF\n(.*?)\nEOF", read("scripts/setup.sh"), re.S)
+    if not match:
+        print("no hosted blurb in scripts/setup.sh", file=sys.stderr)
+        sys.exit(2)
+    blurb = match.group(1)
+    lines = ("insideout whoami", "insideout register --invite <invitation-code> you@example.com")
+    for line in lines:
+        if line not in blurb:
+            print(f"scripts/setup.sh blurb has no `{line}`", file=sys.stderr)
+            sys.exit(2)
+    return lines
+
+
+def cli_and_docs_name_the_two_codes(failures):
+    """USER-10 and the hosted half of PM-08. The web copy has two names. The
+    CLI help, the register usage line, `setup --hosted` and two docs still
+    said "invite code" for both, and the hosted blurb did not teach whoami
+    or the invitation. `insideout setup --local` in that blurb exits 2 with
+    no checkout (cli_setup_local_env.go); the script's blurb does not say it."""
+    workspace, invitation = two_code_names()
+    join = verb_summaries()["join"]
+    if workspace not in join.lower():
+        fail(failures, f"server/cmd/insideout/cli.go: join summary {join!r} does not name the {workspace}")
+    usage = next((line for line in read("server/cmd/insideout/cli_auth.go").splitlines()
+                  if "usage: insideout register" in line), "")
+    if not usage:
+        print("no register usage line in server/cmd/insideout/cli_auth.go", file=sys.stderr)
+        sys.exit(2)
+    if invitation not in usage.lower():
+        fail(failures, "server/cmd/insideout/cli_auth.go: the register usage line does not say "
+                       f"{invitation!r} (the flag stays --invite): {usage.strip()}")
+    hosted = hosted_case_text()
+    for line in setup_sh_taught_lines():
+        if line not in hosted:
+            fail(failures, "server/cmd/insideout/cli_setup.go hosted blurb does not teach "
+                           f"`{line}`, which scripts/setup.sh does")
+    name_invitation(failures, "server/cmd/insideout/cli_setup.go hosted blurb", hosted)
+    if "insideout setup --local" in hosted and "no repository checkout found" in read(
+            "server/cmd/insideout/cli_setup_local_env.go"):
+        fail(failures, "server/cmd/insideout/cli_setup.go hosted blurb tells the reader to run "
+                       "`insideout setup --local`, which exits 2 when there is no repository checkout")
+    surfaces = ("server/cmd/insideout/cli.go", "server/cmd/insideout/cli_auth.go",
+                "server/cmd/insideout/cli_setup.go", "docs/usage/cli-mcp-and-guidance.md",
+                "docs/architecture/database-and-rls.md", "README.md", "docs/usage/installation.md")
+    for where in surfaces:
+        if re.search(r"invite code", read(where), re.I):
+            fail(failures, f"{where}: still says \"invite code\"; the account's word is {invitation!r} "
+                           f"and the workspace's is {workspace!r}")
+    joining = next((line for line in read("docs/architecture/database-and-rls.md").splitlines()
+                    if "Joining a workspace" in line), "")
+    if workspace not in joining.lower():
+        fail(failures, "docs/architecture/database-and-rls.md: the workspace-join sentence does not say "
+                       f"{workspace!r}")
+    if invitation not in read("docs/usage/cli-mcp-and-guidance.md").lower():
+        fail(failures, f"docs/usage/cli-mcp-and-guidance.md: does not call the sign-up code an {invitation!r}")
+
+
 def quoted_commands_exist(failures):
     """Every `insideout <verb>` a script prints is a verb of the CLI, and the
     sign-up flag it quotes is one `register` documents."""
@@ -224,6 +325,7 @@ CHECKS = [installer_headers_state_the_supported_systems,
           install_without_go_offers_the_prebuilt_installer_first,
           hosted_blurb_teaches_login_then_whoami,
           closing_messages_teach_the_sign_up_route,
+          cli_and_docs_name_the_two_codes,
           quoted_commands_exist]
 
 if __name__ == "__main__":
