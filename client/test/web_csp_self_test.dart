@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 
@@ -74,41 +73,65 @@ void main() {
     }
   });
 
-  test('the engine fallback fonts ship in web/fonts with their licenses', () {
-    final roboto = File(
-      'web/fonts/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2',
-    );
-    final sc = Directory('web/fonts/s/notosanssc/v37');
+  test('the whole engine fallback table ships in web/fonts, with licenses', () {
+    // The engine's table (Flutter 3.44) names 724 files in 144 families, and
+    // it fetches a default Roboto besides: 725 files, 145 families. A file
+    // that is missing is a 404 the engine retries in a tight loop. Which
+    // family it asks for depends on the browser language (zh-TW asks for Noto
+    // Sans TC, ja for JP, ko for KR) and on user text, so the mirror is the
+    // whole table, not the slice this UI usually needs.
+    final root = Directory('web/fonts/s');
+    expect(root.existsSync(), isTrue, reason: 'web/fonts/s is missing');
     expect(
-      roboto.existsSync(),
+      File(
+        'web/fonts/s/roboto/v32/KFOmCnqEu92Fr1Me4GZLCzYlKw.woff2',
+      ).existsSync(),
       isTrue,
       reason: 'the default Roboto is missing',
     );
-    expect(
-      sc.existsSync(),
-      isTrue,
-      reason: 'the Noto Sans SC slices are missing',
-    );
-    final slices = sc.listSync().whereType<File>().toList();
-    // The engine's fallback table lists 101 Noto Sans SC slices (v37): all of
-    // them, because user text can need any one and a miss is a 404 retry.
-    expect(slices.length, 101);
-    for (final f in [roboto, ...slices]) {
-      final head = f.openSync().readSync(4);
-      expect(
-        String.fromCharCodes(Uint8List.fromList(head)),
-        'wOF2',
-        reason: '${f.path} is not a woff2 file',
-      );
+    final files = root.listSync(recursive: true).whereType<File>().toList();
+    expect(files.length, 725);
+    final families = <String>{};
+    for (final f in files) {
+      final raf = f.openSync();
+      try {
+        expect(
+          String.fromCharCodes(raf.readSync(4)),
+          'wOF2',
+          reason: '${f.path} is not a woff2 file',
+        );
+      } finally {
+        raf.closeSync();
+      }
+      families.add(
+        f.path.replaceAll(r'\', '/').split('/')[3],
+      ); // web/fonts/s/<family>/..
     }
-    for (final name in ['OFL-Roboto.txt', 'OFL-NotoSansSC.txt']) {
-      final text = File('web/fonts/$name');
-      expect(text.existsSync(), isTrue, reason: 'no $name next to the fonts');
+    expect(families.length, 145);
+    for (final family in families) {
+      final license = File('web/fonts/licenses/$family.txt');
+      expect(license.existsSync(), isTrue, reason: 'no license for $family');
       expect(
-        text.readAsStringSync(),
+        license.readAsStringSync(),
         contains('SIL OPEN FONT LICENSE Version 1.1'),
+        reason: family,
       );
     }
+  });
+
+  test('SHA256SUMS lists exactly the font files that ship', () {
+    final listed = File('web/fonts/SHA256SUMS')
+        .readAsLinesSync()
+        .where((l) => l.trim().isNotEmpty)
+        .map((l) => l.trim().split(RegExp(r'\s+')).last)
+        .toSet();
+    final shipped = Directory('web/fonts/s')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .map((f) => f.path.replaceAll(r'\', '/').replaceFirst('web/fonts/', ''))
+        .toSet();
+    expect(listed.difference(shipped), isEmpty, reason: 'listed, not shipped');
+    expect(shipped.difference(listed), isEmpty, reason: 'shipped, not listed');
   });
 
   test('a font that is not mirrored is a 404, never the SPA shell', () {
