@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../api/open_url_stub.dart'
+    if (dart.library.ui_web) '../../api/open_url_web.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
@@ -10,9 +13,8 @@ import '../../theme/ink_motion.dart';
 enum AuthPrompt { login, register }
 
 /// The privacy notice the auth door links to (rv4-PUB-02). The web build does
-/// not bundle PRIVACY.md, so the link hands out the copy on the project's
-/// public repository; a deployment that hosts its own notice changes this one
-/// line.
+/// not bundle PRIVACY.md, so the link goes to the copy on the project's public
+/// repository; a deployment that hosts its own notice changes this one line.
 const privacyNoticeUrl =
     'https://github.com/frankji-groundcontrol/insideout/blob/main/PRIVACY.md';
 
@@ -176,9 +178,10 @@ class AuthDoor extends StatelessWidget {
   }
 }
 
-/// The link to [privacyNoticeUrl]. A tap copies the address and says so in
-/// place of the label: a snackbar would land on the page under this door's dim
-/// barrier, where nobody reads it.
+/// The link to [privacyNoticeUrl]. In a browser it opens the notice in a new
+/// tab. With no browser to hand it to (a test, a desktop build) it copies the
+/// address and says so in place of the label: a snackbar would land on the
+/// page under this door's dim barrier, where nobody reads it.
 class PrivacyNoticeLink extends StatefulWidget {
   const PrivacyNoticeLink({
     super.key,
@@ -196,10 +199,8 @@ class PrivacyNoticeLink extends StatefulWidget {
 class _PrivacyNoticeLinkState extends State<PrivacyNoticeLink> {
   var _copied = false;
 
-  // ponytail: copies, never opens. A browser tab needs a url_launcher
-  // dependency or a stub/web conditional-import pair; swap this for that when
-  // a cluster owns one.
-  Future<void> _copy() async {
+  Future<void> _open() async {
+    if (openExternalUrl(privacyNoticeUrl)) return;
     await Clipboard.setData(const ClipboardData(text: privacyNoticeUrl));
     if (mounted) setState(() => _copied = true);
   }
@@ -210,7 +211,10 @@ class _PrivacyNoticeLinkState extends State<PrivacyNoticeLink> {
     variant: BlockButtonVariant.ghost,
     size: BlockButtonSize.sm,
     expand: true,
-    trailingIcon: _copied ? Icons.check : Icons.link,
-    onPressed: _copy,
+    // The glyph says what a tap does: opens a tab in a browser, copies elsewhere.
+    trailingIcon: _copied
+        ? Icons.check
+        : (kIsWeb ? Icons.open_in_new : Icons.link),
+    onPressed: _open,
   );
 }

@@ -17,8 +17,10 @@ import '_auth_test_helpers.dart';
 // rv4-PUB-02: the hosted service keeps an account, projects and coach
 // conversations, and the sign-up screen said nothing about it. The notice is
 // PRIVACY.md at the repository root (the web build does not bundle it); the
-// sign-up screen links to that copy. A tap copies the address: the client has
-// no URL launcher, so the link does not open a tab.
+// sign-up screen links to that copy. In a browser a tap opens the copy in a new
+// tab (test/web/privacy_link_web_test.dart taps it under Chrome). This suite is
+// compiled with the stub opener, which has no browser to hand the address to,
+// so a tap copies it and says so.
 
 Future<void> _mount(
   WidgetTester tester, {
@@ -80,7 +82,9 @@ void main() {
     }
   }
 
-  testWidgets('a tap copies the notice address and says so', (tester) async {
+  testWidgets('with no browser to open, the link copies the notice address', (
+    tester,
+  ) async {
     String? copied;
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       SystemChannels.platform,
@@ -98,6 +102,11 @@ void main() {
       ),
     );
     await _mount(tester, locale: 'en-US', prompt: AuthPrompt.register);
+    expect(
+      find.byIcon(Icons.link),
+      findsOneWidget,
+      reason: 'outside a browser the glyph says the link copies',
+    );
 
     await tester.tap(find.widgetWithText(BlockButton, 'Privacy notice'));
     await tester.pump();
@@ -106,6 +115,7 @@ void main() {
     expect(address.scheme, 'https');
     expect(address.path, endsWith('/PRIVACY.md'));
     expect(find.textContaining('Link copied'), findsOneWidget);
+    expect(find.byIcon(Icons.check), findsOneWidget);
   });
 
   test('the notice address is one named constant in the auth door', () {
