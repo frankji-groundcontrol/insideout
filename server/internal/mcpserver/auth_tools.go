@@ -27,6 +27,20 @@ func addAuthTools(s *server.MCPServer, api string) {
 		return mcp.WithString(name, mcp.Description(desc))
 	}
 
+	// refuseSessionSwap blocks a second identity while one is already held, so a
+	// prompt cannot point auth_magic_link_consume or auth_login_code_verify at
+	// an attacker's account (rv4-FR-F176). auth_logout with confirm clears the
+	// gate. The tools stay listed; withholding them is an owner decision.
+	refuseSessionSwap := func() error {
+		session.Lock()
+		unlocked := session.swapUnlocked
+		session.Unlock()
+		if unlocked || humanClient(api).Token() == "" {
+			return nil
+		}
+		return fmt.Errorf("a login is already held; run auth_logout first")
+	}
+
 	// signedIn confirms the freshly stored session via /me and reports the
 	// user — proof the login worked without echoing the token.
 	signedIn := func(ctx context.Context) (string, error) {
@@ -60,6 +74,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool("auth_register", "Create an account and sign this MCP server process in (password appears in the conversation — prefer auth_login_code_request for humans-in-the-loop)",
 		[]mcp.ToolOption{strReq("email", "account email"), strReq("password", "password (min 8 chars)"), strReq("username", "display name"), strOpt("invite_code", "invitation code, required when signup is invitation-only")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			if err := refuseSessionSwap(); err != nil {
+				return "", err
+			}
 			invite, _ := req.GetArguments()["invite_code"].(string)
 			if err := c.Register(reqStr(req, "email"), reqStr(req, "password"), reqStr(req, "username"), invite); err != nil {
 				return "", err
@@ -70,6 +87,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool("auth_login", "Password login for this MCP server process (password appears in the conversation — prefer auth_login_code_request for humans-in-the-loop)",
 		[]mcp.ToolOption{strReq("email", "account email"), strReq("password", "account password")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			if err := refuseSessionSwap(); err != nil {
+				return "", err
+			}
 			if err := c.Login(reqStr(req, "email"), reqStr(req, "password")); err != nil {
 				return "", err
 			}
@@ -87,6 +107,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool("auth_login_code_verify", "Verify the emailed 6-digit code and sign this MCP server process in",
 		[]mcp.ToolOption{strReq("email", "account email"), strReq("code", "6-digit code from the email")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			if err := refuseSessionSwap(); err != nil {
+				return "", err
+			}
 			if err := c.VerifyLoginCode(reqStr(req, "email"), reqStr(req, "code")); err != nil {
 				return "", err
 			}
@@ -104,6 +127,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool("auth_magic_link_consume", "Exchange an emailed magic-link token for a session for this MCP server process",
 		[]mcp.ToolOption{strReq("token", "token from the emailed link (the part after token=)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			if err := refuseSessionSwap(); err != nil {
+				return "", err
+			}
 			if err := c.ConsumeMagicLink(reqStr(req, "token")); err != nil {
 				return "", err
 			}
@@ -126,10 +152,19 @@ func addAuthTools(s *server.MCPServer, api string) {
 			}
 			return "password reset and all sessions revoked — sign in again (auth_login, or the code flow)", nil
 		})
-	addTool("auth_logout", "Clear this MCP server process's in-process session (INSIDEOUT_TOKEN env, if set, becomes the credential again)",
-		nil,
-		func(c *apiclient.Client, _ mcp.CallToolRequest) (string, error) {
+	addTool("auth_logout", "Clear this MCP server process's in-process session. While a login is held, pass confirm=true (INSIDEOUT_TOKEN, if set, becomes the credential again)",
+		[]mcp.ToolOption{mcp.WithBoolean("confirm", mcp.Description("required while a JWT login is held"))},
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			if _, jwt := apiclient.ParseTokenClaims(humanClient(api).Token()); jwt {
+				confirm, _ := req.GetArguments()["confirm"].(bool)
+				if !confirm {
+					return "", fmt.Errorf("auth_logout while a login is held needs confirm=true")
+				}
+			}
 			setSessionToken("")
+			session.Lock()
+			session.swapUnlocked = true // one following sign-in may replace the saved or env login
+			session.Unlock()
 			applyAgentProfile(s, api) // a sign-out that leaves no JWT offers the password tools again
 			return "session cleared", nil
 		})

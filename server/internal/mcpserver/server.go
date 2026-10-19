@@ -100,9 +100,10 @@ const mcpInProcessHint = "call auth_login_code_request and auth_login_code_verif
 // call's SetRenewal re-arms after a refusal.
 var session struct {
 	sync.Mutex
-	token   string
-	refresh string
-	dead    bool // the in-process credential was refused for good
+	token        string
+	refresh      string
+	dead         bool // the in-process credential was refused for good
+	swapUnlocked bool // auth_logout confirmed; the next sign-in may replace the held login
 }
 
 // toolCalls serializes handlers that share this session, so two calls cannot
@@ -122,6 +123,7 @@ func setSession(access, refresh string) {
 	session.token = access
 	session.refresh = refresh
 	session.dead = false
+	session.swapUnlocked = false
 	session.Unlock()
 	apiclient.ForgetAgentToken()
 }

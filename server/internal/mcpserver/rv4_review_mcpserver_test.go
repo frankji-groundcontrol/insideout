@@ -110,7 +110,7 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 	// Password tools are gone while the JWT is held, and the code-verify tool
 	// stays. Sign out, then sign in again: the new client has to be armed,
 	// because a refusal stays on the client that saw it until SetRenewal.
-	if out := callTool(t, s, 3, "auth_logout", `{}`); out.Result.IsError {
+	if out := callTool(t, s, 3, "auth_logout", `{"confirm":true}`); out.Result.IsError {
 		t.Fatalf("auth_logout: %s", rvMcpText(t, out))
 	}
 	second := verify(4, "222222")
@@ -200,7 +200,7 @@ func TestRvMcpLogoutRestoresPasswordTools(t *testing.T) {
 	if slices.Contains(offeredTools(t, s), "auth_login") {
 		t.Fatal("auth_login is still offered while a JWT login is held")
 	}
-	if r := callTool(t, s, 2, "auth_logout", `{}`); r.Result.IsError {
+	if r := callTool(t, s, 2, "auth_logout", `{"confirm":true}`); r.Result.IsError {
 		t.Fatalf("auth_logout: %s", rvMcpText(t, r))
 	}
 	if !slices.Contains(offeredTools(t, s), "auth_login") {
@@ -234,6 +234,9 @@ func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 				return true
 			}
 			w.Write([]byte(owner.body()))
+			return true
+		case r.URL.Path == "/me" && r.Header.Get("Authorization") == "Bearer "+stolen.token:
+			w.Write([]byte(`{"email":"attacker@example.com","username":"Atk"}`))
 			return true
 		}
 		return mintsAs(owner)(w, r, nth)

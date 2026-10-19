@@ -265,7 +265,7 @@ func TestSigningOutForgetsTheAgentToken(t *testing.T) {
 	s := Build(api.URL)
 
 	callTool(t, s, 1, "whoami", `{}`)
-	callTool(t, s, 2, "auth_logout", `{}`)
+	callTool(t, s, 2, "auth_logout", `{"confirm":true}`)
 	callTool(t, s, 3, "whoami", `{}`)
 
 	wantSeen(t, seen(human, "<human>", first.token, "<first>", second.token, "<second>"), []string{
