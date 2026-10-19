@@ -99,8 +99,8 @@ from the cancelled context aborting the probe and the check returning by itself.
 
 Logs are under `/private/tmp/insideout-rv4/reports/`:
 `w4-cli-setup-check-{qual04,frf69}-{red,green}.log`, `-qual04-race15.log`,
-`-frf69-race40.log` and `-mutation.log`. None of the new tests needs the
-database.
+`-frf69-race40.log`, `-mutation.log` and `-gate-race.log`. None of the new
+tests needs the database.
 
 QUAL-04, red on the base (`-run 'TestRvSetupChk(AnInterrupted|CtrlC)'`: twelve
 failing ids, 30 s because every case waits out the 3 s backstop):
@@ -160,6 +160,15 @@ catch it (`-mutation.log`); all fifteen turn red and the file is restored:
 | anonymous failure keeps the `unreachable: ` prefix | the cause-naming test |
 | any `*net.OpError` counts as unreachable | table row "the peer reset the connection" |
 | any `net.Error` counts as unreachable | the TLS cases, the table and the cause-naming test (24 ids) |
+
+Gates on the head, with a private PostgreSQL 18 cluster that was torn down
+afterwards (`-gate-race.log`): `go build ./... && go vet ./...` clean;
+`go test ./cmd/... ./internal/apiclient/... -race -count=1` is `ok` (584 passes
+counting subtests, no failure, no data race; one skip, `TestReadSecretTerminal`,
+which needs a terminal on stdin and has nothing to do with this cluster or the
+database); `gofmt -l` clean; no Go file over 350 lines; the fourteen
+`scripts/tests/check_*.py` pass; `check-redaction.sh` and
+`check-docs-recorded.sh` exit 0.
 
 ## Decisions and deviations
 
