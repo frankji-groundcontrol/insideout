@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/client.dart';
 import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
@@ -26,6 +25,8 @@ class ProjectUpdatesFeed extends StatelessWidget {
     required this.onRemove,
   });
 
+  /// Unread since the server began applying accepted proposals (rv4-FEAT-02);
+  /// kept so the page and the tests that build this widget still compile.
   final String projectId;
   final List<ProjectUpdate> updates;
   final Future<void> Function() onChanged;
@@ -34,42 +35,22 @@ class ProjectUpdatesFeed extends StatelessWidget {
 
   // FEAT-03: the proposal decision loop — the server resolves authority
   // (project owner or workspace admin); the web just surfaces the outcome.
+  // Accepting also applies the proposal's items: decideProposal asks for that
+  // (apply defaults to true) and the server does it in the decision's own
+  // transaction, once (rv4-FEAT-02). This client creates no node of its own —
+  // a second pass here would double every node — and onChanged re-reads the
+  // project and the roadmap the server just changed.
   Future<void> _decide(
     BuildContext context,
     ProjectUpdate update, {
     required bool accept,
   }) async {
     final api = context.read<Session>().api;
-    final done = await guardWrite(context, () async {
-      await api.decideProposal(update.id, accept: accept);
-      if (accept) await _applyAcceptedItems(api, update);
-    });
+    final done = await guardWrite(
+      context,
+      () => api.decideProposal(update.id, accept: accept),
+    );
     if (done && context.mounted) await onChanged();
-  }
-
-  // Accepting a proposal changes the roadmap: each add_node item becomes a
-  // node. parentHint matches an existing node's title; empty means a root.
-  Future<void> _applyAcceptedItems(ApiClient api, ProjectUpdate update) async {
-    final nodes = await api.listRoadmap(projectId);
-    for (final item in update.items) {
-      if (item.action != 'add_node' || item.title.trim().isEmpty) continue;
-      String? parentId;
-      final hint = item.parentHint.trim();
-      if (hint.isNotEmpty) {
-        for (final node in nodes) {
-          if (node.title == hint) {
-            parentId = node.id;
-            break;
-          }
-        }
-      }
-      final created = await api.createRoadmapNode(
-        projectId,
-        item.title.trim(),
-        parentId: parentId,
-      );
-      nodes.add(created);
-    }
   }
 
   @override
