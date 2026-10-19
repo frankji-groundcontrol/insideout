@@ -64,9 +64,9 @@ func TestRvApiClientInterruptedRenewalStillSavesTheRotatedPair(t *testing.T) {
 	t.Run("the command ends by itself", func(t *testing.T) {
 		rvApiClientInterruptDuringRenewal(t, 300*time.Millisecond, "1h")
 	})
-	// The answer comes after interruptGrace: the process may not be ended
-	// before the pair that arrives is saved.
+	// The answer comes after interruptGrace (100 ms) but well inside the drain
+	// (750 ms): the process may not be ended before the pair that arrives is saved.
 	t.Run("the grace runs out first", func(t *testing.T) {
-		rvApiClientInterruptDuringRenewal(t, 500*time.Millisecond, "100ms")
+		rvApiClientInterruptDuringRenewal(t, 400*time.Millisecond, "100ms")
 	})
 }
