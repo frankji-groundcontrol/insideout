@@ -29,14 +29,16 @@ FIXTURE_DOMAINS = ("x.com", "x.co", "b.co")
 DEFAULT_BASE = "server/internal/apiclient/default_base.go"
 DEFAULT_BASE_TEXT = 'package apiclient\n\nconst DefaultBase = "https://hosted.example.test/api/v1"\n'
 
-# rv4-PUB-12: dated records that quoted provider-side ids (Railway deployments,
-# a project row, a design-tool project). The ids add nothing for a reader.
+# rv4-PUB-12, widened by rv4-FR-F46 from three named records to every tracked
+# file under docs/: dated records quoted provider-side ids (Railway deployments,
+# a project row, a design-tool project). The ids add nothing for a reader; write
+# <deploy-id> instead. The nil UUID is no id of anything and stays allowed.
 UUID = re.compile(r"(?<![0-9a-f])[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}(?![0-9a-f])", re.I)
-RECORDS_WITHOUT_PROVIDER_IDS = (
-    "docs/changelogs/2026-08-18-flutter-web-host.md",
-    "docs/changelogs/2026-08-21-dogfood-and-cleanup.md",
-    "docs/plans/2026-09-18-cobalt-flutter-goal.md",
-)
+NIL_UUID = "00000000-0000-0000-0000-000000000000"
+# INTEGRATOR TODO: the findings register still quotes the PUB-12 evidence line, id
+# and all. Scrub it to <deploy-id> and delete this entry; the stale-entry test
+# below goes red until you do.
+QUOTES_EVIDENCE = ("docs/review/2026-10-18-multirole-4/01-findings-register.md",)
 
 
 def addr(local, domain):
@@ -51,6 +53,20 @@ def env():
 
 def run(cmd, cwd):
     return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, env=env())
+
+
+def provider_id_spots():
+    """path:line of every UUID-shaped id in a tracked text file under docs/, the nil UUID aside."""
+    spots = []
+    for name in filter(None, run(["git", "ls-files", "-z", "--", "docs"], ROOT).stdout.split("\0")):
+        path = ROOT / name
+        data = path.read_bytes() if path.is_file() else b""
+        if b"\0" in data[:8000]:  # binary, as git decides it
+            continue
+        for n, line in enumerate(data.decode("utf-8", "replace").split("\n"), 1):
+            if any(m.lower() != NIL_UUID for m in UUID.findall(line)):
+                spots.append(f"{name}:{n}")
+    return spots
 
 
 def guard_on(files):
@@ -259,12 +275,14 @@ class TrackedTree(unittest.TestCase):
         self.assertEqual(where, [], "ssh_alias carries a value at these path:line spots")
 
     def test_dated_records_carry_no_provider_ids(self):
-        # Line numbers only, so a red run does not echo the ids.
-        for name in RECORDS_WITHOUT_PROVIDER_IDS:
-            lines = (ROOT / name).read_text(encoding="utf-8").splitlines()
-            where = [n for n, line in enumerate(lines, 1) if UUID.search(line)]
-            with self.subTest(record=name):
-                self.assertEqual(where, [], "provider ids at these line numbers")
+        # Paths and line numbers only, so a red run does not echo the ids.
+        spots = [s for s in provider_id_spots() if s.rsplit(":", 1)[0] not in QUOTES_EVIDENCE]
+        self.assertEqual(spots, [], "provider ids at these path:line spots")
+
+    def test_the_evidence_allowlist_holds_no_scrubbed_record(self):
+        spotted = {s.rsplit(":", 1)[0] for s in provider_id_spots()}
+        self.assertEqual([n for n in QUOTES_EVIDENCE if n not in spotted], [],
+                         "no id is left in these records: drop them from QUOTES_EVIDENCE")
 
 
 if __name__ == "__main__":
