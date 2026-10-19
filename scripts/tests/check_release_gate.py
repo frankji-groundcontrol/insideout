@@ -41,6 +41,12 @@ an installed or containerised build:
      after the stage's FROM (its context, server/, has no .git, and an ARG
      before FROM is empty inside the stage).
 
+And the runbook stays true to the workflow (rv4-PM-05):
+
+  9. docs/usage/releasing.md has the tag rule, version policy and rollback
+     sections, names the gate, the attestation and --verify-tag that
+     release.yml has, and never tells a maintainer to overwrite a release.
+
 Exits 1 naming every failed property, 2 when the workflow shape cannot be
 read. CI-config property: the first real proof is the first tag run.
 """
@@ -51,6 +57,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github/workflows/release.yml"
 VERSION_GO = ROOT / "server/cmd/insideout/version.go"
+DOC = ROOT / "docs/usage/releasing.md"
 
 
 def steps(text):
@@ -172,6 +179,18 @@ def other_builds():
     return failures
 
 
+def releasing_doc():
+    """rv4-PM-05: the runbook documents the workflow that ships, not an older one."""
+    doc = DOC.read_text(encoding="utf-8") if DOC.is_file() else ""
+    failures = [f"docs/usage/releasing.md: no `## {h}` section" for h in ("The tag rule", "Version policy", "Rollback")
+                if not re.search(rf"^## {h}$", doc, re.M)]
+    failures += [f"docs/usage/releasing.md does not mention `{n}`, which release.yml does"
+                 for n in ("--verify-tag", "attest-build-provenance", "actions: read") if n not in doc]
+    if re.search(r"(?<!no `)--clobber|gh release upload", doc):
+        failures.append("docs/usage/releasing.md tells the reader to overwrite a published release (`--clobber` or `gh release upload`)")
+    return failures
+
+
 def main():
     text = WORKFLOW.read_text(encoding="utf-8")
     all_steps = steps(text)
@@ -199,7 +218,7 @@ def main():
     if not VERSION_GO.is_file() or not re.search(r"^var version\s*=", VERSION_GO.read_text(encoding="utf-8"), re.M):
         failures.append("server/cmd/insideout/version.go does not declare `var version`: the -X stamp would be ignored")
 
-    others = other_builds()
+    others = other_builds() + releasing_doc()
     for failure in failures:
         print(f"release.yml: {failure}", file=sys.stderr)
     for failure in others:
@@ -207,7 +226,7 @@ def main():
     if failures or others:
         sys.exit(1)
     print("release gate ok: gated on a green ci run, go test -race, no clobber, attested, "
-          "version-stamped (release.yml, install.sh, Dockerfile)")
+          "version-stamped (release.yml, install.sh, Dockerfile), runbook matches (releasing.md)")
 
 
 if __name__ == "__main__":
