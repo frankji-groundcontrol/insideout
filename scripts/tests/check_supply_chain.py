@@ -18,6 +18,9 @@ check_release_gate.py.
           pinned to an exact release and installed by `go install` (no
           third-party Action), gitleaks redacting and seeing full history;
           .gitignore keeps *.pem, *.key and *.p12 out of commits.
+          pub07_mutations runs the security.yml check on muted copies of the
+          file (`|| true` after govulncheck, gitleaks replaced by echo) and
+          fails when one still passes.
   SEC-07  every `uses:` in every workflow is pinned to a full 40-hex commit
           SHA with the release tag kept in a trailing `# vX.Y.Z` comment, so
           a moved or hijacked tag cannot change what runs (Dependabot reads
@@ -152,10 +155,14 @@ def dependabot():
     return out
 
 
-def security_workflow():
-    raw = read(".github/workflows/security.yml")
+SECURITY = ".github/workflows/security.yml"
+
+
+def security_workflow(raw=None):
+    """Findings for the text of security.yml (the file in the tree unless `raw` is given)."""
+    raw = read(SECURITY) if raw is None else raw
     if raw is None:
-        return [".github/workflows/security.yml does not exist: no govulncheck, no secret scan (PUB-07)"]
+        return [f"{SECURITY} does not exist: no govulncheck, no secret scan (PUB-07)"]
     text, out = joined(raw), []
     for event in ("push", "pull_request", "schedule"):
         if not re.search(rf"^  {event}:", text, re.M):
@@ -184,6 +191,35 @@ def gitignore_keys():
 def pub07():
     """PUB-07: least-privilege tokens, dependency and secret scanning, key files ignored."""
     return workflow_permissions() + dependabot() + security_workflow() + gitignore_keys()
+
+
+def edit(pattern, repl, count=0):
+    """A mutation: re.sub over the file text (`^` and `$` match at every line)."""
+    return lambda text: re.sub(pattern, repl, text, count=count, flags=re.M)
+
+
+# Each mutation rewrites a protected file the way a hurried edit would; its guard
+# must call the result red. A mutation that stops applying (the file changed
+# shape) fails too: the proof would pass vacuously. (what, file, rewrite, guard)
+MUTATIONS = [
+    ("`|| true` after govulncheck", SECURITY, edit(r"(govulncheck \./\.\.\.)$", r"\1 || true"), security_workflow),
+    ("gitleaks replaced by echo, flags kept", SECURITY, edit(r"^( *)gitleaks git ", r"\1echo gitleaks git "), security_workflow),
+]
+
+
+def pub07_mutations():
+    """PUB-07: the guard goes red on a muted copy of the files it protects."""
+    out = []
+    for what, path, rewrite, guard in MUTATIONS:
+        raw = read(path)
+        if raw is None:
+            continue  # the guard itself reports the missing file
+        mutated = rewrite(raw)
+        if mutated == raw:
+            out.append(f"{path}: the mutation `{what}` no longer applies: update MUTATIONS so the proof is not vacuous")
+        elif not guard(mutated):
+            out.append(f"{path}: the guard stays green on a copy with {what} (PUB-07)")
+    return out
 
 
 def sec07():
@@ -241,7 +277,7 @@ def pub09():
     return out
 
 
-CHECKS = [pub04, pub07, sec07, pub09]
+CHECKS = [pub04, pub07, pub07_mutations, sec07, pub09]
 
 
 def main():
