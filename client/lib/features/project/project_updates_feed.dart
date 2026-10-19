@@ -15,7 +15,7 @@ import '../../widgets/guarded_action.dart';
 /// The Evidence page's updates timeline: the agent-proposal decision loop
 /// (Accept/Reject) and the note edit/delete menu. The page supplies the
 /// note write verbs ([onEdit], [onRemove]) and reloads through [onChanged].
-class ProjectUpdatesFeed extends StatelessWidget {
+class ProjectUpdatesFeed extends StatefulWidget {
   const ProjectUpdatesFeed({
     super.key,
     required this.projectId,
@@ -33,6 +33,20 @@ class ProjectUpdatesFeed extends StatelessWidget {
   final Future<void> Function(ProjectUpdate update, String content) onEdit;
   final Future<void> Function(ProjectUpdate update) onRemove;
 
+  @override
+  State<ProjectUpdatesFeed> createState() => _ProjectUpdatesFeedState();
+}
+
+class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
+  /// Proposals whose decision is on the wire (id -> whether it is an accept)
+  /// and proposals whose decision has landed. Both leave Accept and Reject
+  /// off, the second even while the list this feed holds does not show the
+  /// decision yet: every further decision adds another history note every
+  /// member reads, and an opposite one flips a decision whose nodes already
+  /// exist (rv4-FR-F02, F08, F15).
+  final _deciding = <String, bool>{};
+  final _decided = <String>{};
+
   // FEAT-03: the proposal decision loop — the server resolves authority
   // (project owner or workspace admin); the web just surfaces the outcome.
   // Accepting also applies the proposal's items: decideProposal asks for that
@@ -40,17 +54,46 @@ class ProjectUpdatesFeed extends StatelessWidget {
   // transaction, once (rv4-FEAT-02). This client creates no node of its own —
   // a second pass here would double every node — and onChanged re-reads the
   // project and the roadmap the server just changed.
-  Future<void> _decide(
-    BuildContext context,
-    ProjectUpdate update, {
-    required bool accept,
-  }) async {
+  Future<void> _decide(ProjectUpdate update, {required bool accept}) async {
+    final id = update.id;
+    // Checked here as well as by the disabled buttons: a second tap can land
+    // before the frame that disables them.
+    if (_deciding.containsKey(id) || _decided.contains(id)) return;
     final api = context.read<Session>().api;
+    setState(() => _deciding[id] = accept);
     final done = await guardWrite(
       context,
-      () => api.decideProposal(update.id, accept: accept),
+      () => api.decideProposal(id, accept: accept),
     );
-    if (done && context.mounted) await onChanged();
+    if (!mounted) return;
+    setState(() {
+      _deciding.remove(id);
+      if (done) _decided.add(id);
+    });
+    if (done) await widget.onChanged();
+  }
+
+  Widget _decision(ProjectUpdate u, Appearance l10n) {
+    final pressed = _deciding[u.id];
+    final off = pressed != null || _decided.contains(u.id);
+    return Wrap(
+      spacing: Cobalt.space2,
+      children: [
+        BlockButton(
+          label: l10n.t('proposal.accept'),
+          size: BlockButtonSize.sm,
+          busy: pressed == true,
+          onPressed: off ? null : () => _decide(u, accept: true),
+        ),
+        BlockButton(
+          label: l10n.t('proposal.reject'),
+          size: BlockButtonSize.sm,
+          variant: BlockButtonVariant.secondary,
+          busy: pressed == false,
+          onPressed: off ? null : () => _decide(u, accept: false),
+        ),
+      ],
+    );
   }
 
   @override
@@ -62,9 +105,9 @@ class ProjectUpdatesFeed extends StatelessWidget {
       children: [
         Text(l10n.t('project.updates'), style: theme.textTheme.titleLarge),
         const SizedBox(height: 12),
-        if (updates.isEmpty)
+        if (widget.updates.isEmpty)
           Text(l10n.t('github.empty'), style: theme.textTheme.bodyLarge),
-        for (final u in updates) ...[
+        for (final u in widget.updates) ...[
           FieldCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,24 +127,7 @@ class ProjectUpdatesFeed extends StatelessWidget {
                   // FEAT-03: an agent proposal is decided, not
                   // edited — Accept/Reject own the record.
                   child: u.kind == 'agent_proposal' && u.decision.isEmpty
-                      ? Wrap(
-                          spacing: Cobalt.space2,
-                          children: [
-                            BlockButton(
-                              label: l10n.t('proposal.accept'),
-                              size: BlockButtonSize.sm,
-                              onPressed: () =>
-                                  _decide(context, u, accept: true),
-                            ),
-                            BlockButton(
-                              label: l10n.t('proposal.reject'),
-                              size: BlockButtonSize.sm,
-                              variant: BlockButtonVariant.secondary,
-                              onPressed: () =>
-                                  _decide(context, u, accept: false),
-                            ),
-                          ],
-                        )
+                      ? _decision(u, l10n)
                       : PopupMenuButton<String>(
                           onSelected: (value) async {
                             if (value == 'edit') {
@@ -123,19 +149,19 @@ class ProjectUpdatesFeed extends StatelessWidget {
                               if (values != null && context.mounted) {
                                 final done = await guardWrite(
                                   context,
-                                  () => onEdit(u, values.first.trim()),
+                                  () => widget.onEdit(u, values.first.trim()),
                                 );
                                 if (done && context.mounted) {
-                                  await onChanged();
+                                  await widget.onChanged();
                                 }
                               }
                             } else if (value == 'delete') {
                               final done = await guardWrite(
                                 context,
-                                () => onRemove(u),
+                                () => widget.onRemove(u),
                               );
                               if (done && context.mounted) {
-                                await onChanged();
+                                await widget.onChanged();
                               }
                             }
                           },
