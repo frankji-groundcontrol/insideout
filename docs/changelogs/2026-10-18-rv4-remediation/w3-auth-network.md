@@ -215,13 +215,25 @@ the pass-through nginx = 1)`.
 INTEGRATOR TODO: `docs/usage/deployment.md` (lines 101 to 108): rewrite the
 client-IP trust chain paragraph (REL-13). The server no longer reads "the
 rightmost entry" or trusts a locally spoofed header in compose; it takes the
-Nth entry from the right, N being the variable, and the hosted value is 1.
-Also say the compose server port is now loopback-only, which makes the sentence
-at lines 97 to 99 ("do not publish the server port") true by default.
+Nth entry from the right, N being the variable, and the hosted value is 1. A
+deployment behind a proxy MUST set it, or every client shares one bucket (the
+proxy's address). Also say the compose server port is now loopback-only, which
+makes the sentence at lines 97 to 99 ("do not publish the server port") true by
+default.
 
-INTEGRATOR TODO: note for whoever owns `client/nginx.conf`: if nginx ever starts
-appending `$remote_addr` to `X-Forwarded-For`, every hop count shifts by one
-(compose 1, Railway 2). The two files must change together.
+INTEGRATOR TODO: `client/nginx.conf` (not owned here; another wave-3 cluster
+owns it). The hop defaults assume nginx passes `X-Forwarded-For` through
+untouched, as it does on this base (`proxy_set_header X-Forwarded-For
+$http_x_forwarded_for;`, lines 79 and 101). At integration, look at that line
+again: if the file now appends `$remote_addr`, every count shifts by one (the
+compose default becomes 1, the hosted value 2) and the compose comment above
+the variable must change with it. The two files change together.
+
+INTEGRATOR TODO: `server/internal/api/auth_email_funnel_test.go` is edited again
+by a later cluster (test hardening). Keep the one line added here, `m.mail.Wait()`
+in `lastMail`: the emailed requests answer first and send from the queue, so a
+test that reads the dev-mail log or counts sends must wait first, or it reads
+the log before the job has written to it.
 
 INTEGRATOR TODO: `docs/architecture/backend.md` (the auth paragraph, lines 60
 to 100): refresh tokens rotate inside a session family; a spent token replayed
