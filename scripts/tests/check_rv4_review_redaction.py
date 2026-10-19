@@ -9,6 +9,7 @@ d53035a..rv4/integration against the real guard in a throwaway repository, so
 the proof does not depend on how this checkout happens to look:
 
   LedgerHistoryArm  F45  the ledger-honesty history arm in a shallow clone
+  ProviderIdArm     F46  the UUID-shaped provider-id scan beyond three named records
 """
 import os
 import pathlib
@@ -163,6 +164,54 @@ class LedgerHistoryArm(unittest.TestCase):
             r = self.guard(shallow, ci=True)
             self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
             self.assertIn("fetch-depth: 0", r.stdout)
+
+
+class ProviderIdArm(unittest.TestCase):
+    """rv4-FR-F46: the provider-id scan of check_redaction_addresses.py read three
+    named records, so the next dated record to paste a deployment id passed every
+    guard. Driven black-box: a throwaway repo holds a copy of that test and the
+    records the old arm named; one unlisted record gets an id planted in it."""
+
+    TEST = "TrackedTree.test_dated_records_carry_no_provider_ids"
+    NAMED = ("docs/changelogs/2026-08-18-flutter-web-host.md",
+             "docs/changelogs/2026-08-21-dogfood-and-cleanup.md",
+             "docs/plans/2026-09-18-cobalt-flutter-goal.md")
+    # UUID-shaped but synthetic, built from parts so this file spells none.
+    ID = "-".join(("3f6c1b52", "8d1e", "4a7b", "9c0d", "5e2f7a9b1c34"))
+    NIL = "-".join(("00000000", "0000", "0000", "0000", "000000000000"))
+
+    def run_arm(self, extra):
+        with tempfile.TemporaryDirectory() as tmp:
+            files = {n: "clean\n" for n in self.NAMED}
+            files.update(extra)
+            files["scripts/tests/check_redaction_addresses.py"] = \
+                (ROOT / "scripts/tests/check_redaction_addresses.py").read_text(encoding="utf-8")
+            git(["init", "-q"], tmp)
+            for name, text in files.items():
+                path = pathlib.Path(tmp, name)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding="utf-8")
+            git(["add", "--", *files], tmp)
+            return subprocess.run([sys.executable, "-I", "scripts/tests/check_redaction_addresses.py", self.TEST],
+                                  cwd=tmp, capture_output=True, text=True, env=env())
+
+    def test_a_clean_snapshot_passes(self):
+        r = self.run_arm({})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_an_id_in_any_tracked_record_under_docs_fails_without_being_echoed(self):
+        for path in ("docs/changelogs/2026-10-19-probe.md", "docs/plans/2026-10-19-probe.track.yaml",
+                     "docs/usage/probe.md"):
+            with self.subTest(path=path):
+                r = self.run_arm({path: f"first\nsecond\nDeploy {self.ID} (path strategy)\n"})
+                out = r.stdout + r.stderr
+                self.assertNotEqual(r.returncode, 0, "an unlisted record's provider id passed the arm")
+                self.assertIn(f"{path}:3", out)
+                self.assertNotIn(self.ID, out)
+
+    def test_the_nil_uuid_is_not_a_provider_id(self):
+        r = self.run_arm({"docs/learning/probe.md": f"NULLIF($3::uuid, '{self.NIL}'::uuid)\n"})
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
 
 if __name__ == "__main__":
