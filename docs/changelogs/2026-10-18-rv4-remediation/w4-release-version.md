@@ -6,11 +6,13 @@ over what [wave 3, release supply chain](w3-release-supply.md#moved-to-wave-4)
 left for the installer and the runbook: rv4-PM-04, rv4-PM-05, and the consumer
 side of rv4-PUB-03 and rv4-SEC-07 in `scripts/bootstrap.sh`.
 
-**Nothing here has run on an Actions runner, and no release carries an
-attestation.** `release.yml`, the attestation and the `ci` job that runs the
-`check_*.py` guards are **pending first CI run after push**; the first `v*` tag
-cut after that push is the first end-to-end proof of the provenance check.
-What ran locally is stated per finding below.
+**Nothing here has run on an Actions runner, and no release of this repository
+carries an attestation.** `release.yml`, the attestation and the `ci` job that
+runs the `check_*.py` guards are **pending first CI run after push**; the first
+`v*` tag cut after that push is the first end-to-end proof of the provenance
+check for this repository. What ran locally, and the live runs against GitHub
+(the real `v0.1.0`, and another repository's attested release), are stated under
+[What is and is not proven](#what-is-and-is-not-proven).
 
 ## Commits
 
@@ -203,22 +205,65 @@ reason swallowed, a silent skip.
   old gh, verified, rejected, checksum mismatch) against a stub `gh`, a stub
   `curl`, and a loopback `ThreadingHTTPServer`; the argv it passes; the order of
   checks; bash 3.2 syntax; the docs saying so.
-- **Not proven, and not claimed:** the real attestation path. No release carries
-  an attestation, so `gh attestation verify` has never run against api.github.com
-  for this repository (pending first CI run after push, then the first tag). The
-  stub answers by design; a gh that changes its flags would only show up there.
-- **A live GitHub download was not possible from the machine this ran on:**
-  github.com:443 is unreachable from it (curl exit 28 after 75 s), so the fixed
-  script was not run against the real `v0.1.0` assets. The loopback mirror serves
-  the same names (`insideout-<os>-<arch>.tar.gz`, `checksums.txt`).
+- **Proven live, against the real `v0.1.0`** (https from this machine through its
+  local proxy; the real `gh` 2.102.0; the fixed script piped to `bash -s`). With
+  no `gh` on the PATH it downloads, prints `Checksum verified` and
+  `Provenance not checked: gh (the GitHub CLI) is not installed`, and installs
+  both Mach-O arm64 binaries. With the signed-in `gh` it exits 1: gh prints
+  `Error: HTTP 404: Not Found
+  (https://api.github.com/repos/frankji-groundcontrol/insideout/attestations/sha256:bbde5844...)`,
+  then the script prints `error: could not verify the build provenance of
+  insideout-darwin-arm64.tar.gz — nothing was installed.` and nothing is
+  installed. That is the consequence stated in the docs, observed: `v0.1.0`
+  carries no attestation, so a signed-in `gh` stops the one-liner on it.
+- **The success path, shown on another repository's release.** No release of this
+  repository has an attestation, so the branch that prints `Provenance verified`
+  ran on one that does: `cli/cli` v2.102.0, `gh_2.102.0_linux_amd64.tar.gz`
+  (signer workflow `cli/cli/.github/workflows/deployment.yml`). The archive was
+  served from a loopback mirror under this project's archive name with a generated
+  `checksums.txt`, through a **copy** of `scripts/bootstrap.sh` that differs from
+  the real one in two lines (`repo=cli/cli` and the `workflow=` line, now
+  `deployment.yml`):
+
+  ```
+  ==> Checksum verified
+  ==> Provenance verified: built by cli/cli/.github/workflows/deployment.yml
+  ==> Installing into <scratch>/bin
+  install: <tmpdir>/insideout: No such file or directory
+  ```
+
+  The run ends at `install` (exit 71) because the archive is gh's and holds no
+  `insideout` binary; everything before that is the real path. The same archive
+  with one byte appended and a `checksums.txt` that matches the changed file
+  passes the checksum and then stops, which is the attack the checksum alone
+  cannot see: `Error: no attestations found`, then `could not verify the build
+  provenance ... nothing was installed`, exit 1, nothing installed. Run directly,
+  `gh attestation verify <archive> --repo cli/cli --signer-workflow
+  cli/cli/.github/workflows/deployment.yml` exits 0, and with `release.yml` as the
+  signer workflow it exits 1. So the flag shape, the exit-code contract and both
+  branches work against a real Sigstore attestation on gh 2.102.0.
+- **Not proven, and not claimed:** that this repository's own `release.yml`
+  produces an attestation whose signer matches `--signer-workflow
+  frankji-groundcontrol/insideout/.github/workflows/release.yml`. No release of
+  this repository carries one, so that has never run: pending first CI run after
+  push, then the first tag. A gh that changes its flags would show up there, or
+  here on a newer gh.
+- **A statement that was wrong.** Commits `30c9dc0`, `c565c18` and `8a1f9bab` say
+  github.com:443 is unreachable from this machine (curl exit 28 after 75 s). It
+  is reachable: that probe ran under `env -i`, which dropped the proxy variables
+  this machine needs. The commit messages stay as they are (history is not
+  rewritten); nothing in the script, the guard or the docs depends on the
+  statement, and this section supersedes it.
 - **Known limits:** the check pins the repository and the workflow path, not the
   tag, because the one-liner does not know the tag it will fetch; anyone who can
   run `release.yml` in this repository gets attested artifacts (an attestation
   proves where bytes were built, not that they are benign); `bootstrap.sh` itself
   cannot be checked before it is run (the page says how to verify it by hand);
-  only github.com is supported as the attestation host; with the checksum file on
-  the same origin as the archive, installs without `gh` have the integrity check
-  they had before and nothing more.
+  only github.com is supported as the attestation host; a verification that fails
+  because gh cannot reach api.github.com stops the install the same way as a
+  missing attestation, with gh's own error printed first; with the checksum file
+  on the same origin as the archive, installs without `gh` have the integrity
+  check they had before and nothing more.
 
 ## Owner decisions (DEFERRED_OWNER)
 
