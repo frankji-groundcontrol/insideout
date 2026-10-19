@@ -182,12 +182,14 @@ def other_builds():
 def releasing_doc():
     """rv4-PM-05: the runbook documents the workflow that ships, not an older one."""
     doc = DOC.read_text(encoding="utf-8") if DOC.is_file() else ""
+    flat = " ".join(doc.split())  # a phrase the editor wrapped across two lines is still one phrase
     failures = [f"docs/usage/releasing.md: no `## {h}` section" for h in ("The tag rule", "Version policy", "Rollback")
                 if not re.search(rf"^## {h}$", doc, re.M)]
     failures += [f"docs/usage/releasing.md does not mention `{n}`, which release.yml does"
-                 for n in ("--verify-tag", "attest-build-provenance", "actions: read") if n not in doc]
-    if re.search(r"(?<!no `)--clobber|gh release upload", doc):
-        failures.append("docs/usage/releasing.md tells the reader to overwrite a published release (`--clobber` or `gh release upload`)")
+                 for n in ("--verify-tag", "attest-build-provenance", "actions: read") if n not in flat]
+    if re.search(r"(?<!no `)--clobber|gh release upload", flat):
+        failures.append("docs/usage/releasing.md tells the reader to overwrite a published release (`--clobber` or "
+                        "`gh release upload`); to say it is absent, write \"no `--clobber`\"")
     return failures
 
 
