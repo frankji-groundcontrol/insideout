@@ -117,12 +117,14 @@ func (s *Server) handleUpdatePrd(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if msg := sectionLengthError(req.Sections); msg != "" {
-		httpx.WriteError(w, http.StatusBadRequest, msg, "", nil)
-		return
-	}
 
 	prd, err := s.store.UpdateSections(r.Context(), userID, pid, req.Title, req.Sections, nil) // manual save: no CAS, the human always wins
+	// The store owns the section cap (rv4-FR-F127); its message is the 400.
+	var capErr *store.SectionTooLongError
+	if errors.As(err, &capErr) {
+		httpx.WriteError(w, http.StatusBadRequest, capErr.Error(), "", nil)
+		return
+	}
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
 		return

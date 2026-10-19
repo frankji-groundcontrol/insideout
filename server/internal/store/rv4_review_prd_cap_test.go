@@ -3,9 +3,13 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // rv4-FR-F85 and rv4-FR-F95: the 10,000-character PRD section cap (rv4-COMP-04)
@@ -146,5 +150,62 @@ func TestRvPrdCapRefusalIsTypedAndNamesTheSection(t *testing.T) {
 		if tooLong.Section != first || (first != "goals" && first != "risks") {
 			t.Fatalf("call %d names %q, the first call named %q: the answer changes with map order or names a section that fits", i, tooLong.Section, first)
 		}
+	}
+}
+
+// rvPrdCapPlant stores text in one section the way a row written before the cap
+// holds it: a plain UPDATE under the author's row-level security context,
+// around UpdateSections, which now refuses such text.
+func rvPrdCapPlant(t *testing.T, st *Store, author *User, prdID uuid.UUID, section, text string) {
+	t.Helper()
+	err := st.withUserContext(context.Background(), author.ID, func(tx pgx.Tx) error {
+		tag, err := tx.Exec(context.Background(),
+			`UPDATE insideout.prds SET sections = jsonb_set(sections, ARRAY[$2::text], to_jsonb($3::text)) WHERE id = $1`,
+			prdID, section, text)
+		if err == nil && tag.RowsAffected() != 1 {
+			err = fmt.Errorf("%d rows updated, want 1", tag.RowsAffected())
+		}
+		return err
+	})
+	if err != nil {
+		t.Fatalf("plant the long section: %v", err)
+	}
+}
+
+// rv4-FR-F127: text the section already holds is not a write. The PRD page
+// sends every section back on each save, so a row stored before the cap stays
+// savable around its long section; any change to that section is held to the
+// cap again, whether it is shorter, longer or the same length.
+func TestRvPrdCapUnchangedTextIsExemptButAChangeIsNot(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	author, prd := rvPrdCapDraft(t, st)
+	long := rvPrdCapRunes(15_000)
+	rvPrdCapPlant(t, st, author, prd.ID, "background", long)
+
+	got, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"background": long, "goals": "a goal"}, nil)
+	if err != nil {
+		t.Fatalf("a patch carrying the stored 15000-character section unchanged: %v, want it stored", err)
+	}
+	if got.Sections["background"] != long || got.Sections["goals"] != "a goal" {
+		t.Errorf("after the exempt save background holds %d characters and goals %q, want the long text untouched and the goal stored",
+			utf8.RuneCountInString(got.Sections["background"]), got.Sections["goals"])
+	}
+
+	for name, text := range map[string]string{
+		"one character longer":       rvPrdCapRunes(15_001),
+		"one character shorter":      rvPrdCapRunes(14_999),
+		"just over the cap":          rvPrdCapRunes(10_001),
+		"same length, other content": rvPrdCapRunes(14_999) + "x",
+		"stored text plus a space":   long + " ",
+	} {
+		_, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"background": text}, nil)
+		if !errors.Is(err, ErrValidation) {
+			t.Errorf("%s: err = %v, want a validation error: a change that leaves the section over the cap was stored", name, err)
+		}
+	}
+
+	if _, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, map[string]string{"background": rvPrdCapRunes(10_000)}, nil); err != nil {
+		t.Fatalf("a change that brings the section to exactly the cap: %v, want it stored", err)
 	}
 }

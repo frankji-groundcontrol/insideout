@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 	"unicode/utf8"
 )
@@ -72,4 +73,33 @@ func TestRvPrdCapSavingAroundAnUnchangedLongSectionSucceeds(t *testing.T) {
 	if got["background"] != long {
 		t.Errorf("the untouched long section changed: it holds %d characters, want 15000", utf8.RuneCountInString(got["background"]))
 	}
+}
+
+// Changing a long section is a write like any other: a trim that leaves it over
+// the cap is refused, names the section and the limit, and stores nothing from
+// the same save; a trim that brings it under the cap lands.
+func TestRvPrdCapTrimmingALongSectionIsHeldToTheCap(t *testing.T) {
+	w := newRouteWorld(t)
+	prd := w.prd(t)
+	long := cjk(15_000)
+	rvPrdCapPlant(t, w, prd, "background", long)
+
+	code, body := w.saveSections(t, prd, map[string]string{"background": cjk(12_000), "goals": "must not land"})
+	if code != http.StatusBadRequest {
+		t.Fatalf("a trim to 12000 characters, still over the cap: status %d, want 400: %s", code, body)
+	}
+	for _, want := range []string{"background", "10000"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("the answer %q does not name %q", body, want)
+		}
+	}
+	code, body = w.call(w.owner, http.MethodGet, "/api/v1/prds/"+prd, "")
+	expect(t, "read the PRD back", code, body, http.StatusOK)
+	got := decodeAs[prdView](t, body).Sections
+	if got["background"] != long || got["goals"] != "" {
+		t.Errorf("the refused save changed the PRD: background holds %d characters, goals = %q", utf8.RuneCountInString(got["background"]), got["goals"])
+	}
+
+	code, body = w.saveSections(t, prd, map[string]string{"background": cjk(9_000)})
+	expect(t, "a trim to 9000 characters", code, body, http.StatusOK)
 }

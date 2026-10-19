@@ -148,7 +148,9 @@ func (s *Store) GetPrdForMember(ctx context.Context, prdID, viewerID uuid.UUID) 
 // write rather than the reverse.
 //
 // A section over MaxSectionRunes is refused whole with a *SectionTooLongError
-// (an ErrValidation) before anything is written, whoever the caller is.
+// (an ErrValidation) before anything is written, whoever the caller is. Text
+// identical to what the section already holds is exempt, so a row stored before
+// the cap can still be saved around its long section.
 func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, title *string, patch map[string]string, expectedUpdatedAt *time.Time) (*Prd, error) {
 	var updated *Prd
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -159,9 +161,13 @@ func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, ti
 		if expectedUpdatedAt != nil && !prd.UpdatedAt.Equal(*expectedUpdatedAt) {
 			return ErrConflict
 		}
+		// Text the section already holds is not a write (rv4-FR-F127): the PRD page
+		// sends every section back on each save, so a row stored before the cap (or
+		// by the coach, before the cap bound it) stays savable around its long
+		// section. Changing it to anything over the cap is refused like any write.
 		// Sorted, so which section is named does not depend on map order.
 		for _, k := range slices.Sorted(maps.Keys(patch)) {
-			if utf8.RuneCountInString(patch[k]) > MaxSectionRunes {
+			if v := patch[k]; v != prd.Sections[k] && utf8.RuneCountInString(v) > MaxSectionRunes {
 				return &SectionTooLongError{Section: k}
 			}
 		}
