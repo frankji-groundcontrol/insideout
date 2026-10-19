@@ -24,8 +24,10 @@ check_release_gate.py.
           the comment and rewrites both). Local and docker:// refs are exempt.
   PUB-09  every archive the install skill downloads (Go, Flutter) is checked
           against a pinned sha256 before it is unpacked or replaces the
-          installed toolchain, and a mismatch stops the block. (The Go floor
-          half of PUB-09 lives in check_go_floor.py.)
+          installed toolchain, and a mismatch stops the block: a `&&` chain
+          must be the last statement (nothing after it, such as a write to a
+          shell rc file, may still run), or the check is followed by `|| exit`.
+          (The Go floor half of PUB-09 lives in check_go_floor.py.)
 
 CI-config properties: the first real proof is the first tag run after push.
 """
@@ -226,9 +228,14 @@ def pub09():
             continue
         if unpack and unpack.start() < verify.start():
             out.append(f"modules.md: {name} is unpacked (or the old toolchain removed) before its checksum is verified (PUB-09)")
-        line = next(l for l in code.splitlines() if VERIFY.search(l))
-        if not re.match(r"\s*\S*\s*(&&|\|\|.*\bexit\b)", line[VERIFY.search(line).end():]):
+        lines = code.splitlines()
+        at = next(i for i, l in enumerate(lines) if VERIFY.search(l))
+        stop = re.match(r"\s*\S*\s*(&&|\|\|.*\bexit\b)", lines[at][VERIFY.search(lines[at]).end():])
+        if not stop:
             out.append(f"modules.md: the checksum check for {name} does not stop the block on a mismatch (chain it with && or follow it with `|| exit`) (PUB-09)")
+        elif stop.group(1) == "&&" and any(l.strip() for l in lines[at + 1 :]):
+            out.append(f"modules.md: a command follows the `&&` chain that checks {name}: a mismatch stops the chain but that command still runs; "
+                       "put it in the chain or follow the check with `|| exit` (PUB-09)")
         if not re.search(r"\b[0-9a-f]{64}\b", block):
             out.append(f"modules.md: no pinned sha256 for {name}: the block must carry the 64-hex value, not fetch it beside the archive (PUB-09)")
     return out
