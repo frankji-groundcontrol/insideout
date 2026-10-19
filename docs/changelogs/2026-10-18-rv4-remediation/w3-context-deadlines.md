@@ -133,12 +133,20 @@ loopback that takes 25 s to answer (`live-proof.txt`):
   0 s, the CLI was interrupted at 3 s, and the stub was still answering at 25 s
   with no sign that the server had cancelled. By the same mechanism a call the
   client cut at its deadline leaves the server working too (inferred, not
-  measured). `handleConvertIdea` decodes its body and does not have the problem. Fix, in `server/internal/api/roadmap_ai.go` (not this
-  cluster's file): decode or drain the body first in both handlers, and add a
-  test that closes the connection mid-call and asserts the planner's context is
-  cancelled.
+  measured). `handleConvertIdea` decodes its body and does not have the
+  problem. Fix, in `server/internal/api/roadmap_ai.go` (not this cluster's
+  file): decode or drain the body first in both handlers, and add a test that
+  closes the connection mid-call and asserts the planner's context is cancelled.
 - **`aiRoutes` is a hand-kept list.** A new route whose handler calls the model
   has to be added, or it gets the quick deadline (marked in `deadline.go`).
+- **`insideout setup --check` is not bound to the CLI context.**
+  `runHealthCheck` (`cli_setup_check.go`, not one of this cluster's files)
+  builds its probes on a 60 s context taken from `context.Background()`, and
+  its signed-in probe calls the API with a client that has no context, so a
+  Ctrl-C does not cancel them. The command still ends with status 130, through
+  the `interruptGrace` exit. This is the one CLI call site left outside
+  QUAL-04's fix. Fix, in that file: take the 60 s context from `cliCtx`, pass
+  it to `checkSignedIn` and set it on the probe's client.
 - **MCP cancellation** is proved through the real transport in
   `ctx_cancel_test.go`; it was not driven through a live MCP host.
 - **The deadline is per exchange, not per byte.** A model that streams a draft
@@ -152,3 +160,6 @@ loopback that takes 25 s to answer (`live-proof.txt`):
   everything else is allowed twenty seconds.
 - The server-side disconnect finding above is not in the register; give it an id
   and an owner.
+- `server/cmd/insideout/cli_setup_check.go`: the edit named under `setup
+  --check` above completes rv4-QUAL-04, which this cluster reports as partial
+  until it lands.
