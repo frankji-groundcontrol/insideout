@@ -35,9 +35,10 @@ The layout under s/ mirrors https://fonts.gstatic.com/s/, so one setting,
 fontFallbackBaseUrl: "fonts/s/" (in a custom web/flutter_bootstrap.js), makes
 the engine read them here.
 
-Status: web/flutter_bootstrap.js does not exist yet, so the engine still reads
-fonts.gstatic.com (client/nginx.conf keeps that one host in connect-src). The
-files and nginx's /fonts/ location are in place for the day it does.
+Status: web/flutter_bootstrap.js sets fontFallbackBaseUrl, so the engine reads
+these files and asks fonts.gstatic.com for nothing; client/nginx.conf names no
+host in its Content-Security-Policy. A request for a file that is not here is
+answered 404 by nginx's /fonts/ location, never the SPA shell.
 
 Source of the list: the engine's fallback table, Flutter 3.44.8 (engine
 0cd610717bde); the table in 3.44.0, the version the Dockerfile builds with,
