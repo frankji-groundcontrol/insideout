@@ -1,7 +1,8 @@
 # Wave 3, client assets — review-4 remediation
 
-Branch `rv4/w3-client-assets`, base `4adea1a`. Eight commits, `3530169` to
-`dea8dab`, plus this fragment. Findings are cited as `rv4-<ID>` elsewhere
+Branch `rv4/w3-client-assets`, base `4adea1a`. Ten commits, `3530169` to
+`684cfb2`, plus this fragment (committed first at `f150f45`, updated in repair
+round 1). Findings are cited as `rv4-<ID>` elsewhere
 because review IDs restart per review. Row 3.11 of the
 [remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md);
 the findings are in the
@@ -9,23 +10,24 @@ the findings are in the
 
 | Finding | State | Red | Fix |
 | --- | --- | --- | --- |
-| rv4-COMP-03, the web client needs Google hosts | `PARTIAL` | `3530169`, `95408ad`, `069decd` | `11b6f65`, `b52d404` (`dea8dab` is a comment) |
+| rv4-COMP-03, the web client needs Google hosts | `FIXED` | `3530169`, `95408ad`, `069decd`, `f9eb434` | `11b6f65`, `b52d404`, `684cfb2` (`dea8dab` is a comment) |
 | rv4-COMP-06, cleartext HTTP in every Android build type | `FIXED` at the manifest level | `2ed33a7` | `d2840bd` |
 
-**rv4-COMP-03 was real, and what is left is one file.** The register marked it
-unverified, so the first check below measured it. The base web build asks
-`www.gstatic.com` for CanvasKit and `fonts.gstatic.com` for the fonts the engine
-paints with, and links a Google Fonts stylesheet (`fonts.googleapis.com`) that
-CanvasKit never reads. Block the first and the page never starts; block the
-second and it starts but draws no text. In the branch CanvasKit and the
-stylesheet link are gone, the app starts with every off-origin host blocked, and
-every font the engine can ask for is served from the app's own origin. **One host
-is left**: the policy still names `fonts.gstatic.com` in `connect-src`, and the
-engine still asks there, because moving its font downloads needs a custom
-`client/web/flutter_bootstrap.js`, a new path outside `files_owned`. A verified
-two-commit patch for it is ready ([The follow-up patch](#the-follow-up-patch)).
-Until it is applied, a network that cannot reach `fonts.gstatic.com` gets an app
-that starts but draws no text, as the base did.
+**rv4-COMP-03 was real and is fixed.** The register marked it unverified, so the
+first check below measured it. The base web build asks `www.gstatic.com` for
+CanvasKit and `fonts.gstatic.com` for the fonts the engine paints with, and links
+a Google Fonts stylesheet (`fonts.googleapis.com`) that CanvasKit never reads.
+Block the first and the page never starts; block the second and it starts but
+draws no text. In the branch CanvasKit and every font the engine can ask for are
+served from the app's own origin, a custom `client/web/flutter_bootstrap.js`
+points the engine's font downloads at them, and the Content-Security-Policy names
+no host (`default-src 'self'`, `connect-src 'self'`). A first load, on an open
+network or with every off-origin host blocked, makes no request that leaves the
+origin and draws the landing screen the base drew with Google reachable (a
+byte-identical screenshot in zh-CN). `flutter_bootstrap.js` is the one path the
+verifier added to `files_owned` in repair round 1; until it landed (`684cfb2`) the
+policy still named `fonts.gstatic.com` in `connect-src` and a network that blocked
+it got an app that started but drew no text, as the base did.
 
 **rv4-COMP-06 is fixed in the manifests.** `usesCleartextTraffic` is `false` in
 the main manifest, which every build type merges. Debug and profile, never
@@ -38,14 +40,16 @@ cleartext for `localhost`, `127.0.0.1` and `10.0.2.2` only.
   parses as YAML; `actionlint` is not installed here. **Pending first CI run
   after push.**
 - The image was not built. Its inputs were exercised alone: `flutter build web
-  --release --no-web-resources-cdn` on Flutter 3.44.8 (Dockerfile and CI pin
-  3.44.0; the engine's font tables are identical) and the rendered
-  `client/nginx.conf` on nginx 1.31.7 from an isolated conda-forge prefix (the
-  image has 1.27, the CI job the distro package).
+  --release --no-web-resources-cdn --dart-define=API_BASE=/api/v1` at `684cfb2`
+  on Flutter 3.44.8 (Dockerfile and CI pin 3.44.0; the engine's font tables are
+  identical; exit 0, 27.8 s) and the rendered `client/nginx.conf` on nginx 1.31.7
+  from an isolated conda-forge prefix (the image has 1.27, the CI job the distro
+  package).
 - Browser runs: headless Google Chrome 155 under Playwright 1.64, against a small
   static server that serves `build/web` the way `client/nginx.conf` does for the
   SPA (fallback to `index.html`, 404 for a missing `/fonts/` file, no backend)
-  with the Content-Security-Policy that file declares.
+  with the Content-Security-Policy that file declares. The head rows below ran on
+  the `build/web` of that real build.
 - Android: the five manifests and configs were read as text and parse as XML. No
   SDK, so no APK was built; the merged manifest and device behavior are unchecked.
 
@@ -66,23 +70,25 @@ the view mounted.
 | base | everything off-origin blocked | 4, all blocked (the two CanvasKit files, the stylesheet, Roboto) | never (46 s) | none: `Failed to fetch dynamically imported module` (CanvasKit script) |
 | base | stylesheet blocked | as open, the stylesheet blocked | 1.9 s | 10.6 s |
 | base | both font hosts blocked | `fonts.gstatic.com`: 6,997 blocked requests in 34 s | 1.6 s | none: blank page |
-| branch `dea8dab` | open | `fonts.gstatic.com` x13 | 1.4 s | 10.5 s |
-| branch `dea8dab` | everything off-origin blocked | `fonts.gstatic.com`: 4,456 blocked requests in 25 s | 0.6 s | none: blank page |
-| branch + patch, zh-CN | open | none (13 requests to `/fonts/s/`) | 1.0 s | 10.4 s |
-| branch + patch, zh-CN | blocked | none (13 requests to `/fonts/s/`) | 0.3 s | 10.5 s |
-| branch + patch, en-US | open and blocked | none (2 to `/fonts/s/`: Roboto, one Noto Sans Symbols file) | 0.6 s | 10.4 s |
+| branch before the bootstrap file (`dea8dab`) | open | `fonts.gstatic.com` x13 | 1.4 s | 10.5 s |
+| branch before the bootstrap file (`dea8dab`) | everything off-origin blocked | `fonts.gstatic.com`: 4,456 blocked requests in 25 s | 0.6 s | none: blank page |
+| head `684cfb2`, zh-CN | open | none (13 requests to `/fonts/s/`, all 200) | 0.6 s | 10.6 s |
+| head `684cfb2`, zh-CN | everything off-origin blocked | none (13 requests to `/fonts/s/`, all 200) | 0.6 s | 10.2 s |
+| head `684cfb2`, en-US | open | none (2 to `/fonts/s/`: Roboto, one Noto Sans Symbols file) | 0.6 s | 10.4 s |
+| head `684cfb2`, en-US | everything off-origin blocked | none (2 to `/fonts/s/`) | 0.6 s | 10.3 s |
 
-Screenshots compared by SHA-256: the base open, base stylesheet blocked, branch
-open and both patched zh-CN renders are one file; the two blank pages (base with
-both font hosts blocked, branch blocked) are one file; en-US open and blocked are
-one file.
+Every head run enforced the policy of `client/nginx.conf` and logged no console
+error and no CSP violation. Screenshots compared by SHA-256: the base open, base
+stylesheet blocked, `dea8dab` open and both head zh-CN renders (open and blocked)
+are one file; the two blank pages (base with both font hosts blocked, `dea8dab`
+blocked) are one file; head en-US open and blocked are one file (text drawn).
 
 - **The finding holds, with a correction.** The page needs CanvasKit
   (`www.gstatic.com`, a dynamic import, fatal when blocked) and the engine's
   fonts (`fonts.gstatic.com`), not the stylesheet: blocked, the render is the
   same. The 737 faces the stylesheet declares were never fetched; every font file
   the page loads is an engine `fetch()`.
-- **Every row that finishes lands about 10.5 s after mount, the base included.**
+- **Every row that finishes lands 10 to 11 s after mount, the base included.**
   That matches the 10 s ceiling of the boot gate in
   `client/lib/theme/web_fonts_web.dart`, which polls for CSS faces CanvasKit does
   not use. The file is not in this cluster; the wait is as it was.
@@ -104,7 +110,8 @@ source (Flutter 3.44.8):
   the engine still asked `fonts.gstatic.com` (1,123 blocked requests in 24 s,
   none to the mirror). An inline script would do it, but the CSP bars inline
   script and a hash cannot cover a per-build value. So the option needs a custom
-  `web/flutter_bootstrap.js`, the file outside `files_owned`.
+  `web/flutter_bootstrap.js`, a path outside the first `files_owned` that the
+  verifier added in repair round 1.
 - **A partial mirror (the families this UI uses).** Rejected. The engine picks
   its font from the browser language and the user's text: zh-TW asks for Noto
   Sans TC, zh-HK for HK, ja for JP, ko for KR; an arrow in an English locale asks
@@ -130,29 +137,38 @@ source (Flutter 3.44.8):
   `--no-web-resources-cdn` (the one web build line in each).
 - `client/web/index.html`: the two `preconnect` links and the Google Fonts
   stylesheet are gone.
+- `client/web/flutter_bootstrap.js` (new, 16 lines, the one path added to
+  `files_owned` in repair round 1): the default Flutter template (`{{flutter_js}}`,
+  `{{flutter_build_config}}`, `_flutter.loader.load` with
+  `{{flutter_service_worker_version}}`) plus `config.fontFallbackBaseUrl:
+  "fonts/s/"`, so the engine fetches its Roboto and Noto fonts from the mirror.
+  The path is relative, so it follows `<base href>`.
 - `client/nginx.conf`: the CSP drops `www.gstatic.com/flutter-canvaskit/` (from
   `script-src` and `connect-src`), `fonts.googleapis.com` (`style-src`) and
-  `fonts.gstatic.com` (`font-src`); `connect-src` keeps `https://fonts.gstatic.com`
-  for the engine's font downloads, the one host left. `gzip_types` gains
-  `application/wasm`. A new `location /fonts/ { try_files $uri =404; }` has no
-  `add_header`, because one inside a location replaces the server-level set and
-  the CSP would vanish.
+  `fonts.gstatic.com` (`font-src` and `connect-src`): it names no host and
+  `connect-src` is `'self'`. `gzip_types` gains `application/wasm`. A new
+  `location /fonts/ { try_files $uri =404; }` has no `add_header`, because one
+  inside a location replaces the server-level set and the CSP would vanish.
 - `client/web/fonts/`: `s/` holds 725 woff2 files in 145 families (21.8 MB), byte
   copies of what `fonts.gstatic.com/s/` serves, in the same layout; `licenses/`
   holds the 145 SIL OFL 1.1 texts (0.64 MB); `SHA256SUMS` passes
   `shasum -a 256 -c`; `NOTICE.txt` says why the whole table, who holds the
   copyright, and how to refresh after a Flutter upgrade.
-- `scripts/check_nginx_headers.py`: the policy may name no host beyond
-  `CSP_HOSTS_ALLOWED` and gives `default-src`, `script-src` and `style-src` to this
+- `scripts/check_nginx_headers.py`: `CSP_HOSTS_ALLOWED` is empty, so the policy may
+  name no host, and it gives `default-src`, `script-src` and `style-src` to this
   origin alone; `/fonts/` answers 200 for a mirrored file and 404, never the SPA
   shell, for another; a CanvasKit `.wasm` comes gzip'd (the stub nginx declares
   the one `application/wasm` mime mapping, so `gzip_types` is what is tested).
-- `client/test/web_csp_self_test.dart` (new, 162 lines, 7 tests): `index.html`
+- `client/test/web_csp_self_test.dart` (new, 184 lines, 8 tests): `index.html`
   asks no other origin; scripts, styles and `default-src` list no host; the CSP
-  names no host beyond `engineFontHosts` (empty after the patch); every
-  `flutter build web` line has the flag; the whole engine table ships (725 files,
-  `wOF2` magic, 145 families, a licence each); `SHA256SUMS` lists exactly the
-  shipped files; the `/fonts/` block is `try_files $uri =404` with no `add_header`.
+  names no host at all (`engineFontHosts` is empty); every `flutter build web`
+  line has the flag; the whole engine table ships (725 files, `wOF2` magic, 145
+  families, a licence each); `SHA256SUMS` lists exactly the shipped files;
+  `web/flutter_bootstrap.js` keeps the `{{flutter_js}}`, `{{flutter_build_config}}`
+  and `{{flutter_service_worker_version}}` tokens the Flutter tool fills in (a file
+  without one builds, then never starts the app) and the `_flutter.loader.load(`
+  call, and sets `fontFallbackBaseUrl` to `"fonts/s/"`; the `/fonts/` block is
+  `try_files $uri =404` with no `add_header`.
 - `client/pubspec.yaml`, `client/test/web_font_assets_test.dart`: comments only
   (they said web loads Noto from the CDN).
 
@@ -175,8 +191,9 @@ source (Flutter 3.44.8):
 
 Outputs are kept under `/private/tmp/insideout-rv4/reports/` as
 `w3-client-assets-red-<ID>.txt` and `-green-<ID>.txt` (variants `-gzip`,
-`-mirror`, `-fontbase-patch`), with the browser runs (JSON and screenshots) in
-`w3-client-assets-evidence/`.
+`-mirror`, `-fontbase-patch`, and `-r1-fontbase` for repair round 1), the gate
+output of round 1 in `w3-client-assets-gates-r1.txt`, with the browser runs (JSON
+and screenshots; the head runs are `r1-*`) in `w3-client-assets-evidence/`.
 
 | Step | Result |
 | --- | --- |
@@ -188,20 +205,24 @@ Outputs are kept under `/private/tmp/insideout-rv4/reports/` as
 | red `2ed33a7`, `android_cleartext_test.dart` at the base files | 6 of 7 fail (main `true`, no network security config in debug or profile) |
 | fix `d2840bd` | 7 of 7 pass |
 | mutation check of the COMP-06 test, each edit alone then reverted | a non-loopback `<domain>` in the cleartext block, `base-config` set to `true`, and a config under `src/main/res/xml` each fail the intended test; `usesCleartextTraffic` back to `true` fails two |
+| red `f9eb434`, `web_csp_self_test.dart` at `f150f45` plus the test | 2 of 8 fail: the CSP names `https://fonts.gstatic.com` (`Actual: Set:['https://fonts.gstatic.com']`) and `web/flutter_bootstrap.js` is absent (`no custom bootstrap`); the checker reports 4 failures (the CSP names a host on `/`, a deep route, `/healthz` and nginx's own 502 page) |
+| fix `684cfb2` | 8 of 8 pass (9 with `web_font_assets_test.dart`); the checker prints `OK`, 65 PASS; the Google-host grep prints nothing |
+| mutation check of the bootstrap and policy tests, each edit alone then reverted | the `fontFallbackBaseUrl` line removed, `{{flutter_service_worker_version}}` replaced by a literal, `{{flutter_build_config}}` removed, the option pointed at `https://fonts.gstatic.com/s/`, `https://fonts.gstatic.com` back in `connect-src`, and the file deleted each fail one test; the restored tree passes 8 of 8 |
+| real build at `684cfb2` | `flutter build web --release --no-web-resources-cdn --dart-define=API_BASE=/api/v1`: exit 0, 27.8 s. The rendered `build/web/flutter_bootstrap.js` has `fontFallbackBaseUrl: "fonts/s/"` once, `serviceWorkerVersion` filled in, `"useLocalCanvasKit":true` in the build config and no `{{` left; `build/web/fonts/s` holds 725 woff2 files in 145 family directories |
 
-Gates at `dea8dab`, before this fragment:
+Gates at `684cfb2`, before this fragment's round-1 update:
 
 | Gate | Result |
 | --- | --- |
-| `flutter pub get --enforce-lockfile`, `flutter analyze --no-fatal-infos`, `flutter test` | exit 0; 14 infos, all in `lib/api/`, none in this cluster's files; 497 passed; `pubspec.lock` untouched |
-| `TZ=Asia/Shanghai flutter test` | 497 passed |
+| `flutter pub get --enforce-lockfile`, `flutter analyze --no-fatal-infos`, `flutter test` | exit 0; 14 infos, all in `lib/api/`, none in this cluster's files; 498 passed; `pubspec.lock` untouched |
+| `TZ=Asia/Shanghai flutter test` | 498 passed |
 | `scripts/check_nginx_headers.py` on nginx 1.31.7 | 65 PASS, `OK` |
-| `grep -nE "fonts\.(googleapis\|gstatic)\.com\|gstatic\.com/flutter" client/web/index.html client/nginx.conf` | **not empty in the branch**: `nginx.conf:33` (a comment) and `:40` (`connect-src`); `index.html` is clean. Empty with the follow-up patch applied (checked on a scratch copy) |
+| `grep -nE "fonts\.(googleapis\|gstatic)\.com\|gstatic\.com/flutter" client/web/index.html client/nginx.conf` | prints nothing (grep exit 1) |
 | `grep -n usesCleartextTraffic` on the main manifest | `false` (line 11) |
-| 350-line budget on the `.go` and `.dart` files in the diff | nothing over; the largest is `web_csp_self_test.dart`, 162 |
+| 350-line budget on the `.go` and `.dart` files in the diff | nothing over; the largest is `web_csp_self_test.dart`, 184 |
 | `scripts/tests/check_*.py` | 10 scripts, all exit 0 (each prints its own ok line, so the loop is not silent) |
-| `scripts/check-redaction.sh`, `scripts/check-docs-recorded.sh` | silent, exit 0 (the second after this fragment is committed) |
-| also | `dart format --set-exit-if-changed` on the three test files, 0 changed; `check_nginx_webhook_body.py` passes; `check_nginx_reresolve.py` passes except its chunk-by-chunk timing check, which is load-sensitive (load averages of 55 to 150: 4 of 16 runs failed with this branch's `nginx.conf`, 2 of 15 with the base's) |
+| `scripts/check-redaction.sh`, `scripts/check-docs-recorded.sh` | silent, exit 0 |
+| also | `dart format --set-exit-if-changed` on the three test files, 0 changed; `check_nginx_webhook_body.py` passes; `check_nginx_reresolve.py` passed 3 of 3 runs at load averages of 13 to 25 (its chunk-by-chunk timing check is load-sensitive: at 55 to 150, 4 of 16 runs failed with the round-0 `nginx.conf` and 2 of 15 with the base's) |
 
 ## Design decisions
 
@@ -261,57 +282,31 @@ Gates at `dea8dab`, before this fragment:
 - **The brief said "two flutter build lines" in `ci.yml`;** there is one `flutter
   build web` line. The android job's `flutter build apk` takes no web flag.
 
-## The follow-up patch
+## Repair round 1
 
-`/private/tmp/insideout-rv4/reports/worker-w3-client-assets-r0-font-base.patch`,
-two commits (red `3947549`, fix `eb92161`, written on `b52d404`). It applies
-unchanged on `dea8dab`, which differs from `b52d404` in one comment of
-`client/nginx.conf`. From the repository root, `git apply` it (or `git am` to keep
-the two commits). One path is outside `files_owned`; the rest are owned files.
-
-1. New `client/web/flutter_bootstrap.js`, the default template plus one option
-   (and a six-line comment on why it exists):
-
-   ```
-   {{flutter_js}}
-   {{flutter_build_config}}
-
-   _flutter.loader.load({
-     config: {
-       fontFallbackBaseUrl: "fonts/s/",
-     },
-     serviceWorkerSettings: {
-       serviceWorkerVersion: {{flutter_service_worker_version}},
-     },
-   });
-   ```
-
-2. Owned files: `client/nginx.conf` (`connect-src 'self'`, and the comment above
-   the CSP names no Google host), `client/test/web_csp_self_test.dart`
-   (`engineFontHosts` becomes `{}`; a new test checks that the bootstrap file keeps
-   the tokens the Flutter tool fills in and sets `fontFallbackBaseUrl`),
-   `scripts/check_nginx_headers.py` (`CSP_HOSTS_ALLOWED = ()`) and
-   `client/web/fonts/NOTICE.txt` (the status paragraph).
-
-Verified: red at the first commit (the CSP test and the new bootstrap test fail,
-4 checker failures), green at the second. On a scratch copy of `dea8dab` with the
-patch applied: the two web test files pass (9 tests), the checker prints `OK`, the
-Google-host grep prints nothing, and the "branch + patch" rows above show no
-off-origin request on an open or a blocked network, text drawn, and the landing
-screen identical to the base render.
+The verifier found one cluster gate failing at `f150f45`: the grep for the Google
+hosts in `index.html` and `nginx.conf` printed `nginx.conf:33` (a comment) and
+`:40` (`connect-src` naming `fonts.gstatic.com`). rv4-COMP-03 was `PARTIAL`: the
+engine still fetched its fonts from that host, because only a custom
+`web/flutter_bootstrap.js` can move its `fontFallbackBaseUrl`, and that path was
+outside `files_owned`. Ownership was extended by that one path. The two commits
+written in round 0 (red `3947549`, fix `eb92161`) were cherry-picked onto
+`f150f45` unchanged, as red `f9eb434` and fix `684cfb2`, and the red output was
+produced again at the new position (see Evidence). Round 1 also ran, on the
+branch rather than a scratch copy: a real web build (the rendered
+`flutter_bootstrap.js` carries the font base and a service worker version and no
+unfilled token), the four browser runs of the first-check table, a mutation check
+of the new assertion, and every gate. Nothing else changed.
 
 ## Integrator to-do
 
-- INTEGRATOR TODO (pre-gate): apply the follow-up patch, or give
-  `client/web/flutter_bootstrap.js` to a wave-4 cluster. Until then COMP-03 stays
-  `PARTIAL` and a network that blocks `fonts.gstatic.com` gets no text.
 - INTEGRATOR TODO: `THIRD_PARTY_NOTICES.md`: add the fonts under
   `client/web/fonts` (Noto and Roboto, SIL OFL 1.1; licence texts in
   `client/web/fonts/licenses`, copyright holders in `client/web/fonts/NOTICE.txt`).
 - INTEGRATOR TODO: `PRIVACY.md` (row 3.5, when it lands): its list of hosts the
-  web client contacts must match this outcome. `www.gstatic.com` and
-  `fonts.googleapis.com` are no longer contacted; `fonts.gstatic.com` still is
-  until the patch lands, and not after.
+  web client contacts must match this outcome. A first load of the web client
+  contacts no host but its own origin: `www.gstatic.com`, `fonts.googleapis.com`
+  and `fonts.gstatic.com` are all gone (the Content-Security-Policy names none).
 - INTEGRATOR TODO: stale text. `docs/usage/deployment.md` (lines 233 to 236) still
   lists CanvasKit from the gstatic CDN, the engine's fallback fonts and the Google
   Fonts stylesheet; `README.md` (lines 217 and 224, one per language) says the web
@@ -332,13 +327,13 @@ screen identical to the base render.
   `docs/changelogs/index/2026-10.md` and
   `docs/changelogs/2026-10-18-rv4-remediation/index.md`: index this fragment.
 - INTEGRATOR TODO: `docs/plans/README.md`, `docs/HANDOFF.md`: row 3.11 state
-  (COMP-06 fixed at the manifest level; COMP-03 partial until the bootstrap file
-  lands), and the first-CI-run follow-up (the `client` job builds the web target
-  with the flag; the `nginx` job runs the extended checker on the distro nginx).
+  (COMP-03 fixed; COMP-06 fixed at the manifest level), and the first-CI-run
+  follow-up (the `client` job builds the web target with the flag; the `nginx`
+  job runs the extended checker on the distro nginx; the image build with
+  `--no-web-resources-cdn`).
 - INTEGRATOR TODO: `docs/issues/2026-10-18-review-4-open-findings.md` and
-  `docs/issues/README.md`: COMP-03 `PARTIAL` (one CSP host and one file), COMP-06
-  `FIXED` with the `dart:io` ceiling, the mirror-versus-SDK gap and the missing
-  cache headers.
+  `docs/issues/README.md`: COMP-03 `FIXED`, COMP-06 `FIXED` with the `dart:io`
+  ceiling, the mirror-versus-SDK gap and the missing cache headers.
 - INTEGRATOR TODO: `docs/learning/README.md`: a lesson on CanvasKit fonts. CSS
   `@font-face` is ignored; the engine fetches its fonts with `fetch()`, so the CSP
   directive is `connect-src` and not `font-src`; a failed font is retried on every
