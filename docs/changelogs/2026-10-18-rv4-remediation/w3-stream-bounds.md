@@ -181,6 +181,11 @@ Run on the head of the branch against a private PostgreSQL cluster.
   infos, none new: the one in `client_stream.dart` sits on a parameter the base
   already had), `flutter test` 493 tests and `TZ=Asia/Shanghai flutter test` 493
   tests: pass.
+- The whole server suite ran once: 26 packages passed and `internal/store`
+  failed one test, `TestSignupModeSetting`, because the live check had left
+  `signup_mode` set to open on the private test database. With the seeded value
+  restored the store package passes; nothing under `internal/store` changed on
+  this branch.
 - `scripts/tests/check_*.py` print the same success lines as the integration
   branch and exit 0; `scripts/check-redaction.sh` and
   `scripts/check-docs-recorded.sh --worktree` exit 0.
