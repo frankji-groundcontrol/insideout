@@ -202,8 +202,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	hash := auth.HashRefreshToken(raw)
 	sess, err := s.store.GetActiveSessionByHash(r.Context(), hash)
 	if errors.Is(err, store.ErrNotFound) {
-		s.endLineageOnReuse(r.Context(), hash)
-		s.clearAuthCookies(w)
+		s.refuseNotLiveRefresh(r.Context(), w, hash)
 		httpx.WriteError(w, http.StatusUnauthorized, "refresh token expired or already used", "", nil)
 		return
 	}
@@ -223,10 +222,9 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	newExpiry := time.Now().Add(s.cfg.RefreshTTL)
 	_, err = s.store.RotateSession(r.Context(), sess.ID, sess.UserID, newHash, newExpiry)
 	if errors.Is(err, store.ErrConflict) {
-		// A concurrent refresh already rotated this token — this request is a
-		// replay. Refuse it and drop the (now-dead) cookie, same contract as
-		// the "already used" path above.
-		s.clearAuthCookies(w)
+		// A concurrent refresh already rotated this token, moments ago, so this
+		// request lost the race. Refuse it and touch nothing, as the "already
+		// used" path does inside the grace: the cookies are the winner's now.
 		httpx.WriteError(w, http.StatusUnauthorized, "refresh token expired or already used", "", nil)
 		return
 	}
@@ -251,12 +249,34 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 // again without being taken for theft (rv4-SEC-04). Two CLI or MCP processes
 // sharing one credentials file, two tabs, or a retried request legitimately
 // present the same one-time token moments apart, and the loser must not take the
-// winner's fresh pair down with it. The clients wait 500 ms for the winner's pair
-// to land (apiclient renewalGrace); 10 s covers that, the request's own latency
-// and a stall with room to spare, and is still short next to the time a thief
-// who replays a copied token needs. A starting value, not measured: raise it if
-// legitimate users are being signed out, lower it to tighten.
+// winner's fresh pair down with it: neither its session lineage nor, for a
+// browser whose tabs share one cookie jar, the cookies the winner just set. The
+// loser gets a bare 401 (rv4-FR-F100). The clients wait 500 ms for the winner's
+// pair to land (apiclient renewalGrace); 10 s covers that, the request's own
+// latency and a stall with room to spare, and is still short next to the time a
+// thief who replays a copied token needs. A starting value, not measured: raise
+// it if legitimate users are being signed out, lower it to tighten.
 const refreshReuseGrace = 10 * time.Second
+
+// refuseNotLiveRefresh is what a refresh token that is not live costs, short of
+// the 401 itself (same status and body whatever the cause). Spent no more than
+// refreshReuseGrace ago, it is the loser of a race or a retry and nothing
+// happens: the lineage and the cookies are the winner's, and a browser applies
+// this answer after the winner's own. Any other token is junk or a long-spent
+// copy: its lineage ends if it was spent, and the cookies it arrived with are
+// cleared.
+func (s *Server) refuseNotLiveRefresh(ctx context.Context, w http.ResponseWriter, tokenHash string) {
+	inGrace, err := s.store.SpentWithinGrace(ctx, tokenHash, refreshReuseGrace)
+	if err != nil {
+		// Not known to be a lost race: answer as for a token past the grace.
+		s.log.Error("refresh reuse: read the grace", "error", err)
+	}
+	if inGrace {
+		return
+	}
+	s.endLineageOnReuse(ctx, tokenHash)
+	s.clearAuthCookies(w)
+}
 
 // endLineageOnReuse runs when a presented refresh token is not live. If it is a
 // spent one offered again after the grace, every live session of its lineage

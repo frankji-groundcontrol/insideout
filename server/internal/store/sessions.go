@@ -153,3 +153,23 @@ func (s *Store) RevokeFamilyOnReuse(ctx context.Context, tokenHash string, grace
 	}
 	return users[0], len(users), nil
 }
+
+// SpentWithinGrace reports whether tokenHash is a refresh token whose session
+// was revoked no more than grace ago: the loser of a rotation race, or a retry
+// of a request the winner already answered (rv4-FR-F100). It is the other side
+// of RevokeFamilyOnReuse's edge on the same database clock, so a spent token is
+// either within the grace (this) or past it (that), never both. A token that is
+// unknown, still live, or expired without ever being revoked is not spent. The
+// caller uses it to refuse such a token without touching the winner's lineage
+// or the cookies the winner just set.
+func (s *Store) SpentWithinGrace(ctx context.Context, tokenHash string, grace time.Duration) (bool, error) {
+	var spent bool
+	err := s.Pool.QueryRow(ctx, `
+		SELECT EXISTS (
+			SELECT 1 FROM insideout.sessions
+			WHERE token_hash = $1 AND revoked_at >= now() - make_interval(secs => $2)
+		)`,
+		tokenHash, grace.Seconds(),
+	).Scan(&spent)
+	return spent, err
+}

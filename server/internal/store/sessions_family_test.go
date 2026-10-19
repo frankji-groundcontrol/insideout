@@ -226,3 +226,84 @@ func TestRevokeFamilyOnReuse_IgnoresTokensThatAreNotSpent(t *testing.T) {
 		t.Fatalf("live session changed identity")
 	}
 }
+
+// rv4-FR-F100: the grace has two sides and a spent token is on exactly one of
+// them. Inside it SpentWithinGrace is true (the loser of a race: refuse it,
+// touch nothing); past it RevokeFamilyOnReuse acts instead. Pinned at 5 s and
+// 15 s around a 10 s grace, so flipping the comparison on either side fails.
+func TestRvAuthRefreshSpentWithinGrace_IsTheOtherSideOfTheReuseEdge(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	u := mkUser(t, st)
+	exp := time.Now().Add(time.Hour)
+	sfx := uuid.NewString()
+
+	a0, err := st.CreateSession(ctx, u.ID, "grace-a0-"+sfx, exp)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if _, err := st.RotateSession(ctx, a0.ID, u.ID, "grace-a1-"+sfx, exp); err != nil {
+		t.Fatalf("rotate: %v", err)
+	}
+	spentWithin := func(age string) bool {
+		t.Helper()
+		within, err := st.SpentWithinGrace(ctx, "grace-a0-"+sfx, reuseGrace)
+		if err != nil {
+			t.Fatalf("spent %s ago: %v", age, err)
+		}
+		return within
+	}
+
+	for _, age := range []time.Duration{0, 5 * time.Second} {
+		ageRevocations(t, st, u.ID, age)
+		if !spentWithin(age.String()) {
+			t.Fatalf("spent %v ago, inside the %v grace: not reported as within it", age, reuseGrace)
+		}
+		if _, ended, err := st.RevokeFamilyOnReuse(ctx, "grace-a0-"+sfx, reuseGrace); err != nil || ended != 0 {
+			t.Fatalf("spent %v ago: within the grace, yet the family was ended (%d, %v)", age, ended, err)
+		}
+	}
+
+	ageRevocations(t, st, u.ID, 10*time.Second) // 15 s in all
+	if spentWithin("15s") {
+		t.Fatalf("spent 15 s ago, past the %v grace: still reported as within it", reuseGrace)
+	}
+	if _, ended, err := st.RevokeFamilyOnReuse(ctx, "grace-a0-"+sfx, reuseGrace); err != nil || ended != 1 {
+		t.Fatalf("spent 15 s ago: past the grace, so the family must end (%d, %v)", ended, err)
+	}
+}
+
+// A token that is not spent is never "within the grace": the caller would
+// otherwise skip clearing the cookies of a junk or expired token. A session
+// revoked another way (logout) is spent all the same.
+func TestRvAuthRefreshSpentWithinGrace_OnlyRevokedTokensCount(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	u := mkUser(t, st)
+	sfx := uuid.NewString()
+
+	if _, err := st.CreateSession(ctx, u.ID, "grace-live-"+sfx, time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if _, err := st.CreateSession(ctx, u.ID, "grace-stale-"+sfx, time.Now().Add(-time.Hour)); err != nil { // expired, never revoked
+		t.Fatalf("create: %v", err)
+	}
+	out, err := st.CreateSession(ctx, u.ID, "grace-out-"+sfx, time.Now().Add(time.Hour))
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if err := st.RevokeSession(ctx, out.ID); err != nil {
+		t.Fatalf("logout: %v", err)
+	}
+
+	for hash, want := range map[string]bool{
+		"grace-live-" + sfx:    false,
+		"grace-stale-" + sfx:   false,
+		"grace-unknown-" + sfx: false,
+		"grace-out-" + sfx:     true,
+	} {
+		if got, err := st.SpentWithinGrace(ctx, hash, reuseGrace); err != nil || got != want {
+			t.Errorf("%s: within the grace %v (err %v), want %v", hash, got, err, want)
+		}
+	}
+}
