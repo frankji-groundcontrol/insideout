@@ -22,6 +22,10 @@ check_release_gate.py.
           SHA with the release tag kept in a trailing `# vX.Y.Z` comment, so
           a moved or hijacked tag cannot change what runs (Dependabot reads
           the comment and rewrites both). Local and docker:// refs are exempt.
+  PUB-09  every archive the install skill downloads (Go, Flutter) is checked
+          against a pinned sha256 before it is unpacked or replaces the
+          installed toolchain, and a mismatch stops the block. (The Go floor
+          half of PUB-09 lives in check_go_floor.py.)
 
 CI-config properties: the first real proof is the first tag run after push.
 """
@@ -196,7 +200,41 @@ def sec07():
     return out
 
 
-CHECKS = [pub04, pub07, sec07]
+# PUB-09: the install skill (references/modules.md) downloads toolchain archives
+# that are unpacked as root (Go replaces /usr/local/go). VERIFY is the checksum
+# command, DESTRUCTIVE what must not run before it succeeds.
+ARCHIVE_URL = re.compile(r"https?://[^\s\"']+?\.(?:zip|tar\.xz|tar\.gz|tgz)\b")
+VERIFY = re.compile(r"(?:sha256sum|shasum -a 256) -c\b")
+DESTRUCTIVE = re.compile(r"\btar\b[^&|;]*\s-[A-Za-z]*x|\bunzip\b|\brm -rf /usr/local/go\b")
+
+
+def pub09():
+    """PUB-09: downloaded toolchain archives are verified against a pinned sha256 before use."""
+    doc = read("skills/insideout-setup/references/modules.md")
+    if doc is None:
+        return ["skills/insideout-setup/references/modules.md does not exist (PUB-09)"]
+    out = []
+    for block in re.findall(r"```bash\n(.*?)```", doc, re.S):
+        code = joined("\n".join(re.sub(r"\s#.*$", "", l) for l in block.splitlines()))
+        urls = ARCHIVE_URL.findall(code)
+        if not urls:
+            continue
+        name = urls[0].rsplit("/", 1)[-1]
+        verify, unpack = VERIFY.search(code), DESTRUCTIVE.search(code)
+        if not verify:
+            out.append(f"modules.md: {name} is downloaded and unpacked with no `sha256sum -c` / `shasum -a 256 -c` (PUB-09)")
+            continue
+        if unpack and unpack.start() < verify.start():
+            out.append(f"modules.md: {name} is unpacked (or the old toolchain removed) before its checksum is verified (PUB-09)")
+        line = next(l for l in code.splitlines() if VERIFY.search(l))
+        if not re.match(r"\s*\S*\s*(&&|\|\|.*\bexit\b)", line[VERIFY.search(line).end():]):
+            out.append(f"modules.md: the checksum check for {name} does not stop the block on a mismatch (chain it with && or follow it with `|| exit`) (PUB-09)")
+        if not re.search(r"\b[0-9a-f]{64}\b", block):
+            out.append(f"modules.md: no pinned sha256 for {name}: the block must carry the 64-hex value, not fetch it beside the archive (PUB-09)")
+    return out
+
+
+CHECKS = [pub04, pub07, sec07, pub09]
 
 
 def main():

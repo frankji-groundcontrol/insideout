@@ -9,7 +9,11 @@ GOTOOLCHAIN=local, so an older base cannot compile the module and the
 image build dies at `go mod download` — BUG-005, review-3 ARCH-01), and
 the prose files a fresh installer reads first must not promise an older
 minimum (review-3 ARCH-02). A file that states no number (it points at
-go.mod instead) passes. Exits 1 naming every offending pin.
+go.mod instead) passes. Two more pins are held to the floor (review-4
+PUB-09): the GO_VERSION the install skill downloads, and the Ubuntu CI
+verify step, which must ask the go command about server/go.mod instead of
+grepping `go version` for a hand-written range of releases (a range goes
+stale the day the floor moves). Exits 1 naming every offending pin.
 """
 import pathlib
 import re
@@ -74,6 +78,22 @@ def stale_prose_minimums(floor):
     return stale
 
 
+def installer_go_version():
+    """The Go release the install skill's Ubuntu block downloads (GO_VERSION=x.y.z)."""
+    text = (ROOT / "skills/insideout-setup/references/modules.md").read_text(encoding="utf-8")
+    match = re.search(r"^GO_VERSION=(\d+\.\d+\.\d+)", text, re.M)
+    if not match:
+        print("no GO_VERSION=x.y.z line in skills/insideout-setup/references/modules.md", file=sys.stderr)
+        sys.exit(2)
+    return match.group(1)
+
+
+def ci_hardcoded_ranges():
+    """Line numbers in ubuntu-install.yml that hard-code a range of Go releases (go1\\.(2[6-9]|...))."""
+    text = (ROOT / ".github/workflows/ubuntu-install.yml").read_text(encoding="utf-8")
+    return [no for no, line in enumerate(text.splitlines(), start=1) if "go1\\.(" in line]
+
+
 if __name__ == "__main__":
     floor = go_mod_floor()
     image = image_go_version()
@@ -93,6 +113,25 @@ if __name__ == "__main__":
             file=sys.stderr,
         )
         failures += 1
+    pinned = installer_go_version()
+    if version_tuple(pinned) < version_tuple(floor):
+        print(
+            f"skills/insideout-setup/references/modules.md installs Go {pinned} but "
+            f"server/go.mod requires >= {floor}",
+            file=sys.stderr,
+        )
+        failures += 1
+    for no in ci_hardcoded_ranges():
+        print(
+            f".github/workflows/ubuntu-install.yml:{no}: greps `go version` for a "
+            "hand-written range of Go releases; derive the floor from server/go.mod "
+            "(GOTOOLCHAIN=local go list -m run in server/)",
+            file=sys.stderr,
+        )
+        failures += 1
     if failures:
         sys.exit(1)
-    print(f"go floor ok: golang:{image} >= go.mod's go {floor}, prose in sync")
+    print(
+        f"go floor ok: golang:{image} >= go.mod's go {floor}, prose in sync, "
+        f"installer pins go{pinned}, CI derives the floor"
+    )
