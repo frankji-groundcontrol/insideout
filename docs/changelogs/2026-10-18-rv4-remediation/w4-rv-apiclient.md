@@ -1,7 +1,8 @@
 # Wave 4, the Go API client: renewal trouble, Guide's 401, the final-401 advice, interrupted renewals, Logout — review-4 remediation
 
 Branch `rv4/w4-rv-apiclient`, `582a4bd..cd98147` (ten commits: five red/fix
-pairs), then this fragment. Cluster `w4-rv-apiclient` of the whole-change
+pairs), a test-margin commit (`234f4724`, see the design notes), then this
+fragment. Cluster `w4-rv-apiclient` of the whole-change
 review of `git diff d53035a..rv4/integration`. Findings are cited as
 `rv4-<ID>` because review IDs restart per review; `FR` is that review's prefix.
 Eight rows, all `FIXED`, in five roots. The Logout test ran against a private
@@ -73,7 +74,8 @@ row in the report, and the test names say which roots they cover.
   and the ceiling.
 - **`Client.Logout()` ends the server session** (F70, client half).
   `insideout logout` only deleted the saved file, so a copy of it (a backup, a
-  stolen laptop) kept a refresh token that renews for weeks. `Logout`
+  stolen laptop) kept a refresh token that renews for up to 30 days by default
+  (`INSIDEOUT_REFRESH_TTL`, `720h`). `Logout`
   (`logout.go`) posts the refresh token to `POST /auth/logout`, which revokes
   the session behind it (no bearer; the server answers 200 for any token and
   clears cookies). A client with no refresh token sends nothing and returns nil.
@@ -94,10 +96,10 @@ cannot be red (guards, the registry rows). Outputs are from `go test -race`.
 
 | Root | Red (tests at the red commit, sources as at the base) | Green (HEAD) |
 | --- | --- | --- |
-| A | `TestRenewalTroubleIsNotAVerdictOnTheSession/429` and `/503` at `e98b3bb4`: `call 0: err = apiclient: GET /me: unauthorized: the session expired or was revoked; run \`insideout login\` to sign in again (...), want the failed renewal named with its status, not a verdict on the session` | both subtests `PASS`; the same test also asserts the client tried the refresh twice and saved nothing |
+| A | `TestRenewalTroubleIsNotAVerdictOnTheSession/429` and `/503` at `e98b3bb4`: `` call 0: err = apiclient: GET /me: unauthorized: the session expired or was revoked; run `insideout login` to sign in again (...), want the failed renewal named with its status, not a verdict on the session `` | both subtests `PASS`; the same test also asserts the client tried the refresh twice and saved nothing |
 | B | `TestUnauthorizedNamesTheFix` at `5e6c7038`, signed in and signed out: `err = apiclient: GET guide: 401 Unauthorized: {"error":"invalid or expired session"}, want ErrUnauthorized naming insideout login and INSIDEOUT_TOKEN` | `PASS` |
 | C | `TestRvApiClientUnauthorizedHintIsPerClient` and `TestRvApiClientHintSurvivesARejectedRenewal` at `545bb6d0`, all four subtests: `*Client has no SetUnauthorizedHint` | all `PASS`; `TestSweepCoversEveryClientMethod` and `TestHostileValuesStayOneSegmentOrOneQueryValue/SetUnauthorizedHint` `PASS` |
-| D | `TestRvApiClientCancelledRenewalKeepsTheRotatedPair` at `1a5f51c2`: `stored session = {access:old refresh:ref-1 saved:0}, want the pair the server rotated to (new/ref-2) saved once` (the stub asserts it did rotate). `TestRvApiClientInterruptedRenewalStillSavesTheRotatedPair` in `cmd/insideout`, a child process hit with SIGINT while its renewal is in flight, both subtests: `saved config after the interrupt = {... Token:acc-old RefreshToken:ref-old}, want the pair the server rotated to {... Token:acc-new RefreshToken:ref-new}` | all `PASS` (0.3 s and 0.5 s); `TestCancelledContextAbortsARenewal`, `TestCtrlCAbortsTheRequestInFlight`, `TestCtrlCAtAPromptEndsTheCommand` and the renewal tests in `cmd/insideout` stay green |
+| D | `TestRvApiClientCancelledRenewalKeepsTheRotatedPair` at `1a5f51c2`: `stored session = {access:old refresh:ref-1 saved:0}, want the pair the server rotated to (new/ref-2) saved once` (the stub asserts it did rotate). `TestRvApiClientInterruptedRenewalStillSavesTheRotatedPair` in `cmd/insideout`, a child process hit with SIGINT while its renewal is in flight, both subtests: `saved config after the interrupt = {... Token:acc-old RefreshToken:ref-old}, want the pair the server rotated to {... Token:acc-new RefreshToken:ref-new}` | all `PASS` (0.3 s and 0.4 s); `TestCancelledContextAbortsARenewal`, `TestCtrlCAbortsTheRequestInFlight`, `TestCtrlCAtAPromptEndsTheCommand` and the renewal tests in `cmd/insideout` stay green |
 | E | `TestRvApiClientLogoutRevokesTheServerSession` at `4bb60e46`, real handlers over real PostgreSQL (two sessions of one user): `*Client has no Logout` | `PASS`: after `Logout` the leaving session's refresh token answers 401 and the control session's answers 200; `TestRvApiClientLogoutRequestAndFailures` `PASS` |
 
 Mutation checks (the hunk put back or the key condition flipped, the tests of
@@ -114,8 +116,8 @@ HEAD kept, then restored; the tree is clean after each):
   "grace runs out first" subtest fails, with the old pair on disk. The
   pre-send check removed from `postRefresh`:
   `TestRvApiClientCancelledBeforeTheRenewalSendsNothing` fails (`a refresh token
-  was spent for a caller that had gone`). The detachment itself is the red
-  commit's whole content.
+  was spent for a caller that had gone`). The detachment itself needs no
+  mutation: the base behavior is what the red commit shows (the pair is lost).
 - **E.** nothing sent: the real-API test fails (`after Logout the refresh token
   still renews: HTTP 200, want 401`) and so does every case of the request test.
   The `context.Canceled` exclusion removed: the cancelled case fails
@@ -124,8 +126,8 @@ HEAD kept, then restored; the tree is clean after each):
 ## Design notes
 
 - **The drain is a ceiling, not a guarantee.** An answer slower than
-  `renewalDrain` after the cancellation, or a second signal (the CLI keeps "a
-  second Ctrl-C ends the process at once"), still loses the pair. A Ctrl-C taken
+  `renewalDrain` after the cancellation, or a second signal (the CLI keeps its
+  rule that a second signal ends the process at once), still loses the pair. A Ctrl-C taken
   during a renewal can now take up to 750 ms longer to end the command, only
   then. The way to remove the ceiling is a two-step rotation on the server
   (confirm the new pair before the old token dies); that is a server design
@@ -134,9 +136,18 @@ HEAD kept, then restored; the tree is clean after each):
   a goroutine of its own; reading the package variable there raced with a test
   that changes it (the race detector said so). `postRefresh` copies it first.
 - **Why not abort and retry.** The renewal could be re-sent after an abort, but
-  the first request may already have rotated the token; the second would then
-  present a spent token and, after the reuse grace, end the whole token family.
-  Waiting for the answer in flight is the only safe course.
+  the first request may already have rotated the token and its answer is gone;
+  a re-send presents the spent token, which the server refuses (and, past the
+  reuse grace, treats as reuse and ends the whole token family). Waiting for
+  the answer in flight is the only safe course.
+- **The timing margin of the CLI test.** The stub of
+  `TestRvApiClientInterruptedRenewalStillSavesTheRotatedPair` answers 300 ms
+  and 400 ms after the request, against the 750 ms drain and a 100 ms
+  `interruptGrace` in the second case. `234f4724` lowered the second answer
+  from 500 ms to 400 ms: the margin before the answer could miss the drain on
+  a loaded machine is 350 ms, and the answer still lands after the grace, so
+  the forced-exit path stays covered (the `WaitForRenewal` mutation still
+  turns exactly that case red).
 - **`WaitForRenewal` polls `renewing.TryLock()`** every 10 ms. The renewal holds
   that lock from before its POST until after its save, so "unlocked" means "no
   pair is half-written". It adds no state.
@@ -148,6 +159,20 @@ HEAD kept, then restored; the tree is clean after each):
   hostile value as the refresh token (it travels in the body, never the URL).
 - **`rv4_review_apiclient_test.go` is 337 lines**, under the cap; the child
   process tests are in `server/cmd/insideout/rv4_review_interrupt_test.go`.
+
+## Observed, not changed
+
+- **A queued renewal can meet a disarmed client (older than this cluster).**
+  `renewSession` does not re-check `armed()` after it takes the process-wide
+  lock. If two goroutines of one `Client` both get a 401 and the first one's
+  renewal is rejected for good (which disarms the client), the second then calls
+  a nil hook. At the base the same sequence dereferenced a nil `c.renew`, so it
+  is not new; as far as this cluster read, the CLI does not issue concurrent
+  requests on one client. An in-process login armed through `SetRenewal` (the
+  MCP server, root C) can meet it if its tool calls run concurrently. The cure
+  is three lines (`if !c.renew.armed() { return "", nil }` after the lock) with
+  a test that calls `renewSession` on a disarmed client. It is not one of the
+  eight rows, so it is left to the MCP cluster or the integrator to decide.
 
 ## Handover and the integrator's list
 
