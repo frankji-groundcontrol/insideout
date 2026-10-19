@@ -7,7 +7,7 @@ Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
 offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08,
-rv4-ARCH-06, rv4-PM-03).
+rv4-ARCH-06, rv4-PM-03, rv4-PM-09).
 """
 import fnmatch
 import pathlib
@@ -234,6 +234,21 @@ def open_slices_visible(failures):
         fail(failures, "docs/plans/README.md's product-promise row is not Pending")
 
 
+def handoff_flutter_versions_agree(failures):
+    """rv4-PM-09: HANDOFF is read as current, so a Flutter version it states
+    must be on the minor the repo pins (ci.yml); it may not warn about one SDK
+    in one section and record another in the next."""
+    pinned = re.search(r"flutter-version:\s*(\d+\.\d+)\.\d+", read(".github/workflows/ci.yml"))
+    if not pinned:
+        return  # no pinned SDK in CI; nothing to compare against
+    for block in re.split(r"\n\s*\n", read("docs/HANDOFF.md")):
+        if "Flutter" not in block:
+            continue
+        for version in re.findall(r"\b\d+\.\d+\.\d+\b", block):
+            if not version.startswith(pinned.group(1) + "."):
+                fail(failures, f"docs/HANDOFF.md states Flutter {version}, but CI pins {pinned.group(1)}.x")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     env_variables_documented(facts, failures)
@@ -243,6 +258,7 @@ if __name__ == "__main__":
     client_surface_documented(failures)
     backend_states_current_facts(failures)
     open_slices_visible(failures)
+    handoff_flutter_versions_agree(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
