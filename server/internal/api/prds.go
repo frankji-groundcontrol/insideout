@@ -117,6 +117,10 @@ func (s *Server) handleUpdatePrd(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	if msg := sectionLengthError(req.Sections); msg != "" {
+		httpx.WriteError(w, http.StatusBadRequest, msg, "", nil)
+		return
+	}
 
 	prd, err := s.store.UpdateSections(r.Context(), userID, pid, req.Title, req.Sections, nil) // manual save: no CAS, the human always wins
 	if errors.Is(err, store.ErrNotFound) {

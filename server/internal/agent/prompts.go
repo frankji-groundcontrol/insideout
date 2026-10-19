@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/readiness"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -207,10 +208,30 @@ func parseRankedCritique(reply string) []CriticFinding {
 	return out
 }
 
+// maxPromptSectionRunes is the most characters of one PRD section a prompt
+// carries (rv4-COMP-04). It is the number the api refuses at write
+// (api/prd_section_cap.go; api does not import agent, so the two are kept equal
+// by hand and each is pinned by a test), which makes the cut bite only a row
+// stored before that write cap existed.
+const maxPromptSectionRunes = 10_000
+
+// clipSection cuts a section at maxPromptSectionRunes characters and says how
+// many it dropped, so the model knows what it reads is partial. Every prompt
+// that carries sections (coach, critic, roadmap planner) routes through
+// formatSectionsForPrompt, so this is the one place the cut lives.
+func clipSection(content string) string {
+	total := utf8.RuneCountInString(content)
+	if total <= maxPromptSectionRunes {
+		return content
+	}
+	return string([]rune(content)[:maxPromptSectionRunes]) +
+		fmt.Sprintf("...[truncated: %d more characters]", total-maxPromptSectionRunes)
+}
+
 func formatSectionsForPrompt(sections map[string]string) string {
 	var out string
 	for _, key := range store.PrdSectionKeys {
-		content := sections[key]
+		content := clipSection(sections[key])
 		if content == "" {
 			content = "(空)"
 		}
