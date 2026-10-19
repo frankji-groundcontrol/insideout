@@ -1,7 +1,8 @@
 # Wave 3, context and deadlines — review-4 remediation
 
 Branch `rv4/w3-context-deadlines`, `8c74218..d86ca54` (eight commits: four red
-tests and four fixes), then this fragment. Row 3.9 of the
+tests and four fixes), then this fragment and one test-only repair commit
+(round 1, below). Row 3.9 of the
 [remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md)
 (a design row); findings `rv4-QUAL-04`, `rv4-QUAL-06`, `rv4-REL-06` and
 `rv4-FULL-07`. Findings are cited as `rv4-<ID>` because review IDs restart per
@@ -60,6 +61,40 @@ review. No value, name or address is spelled in this fragment.
   has its own red and fix. The fix is one entry in `aiRoutes` and three cases in
   the route table; `/expand/confirm` and every GET stay on the quick deadline.
 
+## Repair round 1: the CLI half of rv4-QUAL-04 is now pinned by tests
+
+The verifier removed the three `c.SetContext(cliCtx)` calls (`clientFromFlag` in
+`cli.go`, `runAuthCommand` in `cli_auth.go`, `newSetupAPIClient` in
+`cli_setup.go`) and both Ctrl-C tests stayed green: a command that ignores the
+cancelled context still exits 130 when `interruptGrace` runs out. No test failed
+if the threading was lost. Tests only, no production change (`fa9a198`):
+
+- `cli_ctx_bound_test.go` (new) makes a cancellable context the `cliCtx` in
+  force, holds a request open on a real server, cancels the context when the
+  request arrives, and requires the call to end with `context canceled` within
+  2 s. One case for each of the three places the CLI builds a client; the setup
+  form's client is driven directly because the form needs a terminal. A second
+  test checks the setup client that exists before the form has named a server.
+- `cli_ctx_signal_test.go`: the in-flight Ctrl-C test starts its child with an
+  `interruptGrace` of one hour, through an `init` hook in the test file (the CLI
+  itself still has no such switch). Exit 130 can now only come from the request
+  being cancelled and the command ending by itself. The wait for the child is
+  bounded at 5 s. The prompt test keeps the default grace on purpose: a command
+  at a prompt has no request to abort, so it is the test of the fallback.
+
+Mutation, run by hand on the repair head (outputs `qual04-repair-mutation-*`):
+
+| Mutation | Red |
+| --- | --- |
+| delete `SetContext(cliCtx)` in `clientFromFlag` | bound `clientFromFlag`, Ctrl-C `whoami` |
+| delete `SetContext(cliCtx)` in `runAuthCommand` | bound `runAuthCommand`, Ctrl-C `forgot-password` |
+| delete `SetContext(cliCtx)` in `newSetupAPIClient` | bound `setupClient`, default setup client |
+| delete `cliCtx = ctx` in `runInterruptible` | both Ctrl-C in-flight cases |
+| delete the `cancel()` on the first signal | both Ctrl-C in-flight cases |
+
+On the unrepaired tests the first three mutations stay green
+(`qual04-repair-hole-existing-tests.txt`).
+
 ## Design spike (row 3.9)
 
 Four questions were settled before the code. *Where the context lives:*
@@ -109,7 +144,9 @@ Under `/private/tmp/insideout-rv4/reports/w3-context-deadlines-evidence/`: a red
 and a green file per finding (`qual04-*`, `qual06-*`, `rel06-*`, `full07-*`),
 the DB-gated agent tests having run against a private PostgreSQL cluster (a
 skipped test counts as red). Removing the build route from `aiRoutes` turns the
-REL-06 red test, the draft subtest and the route table red again.
+REL-06 red test, the draft subtest and the route table red again. The repair
+round adds `qual04-repair-hole-existing-tests.txt` (the old Ctrl-C tests green
+under each mutation) and `qual04-repair-mutation-*.txt` (the new tests red).
 
 Live proof with the real binaries: the CLI built at the REL-06 red commit
 ("before", still on the 20 s timeout) and at the head of this branch ("after"),
