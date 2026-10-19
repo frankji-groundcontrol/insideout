@@ -7,7 +7,7 @@ Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
 offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08,
-rv4-ARCH-06, rv4-PM-03, rv4-PM-09).
+rv4-USER-09 README half, rv4-ARCH-06, rv4-PM-03, rv4-PM-09).
 """
 import fnmatch
 import pathlib
@@ -139,6 +139,24 @@ def readme_first_run_path(failures):
             fail(failures, "README's Install section has no 'Try it without an account' line")
 
 
+def readme_does_not_mislead_prebuilt_users(failures):
+    """rv4-USER-09, README half (residue R1-06): the prebuilt install has no
+    repository checkout, so a README line that offers `setup --local` says it
+    needs one; and `promote-admin` creates an absent account, which is what a
+    first run without an invite relies on, so the README says that too."""
+    readme = read("README.md")
+    if "no repository checkout found" in read("server/cmd/insideout/cli_setup_local_env.go"):
+        for line in readme.splitlines():
+            if "setup --local" in line and not re.search(r"(?i)checkout|检出", line):
+                fail(failures, "README offers 'setup --local' without saying it needs a repository "
+                               f"checkout, which the prebuilt binaries lack: {line.strip()[:60]!r}")
+    if "createAdminAccount(" in read("server/cmd/insideout/promote_admin.go"):
+        for block in re.split(r"\n\s*\n", readme):
+            if "promote-admin" in block and not re.search(r"(?i)creates? the account", block):
+                fail(failures, "README names promote-admin but not that it creates the account "
+                               "when the address has none")
+
+
 CLIENT_DOC = "docs/architecture/cli-mcp-and-client-config.md"
 
 
@@ -255,6 +273,7 @@ if __name__ == "__main__":
     offline_coach_not_overclaimed(failures)
     readme_scopes_github_evidence(failures)
     readme_first_run_path(failures)
+    readme_does_not_mislead_prebuilt_users(failures)
     client_surface_documented(failures)
     backend_states_current_facts(failures)
     open_slices_visible(failures)
