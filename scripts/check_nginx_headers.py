@@ -52,12 +52,12 @@ CSP_EXACT = {
     "frame-ancestors": ["'none'"],
 }
 CSP_NEVER_IN_SCRIPT = ("'unsafe-inline'", "'unsafe-eval'")
-# The only hosts the policy may name (rv4-COMP-03). The engine downloads its
-# Roboto and Noto fallback fonts from fontFallbackBaseUrl, which defaults to
-# this host until web/flutter_bootstrap.js points it at /fonts/s/; then this
-# becomes () and the policy is self-only. Keep it equal to engineFontHosts in
+# The only hosts the policy may name (rv4-COMP-03): none. The engine reads its
+# Roboto and Noto fallback fonts from fontFallbackBaseUrl, which
+# web/flutter_bootstrap.js points at /fonts/s/ (every file the engine can ask
+# for is mirrored there). Keep it equal to engineFontHosts in
 # client/test/web_csp_self_test.dart.
-CSP_HOSTS_ALLOWED = ("https://fonts.gstatic.com",)
+CSP_HOSTS_ALLOWED = ()
 
 
 def fetch(port, path, headers=None):

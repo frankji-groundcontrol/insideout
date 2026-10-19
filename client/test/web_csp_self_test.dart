@@ -10,11 +10,10 @@ import 'package:flutter_test/flutter_test.dart';
 /// network, and a blocked CanvasKit is a page that never starts.
 ///
 /// [engineFontHosts] is what may still leave the origin. The engine takes its
-/// fallback fonts from `fontFallbackBaseUrl`, and only a custom
-/// web/flutter_bootstrap.js can change that. Until that file lands this one
-/// host stays in the policy; when it lands, empty the set, so the policy
-/// is self-only and this test then forbids any host.
-const engineFontHosts = <String>{'https://fonts.gstatic.com'};
+/// fallback fonts from `fontFallbackBaseUrl`; web/flutter_bootstrap.js points
+/// it at web/fonts/s, which holds every file the engine can ask for, so the
+/// policy is self-only and this test forbids any host.
+const engineFontHosts = <String>{};
 
 void main() {
   final nginx = File('nginx.conf').readAsStringSync();
@@ -38,7 +37,7 @@ void main() {
     }
   });
 
-  test('the CSP names no host beyond the engine font host', () {
+  test('the CSP names no host at all', () {
     final hosts = {
       for (final sources in _directives(nginx).values)
         ...sources.where(_isHost),
@@ -132,6 +131,29 @@ void main() {
         .toSet();
     expect(listed.difference(shipped), isEmpty, reason: 'listed, not shipped');
     expect(shipped.difference(listed), isEmpty, reason: 'shipped, not listed');
+  });
+
+  test('web/flutter_bootstrap.js points the engine fonts at web/fonts/s', () {
+    final file = File('web/flutter_bootstrap.js');
+    expect(file.existsSync(), isTrue, reason: 'no custom bootstrap');
+    final js = file.readAsStringSync();
+    // The tokens the Flutter tool fills in; a bootstrap without one of them
+    // builds, then never starts the app.
+    for (final token in [
+      '{{flutter_js}}',
+      '{{flutter_build_config}}',
+      '{{flutter_service_worker_version}}',
+      '_flutter.loader.load(',
+    ]) {
+      expect(js, contains(token));
+    }
+    expect(
+      RegExp(r'''fontFallbackBaseUrl\s*:\s*["']fonts/s/["']''').hasMatch(js),
+      isTrue,
+      reason:
+          'fontFallbackBaseUrl must be "fonts/s/" (relative, trailing slash)',
+    );
+    expect(Directory('web/fonts/s').existsSync(), isTrue);
   });
 
   test('a font that is not mirrored is a 404, never the SPA shell', () {
