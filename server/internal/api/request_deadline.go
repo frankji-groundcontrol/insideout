@@ -18,17 +18,17 @@ var requestDeadline = 25 * time.Second
 // deadlineExempt lists the mux patterns that legitimately outlive
 // requestDeadline: the passive SSE streams (they run until the tab leaves and
 // arm their own write deadline per frame), the coach turn (one streamed model
-// call, bounded by the agent) and the AI planner calls with their confirms,
-// which write a whole drafted tree. request_deadline_routes_test.go fails when
-// a pattern here stops naming a registered route.
+// call, bounded by the agent) and the two AI planner calls. Only model calls
+// belong here: the build and expand confirms just write the tree the caller
+// already holds, so they run under the deadline like any database route
+// (rv4-FR-F129). request_deadline_routes_test.go fails when a pattern here
+// stops naming a registered route.
 var deadlineExempt = map[string]bool{
 	"GET /api/v1/projects/{pid}/presence/stream":         true,
 	"GET /api/v1/projects/{pid}/roadmap/progress/stream": true,
 	"POST /api/v1/conversations/{id}/messages":           true,
 	"POST /api/v1/prds/{pid}/build":                      true,
-	"POST /api/v1/prds/{pid}/build/confirm":              true,
 	"POST /api/v1/roadmap/{nid}/expand":                  true,
-	"POST /api/v1/roadmap/{nid}/expand/confirm":          true,
 }
 
 // withRequestDeadline gives every non-exempt request a context that expires
