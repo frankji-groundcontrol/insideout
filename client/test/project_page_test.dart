@@ -28,6 +28,8 @@ class _FakeApi extends ApiClient {
   void Function(String id, bool accept)? onDecide;
   void Function(String repo)? onSetRepo;
   final List<({String projectId, String title, String? parentId})> created = [];
+  final List<({String id, bool accept, bool apply})> decisions = [];
+  var roadmapReads = 0;
 
   @override
   Future<Map<String, dynamic>> getProject(String id) async => {
@@ -42,7 +44,10 @@ class _FakeApi extends ApiClient {
   };
 
   @override
-  Future<List<RoadmapNode>> listRoadmap(String projectId) async => nodes;
+  Future<List<RoadmapNode>> listRoadmap(String projectId) async {
+    roadmapReads++;
+    return nodes;
+  }
 
   @override
   Future<Project> setRepo(String projectId, String repoUrl) async {
@@ -84,6 +89,7 @@ class _FakeApi extends ApiClient {
     String reason = '',
     bool apply = true,
   }) async {
+    decisions.add((id: updateId, accept: accept, apply: apply));
     onDecide?.call(updateId, accept);
     return {'decision': accept ? 'accepted' : 'rejected'};
   }
@@ -169,7 +175,12 @@ void main() {
     expect(decided, ['up1:n']);
   });
 
-  testWidgets('accepting a proposal with one item adds that roadmap node', (
+  // rv4-FEAT-02: the server applies an accepted proposal's items inside the
+  // decision's own transaction, exactly once. The feed used to re-create each
+  // node itself after the decision, so a web accept doubled every node. It now
+  // asks the server to apply (apply: true), creates no node of its own, and
+  // re-reads the roadmap the server just changed.
+  testWidgets('accepting a proposal leaves applying its items to the server', (
     tester,
   ) async {
     final api = _FakeApi([
@@ -182,13 +193,18 @@ void main() {
       ),
     ]);
     await _pump(tester, api);
+    final readsBefore = api.roadmapReads;
 
     await tester.tap(find.text('Accept'));
     await tester.pumpAndSettle();
 
-    expect(api.created, [
-      (projectId: 'p1', title: 'Login throttling', parentId: null),
-    ]);
+    expect(api.decisions, [(id: 'up1', accept: true, apply: true)]);
+    expect(api.created, isEmpty, reason: 'the server creates the nodes, once');
+    expect(
+      api.roadmapReads,
+      greaterThan(readsBefore),
+      reason: 'the page re-reads the roadmap after the decision',
+    );
   });
 
   // 4.1: a failing repo save must show the localized error and keep the
