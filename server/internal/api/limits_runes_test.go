@@ -62,7 +62,8 @@ type runeLimit struct {
 	msg string
 	// ok: an accepted value must come back 2xx. False only for register,
 	// whose signup policy (invitation-only by default) answers 403 after the
-	// length check has passed.
+	// length check has passed, and for the coach message, which answers 503
+	// once the check passes because the route world wires no coach.
 	ok   bool
 	send func(t *testing.T, w *routeWorld, v string) (int, string)
 }
@@ -136,6 +137,9 @@ func runeLimits() []runeLimit {
 		}},
 		{"profile username", 60, "username is required (max 60 characters)", true, func(t *testing.T, w *routeWorld, v string) (int, string) {
 			return owner(t, w, "PATCH", "/api/v1/me", map[string]any{"username": v})
+		}},
+		{"coach message content", 10_000, "message too long", false, func(t *testing.T, w *routeWorld, v string) (int, string) {
+			return owner(t, w, "POST", "/api/v1/conversations/"+w.rvGuardsConversation(t)+"/messages", map[string]any{"content": v})
 		}},
 	}
 }

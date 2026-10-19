@@ -14,7 +14,19 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
+
+// rvGuardsConversation converts a fresh idea and returns its conversation id,
+// one the owner can post coach messages to (rv4-FR-F135, rv4-FR-F140).
+func (w *routeWorld) rvGuardsConversation(t *testing.T) string {
+	t.Helper()
+	_, conv, err := w.st.ConvertIdea(context.Background(), w.owner.ID, uuid.MustParse(w.idea(t)))
+	if err != nil {
+		t.Fatalf("convert idea: %v", err)
+	}
+	return conv.ID.String()
+}
 
 // rv4-FR-F129: the two confirm routes only write the tree the caller already
 // holds, yet both sat in deadlineExempt, so a database that stopped answering
