@@ -272,6 +272,9 @@ For `w4-rv-mcpserver` (it builds on C, D and E):
   expired calls still renews once per call and shares unlocked token fields (see
   the design notes). Serialize tool calls per client, or give each concurrent
   call its own client armed with the same hooks and hint.
+- A refusal stays on the client until the next `SetRenewal` (a new `Login` does
+  not clear it, as at the base, where it dropped the whole `Renewal`): re-arm
+  the client after every new sign-in.
 
 For `w4-copy-sweep` (the CLI half of F70):
 
