@@ -184,6 +184,10 @@ the
   proposal is in [Version policy](#version-policy).
 - **Rollback of a published release.** Mark a bad one a pre-release, delete it,
   or leave it and supersede it only. Today only the last is documented.
+- **The release gate.** The release waits for a green `ci` run on the tagged
+  commit because its runner has no PostgreSQL service, so the `DATABASE_URL`-gated
+  suites cannot run there. Keep that, or add a PostgreSQL service to the release
+  job and run them in it?
 - **Immutable releases.** Make a published release's tag and assets unchangeable?
   Settings > General > Releases > "Enable release immutability".
 - **Who may tag.** Restrict creating, updating and deleting `v*` tags to the
