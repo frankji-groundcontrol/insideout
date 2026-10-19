@@ -4,7 +4,7 @@ something that runs.
 
 Review 4 found the review-3 ledger counting eleven rows as "closed by code"
 whose cited fix commit touched only docs/. Recording a gap is a legitimate
-disposition, but it is Recorded, not Fixed. Two arms, both read from the
+disposition, but it is Recorded, not Fixed. Three arms, all read from the
 ledger table itself:
 
   history - each `fix <sha>` a row cites is looked up with git. A Fixed row
@@ -18,6 +18,12 @@ ledger table itself:
             state the tally the table has, so the header cannot drift from
             the rows again. This arm needs no git, so it holds on a clone
             with no history.
+  restated - the board and the records that restate the tally (RESTATING) may
+            not claim more rows closed by code than the table labels Fixed,
+            and must name the Recorded rows beside it. Verifier round 1
+            found the plans board still saying "73/83 rows by code" after
+            the ledger said 63 and 10 Recorded. A superseded figure may be
+            quoted when introduced as "first count N closed by code".
 
 Run: python3 -I scripts/tests/check_ledger_honesty.py
 """
@@ -31,6 +37,14 @@ ROOT = Path(__file__).resolve().parents[2]
 LEDGER = ROOT / "docs/review/2026-10-10-disposition-ledger/04-multirole-3.md"
 ROW = re.compile(r"^\| ([A-Z]+-\d+) \| [A-Z] \| (.+?) \| (.*?) \|?$")
 COUNTS = re.compile(r"^Counts[^:\n]*: (\d+) rows = (.+)\.$", re.M)
+# Documents that restate the tally; "73/83 rows by code", "73 of 83 rows by
+# code" and "73 closed by code" are the claim shapes.
+RESTATING = (
+    "docs/plans/README.md",
+    "docs/plans/2026-10-10-rv3-remediation.md",
+    "docs/review/2026-10-10-multirole-3/README.md",
+)
+BYCODE = re.compile(r"(?<!first count )\b(\d+)(?:/83 rows| of 83 rows| closed) by code")
 
 
 def changed_files(sha):
@@ -87,11 +101,29 @@ def main():
             problems.append(f"{id_} is Fixed but its fix commit(s) {', '.join(shas)} changed only docs/ - label it Recorded")
         if status == "Recorded" and outside:
             problems.append(f"{id_} is Recorded but its fix commit(s) {', '.join(shas)} changed {outside[0]} outside docs/ - label it Fixed")
+
+    # restated arm
+    fixed = sum(n for s, n in tally.items() if s.startswith("Fixed"))
+    recorded = tally.get("Recorded", 0)
+    restated = 0
+    for rel in RESTATING:
+        if not (ROOT / rel).is_file():
+            continue
+        text = (ROOT / rel).read_text()
+        claims = [int(n) for n in BYCODE.findall(text)]
+        restated += bool(claims)
+        for n in claims:
+            if n > fixed:
+                problems.append(f"{rel} says {n} rows are closed by code, but the ledger labels only {fixed} Fixed; "
+                                f"the {recorded} Recorded rows changed only docs/ and are not closed by code")
+        if claims and not re.search(rf"\b{recorded}\s+recorded\b", text):
+            problems.append(f"{rel} restates the by-code tally without the {recorded} Recorded rows")
     if problems:
         print("\n".join("FAIL: " + p for p in problems))
         sys.exit(1)
     print(f"ledger honesty ok: {len(rows)} rows, Counts line matches the table; "
-          f"{seen} of {cited} cited fix commits visible to git, labels match their diffs")
+          f"{seen} of {cited} cited fix commits visible to git, labels match their diffs; "
+          f"{restated} restatements agree")
 
 
 if __name__ == "__main__":
