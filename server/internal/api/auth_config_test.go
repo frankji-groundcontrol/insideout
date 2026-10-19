@@ -12,6 +12,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
 
 // USER-04: the sign-in UI offers emailed links, codes and reset mails, but
@@ -30,6 +31,7 @@ func TestAuthConfigReportsWhetherMailIsDelivered(t *testing.T) {
 		t.Fatalf("open store: %v", err)
 	}
 	t.Cleanup(st.Close)
+	testlock.SignupMode(t, st.Pool) // reads the signup_mode row another package's test flips
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
 
 	cases := []struct {

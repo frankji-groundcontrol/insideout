@@ -14,6 +14,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -181,10 +182,13 @@ func TestPasswordResetRoundTrip(t *testing.T) {
 // invitation being spent in the admin's list.
 func TestInvitationRoundTrip(t *testing.T) {
 	m := newMailWorld(t)
+	testlock.SignupMode(t, m.world.st.Pool)
 	email := "roundtrip-invitee-" + uuid.NewString() + "@test.local"
 
 	// register only consumes the invite in invitation_only mode; the row
-	// is shared global state, so save and restore it like the store suite.
+	// is shared global state that store/TestSignupModeSetting also flips from
+	// another process: hold the lock above, and save and restore it like the
+	// store suite.
 	status, body := m.world.call(m.admin, http.MethodGet, "/api/v1/admin/settings", "")
 	expect(t, "get signup mode", status, body, http.StatusOK)
 	prior := decodeAs[map[string]string](t, body)["signupMode"]

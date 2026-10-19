@@ -73,6 +73,7 @@ func TestSignupModeTouchersWaitForTheCrossProcessLock(t *testing.T) {
 
 func TestAdminCanReadAndWriteSignupMode(t *testing.T) {
 	w, admin := newAdminWorld(t)
+	testlock.SignupMode(t, w.st.Pool)
 	ctx := context.Background()
 	updatedAt := func() time.Time {
 		var at time.Time
@@ -90,9 +91,10 @@ func TestAdminCanReadAndWriteSignupMode(t *testing.T) {
 	}
 
 	// signup_mode is one global row that store/TestSignupModeSetting also
-	// reads, in a package that runs beside this one. So write back the mode it
-	// already has instead of flipping it: the write is still proven, by the
-	// row's updated_at moving.
+	// writes, in a package that runs beside this one; the lock above orders the
+	// two. Still write back the mode it already has instead of flipping it: the
+	// write is proven by the row's updated_at moving, and a crash mid-test
+	// leaves the deployment's mode alone.
 	before := updatedAt()
 	status, body = w.call(admin, http.MethodPut, "/api/v1/admin/settings", `{"signupMode":"`+mode+`"}`)
 	expect(t, "PUT settings", status, body, http.StatusOK)

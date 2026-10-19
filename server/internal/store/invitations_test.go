@@ -23,9 +23,12 @@ func TestSignupModeSetting(t *testing.T) {
 	st := newTestStore(t)
 	ctx := context.Background()
 
-	// signup_mode is shared global state on a persistent database — save
-	// and restore it so a test run can never leave the deployment in a
-	// different mode than it started.
+	// signup_mode is shared global state on a persistent database, and the
+	// api suite reads and forces it from another process: take the
+	// cross-process lock first (so the restore below runs while it is still
+	// held), then save and restore the row so a test run can never leave the
+	// deployment in a different mode than it started.
+	testlock.SignupMode(t, st.Pool)
 	prior, priorErr := st.GetSetting(ctx, "signup_mode")
 	t.Cleanup(func() {
 		if priorErr == nil {

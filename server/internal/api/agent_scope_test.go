@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -124,6 +125,7 @@ func TestAnAgentTokenCannotDelete(t *testing.T) {
 // even for a user who is a system admin when signed in themselves.
 func TestAnAgentTokenCannotReachTheAdminRoutes(t *testing.T) {
 	w, admin := newAdminWorld(t)
+	testlock.SignupMode(t, w.st.Pool) // updated_at below must only move if the agent token wrote it
 	agent := w.asAgent(t, admin)
 	ctx := context.Background()
 	updatedAt := func() time.Time {
