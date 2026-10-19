@@ -77,6 +77,15 @@ the view mounted.
 | head `684cfb2`, en-US | open | none (2 to `/fonts/s/`: Roboto, one Noto Sans Symbols file) | 0.6 s | 10.4 s |
 | head `684cfb2`, en-US | everything off-origin blocked | none (2 to `/fonts/s/`) | 0.6 s | 10.3 s |
 
+Real nginx: three of these runs (zh-CN blocked, en-US blocked, zh-CN open) were
+repeated against nginx 1.31.7 itself, serving the real `build/web` with
+`client/nginx.conf` rendered as the image entrypoint renders it (`root`
+repointed). Each: no off-origin request, no console error, the server's own
+header with `connect-src 'self'`, every `/fonts/s/` request 200 (13 and 2), and
+screenshots byte-identical to the stand-in runs and the base open render. On
+this macOS (Darwin 27) that nginx logs `[alert] kevent() failed (22)` in a loop
+after clients close keep-alive connections; responses were unaffected.
+
 Every head run enforced the policy of `client/nginx.conf` and logged no console
 error and no CSP violation. Screenshots compared by SHA-256: the base open, base
 stylesheet blocked, `dea8dab` open and both head zh-CN renders (open and blocked)
@@ -257,9 +266,9 @@ Gates at `684cfb2`, before this fragment's round-1 update:
   `font_fallback_data.dart`, fetch the new paths, regenerate `SHA256SUMS`, update
   the two counts in the test); no test reads the SDK.
 - **Browsers and servers.** Only Chrome 155 was driven, against a stand-in
-  server, not the image; Firefox, Safari, nginx 1.27 and the CI package were not
-  run. The nginx directives used (`try_files`, `gzip_types`, `add_header ...
-  always`) are not version-specific.
+  server and (three runs) an isolated nginx 1.31.7, not the image; Firefox,
+  Safari, nginx 1.27 and the CI package were not run. The nginx directives used
+  (`try_files`, `gzip_types`, `add_header ... always`) are not version-specific.
 - **The web theme names faces no canvas can draw.** `client/lib/theme/cobalt.dart`
   names Archivo, Source Serif 4 and Noto Sans/Serif SC for web. They came from the
   stylesheet this change removes, and the identical renders show the stylesheet
