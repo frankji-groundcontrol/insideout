@@ -45,13 +45,29 @@ func (w *childStderr) String() string {
 	return w.buf.String()
 }
 
+// graceEnv lets a test choose the interruptGrace of the child it starts. It is
+// read here, in the test binary, so the shipped CLI has no such switch.
+const graceEnv = "INSIDEOUT_TEST_INTERRUPT_GRACE"
+
+func init() {
+	if d, err := time.ParseDuration(os.Getenv(graceEnv)); err == nil {
+		interruptGrace = d
+	}
+}
+
 // startCLI starts main() in a child (see TestMain) with a throwaway home, a
 // token that is not the developer's own, and stdin that stays open.
 func startCLI(t *testing.T, mark string, args ...string) (*exec.Cmd, *childStderr) {
 	t.Helper()
+	return startCLIWithEnv(t, nil, mark, args...)
+}
+
+// startCLIWithEnv is startCLI with more variables in the child's environment.
+func startCLIWithEnv(t *testing.T, env []string, mark string, args ...string) (*exec.Cmd, *childStderr) {
+	t.Helper()
 	home := t.TempDir()
 	cmd := exec.Command(os.Args[0], args...)
-	cmd.Env = []string{runMainEnv + "=1", "HOME=" + home, "XDG_CONFIG_HOME=" + home + "/config", "INSIDEOUT_TOKEN=tok-test"}
+	cmd.Env = append([]string{runMainEnv + "=1", "HOME=" + home, "XDG_CONFIG_HOME=" + home + "/config", "INSIDEOUT_TOKEN=tok-test"}, env...)
 	errOut := &childStderr{mark: mark, seen: make(chan struct{})}
 	cmd.Stderr = errOut
 	stdin, err := cmd.StdinPipe()
@@ -73,7 +89,16 @@ func wantInterrupted(t *testing.T, cmd *exec.Cmd, errOut *childStderr) {
 	if err := cmd.Process.Signal(os.Interrupt); err != nil {
 		t.Fatal(err)
 	}
-	err := cmd.Wait()
+	ended := make(chan error, 1)
+	go func() { ended <- cmd.Wait() }()
+	var err error
+	select {
+	case err = <-ended:
+	case <-time.After(5 * time.Second):
+		cmd.Process.Kill()
+		<-ended
+		t.Fatalf("the command was still running 5 s after SIGINT (stderr %q)", errOut.String())
+	}
 	var exit *exec.ExitError
 	if !errors.As(err, &exit) || exit.ExitCode() != 130 {
 		t.Fatalf("after SIGINT the command ended with %v, want exit status 130 (stderr %q)", err, errOut.String())
@@ -88,6 +113,10 @@ func wantInterrupted(t *testing.T, cmd *exec.Cmd, errOut *childStderr) {
 
 // Ctrl-C aborts the request in flight, for the verbs that sign nothing in
 // (clientFromFlag) and the ones that do (runAuthCommand builds its own client).
+// The child's grace is an hour, so the exit that interruptGrace forces on a
+// command that ignores the signal cannot be what ends it: status 130 here means
+// the cancelled context aborted the request and the command ended by itself.
+// (cli_ctx_bound_test.go pins the same binding without a process.)
 func TestCtrlCAbortsTheRequestInFlight(t *testing.T) {
 	arrived := make(chan struct{}, 1)
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +137,7 @@ func TestCtrlCAbortsTheRequestInFlight(t *testing.T) {
 		{"forgot-password", "--api", api.URL, "a@example.com"},
 	} {
 		t.Run(args[0], func(t *testing.T) {
-			cmd, errOut := startCLI(t, "", args...)
+			cmd, errOut := startCLIWithEnv(t, []string{graceEnv + "=1h"}, "", args...)
 			select {
 			case <-arrived:
 			case <-time.After(10 * time.Second):
@@ -120,7 +149,8 @@ func TestCtrlCAbortsTheRequestInFlight(t *testing.T) {
 }
 
 // A command that is not in a request (here: waiting for the password) must still
-// end on the first Ctrl-C, not hold the terminal until a second one.
+// end on the first Ctrl-C, not hold the terminal until a second one. It has no
+// request to abort, so this is the one test that leans on interruptGrace.
 func TestCtrlCAtAPromptEndsTheCommand(t *testing.T) {
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t.Errorf("the API was called (%s %s) before the password was given", r.Method, r.URL.Path)
