@@ -144,7 +144,13 @@ func TestRefreshTakesItsTokenFromTheCookieOrTheBody(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Fatalf("a spent token refreshed again: %d %s", rec.Code, rec.Body.String())
 	}
-	expectCleared(t, "refresh with a spent token", rec)
+	// Inside the reuse grace the 401 sets and deletes nothing: the cookies in the
+	// browser are the winner's now (rv4-FR-F100).
+	for _, name := range []string{accessCookieName, refreshCookieName} {
+		if c := setCookie(rec, name); c != nil {
+			t.Fatalf("a spent token inside the grace: Set-Cookie %s = %+v, want the winner's cookies left alone", name, c)
+		}
+	}
 
 	// The cookie wins when the body carries something else.
 	rec = refresh(`{"refreshToken":"garbage"}`, &http.Cookie{Name: refreshCookieName, Value: next.RefreshToken})
