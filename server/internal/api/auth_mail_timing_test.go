@@ -24,7 +24,7 @@ import (
 // rv4-SEC-03 / rv4-REL-07: the three emailed-auth requests (magic link, forgot
 // password, login code) answered a known address only after the token was
 // stored and the mail provider had replied, and an unknown address at once. The
-// uniform 200 body hid nothing: the response time said which addresses have an
+// uniform 200 body hid nothing: the response time said which addresses have
 // accounts. The same synchronous send held the request open for as long as the
 // provider took (the client timeout is 10 s).
 
