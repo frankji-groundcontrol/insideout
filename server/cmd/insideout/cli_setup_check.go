@@ -10,6 +10,10 @@ package main
 // Offline-safe: a probe whose target is unreachable reports SKIP
 // with a message instead of failing the run; a configured target
 // that answers wrongly (a rejected token, a 5xx) fails it.
+// The probes run under the CLI context (cliCtx), like every other verb:
+// Ctrl-C cancels them, a probe it cuts short reports SKIP "cancelled",
+// and the run ends with exit 1 (runInterruptible turns that into 130),
+// never with "all configured checks passed".
 
 import (
 	"context"
@@ -32,9 +36,21 @@ type checkOutcome struct {
 	detail string
 }
 
+// commandInterrupted reports that ctx was cancelled, which only the CLI context
+// does (Ctrl-C or SIGTERM); the check's own 60 s deadline is DeadlineExceeded.
+func commandInterrupted(ctx context.Context) bool {
+	return errors.Is(ctx.Err(), context.Canceled)
+}
+
+// cancelledOutcome is the line of a probe the interrupt cut short. It is a
+// skip, not a failure: the target was never judged.
+func cancelledOutcome(name string) checkOutcome {
+	return checkOutcome{name, "skip", "cancelled (interrupted before it answered)"}
+}
+
 // runHealthCheck is `insideout setup --check`: one line per probe.
 func runHealthCheck(llmLive bool) (bool, int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(cliCtx, 60*time.Second)
 	defer cancel()
 
 	outcomes := []checkOutcome{checkAPI(ctx)}
@@ -55,6 +71,10 @@ func runHealthCheck(llmLive bool) (bool, int) {
 		fmt.Printf("%d check(s) failed\n", failed)
 		return true, 1
 	}
+	if commandInterrupted(ctx) {
+		fmt.Println("interrupted — the run did not finish, so it is not a pass")
+		return true, 1
+	}
 	fmt.Println("all configured checks passed (skipped ones need their keys set)")
 	return true, 0
 }
@@ -66,7 +86,7 @@ func checkAPI(ctx context.Context) checkOutcome {
 	}
 	base := creds.Base
 	if creds.Token != "" {
-		return checkSignedIn(creds)
+		return checkSignedIn(ctx, creds)
 	}
 	res, err := probe.APIProbe(ctx, nil, base)
 	switch {
@@ -74,6 +94,8 @@ func checkAPI(ctx context.Context) checkOutcome {
 		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable, authentication required (as expected)", redactBase(base))}
 	case err == nil:
 		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable and already authenticated", redactBase(base))}
+	case commandInterrupted(ctx):
+		return cancelledOutcome("api")
 	case errors.Is(err, probe.ErrUnreachable):
 		return checkOutcome{"api", "skip", fmt.Sprintf("%s unreachable (offline?) — not failed", redactBase(base))}
 	default:
@@ -83,14 +105,19 @@ func checkAPI(ctx context.Context) checkOutcome {
 
 // checkSignedIn asks the API as the user who is signed in: the only answer
 // that tells a working sign-in from an expired or revoked one. The error of a
-// rejected login already says what to do about it.
-func checkSignedIn(creds clientconfig.Creds) checkOutcome {
+// rejected login already says what to do about it. The client is bound to ctx,
+// so a Ctrl-C (or the check's own deadline) ends the request, renewal included.
+func checkSignedIn(ctx context.Context, creds clientconfig.Creds) checkOutcome {
 	base := redactBase(creds.Base)
-	_, err := creds.Client().Whoami()
+	c := creds.Client()
+	c.SetContext(ctx)
+	_, err := c.Whoami()
 	var netErr *url.Error
 	switch {
 	case err == nil:
 		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable, signed in", base)}
+	case commandInterrupted(ctx):
+		return cancelledOutcome("api")
 	case errors.As(err, &netErr):
 		return checkOutcome{"api", "skip", fmt.Sprintf("%s unreachable (offline?) — not failed", base)}
 	default:
@@ -104,6 +131,9 @@ func checkDB(ctx context.Context) []checkOutcome {
 		return []checkOutcome{{"db", "skip", "no DATABASE_URL (no .env in a checkout and none exported)"}}
 	}
 	if err := probe.DBProbe(ctx, dsn); err != nil {
+		if commandInterrupted(ctx) {
+			return []checkOutcome{cancelledOutcome("db")}
+		}
 		// A configured database that cannot be reached is a failure,
 		// not an offline skip — it is usually loopback, not internet.
 		return []checkOutcome{{"db", "fail", err.Error()}}
@@ -156,6 +186,8 @@ func checkLLM(ctx context.Context, live bool) []checkOutcome {
 	}
 	code, err := llmModelsProbe(ctx, base, key)
 	switch {
+	case err != nil && commandInterrupted(ctx):
+		return []checkOutcome{cancelledOutcome("llm")}
 	case err != nil && errors.Is(err, probe.ErrUnreachable):
 		return []checkOutcome{{"llm", "skip", "provider unreachable (offline?) — shape ok"}}
 	case err != nil:
