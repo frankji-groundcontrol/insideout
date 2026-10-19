@@ -243,3 +243,27 @@ func TestRvGhBindASpentQuotaIsStillARateLimitNotARefusal(t *testing.T) {
 		t.Errorf("code = %q, want GITHUB_RATE_LIMITED; body %s", got, body)
 	}
 }
+
+// The one answer given to "held by a project you cannot read" and to "GitHub does
+// not show it" has to be true of both. The squatted owner of F199 gets it with
+// the App already installed, and on an instance with no App configured a holder
+// is the only cause there can be, so "install the App" alone sends them in a
+// circle. The sentence names a holder as a possible cause for everyone alike.
+func TestRvGhBindTheNotVisibleAnswerAllowsForAHolder(t *testing.T) {
+	f := newFakeGitHub(t)
+	w := appServerWorld(t)
+	stranger, strangerProject := anotherTenant(t, w)
+	held, hidden := uniqueRepo(), uniqueRepo()
+	f.addRepo(held, fakeRepo{private: true, install: 77})
+	f.addRepo(hidden, fakeRepo{private: true}) // no installation
+	code, body := putRepo(t, w, held)
+	expect(t, "the holder links its repo", code, body, http.StatusOK)
+
+	for what, name := range map[string]string{"held by another workspace": held, "not shown by GitHub": hidden} {
+		code, body := putRepoAs(t, w, stranger, strangerProject.ID, name)
+		expect(t, "a stranger links a repo "+what, code, body, http.StatusBadRequest)
+		if msg := decodeAs[struct{ Error string }](t, body).Error; !strings.Contains(msg, "another project") {
+			t.Errorf("%s: the answer %q does not say that another project may hold the repo", what, msg)
+		}
+	}
+}
