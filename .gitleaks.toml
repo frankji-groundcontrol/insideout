@@ -1,0 +1,23 @@
+# Repo config for gitleaks. .github/workflows/security.yml runs
+# `gitleaks git ... .`, which reads this file from the scan root.
+title = "insideout gitleaks config"
+
+[extend]
+useDefault = true
+
+# rv4-FR-F53, F55: one allowance, narrow on purpose.
+#
+# The fixture BASE_ENV in scripts/tests/keys/database/test_database-owner-dsn.py
+# feeds `env.sh check`, which wants a JWT secret of 32+ characters; the value is
+# 48 hex digits made up for the test, not a secret, and it trips generic-api-key.
+# gitleaks scans every commit's patch, so editing the file later cannot clear a
+# range that already holds the commit, and a `gitleaks:allow` comment would not
+# either. condition = "AND" makes the allowance need both halves: that file and
+# that exact value. The same value anywhere else, and any other secret pasted
+# into that file, are still reported. Drop this block once no scanned range
+# contains the commit that added the fixture.
+[[allowlists]]
+description = "made-up JWT-secret fixture in the env.sh check test"
+condition = "AND"
+paths = ['''^scripts/tests/keys/database/test_database-owner-dsn\.py$''']
+regexes = ['''^0123456789abcdef0123456789abcdef0123456789abcdef$''']
