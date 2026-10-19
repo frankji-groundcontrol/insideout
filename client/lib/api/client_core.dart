@@ -74,9 +74,10 @@ abstract class _ApiCore {
   Future<void>? _refreshing;
 
   /// Exactly one in-flight refresh no matter how many requests 401 at the
-  /// same moment. A refresh the server rejects clears the session so the app
-  /// routes to the auth door instead of retrying with a dead token; one that
-  /// merely failed (network, 5xx) keeps it ([refreshEndsSession]).
+  /// same moment. A refresh the server rejects (and no other tab rotated away)
+  /// clears the session so the app routes to the auth door instead of retrying
+  /// with a dead token; one that merely failed (network, 5xx) keeps it
+  /// ([refreshEndsSession]).
   Future<void> _refreshSingleFlight() =>
       _refreshing ??= refresh().whenComplete(() => _refreshing = null);
 
@@ -111,17 +112,39 @@ abstract class _ApiCore {
     );
   }
 
+  /// How long a refresh the server refused waits for another tab's rotated
+  /// pair to reach the store before the refusal is taken for the end of the
+  /// session: the Go client's renewalGrace, which the server's
+  /// refreshReuseGrace (10 s) covers with room to spare.
+  static const _rotationGrace = Duration(milliseconds: 500);
+  static const _rotationPoll = Duration(milliseconds: 25);
+
   Future<void> refresh() async {
-    final refresh = await _readRefresh();
-    if (refresh == null || refresh.isEmpty) {
+    final sent = await _readRefresh();
+    if (sent == null || sent.isEmpty) {
       throw ApiException('no refresh token', status: 401);
     }
-    final res = await _dio.post(
-      '/auth/refresh',
-      data: {'refreshToken': refresh},
-    );
+    final res = await _dio.post('/auth/refresh', data: {'refreshToken': sent});
+    // rv4-FR-F112: the one-time token may have been spent a moment ago by
+    // another tab, whose rotated pair reaches the shared store just after the
+    // server answered this request. That pair is the session: carry on with
+    // it (callers re-read the access token when they retry) instead of
+    // clearing the store the winner has just filled.
+    final refused = res.statusCode == 401 || res.statusCode == 403;
+    if (refused && await _rotatedAway(sent)) return;
     final data = await _parse(res, (d) => d as Map<String, dynamic>);
     final pair = tokensFromRefreshBody(data);
     await _writeTokens(pair.access, pair.refresh);
+  }
+
+  /// Whether the store comes to hold a refresh token other than [sent] within
+  /// the grace. Counts polls, not wall time, so it behaves under fake clocks.
+  Future<bool> _rotatedAway(String sent) async {
+    for (var waited = Duration.zero; ; waited += _rotationPoll) {
+      final stored = await _readRefresh();
+      if (stored != null && stored.isNotEmpty && stored != sent) return true;
+      if (waited >= _rotationGrace) return false;
+      await Future<void>.delayed(_rotationPoll);
+    }
   }
 }
