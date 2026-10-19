@@ -163,7 +163,8 @@ SECURITY = ".github/workflows/security.yml"
 SCANS = {"govulncheck": "govulncheck ./...",
          "gitleaks": 'gitleaks git --redact --verbose --no-banner --exit-code 1 --log-opts="$range" .'}
 # What lets a failing step pass; no step of a file whose job is to fail may carry it.
-MUTES = [(r"\|\|", "an `||` list"), (r"\bcontinue-on-error\b", "`continue-on-error`")]
+MUTES = [(r"\|\|", "an `||` list"), (r"\bcontinue-on-error\b", "`continue-on-error`"),
+         (r"(?m)^\s*(?:set\s+\+\w*e|exit\s+0\b|trap\b)", "`set +e`, `exit 0` or `trap`")]
 
 
 def security_workflow(raw=None):
