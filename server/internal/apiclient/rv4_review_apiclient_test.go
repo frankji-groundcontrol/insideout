@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -260,5 +261,77 @@ func TestRvApiClientLogoutRevokesTheServerSession(t *testing.T) {
 	}
 	if got := renewStatus(staying.RefreshToken()); got != http.StatusOK {
 		t.Errorf("Logout ended another session of the user: HTTP %d, want 200", got)
+	}
+}
+
+// Logout is a client method like the rest: the escape sweep lists it too, with
+// the refresh token as the hostile value (it travels in the body, never the URL).
+func init() {
+	sweep = append(sweep, sweepCase{
+		name: "Logout", method: "POST", shape: "/auth/logout",
+		call: func(c *Client, h string) error {
+			own := *c // the sweep's client keeps its own refresh token
+			own.refresh = h
+			return own.Logout()
+		},
+	})
+}
+
+// What Logout sends and how it fails: the refresh token and no bearer; no token,
+// no request; an unanswered request is told apart from a refusal, and a
+// cancelled one from both (the CLI words each differently).
+func TestRvApiClientLogoutRequestAndFailures(t *testing.T) {
+	var mu sync.Mutex
+	var seen []string
+	status := http.StatusOK
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		seen = append(seen, r.Method+" "+r.URL.Path+" ["+r.Header.Get("Authorization")+"] "+string(body))
+		code := status
+		mu.Unlock()
+		w.WriteHeader(code)
+	}))
+	t.Cleanup(srv.Close)
+	signedIn := func(base string) *Client {
+		c := New(base)
+		c.SetToken("access")
+		c.refresh = "ref-1"
+		return c
+	}
+	requests := func() []string { mu.Lock(); defer mu.Unlock(); return append([]string(nil), seen...) }
+
+	if err := signedIn(srv.URL).Logout(); err != nil {
+		t.Fatalf("Logout: %v", err)
+	}
+	if got, want := requests(), []string{`POST /auth/logout [] {"refreshToken":"ref-1"}`}; len(got) != 1 || got[0] != want[0] {
+		t.Errorf("server saw %q, want %q", got, want)
+	}
+
+	anonymous := New(srv.URL)
+	anonymous.SetToken("access") // an access token alone cannot be revoked
+	if err := anonymous.Logout(); err != nil || len(requests()) != 1 {
+		t.Errorf("without a refresh token: err = %v, %d requests, want nil and no request", err, len(requests())-1)
+	}
+
+	mu.Lock()
+	status = http.StatusServiceUnavailable
+	mu.Unlock()
+	if err := signedIn(srv.URL).Logout(); err == nil || !strings.Contains(err.Error(), "503") || errors.Is(err, ErrLogoutUnreachable) {
+		t.Errorf("refused: err = %v, want the status named and not the unreachable sentinel", err)
+	}
+
+	dead := httptest.NewServer(http.NotFoundHandler())
+	dead.Close()
+	if err := signedIn(dead.URL).Logout(); !errors.Is(err, ErrLogoutUnreachable) {
+		t.Errorf("no answer: err = %v, want it to wrap ErrLogoutUnreachable", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	gone := signedIn(srv.URL)
+	gone.SetContext(ctx)
+	if err := gone.Logout(); !errors.Is(err, context.Canceled) || errors.Is(err, ErrLogoutUnreachable) {
+		t.Errorf("cancelled: err = %v, want context.Canceled and not the unreachable sentinel", err)
 	}
 }
