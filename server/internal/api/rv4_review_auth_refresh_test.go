@@ -269,3 +269,61 @@ func TestRvAuthRefreshConcurrentTabsOnOneJarKeepTheWinnersPair(t *testing.T) {
 		t.Fatalf("the winner's pair after the race: status %d, want 200", next.StatusCode)
 	}
 }
+
+// Outside the grace nothing changes: a token spent long ago and offered again
+// is a copy in someone else's hands. The replay is answered like an unknown
+// token (401, both cookies cleared) and the family ends.
+func TestRvAuthRefreshReplayAfterTheGraceStillEndsTheFamilyAndClearsTheCookies(t *testing.T) {
+	w := newRefreshWorld(t, io.Discard)
+	u := w.newUser(t)
+	jar := rvAuthRefreshLogin(t, w, u)
+	replayer := jar.clone() // r0, about to be spent
+
+	won := rvAuthRefreshPost(w, jar)
+	if won.StatusCode != http.StatusOK {
+		t.Fatalf("the rotation: status %d, want 200", won.StatusCode)
+	}
+	jar.apply(won) // r1 is the live token
+	w.ageRevocations(t, u.ID)
+
+	lost := rvAuthRefreshPost(w, replayer)
+	if lost.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("a replay after the grace: status %d, want 401", lost.StatusCode)
+	}
+	replayer.apply(lost)
+	if len(replayer) != 0 {
+		t.Errorf("a replay after the grace must clear the cookies it was sent; the browser still holds %s", replayer.holds())
+	}
+	if next := rvAuthRefreshPost(w, jar); next.StatusCode != http.StatusUnauthorized {
+		t.Errorf("the newest token still refreshes (status %d) after a long-spent one was replayed: the family must end", next.StatusCode)
+	}
+}
+
+// A cookie that names no spent token is junk and is cleared, as before.
+func TestRvAuthRefreshTokenThatIsNotASpentOneIsStillCleared(t *testing.T) {
+	w := newRefreshWorld(t, io.Discard)
+	u := w.newUser(t)
+	expired, expiredHash, err := auth.GenerateRefreshToken()
+	if err != nil {
+		t.Fatalf("generate token: %v", err)
+	}
+	if _, err := w.st.Pool.Exec(context.Background(),
+		`INSERT INTO insideout.sessions (user_id, token_hash, expires_at) VALUES ($1, $2, now() - interval '1 hour')`,
+		u.ID, expiredHash); err != nil {
+		t.Fatalf("insert expired session: %v", err)
+	}
+	for name, token := range map[string]string{
+		"an unknown token":                        "never-issued-" + uuid.NewString(),
+		"an expired token that was never revoked": expired,
+	} {
+		browser := rvAuthRefreshJar{accessCookieName: "stale-access", refreshCookieName: token}
+		resp := rvAuthRefreshPost(w, browser)
+		if resp.StatusCode != http.StatusUnauthorized {
+			t.Fatalf("%s: status %d, want 401", name, resp.StatusCode)
+		}
+		browser.apply(resp)
+		if len(browser) != 0 {
+			t.Errorf("%s: the response must clear both cookies; the browser still holds %s", name, browser.holds())
+		}
+	}
+}
