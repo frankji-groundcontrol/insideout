@@ -20,6 +20,10 @@ and the bug records it links to.
   version control (Commit + readiness + audience views), the agent
   vocabulary (with proposal application), the time-first roadmap,
   real-time presence/cursors, and the GitHub evidence loop.
+- [CLI, MCP and client configuration](cli-mcp-and-client-config.md) — the
+  non-web clients: `clientconfig.Resolve` (which server, which identity), the
+  saved 0600 session and its renewal, the MCP process and its agent profile,
+  install and release, and the single-replica contract.
 - [Agent token scope](agent-token-scope.md) — the signed `scope` claim, the
   route policy that refuses an agent token on human-only routes, the MCP
   profile and token exchange, and the fencing of user-written text.

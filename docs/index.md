@@ -35,7 +35,8 @@ keeps its original bilingual text as a historical record).
 ## Records
 
 - [architecture/](architecture/index.md) — current system shape: backend,
-  database and RLS, PRD Coach agent, frontend, deployment.
+  database and RLS, PRD Coach agent, frontend, deployment, and the CLI/MCP
+  client configuration ([cli-mcp-and-client-config.md](architecture/cli-mcp-and-client-config.md)).
 - [usage/](usage/README.md) — installation, local development, and operator/deployment
   guides.
 - [SETENV.md](SETENV.md) — the environment operating manual: create the file,

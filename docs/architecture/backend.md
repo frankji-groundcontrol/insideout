@@ -31,7 +31,8 @@ server/
     github/            linked-repo commit fetch feeding project progress
     guide/             the repo-side matching guide (insideout.yaml) generator
     httpx/             JSON request/response helpers, the error contract
-    linebudget/        the ~350-line file-budget guard the server tree runs
+    linebudget/        the file-budget guard the server tree runs: a Go file over 400 lines
+                       fails the build
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb, an agent profile that
                        withholds twelve tools, and the result fence (fence.go)
@@ -42,8 +43,12 @@ server/
     readiness/         per-audience gap disclosure for a working PRD
     roadmaptime/       the time-first deadline and pressure rules
     setup/             the guided-setup flow engine behind `insideout setup`
-    store/             all pgx queries; one file per domain resource
+    store/             all pgx queries; files grouped by domain resource (Store layer below)
 ```
+
+The non-web clients (`cmd/insideout-mcp`, `apiclient`, `clientconfig`, `mcpserver`,
+`setup`, the CLI verbs) are described in
+[CLI, MCP and client configuration](cli-mcp-and-client-config.md).
 
 ## Request flow
 
@@ -56,11 +61,17 @@ webhook route, which gets 8 MiB — a push delivery listing every commit's
 files can outgrow 1 MiB) → the
 `net/http` mux → route-level `requireAuth` where needed.
 
-Authentication is httpOnly-cookie based: a short-lived JWT access token plus a
-rotating opaque refresh token (SHA-256 hash stored at rest, rotated on every
-`/auth/refresh` call). The hosted Flutter web client is served by an nginx
-that proxies `/api/v1/**` to this server same-origin (see
-[deployment](deployment.md)), so browser cookies work without CORS; local
+Authentication is a short-lived JWT access token plus a rotating opaque
+refresh token (SHA-256 hash stored at rest, rotated on every `/auth/refresh`
+call). It is Bearer-first: `requireAuth` takes the access token from
+`Authorization: Bearer` and only then from the httpOnly access cookie
+(`bearerOrCookie` in `cookies.go`). Every first-party client sends the header
+(the Flutter client, the CLI, MCP); sign-in still sets the httpOnly cookies and
+the server still accepts them, which keeps a plain browser session working.
+`/auth/refresh` reads the refresh token from the httpOnly cookie, else a
+`{"refreshToken"}` body, and the cookie wins when both are present. The hosted
+Flutter web client is served by an nginx that proxies `/api/v1/**` to this
+server same-origin (see [deployment](deployment.md)), so it needs no CORS; local
 Flutter web dev is cross-origin and uses the `INSIDEOUT_CORS_ORIGINS`
 allow-list (`dev.sh` defaults it to the `localhost` token).
 
@@ -101,10 +112,20 @@ existence is not enumerable.
 ## Store layer
 
 `internal/store` wraps a single `*pgxpool.Pool` in a `Store` struct — no code
-generator, hand-scanned SQL. One file per domain resource: `users.go`,
-`sessions.go`, `workspaces.go`, `memberships.go`, `projects.go`,
-`project_updates.go`, `ideas.go`, `prds.go`, `prd_revisions.go`,
-`agent_conversations.go`, `agent_messages.go`.
+generator, hand-scanned SQL. Files are grouped by resource family, one file per
+concern inside a family:
+
+- accounts: `users.go`, `sessions.go`, `auth_tokens.go` (magic links, resets,
+  sign-in codes), `invitations.go`
+- teams: `workspaces.go`, `memberships.go`
+- work: `ideas.go`, `project*.go` (projects, updates, the linked repo), `prd*.go`
+  (PRDs, revisions, Commit)
+- the coach: `agent_*.go` (conversations, messages, the context queries)
+- proposals: `proposal_*.go` (the human decision, the structured items)
+- roadmap: `roadmap*.go` (nodes, evidence, moves, plans, validation)
+- GitHub: `github_webhook.go` (the system-run webhook path)
+- plumbing: `pool.go`, `errors.go` (the sentinels the api maps to statuses),
+  `migrate*.go`, `serve_role.go`
 
 Authorization is enforced twice, deliberately:
 
@@ -117,10 +138,26 @@ Authorization is enforced twice, deliberately:
 
 ## API surface
 
-Domain handlers live in `internal/api/*.go`, one file per resource
-(`auth.go`, `me.go`, `workspaces.go`, `members.go`, `projects.go`,
-`project_updates.go`, `ideas.go`, `prds.go`, `conversations.go`). The error
-contract is `{"error": string, "code"?: string, ...extra}` (see
+Domain handlers live in `internal/api`, grouped by resource:
+
+- wiring: `server.go` (routes), `middleware.go`, `context.go`, `cors.go`,
+  `cookies.go`, `util.go`, `url_scheme.go`, `healthz.go`, `single_replica.go`
+  (the second-process guard, see the client doc below)
+- accounts: `auth*.go` (sign-in, the emailed one-time flows and their
+  templates, the throttle and resend cooldown), `me.go`, `admin.go`
+  (invitations and the signup-mode switch)
+- agents: `agent_*.go` (the agent vocabulary routes and `agentRoutePolicy`)
+- teams and work: `workspaces.go`, `members.go`, `projects.go`,
+  `project_updates.go`, `ideas.go`, `guide.go`
+- PRDs: `prd*.go` (PRDs, audience views, readiness, Commit), `conversations.go`
+  (the coach's SSE turns)
+- roadmap: `roadmap*.go` (nodes, drafting, evidence, progress, validation),
+  `presence_routes.go`
+- GitHub: `github*.go` (repo sync, the webhook and its evidence)
+
+The single-replica contract and its guard are in
+[CLI, MCP and client configuration](cli-mcp-and-client-config.md#the-single-replica-contract).
+The error contract is `{"error": string, "code"?: string, ...extra}` (see
 `internal/httpx/json.go`); AI-specific throttling responses preserve the
 `APP_THROTTLE` (429) and `CIRCUIT_OPEN` (503) JSON shapes the original
 frontend countdown logic expects; a provider-side rate limit hits after the
