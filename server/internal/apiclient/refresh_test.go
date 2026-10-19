@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -142,16 +143,29 @@ func TestRejectedRenewalIsFinalAndNotRepeated(t *testing.T) {
 }
 
 func TestRenewalTroubleIsNotAVerdictOnTheSession(t *testing.T) {
-	base, calls := sessionAPI(t, func(w http.ResponseWriter, _ string) { w.WriteHeader(http.StatusServiceUnavailable) })
-	f := &file{access: "old", refresh: "ref-1"}
-	c := armed(base, f)
+	// 429 is the per-IP throttle on /auth/refresh, 503 a deploy in progress: neither
+	// says anything about the session (rv4-FR-F151, rv4-FR-F164).
+	for _, status := range []int{http.StatusTooManyRequests, http.StatusServiceUnavailable} {
+		t.Run(strconv.Itoa(status), func(t *testing.T) {
+			base, calls := sessionAPI(t, func(w http.ResponseWriter, _ string) { w.WriteHeader(status) })
+			f := &file{access: "old", refresh: "ref-1"}
+			c := armed(base, f)
 
-	for i := 0; i < 2; i++ {
-		_, _ = c.Whoami()
-	}
+			for i := 0; i < 2; i++ {
+				_, err := c.Whoami()
+				if err == nil || errors.Is(err, ErrUnauthorized) || !strings.Contains(err.Error(), "/auth/refresh") ||
+					!strings.Contains(err.Error(), strconv.Itoa(status)) || strings.Contains(err.Error(), "expired or was revoked") {
+					t.Fatalf("call %d: err = %v, want the failed renewal named with its status, not a verdict on the session", i, err)
+				}
+			}
 
-	if n := strings.Count(paths(calls()), "/auth/refresh"); n != 2 {
-		t.Errorf("after a 503 the client must keep its renewal (tried %d times, want 2)", n)
+			if n := strings.Count(paths(calls()), "/auth/refresh"); n != 2 {
+				t.Errorf("after a %d the client must keep its renewal (tried %d times, want 2)", status, n)
+			}
+			if f.saved != 0 || f.refresh != "ref-1" {
+				t.Errorf("a refused renewal must leave the stored session alone: %+v", *f)
+			}
+		})
 	}
 }
 
