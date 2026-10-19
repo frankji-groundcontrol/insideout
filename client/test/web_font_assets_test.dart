@@ -12,6 +12,31 @@ void main() {
     expect(_bundledOnWeb(pubspec, 'assets/fonts/NotoSansSC-Var.ttf'), isFalse);
     expect(_bundledOnWeb(pubspec, 'assets/fonts/NotoSerifSC-Var.ttf'), isFalse);
   });
+
+  // rv4-FR-F14, F215, F210, D01 (R3-30): loadWebFonts() in
+  // lib/theme/web_fonts_web.dart waits for nothing because no page under web/
+  // declares a CSS font face. If a stylesheet returns, the gate has to return
+  // with it, so this fails first.
+  test('web/ declares no CSS font face for the web boot to wait on', () {
+    final html = File(
+      'web/index.html',
+    ).readAsStringSync().replaceAll(RegExp(r'<!--.*?-->', dotAll: true), '');
+    expect(
+      RegExp(
+        r'@font-face|<style|<link[^>]*stylesheet',
+        caseSensitive: false,
+      ).allMatches(html).map((m) => m.group(0)).toList(),
+      isEmpty,
+      reason: 'index.html declares a face again: gate loadWebFonts() on it',
+    );
+    final sheets = Directory('web')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.css'))
+        .map((f) => f.path)
+        .toList();
+    expect(sheets, isEmpty, reason: 'a stylesheet under web/ may declare faces');
+  });
 }
 
 /// True when [assetPath] is a Flutter asset that the web target includes.
