@@ -26,8 +26,13 @@ refuses a role that bypasses row-level security) and deploy the server before
 the MCP binary. Board row: [plan](plans/2026-10-18-multirole-4.md); open
 records: [issues](issues/2026-10-18-review-4-open-findings.md).
 
-**Everything engineering is closed; the owner's account actions below are
-all that remain.** The 2026-10-11 docs-order pass (survey, folder READMEs,
+**Engineering is not closed: nine product-promise slices are open, and the
+owner's account actions below remain.** The slices are what
+[PRODUCT.md](../PRODUCT.md) promises and the running system does not
+implement; take them in the
+[recommended order](issues/2026-10-11-product-promise-gaps.md), starting with
+the keystone (Product Branch, Merge and the Decision Log), and open a dated
+plan on the [board](plans/README.md) before editing. The 2026-10-11 docs-order pass (survey, folder READMEs,
 index consistency, Marksman cross-references — zero orphan docs) landed
 with its [changelog](changelogs/2026-10-11-docs-order-marksman.md) and
 closed [plan](plans/2026-10-11-docs-marksman-order.md). 2026-10-11: the deploy (server @ `b6c34c4`, app @
