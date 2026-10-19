@@ -199,6 +199,25 @@ class FixtureDomains(unittest.TestCase):
                 self.assertEqual(r.returncode, 0, f"entry {n} is not spelled in {path}")
 
 
+class ExampleNames(unittest.TestCase):
+    """rv4-FR-F44: only example.com, example.net and example.org are reserved
+    (RFC 2606). The guard let example.<any letters> through, which is also
+    example.io, example.ai and example.co, all registrable."""
+
+    def test_registrable_example_domains_fail(self):
+        for domain in ("example.io", "example.ai", "example.co", "example.dev",
+                       "acme.example.io", "mail.example.co"):
+            with self.subTest(domain=domain):
+                r = guard_on({"docs/n.md": f"see {addr('zq-probe', domain)} here\n"})
+                self.assertEqual(r.returncode, 1, "the address passed the guard")
+
+    def test_reserved_example_domains_and_their_subdomains_pass(self):
+        for domain in ("example.com", "example.net", "example.org", "mail.example.net", "a.b.example.org"):
+            with self.subTest(domain=domain):
+                r = guard_on({"docs/n.md": f"see {addr('zq-probe', domain)} here\n"})
+                self.assertEqual((r.returncode, r.stderr), (0, ""))
+
+
 class TrackedTree(unittest.TestCase):
     """Facts about this checkout that the scrub established and must not drift back."""
 
