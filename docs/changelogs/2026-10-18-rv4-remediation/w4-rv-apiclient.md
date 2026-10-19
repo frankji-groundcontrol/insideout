@@ -1,13 +1,16 @@
 # Wave 4, the Go API client: renewal trouble, Guide's 401, the final-401 advice, interrupted renewals, Logout — review-4 remediation
 
 Branch `rv4/w4-rv-apiclient`, `582a4bd..cd98147` (ten commits: five red/fix
-pairs), a test-margin commit (`234f4724`, see the design notes), then this
-fragment. Cluster `w4-rv-apiclient` of the whole-change
+pairs), a test-margin commit (`234f4724`, see the design notes), a repair round
+after the verifier's first pass (`61281ffc..001f2f99`, five commits: a test move
+and two red/fix pairs, see "Repair round 1"), and this fragment. Cluster
+`w4-rv-apiclient` of the whole-change
 review of `git diff d53035a..rv4/integration`. Findings are cited as
 `rv4-<ID>` because review IDs restart per review; `FR` is that review's prefix.
-Eight rows, all `FIXED`, in five roots. The Logout test ran against a private
-PostgreSQL (`needs_db`); its port was torn down. No address, host, secret or
-token is spelled in this fragment.
+Eight rows, all `FIXED`, in five roots; the repair round reopened roots C (F152)
+and E (F70). The Logout tests run against a private PostgreSQL (`needs_db`);
+its port was torn down. No address, host, secret or token is spelled in this
+fragment.
 
 | Finding | Root | Red | Fix |
 | --- | --- | --- | --- |
@@ -18,7 +21,9 @@ token is spelled in this fragment.
 | `rv4-FR-F70` (client half, row `rv4-FR-F70-api`) | E. no way to end the server session behind a login | `4bb60e46` | `cd981475` |
 
 Findings that share a root share its red test. Each finding is still its own
-row in the report, and the test names say which roots they cover.
+row in the report, and the test names say which roots they cover. The repair
+round adds a second pair to C (`566b4021` red, `001f2f99` fix) and to E
+(`22a845ae` red, `34210174` fix, after the move `61281ffc`).
 
 ## What changed
 
@@ -46,11 +51,12 @@ row in the report, and the test names say which roots they cover.
   client* for `hint` (`""` restores the default text, byte for byte). The
   default says `insideout login`, which cannot cure a client whose credential is
   not the saved login: the MCP server's in-process sign-in. The hint survives
-  `SetRenewal` in either order and a rejected renewal (the rejection now clears
-  `Reload` and `Save` in place instead of dropping the whole `Renewal`, which
-  used to take the hint with it). A `Renewal` without both hooks is a carrier of
-  the hint and is never armed. `AgentScoped` returns a new client and does not
-  copy the hint; set it on the client it returns.
+  `SetRenewal` in either order and a rejected renewal (at the base the
+  rejection dropped the whole `Renewal`, and the hint with it; it now sets a
+  `rejected` flag on it, and the hooks and the hint stay: see "Repair round 1").
+  A `Renewal` without both hooks is a carrier of the hint and is never armed.
+  `AgentScoped` returns a new client and does not copy the hint; set it on the
+  client it returns.
 - **`SetRenewal` with caller-supplied hooks** (F152, second half). It already
   works: apiclient does no file I/O, only the hooks do (the CLI's are in
   `clientconfig`). `refresh_test.go` runs every renewal test on in-memory hooks
@@ -83,8 +89,10 @@ row in the report, and the test names say which roots they cover.
   exported `ErrLogoutUnreachable`; a refusal names its status; a cancellation
   wraps `context.Canceled` and is not reported as an outage. The access token
   already issued is stateless and lives out its short TTL; only the refresh
-  token, the long-lived credential, is revoked. The client keeps its credentials;
-  the caller discards them.
+  token, the long-lived credential, is revoked. A nil return leaves the client
+  empty (no access token, no refresh token), so it cannot present a revoked
+  login again; any error leaves both in place, so a retry presents the same
+  refresh token (see "Repair round 1").
 
 ## Evidence
 
@@ -93,6 +101,8 @@ the F70 red name a method the client does not have yet through an interface
 assertion (`rvApiClientHas`), so the package still compiles and the rest of its
 tests run at the red commit. Fix commits carry the sources and any tests that
 cannot be red (guards, the registry rows). Outputs are from `go test -race`.
+This table and the mutation list are the first pass; the repair round's own
+evidence is under "Repair round 1".
 
 | Root | Red (tests at the red commit, sources as at the base) | Green (HEAD) |
 | --- | --- | --- |
@@ -122,6 +132,78 @@ HEAD kept, then restored; the tree is clean after each):
   still renews: HTTP 200, want 401`) and so does every case of the request test.
   The `context.Canceled` exclusion removed: the cancelled case fails
   (`could not reach the server: ...: context canceled`).
+
+## Repair round 1
+
+The verifier accepted seven rows and required three repairs, in roots E and C.
+Each is a red commit (tests only, run to failure) and a separate fix.
+
+**1 and 2. `Logout` leaves the client empty, and a 401 is "already signed out"
+(F70).** `Logout` returned nil with the access and refresh tokens still on the
+client, so a caller that went on using it presented a login the server had just
+revoked. And a 401 from `POST /auth/logout` was an error, though the handler is
+public and idempotent (it answers 200 for any token): a 401 can only come from
+something in front of the server, and "this credential is no longer valid" is
+what logout wanted anyway.
+
+- Fix `34210174` (`logout.go`, `auth.go`): a nil return sets `c.token` and
+  `c.refresh` to `""`, also for a client that had no refresh token (it sends
+  nothing). `authPost` now carries a refusal's status in `authBody.status` (the
+  error text is unchanged) and `Logout` takes 401 as nil, without a retry.
+  Every other failure (another status, no answer, a cancellation) keeps both
+  tokens: a second `Logout` on an emptied client would send nothing and report
+  a revocation that never happened.
+- `61281ffc` moved the Logout tests to `rv4_review_logout_test.go`, unchanged
+  (see the design notes). The real-API test now reads the refresh token before
+  the call, since the client is empty after it, and still checks the server: the
+  spent token answers 401, another session of the same user 200.
+- Residual: if a gateway swallowed the request, the revocation never reached
+  the server and the refresh token lives until its TTL. The client cannot tell,
+  and a retry would meet the same gateway.
+
+**3. A call queued behind a rejected renewal ends with the refusal (F152).**
+Renewals are serialized on a process-wide lock. When the server refused the
+refresh token for good, the winner disarmed the client by clearing `Reload` and
+`Save`; calls that had already seen their own 401 were queued on the lock and
+called the nil hooks next (a nil-pointer panic), and the unlocked `armed()` read
+in `RoundTrip` raced with that write. Re-checking `armed()` once the lock is
+held removes the panic but not the race (M6 below: the test passes without
+`-race` and fails with it), because the hooks are still written while other
+calls read them.
+
+- Fix `001f2f99` (`refresh.go`): the hooks never change after `SetRenewal`.
+  `Renewal.rejected` records the refusal and is read and written only under the
+  renewal lock; a call that takes the lock and finds it set returns "the refusal
+  stands", as the first call did. The hint stays. After a rejection `armed()`
+  stays true, so a later final 401 takes the lock once more (it waits only if a
+  renewal is in flight) and returns at once.
+- `TestRvApiClientCallsQueuedBehindARejectedRenewalEndWithTheRefusal`
+  (`rv4_review_concurrent_test.go`): four goroutines call `Whoami` on one armed
+  client; a barrier makes the stub refuse all four together, and it refuses the
+  one refresh with 401. Each call must end `ErrUnauthorized` telling to sign in,
+  the dead token is offered once, nothing is saved.
+
+| Red (tests at the red commit, sources as at `dbd2d89c`) | Green (HEAD) |
+| --- | --- |
+| `22a845ae`, `TestRvApiClientLogoutRequestAndFailures`: `answered 200: the client holds access "access" and refresh "ref-1", want neither`; the same for no refresh token; `answered 401: err = POST /auth/logout: 401 Unauthorized: , want nil (already signed out)`; `answered 401: the client holds access "access" and refresh "ref-1", want neither` | `PASS`, with `TestRvApiClientLogoutRevokesTheServerSession` (real PostgreSQL) and the `Logout` rows of the hostile-value and registry sweeps |
+| `566b4021`, `TestRvApiClientCallsQueuedBehindARejectedRenewalEndWithTheRefusal`: `call 1: err = panic: runtime error: invalid memory address or nil pointer dereference, want the refusal (ErrUnauthorized telling to sign in again)` (calls 2 and 3 too), `WARNING: DATA RACE`, `race detected during execution of test` | `PASS` (0.08 s); `-race -count=30` stable; the whole package `ok` under `-race` |
+
+Mutation checks against the HEAD tests (each restored, tree clean after each):
+
+- **F70.** M1 `Logout` not emptying the client: fails at the 200, no-refresh and
+  401 cases. M3 emptying it on failure too: fails at the 503, no-answer and
+  cancelled cases (`want both kept for a retry`). M2 a 401 returned as an error
+  again: `answered 401: err = POST /auth/logout: 401 Unauthorized: , want nil`.
+  M8 nothing sent: `after Logout the refresh token still renews: HTTP 200, want
+  401` and the request test. M9 the `context.Canceled` exclusion pointed
+  elsewhere: `cancelled: err = could not reach the server: ...: context canceled`.
+- **F152.** M4 the `rejected` check disabled: `the dead refresh token was
+  offered 4 times, want once`. M5 the rejection clearing the hooks again: three
+  of the four calls panic on a nil hook and the race detector fires. M6 the
+  narrower repair (hooks cleared, `armed()` re-checked under the lock): `race
+  detected during execution of test` with `-race`, `ok` without. M7 the rejection
+  dropping the whole `Renewal`: `TestRvApiClientHintSurvivesARejectedRenewal`
+  fails in both orders.
 
 ## Design notes
 
@@ -153,26 +235,25 @@ HEAD kept, then restored; the tree is clean after each):
   pair is half-written". It adds no state.
 - **The escape sweep.** `escape_test.go` (not this cluster's) lists every
   exported `Client` method and fails on one it does not know. `SetUnauthorizedHint`
-  and `Logout` register their own rows from an `init()` in
-  `rv4_review_apiclient_test.go`, so that file stays untouched and the registry
-  keeps working. The `Logout` row uses a copy of the sweep's client with the
-  hostile value as the refresh token (it travels in the body, never the URL).
-- **`rv4_review_apiclient_test.go` is 337 lines**, under the cap; the child
-  process tests are in `server/cmd/insideout/rv4_review_interrupt_test.go`.
-
-## Observed, not changed
-
-- **A queued renewal can meet a disarmed client (older than this cluster).**
-  `renewSession` does not re-check `armed()` after it takes the process-wide
-  lock. If two goroutines of one `Client` both get a 401 and the first one's
-  renewal is rejected for good (which disarms the client), the second then calls
-  a nil hook. At the base the same sequence dereferenced a nil `c.renew`, so it
-  is not new; as far as this cluster read, the CLI does not issue concurrent
-  requests on one client. An in-process login armed through `SetRenewal` (the
-  MCP server, root C) can meet it if its tool calls run concurrently. The cure
-  is three lines (`if !c.renew.armed() { return "", nil }` after the lock) with
-  a test that calls `renewSession` on a disarmed client. It is not one of the
-  eight rows, so it is left to the MCP cluster or the integrator to decide.
+  and `Logout` register their own rows from an `init()` each, in
+  `rv4_review_apiclient_test.go` and `rv4_review_logout_test.go`, so the
+  registry file stays untouched and keeps working. The `Logout` row uses a copy
+  of the sweep's client with the hostile value as the refresh token (it travels
+  in the body, never the URL).
+- **Where the tests live.** Adding the repair assertions to
+  `rv4_review_apiclient_test.go` (337 lines) would have taken it past the
+  350-line cap, so the Logout tests moved, unchanged, to `rv4_review_logout_test.go` (189
+  lines) in a commit of their own (`61281ffc`) before anything was added. The
+  concurrency test is in `rv4_review_concurrent_test.go` (83 lines); the
+  apiclient file is 195. The child process tests are in
+  `server/cmd/insideout/rv4_review_interrupt_test.go`.
+- **A `Client` serves one caller at a time.** The rejection path is now safe for
+  overlapping calls, but the rest is not: on the success path a renewal writes
+  `c.token` and `c.refresh` under the lock while `do` reads `c.token` without
+  it, and a burst of N expired calls on one client renews N times in turn (each
+  later call finds the pair the winner stored equal to what the shared client
+  now holds). Those are valid rotations, only wasteful. Callers that overlap
+  serialize per client or give each call its own client (see the handover).
 
 ## Handover and the integrator's list
 
@@ -186,6 +267,11 @@ For `w4-rv-mcpserver` (it builds on C, D and E):
   hint on the client it returns.
 - A tool call that is cancelled mid-renewal now keeps the rotated pair (D), so
   the in-memory hooks see `Save` even when the call returns `context.Canceled`.
+- Overlapping tool calls on one client end cleanly when the refresh token is
+  rejected for good (every call gets the refusal and the hint), but a burst of
+  expired calls still renews once per call and shares unlocked token fields (see
+  the design notes). Serialize tool calls per client, or give each concurrent
+  call its own client armed with the same hooks and hint.
 
 For `w4-copy-sweep` (the CLI half of F70):
 
@@ -194,6 +280,9 @@ For `w4-copy-sweep` (the CLI half of F70):
   the local file. On an error wrapping `apiclient.ErrLogoutUnreachable`, say the
   session could not be revoked on the server and delete the file anyway; on any
   other error name it. A cancelled `Logout` is an interrupt, not an outage.
+- A nil return means the server session is gone or was never there (a 401 counts
+  as already signed out) and the client is empty: read `RefreshToken()` before
+  the call if it is needed after. On an error the client keeps its tokens.
 
 INTEGRATOR TODO items (shared indexes and files outside this cluster):
 
@@ -202,17 +291,22 @@ INTEGRATOR TODO items (shared indexes and files outside this cluster):
   needs `c.renew.hint`); until then the MCP cluster sets it on the result.
 - INTEGRATOR TODO: `server/internal/apiclient/escape_test.go`: optional, fold
   the `SetUnauthorizedHint` and `Logout` rows (registered from
-  `rv4_review_apiclient_test.go`) into the registry and its `covered` map.
+  `rv4_review_apiclient_test.go` and `rv4_review_logout_test.go`) into the
+  registry and its `covered` map.
 - INTEGRATOR TODO: `docs/architecture/cli-mcp-and-client-config.md`: the
   renewal paragraph (`renewalGrace`, around line 96) gains the drain: a call
   cancelled while a renewal is in flight waits up to 750 ms for the answer and
   saves it, and the CLI's forced exit waits for it (`WaitForRenewal`); a 429/5xx
-  from `/auth/refresh` is reported as trouble, not as an ended session; `Logout`
-  revokes the server session.
+  from `/auth/refresh` is reported as trouble, not as an ended session; a
+  refresh token the server refused for good is remembered by the client, and
+  calls queued behind that refusal end with it; `Logout` revokes the server
+  session, takes a 401 as already signed out and empties the client.
 - INTEGRATOR TODO: `docs/usage/` (the CLI reference, if it describes `logout`):
   once `w4-copy-sweep` lands, `logout` also revokes the session on the server.
 - INTEGRATOR TODO: `docs/issues/2026-10-18-review-4-open-findings.md`: the eight
-  rows become `FIXED` (F70 with the CLI half pending on `w4-copy-sweep`).
+  rows become `FIXED` (F70 with the CLI half pending on `w4-copy-sweep`), plus
+  two ceilings: a 401 from `/auth/logout` may mean a gateway swallowed the
+  revocation, and one `Client` still serves one caller at a time.
 - INTEGRATOR TODO: `docs/plans/2026-10-18-multirole-4.md` and
   `docs/plans/2026-10-18-multirole-4.track.yaml`: the `w4-rv-apiclient` step and
   its history.
