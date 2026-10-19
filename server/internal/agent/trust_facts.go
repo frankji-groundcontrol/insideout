@@ -43,6 +43,17 @@ const (
 	// therefore still carry an invented addition as long as the quote itself. Where
 	// to begin is the owner's call.
 	longTextRatio = 2
+
+	// minWholeAnswerRunes is the shortest quote, in the same letter equivalents,
+	// that may attest a fact when it is one of the user's messages in full
+	// (rv4-FR-F94). The 12 above exists because a short quote lifted out of a longer
+	// message can stand behind any claim; a quote that is the whole message is no
+	// fragment, so a complete short answer ("ASAP", "现在就要", "Students.") may
+	// attest. 4 lets those in and keeps "ok" and "yes" out. "sure" and "okay" weigh 4
+	// as well: whether to keep such words out by name is the owner's call. The
+	// support and long-text checks still apply, and with a quote this short they
+	// leave the text little room beyond the user's own words.
+	minWholeAnswerRunes = 4
 )
 
 // checkFactEvidence refuses a fact its quote cannot stand behind. quoteIsGrounded
@@ -52,21 +63,34 @@ const (
 // Support is lexical, as far as a server without a model call can go: it catches
 // text about something else and long invented additions, not a short addition or
 // text that merely sounds like the quote, and the model can still pass it by
-// copying the quote into the text.
-func checkFactEvidence(text, quote string) error {
+// copying the quote into the text. userMessages are what the user has said in
+// this conversation: a quote that is one of them in full clears the length floor
+// at minWholeAnswerRunes instead, so a complete short answer can attest.
+func checkFactEvidence(text, quote string, userMessages ...string) error {
 	nq := normalizeForMatch(quote)
-	if quoteWeight(nq) < minAttestedQuoteRunes {
-		return fmt.Errorf("agent: the quote is too short to attest a fact — quote the user's fuller words, a whole clause rather than a word or two")
+	if w := quoteWeight(nq); w < minAttestedQuoteRunes && !(w >= minWholeAnswerRunes && quoteIsWholeMessage(nq, userMessages)) {
+		return fmt.Errorf("agent: the quote is too short to attest a fact — quote the user's fuller words, a whole clause rather than a word or two. If what they said really is that short, ask a follow-up question that draws a full sentence from them, and quote that")
 	}
 	nt := normalizeForMatch(text)
 	support := textSupport(nt, nq)
 	if support < minTextSupport {
-		return fmt.Errorf("agent: the fact's text is not supported by its quote — restate the fact in the words of the quote, and don't add claims the user didn't make")
+		return fmt.Errorf("agent: the fact's text is not supported by its quote — restate the fact in the quote's own words and language, and don't add claims the user didn't make")
 	}
 	if quoteWeight(nt) > longTextRatio*quoteWeight(nq) && support < minLongTextSupport {
 		return fmt.Errorf("agent: the fact's text is not supported by its quote — it is more than %d times as long as the quote and most of it is not in the quote; cut it back to what the quote says, and record anything else the user said as its own fact with its own quote", longTextRatio)
 	}
 	return nil
+}
+
+// quoteIsWholeMessage reports whether nq, a normalized quote, is one of the
+// messages in full, ignoring case, spaces and punctuation as quoteIsGrounded does.
+func quoteIsWholeMessage(nq string, messages []string) bool {
+	for _, m := range messages {
+		if normalizeForMatch(m) == nq {
+			return true
+		}
+	}
+	return false
 }
 
 func isCJK(r rune) bool {
