@@ -174,21 +174,26 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 			}
 		}
 
-		row := tx.QueryRow(ctx, `
-			UPDATE insideout.projects
-			SET title = $2, description = $3, status = $4, owner_id = $5
-			WHERE id = $1
-			RETURNING `+projectColumns,
-			projectID, f.Title, f.Description, f.Status, f.OwnerID,
-		)
-		var scanErr error
-		p, scanErr = scanProject(row)
-		return scanErr
+		var upErr error
+		p, upErr = updateProjectRow(ctx, tx, projectID, f)
+		return upErr
 	})
 	if err != nil {
 		return nil, err
 	}
 	return p, nil
+}
+
+// updateProjectRow is the one UPDATE of a project's editable fields. It decides
+// nothing about who may call it: UpdateProject does, before it gets here.
+func updateProjectRow(ctx context.Context, tx pgx.Tx, projectID uuid.UUID, f ProjectUpdateFields) (*Project, error) {
+	return scanProject(tx.QueryRow(ctx, `
+		UPDATE insideout.projects
+		SET title = $2, description = $3, status = $4, owner_id = $5
+		WHERE id = $1
+		RETURNING `+projectColumns,
+		projectID, f.Title, f.Description, f.Status, f.OwnerID,
+	))
 }
 
 // DeleteProject requires actorID to be a workspace admin.
