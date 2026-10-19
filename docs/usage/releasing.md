@@ -11,9 +11,8 @@ no-overwrite publish below are review-4 row 3.4
 ([record](../changelogs/2026-10-18-rv4-remediation/w3-release-supply.md)). They
 are CI configuration that has not run on GitHub yet: **pending first CI run
 after push**, and the first `v*` tag cut after that push is their first proof.
-Still open, so this page is not a finished runbook: stamping the builds that do
-not come from this workflow (rv4-PM-04), the version policy and the rollback
-rule (rv4-PM-05), and the download checks in `scripts/bootstrap.sh`.
+Still open, so this page is not a finished runbook: the version policy and the
+rollback rule (rv4-PM-05), and the download checks in `scripts/bootstrap.sh`.
 
 ## The tag rule
 
@@ -38,9 +37,12 @@ gate below existed.
    at the top level beside `LICENSE` and `THIRD_PARTY_NOTICES.md` (the MPL-2.0
    section 3.2 source offer and the license texts), plus `checksums.txt`
    (SHA-256) and `bootstrap.sh`. `insideout` is stamped with the tag
-   (`-X main.version`), so `insideout version` prints it. A build from the
-   container image or from `scripts/install.sh` is not stamped and prints `dev`
-   (rv4-PM-04, open).
+   (`-X main.version`), so `insideout version` prints it. The other two build
+   recipes stamp too: `scripts/install.sh` passes `git describe --tags --always
+   --dirty` of the checkout it builds (`dev` when there is no git), and
+   `server/Dockerfile` takes a `VERSION` build argument (`docker build
+   --build-arg VERSION="$(git describe --tags --always --dirty)" server`; its
+   context has no `.git`, and an image built without the argument prints `dev`).
 4. **Attest.** A signed build-provenance attestation for every file in `dist/`,
    made with the job's OIDC identity (`id-token: write`, `attestations: write`).
    It sits after the build and before the publish, so nothing unattested is

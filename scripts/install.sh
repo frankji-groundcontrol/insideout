@@ -32,7 +32,10 @@ fi
 echo "==> Building insideout + insideout-mcp (Go $(go version | awk '{print $3}'))"
 build_dir=$(mktemp -d)
 trap 'rm -rf "$build_dir"' EXIT
-(cd "$repo_root/server" && go build -o "$build_dir/insideout" ./cmd/insideout)
+# `insideout version` names the checkout it was built from: the tag, or the
+# commit when untagged, plus -dirty for local edits. Without git it stays "dev".
+version=$(git -C "$repo_root" describe --tags --always --dirty 2>/dev/null || echo dev)
+(cd "$repo_root/server" && go build -ldflags "-X main.version=$version" -o "$build_dir/insideout" ./cmd/insideout)
 (cd "$repo_root/server" && go build -o "$build_dir/insideout-mcp" ./cmd/insideout-mcp)
 
 echo "==> Installing into $install_dir"

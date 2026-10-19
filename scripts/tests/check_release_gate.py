@@ -144,10 +144,10 @@ def publish_path(text, all_steps):
     return failures
 
 
-# Build recipes other than release.yml, and what supplies the stamp's value in each.
+# Build recipes other than release.yml, and the pattern that supplies the stamp's value in each.
 OTHER_BUILDS = {
-    "scripts/install.sh": "git describe",
-    "server/Dockerfile": "ARG VERSION",
+    "scripts/install.sh": r"\bgit\b[^\n|;]*\bdescribe\b",
+    "server/Dockerfile": r"^ARG VERSION\b",
 }
 
 
@@ -164,9 +164,10 @@ def other_builds():
         if "-X main.version=" not in build:
             failures.append(f"{rel}: the ./cmd/insideout build is not stamped with -ldflags \"-X main.version=...\": "
                             "`insideout version` prints dev (R1-04, PM-04)")
-        if source not in text:
-            failures.append(f"{rel}: nothing supplies the stamp's value (`{source}` is missing)")
-        elif source == "ARG VERSION" and text.index(source) < text.index("FROM "):
+        supply = re.search(source, text, re.M)
+        if not supply:
+            failures.append(f"{rel}: nothing supplies the stamp's value (expected `{source}`)")
+        elif rel.endswith("Dockerfile") and supply.start() < text.index("FROM "):
             failures.append(f"{rel}: `ARG VERSION` sits before FROM, so it is empty inside the build stage")
     return failures
 
