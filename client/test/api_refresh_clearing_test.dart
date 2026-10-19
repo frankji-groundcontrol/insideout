@@ -138,5 +138,48 @@ void main() {
         expect(cleared, isTrue);
       });
     }
+
+    // rv4-FR-F01: the roadmap page's retry loop ends for good on 401, 403 and
+    // 404 (a signed-out user, a gone project). A kept session must throw
+    // something it retries, or live presence and progress stop for a user who
+    // is still signed in. 401 stays for the paths that cleared the session.
+    Matcher retryable() => throwsA(
+      isA<ApiException>().having(
+        (e) => e.status,
+        'status',
+        isNot(anyOf(401, 403, 404)),
+      ),
+    );
+
+    for (final (name, boom) in <(String, Object Function())>[
+      ('a network error', () => Exception('socket closed')),
+      ('a 503', () => ApiException('unavailable', status: 503)),
+      ('an answer with no status', () => ApiException('no tokens in reply')),
+    ]) {
+      test(
+        '$name during refresh throws a status a retry loop retries',
+        () async {
+          await expectLater(
+            coachSseWithRefresh(
+              open,
+              () async => throw boom(),
+              () async {},
+            ).drain<void>(),
+            retryable(),
+          );
+        },
+      );
+    }
+
+    test('a refresh refused for rate (429) keeps its own status', () async {
+      await expectLater(
+        coachSseWithRefresh(
+          open,
+          () async => throw ApiException('slow down', status: 429),
+          () async {},
+        ).drain<void>(),
+        throwsA(isA<ApiException>().having((e) => e.status, 'status', 429)),
+      );
+    });
   });
 }
