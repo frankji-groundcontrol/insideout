@@ -9,6 +9,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -43,6 +44,8 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 		return loginCommand(c, creds.Base, positional, *useCode, *useMagic)
 	case "register":
 		return registerCommand(c, creds.Base, positional, *invite)
+	case "logout":
+		return logoutCommand(creds.Base)
 	case "forgot-password":
 		email := argAt(positional, 0)
 		if email == "" {
@@ -74,10 +77,52 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, err)
 			return true, 1
 		}
+		if err := forgetSavedLogin(creds.Base); err != nil {
+			fmt.Fprintf(os.Stderr, "insideout: password reset, but the saved login could not be removed (%v)\n", err)
+		}
 		fmt.Fprintln(os.Stderr, "password reset; every session was revoked — sign in again")
 		return true, 0
 	}
 	return false, 0
+}
+
+// logoutCommand revokes the saved session for base, then deletes that saved
+// login. No saved login prints one line and exits 0, so a second logout is
+// the same as the first. An unreachable server still loses the local copy;
+// the session then expires by itself. Any other refusal keeps the file, so
+// a retry presents the same refresh token.
+func logoutCommand(base string) (bool, int) {
+	cfg, err := savedLoginFor(base)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return true, 1
+	}
+	if cfg.Token == "" && cfg.RefreshToken == "" {
+		fmt.Fprintln(os.Stderr, "not signed in")
+		return true, 0
+	}
+	c := apiclient.New(base)
+	c.SetContext(cliCtx)
+	c.SetToken(cfg.Token)
+	if cfg.RefreshToken != "" {
+		c.SetRenewal(cfg.RefreshToken, apiclient.Renewal{})
+	}
+	err = c.Logout()
+	unreachable := errors.Is(err, apiclient.ErrLogoutUnreachable)
+	if err != nil && !unreachable {
+		fmt.Fprintln(os.Stderr, err)
+		return true, 1
+	}
+	if ferr := forgetSavedLogin(base); ferr != nil {
+		fmt.Fprintln(os.Stderr, ferr)
+		return true, 1
+	}
+	if unreachable {
+		fmt.Fprintln(os.Stderr, "insideout: the server session could not be revoked and expires by itself")
+		return true, 0
+	}
+	fmt.Fprintln(os.Stderr, "insideout: signed out")
+	return true, 0
 }
 
 func loginCommand(c *apiclient.Client, base string, positional []string, useCode, useMagic bool) (bool, int) {

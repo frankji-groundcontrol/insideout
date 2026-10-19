@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -50,6 +51,7 @@ var cliVerbs = []cliVerb{
 
 	{groupAccount, "register", "create an account (password on stdin; --invite when signup is invitation-only)"},
 	{groupAccount, "login", "sign in, save the login and print the token (--code or --magic for emailed sign-in)"},
+	{groupAccount, "logout", "revoke the saved login on the server and delete it"},
 	{groupAccount, "forgot-password", "email a password-reset link"},
 	{groupAccount, "reset-password", "finish a reset: paste the link, then the new password"},
 	{groupAccount, "whoami", "show the signed-in user"},
@@ -181,7 +183,7 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runRoadmapCommand(append([]string{"presence"}, rest...))
 	case "idea":
 		return runIdeaCommand(rest)
-	case "login", "register", "forgot-password", "reset-password":
+	case "login", "register", "forgot-password", "reset-password", "logout":
 		return runAuthCommand(cmd, rest)
 	case "invite", "invites", "signup-mode":
 		return runAdminCommand(cmd, rest)
@@ -266,4 +268,69 @@ func printJSON(raw json.RawMessage, err error) (bool, int) {
 	}
 	fmt.Println(buf.String())
 	return true, 0
+}
+
+// savedLoginFor is the config file's login for base, or a zero config when
+// nothing was saved for that server (missing file, or another server's login).
+func savedLoginFor(base string) (clientconfig.Config, error) {
+	path, err := clientconfig.DefaultPath()
+	if err != nil {
+		return clientconfig.Config{}, nil
+	}
+	cfg, err := clientconfig.Load(path)
+	if err != nil || !basesMatch(base, savedBase(cfg.APIBase)) {
+		return clientconfig.Config{}, err
+	}
+	return cfg, nil
+}
+
+// forgetSavedLogin removes the saved login for base. The file goes when it
+// holds nothing else; any other field stays and only the token fields clear.
+func forgetSavedLogin(base string) error {
+	path, err := clientconfig.DefaultPath()
+	if err != nil {
+		return nil
+	}
+	data, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	saved, _ := raw["api_base"].(string)
+	if !basesMatch(base, savedBase(saved)) {
+		return nil
+	}
+	extra := false
+	for key := range raw {
+		if key != "api_base" && key != "token" && key != "refresh_token" {
+			extra = true
+		}
+	}
+	if !extra {
+		return os.Remove(path)
+	}
+	delete(raw, "token")
+	delete(raw, "refresh_token")
+	out, err := json.MarshalIndent(raw, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, append(out, '\n'), 0o600)
+}
+
+func savedBase(apiBase string) string {
+	if apiBase == "" {
+		return apiclient.DefaultBase
+	}
+	return apiBase
+}
+
+func basesMatch(a, b string) bool {
+	return strings.TrimRight(a, "/") == strings.TrimRight(b, "/")
 }

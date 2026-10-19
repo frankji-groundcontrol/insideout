@@ -59,6 +59,14 @@ saved session or `INSIDEOUT_TOKEN`, read verbs fail with `not signed in`
 and say how to sign in. Signup on the hosted service takes an invitation code
 from the server's administrator:
 `insideout register --invite <invitation-code> you@example.com`.
+`insideout logout` ends the saved login: it revokes that session on the
+server, then deletes `<OS config dir>/insideout/config.json` when the file
+holds nothing else, or clears only the token fields when the file holds
+more. With no saved login it prints `not signed in` and exits 0. If the
+server cannot be reached, the file is still removed and the command says
+the server session could not be revoked and expires by itself.
+`insideout reset-password` clears a saved login for that server too, because
+the reset revokes every session and the file would otherwise keep a dead pair.
 
 Every way the web can sign in works here too (prompts on stderr, token
 on stdout, session saved):
@@ -76,7 +84,7 @@ insideout reset-password                            # paste link/token + new pas
 
 | Area | Verbs |
 | --- | --- |
-| Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `forgot-password <email>`, `reset-password` |
+| Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `logout`, `forgot-password <email>`, `reset-password` |
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `join <code>`, `projects create --title [--desc] <ws-id>` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
@@ -184,7 +192,8 @@ Auth can also happen at runtime: the `auth_*` tools
 `auth_magic_link_consume`, `auth_forgot_password`,
 `auth_reset_password`, `auth_logout`) sign the server **process** in —
 the token is kept in memory and never echoed into the conversation, and
-every later tool call rides that session. Once the process holds a JWT
+every later tool call rides that session. `auth_logout` drops that
+in-memory session only; the saved login file stays until `insideout logout`. Once the process holds a JWT
 login, the four password tools are no longer offered (see "Agent scope");
 the code and magic-link tools stay. The code flow is the
 agent-friendly one: the human gets the email and supplies the digits, so
