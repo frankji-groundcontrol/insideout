@@ -7,6 +7,7 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"sync"
 
 	"github.com/mark3labs/mcp-go/mcp"
@@ -62,55 +63,138 @@ var withheldFromAgents = []string{
 	"idea_delete", "roadmap_delete", "auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
 }
 
+// profileNarrowed remembers that the human-only tools were removed, so a
+// sign-out that leaves no JWT can register them again. One process, one registry.
+var profileNarrowed bool
+
 // applyAgentProfile removes withheldFromAgents once the process holds a login (a
 // JWT: the saved login, INSIDEOUT_TOKEN or an in-process sign-in). Without one the
 // registry stays whole so a process can still sign in or register, and a token
-// that is not a JWT cannot carry a scope. This is advice to the model; the
-// server's 403 for an agent-scope token is what holds.
+// that is not a JWT cannot carry a scope. A sign-out that leaves no JWT puts the
+// tools back (rv4-FR-F168): DeleteTools is not undone by anything else. This is
+// advice to the model; the server's 403 for an agent-scope token is what holds.
 func applyAgentProfile(s *server.MCPServer, api string) {
 	if _, ok := apiclient.ParseTokenClaims(humanClient(api).Token()); ok {
 		s.DeleteTools(withheldFromAgents...)
+		profileNarrowed = true
+		return
 	}
+	if !profileNarrowed {
+		return
+	}
+	addAuthTools(s, api)
+	addProductTools(s, api)
+	addAdminTools(s, api)
+	profileNarrowed = false
 }
 
-// session holds the token acquired by an auth tool so subsequent tool
-// calls use it; the saved credentials stay the fallback. Process memory,
-// never conversation output.
+// mcpInProcessHint replaces "run insideout login" for an in-process sign-in.
+// That command writes the saved file, which this session ignores until the
+// in-process credential is cleared or finally refused.
+const mcpInProcessHint = "call auth_login_code_request and auth_login_code_verify again, or auth_logout to fall back to the saved login"
+
+// session is the login an auth tool acquired. Process memory, never conversation
+// output. Each tool call builds its own client armed from here: a Client serves
+// one caller at a time, and a shared client would keep a refused renewal until
+// someone called SetRenewal again. A new sign-in replaces the pair, so the next
+// call's SetRenewal re-arms after a refusal.
 var session struct {
 	sync.Mutex
-	token string
+	token   string
+	refresh string
+	dead    bool // the in-process credential was refused for good
 }
 
-// setSessionToken installs (or, with "", clears) the in-process login. The agent
-// token minted for the previous login goes with it.
-func setSessionToken(tok string) {
+// toolCalls serializes handlers that share this session, so two calls cannot
+// observe a pair mid-refresh. Each handler still gets its own client.
+var toolCalls sync.Mutex
+
+// beginToolCall locks for the rest of the tool invocation.
+func beginToolCall() func() {
+	toolCalls.Lock()
+	return toolCalls.Unlock
+}
+
+// setSession stores an in-process sign-in, refresh token included, and drops a
+// refusal remembered only so the saved login could take over.
+func setSession(access, refresh string) {
 	session.Lock()
-	session.token = tok
+	session.token = access
+	session.refresh = refresh
+	session.dead = false
 	session.Unlock()
 	apiclient.ForgetAgentToken()
 }
 
+// setSessionToken installs (or, with "", clears) the in-process access token and
+// drops any refresh token. The agent token minted for the previous login goes
+// with it.
+func setSessionToken(tok string) { setSession(tok, "") }
+
+func inProcessCreds() (access, refresh string, ok bool) {
+	session.Lock()
+	defer session.Unlock()
+	if session.dead || session.token == "" {
+		return "", "", false
+	}
+	return session.token, session.refresh, true
+}
+
+func reloadInProcess() (string, string, bool) {
+	access, refresh, ok := inProcessCreds()
+	if !ok || refresh == "" {
+		return "", "", false
+	}
+	return access, refresh, true
+}
+
+func saveInProcess(access, refresh string) {
+	session.Lock()
+	session.token, session.refresh = access, refresh
+	session.dead = false
+	session.Unlock()
+}
+
+// rejectInProcess stops a refused in-process credential from shadowing the
+// saved login for the rest of the process.
+func rejectInProcess() {
+	session.Lock()
+	session.dead = true
+	session.Unlock()
+	apiclient.ForgetAgentToken()
+}
+
+func savedCredential(api string) string {
+	creds, err := clientconfig.Resolve(api)
+	if err != nil {
+		return ""
+	}
+	return creds.Token
+}
+
 // humanClient resolves the saved credentials like every other surface
-// (clientconfig.Resolve) and lets this process's own login win over them. It
-// carries the user's own login, so only the auth tools and the agent-token
-// exchange use it. Credentials that cannot be resolved (an unreadable config
-// file) give a client that fails every call with that error.
+// (clientconfig.Resolve) and lets this process's own login win over them until
+// that login is finally refused. It carries the user's own login, so only the
+// auth tools and the agent-token exchange use it. An in-process sign-in keeps
+// its own refresh token and renews through in-memory hooks; it does not read or
+// write the saved file. Credentials that cannot be resolved (an unreadable
+// config file) give a client that fails every call with that error.
 func humanClient(api string) *apiclient.Client {
 	creds, err := clientconfig.Resolve(api)
 	if err != nil {
 		return apiclient.Failing(err)
 	}
-	session.Lock()
-	inProcess := session.token
-	session.Unlock()
-	if inProcess != "" {
-		// This process's own login is not the saved session: it neither
-		// renews itself with the saved refresh token nor overwrites the file.
-		c := apiclient.New(creds.Base)
-		c.SetToken(inProcess)
-		return c
+	access, refresh, ok := inProcessCreds()
+	if !ok {
+		return creds.Client()
 	}
-	return creds.Client()
+	c := apiclient.New(creds.Base)
+	c.SetToken(access)
+	if refresh != "" {
+		c.SetRenewal(refresh, apiclient.Renewal{Reload: reloadInProcess, Save: saveInProcess})
+	}
+	c.SetUnauthorizedHint(mcpInProcessHint)
+	return c
 }
 
 // humanClientCtx is humanClient bound to a tool call's context, so a cancelled
@@ -125,8 +209,34 @@ func humanClientCtx(ctx context.Context, api string) *apiclient.Client {
 // for an agent-scope token (apiclient.AgentScoped), never the login itself. A
 // failed trade is a client that fails every call, so no tool falls back to the
 // full session. The call's context rides both the trade and the client.
+//
+// An in-process sign-in that the server has refused for good (the refresh token
+// is dead, or there was none) stops shadowing the saved login, which is what
+// `insideout login` updates. AgentScoped does not copy the unauthorized hint,
+// so the client this returns gets it itself.
 func clientCtx(ctx context.Context, api string) *apiclient.Client {
-	return apiclient.AgentScoped(humanClientCtx(ctx, api))
+	_, _, inProcess := inProcessCreds()
+	c := apiclient.AgentScoped(humanClientCtx(ctx, api))
+	if !inProcess {
+		return c
+	}
+	if inProcessFinallyRejected(c) && savedCredential(api) != "" {
+		rejectInProcess()
+		return apiclient.AgentScoped(humanClientCtx(ctx, api))
+	}
+	c.SetUnauthorizedHint(mcpInProcessHint)
+	return c
+}
+
+// inProcessFinallyRejected reports whether the agent-scope trade refused the
+// in-process credential. A client with a token traded successfully. A failing
+// client carries the trade's error and does not touch the network.
+func inProcessFinallyRejected(c *apiclient.Client) bool {
+	if c.Token() != "" {
+		return false
+	}
+	_, err := c.Whoami()
+	return errors.Is(err, apiclient.ErrUnauthorized)
 }
 
 // client is clientCtx for a caller that has no context to give.

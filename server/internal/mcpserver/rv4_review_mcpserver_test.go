@@ -27,7 +27,7 @@ func rvMcpText(t *testing.T, r rpcResult) string {
 }
 
 // TestRvMcpInProcessSignInRenewsAndRearms covers the shared root of F158, F163,
-// F168 and F175: the refresh token from auth_login has to renew an expired
+// F168 and F175: the refresh token from an auth_* sign-in has to renew an expired
 // access token, and a later sign-in has to arm renewal again after a refusal.
 func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 	pinConfigHome(t)
@@ -42,8 +42,9 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 	var logins int
 	sealed := false
 	api, seen := routedAPI(t, func(w http.ResponseWriter, r *http.Request, _ int) bool {
+		authz := r.Header.Get("Authorization")
 		switch {
-		case r.URL.Path == "/auth/login":
+		case r.URL.Path == "/auth/login-code/verify":
 			logins++
 			access, refresh := expired1, "ref-1"
 			if logins > 1 {
@@ -65,24 +66,35 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 			}
 			return true
 		case r.Method == http.MethodPost && r.URL.Path == "/agent/token":
-			switch r.Header.Get("Authorization") {
-			case "Bearer " + fresh1:
+			switch {
+			case authz == "Bearer "+fresh1 && !sealed:
 				w.Write([]byte(g1.body()))
-			case "Bearer " + fresh2:
+			case authz == "Bearer "+fresh2:
 				w.Write([]byte(g2.body()))
 			default:
 				w.WriteHeader(http.StatusUnauthorized)
 				w.Write([]byte(`{"error":"unauthorized"}`))
 			}
 			return true
+		case r.URL.Path == "/me":
+			if authz == "Bearer "+g1.token || authz == "Bearer "+g2.token {
+				w.Write([]byte(`{"email":"a@example.com","username":"A"}`))
+				return true
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+			w.Write([]byte(`{"error":"unauthorized"}`))
+			return true
 		}
 		return false
 	})
 	s := Build(api.URL)
+	verify := func(id int, code string) rpcResult {
+		return callTool(t, s, id, "auth_login_code_verify", fmt.Sprintf(`{"email":"a@example.com","code":%q}`, code))
+	}
 
-	first := callTool(t, s, 1, "auth_login", `{"email":"a@example.com","password":"pw123456"}`)
+	first := verify(1, "111111")
 	if first.Result.IsError {
-		t.Fatalf("auth_login with an expired access token and a live refresh token: %s", rvMcpText(t, first))
+		t.Fatalf("auth_login_code_verify with an expired access token and a live refresh token: %s", rvMcpText(t, first))
 	}
 	if !slices.Contains(seen(), "POST /auth/refresh ") {
 		t.Fatalf("the sign-in never renewed; the API saw %q", seen())
@@ -95,13 +107,19 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 		t.Fatalf("a refused in-process refresh must name the auth_* tools, got %+v", failed.Result)
 	}
 
-	second := callTool(t, s, 3, "auth_login", `{"email":"a@example.com","password":"pw123456"}`)
+	// Password tools are gone while the JWT is held, and the code-verify tool
+	// stays. Sign out, then sign in again: the new client has to be armed,
+	// because a refusal stays on the client that saw it until SetRenewal.
+	if out := callTool(t, s, 3, "auth_logout", `{}`); out.Result.IsError {
+		t.Fatalf("auth_logout: %s", rvMcpText(t, out))
+	}
+	second := verify(4, "222222")
 	if second.Result.IsError {
 		t.Fatalf("a new sign-in did not re-arm renewal after the refusal: %s", rvMcpText(t, second))
 	}
-	who := callTool(t, s, 4, "whoami", `{}`)
+	who := callTool(t, s, 5, "whoami", `{}`)
 	if who.Result.IsError || !strings.Contains(rvMcpText(t, who), "a@example.com") {
-		t.Fatalf("whoami after the second sign-in: %+v", who.Result)
+		t.Fatalf("whoami after the second sign-in: %+v\nAPI saw %q", who.Result, seen(expired1, "<e1>", fresh1, "<f1>", expired2, "<e2>", fresh2, "<f2>", g1.token, "<g1>", g2.token, "<g2>"))
 	}
 }
 

@@ -96,6 +96,7 @@ func pinConfigHome(t *testing.T) {
 	t.Setenv("INSIDEOUT_API", "")
 	t.Setenv("INSIDEOUT_TOKEN", "")
 	setSessionToken("")
+	profileNarrowed = false
 }
 
 func saveConfig(t *testing.T, cfg clientconfig.Config) {
