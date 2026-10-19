@@ -70,9 +70,22 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 		// A body that does not decode leaves it 0 and the sync looks it up.
 		var ev webhookEvent
 		_ = json.Unmarshal(body, &ev)
-		commits := 0
+		// A holder with nobody to act as (no owner, or an owner who left the
+		// workspace) keeps the repo, so the delivery is not handed to another
+		// project, but nothing can run as it: it is skipped, and the answer and
+		// the log say so (rv4-FR-F193, rv4-FR-F121). An admin can still sync it
+		// by hand, or give it an owner, or release the link.
+		acting := make([]store.ProjectOwner, 0, len(targets))
 		for _, po := range targets {
-			added, _, err := s.syncGithubProject(r.Context(), po.OwnerID, po.ProjectID, ev.Installation.ID)
+			if po.OwnerID == nil {
+				s.log.Warn("webhook: the project holding this repo has no owner to act as", "repo", name, "project", po.ProjectID)
+				continue
+			}
+			acting = append(acting, po)
+		}
+		commits := 0
+		for _, po := range acting {
+			added, _, err := s.syncGithubProject(r.Context(), *po.OwnerID, po.ProjectID, ev.Installation.ID)
 			if err != nil {
 				// One project's failure must not block the others; GitHub
 				// retries the whole delivery only on 5xx.
@@ -81,9 +94,10 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 			}
 			commits += added
 		}
-		matched := s.attachGuideEvidence(r.Context(), event, name, body, targets)
+		matched := s.attachGuideEvidence(r.Context(), event, name, body, acting)
 		httpx.WriteJSON(w, http.StatusOK, map[string]any{
-			"event": event, "repo": name, "projects": len(targets), "commits": commits, "evidence": matched,
+			"event": event, "repo": name, "projects": len(acting), "skipped": len(targets) - len(acting),
+			"commits": commits, "evidence": matched,
 		})
 	default:
 		httpx.WriteJSON(w, http.StatusOK, map[string]any{"ignored": event})
@@ -93,7 +107,8 @@ func (s *Server) handleGithubWebhook(w http.ResponseWriter, r *http.Request) {
 // attachGuideEvidence loads the repo's insideout.yaml (installation
 // token when the app credentials are configured and the delivery names
 // an installation; unauthenticated otherwise — public repos), matches
-// the event, and appends leaf evidence to the resolved projects.
+// the event, and appends leaf evidence to the resolved projects. Every
+// target has an owner to act as (the caller leaves the others out).
 func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string, body []byte, targets []store.ProjectOwner) int {
 	if len(targets) == 0 {
 		return 0
@@ -137,7 +152,7 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 			if err != nil {
 				return false
 			}
-			return s.store.IsRoadmapLeaf(ctx, po.OwnerID, po.ProjectID, nodeID)
+			return s.store.IsRoadmapLeaf(ctx, *po.OwnerID, po.ProjectID, nodeID)
 		}
 	}
 	added := 0
@@ -147,7 +162,7 @@ func (s *Server) attachGuideEvidence(ctx context.Context, event, repoName string
 			if err != nil {
 				continue
 			}
-			if err := s.store.AddRoadmapEvidence(ctx, po.OwnerID, nodeID, plan.kind, plan.detail, plan.source); err != nil {
+			if err := s.store.AddRoadmapEvidence(ctx, *po.OwnerID, nodeID, plan.kind, plan.detail, plan.source); err != nil {
 				s.log.Warn("webhook: evidence", "node", id, "error", err)
 				continue
 			}

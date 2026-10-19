@@ -73,7 +73,8 @@ func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID
 // check and the UPDATE after it are one critical section per repo: an advisory
 // lock keyed on the lower-cased URL is held to the end of the transaction, so
 // two projects racing for one repo cannot both pass the check. The holder is
-// whatever _projects_by_repo names, the same answer the webhook delivers by.
+// whatever _projects_by_repo names, the same answer the webhook delivers by: the
+// earliest project carrying the repo, with or without an owner (rv4-FR-F193).
 //
 // ponytail: a lock, not a UNIQUE index, because rows that predate the rule may
 // already share a repo (migration 20261018180000) and an index would refuse to
