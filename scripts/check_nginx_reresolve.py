@@ -2,9 +2,9 @@
 """Does the app's nginx follow its API upstream when DNS changes? (BUG-027)
 
 Renders client/nginx.conf the way the official image's entrypoint does
-(envsubst of NGINX_API_UPSTREAM and NGINX_LOCAL_RESOLVERS), runs it on a real
-nginx next to a stub DNS server and two upstreams on two local addresses, then
-checks that the proxy
+(envsubst of NGINX_API_UPSTREAM, NGINX_LOCAL_RESOLVERS and NGINX_XFF), runs it
+on a real nginx next to a stub DNS server and two upstreams on two local
+addresses, then checks that the proxy
 
   1. starts while the upstream name does not resolve yet, and answers 502,
   2. finds the upstream once the name resolves,
@@ -12,7 +12,12 @@ checks that the proxy
   4. still passes the query string and headers, and a chunked response still
      arrives chunk by chunk (nginx forwards a slow stream as it comes, with
      proxy_buffering on or off, so this guards the request path, not that
-     directive).
+     directive),
+  5. hands the server the X-Forwarded-For the client address chain needs
+     (rv4-FR-F61): the hosted image, with the edge in front, passes the chain
+     through untouched; the compose stack, with nothing in front, ends it in
+     the address nginx itself saw, because the server's throttle trusts the
+     rightmost entry and a client may write any other.
 
 Usage:  python3 scripts/check_nginx_reresolve.py [--template FILE] [--nginx BIN]
 
@@ -90,7 +95,8 @@ def upstream(ip, port, label):
             h = self.headers
             body = (
                 f"{label} {self.path} host={h.get('Host')} "
-                f"proto={h.get('X-Forwarded-Proto')} auth={h.get('Authorization')}\n"
+                f"proto={h.get('X-Forwarded-Proto')} auth={h.get('Authorization')} "
+                f"xff={h.get('X-Forwarded-For')}\n"
             ).encode()
             self.send_response(200)
             self.send_header("Content-Length", str(len(body)))
@@ -125,11 +131,32 @@ def second_address():
         return s.getsockname()[0]
 
 
-def render(template, upstream_url, resolvers, port):
-    """The entrypoint's envsubst for the two variables, on a free listen port."""
+def image_xff(template):
+    """NGINX_XFF as the client image bakes it in (client/Dockerfile ENV), after
+    Docker's own substitution: `\\$` is a literal dollar sign and a bare `$name`
+    expands to nothing. Without such a line the template is the hosted
+    pass-through itself."""
+    dockerfile = Path(template).with_name("Dockerfile")
+    m = re.search(r"^ENV NGINX_XFF=(\S*)", dockerfile.read_text(), re.M) if dockerfile.is_file() else None
+    raw = m.group(1) if m else r"\$http_x_forwarded_for"
+    return re.sub(r"(?<!\\)\$\w+", "", raw).replace("\\$", "$")
+
+
+def compose_xff(template):
+    """NGINX_XFF the compose client service sets (`$$` is compose's escape for
+    a dollar sign); the image's own value when compose sets none."""
+    compose = Path(template).parent.parent / "docker-compose.yml"
+    m = re.search(r"^\s+NGINX_XFF:\s*(\S+)", compose.read_text(), re.M) if compose.is_file() else None
+    return m.group(1).strip("\"'").replace("$$", "$") if m else image_xff(template)
+
+
+def render(template, upstream_url, resolvers, port, xff=None):
+    """The entrypoint's envsubst for the three variables, on a free listen port.
+    NGINX_XFF is the image's baked value unless the caller names one."""
     text = Path(template).read_text()
     text = text.replace("${NGINX_API_UPSTREAM}", upstream_url)
     text = text.replace("${NGINX_LOCAL_RESOLVERS}", resolvers)
+    text = text.replace("${NGINX_XFF}", image_xff(template) if xff is None else xff)
     left = re.findall(r"\$\{[A-Z_]+\}", text)
     if left:
         sys.exit(f"{template}: unsubstituted {left}")
@@ -163,6 +190,66 @@ def stream_gap(port):
     return seen[b"chunk-2"] - seen[b"chunk-1"] if len(seen) == 2 else None
 
 
+def start_nginx(nginx, site, web_port):
+    """Run a rendered template on a real nginx inside a temp directory and wait
+    for /healthz. Returns (proc, tmp); proc has already exited when nginx would
+    not start the template."""
+    tmp = Path(tempfile.mkdtemp(prefix="nginx-reresolve-"))
+    (tmp / "logs").mkdir()  # the default error log path, relative to -p
+    (tmp / "site.conf").write_text(site)
+    (tmp / "nginx.conf").write_text(
+        f"daemon off;\nworker_processes 1;\npid {tmp}/nginx.pid;\nerror_log {tmp}/error.log info;\n"
+        f"events {{ worker_connections 64; }}\nhttp {{\n  access_log {tmp}/access.log;\n"
+        + "".join(f"  {d}_temp_path {tmp}/{d};\n" for d in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"))
+        + f"  include {tmp}/site.conf;\n}}\n"
+    )
+    proc = subprocess.Popen(
+        [nginx, "-p", str(tmp), "-c", str(tmp / "nginx.conf")],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    for _ in range(50):
+        if proc.poll() is not None:
+            break
+        try:
+            if get(web_port, "/healthz")[0] == 200:
+                break
+        except OSError:
+            time.sleep(0.1)
+    return proc, tmp
+
+
+def stop_nginx(proc, tmp):
+    if proc.poll() is None:
+        proc.terminate()
+        proc.wait(timeout=10)
+    shutil.rmtree(tmp, ignore_errors=True)
+
+
+FORGED = "198.51.100.9"  # an address a client writes into X-Forwarded-For itself
+
+
+def forwarded(args, dns_port, xff):
+    """The X-Forwarded-For a server receives through the template rendered with
+    NGINX_XFF=xff, for a /api/ request that sends FORGED, one that sends none and
+    a webhook delivery that sends FORGED. Returns (values, why): values is None
+    and why is nginx's own output when nginx did not start."""
+    up_port, web_port = free_port(), free_port()
+    srv = upstream("127.0.0.1", up_port, "F")  # an IP literal needs no DNS
+    site = render(args.template, f"http://127.0.0.1:{up_port}", f"127.0.0.1:{dns_port}", web_port, xff)
+    proc, tmp = start_nginx(args.nginx, site, web_port)
+    try:
+        if proc.poll() is not None:
+            return None, proc.stdout.read().strip()
+        asks = (("/api/v1/x", {"X-Forwarded-For": FORGED}), ("/api/v1/x", {}), ("/api/v1/hooks/github", {"X-Forwarded-For": FORGED}))
+        return [re.search(r"xff=(.*)", get(web_port, path, hdrs)[1]).group(1) for path, hdrs in asks], ""
+    finally:
+        stop_nginx(proc, tmp)
+        srv.shutdown()
+        srv.server_close()
+
+
 def main():
     root = Path(__file__).resolve().parent.parent
     ap = argparse.ArgumentParser()
@@ -176,19 +263,10 @@ def main():
     up_port, web_port = free_port(), free_port()
     dns = Dns()
     dns.start()
-    tmp = Path(tempfile.mkdtemp(prefix="nginx-reresolve-"))
     site = render(args.template, f"http://{HOST}:{up_port}", f"127.0.0.1:{dns.port}", web_port)
-    (tmp / "logs").mkdir()  # the default error log path, relative to -p
-    (tmp / "site.conf").write_text(site)
-    (tmp / "nginx.conf").write_text(
-        f"daemon off;\nworker_processes 1;\npid {tmp}/nginx.pid;\nerror_log {tmp}/error.log info;\n"
-        f"events {{ worker_connections 64; }}\nhttp {{\n  access_log {tmp}/access.log;\n"
-        + "".join(f"  {d}_temp_path {tmp}/{d};\n" for d in ("client_body", "proxy", "fastcgi", "uwsgi", "scgi"))
-        + f"  include {tmp}/site.conf;\n}}\n"
-    )
     m = re.search(r"valid=(\d+)s", site)
     wait = int(m.group(1)) + 2 if m else 3  # past the resolver's cache window
-    up_a = up_b = proc = None
+    up_a = up_b = proc = tmp = None
     failures = []
 
     def check(name, ok, detail=""):
@@ -197,20 +275,7 @@ def main():
             failures.append(name)
 
     try:
-        proc = subprocess.Popen(
-            [args.nginx, "-p", str(tmp), "-c", str(tmp / "nginx.conf")],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-        for _ in range(50):
-            if proc.poll() is not None:
-                break
-            try:
-                if get(web_port, "/healthz")[0] == 200:
-                    break
-            except OSError:
-                time.sleep(0.1)
+        proc, tmp = start_nginx(args.nginx, site, web_port)
         up = proc.poll() is None
         check("nginx starts while the upstream name does not resolve", up, (proc.stdout.read() if not up else "").strip())
         if not up:
@@ -241,15 +306,29 @@ def main():
 
         gap = stream_gap(web_port)
         check("a chunked response still arrives chunk by chunk", gap is not None and gap >= 1.0, f"gap {gap}")
+
+        # rv4-FR-F61: the server trusts the INSIDEOUT_TRUSTED_PROXY_HOPS-th entry
+        # from the right, so what nginx writes decides whose bucket a client gets.
+        hosted, why = forwarded(args, dns.port, image_xff(args.template))
+        check(
+            "hosted image: X-Forwarded-For passes through untouched (the edge in front appended the client)",
+            hosted == [FORGED, "None", FORGED],
+            why or f"the server received {hosted}",
+        )
+        xff = compose_xff(args.template)
+        shipped, why = forwarded(args, dns.port, xff)
+        check(
+            "compose stack: the rightmost X-Forwarded-For entry is the peer nginx saw, never a client-written one",
+            shipped is not None and all(s.rsplit(",", 1)[-1].strip() == "127.0.0.1" for s in shipped),
+            f"NGINX_XFF={xff!r}: " + (why or f"the server received {shipped} for a client that wrote {FORGED}"),
+        )
     finally:
-        if proc and proc.poll() is None:
-            proc.terminate()
-            proc.wait(timeout=10)
+        if proc:
+            stop_nginx(proc, tmp)
         for srv in (up_a, up_b):
             if srv:
                 srv.shutdown()
         dns.stop()
-        shutil.rmtree(tmp, ignore_errors=True)
     print("OK" if not failures else f"{len(failures)} check(s) failed")
     return 1 if failures else 0
 
