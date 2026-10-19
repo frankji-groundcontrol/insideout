@@ -3,12 +3,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-# The build context is server/, which has no .git, so the version comes in as a
-# build argument (after FROM: an ARG before it is empty inside the stage):
-#   docker build --build-arg VERSION="$(git describe --tags --always --dirty)" server
-# Without it `insideout version` prints "dev".
-ARG VERSION=dev
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-X main.version=${VERSION}" -o /out/insideout ./cmd/insideout
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/insideout ./cmd/insideout
 
 FROM gcr.io/distroless/static-debian12
 COPY --from=build /out/insideout /insideout
