@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -158,5 +160,67 @@ func TestRvGhBindARepoHeldByAnotherWorkspaceIsAnsweredLikeOneGitHubDoesNotShow(t
 		if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_ALREADY_LINKED" {
 			t.Errorf("%s: code = %q, want GITHUB_REPO_ALREADY_LINKED; body %s", who, got, body)
 		}
+	}
+}
+
+// rvGhBindRefuse makes GitHub answer 403 with message, and no rate-limit header,
+// to the requests whose path ends in suffix; everything else goes on to the fake
+// installed before it.
+func rvGhBindRefuse(t *testing.T, suffix, message string) {
+	t.Helper()
+	next := http.DefaultTransport
+	http.DefaultTransport = roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Hostname() != "api.github.com" || !strings.HasSuffix(r.URL.Path, suffix) {
+			return next.RoundTrip(r)
+		}
+		return &http.Response{
+			StatusCode: http.StatusForbidden, Status: "403 Forbidden", Request: r,
+			Header: http.Header{"Content-Type": {"application/json"}},
+			Body:   io.NopCloser(strings.NewReader(`{"message":` + strconv.Quote(message) + `}`)),
+		}, nil
+	})
+	t.Cleanup(func() { http.DefaultTransport = next })
+}
+
+// rv4-FR-F170 (API half of F186, F130): the github client now tells a refusal
+// from a rate limit (*github.AccessRefusedError). Answered as a bad gateway the
+// user is told GitHub failed and to try later, which cannot help: a blocked repo,
+// a permission the App lacks or a suspended installation stays that way. The
+// answer is the user's to act on at GitHub, so it is a 400 with its own code and
+// GitHub's words; a rate limit keeps its 429.
+func TestRvGhBindAGithubRefusalWhileLinkingIsNotABadGateway(t *testing.T) {
+	f := newFakeGitHub(t)
+	w := appServerWorld(t)
+	name := uniqueRepo()
+	f.addRepo(name, fakeRepo{private: true, install: 77})
+	const why = "Repository access blocked"
+	rvGhBindRefuse(t, "/installation", why)
+
+	code, body := putRepo(t, w, name)
+	expect(t, "link while GitHub refuses the App", code, body, http.StatusBadRequest)
+	got := decodeAs[struct{ Code, Error string }](t, body)
+	if got.Code != "GITHUB_ACCESS_REFUSED" || !strings.Contains(got.Error, why) {
+		t.Errorf("answer = %s, want code GITHUB_ACCESS_REFUSED carrying GitHub's words %q", body, why)
+	}
+	if repoURL, _, err := w.st.ProjectRepoSync(context.Background(), w.owner.ID, w.project.ID); err != nil || repoURL != "" {
+		t.Errorf("a refused link stored repo_url %q (err %v), want nothing", repoURL, err)
+	}
+}
+
+func TestRvGhBindAGithubRefusalWhileSyncingIsNotABadGateway(t *testing.T) {
+	f := newFakeGitHub(t)
+	w := appServerWorld(t)
+	name := uniqueRepo()
+	f.addRepo(name, fakeRepo{private: true, install: 77, shas: []string{"c1"}})
+	code, body := putRepo(t, w, name)
+	expect(t, "link the private repo", code, body, http.StatusOK)
+	const why = "Resource not accessible by integration"
+	rvGhBindRefuse(t, "/commits", why)
+
+	code, body = w.call(w.owner, http.MethodPost, syncPath(w), "")
+	expect(t, "sync while GitHub refuses the commits read", code, body, http.StatusBadRequest)
+	got := decodeAs[struct{ Code, Error string }](t, body)
+	if got.Code != "GITHUB_ACCESS_REFUSED" || !strings.Contains(got.Error, why) {
+		t.Errorf("answer = %s, want code GITHUB_ACCESS_REFUSED carrying GitHub's words %q", body, why)
 	}
 }
