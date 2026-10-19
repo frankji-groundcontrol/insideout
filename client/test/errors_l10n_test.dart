@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/errors_l10n.dart';
+import 'package:insideout/l10n/l10n.dart';
 
 // USER-11: the mapper is the single place raw errors become UI copy —
 // status → key, backoff codes → throttled, transport → network, unknown →
@@ -76,6 +77,57 @@ void main() {
         ),
       ),
       'error.network',
+    );
+  });
+
+  // rv4-FR-F03, F09, F16: the server tells a failed repo link apart by code
+  // (github.go), and the status alone says the wrong thing: 400 reads "bad
+  // request" and 409 reads "changed elsewhere, refresh", though refreshing
+  // changes nothing and the fix for a private repo is installing the App.
+  const repoCodes = <(int, String, String)>[
+    (400, 'GITHUB_REPO_NOT_VISIBLE', 'error.githubRepoNotVisible'),
+    (400, 'GITHUB_REPO_URL_INVALID', 'error.githubRepoUrlInvalid'),
+    (409, 'GITHUB_REPO_ALREADY_LINKED', 'error.githubRepoAlreadyLinked'),
+  ];
+
+  for (final (status, code, want) in repoCodes) {
+    test('$code reads as its own advice, not as a bare $status', () {
+      expect(
+        key(ApiException('server words', status: status, code: code)),
+        want,
+      );
+    });
+
+    test('$code has its own words in both languages', () {
+      final en = lookup('en-US', want);
+      final zh = lookup('zh-CN', want);
+      expect(en, isNot(want), reason: 'the English key is missing');
+      expect(zh, isNot(want), reason: 'the Chinese key is missing');
+      for (final locale in ['en-US', 'zh-CN']) {
+        final text = locale == 'en-US' ? en : zh;
+        expect(text, isNot(lookup(locale, 'error.badRequest')));
+        expect(text, isNot(lookup(locale, 'error.conflict')));
+      }
+    });
+  }
+
+  test('a private repo is told to install the GitHub App, then link again', () {
+    expect(
+      lookup('en-US', 'error.githubRepoNotVisible'),
+      contains(
+        'install the InsideOut GitHub App on the repository, then link it again',
+      ),
+    );
+  });
+
+  test('the same status without a repo-link code keeps the status copy', () {
+    expect(
+      key(ApiException('x', status: 400, code: 'SOMETHING_ELSE')),
+      'error.badRequest',
+    );
+    expect(
+      key(ApiException('x', status: 409, code: 'SOMETHING_ELSE')),
+      'error.conflict',
     );
   });
 

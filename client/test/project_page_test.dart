@@ -232,6 +232,44 @@ void main() {
     );
   });
 
+  // rv4-FR-F03, F09, F16: a repo link the server refuses by code says what to
+  // do about it, in the banner, not the status-level "bad request" / "changed
+  // elsewhere - refresh".
+  for (final (status, code, advice) in <(int, String, String)>[
+    (
+      400,
+      'GITHUB_REPO_NOT_VISIBLE',
+      'GitHub cannot see that repository — install the InsideOut GitHub App on the repository, then link it again',
+    ),
+    (
+      400,
+      'GITHUB_REPO_URL_INVALID',
+      'That is not a GitHub repository address — check it, then link the repository again',
+    ),
+    (
+      409,
+      'GITHUB_REPO_ALREADY_LINKED',
+      'That repository is already linked to another project',
+    ),
+  ]) {
+    testWidgets('a repo save refused with $code shows its advice', (
+      tester,
+    ) async {
+      final api = _FakeApi(
+        const [],
+        onSetRepo: (_) =>
+            throw ApiException('server words', status: status, code: code),
+      );
+      await _pump(tester, api);
+
+      await tester.enterText(find.byType(TextField), 'owner/repo');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Save failed — $advice'), findsOneWidget);
+    });
+  }
+
   // 4.4 consumer: the dock's Evidence tap on this already-open page pulses
   // evidencePulse; the page scrolls its header into view and flashes it.
   testWidgets('evidence pulse scrolls to the header and flashes it once', (
