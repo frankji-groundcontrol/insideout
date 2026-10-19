@@ -17,9 +17,16 @@ property, 2 when a premise cannot be derived.
   name that starts with localhost, or user-info before an @, is not. Every
   request, and every redirect, is https-only (curl --proto-redir =https), so a
   mirror cannot step the download down to plain http. The docs say so.
+- rv4-PUB-03: after the checksum, and before anything is unpacked or installed,
+  bootstrap.sh runs `gh attestation verify` on the archive when gh is installed,
+  signed in and new enough to have the command, pinned to this repository and to
+  the release.yml that builds the release. A failed verification installs
+  nothing and shows gh's reason. Without a usable gh the script says so, loudly,
+  and installs on the checksum alone. The docs say both.
 
 CI-config property of a script a release ships: the first real proof is the
-first tag run after the workflow lands; this runs it against a local mirror.
+first tag run after the workflow lands; this runs it against a local mirror and
+a stub gh (the real attestation path needs a release that carries one).
 """
 import collections
 import hashlib
@@ -41,6 +48,24 @@ BASH = "/bin/bash" if pathlib.Path("/bin/bash").exists() else shutil.which("bash
 NEED = ("uname", "mktemp", "rm", "mkdir", "curl", "tar", "awk", "install", "cat", "grep", "basename")
 MAYBE = ("gzip", "shasum", "sha256sum")  # GNU tar calls gzip; the script takes either hasher
 STUB_CURL = 'echo "$*" >> "$STUB_LOG"; exit 22'  # records the request, then fails like a refused download
+# A gh that answers as each case says (GH_AUTH, GH_HELP, GH_VERIFY: 0 is yes) and reads stdin the way a prompt
+# would, so a call without </dev/null swallows the rest of a script piped to bash.
+STUB_GH = r'''echo "host=$GH_HOST $*" >> "$STUB_LOG"
+cat > /dev/null
+case $1 in
+  auth) exit "$GH_AUTH" ;;
+  attestation)
+    [ "$GH_HELP" = 0 ] || { echo 'unknown command "attestation" for "gh"' >&2; exit 1; }
+    case "$*" in *--repo*) ;; *) exit 0 ;; esac
+    [ -e "$STUB_INST/insideout" ] && echo installed-before-verify >> "$STUB_LOG"
+    cat "$3" > "$STUB_SEEN"
+    [ "$GH_AUTH" = 0 ] || { echo "To get started with GitHub CLI, please run: gh auth login" >&2; exit 4; }
+    [ "$GH_VERIFY" = 0 ] && { echo "Loaded 1 attestation from GitHub API"; exit 0; }
+    echo "no attestations found for subject sha256:0000" >&2; exit 1 ;;
+esac
+exit 99'''
+WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
+BOTH = ["insideout", "insideout-mcp"]
 
 REFUSED = (
     "http://example.invalid/releases",  # plain http away from this machine
@@ -191,9 +216,78 @@ def docs_say_https():
     return []
 
 
+def provenance_is_checked(mirror, repo, name, data):
+    """PUB-03: gh verifies the archive when it can and a failed check installs nothing; without a usable gh
+    the script says so and goes on."""
+    wf = f"{repo}/.github/workflows/release.yml"
+    ask = re.compile(rf"^host=github\.com attestation verify \S+/{re.escape(name)} --repo {re.escape(repo)} "
+                     rf"--signer-workflow {re.escape(wf)}$")
+    answers = {"GH_AUTH": "0", "GH_HELP": "0", "GH_VERIFY": "0"}
+
+    def go(path="/good", script=STUB_GH, **env):
+        r = run(f"http://127.0.0.1:{mirror.server_port}{path}", gh=script, env=dict(answers, **env))
+        return r, (r.out + r.err).lower(), f"exit {r.code}, installed {r.installed}, stderr {r.err.strip()!r}"
+
+    failures = []
+    for label, script, env, why in (("gh is not installed", None, {}, "not installed"),
+                                    ("gh is signed out", STUB_GH, {"GH_AUTH": "1"}, "not signed in"),
+                                    ("gh has no attestation command", STUB_GH, {"GH_HELP": "1"}, "attestation")):
+        r, text, got = go(script=script, **env)
+        if r.code != 0 or r.installed != BOTH:
+            failures.append(f"{label}: the checksum alone should still install; got {got}")
+        elif "provenance not checked" not in text or why not in text:
+            failures.append(f"{label}: want a 'Provenance not checked' notice that says why ({why!r}); got {got}")
+        elif "--repo" in r.log:
+            failures.append(f"{label}: gh attestation verify was called anyway: {r.log.strip()!r}")
+    r, text, got = go(GH_HOST="ghe.example.invalid")
+    calls = [line for line in r.log.splitlines() if "--repo" in line]
+    if r.code != 0 or r.installed != BOTH:
+        failures.append(f"an archive gh verifies was not installed: {got}")
+    if not (len(calls) == 1 and ask.match(calls[0])):
+        failures.append(f"want one `gh attestation verify <archive> --repo {repo} --signer-workflow {wf}` run "
+                        f"against github.com whatever GH_HOST says; got {calls}")
+    else:
+        if r.seen != data:
+            failures.append("gh was handed bytes the mirror did not serve")
+        if "installed-before-verify" in r.log:
+            failures.append("something was installed before the provenance check ran")
+        if "provenance verified" not in text:
+            failures.append(f"no 'Provenance verified' line after a good check; got stdout {r.out.strip()!r}")
+    r, text, got = go(GH_VERIFY="1")
+    if r.code == 0 or r.installed or "nothing was installed" not in text or "no attestations found" not in text:
+        failures.append(f"a failed verification should install nothing, say so and show gh's reason; got {got}")
+    r, text, got = go("/badsum")
+    if r.code == 0 or r.installed or "--repo" in r.log:
+        failures.append(f"a checksum mismatch should stop before gh is asked; got {got}, gh calls {r.log.strip()!r}")
+    return failures
+
+
+def workflow_attests():
+    """The workflow the script pins must be the one that attests the archives."""
+    if re.search(r"attest-build-provenance@[0-9a-f]{40}[\s\S]*?subject-path:[^\n]*dist/\*",
+                 WORKFLOW.read_text(encoding="utf-8")):
+        return []
+    return [".github/workflows/release.yml: no attest-build-provenance step over dist/*, so the "
+            "gh attestation verify in bootstrap.sh would fail for every release"]
+
+
+def docs_say_provenance():
+    flat = lambda path: " ".join((ROOT / path).read_text(encoding="utf-8").split())
+    installing, releasing = flat("docs/usage/installation.md"), flat("docs/usage/releasing.md")
+    failures = []
+    if "gh attestation verify" not in installing:
+        failures.append("docs/usage/installation.md: does not say bootstrap.sh runs gh attestation verify")
+    if not re.search(r"bootstrap\.sh\W+runs\W+gh attestation verify", releasing):
+        failures.append("docs/usage/releasing.md: does not say bootstrap.sh runs gh attestation verify")
+    if re.search(r"bootstrap\.sh\W+does not", releasing) or re.search(r"still open[^:]*:\s*the download checks",
+                                                                      releasing, re.I):
+        failures.append("docs/usage/releasing.md: still lists bootstrap.sh's download checks as open")
+    return failures
+
+
 def main():
-    if not SCRIPT.is_file() or not BASH:
-        premise("scripts/bootstrap.sh or a bash to run it with is missing")
+    if not SCRIPT.is_file() or not BASH or not WORKFLOW.is_file():
+        premise("scripts/bootstrap.sh, .github/workflows/release.yml or a bash to run the script with is missing")
     if subprocess.run(["curl", "--proto-redir", "=https", "--version"], capture_output=True).returncode != 0:
         premise("this curl has no --proto-redir, so the redirect rule cannot be exercised")
     repo = re.search(r"^repo=(\S+)$", SCRIPT.read_text(encoding="utf-8"), re.M)
@@ -207,7 +301,9 @@ def main():
     mirror = Mirror(tree)
     threading.Thread(target=mirror.serve_forever, daemon=True).start()
     try:
-        failures = release_base_is_https(name, repo.group(1)) + redirects_stay_https(mirror) + docs_say_https()
+        failures = (release_base_is_https(name, repo.group(1)) + redirects_stay_https(mirror) + docs_say_https()
+                    + provenance_is_checked(mirror, repo.group(1), name, data) + workflow_attests()
+                    + docs_say_provenance())
     finally:
         mirror.shutdown()
         mirror.server_close()
@@ -215,7 +311,8 @@ def main():
         print(failure, file=sys.stderr)
     if failures:
         sys.exit(1)
-    print("bootstrap release ok: https-only release base and redirects, loopback mirror installs")
+    print("bootstrap release ok: https-only release base and redirects, provenance checked when gh can, "
+          "loopback mirror installs")
 
 
 if __name__ == "__main__":
