@@ -5,6 +5,9 @@
 # tarball for this platform, verifies it against checksums.txt, then
 # installs both binaries the same way scripts/install.sh does.
 #
+# Supported systems: macOS and Linux, on arm64 or amd64. Windows is not
+# supported: on any other OS the script stops before it downloads anything.
+#
 #   curl -fsSL <script-url> | bash
 #   scripts/bootstrap.sh [install-dir]   # same argument as install.sh
 #

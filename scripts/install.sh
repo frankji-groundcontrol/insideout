@@ -9,6 +9,9 @@
 # not already on PATH — appends one marked export line to the login shell's
 # rc file (~/.zshrc for zsh, ~/.bashrc for bash, ~/.profile otherwise).
 # Idempotent: safe to re-run; the rc append is skipped when already present.
+#
+# Supported systems: macOS and Linux. Windows is not supported. With no Go
+# toolchain, use the prebuilt installer instead: scripts/bootstrap.sh.
 
 set -euo pipefail
 
@@ -19,7 +22,10 @@ mkdir -p "$install_dir"
 install_dir=$(cd "$install_dir" && pwd)
 
 if ! command -v go >/dev/null 2>&1; then
-  echo "error: Go toolchain not found on PATH — install Go 1.26+ and re-run." >&2
+  echo "error: Go toolchain not found on PATH." >&2
+  echo "The prebuilt installer needs none (macOS and Linux, arm64 and amd64):" >&2
+  echo "  curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash" >&2
+  echo "To build from this checkout instead, install Go 1.26+ and re-run." >&2
   exit 1
 fi
 
