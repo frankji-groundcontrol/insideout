@@ -16,21 +16,36 @@ Print the hosted API the binaries call:
 
 No checkout, no Go toolchain — the bootstrap script downloads the
 right `insideout` + `insideout-mcp` for your OS and architecture
-(macOS/Ubuntu, amd64/arm64), verifies the sha256 checksums, and
-installs them the same way `install.sh` does:
+(macOS/Ubuntu, amd64/arm64), verifies the sha256 checksum and, when it
+can, the build provenance, and installs them the same way `install.sh`
+does:
 
 ```bash
 curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash
 # or from a checkout: scripts/bootstrap.sh [install-dir]
 ```
 
+After the checksum, `bootstrap.sh` runs `gh attestation verify` on the
+archive when the GitHub CLI is installed, signed in to github.com and
+new enough to have that command. The check is pinned to this repository
+and to the `release.yml` workflow that builds the release, and a failed
+check installs nothing. Without a usable `gh` the script prints
+`Provenance not checked` with the reason and installs on the checksum
+alone, which shows the archive matches the `checksums.txt` beside it, not
+who built it. `v0.1.0`, the only release so far, predates the
+attestation step: with `gh` signed in the one-liner stops on it until a
+tag cut by the current workflow exists, and `scripts/install.sh` from a
+checkout (build from source) works meanwhile. An archive you built
+yourself has no attestation either. How to verify by hand:
+[releasing.md](releasing.md#verifying-a-download).
+
 `INSIDEOUT_RELEASE_BASE` overrides the download base for a self-hosted
-mirror or a test, and must be an `https://` URL: plain http is accepted
+mirror of a release, and must be an `https://` URL: plain http is accepted
 only for a mirror on this machine (`localhost`, `127.0.0.1` or `[::1]`),
 and a redirect to plain http is refused. Anything else stops the script
 before it downloads. This path is live: `v0.1.0` (2026-10-11) publishes
-all four targets and the anonymous one-liner above is verified working
-(the repository went public the same day).
+all four targets and the anonymous one-liner above was verified working
+the day the repository went public, before the provenance check existed.
 
 ## Hosted service
 

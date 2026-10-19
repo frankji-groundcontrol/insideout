@@ -2,8 +2,9 @@
 # bootstrap.sh — install the insideout CLI + MCP server from GitHub Releases.
 #
 # curl | bash safe: needs no repository checkout. Downloads the release
-# tarball for this platform, verifies it against checksums.txt, then
-# installs both binaries the same way scripts/install.sh does.
+# tarball for this platform, verifies it against checksums.txt and, when gh
+# can, against the build attestation release.yml signs, then installs both
+# binaries the same way scripts/install.sh does.
 #
 # Supported systems: macOS and Linux, on arm64 or amd64. Windows is not
 # supported: on any other OS the script stops before it downloads anything.
@@ -117,6 +118,37 @@ if [ "$actual" != "$expected" ]; then
   exit 1
 fi
 echo "==> Checksum verified"
+
+# rv4-PUB-03: the checksum shows the archive matches a checksums.txt that came
+# from the same place; the attestation release.yml signs shows who built it.
+# Check it when gh can (installed, signed in to github.com, new enough to have
+# the command) and stop on any failure. When gh cannot, say so and go on: the
+# checksum is verified, nothing stronger is. </dev/null on every gh call: under
+# curl | bash the script itself is on stdin, and a gh that reads it eats it.
+workflow=$repo/.github/workflows/release.yml
+skip_reason=
+if ! command -v gh >/dev/null 2>&1; then
+  skip_reason="gh (the GitHub CLI) is not installed"
+elif ! gh auth status --hostname github.com </dev/null >/dev/null 2>&1; then
+  skip_reason="gh is not signed in to github.com"
+elif ! gh attestation --help </dev/null >/dev/null 2>&1; then
+  skip_reason="this gh has no 'attestation' command (upgrade gh)"
+fi
+if [ -n "$skip_reason" ]; then
+  echo "==> Provenance not checked: $skip_reason"
+  echo "    The checksum shows the archive matches the checksums.txt beside it, not who built it."
+  echo "    To check that too: install or upgrade gh, sign in with 'gh auth login', run this again."
+elif result=$(GH_HOST=github.com gh attestation verify "$workdir/$tarball" \
+    --repo "$repo" --signer-workflow "$workflow" </dev/null 2>&1); then
+  echo "==> Provenance verified: built by $workflow"
+else
+  printf '%s\n' "$result" >&2
+  echo "error: could not verify the build provenance of $tarball — nothing was installed." >&2
+  echo "If gh found no attestation, this release predates them (v0.1.0 does) or the" >&2
+  echo "archive is not what $workflow built." >&2
+  echo "Use a newer release, or build from source: scripts/install.sh in a checkout." >&2
+  exit 1
+fi
 
 tar -xzf "$workdir/$tarball" -C "$workdir"
 

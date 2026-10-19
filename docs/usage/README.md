@@ -4,7 +4,7 @@ How to run InsideOut — as a developer or an operator.
 
 | Doc | Audience | Covers |
 |-----|----------|--------|
-| [installation.md](installation.md) | Users + agents | Hosted install with no environment variables, and the guided PostgreSQL setup (`insideout setup`) for a server on this machine |
+| [installation.md](installation.md) | Users + agents | The prebuilt one-liner (https-only, checksum and build-provenance checks), the hosted install with no environment variables, and the guided PostgreSQL setup (`insideout setup`) for a server on this machine |
 | [key-setup-tutorial.md](key-setup-tutorial.md) | Operators + first-timers | Guided setup for all 31 mapped keys, with links to each key reference |
 | [key-testing-tutorial.md](key-testing-tutorial.md) | Operators + maintainers | Shape, reachability, provider, delivery, and capability checks for every key |
 | [../../skills/insideout-setup/](../../skills/insideout-setup/SKILL.md) | Agents | The installation skill: bare macOS/Ubuntu machine → verified install, module-by-module steps, key store, host record |
@@ -15,7 +15,7 @@ How to run InsideOut — as a developer or an operator.
 | [../SETENV.md](../SETENV.md) | First-timers | The environment operating manual: create the file, choose each key (`env.sh init` / `edit`), propagate to the components, prove it works |
 | [deployment.md](deployment.md) | Operators | docker-compose topology, image builds, ports, reverse-proxy expectations, current Railway public deploy |
 | [backup-restore.md](backup-restore.md) | Operators | The backup story: managed (Supabase toggle) + portable dumps (`scripts/backup-db.sh`), restore runbook, scratch-stack walkthrough |
-| [releasing.md](releasing.md) | Maintainers | How a `v*` tag becomes a release: the `ci` gate, the test step, the four builds and checksums, the attestation, the no-overwrite publish, what `insideout version` prints per build, how to verify a download, rollback, the supply-chain controls, and the decisions still open (version policy, rollback of a published release) |
+| [releasing.md](releasing.md) | Maintainers | How a `v*` tag becomes a release: the `ci` gate, the test step, the four builds and checksums, the attestation, the no-overwrite publish, what `insideout version` prints per build, how to verify a download (and what `bootstrap.sh` checks for you), rollback, the supply-chain controls, and the decisions still open (version policy, rollback of a published release, installs without `gh`) |
 | [cli-mcp-and-guidance.md](cli-mcp-and-guidance.md) | Users + agents | The `insideout` CLI (`scripts/install.sh` → `~/.local/bin` + PATH), the MCP server registration snippet, and the `insideout.yaml` guidance flow that feeds GitHub evidence into a roadmap |
 
 For what the product *is*, see the root [README.md](../../README.md).

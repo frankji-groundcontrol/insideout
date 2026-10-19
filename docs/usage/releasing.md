@@ -11,8 +11,11 @@ no-overwrite publish below are review-4 row 3.4
 ([record](../changelogs/2026-10-18-rv4-remediation/w3-release-supply.md)). They
 are CI configuration that has not run on GitHub yet: **pending first CI run
 after push**, and the first `v*` tag cut after that push is their first proof.
-Still open, so this page is not a finished runbook: the download checks in
-`scripts/bootstrap.sh` (rv4-SEC-07, rv4-PUB-03) and the
+The download checks in `scripts/bootstrap.sh` (an https-only base, the
+attestation check) are the consumer half of that row
+([Verifying a download](#verifying-a-download)): a local mirror and a stub `gh`
+prove them, but their real attestation path also waits for that first tag.
+Still open, so this page is not a finished runbook: the
 [owner decisions](#owner-decisions) at the end.
 
 ## The tag rule
@@ -104,17 +107,26 @@ publishes as a normal release and takes `latest`; a pre-release lane would be a
 
 ## Verifying a download
 
+- **Transport.** `bootstrap.sh` fetches over https only: `INSIDEOUT_RELEASE_BASE`
+  must be an `https://` URL (plain http is accepted for `localhost`, `127.0.0.1`
+  and `[::1]` only), and a redirect to plain http is refused.
 - **Checksum.** `bootstrap.sh` checks the archive against `checksums.txt` before
   it installs anything. The file ships from the same origin as the archive, so it
   catches a corrupt or truncated download, not a swapped upload.
-- **Provenance.** `gh attestation verify insideout-linux-amd64.tar.gz --repo
-  frankji-groundcontrol/insideout` checks the signed attestation against this
-  repository; add `--signer-workflow
-  frankji-groundcontrol/insideout/.github/workflows/release.yml` to require that
-  this workflow built it. The attestation covers every file of the release,
-  `checksums.txt` and `bootstrap.sh` included. `bootstrap.sh` does not run it yet
-  (rv4-SEC-07 and rv4-PUB-03), so run it by hand. Pending first CI run: no
-  release carries an attestation yet, `v0.1.0` included.
+- **Provenance.** `bootstrap.sh` runs `gh attestation verify` on the archive
+  after the checksum, when `gh` is installed, signed in to github.com and new
+  enough to have the command, and installs nothing if it fails. Otherwise it
+  prints `Provenance not checked` with the reason and installs on the checksum
+  alone. By hand: `gh attestation verify insideout-linux-amd64.tar.gz --repo
+  frankji-groundcontrol/insideout --signer-workflow
+  frankji-groundcontrol/insideout/.github/workflows/release.yml` (the script
+  passes exactly those; the second flag requires that this workflow built it).
+  The attestation covers every file of the release, `checksums.txt` and
+  `bootstrap.sh` included, so the installer itself can be checked the same way
+  before it is piped to a shell. Pending first CI run: no release carries an
+  attestation yet. `v0.1.0` predates it, so with `gh` signed in `bootstrap.sh`
+  stops on `v0.1.0`; the first tag cut after the workflow lands fixes that for
+  `latest`.
 - **Contents.** `tar -tzf insideout-<os>-<arch>.tar.gz` lists `insideout`,
   `insideout-mcp`, `LICENSE` and `THIRD_PARTY_NOTICES.md`. The notices carry the
   MPL-2.0 section 3.2 source offer and the license text of every module linked
@@ -151,13 +163,14 @@ break that. A bad release is superseded by a new tag.
 | Secret scan | `security.yml` | `gitleaks` (pinned, redacted) over the commits a push or pull request adds |
 | Notices | [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md) | every module `server/go.mod` requires has an entry; a new dependency fails the guard until it has one |
 | Toolchain archives | [install skill](../../skills/insideout-setup/references/modules.md) | the Go and Flutter archives are checked against a pinned SHA-256 before they are unpacked; the `ubuntu-install` workflow compares the Flutter pins to the vendor feeds |
+| Download checks | [`scripts/bootstrap.sh`](../../scripts/bootstrap.sh) | https-only release base and redirects, the SHA-256 against `checksums.txt`, and `gh attestation verify` when `gh` can ([Verifying a download](#verifying-a-download)) |
 
-[`check_supply_chain.py`](../../scripts/tests/check_supply_chain.py) and
-`check_release_gate.py` pin these properties and run in the `ci` `env-suites`
-job. The `security` workflow is not part of the release gate. Gaps still open:
-`bootstrap.sh` does not enforce https for `INSIDEOUT_RELEASE_BASE` or verify the
-attestation (rv4-SEC-07, rv4-PUB-03), and the Docker base images are pinned by
-tag, not digest, and are not in `dependabot.yml`.
+[`check_supply_chain.py`](../../scripts/tests/check_supply_chain.py),
+`check_release_gate.py` and
+[`check_bootstrap_release.py`](../../scripts/tests/check_bootstrap_release.py)
+pin these properties and run in the `ci` `env-suites` job. The `security`
+workflow is not part of the release gate. Gap still open: the Docker base images
+are pinned by tag, not digest, and are not in `dependabot.yml`.
 
 ## Owner decisions
 
@@ -186,13 +199,17 @@ the
 - **Old history (rv4-PUB-05).** A full-history `gitleaks` run reports 7 findings.
   Allow-list the fixtures in a `.gitleaksignore`, and rotate or disable the key
   behind the deleted-file ones? History is never rewritten by an agent.
+- **Installs without `gh`.** `bootstrap.sh` installs on the checksum alone when
+  `gh` is missing, signed out or too old, and says so; most people who run the
+  one-liner have no `gh`. Requiring it would lock them out, and nothing here
+  decides that for you.
 - **Hosted version.** Should the hosted image report a version rather than
   `dev`? Railway service `server` > Variables, add `VERSION`: the Dockerfile
   declares `ARG VERSION`, and Railway hands a service variable to a declared
   `ARG`. Confirm on the first deploy that sets it.
 
-Records: rv4-PM-05, rv4-TEST-01, rv4-PUB-03, rv4-PUB-04, rv4-PUB-07, rv4-SEC-07
-and rv4-PUB-09 in the
+Records: rv4-PM-04, rv4-PM-05, rv4-TEST-01, rv4-PUB-03, rv4-PUB-04, rv4-PUB-07,
+rv4-SEC-07 and rv4-PUB-09 in the
 [review-4 open findings](../issues/2026-10-18-review-4-open-findings.md);
 [wave 3, release supply chain](../changelogs/2026-10-18-rv4-remediation/w3-release-supply.md);
 [wave 4, release version](../changelogs/2026-10-18-rv4-remediation/w4-release-version.md).
