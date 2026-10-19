@@ -6,10 +6,11 @@ Usage: python3 -I scripts/tests/check_first_run_copy.py
 
 Stdlib only; no network, database or Go toolchain. The scripts are run, not
 just read, wherever they stop before doing any work: scripts/install.sh stops
-at its Go check when no go is on PATH, and scripts/bootstrap.sh stops at its
-OS check when uname names another system. Each check derives its premise from
-the tree first (the style of check_ops_hardening.py). Exits 1 naming every
-offending property; exit 2 when a premise cannot be derived.
+at its Go check when no go is on PATH, scripts/bootstrap.sh stops at its OS
+check when uname names another system, and scripts/setup.sh --hosted prints
+its blurb and exits before it looks at any env file. Each check derives its
+premise from the tree first (the style of check_ops_hardening.py). Exits 1
+naming every offending property; exit 2 when a premise cannot be derived.
 """
 import os
 import pathlib
@@ -44,8 +45,8 @@ def header(name):
 def run(script, args, tools, fake=None):
     """Run `bash scripts/<script> <args>` on a PATH that holds only `tools`
     (real commands) and `fake` (name -> sh body standing in for a command),
-    with a scratch HOME. `{scratch}` in `args` is that directory. Returns
-    (exit code, stdout, stderr)."""
+    with a scratch HOME and an env file that does not exist. `{scratch}` in
+    `args` is that directory. Returns (exit code, stdout, stderr)."""
     if not BASH:
         print("no bash on PATH", file=sys.stderr)
         sys.exit(2)
@@ -62,7 +63,8 @@ def run(script, args, tools, fake=None):
         for name, body in (fake or {}).items():
             (bindir / name).write_text(f"#!/bin/sh\n{body}\n", encoding="utf-8")
             (bindir / name).chmod(0o755)
-        env = {"PATH": str(bindir), "HOME": str(scratch), "LC_ALL": "C"}
+        env = {"PATH": str(bindir), "HOME": str(scratch), "LC_ALL": "C",
+               "INSIDEOUT_ENV_FILE": str(scratch / "absent.env")}
         args = [arg.replace("{scratch}", str(scratch)) for arg in args]
         done = subprocess.run([BASH, str(ROOT / "scripts" / script), *args], cwd=scratch, env=env,
                               capture_output=True, text=True, timeout=60)
@@ -120,9 +122,109 @@ def install_without_go_offers_the_prebuilt_installer_first(failures):
         fail(failures, "scripts/install.sh with no go on PATH names the Go toolchain route before the prebuilt installer")
 
 
+def paragraph(lines, at):
+    """The blank-line-delimited block of `lines` that holds index `at`."""
+    start = end = at
+    while start > 0 and lines[start - 1].strip():
+        start -= 1
+    while end + 1 < len(lines) and lines[end + 1].strip():
+        end += 1
+    return "\n".join(lines[start:end + 1])
+
+
+def line_at(lines, text):
+    """Index of the first line that is `text` once stripped, else -1."""
+    return next((i for i, line in enumerate(lines) if line.strip() == text), -1)
+
+
+def hosted_blurb_teaches_login_then_whoami(failures):
+    """LEAD-SETUP-BLURB: `setup.sh --hosted` taught
+    `export INSIDEOUT_TOKEN="$(insideout login ...)"`, an access token that
+    nothing renews, though `insideout login` already saves a login that does
+    renew. The blurb teaches login then whoami, keeps INSIDEOUT_TOKEN as the
+    headless or CI alternative, and says how a stranger gets an account: an
+    invitation code from the server's administrator."""
+    code, out, err = run("setup.sh", ["--hosted"], tools=["dirname", "sed", "cat"])
+    if code != 0:
+        fail(failures, f"scripts/setup.sh --hosted: exit {code}, stderr {err.strip()!r}; want 0")
+        return
+    lines = out.splitlines()
+    login = line_at(lines, "insideout login you@example.com")
+    whoami = line_at(lines, "insideout whoami")
+    if login < 0 or whoami < 0 or login > whoami:
+        fail(failures, "scripts/setup.sh --hosted does not teach `insideout login you@example.com` "
+                       "and then `insideout whoami`")
+    for no, line in enumerate(lines):
+        if "INSIDEOUT_TOKEN" not in line:
+            continue
+        if "insideout login" in line:
+            fail(failures, "scripts/setup.sh --hosted teaches an exported INSIDEOUT_TOKEN from `insideout login` "
+                           "as the sign-in; the saved login renews, an exported token does not")
+        elif whoami < 0 or no < whoami or not re.search(r"headless|\bCI\b", paragraph(lines, no), re.I):
+            fail(failures, "scripts/setup.sh --hosted mentions INSIDEOUT_TOKEN other than as the headless or CI "
+                           "alternative after the sign-in lines")
+    register = line_at(lines, "insideout register --invite <invitation-code> you@example.com")
+    if register < 0 or register < whoami:
+        fail(failures, "scripts/setup.sh --hosted does not give the sign-up route "
+                       "`insideout register --invite <invitation-code> you@example.com` after the sign-in lines")
+    name_invitation(failures, "scripts/setup.sh --hosted", out)
+
+
+def name_invitation(failures, where, text):
+    """The one name for the account invitation, shared with the web copy
+    (USER-10): an invitation code, from the server's administrator."""
+    if "invitation code" not in text or "administrator" not in text:
+        fail(failures, f"{where}: the sign-up route does not say an invitation code comes from the "
+                       "server's administrator")
+    if re.search(r"invite code", text, re.I):
+        fail(failures, f"{where}: calls the account invitation an \"invite code\"; that is the workspace "
+                       "code's old name, the account's is \"invitation code\"")
+
+
+def closing_messages_teach_the_sign_up_route(failures):
+    """LEAD-SETUP-BLURB: the installers' closing messages end where a stranger
+    needs an account; they give the same route as the blurb."""
+    install = read("scripts/install.sh")
+    if "api_base=" not in install:
+        print("no api_base= closing block in scripts/install.sh", file=sys.stderr)
+        sys.exit(2)
+    bootstrap = re.search(r"cat <<EOF\n(.*?)\nEOF(?:\n|\Z)", read("scripts/bootstrap.sh"), re.S)
+    if not bootstrap:
+        print("no closing `cat <<EOF` message in scripts/bootstrap.sh", file=sys.stderr)
+        sys.exit(2)
+    for where, text in (("scripts/install.sh", install.split("api_base=", 1)[1]),
+                        ("scripts/bootstrap.sh", bootstrap.group(1))):
+        if "insideout register --invite <invitation-code> you@example.com" not in text:
+            fail(failures, f"{where}: the closing message does not give the sign-up route "
+                           "`insideout register --invite <invitation-code> you@example.com`")
+        name_invitation(failures, f"{where} closing message", text)
+
+
+def quoted_commands_exist(failures):
+    """Every `insideout <verb>` a script prints is a verb of the CLI, and the
+    sign-up flag it quotes is one `register` documents."""
+    verbs = dict(re.findall(r'\{group\w+, "([a-z][a-z-]*)", "([^"]*)"\}', read("server/cmd/insideout/cli.go")))
+    if len(verbs) < 20 or "register" not in verbs:
+        print("cannot read the verb table in server/cmd/insideout/cli.go", file=sys.stderr)
+        sys.exit(2)
+    _, blurb, _ = run("setup.sh", ["--hosted"], tools=["dirname", "sed", "cat"])
+    bootstrap = re.search(r"cat <<EOF\n(.*?)\nEOF(?:\n|\Z)", read("scripts/bootstrap.sh"), re.S)
+    texts = {"scripts/setup.sh --hosted": blurb, "scripts/install.sh": read("scripts/install.sh"),
+             "scripts/bootstrap.sh": bootstrap.group(1) if bootstrap else ""}
+    for where, text in texts.items():
+        for verb in re.findall(r'^\s*(?:echo\s+")?\s*insideout (?!-)([a-z][a-z-]*)', text, re.M):
+            if verb not in verbs:
+                fail(failures, f"{where} prints `insideout {verb}`, which is not a verb of the CLI")
+        if "register --invite" in text and "--invite" not in verbs["register"]:
+            fail(failures, f"{where} quotes `register --invite`, which `insideout help` no longer lists")
+
+
 CHECKS = [installer_headers_state_the_supported_systems,
           bootstrap_refuses_another_system_by_naming_the_supported_two,
-          install_without_go_offers_the_prebuilt_installer_first]
+          install_without_go_offers_the_prebuilt_installer_first,
+          hosted_blurb_teaches_login_then_whoami,
+          closing_messages_teach_the_sign_up_route,
+          quoted_commands_exist]
 
 if __name__ == "__main__":
     failures = []
