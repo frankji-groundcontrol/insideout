@@ -7,7 +7,7 @@ Companion to check_docs_truth.py, split out to keep both under the line
 budget. Same method: derive the premise from the tree first, then assert the
 doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
 offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08,
-rv4-ARCH-06).
+rv4-ARCH-06, rv4-PM-03).
 """
 import fnmatch
 import pathlib
@@ -201,6 +201,39 @@ def backend_states_current_facts(failures):
                 fail(failures, f"backend.md's {title} section does not name {directory}/{path.name}")
 
 
+COUNT_WORDS = ("no", "one", "two", "three", "four", "five", "six", "seven", "eight",
+               "nine", "ten", "eleven", "twelve")
+
+
+def open_slices_visible(failures):
+    """rv4-PM-03: engineering work that remains must be visible from the resume
+    path and the board. While a product-promise slice record exists, HANDOFF may
+    not say engineering is closed, must link the enumeration and state how many
+    slices are open, and the board must carry a row for the set that is not
+    marked finished."""
+    gaps = "docs/issues/2026-10-11-product-promise-gaps.md"
+    if not (ROOT / gaps).exists():
+        return  # the enumeration is retired; every slice shipped
+    listed = re.findall(r"^\d+\. \[[^\]]+\]\((2026-[a-z0-9-]+\.md)\)", read(gaps), re.M)
+    count = len([name for name in listed if (ROOT / "docs/issues" / name).exists()])
+    if not count:
+        return
+    handoff = read("docs/HANDOFF.md")
+    if re.search(r"(?i)everything engineering is closed", handoff):
+        fail(failures, f"docs/HANDOFF.md says engineering is closed, but {count} product-promise slices are open")
+    if "product-promise-gaps.md" not in handoff:
+        fail(failures, "docs/HANDOFF.md does not link the product-promise slice order "
+                       "(docs/issues/2026-10-11-product-promise-gaps.md)")
+    word = COUNT_WORDS[count] if count < len(COUNT_WORDS) else str(count)
+    if not re.search(rf"(?i)\b({count}|{word})\b[\s\w-]{{0,40}}slices?", handoff):
+        fail(failures, f"docs/HANDOFF.md does not say that {count} product-promise slices are open")
+    row = next((l for l in read("docs/plans/README.md").splitlines() if "product-promise-gaps.md" in l), "")
+    if not row:
+        fail(failures, "docs/plans/README.md has no board row for the open product-promise slices")
+    elif re.search(r"\*\*(Finished|Completed|Done|Closed|Fixed)", row) or "Pending" not in row:
+        fail(failures, "docs/plans/README.md's product-promise row is not Pending")
+
+
 if __name__ == "__main__":
     facts, failures = {}, []
     env_variables_documented(facts, failures)
@@ -209,6 +242,7 @@ if __name__ == "__main__":
     readme_first_run_path(failures)
     client_surface_documented(failures)
     backend_states_current_facts(failures)
+    open_slices_visible(failures)
     for message in failures:
         print(message, file=sys.stderr)
     if failures:
