@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -54,6 +55,20 @@ func TestAdminRoutesRefuseEveryoneButSystemAdmins(t *testing.T) {
 			}
 		})
 	}
+}
+
+// Every test that reads or writes the global signup_mode row takes the
+// cross-process lock (review-4 TEST-02), because `go test ./...` runs the store
+// suite beside this one and its TestSignupModeSetting flips the row to "open".
+// A new test that touches the row belongs in this list.
+func TestSignupModeTouchersWaitForTheCrossProcessLock(t *testing.T) {
+	w, _ := newAdminWorld(t)
+	testlock.AssertWaits(t, w.st.Pool, testlock.SignupModeLock,
+		"TestAdminCanReadAndWriteSignupMode",
+		"TestAnAgentTokenCannotReachTheAdminRoutes",
+		"TestInvitationRoundTrip",
+		"TestAuthConfigReportsWhetherMailIsDelivered",
+	)
 }
 
 func TestAdminCanReadAndWriteSignupMode(t *testing.T) {

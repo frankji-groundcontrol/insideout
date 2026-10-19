@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -46,6 +47,14 @@ func TestSignupModeSetting(t *testing.T) {
 		t.Fatalf("signup_mode after set = %q, want open", mode)
 	}
 	_ = mode
+}
+
+// The test that writes the global signup_mode row takes the cross-process
+// lock (review-4 TEST-02): `go test ./...` runs the api suite beside this one,
+// and an unlocked flip to "open" fails its invitation tests.
+func TestSignupModeSettingWaitsForTheCrossProcessLock(t *testing.T) {
+	st := newTestStore(t)
+	testlock.AssertWaits(t, st.Pool, testlock.SignupModeLock, "TestSignupModeSetting")
 }
 
 func TestInvitationLifecycle(t *testing.T) {
