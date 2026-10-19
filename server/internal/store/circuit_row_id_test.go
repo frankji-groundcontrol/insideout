@@ -15,7 +15,7 @@ import (
 // "breaker" lock the wiring tests take.
 func TestCircuitRowTestWaitsForTheCrossProcessLock(t *testing.T) {
 	st := newTestStore(t)
-	testlock.AssertWaits(t, st.Pool, "breaker", "TestCircuitFunctions_TakeARowID")
+	testlock.AssertWaits(t, st.Pool, testlock.BreakerLock, "TestCircuitFunctions_TakeARowID")
 }
 
 // TEST-06's core: the breaker rules live in SQL functions hardwired to the
@@ -34,6 +34,7 @@ func TestCircuitFunctions_TakeARowID(t *testing.T) {
 		t.Fatalf("open store: %v", err)
 	}
 	t.Cleanup(st.Close)
+	testlock.Acquire(t, st.Pool, testlock.BreakerLock)
 
 	const own = "circuit-own-row-test"
 	if _, err := st.Pool.Exec(ctx,

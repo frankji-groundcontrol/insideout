@@ -35,6 +35,10 @@ import (
 // signup_mode setting (the insideout.settings row) takes.
 const SignupModeLock = "signup_mode"
 
+// BreakerLock names the lock every test that opens, fills or asserts on the
+// production circuit-breaker row ('anthropic') takes (rv4-CLOSE-08).
+const BreakerLock = "breaker"
+
 // waitLimit bounds how long a test waits for a lock another process holds. A
 // holder keeps it for one test (seconds), so reaching this means a holder is
 // wedged; failing beats hanging until the package timeout.

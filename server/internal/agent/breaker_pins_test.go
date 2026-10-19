@@ -25,6 +25,13 @@ import (
 // counts — they never touch last_failure_at — so a failure recording is
 // witnessed by that timestamp moving, and "records nothing" is witnessed by
 // counts that stay put around code that must not record.
+//
+// rv4-CLOSE-08: resetBreaker also takes the cross-process "breaker" lock for
+// the rest of the test, because opening this row would otherwise fail store's
+// TestCircuitFunctions_TakeARowID, which reads it from a sibling test process.
+// A row of their own per test needs the Store to pass a row id to the two SQL
+// functions: CheckCircuit and RecordCircuitResult are hardwired to the default
+// row, and the Coach reaches the breaker only through them.
 
 // breakerState reads the shared row's failure count and the epoch of its last
 // recorded failure (0 when there was none).
@@ -43,6 +50,10 @@ func breakerState(t *testing.T, c *Coach) (failures int, lastFailure float64) {
 // open circuit, and later tests must not inherit this test's failures.
 func resetBreaker(t *testing.T, c *Coach) {
 	t.Helper()
+	// Lock first: the restore registered below then runs before the lock is
+	// released (cleanups run last-in first-out), so the row is closed again
+	// while this test still holds it.
+	testlock.Acquire(t, c.store.Pool, testlock.BreakerLock)
 	reset := func() {
 		if _, err := c.store.Pool.Exec(context.Background(),
 			`UPDATE insideout.ai_circuit_breaker SET state = 'closed', failure_count = 0, success_count = 0, opened_at = NULL, last_failure_at = NULL WHERE id = 'anthropic'`); err != nil {
@@ -60,7 +71,7 @@ func resetBreaker(t *testing.T, c *Coach) {
 // The test that reads the row in the other package takes the same lock.
 func TestBreakerWiringTestsWaitForTheCrossProcessLock(t *testing.T) {
 	st := newTestStore(t)
-	testlock.AssertWaits(t, st.Pool, "breaker",
+	testlock.AssertWaits(t, st.Pool, testlock.BreakerLock,
 		"TestFailTurn_FeedsOnlyProviderHealthToTheBreaker",
 		"TestAdmitDone_ReportsTheBreakerVerdicts",
 		"TestAdmit_RefusedWhileTheCircuitIsOpen",
