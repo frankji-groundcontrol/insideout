@@ -85,6 +85,7 @@ const zhAccount = <String, String>{
   'register.passwordHint': '至少 8 个字符',
   'register.submit': '创建账号',
   'register.error': '创建账号失败，请重试',
+  'register.closedError': '此服务器已关闭注册。请联系服务器管理员开放注册。',
   'register.inviteError': '邀请码缺失、无效或已过期。请检查邀请码，或向管理员索取新的邀请。',
   'profile.title': '个人资料',
   'profile.username': '用户名',

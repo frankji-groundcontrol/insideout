@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/errors.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_button.dart';
@@ -10,6 +9,7 @@ import '../../theme/block_chrome.dart';
 import '../../theme/block_field.dart';
 import '../../theme/cobalt.dart';
 import 'auth_door.dart';
+import 'auth_form_errors.dart';
 import 'auth_sent_panels.dart';
 import 'mail_off_notice.dart';
 
@@ -47,6 +47,7 @@ class _AuthFormState extends State<AuthForm> {
   bool linkSent = false;
   bool codeSent = false;
   bool inviteRequired = false;
+  String? signupMode; // from /auth/config; null until it answers
   bool mailOff = false;
   _LoginMode _mode = _LoginMode.password;
 
@@ -65,10 +66,10 @@ class _AuthFormState extends State<AuthForm> {
           .authConfig()
           .then((mode) {
             if (mounted) {
-              setState(
-                () => inviteRequired =
-                    mode == 'invitation_only' || mode == 'closed',
-              );
+              setState(() {
+                signupMode = mode;
+                inviteRequired = mode == 'invitation_only' || mode == 'closed';
+              });
             }
           })
           .catchError((_) {});
@@ -131,12 +132,11 @@ class _AuthFormState extends State<AuthForm> {
         if (mounted) context.go('/dashboard');
       }
     } catch (e) {
-      // The server answers register with 403 when the invitation is the
-      // problem (closed, missing, wrong or expired); "try again" cannot fix it.
-      final inviteProblem = _register && e is ApiException && e.status == 403;
+      // A register 403 is the door or the invitation, never "try again".
       setState(
-        () =>
-            error = l10n.t(inviteProblem ? 'register.inviteError' : _errorKey),
+        () => error = l10n.t(
+          _register ? registerErrorKey(e, signupMode) : _errorKey,
+        ),
       );
     } finally {
       if (mounted) setState(() => busy = false);

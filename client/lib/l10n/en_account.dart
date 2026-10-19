@@ -100,6 +100,8 @@ const enAccount = <String, String>{
   'register.passwordHint': 'At least 8 characters',
   'register.submit': 'Create account',
   'register.error': 'Could not create account. Please try again.',
+  'register.closedError':
+      "Registration is closed on this server. Ask the server's administrator to open sign-up.",
   'register.inviteError':
       'That invitation code is missing, invalid or expired. Check it, or ask an admin for a new invitation.',
   'profile.title': 'Profile',
