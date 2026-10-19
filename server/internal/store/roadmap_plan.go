@@ -26,7 +26,9 @@ func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConfl
 
 // ReplaceRoadmapTree atomically swaps a project's whole roadmap for the given
 // tree — used by "build the MVP" generation. Returns the number of nodes
-// written. Any workspace member may regenerate (roadmap is collaborative).
+// written. It deletes every node, so it takes the rule every plan write takes:
+// the project owner or a workspace admin (BUG-020). The expected count below is
+// a staleness guard, not an authorisation.
 //
 // Guard: a non-empty roadmap is only replaced when expectedCount confirms the
 // exact live count, else ReplaceConflictError. The count check runs behind a
@@ -35,11 +37,7 @@ func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConfl
 func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.UUID, expectedCount *int, root RoadmapPlanNode) (int, error) {
 	count := 0
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := projectWorkspace(ctx, tx, projectID)
-		if err != nil {
-			return err
-		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 
