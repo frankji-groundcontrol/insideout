@@ -6,13 +6,16 @@ import (
 	"os"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
 // newTestStore connects to DATABASE_URL and skips the test if it's unset
 // — these are real integration tests against a real Postgres (RLS
 // policies can't be verified against a mock), consistent with this
-// project's no-mocks testing policy. Run with:
+// project's no-mocks testing policy. With INSIDEOUT_TEST_STRICT set it
+// refuses a database on another machine before it connects, so every store
+// test that goes through it (writeWalkStore too) is covered. Run with:
 //
 //	DATABASE_URL=... go test ./internal/store/ -run TestAuthz -v
 func newTestStore(t *testing.T) *Store {
@@ -21,6 +24,7 @@ func newTestStore(t *testing.T) *Store {
 	if url == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
 	st, err := Open(context.Background(), url)
 	if err != nil {
 		t.Fatalf("open store: %v", err)

@@ -9,6 +9,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 	"golang.org/x/term"
 )
@@ -20,12 +21,17 @@ import (
 // process (main_exec_test.go) against real PostgreSQL; the password reaches
 // the CLI on stdin only, never argv. DB-gated: a skip counts as red.
 
+// dbEnv returns the two DSNs, skipping when either is unset. With
+// INSIDEOUT_TEST_STRICT set it refuses either one if it is on another machine:
+// the child CLI connects to both (rv4-FR-F65).
 func dbEnv(t *testing.T) (url, owner string) {
 	t.Helper()
 	url, owner = os.Getenv("DATABASE_URL"), os.Getenv("DATABASE_OWNER_URL")
 	if url == "" || owner == "" {
 		t.Skip("DATABASE_URL and DATABASE_OWNER_URL not both set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
+	testlock.RequireLocalURL(t, owner)
 	return url, owner
 }
 
@@ -38,8 +44,11 @@ func serverEnv(url, owner string) []string {
 	}
 }
 
+// openTestStore opens the app store on url, the one door the CLI tests share.
+// Strict mode refuses a database on another machine before it connects.
 func openTestStore(t *testing.T, url string) *store.Store {
 	t.Helper()
+	testlock.RequireLocalURL(t, url)
 	st, err := store.Open(context.Background(), url)
 	if err != nil {
 		t.Fatalf("open store: %v", err)

@@ -77,9 +77,26 @@ func strict() bool {
 // configuration, so it never connects, and it never prints the host.
 func RequireLocalHost(t testing.TB, pool *pgxpool.Pool) {
 	t.Helper()
-	cfg := pool.Config().ConnConfig
-	hosts := []string{cfg.Host}
-	for _, fb := range cfg.Fallbacks {
+	requireLocal(t, pool.Config())
+}
+
+// RequireLocalURL is RequireLocalHost for a DSN no pool exists for yet. A helper
+// that opens the store calls it before it does: store.Open pings, so a check
+// made after it has already reached the host (rv4-FR-F195). A DSN that does
+// not parse passes; the open that follows reports it before it connects.
+func RequireLocalURL(t testing.TB, dsn string) {
+	t.Helper()
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return
+	}
+	requireLocal(t, cfg)
+}
+
+func requireLocal(t testing.TB, cfg *pgxpool.Config) {
+	t.Helper()
+	hosts := []string{cfg.ConnConfig.Host}
+	for _, fb := range cfg.ConnConfig.Fallbacks {
 		hosts = append(hosts, fb.Host)
 	}
 	if err := localOnly(strict(), hosts...); err != nil {

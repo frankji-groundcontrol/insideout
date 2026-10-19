@@ -6,18 +6,22 @@ import (
 	"testing"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
 // newTestStore connects to DATABASE_URL and skips if unset — same
 // no-mocks convention as internal/store's integration tests
-// (DATABASE_URL=... go test ./internal/agent/ -run TestStageGate -v).
+// (DATABASE_URL=... go test ./internal/agent/ -run TestStageGate -v). With
+// INSIDEOUT_TEST_STRICT set it refuses a database on another machine before it
+// connects.
 func newTestStore(t *testing.T) *store.Store {
 	t.Helper()
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
 	st, err := store.Open(context.Background(), url)
 	if err != nil {
 		t.Fatalf("open store: %v", err)

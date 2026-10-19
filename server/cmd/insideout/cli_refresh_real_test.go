@@ -17,7 +17,6 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
-	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
 // Review-4 USER-04 against the real thing: the real /api/v1 handlers over real
@@ -31,11 +30,7 @@ func TestSavedLoginOutlivesItsAccessTokenTwice(t *testing.T) {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
 	ctx := context.Background()
-	st, err := store.Open(ctx, dsn)
-	if err != nil {
-		t.Fatalf("open store: %v", err)
-	}
-	t.Cleanup(st.Close)
+	st := openTestStore(t, dsn) // refuses a database on another machine under INSIDEOUT_TEST_STRICT (rv4-FR-F65)
 
 	email, password := "refresh-"+uuid.NewString()+"@example.org", "pw-for-tests-"+uuid.NewString()
 	hash, err := auth.HashPassword(password)
