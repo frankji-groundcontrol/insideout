@@ -183,22 +183,50 @@ def backup_dump_is_owner_only(failures):
             fail(failures, f"docs/usage/backup-restore.md does not say the dump {claim}")
 
 
+def compose_ports(service):
+    """Entries of a compose service's `ports:` list. Comment and blank lines
+    inside the block are skipped; quotes and a trailing comment are stripped.
+    [] when the key is missing, empty, commented out, a flow sequence or
+    anything else this line reader cannot read: a caller must fail on [],
+    never pass on it."""
+    entries, inside = [], False
+    for line in service.splitlines():
+        if not inside:
+            inside = re.fullmatch(r"    ports:\s*(?:#.*)?", line) is not None
+        elif not line.strip() or line.lstrip().startswith("#"):
+            continue
+        elif re.match(r" {4,}- ", line):
+            entries.append(re.sub(r"\s+#.*$", "", line.split("- ", 1)[1]).strip().strip("\"'"))
+        else:
+            break
+    return entries
+
+
 def compose_server_port_is_loopback(failures):
     """SEC-02: the throttle and the resend cooldown key on the client address,
     and the one place a client can write X-Forwarded-For itself is the server's
     own port. Compose publishes the client (nginx) as the front door, so the
     server's port stays on loopback for local tooling. The hop count the
     server trusts (INSIDEOUT_TRUSTED_PROXY_HOPS) must reach the container
-    whenever the server reads it."""
+    whenever the server reads it, as a key of the environment map, not as a
+    word in a comment.
+
+    A list this check cannot read fails it. Reading it as empty would pass
+    every mapping without looking at one, which is what the first version did
+    once a comment sat between `ports:` and its first entry."""
     server = compose_service("server")
-    block = re.search(r"^    ports:\n((?:      - .*\n?)+)", server, re.M)
-    for entry in re.findall(r'^      - "?([^"\n#]+?)"?\s*(?:#.*)?$', block.group(1) if block else "", re.M):
-        if not re.match(r"(127\.0\.0\.1|\[::1\]):", entry.strip()):
-            fail(failures, f"docker-compose.yml: the server publishes {entry.strip()!r} on every interface, "
-                           "so any host on the network can reach it directly and write X-Forwarded-For "
-                           "itself; bind it to 127.0.0.1")
+    ports = compose_ports(server)
+    if not ports:
+        fail(failures, "docker-compose.yml: no entry could be read from the server's `ports:` list "
+                       "(missing, empty, commented out or not a block list), so the loopback bind is "
+                       "unchecked; publish the server port as a block-list entry bound to 127.0.0.1")
+    for entry in ports:
+        if not re.match(r"(127\.0\.0\.1|\[::1\]):", entry):
+            fail(failures, f"docker-compose.yml: the server publishes {entry!r}, which is not bound to "
+                           "loopback (127.0.0.1 or [::1]), so any host on the network can reach it "
+                           "directly and write X-Forwarded-For itself; bind it to 127.0.0.1")
     if "INSIDEOUT_TRUSTED_PROXY_HOPS" in read("server/internal/config/config.go") \
-            and "INSIDEOUT_TRUSTED_PROXY_HOPS" not in server:
+            and not re.search(r"^\s+(?:-\s+)?INSIDEOUT_TRUSTED_PROXY_HOPS\s*[:=]", server, re.M):
         fail(failures, "docker-compose.yml: the server service does not pass INSIDEOUT_TRUSTED_PROXY_HOPS, "
                        "so a hop count set in .env never reaches the container")
 
