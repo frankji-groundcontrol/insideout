@@ -129,7 +129,9 @@ func (s *Server) writeGithubError(w http.ResponseWriter, err error, upstreamMsg 
 	case errors.Is(err, errRepoURLInvalid):
 		httpx.WriteError(w, http.StatusBadRequest, "the linked repository URL is not a GitHub repository — link the repository again", "GITHUB_REPO_URL_INVALID", nil)
 	case errors.Is(err, errRepoNotVisible):
-		httpx.WriteError(w, http.StatusBadRequest, "GitHub does not show this repository to InsideOut — install the InsideOut GitHub App on it, or link a public repository", "GITHUB_REPO_NOT_VISIBLE", nil)
+		// Also the answer for a repo held by a project the caller cannot read
+		// (rv4-FR-F199), so the sentence allows for that cause as well.
+		httpx.WriteError(w, http.StatusBadRequest, "GitHub does not show this repository to InsideOut, or another project already holds it — install the InsideOut GitHub App on it, or link a public repository", "GITHUB_REPO_NOT_VISIBLE", nil)
 	default:
 		s.log.Error("github call", "error", err)
 		httpx.WriteError(w, http.StatusBadGateway, upstreamMsg, "GITHUB_UPSTREAM", nil)
