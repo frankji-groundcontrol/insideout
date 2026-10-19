@@ -107,6 +107,10 @@ func TestASecondProjectCannotLinkARepoThatIsAlreadyLinked(t *testing.T) {
 	expect(t, "second project links the freed repo", code, body, http.StatusOK)
 }
 
+// Six tenants link one repo at once and exactly one wins. This is the outcome
+// check, not the guard of the lock behind it: with the advisory lock removed it
+// still passed 60 runs of 60 (the window is too narrow in process). The lock is
+// pinned by store.TestSetProjectRepoWaitsForALinkOfTheSameRepoThatIsInFlight.
 func TestConcurrentLinksOfOneRepoLetExactlyOneProjectWin(t *testing.T) {
 	w := newRouteWorld(t)
 	name := uniqueRepo()
