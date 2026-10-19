@@ -62,8 +62,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
-  # Web loads Noto from the CDN. Native still rootBundle-loads the
-  # variable fonts, so they stay on disk but are not web assets.
+  # Native rootBundle-loads the two variable fonts, so they stay on disk but are
+  # not web assets. Web draws CJK with the fonts the CanvasKit engine downloads
+  # itself; those are mirrored under web/fonts/s (see web/fonts/NOTICE.txt).
   assets:
     - assets/fonts/OFL.txt
     - path: assets/fonts/NotoSansSC-Var.ttf

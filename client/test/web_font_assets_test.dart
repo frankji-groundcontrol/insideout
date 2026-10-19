@@ -3,7 +3,8 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 /// Wave 7.1: the web bundle must not ship the two CJK variable fonts.
-/// Native platforms still list them. Web loads the faces from the CDN.
+/// Native platforms still list them. Web draws CJK with the fonts the engine
+/// downloads itself, mirrored under web/fonts/s (web_csp_self_test.dart).
 void main() {
   test('declared web assets omit the two CJK variable fonts', () {
     final pubspec = File('pubspec.yaml').readAsStringSync();

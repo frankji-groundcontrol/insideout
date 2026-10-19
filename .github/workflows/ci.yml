@@ -276,7 +276,7 @@ jobs:
       - run: flutter test --platform chrome test/web
       # The web target is the production surface, and VM tests can't see
       # web-only conditional imports (they broke exactly this way once).
-      - run: flutter build web --release --dart-define=API_BASE=/api/v1
+      - run: flutter build web --release --no-web-resources-cdn --dart-define=API_BASE=/api/v1
 
   android:
     name: android (flutter apk)

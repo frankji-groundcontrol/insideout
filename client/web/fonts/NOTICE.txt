@@ -1,0 +1,34 @@
+Fonts the Flutter web engine downloads on its own, served from this origin
+(rv4-COMP-03).
+
+The CanvasKit renderer ignores CSS @font-face rules. It fetches the fonts it
+paints with by URL: a default Roboto, and, for every glyph Roboto lacks, the
+Noto slice that covers it. Both come from https://fonts.gstatic.com/s/ unless
+the engine is told otherwise (fontFallbackBaseUrl). A network that cannot
+reach Google therefore got an app with no text. These files are the exact
+bytes that host serves, so a first load can stay on this origin:
+
+  s/roboto/v32/            Roboto latin, regular   SIL OFL 1.1   OFL-Roboto.txt
+  s/notosanssc/v37/        Noto Sans SC, all 101   SIL OFL 1.1   OFL-NotoSansSC.txt
+                           slices (Simplified Chinese; user text can need any)
+
+The layout under s/ mirrors https://fonts.gstatic.com/s/, so the one setting
+fontFallbackBaseUrl: "fonts/s/" (in a custom web/flutter_bootstrap.js) makes
+the engine read them here. The files are unmodified; SHA256SUMS lists them.
+
+Status: web/flutter_bootstrap.js does not exist yet, so the engine still reads
+fonts.gstatic.com (client/nginx.conf keeps that one host in connect-src). The
+files and nginx's /fonts/ location are in place for the day it does.
+Other Noto families the engine can pick (emoji, Japanese, Korean, symbols, ...)
+are not mirrored: those glyphs would show as boxes on an offline network.
+
+Source of the list: the engine's fallback table, Flutter 3.44.8 (engine
+0cd610717bde); the table in 3.44.0, the version the Dockerfile builds with,
+is identical.
+
+Refresh after a Flutter upgrade: compare the roboto and notosanssc entries in
+<flutter>/bin/cache/flutter_web_sdk/lib/_engine/engine/font_fallback_data.dart
+(and _robotoUrl in canvaskit/fonts.dart) with SHA256SUMS, download any new path
+from https://fonts.gstatic.com/s/<path>, then
+  cd client/web/fonts && shasum -a 256 $(find s -name '*.woff2' | LC_ALL=C sort) > SHA256SUMS
+and update the slice count in client/test/web_csp_self_test.dart.

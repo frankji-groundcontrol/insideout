@@ -7,7 +7,10 @@ RUN flutter pub get --enforce-lockfile
 COPY . .
 # Same-origin /api/v1 via nginx; include any /v1 on the Go side already.
 ARG API_BASE=/api/v1
-RUN flutter build web --release --dart-define=API_BASE=${API_BASE}
+# --no-web-resources-cdn: ship CanvasKit in build/web instead of loading it from
+# www.gstatic.com (rv4-COMP-03); a network that blocks that host would never
+# get past a blank page.
+RUN flutter build web --release --no-web-resources-cdn --dart-define=API_BASE=${API_BASE}
 
 # Unprivileged variant: nginx runs as uid 101 with no root master process,
 # listening on 8080 — the same container port as the old nginx:1.27-alpine
