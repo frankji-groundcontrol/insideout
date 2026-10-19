@@ -4,7 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"maps"
+	"slices"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -25,6 +29,26 @@ func emptySections() map[string]string {
 	}
 	return m
 }
+
+// MaxSectionRunes caps one PRD section's text at write, in characters like every
+// other text cap (a byte count would refuse 3,333 CJK characters). UpdateSections
+// is the only writer of prds.sections, so this one check binds the human PATCH,
+// the coach's update_prd_section tool and any writer added later (rv4-FR-F85).
+// The agent prompts clip a section at the same number (agent.maxPromptSectionRunes
+// is this constant), so the clip only ever bites a row stored before the cap
+// existed.
+const MaxSectionRunes = 10_000
+
+// SectionTooLongError is the refusal of a write whose text for one section is
+// over MaxSectionRunes. It is an ErrValidation, so a caller that maps only the
+// class still answers 400; the api and the coach tool read Section to say which.
+type SectionTooLongError struct{ Section string }
+
+func (e *SectionTooLongError) Error() string {
+	return fmt.Sprintf("section %s is too long (max %d characters)", e.Section, MaxSectionRunes)
+}
+
+func (e *SectionTooLongError) Is(target error) bool { return target == ErrValidation }
 
 type Prd struct {
 	ID              uuid.UUID
@@ -122,6 +146,9 @@ func (s *Store) GetPrdForMember(ctx context.Context, prdID, viewerID uuid.UUID) 
 // saves via the PATCH endpoint pass nil: no CAS, last-write-wins, which
 // is what makes a human's direct edit always win over a stale coach
 // write rather than the reverse.
+//
+// A section over MaxSectionRunes is refused whole with a *SectionTooLongError
+// (an ErrValidation) before anything is written, whoever the caller is.
 func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, title *string, patch map[string]string, expectedUpdatedAt *time.Time) (*Prd, error) {
 	var updated *Prd
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -131,6 +158,12 @@ func (s *Store) UpdateSections(ctx context.Context, actorID, prdID uuid.UUID, ti
 		}
 		if expectedUpdatedAt != nil && !prd.UpdatedAt.Equal(*expectedUpdatedAt) {
 			return ErrConflict
+		}
+		// Sorted, so which section is named does not depend on map order.
+		for _, k := range slices.Sorted(maps.Keys(patch)) {
+			if utf8.RuneCountInString(patch[k]) > MaxSectionRunes {
+				return &SectionTooLongError{Section: k}
+			}
 		}
 
 		merged := prd.Sections

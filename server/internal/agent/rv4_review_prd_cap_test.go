@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"unicode/utf8"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
 // rv4-FR-F85 and rv4-FR-F95: the PRD section cap (10,000 characters) bound only
@@ -99,5 +101,70 @@ func TestRvPrdCapThePromptNeverClipsWhatTheCoachWrote(t *testing.T) {
 		if i := strings.Index(prompt, "[truncated:"); i >= 0 {
 			t.Errorf("%s: the section the coach wrote reaches its own prompt cut (%.60q): the cap that stops this is not on the coach's write path", name, prompt[i:])
 		}
+	}
+}
+
+// rvPrdCapPlant stores text in one section of the executor's PRD the way a row
+// written before the cap holds it: a plain UPDATE under the author's row-level
+// security context, around the write path that now refuses such text.
+func rvPrdCapPlant(t *testing.T, st *store.Store, ex *toolExecutor, section, text string) {
+	t.Helper()
+	ctx := context.Background()
+	tx, err := st.Pool.Begin(ctx)
+	if err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+	defer tx.Rollback(ctx)
+	if _, err := tx.Exec(ctx, `SELECT set_config('app.user_id', $1, true)`, ex.actorID.String()); err != nil {
+		t.Fatalf("set the acting user: %v", err)
+	}
+	tag, err := tx.Exec(ctx,
+		`UPDATE insideout.prds SET sections = jsonb_set(sections, ARRAY[$2::text], to_jsonb($3::text)) WHERE id = $1`,
+		ex.prdID, section, text)
+	if err != nil {
+		t.Fatalf("plant the long section: %v", err)
+	}
+	if tag.RowsAffected() != 1 {
+		t.Fatalf("plant the long section: %d rows updated, want 1", tag.RowsAffected())
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatalf("commit: %v", err)
+	}
+}
+
+// A row stored before the cap is what the clip in the prompts is for. get_prd
+// returns it whole, so the coach can shorten it faithfully; a rewrite that is
+// still over the cap is refused like any other, one under it is stored, and from
+// then on the prompt carries the section uncut.
+func TestRvPrdCapCoachCanShortenAnOversizeStoredSection(t *testing.T) {
+	st := newTestStore(t)
+	_, ex := seedConversation(t, st)
+	ctx := context.Background()
+	long := strings.Repeat("字", 15_000)
+	rvPrdCapPlant(t, st, ex, "background", long)
+
+	out, err := ex.Execute(ctx, ToolCallRequest{Name: "get_prd", Arguments: "{}"})
+	if err != nil {
+		t.Fatalf("get_prd: %v", err)
+	}
+	if !strings.Contains(out, long) {
+		t.Error("get_prd cut the stored 15000-character section: the coach cannot read all of what it has to shorten")
+	}
+
+	if _, err := rvPrdCapWrite(t, ex, "background", 12_000); err == nil {
+		t.Error("a rewrite to 12000 characters, still over the cap, was stored")
+	}
+	if _, err := rvPrdCapWrite(t, ex, "background", 9_000); err != nil {
+		t.Fatalf("a rewrite to 9000 characters: %v, want it stored", err)
+	}
+	prd, err := st.GetPrdForMember(ctx, ex.prdID, ex.actorID)
+	if err != nil {
+		t.Fatalf("read the PRD back: %v", err)
+	}
+	if n := utf8.RuneCountInString(prd.Sections["background"]); n != 9_000 {
+		t.Errorf("background holds %d characters, want the 9000 just written", n)
+	}
+	if strings.Contains(formatSectionsForPrompt(prd.Sections), "truncated") {
+		t.Error("the prompt still cuts the section after it was shortened under the cap")
 	}
 }

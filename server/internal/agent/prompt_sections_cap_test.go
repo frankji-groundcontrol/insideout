@@ -11,9 +11,9 @@ import (
 // whole, so one section saved at the 1 MiB body cap rode into every coach,
 // critic and planner call. A section is now cut at contractSectionRunes
 // characters with a marker that says how much was cut. The number is the one
-// the api refuses at write (api/prd_section_cap.go), written out here on
-// purpose: the coach reads exactly what was saved, and the cut only bites a
-// row stored before that write cap.
+// store.UpdateSections refuses at write (store.MaxSectionRunes), written out
+// here on purpose: the coach reads exactly what was saved, and the cut only
+// bites a row stored before that write cap.
 const contractSectionRunes = 10_000
 
 func TestFormatSectionsForPrompt_CutsAHugeSectionAndSaysSo(t *testing.T) {

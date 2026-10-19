@@ -112,3 +112,39 @@ func TestRvPrdCapTheCoachCallShapeIsCappedToo(t *testing.T) {
 		t.Errorf("a 10001-character write with a fresh revision: err = %v, want a validation error", err)
 	}
 }
+
+// The documented cap, spelled out. Raising it is a decision for the docs.
+func TestRvPrdCapTheCapIsTenThousandCharacters(t *testing.T) {
+	if got := MaxSectionRunes; got != 10_000 {
+		t.Fatalf("MaxSectionRunes = %d, want 10000: the cap is the documented contract", got)
+	}
+}
+
+// The refusal is typed: the api answers 400 with its text, which is what the
+// PRD page shows the user, and the coach tool builds its message from the
+// section it names. With two sections over the cap the answer must not change
+// with map order.
+func TestRvPrdCapRefusalIsTypedAndNamesTheSection(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+	author, prd := rvPrdCapDraft(t, st)
+	patch := map[string]string{"risks": rvPrdCapRunes(10_001), "goals": rvPrdCapRunes(10_001), "users": "fine"}
+
+	first := ""
+	for i := 0; i < 20; i++ {
+		_, err := st.UpdateSections(ctx, author.ID, prd.ID, nil, patch, nil)
+		var tooLong *SectionTooLongError
+		if !errors.As(err, &tooLong) || !errors.Is(err, ErrValidation) {
+			t.Fatalf("err = %v, want a *SectionTooLongError that is an ErrValidation", err)
+		}
+		if want := "section " + tooLong.Section + " is too long (max 10000 characters)"; err.Error() != want {
+			t.Fatalf("message = %q, want %q", err.Error(), want)
+		}
+		if first == "" {
+			first = tooLong.Section
+		}
+		if tooLong.Section != first || (first != "goals" && first != "risks") {
+			t.Fatalf("call %d names %q, the first call named %q: the answer changes with map order or names a section that fits", i, tooLong.Section, first)
+		}
+	}
+}

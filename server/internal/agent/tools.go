@@ -3,8 +3,10 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
@@ -197,6 +199,12 @@ func (e *toolExecutor) updateSection(ctx context.Context, argsJSON string) (stri
 	if _, err := e.store.UpdateSections(ctx, e.actorID, e.prdID, nil, map[string]string{args.Section: args.Markdown}, &prd.UpdatedAt); err != nil {
 		if err == store.ErrConflict {
 			return "", fmt.Errorf("agent: this section was edited by someone else since you last read it — call get_prd again to see the current content before retrying")
+		}
+		// The model reads this error as the tool result, so it says what to change
+		// (rv4-FR-F85): the store refused the text and wrote nothing.
+		var tooLong *store.SectionTooLongError
+		if errors.As(err, &tooLong) {
+			return "", fmt.Errorf("agent: %w; you sent %d characters. Shorten the section, moving detail that belongs elsewhere into the section it fits, then call update_prd_section again", err, utf8.RuneCountInString(args.Markdown))
 		}
 		return "", err
 	}

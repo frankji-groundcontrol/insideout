@@ -209,11 +209,13 @@ func parseRankedCritique(reply string) []CriticFinding {
 }
 
 // maxPromptSectionRunes is the most characters of one PRD section a prompt
-// carries (rv4-COMP-04). It is the number the api refuses at write
-// (api/prd_section_cap.go; api does not import agent, so the two are kept equal
-// by hand and each is pinned by a test), which makes the cut bite only a row
-// stored before that write cap existed.
-const maxPromptSectionRunes = 10_000
+// carries (rv4-COMP-04). It is store.MaxSectionRunes, the number
+// store.UpdateSections refuses at write for every writer (the human PATCH and
+// the coach's own update_prd_section alike), so the cut bites only a row stored
+// before that cap existed. get_prd deliberately returns such a row whole: the
+// coach needs the full text to shorten it faithfully, and its next write is the
+// way to bring the row under the cap (rv4-FR-F95).
+const maxPromptSectionRunes = store.MaxSectionRunes
 
 // clipSection cuts a section at maxPromptSectionRunes characters and says how
 // many it dropped, so the model knows what it reads is partial. Every prompt
