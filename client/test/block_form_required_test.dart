@@ -142,7 +142,7 @@ void main() {
     await tester.tap(find.text('Join').last);
     await tester.pumpAndSettle();
 
-    expect(find.text('Invite code'), findsOneWidget);
+    expect(find.text('Workspace code'), findsOneWidget);
     expect(find.text('This field is required'), findsOneWidget);
     expect(api.joinedCodes, isEmpty);
   });

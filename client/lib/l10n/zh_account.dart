@@ -68,7 +68,7 @@ const zhAccount = <String, String>{
   'admin.inviteEmail': '邀请注册（邮箱）',
   'admin.inviteCreate': '邀请',
   'admin.codeTitle': '邀请已创建',
-  'admin.codeOnce': '验证码仅显示一次，并已发送到被邀请人邮箱：',
+  'admin.codeOnce': '邀请码仅显示一次，并已发送到被邀请人邮箱：',
   'admin.codeNotEmailed': '邀请邮件未能发送。请复制下面的注册链接并自行发送给被邀请人，该链接仅显示一次：',
   'admin.copyLink': '复制注册链接',
   'admin.inviteList': '最近邀请',

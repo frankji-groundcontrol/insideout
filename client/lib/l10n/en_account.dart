@@ -80,7 +80,8 @@ const enAccount = <String, String>{
   'admin.inviteEmail': 'Invite someone (email)',
   'admin.inviteCreate': 'Invite',
   'admin.codeTitle': 'Invitation created',
-  'admin.codeOnce': 'This code is shown once and was emailed to the invitee:',
+  'admin.codeOnce':
+      'This invitation code is shown once and was emailed to the invitee:',
   'admin.codeNotEmailed':
       'The invitation email was not sent. Copy this signup link and send it to the invitee yourself. It is shown only once:',
   'admin.copyLink': 'Copy signup link',

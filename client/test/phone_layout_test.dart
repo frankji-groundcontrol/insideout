@@ -205,7 +205,7 @@ const _strings = <String, (String, String, String, String, String, String)>{
     'Join with a code',
     'New project',
   ),
-  'zh-CN': ('开始打磨', '登录', '记下想法', '创建工作区', '用邀请码加入', '新项目'),
+  'zh-CN': ('开始打磨', '登录', '记下想法', '创建工作区', '用工作区代码加入', '新项目'),
 };
 
 void main() {

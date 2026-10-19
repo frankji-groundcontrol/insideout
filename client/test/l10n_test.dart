@@ -17,7 +17,7 @@ void main() {
   test('interpolates {placeholders} in both locales', () {
     expect(
       lookup('en-US', 'workspace.inviteCode', {'code': 'AB12CD'}),
-      'Invite code: AB12CD',
+      'Workspace code: AB12CD',
     );
     expect(
       lookup('zh-CN', 'coach.rateLimited', {'seconds': 9}),
