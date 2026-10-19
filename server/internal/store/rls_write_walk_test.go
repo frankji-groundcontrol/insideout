@@ -123,7 +123,10 @@ func TestRLSWriteWalk_MembershipInsert(t *testing.T) {
 
 // userColumnWrites lists every users column the app may write or may not, with
 // an assignment that really changes the stored value (a no-op would pass for a
-// refusal). updated_at is left out: set_updated_at maintains it.
+// refusal). updated_at is left out: set_updated_at maintains it. No assignment
+// may read password_hash (rv4-DATA-03: insideout_app cannot SELECT it, so the
+// old `password_hash || '!'` would be refused for that read, not for the
+// write); rls_read_walk_test.go asserts that read is refused.
 var userColumnWrites = map[string]struct {
 	set string
 	ok  bool
@@ -132,7 +135,7 @@ var userColumnWrites = map[string]struct {
 	"bio":               {`bio = bio || '!'`, true},
 	"keywords":          {`keywords = ARRAY['walk']`, true},
 	"avatar_url":        {`avatar_url = 'https://example.com/walk.png'`, true},
-	"password_hash":     {`password_hash = password_hash || '!'`, true},
+	"password_hash":     {`password_hash = 'walk-' || gen_random_uuid()::text`, true},
 	"id":                {`id = gen_random_uuid()`, false},
 	"email":             {`email = 'rewritten-' || email`, false},
 	"role":              {`role = CASE role WHEN 'admin' THEN 'user' ELSE 'admin' END`, false},

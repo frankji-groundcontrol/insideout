@@ -13,7 +13,7 @@ import (
 type User struct {
 	ID              uuid.UUID
 	Email           string
-	PasswordHash    string
+	PasswordHash    string // only GetUserByEmail fills it: login verifies against it
 	Username        string
 	AvatarURL       *string
 	Bio             string
@@ -25,11 +25,17 @@ type User struct {
 	UpdatedAt       time.Time
 }
 
-const userColumns = `id, email, password_hash, username, avatar_url, bio, keywords, role, system_role, email_verified_at, created_at, updated_at`
+// userColumns is every users column the app selects, password_hash left out:
+// insideout_app has no SELECT on it (20261018200000_users_read_grants.sql), so
+// no SELECT or RETURNING built from this list can leak it or fail on it. A
+// column added here needs its own GRANT SELECT in a migration.
+const userColumns = `id, email, username, avatar_url, bio, keywords, role, system_role, email_verified_at, created_at, updated_at`
 
-func scanUser(row pgx.Row) (*User, error) {
+// scanUser scans a userColumns row; extra are further destinations for columns
+// selected after them.
+func scanUser(row pgx.Row, extra ...any) (*User, error) {
 	var u User
-	err := row.Scan(&u.ID, &u.Email, &u.PasswordHash, &u.Username, &u.AvatarURL, &u.Bio, &u.Keywords, &u.Role, &u.SystemRole, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt)
+	err := row.Scan(append([]any{&u.ID, &u.Email, &u.Username, &u.AvatarURL, &u.Bio, &u.Keywords, &u.Role, &u.SystemRole, &u.EmailVerifiedAt, &u.CreatedAt, &u.UpdatedAt}, extra...)...)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -63,9 +69,22 @@ func (s *Store) CreateUser(ctx context.Context, email, passwordHash, username st
 	return u, nil
 }
 
+// GetUserByEmail is login's reader and the only one that carries the stored
+// credential (PasswordHash). The app role cannot SELECT password_hash from the
+// table, so it comes from insideout._credential_for_email, which answers only
+// in the pre-auth context this runs in. An unknown email is ErrNotFound, as
+// before, after the same single indexed lookup.
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*User, error) {
-	row := s.Pool.QueryRow(ctx, `SELECT `+userColumns+` FROM insideout.users WHERE email = $1`, email)
-	return scanUser(row)
+	var hash string
+	u, err := scanUser(s.Pool.QueryRow(ctx, `
+		SELECT `+qualifyColumns("u", userColumns)+`, c.password_hash
+		FROM insideout._credential_for_email($1) c
+		JOIN insideout.users u ON u.id = c.id`, email), &hash)
+	if err != nil {
+		return nil, err
+	}
+	u.PasswordHash = hash
+	return u, nil
 }
 
 // GetUserByID is only ever called for a caller loading their own profile
