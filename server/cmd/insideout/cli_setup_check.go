@@ -7,9 +7,12 @@ package main
 // login or INSIDEOUT_TOKEN) the API is asked as that user, renewing
 // an expired saved login like every verb; with none it is the
 // anonymous probe, where a 401 is the pass.
-// Offline-safe: a probe whose target is unreachable reports SKIP
-// with a message instead of failing the run; a configured target
-// that answers wrongly (a rejected token, a 5xx) fails it.
+// Offline-safe: a probe whose target cannot be reached at all (refused,
+// no route, no such host, timed out) reports SKIP with a message
+// instead of failing the run; a configured target that answers wrongly
+// (a rejected token, a 5xx) or cannot be trusted (a certificate this
+// machine does not accept, a scheme that is not http(s), a connection
+// the peer breaks) fails it.
 // The probes run under the CLI context (cliCtx), like every other verb:
 // Ctrl-C cancels them, a probe it cuts short reports SKIP "cancelled",
 // and the run ends with exit 1 (runInterruptible turns that into 130),
@@ -19,8 +22,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -46,6 +49,27 @@ func commandInterrupted(ctx context.Context) bool {
 // skip, not a failure: the target was never judged.
 func cancelledOutcome(name string) checkOutcome {
 	return checkOutcome{name, "skip", "cancelled (interrupted before it answered)"}
+}
+
+// targetUnreachable reports that err means the target could not be reached at
+// all: its name does not resolve, nothing accepted the connection (or the proxy
+// in front of it did not), or the wait ran out. Nothing about the peer was
+// seen, so "offline" is a fair reading. Every other transport error is a peer
+// that answered, or tried to, and must fail the check: a certificate this
+// machine does not accept, a scheme that is not http(s), a connection the peer
+// broke. The test is a whitelist so that what it does not know fails.
+func targetUnreachable(err error) bool {
+	var dns *net.DNSError
+	var op *net.OpError
+	var timeout net.Error
+	switch {
+	case errors.As(err, &dns):
+		return true
+	case errors.As(err, &op) && (op.Op == "dial" || op.Op == "proxyconnect"):
+		return true
+	default:
+		return errors.As(err, &timeout) && timeout.Timeout()
+	}
 }
 
 // runHealthCheck is `insideout setup --check`: one line per probe.
@@ -96,10 +120,12 @@ func checkAPI(ctx context.Context) checkOutcome {
 		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable and already authenticated", redactBase(base))}
 	case commandInterrupted(ctx):
 		return cancelledOutcome("api")
-	case errors.Is(err, probe.ErrUnreachable):
+	case errors.Is(err, probe.ErrUnreachable) && targetUnreachable(err):
 		return checkOutcome{"api", "skip", fmt.Sprintf("%s unreachable (offline?) — not failed", redactBase(base))}
 	default:
-		return checkOutcome{"api", "fail", err.Error()}
+		// APIProbe calls every transport failure "unreachable"; one that is
+		// not (see targetUnreachable) is a peer that failed the check.
+		return checkOutcome{"api", "fail", strings.TrimPrefix(err.Error(), probe.ErrUnreachable.Error()+": ")}
 	}
 }
 
@@ -112,13 +138,12 @@ func checkSignedIn(ctx context.Context, creds clientconfig.Creds) checkOutcome {
 	c := creds.Client()
 	c.SetContext(ctx)
 	_, err := c.Whoami()
-	var netErr *url.Error
 	switch {
 	case err == nil:
 		return checkOutcome{"api", "ok", fmt.Sprintf("%s reachable, signed in", base)}
 	case commandInterrupted(ctx):
 		return cancelledOutcome("api")
-	case errors.As(err, &netErr):
+	case targetUnreachable(err):
 		return checkOutcome{"api", "skip", fmt.Sprintf("%s unreachable (offline?) — not failed", base)}
 	default:
 		return checkOutcome{"api", "fail", err.Error()}
