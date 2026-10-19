@@ -154,7 +154,8 @@ var ErrHandoverNeedsAdmin = fmt.Errorf("%w: giving a project to someone else nee
 // workspace's admin, re-checked transactionally. Changing the owner is
 // narrower: an owner who is not a workspace admin may edit the project but
 // not give it away, and gets ErrHandoverNeedsAdmin before the UPDATE is tried
-// (an edit that keeps the current owner is still the owner's). No explicit
+// (an edit that keeps the current owner is still the owner's). A new owner
+// who is not a member of the workspace is ErrValidation. No explicit
 // row lock (FOR UPDATE) — see the comment on requireCreatorOrAdmin in
 // workspaces.go for why: this table's SELECT policy references
 // workspace_memberships, which Postgres cannot correctly re-evaluate
@@ -187,6 +188,21 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 					return ErrHandoverNeedsAdmin
 				}
 				return ErrForbidden
+			}
+		}
+
+		// Whom the project is given to has to be a member of its workspace, as a
+		// roadmap node's owner does. Judged after the caller's standing, so a
+		// caller who may not change the owner learns nothing about who is in
+		// the workspace; and only for a change, so a project whose owner has
+		// since left stays editable with the owner the client was shown.
+		if f.OwnerID != nil && !keepsOwner {
+			_, err := requireMember(ctx, tx, workspaceID, *f.OwnerID)
+			if errors.Is(err, ErrForbidden) {
+				return ErrValidation
+			}
+			if err != nil {
+				return err
 			}
 		}
 
