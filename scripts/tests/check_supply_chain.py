@@ -18,9 +18,10 @@ check_release_gate.py.
           pinned to an exact release and installed by `go install` (no
           third-party Action), gitleaks redacting and seeing full history;
           .gitignore keeps *.pem, *.key and *.p12 out of commits.
-          pub07_mutations runs the security.yml check on muted copies of the
-          file (`|| true` after govulncheck, gitleaks replaced by echo) and
-          fails when one still passes.
+          Neither scan may be muted: each scanner is one exact command line
+          (govulncheck ./... from server/), and no `||` list, continue-on-error
+          or `if:` skip may swallow a finding. pub07_mutations proves it by
+          running that check on muted copies of security.yml.
   SEC-07  every `uses:` in every workflow is pinned to a full 40-hex commit
           SHA with the release tag kept in a trailing `# vX.Y.Z` comment, so
           a moved or hijacked tag cannot change what runs (Dependabot reads
@@ -156,6 +157,13 @@ def dependabot():
 
 
 SECURITY = ".github/workflows/security.yml"
+# The scanners, each as the one command line it may have: a flag, pipe, redirect or
+# `||` list on these lines changes what a scan reports. --redact keeps a finding from
+# printing the secret into a public log.
+SCANS = {"govulncheck": "govulncheck ./...",
+         "gitleaks": 'gitleaks git --redact --verbose --no-banner --exit-code 1 --log-opts="$range" .'}
+# What lets a failing step pass; no step of a file whose job is to fail may carry it.
+MUTES = [(r"\|\|", "an `||` list"), (r"\bcontinue-on-error\b", "`continue-on-error`")]
 
 
 def security_workflow(raw=None):
@@ -173,11 +181,17 @@ def security_workflow(raw=None):
             out.append(f"security.yml: {tool} is not installed with `go install ...@vX.Y.Z` (pin an exact release, no @latest, no third-party Action)")
     if re.search(r"@latest\b", text):
         out.append("security.yml: `@latest` is not a pin")
-    if not re.search(r"govulncheck\s+\./\.\.\.", text):
-        out.append("security.yml: govulncheck does not scan ./...")
-    scans = [l for l in text.splitlines() if "--log-opts" in l]  # the gitleaks range scan
-    if not scans or not all("--redact" in l for l in scans):
-        out.append("security.yml: the gitleaks scan (`gitleaks git --log-opts=...`) must pass --redact: an unredacted finding prints the secret into a public log")
+    commands = [re.sub(r"^(?:- )?(?:run:\s*)?", "", l.strip()) for l in text.splitlines()]
+    for tool, line in SCANS.items():
+        found = [c for c in commands if c.split(None, 1)[:1] == [tool]]
+        if found != [line]:
+            out.append(f"security.yml: the one `{tool}` command must be exactly `{line}`, found {found or 'none'}: "
+                       "a flag, pipe, `||` list or echo in its place mutes the scan")
+    if not re.search(r"(?m)^\s*working-directory: server\n\s*run: govulncheck \./\.\.\.$", text):
+        out.append("security.yml: govulncheck must run from server/, where go.mod is (`working-directory: server` just above its `run:`)")
+    out += [f"security.yml: {what} lets a failing scan pass" for pat, what in MUTES if re.search(pat, text)]
+    if any(c != "github.event_name != 'schedule'" for c in re.findall(r"(?m)^\s*(?:- )?if:\s*(.*\S)", text)):
+        out.append("security.yml: only `github.event_name != 'schedule'` on the secrets job may skip a job or step: a skipped scan is a muted scan")
     if "fetch-depth: 0" not in text:
         out.append("security.yml: the secret scan needs `fetch-depth: 0` to see the commits it scans")
     return out
