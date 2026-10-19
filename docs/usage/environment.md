@@ -129,7 +129,7 @@ offline coach, not an error.
 | `INSIDEOUT_LLM_SCHEMA` | no | `messages` | Wire format: `messages` (Anthropic Messages at `{base}/messages`) or `responses` (OpenAI Responses at `{base}/responses`). |
 | `INSIDEOUT_AI_MAX_CONCURRENT` | no | `4` | Concurrency ceiling for AI turns; excess turns queue briefly, then are rejected (503 with a retry hint). |
 | `INSIDEOUT_AI_QUEUE_WAIT` | no | `15s` | How long a queued AI turn waits for a slot before rejection (Go `time.Duration`). |
-| `INSIDEOUT_AI_TURN_DEADLINE` | no | `12m` | Wall-clock bound on one whole coach turn (Go `time.Duration`). Stops an upstream that trickles output but never finishes from holding a slot and the conversation lock. Unset, unparsable or non-positive keeps `12m`. Env-only (not a key-store kind), and `docker-compose.yml` does not interpolate it yet, so a compose deployment runs the default. |
+| `INSIDEOUT_AI_TURN_DEADLINE` | no | `12m` | Wall-clock bound on one whole coach turn (Go `time.Duration`). Stops an upstream that trickles output but never finishes from holding a slot and the conversation lock. Unset, empty, unparsable or non-positive keeps `12m`. Env-only (not a key-store kind); `docker-compose.yml` passes it to the server (empty when `.env` leaves it unset), so a compose deployment honours it. |
 
 **What lets user data leave the server.** Two keys do, and only when set:
 `INSIDEOUT_LLM_API_KEY` sends coach and roadmap-planner text to the model
@@ -158,7 +158,8 @@ regardless.
 
 Compose also interpolates the operator-facing vars that flow into the Go
 backend — `DATABASE_URL`, `INSIDEOUT_JWT_SECRET`, the `INSIDEOUT_LLM_*`
-provider set, `INSIDEOUT_AI_MAX_CONCURRENT` / `INSIDEOUT_AI_QUEUE_WAIT`,
+provider set, the coach knobs (`INSIDEOUT_AI_MAX_CONCURRENT`,
+`INSIDEOUT_AI_QUEUE_WAIT`, `INSIDEOUT_AI_TURN_DEADLINE`),
 the `INSIDEOUT_MAIL_*` set with `INSIDEOUT_PUBLIC_URL`, the browser knobs
 (`INSIDEOUT_CORS_ORIGINS`, `INSIDEOUT_DEV_CORS`, `INSIDEOUT_COOKIE_SECURE`,
 `INSIDEOUT_ACCESS_TTL`, `INSIDEOUT_REFRESH_TTL`), and the GitHub

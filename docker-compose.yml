@@ -68,9 +68,11 @@ services:
       INSIDEOUT_LLM_MODEL: ${INSIDEOUT_LLM_MODEL:-claude-sonnet-4-20250514}
       INSIDEOUT_LLM_SCHEMA: ${INSIDEOUT_LLM_SCHEMA:-messages}
       # AI turn concurrency ceiling / how long a queued turn waits before
-      # rejection (empty = server defaults 4 / 15s).
+      # rejection / wall-clock bound on one whole turn (empty = server
+      # defaults 4 / 15s / 12m; the server treats an empty value as unset).
       INSIDEOUT_AI_MAX_CONCURRENT: ${INSIDEOUT_AI_MAX_CONCURRENT:-}
       INSIDEOUT_AI_QUEUE_WAIT: ${INSIDEOUT_AI_QUEUE_WAIT:-}
+      INSIDEOUT_AI_TURN_DEADLINE: ${INSIDEOUT_AI_TURN_DEADLINE:-}
       # Transactional email (Resend). An empty INSIDEOUT_MAIL_API_KEY is a
       # deliberate dev posture: the sender logs recipient+subject instead of
       # delivering (full bodies only with INSIDEOUT_MAIL_DEV_BODY=1 — never
