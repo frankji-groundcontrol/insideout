@@ -12,8 +12,9 @@ import (
 // ProposalDecision is the human decision on an agent proposal — the
 // Decision Log entry. The row holds the latest decision: deciding again
 // overwrites it (a decision may be reversed). History is the project
-// timeline, where every decide appends a "[proposal accepted]" or
-// "[proposal rejected]" note (see DecideProposal).
+// timeline, where every change of decision appends a "[proposal accepted]"
+// or "[proposal rejected]" note (see DecideProposal); deciding what is
+// already decided, with the same reason, is not a change.
 type ProposalDecision struct {
 	UpdateID  uuid.UUID `json:"updateId"`
 	Decision  string    `json:"decision"`
@@ -25,7 +26,9 @@ type ProposalDecision struct {
 // DecideProposal records the human accept/reject of an agent proposal.
 // Only the project owner or a workspace admin may decide; the decision
 // row is upserted (latest state) and a timeline note makes the decision
-// visible in the project history.
+// visible in the project history. Repeating the decision on record, with
+// the same reason (a double tap, a retry, a second tab), writes neither
+// and returns the record as it stands (see recordDecisionTx).
 func (s *Store) DecideProposal(ctx context.Context, actorID, updateID uuid.UUID, decision, reason string) (*ProposalDecision, error) {
 	d, _, err := s.decideProposal(ctx, actorID, updateID, decision, reason, false)
 	return d, err
@@ -78,32 +81,16 @@ func (s *Store) decideProposal(ctx context.Context, actorID, updateID uuid.UUID,
 				return ErrForbidden
 			}
 		}
-		var d ProposalDecision
-		if err := tx.QueryRow(ctx, `
-			INSERT INTO insideout.proposal_decisions (update_id, decision, reason, decided_by)
-			VALUES ($1, $2, $3, $4)
-			ON CONFLICT (update_id) DO UPDATE
-			  SET decision = EXCLUDED.decision, reason = EXCLUDED.reason,
-			      decided_by = EXCLUDED.decided_by, decided_at = now()
-			RETURNING update_id, decision, reason, decided_by, decided_at`,
-			updateID, decision, reason, actorID,
-		).Scan(&d.UpdateID, &d.Decision, &d.Reason, &d.DecidedBy, &d.DecidedAt); err != nil {
-			return err
-		}
-		// The decision is part of the project history, visible to everyone.
-		if _, err := tx.Exec(ctx, `
-			INSERT INTO insideout.project_updates (project_id, author_id, kind, content)
-			VALUES ($1, $2, 'note', $3)`, projectID, actorID,
-			"[proposal "+decision+"] "+firstLine(content)+noteSuffix(reason)); err != nil {
+		d, err := recordDecisionTx(ctx, tx, projectID, actorID, updateID, decision, reason, content)
+		if err != nil {
 			return err
 		}
 		if apply {
-			var err error
 			if created, err = applyProposalItemsTx(ctx, tx, actorID, projectID, updateID); err != nil {
 				return err
 			}
 		}
-		out = &d
+		out = d
 		return nil
 	})
 	if err != nil {
@@ -113,6 +100,48 @@ func (s *Store) decideProposal(ctx context.Context, actorID, updateID uuid.UUID,
 		s.noteRoadmapChange(projectID)
 	}
 	return out, created, nil
+}
+
+// recordDecisionTx stores the decision on the proposal and its note on the
+// project timeline, which is the history everyone reads. Deciding the same thing
+// again with the same reason (a double tap, a retry, a second tab, the CLI after
+// the web) changes nothing and returns the record on file: a repeat is not an
+// event, and rewriting decided_at and decided_by would hide who decided and
+// when. A different decision or a different reason is a change and writes both.
+// The caller holds the proposal's row lock, so taps at once run in turn and the
+// second finds the first's record. An accept with apply still applies whatever
+// is left (the caller does that), which is how a proposal accepted without
+// apply gets built later.
+func recordDecisionTx(ctx context.Context, tx pgx.Tx, projectID, actorID, updateID uuid.UUID, decision, reason, content string) (*ProposalDecision, error) {
+	var d ProposalDecision
+	err := tx.QueryRow(ctx, `
+		SELECT update_id, decision, reason, decided_by, decided_at
+		FROM insideout.proposal_decisions WHERE update_id = $1`, updateID,
+	).Scan(&d.UpdateID, &d.Decision, &d.Reason, &d.DecidedBy, &d.DecidedAt)
+	if err == nil && d.Decision == decision && d.Reason == reason {
+		return &d, nil
+	}
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, err
+	}
+	if err := tx.QueryRow(ctx, `
+		INSERT INTO insideout.proposal_decisions (update_id, decision, reason, decided_by)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (update_id) DO UPDATE
+		  SET decision = EXCLUDED.decision, reason = EXCLUDED.reason,
+		      decided_by = EXCLUDED.decided_by, decided_at = now()
+		RETURNING update_id, decision, reason, decided_by, decided_at`,
+		updateID, decision, reason, actorID,
+	).Scan(&d.UpdateID, &d.Decision, &d.Reason, &d.DecidedBy, &d.DecidedAt); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO insideout.project_updates (project_id, author_id, kind, content)
+		VALUES ($1, $2, 'note', $3)`, projectID, actorID,
+		"[proposal "+decision+"] "+firstLine(content)+noteSuffix(reason)); err != nil {
+		return nil, err
+	}
+	return &d, nil
 }
 
 func isWorkspaceAdmin(ctx context.Context, tx pgx.Tx, workspaceID, userID uuid.UUID) (bool, error) {
