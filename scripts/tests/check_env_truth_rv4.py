@@ -19,6 +19,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 SETUP_VERBS = re.compile(r"^cli_setup\w*\.go$")
 NAME = r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b"  # an environment variable name
 TOKEN_CLAIM = re.compile(r"(?i)unauthenticated|rate[- ]?limit|\bGo server\b")
+COMMENT = re.compile(r"\s*(?:#|//)\s?(.*)")  # shell, YAML, Python, .env and Go comment lines
 # "docker-compose.yml does not interpolate X": X (or "it", the row's variable) is the object.
 NOT_INTERPOLATED = re.compile(
     r"(?i:compose(?:\.ya?ml)?[`'\"*]*\s+(?:does\s+not|doesn't|do\s+not|don't)\s+(?:yet\s+)?"
@@ -81,23 +82,50 @@ def server_reads_github_token():
                for p in go_sources("server") if not SETUP_VERBS.match(p.name))
 
 
+def statements(path):
+    """(first line number, text) pairs. A run of consecutive comment lines is one
+    text, so a sentence wrapped over several lines stays whole; any other line
+    stands alone."""
+    run = []
+    for number, line in [*numbered_lines(path), (0, "")]:  # the sentinel closes a final run
+        comment = COMMENT.match(line)
+        if comment:
+            run.append((number, comment.group(1)))
+            continue
+        if run:
+            yield run[0][0], " ".join(text for _, text in run)
+            run = []
+        if line.strip():
+            yield number, line
+
+
+def token_sentences(text):
+    """The sentences of one text that speak about GITHUB_TOKEN: those naming it,
+    or every sentence of a comment block that ends on its assignment (how
+    .env.example describes a variable: prose above `#GITHUB_TOKEN=`)."""
+    owned = re.search(r"\bGITHUB_TOKEN=\s*$", text)
+    return [s for s in re.split(r"(?<=\.)\s+", text) if owned or "GITHUB_TOKEN" in s]
+
+
 def token_not_oversold(failures):
     """rv4-FEAT-04 (R3-27): commit sync reads a private repo with the GitHub
     App's installation token and a public one anonymously, so the server never
     reads GITHUB_TOKEN; only `insideout setup --check` does. While that holds,
     no env script, compose file, env example or CLI source may tie the token to
-    sync (a rate limit, an unauthenticated run) or to the Go server, and the
-    prompt that asks for it must say who reads it."""
+    sync (a rate limit, an unauthenticated run) or to the Go server, however
+    the sentence is wrapped, and the prompt that asks for it must say who
+    reads it."""
     if server_reads_github_token():
         return  # the server reads it again; the wording may change
     scripts = sorted((ROOT / "scripts").glob("*.sh"))
     texts = scripts + [p for p in sorted((ROOT / "scripts").glob("*.py")) if not p.name.startswith("test_")]
     texts += [ROOT / "docker-compose.yml", ROOT / ".env.example"] + go_sources("server/cmd")
     for path in texts:
-        for number, line in numbered_lines(path):
-            if "GITHUB_TOKEN" in line and TOKEN_CLAIM.search(line):
-                fail(failures, f"{rel(path)}:{number} ties GITHUB_TOKEN to sync or to the Go server "
-                               f"({line.strip()[:100]!r}), but only `insideout setup --check` reads it")
+        for number, text in statements(path):
+            for sentence in token_sentences(text):
+                if TOKEN_CLAIM.search(sentence):
+                    fail(failures, f"{rel(path)}:{number} ties GITHUB_TOKEN to sync or to the Go server "
+                                   f"({sentence.strip()[:100]!r}), but only `insideout setup --check` reads it")
     for path in scripts:
         for number, line in numbered_lines(path):
             if re.match(r"\s*printf\b", line) and "GITHUB_TOKEN" in line and "setup --check" not in line:
