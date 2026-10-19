@@ -32,12 +32,22 @@ func testApp(t *testing.T) *InstallationTokens {
 	return NewInstallationTokens("424242", testKey)
 }
 
-// point aims the package at srv for one test.
+// point aims the package at srv for one test, with no remembered answers from
+// an earlier one.
 func point(t *testing.T, srv *httptest.Server) {
 	t.Helper()
 	prev := apiBaseURL
 	apiBaseURL = srv.URL
-	t.Cleanup(func() { apiBaseURL = prev })
+	forgetPublicAnswers()
+	t.Cleanup(func() { apiBaseURL = prev; forgetPublicAnswers() })
+}
+
+// forgetPublicAnswers empties what RepoIsPublic remembers, for a test that
+// changes GitHub's answer about one repo between two questions.
+func forgetPublicAnswers() {
+	publicMu.Lock()
+	clear(publicAnswers)
+	publicMu.Unlock()
 }
 
 // rv4-FEAT-04: which installation covers a repo is GitHub's answer for that

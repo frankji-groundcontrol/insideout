@@ -54,6 +54,7 @@ func TestRepoIsPublic(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			status, retry = tc.status, tc.retry
+			forgetPublicAnswers() // one repo, four answers: do not serve the last
 			got, err := RepoIsPublic(context.Background(), "own", "repo")
 			if got != tc.want {
 				t.Errorf("RepoIsPublic = %v, want %v", got, tc.want)
@@ -112,7 +113,12 @@ func TestRepoVisible(t *testing.T) {
 	point(t, srv)
 	app := testApp(t)
 
-	set := func(i, p int) { mu.Lock(); installation, public, publicAsked = i, p, 0; mu.Unlock() }
+	set := func(i, p int) {
+		forgetPublicAnswers() // one repo, five states: do not serve the last
+		mu.Lock()
+		installation, public, publicAsked = i, p, 0
+		mu.Unlock()
+	}
 	for _, tc := range []struct {
 		name         string
 		install, pub int

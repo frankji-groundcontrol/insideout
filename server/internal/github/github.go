@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -98,27 +99,24 @@ const maxSubjectRunes = 280
 // bad owner/repo name. Callers map it to a 404, distinct from an upstream 5xx.
 var ErrRepoNotFound = errors.New("github: repository not found")
 
-// RateLimitError means GitHub said a rate limit is spent: a 429, or a 403 that
-// carries Retry-After or an X-RateLimit-Remaining of 0 (limitOrRefusal).
-// RetryAfterSeconds is when to ask again, so the API layer can tell the user
-// instead of a bare 502 (F20).
+// RateLimitError means GitHub said a rate limit is spent: a 429, or a 403 with
+// Retry-After or X-RateLimit-Remaining 0 (limitOrRefusal). RetryAfterSeconds is
+// when to ask again, so the API layer can say so instead of a bare 502 (F20).
 type RateLimitError struct{ RetryAfterSeconds int }
 
 func (e *RateLimitError) Error() string { return "github: rate limited" }
 
-// AccessRefusedError means GitHub answered 403 and gave no sign of a rate limit:
-// it refused the request. A repository it has blocked, a permission the App was
-// not granted ("Resource not accessible by integration") and a suspended
-// installation all say this, and waiting does not help any of them. Message is
-// GitHub's own explanation, stripped of control characters and capped.
+// AccessRefusedError means GitHub answered 403 with no sign of a rate limit: a
+// blocked repository, a permission the App was not granted ("Resource not
+// accessible by integration") or a suspended installation. Waiting does not
+// help. Message is GitHub's own explanation, cleaned and capped.
 type AccessRefusedError struct{ Message string }
 
 func (e *AccessRefusedError) Error() string { return "github: access refused: " + e.Message }
 
-// retryAfterSeconds is when to ask GitHub again. Its Retry-After wins (whole
-// seconds); for a spent quota it is the time until X-RateLimit-Reset (an epoch
-// second), at least one second; otherwise 60. A secondary limit that leaves
-// quota behind carries no reset worth waiting for, so it gets the 60 as well.
+// retryAfterSeconds is when to ask GitHub again: its Retry-After (whole seconds);
+// else, for a spent quota, the time until X-RateLimit-Reset (epoch seconds), at
+// least one; else 60 (a secondary limit with quota left has no reset to wait for).
 func retryAfterSeconds(h http.Header, now time.Time) int {
 	if n, err := strconv.Atoi(strings.TrimSpace(h.Get("Retry-After"))); err == nil && n > 0 {
 		return n
@@ -188,15 +186,65 @@ func FetchCommitsSince(ctx context.Context, token, repoURL, sinceSHA string, per
 	return out, nil
 }
 
+// How long RepoIsPublic remembers an answer (rv4-FR-F177): the server asks
+// without a credential from one address whose anonymous quota is 60 requests an
+// hour for everyone, and a public repo stays public, so that is kept five
+// minutes. A "no" is kept a minute, so a repo just made public is not refused long.
+const (
+	publicTTL    = 5 * time.Minute
+	notPublicTTL = time.Minute
+	publicMax    = 512 // answers kept at most; a full map is emptied
+)
+
+type publicAnswer struct {
+	public bool
+	until  time.Time
+}
+
+// ponytail: one process-wide map, emptied when full (a loop over distinct names
+// costs the others one more question each); two first asks for one repo at once
+// both reach GitHub. Add an LRU or singleflight only if that ever shows.
+var (
+	publicMu      sync.Mutex
+	publicAnswers = map[string]publicAnswer{}
+)
+
 // RepoIsPublic reports whether anyone can read owner/repo. It asks without a
 // credential: GitHub answers an anonymous request 200 for a public repo and 404
 // for a private one and a missing one alike, so false means "not visible to
-// us", never "missing". A question GitHub cannot answer (rate limit, outage) is
-// an error, not false.
+// us", never "missing". A question GitHub cannot answer (limit, refusal, outage)
+// is an error, never false, and is not remembered; an answer is, per repo and
+// whatever the case of its name.
 func RepoIsPublic(ctx context.Context, owner, repo string) (bool, error) {
 	if !isRepoSegment(owner) || !isRepoSegment(repo) {
 		return false, fmt.Errorf("github: %q/%q is not a repo name", owner, repo)
 	}
+	key := strings.ToLower(owner + "/" + repo)
+	publicMu.Lock()
+	a, ok := publicAnswers[key]
+	publicMu.Unlock()
+	if ok && time.Now().Before(a.until) {
+		return a.public, nil
+	}
+	public, err := askRepoPublic(ctx, owner, repo)
+	if err != nil {
+		return false, err
+	}
+	ttl := notPublicTTL
+	if public {
+		ttl = publicTTL
+	}
+	publicMu.Lock()
+	if len(publicAnswers) >= publicMax {
+		clear(publicAnswers)
+	}
+	publicAnswers[key] = publicAnswer{public: public, until: time.Now().Add(ttl)}
+	publicMu.Unlock()
+	return public, nil
+}
+
+// askRepoPublic is the question RepoIsPublic remembers the answer to.
+func askRepoPublic(ctx context.Context, owner, repo string) (bool, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/repos/%s/%s", apiBaseURL, owner, repo), nil)
 	if err != nil {
 		return false, fmt.Errorf("github: build request: %w", err)

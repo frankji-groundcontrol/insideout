@@ -7,8 +7,10 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // rv4-FR-F177 and rv4-FR-F185: without the server-wide token every link to a
@@ -138,4 +140,95 @@ func TestRvGhClientAnErrorIsNotRemembered(t *testing.T) {
 			}
 		})
 	}
+}
+
+// How long an answer is kept is read off the map itself: a clock that could be
+// wound would be a second moving part to test the first.
+func TestRvGhClientAnswersAreKeptForTheirTime(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		status int
+		ttl    time.Duration
+	}{{"public", http.StatusOK, publicTTL}, {"not public", http.StatusNotFound, notPublicTTL}} {
+		t.Run(c.name, func(t *testing.T) {
+			rvGhClientNewGitHub(t, c.status)
+			repo := rvGhClientRepo()
+			before := time.Now()
+			if _, err := RepoIsPublic(context.Background(), "own", repo); err != nil {
+				t.Fatal(err)
+			}
+			publicMu.Lock()
+			a, ok := publicAnswers["own/"+repo]
+			publicMu.Unlock()
+			if !ok {
+				t.Fatal("the answer was not kept")
+			}
+			if d := a.until.Sub(before); d < c.ttl || d > c.ttl+10*time.Second {
+				t.Errorf("kept for %v, want %v", d, c.ttl)
+			}
+		})
+	}
+	if publicTTL < 2*time.Minute || notPublicTTL >= publicTTL {
+		t.Errorf("publicTTL = %v, notPublicTTL = %v: want a few minutes for a yes and less for a no", publicTTL, notPublicTTL)
+	}
+}
+
+// A kept answer stops counting when its time is up, and the new one replaces it.
+func TestRvGhClientAnExpiredAnswerIsAskedAgain(t *testing.T) {
+	g := rvGhClientNewGitHub(t, http.StatusOK)
+	repo := rvGhClientRepo()
+	publicMu.Lock()
+	publicAnswers["own/"+repo] = publicAnswer{public: false, until: time.Now().Add(-time.Second)}
+	publicMu.Unlock()
+	for range 2 {
+		if got, err := RepoIsPublic(context.Background(), "own", repo); err != nil || !got {
+			t.Fatalf("RepoIsPublic = %v, %v; want true, the stale 'no' must not be served", got, err)
+		}
+	}
+	if n := g.public.Load(); n != 1 {
+		t.Errorf("asked %d times, want 1: once to replace the stale answer, then none", n)
+	}
+}
+
+// What is remembered is bounded: a full memory is emptied, and the answer that
+// found it full is kept.
+func TestRvGhClientTheMemoryIsBounded(t *testing.T) {
+	g := rvGhClientNewGitHub(t, http.StatusOK)
+	publicMu.Lock()
+	for i := range publicMax {
+		publicAnswers[fmt.Sprintf("own/fill-%d", i)] = publicAnswer{public: true, until: time.Now().Add(time.Hour)}
+	}
+	publicMu.Unlock()
+	repo := rvGhClientRepo()
+	for range 2 {
+		if _, err := RepoIsPublic(context.Background(), "own", repo); err != nil {
+			t.Fatal(err)
+		}
+	}
+	publicMu.Lock()
+	n := len(publicAnswers)
+	publicMu.Unlock()
+	if n < 1 || n > publicMax {
+		t.Errorf("%d answers kept, want 1 to %d", n, publicMax)
+	}
+	if got := g.public.Load(); got != 1 {
+		t.Errorf("asked %d times, want 1: the answer that emptied the memory was dropped with it", got)
+	}
+}
+
+// Questions arrive from request goroutines; run under -race.
+func TestRvGhClientConcurrentQuestionsAreSafe(t *testing.T) {
+	rvGhClientNewGitHub(t, http.StatusOK)
+	repos := []string{rvGhClientRepo(), rvGhClientRepo(), rvGhClientRepo(), rvGhClientRepo()}
+	var wg sync.WaitGroup
+	for i := range 32 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if got, err := RepoIsPublic(context.Background(), "own", repos[i%len(repos)]); err != nil || !got {
+				t.Errorf("RepoIsPublic = %v, %v; want true", got, err)
+			}
+		}()
+	}
+	wg.Wait()
 }
