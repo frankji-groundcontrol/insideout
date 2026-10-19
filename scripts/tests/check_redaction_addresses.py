@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Pin the privacy scrub of review-4 wave 0 (rv4-PUB-01, PM-11, PUB-05, PUB-10, PUB-12).
+"""Pin the privacy scrub of review-4 wave 0 (rv4-PUB-01, PM-11, PUB-05, PUB-10, PUB-12)
+and the whole-change review that tightened it (rv4-FR-F43, F44, F46, F52, F56, F63).
 
 Usage: python3 -I scripts/tests/check_redaction_addresses.py
 
@@ -20,6 +21,9 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 GUARD = ROOT / "scripts" / "check-redaction.sh"
 AT = "@"
+
+# Real, registrable domains that the Go auth tests borrow for throwaway addresses.
+FIXTURE_DOMAINS = ("x.com", "x.co", "b.co")
 
 # The guard reads the hosted host from this constant and exits 2 without it.
 DEFAULT_BASE = "server/internal/apiclient/default_base.go"
@@ -90,10 +94,8 @@ class AddressRule(unittest.TestCase):
             addr("zq-probe", "insideout.local"),
             addr("zq-probe", "box.localhost"),
             addr("onboarding", "resend.dev"),  # the mail provider's sandbox
-            addr("a", "x.com"),  # fixture domains of the Go auth tests
-            addr("A", "X.COM"),
-            addr("a", "x.co"),
-            addr("a", "b.co"),
+            addr("zq-probe", "example.net"),
+            addr("zq-probe", "eu.mail.example.com"),
             "icon" + AT + "2x.png",  # retina asset names are not addresses
             "logo" + AT + "3x.jpg",
         ]
@@ -116,6 +118,85 @@ class AddressRule(unittest.TestCase):
             with self.subTest(text=text):
                 r = guard_on({"docs/n.md": f"see {text} here\n"})
                 self.assertEqual(r.returncode, 1, r.stderr)
+
+
+GO_TEST = "server/internal/api/probe_test.go"
+
+
+class FixtureDomains(unittest.TestCase):
+    """rv4-FR-F43, F52, F56, F63: x.com, x.co and b.co are live, registrable
+    domains, not reserved names. The guard exempted them for any local part in
+    any file, so a person's address on them committed cleanly. Only the exact
+    fixture addresses the Go tests spell today may use them."""
+
+    # (finding, path, local part, domain): the probes the reviewers ran.
+    PERSON_LIKE = [
+        ("F43", "docs/n.md", "jane.doe", "x.com"),
+        ("F43", "docs/n.md", "ceo", "x.co"),
+        ("F43", "docs/n.md", "me", "b.co"),
+        ("F43", "docs/n.md", "Jane.Doe", "X.COM"),
+        ("F52", "docs/zz1.md", "jane.doe", "x.com"),
+        ("F52", "docs/zz2.md", "alice", "x.co"),
+        ("F52", "docs/zz2.md", "bob", "b.co"),
+        ("F56", "README.md", "elonmusk", "x.com"),
+        ("F56", "hosts/h/host.yml", "jane.doe", "x.co"),
+        ("F63", "docs/zz-probe.md", "bob.smith", "x.co"),
+        ("F63", "docs/zz-probe.md", "alice", "b.co"),
+        ("F43", GO_TEST, "jane.doe", "x.com"),  # a NEW address fails in a Go test too
+    ]
+
+    def test_person_like_addresses_on_the_fixture_domains_fail(self):
+        for finding, path, local, domain in self.PERSON_LIKE:
+            with self.subTest(finding=finding, path=path, domain=domain):
+                r = guard_on({path: f"Contact the lead at {addr(local, domain)} for access.\n"})
+                self.assertEqual(r.returncode, 1, "the address passed the guard")
+                self.assertIn(f"{path}:1", r.stderr)
+                self.assertNotIn(addr(local, domain), r.stderr, "the guard must not print the value")
+
+    def test_wrapped_person_like_address_fails(self):
+        for wrap in ("<{}>", "mailto:{}", "({})", '"{}"'):
+            with self.subTest(wrap=wrap):
+                r = guard_on({"docs/n.md": wrap.format(addr("bob", "x.com")) + "\n"})
+                self.assertEqual(r.returncode, 1, r.stderr)
+
+    def test_listed_fixture_addresses_pass_inside_go_tests_under_server(self):
+        listed = [addr("a", "x.com"), addr("A", "X.COM"), addr("a", "x.co"), addr("a", "b.co"),
+                  "user%d" + AT + "x.co"]
+        for text in listed:
+            with self.subTest(text=text):
+                r = guard_on({GO_TEST: f'// {text}\n'})
+                self.assertEqual((r.returncode, r.stderr), (0, ""))
+
+    def test_the_fixture_exemption_is_exact(self):
+        # Not listed: fails even in a Go test. Listed, but not in a Go test under
+        # server/: fails too, so the fixtures cannot travel into docs or config.
+        cases = [
+            (GO_TEST, addr("zq-probe", "x.com")),
+            (GO_TEST, addr("zq-probe", "b.co")),
+            ("server/internal/api/probe.go", addr("a", "x.com")),
+            ("client/test/probe_test.dart", addr("a", "x.co")),
+            ("docs/n.md", addr("a", "x.com")),
+            ("docs/n.md", addr("a", "b.co")),
+        ]
+        for path, text in cases:
+            with self.subTest(path=path):
+                r = guard_on({path: f"// {text}\n"})
+                self.assertEqual(r.returncode, 1, "the address passed the guard")
+                self.assertIn(f"{path}:1", r.stderr)
+
+    def test_every_listed_fixture_names_the_file_that_needs_it(self):
+        # The list is the exemption's whole surface. Each line is a local part, a
+        # domain and, as the comment, a tracked Go test that really spells it.
+        block = re.search(r"<<'FIXTURES'\n(.*?)\nFIXTURES\n", GUARD.read_text(encoding="utf-8"), re.S)
+        self.assertIsNotNone(block, "no fixture list in the guard")
+        entries = re.findall(r"^(\S+)[ \t]+(\S+)[ \t]+# (\S+)$", block.group(1), re.M)
+        self.assertTrue(entries, "the fixture list is empty or malformed")
+        for n, (local, domain, path) in enumerate(entries, 1):
+            with self.subTest(entry=n, path=path):
+                self.assertIn(domain, FIXTURE_DOMAINS)
+                self.assertTrue(path.startswith("server/") and path.endswith("_test.go"), path)
+                r = run(["git", "grep", "-q", "-i", "-F", "-e", addr(local, domain), "--", path], ROOT)
+                self.assertEqual(r.returncode, 0, f"entry {n} is not spelled in {path}")
 
 
 class TrackedTree(unittest.TestCase):
