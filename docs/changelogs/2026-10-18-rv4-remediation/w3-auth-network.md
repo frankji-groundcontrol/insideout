@@ -26,8 +26,9 @@ retry). It was settled by running the built CLI rather than by argument: with
 with 0, the first burst ends the session.
 
 Branch `rv4/w3-auth-network`, base `8c74218`, seven commits `488add8..09f5c01`
-(three red/fix pairs and a comment fix), then this fragment. Findings are cited
-as `rv4-<ID>` because review IDs restart per review. Row 3.3 of the
+(three red/fix pairs and a comment fix), then this fragment, then the round-1
+guard repair `10b5871` (below). Findings are cited as `rv4-<ID>` because review
+IDs restart per review. Row 3.3 of the
 [remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md).
 No address, host, secret or token is spelled here; every account in the live
 runs below was a throwaway on a private database.
@@ -259,6 +260,38 @@ INTEGRATOR TODO (optional): drain the mail queue on SIGTERM: call
 with an accessor on `Server` in `server.go`), so a deploy does not eat a mail
 that was accepted a moment earlier.
 
+## Repair round 1: the compose guard
+
+The verifier found the SEC-02 compose guard (`compose_server_port_is_loopback`
+in `scripts/tests/check_ops_hardening.py`) vacuous at `3262fde`. It looked for a
+list entry directly under `ports:`. The fix commit `e310aaa` put a comment block
+there, the pattern matched nothing, zero entries were checked and any mapping
+passed; it had been red at `488add8` only because the base file had no comment
+under the key. With the server mapping on every interface it still printed
+`ops hardening ok: 5 checks`, exit 0, so the loopback bind had no working test
+and docker is not installed here to stand in for it.
+
+`10b5871` changes the guard only. `compose_ports` reads the block line by line,
+skipping comment and blank lines, and a list it cannot read (key missing, empty,
+commented out, a flow sequence) now fails instead of passing. The pass-through
+test for `INSIDEOUT_TRUSTED_PROXY_HOPS` had the same flaw, matching the name
+anywhere in the service text, comments included; it now needs a real
+environment key. Mutation proof on a throwaway copy of the branch, each case
+run as `python3 -I scripts/tests/check_ops_hardening.py`:
+
+| `docker-compose.yml` mutated to | guard at `3262fde` | guard at `10b5871` |
+| --- | --- | --- |
+| server mapping `"${SERVER_PORT:-8080}:8080"` (every interface) | exit 0 | exit 1, names the entry |
+| hop-count line commented out | exit 0 | exit 1 |
+| unmutated, or `127.0.0.1` restored | exit 0 | exit 0 |
+
+All 26 cases behave at `10b5871`: `0.0.0.0`, a bare or unquoted port, an extra
+all-interface entry (first or second), zero entries (comment-only block, entry
+commented out, key removed, flow sequence), long syntax, the hop-count line
+removed, and the shapes that must still pass (blank and comment lines around
+entries, `[::1]`, a list at the key's indent, a trailing comment, a block ended
+by end of file). `docker compose config` itself is still not run here.
+
 ## Verification
 
 Run against a private PostgreSQL 18 cluster on a port of its own, migrated from
@@ -302,7 +335,8 @@ provider's own failure modes were not observed. A real proxy chain: the
 `X-Forwarded-For` chains were written by `curl` and by tests, never by the
 Railway edge or nginx. `docker compose config`: docker is not installed here,
 so the compose properties are proven by the ops-hardening guard (which reads
-the file) and a YAML render (server `127.0.0.1:8080:8080`, hop count 0).
+the file, and since round 1 fails on a list it cannot read) and a YAML render
+(server `127.0.0.1:8080:8080`, hop count 0).
 Several server replicas: the queue and the throttle are per process, as before.
 
 New test files outside the literal `files_owned` globs, listed for the
