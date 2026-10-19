@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
 
 // Pins for the circuit-breaker WIRING that surrounds an LLM call: which
@@ -49,6 +51,20 @@ func resetBreaker(t *testing.T, c *Coach) {
 	}
 	reset()
 	t.Cleanup(reset)
+}
+
+// rv4-CLOSE-08: the wiring tests below open and fill the one production row
+// while store's TestCircuitFunctions_TakeARowID, in a sibling test process of
+// the same `go test ./...`, asserts that row is not open. Every test that goes
+// through resetBreaker must therefore hold the cross-process "breaker" lock.
+// The test that reads the row in the other package takes the same lock.
+func TestBreakerWiringTestsWaitForTheCrossProcessLock(t *testing.T) {
+	st := newTestStore(t)
+	testlock.AssertWaits(t, st.Pool, "breaker",
+		"TestFailTurn_FeedsOnlyProviderHealthToTheBreaker",
+		"TestAdmitDone_ReportsTheBreakerVerdicts",
+		"TestAdmit_RefusedWhileTheCircuitIsOpen",
+		"TestHandleMessage_TotalTurnDeadlineCutsATricklingTurn")
 }
 
 // failTurn feeds the breaker only failures that say something about the

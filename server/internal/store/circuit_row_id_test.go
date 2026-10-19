@@ -4,7 +4,19 @@ import (
 	"context"
 	"os"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
+
+// rv4-CLOSE-08: the test below ends by reading the production 'anthropic' row
+// and failing if it is open. The agent package's wiring tests, in a sibling
+// test process of the same `go test ./...`, open that very row for a moment,
+// so this test spuriously failed whenever the two overlapped. It takes the
+// "breaker" lock the wiring tests take.
+func TestCircuitRowTestWaitsForTheCrossProcessLock(t *testing.T) {
+	st := newTestStore(t)
+	testlock.AssertWaits(t, st.Pool, "breaker", "TestCircuitFunctions_TakeARowID")
+}
 
 // TEST-06's core: the breaker rules live in SQL functions hardwired to the
 // one shared 'anthropic' row, so no test can own its breaker state — the
