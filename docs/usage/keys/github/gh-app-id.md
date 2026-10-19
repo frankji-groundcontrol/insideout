@@ -1,7 +1,7 @@
 # gh-app-id
 
 `INSIDEOUT_GH_APP_ID` is the numeric id of the GitHub App that signs
-installation-token requests for private guide and evidence fetches.
+installation-token requests for private guide, commit and evidence fetches.
 
 ## 1. Where the `.key` file is
 
@@ -13,9 +13,12 @@ installation-token requests for private guide and evidence fetches.
 ## 2. How it is propagated
 
 The value moves from `.env` through `dev.sh` into `config.Load`. The server
-uses it only when a signed GitHub App delivery carries an installation id. It
-does not authenticate the user-triggered `insideout sync` command; that route
-uses `GITHUB_TOKEN` when one is configured, or GitHub's public API lane.
+mints installation tokens with it for a signed GitHub App delivery (which
+carries an installation id), for the commits `insideout sync` reads from a
+private repository (it asks GitHub which installation covers the repo), and for
+the visibility check when a repository is linked to a project. A public
+repository is read anonymously, and `GITHUB_TOKEN` is not part of this path
+(rv4-FEAT-04).
 
 ## 3. How to set it
 

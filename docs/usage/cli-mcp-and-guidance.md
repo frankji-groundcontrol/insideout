@@ -78,7 +78,7 @@ insideout reset-password                            # paste link/token + new pas
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `join <code>`, `projects create --title [--desc] <ws-id>` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
-| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>`, `idea delete <id>` (soft drop), `idea convert <id>` |
+| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>`, `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
 | Admin | `invite [--ttl hours] <email>`, `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
@@ -89,6 +89,13 @@ insideout reset-password                            # paste link/token + new pas
 Flags precede positional ids (Go convention). Statuses are
 `locked|pending|in_progress|done`; audiences are
 `decision|management|delivery|validation`.
+
+Every request has a deadline: 5 minutes for the two calls that wait on a model
+(`POST /prds/{id}/build` and `POST /roadmap/{id}/expand`), 20 seconds for the
+rest, and an MCP tool call is bound by the same numbers. Ctrl-C (or SIGTERM)
+ends the request in flight and the command with status 130 and
+`insideout: interrupted`; a command still running 400 ms later, or a second
+signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
 
 ## MCP server
 
@@ -190,7 +197,11 @@ Connecting a repository so pushes and PRs feed your roadmap:
 1. **Bind the repo**: `insideout repo set <project-id>
    https://github.com/owner/repo` (web: the project's repo field). Accepted:
    `owner/repo` or a github.com URL (the host must be exactly `github.com`);
-   the server stores `https://github.com/<owner>/<repo>`.
+   the server stores `https://github.com/<owner>/<repo>`. A repository belongs
+   to one project: a second project linking it, in any letter case, gets 409
+   `GITHUB_REPO_ALREADY_LINKED`. When the GitHub App is configured, the
+   repository must be public or covered by an installation of the App, else the
+   answer is 400 `GITHUB_REPO_NOT_VISIBLE` (rv4-COMP-05).
 2. **Scaffold the guide**: `insideout guide --out insideout.yaml
    <project-id>` — generated from your roadmap: every leaf node with
    editable matchers, branch nodes documented as comments.
@@ -214,8 +225,10 @@ From the next push, GitHub delivers to
 delivery is
 HMAC-verified, the guide is fetched (installation token for private
 repos), and matched **leaf** nodes gain evidence rows — commits show
-activity, opened PRs review, merged PRs implementation, deployments
-release. Unmatched activity stays visible but attaches to nothing;
+activity, opened PRs review, merged PRs implementation, and a successful
+deployment status release (a deployment merely created is activity; the App
+must deliver `deployment_status` events). Unmatched activity stays visible but
+attaches to nothing;
 evidence never auto-proves outcomes. Redeliveries are idempotent.
 Re-generate the guide any time with `insideout guide`; node ids are
 stable, so committed matchers survive regeneration.

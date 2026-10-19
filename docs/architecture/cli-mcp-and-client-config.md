@@ -37,6 +37,18 @@ review 4 records it as rv4-ARCH-07 in
 [the architect review](../review/2026-10-18-multirole-4/10-architect.md). Ask
 `tools/list` for the MCP tool set; a count written in prose drifted twice.
 
+A client verb runs under one context (`runInterruptible` in `cli.go`): the
+first Ctrl-C or SIGTERM cancels it, the request in flight aborts, and the
+command ends with status 130 and `insideout: interrupted` on stderr. A command
+that is still running 400 ms later, or a second signal, ends the process at once.
+Before this the default signal action killed the process wherever it stood,
+even between the server rotating a refresh token and the CLI saving the new
+pair (rv4-QUAL-04). One client-building site is not yet on that context:
+the sign-in probe of `setup --check` (`runHealthCheck` in `cli_setup_check.go`),
+so a first Ctrl-C does not abort its request and the process ends at the 400 ms
+grace instead (open residue R3-24 in
+[the open findings](../issues/2026-10-18-review-4-open-findings.md)).
+
 ## Finding the server and the identity: `clientconfig.Resolve`
 
 Every CLI verb, every `--api` flag and the MCP server resolve credentials through
@@ -81,7 +93,12 @@ client built from the saved session (`Creds.Client()`) renews itself on 401:
   the `Reload` hook re-reads the stored pair, so a second process that already
   rotated the token is adopted instead of racing with a retired one. A renewal
   that loses the race anyway polls the store for the winner's pair for 500 ms
-  (`renewalGrace`) before it takes the refusal as the end of the session.
+  (`renewalGrace`) before it takes the refusal as the end of the session. The
+  server backs that wait: a spent refresh token offered again within
+  `refreshReuseGrace` (10 s, `internal/api/auth.go`) of its rotation is refused
+  without ending the session family, and only a later reuse revokes the family
+  (rv4-SEC-04). The 500 ms poll stays the ordinary path; a lock file beside the
+  config is the upgrade path if that grace is ever shortened below the wait.
 - `Save` stores the rotated pair only while the file still holds a login for the
   same server; a newer `login --api <other>` in another terminal is neither
   overwritten nor adopted. If the write fails the old refresh token is already
@@ -110,6 +127,15 @@ saved login's tokens only ever go to the server they were issued by.
   That removal is advice to the model; the server's 403 for an agent-scope
   token is what holds. See [agent token scope](agent-token-scope.md), which also
   states the deploy order (server first, then the new binary).
+- Each call rides the context of what is running it. `apiclient.Client` has no
+  `http.Client` timeout; `SetContext` binds a context and every request is cut
+  by a deadline picked from its route (`deadline.go`): 20 s for a call the
+  server answers from its database, 5 minutes for the two that wait on the
+  planner's model (`POST /prds/{id}/build` and `POST /roadmap/{id}/expand`;
+  `aiRoutes` is a hand-kept list, so a new model-calling route has to be added
+  to it). In the MCP process the tool call's context is that context, so a
+  host that cancels a call frees the server request; the agent-scope trade rides
+  the same context (rv4-QUAL-06, rv4-REL-06, rv4-FULL-07).
 - Every product result opens with a one-line label and carries its data inside
   one `<prd_data>` fence (`fence.go`, the same fence the coach's prompts use,
   `agentcontext.FenceData`), with tag-like text broken so the data cannot close

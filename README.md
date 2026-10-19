@@ -52,7 +52,7 @@ Quick start below). For self-hosting, see
 托管实例的地址是 `./scripts/default-api.sh` 所打印 API 基址去掉 `/api/v1` 的部分。没有邀请码？在本仓库开一个标题为 “Invite request” 的 issue（不要贴邮箱），或像 [SECURITY.md](SECURITY.md) 那样通过 GitHub 联系仓库所有者。
 
 The hosted instance is the host in the API base `./scripts/default-api.sh`
-prints (without `/api/v1`). No invite code? Open an issue titled "Invite
+prints (without `/api/v1`). No invitation code? Open an issue titled "Invite
 request" on this repository (do not paste an email address into it), or reach
 the repository owner through GitHub, the contact [SECURITY.md](SECURITY.md)
 lists.
@@ -179,7 +179,7 @@ coach falls back to an offline template that only echoes your last message
 
 网页端的产品环：注册（或凭邀请码）→ 建工作区 → 在想法箱记一句话 → 「转化为 PRD」→ 和教练对话打磨 → 长出路线图、挂上仓库 → 人类 Commit 定格版本。
 
-The web loop: register (invite code in hand) → create a workspace → jot a
+The web loop: register (invitation code in hand) → create a workspace → jot a
 one-line idea → "Convert to PRD" → refine it with the coach → grow the
 roadmap and bind a repo → a human Commits the version.
 
@@ -206,7 +206,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 
 > 注册默认「仅限邀请」：全新数据库播种 `signup_mode = invitation_only`，无邀请码注册返回 403。本地首跑先用 `insideout promote-admin <your-email>` 提升管理员（该邮箱还没有账号时会先创建账号，密码从标准输入读取）、再生成邀请码（本地开发可 `insideout signup-mode open`）。
 > Registration is **invitation-only by default**: a fresh database seeds
-> `signup_mode = invitation_only`; registering without an invite code
+> `signup_mode = invitation_only`; registering without an invitation code
 > returns 403. For a local first run, bootstrap with `insideout
 > promote-admin <your-email>` (it creates the account first when the
 > address has none, reading the password from stdin) then mint invites
@@ -228,7 +228,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 | 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |
 | 架构 / Architecture | [`docs/architecture/index.md`](docs/architecture/index.md) |
 | 变更记录 / Change log | [`docs/changelogs/`](docs/changelogs/README.md) |
-| 贡献与安全 / Contributing & security | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) |
+| 贡献、安全与隐私 / Contributing, security & privacy | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`PRIVACY.md`](PRIVACY.md) |
 | 许可证 / License | [`LICENSE`](LICENSE) - Mozilla Public License 2.0 |
 
 ## 第三方资源 / Third-party assets
@@ -239,16 +239,20 @@ The agent vocabulary — agents report, humans decide: `agent-context`
   **Noto Serif SC**（`client/assets/fonts/`，经 `client/pubspec.yaml` 打包，由
   `client/lib/theme/native_fonts.dart` 加载）。许可全文随附于
   [`client/assets/fonts/OFL.txt`](client/assets/fonts/OFL.txt)。
-- Web 端不打包字体文件，经 Google Fonts 加载所需字族（Archivo、Noto Sans SC、
-  Source Serif 4、Noto Serif SC；见 `client/lib/theme/web_fonts_web.dart`）。
+- Web 端自带引擎绘制所需的全部字体（145 个字族，SIL OFL 1.1 许可的 Noto 与
+  Roboto），放在 `client/web/fonts/`，由 `client/web/flutter_bootstrap.js` 指向同源
+  地址，页面不再访问任何字体托管域。许可全文见 `client/web/fonts/licenses/`，版权
+  方见 `client/web/fonts/NOTICE.txt`。
 - Native builds (iOS / Android / desktop) ship two SIL OFL-licensed variable
   fonts, **Noto Sans SC** and **Noto Serif SC** (`client/assets/fonts/`,
   bundled via `client/pubspec.yaml`, loaded by
   `client/lib/theme/native_fonts.dart`). The full license text ships alongside
   as [`client/assets/fonts/OFL.txt`](client/assets/fonts/OFL.txt).
-- The web build loads its faces from Google Fonts instead of bundling font
-  files (Archivo, Noto Sans SC, Source Serif 4, Noto Serif SC; see
-  `client/lib/theme/web_fonts_web.dart`).
+- The web build serves its own fonts: the whole table the engine paints with
+  (145 SIL OFL 1.1 families, Noto and Roboto) sits in `client/web/fonts/`, and
+  `client/web/flutter_bootstrap.js` points the engine at it, so a page contacts no
+  font host. Licence texts are in `client/web/fonts/licenses/`, the copyright
+  holders in `client/web/fonts/NOTICE.txt`.
 
 **阿里巴巴普惠体 / Alibaba PuHuiTi — 历史署名，仅作记录 / historical attribution only:**
 

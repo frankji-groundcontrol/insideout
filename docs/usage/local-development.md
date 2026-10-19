@@ -7,7 +7,11 @@ This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git histo
 
 ## Prerequisites
 
-- **Go 1.26+** (see `server/go.mod`)
+- **Go 1.26+** (see `server/go.mod`). The same file names a newer `toolchain`
+  release, which the vulnerability scan in `.github/workflows/security.yml`
+  runs with (rv4-PUB-07). With the default `GOTOOLCHAIN=auto`, the first `go`
+  command inside `server/` downloads it when your Go is older (network access
+  once, then cached).
 - **Flutter 3.44.x** (for `client/`; CI and `client/Dockerfile` pin 3.44.0; see [`client/README.md`](../../client/README.md))
 - **PostgreSQL 18** reachable via `DATABASE_URL` — either your own instance or the bundled one below (CI and the bundled service run 18; older majors are untested)
 - **Docker** (optional) — only needed for the bundled Postgres / full-compose runs
@@ -160,6 +164,15 @@ For browser dev against the local server, `scripts/dev.sh` exports
 localhost port passes CORS without extra config.
 Hosted web uses same-origin `/api/v1` behind nginx
 ([deployment.md](deployment.md#railway-current-public-deploy)).
+
+Android (rv4-COMP-06): no build type allows cleartext http except debug and
+profile, and those only for `localhost`, `127.0.0.1` and `10.0.2.2`. In the
+emulator, point the app at the host through its alias:
+`--dart-define=API_BASE=http://10.0.2.2:8080/api/v1`. On a physical device run
+`adb reverse tcp:8080 tcp:8080` and use `http://127.0.0.1:8080/api/v1`. A LAN
+address such as `http://192.168.x.y:8080` no longer works over http, even in
+debug; use the reverse above or an https endpoint. A release build needs an
+`https` `API_BASE`.
 
 ## Testing
 

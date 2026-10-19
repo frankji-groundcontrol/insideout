@@ -98,8 +98,9 @@ separately and keep the body switch local.
 
 ## 7. Prove GitHub access
 
-For [the optional GitHub token](keys/github/github-token.md), bind a project
-and run the manual sync path:
+Bind a project and run the manual sync path. A public repository is read
+anonymously; a private one is read with the GitHub App's installation token, not
+with `GITHUB_TOKEN` (rv4-FEAT-04):
 
 ```bash
 export PROJECT_ID='project-id'
@@ -113,9 +114,11 @@ on a private test repository and trigger a signed App delivery that requires a
 private guide fetch. The delivery must answer HTTP 200 and the server log must
 not report an unusable private key. For the [webhook secret](keys/github/gh-webhook-secret.md),
 send a signed delivery from GitHub and require HTTP 200; a mismatched signature
-must be rejected. `GITHUB_TOKEN` is optional and is validated by
-`insideout setup --check` when present. The stored OAuth client secret has no
-live consumer and receives placement-only verification.
+must be rejected. To prove commit sync on a private repository, install the App
+on it and run the sync above: the installation token reads it. The
+[optional GitHub token](keys/github/github-token.md) is read only by
+`insideout setup --check` and is validated there when present. The stored OAuth
+client secret has no live consumer and receives placement-only verification.
 
 ## 8. Troubleshoot by evidence
 

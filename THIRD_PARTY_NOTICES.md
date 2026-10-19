@@ -62,6 +62,19 @@ cannot reach the repository, open an issue at
 | golang.org/x/text | BSD-3-Clause (Go Authors) | Copyright 2009 The Go Authors. |
 | gopkg.in/yaml.v3 | MIT and Apache-2.0 | see the yaml.v3 text below |
 
+## Fonts in the web client
+
+The Go binaries in this archive contain no fonts. The web client in the
+repository serves its own: `client/web/fonts/` holds the 725 font files (145
+families, Noto and Roboto) that the Flutter web engine would otherwise fetch from
+`fonts.gstatic.com`, unmodified copies in the same layout. They are under the SIL
+Open Font License 1.1. The license text of each family is
+`client/web/fonts/licenses/<family>.txt`, and `client/web/fonts/NOTICE.txt` lists
+the copyright holders: Adobe (the five CJK families), Google (Noto Color Emoji),
+The Roboto Project Authors (Roboto) and The Noto Project Authors (the other 138).
+The native builds bundle Noto Sans SC and Noto Serif SC under the same license
+(`client/assets/fonts/OFL.txt`).
+
 ## License texts
 
 ### MIT

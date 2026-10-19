@@ -141,7 +141,9 @@ ApiCall postPrdConversation(String id, String locale) =>
 
 /// Confirms the stage the coach proposed (it waits in conversation meta,
 /// not in the stage column): the server writes it and clears the proposal.
-/// Declining never calls this — the row simply keeps the old stage.
+/// Declining is its own call, `declineConversationStage` in client_prd.dart
+/// (`POST /conversations/{id}/stage/decline`): the server clears the proposal
+/// and the finding resolutions parked with it, and the row keeps the old stage.
 ApiCall postConversationStage(String id, String stage) =>
     ApiCall('POST', '/conversations/$id/stage', {'stage': stage});
 

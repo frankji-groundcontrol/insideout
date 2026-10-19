@@ -17,8 +17,8 @@ import (
 )
 
 // Coach is the subset of internal/agent.Coach the API layer needs; kept as
-// an interface here so api doesn't import agent until it's wired in P4,
-// and so handler tests can stub it.
+// an interface here so api never imports agent (cmd/insideout wires the real
+// coach in), and so handler tests can stub it.
 type Coach interface {
 	HandleMessage(w http.ResponseWriter, r *http.Request, conversationID, userID, workspaceID, content string)
 	// ConfirmStage ratifies a proposed stage change: it advances the stage

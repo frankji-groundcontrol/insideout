@@ -106,9 +106,10 @@ services:
       # /api/v1/hooks/github; APP_ID + PRIVATE_KEY mint installation access
       # tokens (PRIVATE_KEY is the .pem with \n-escaped newlines;
       # PRIVATE_KEY_FILE wins when set). All empty = webhook disabled
-      # (503), guide loads unauthenticated (public repos only). GITHUB_TOKEN
-      # raises the commit-sync rate limit; empty keeps the unauthenticated
-      # one.
+      # (503), guide loads unauthenticated (public repos only). Commit sync
+      # reads a private repo with the App's installation token and a public
+      # one anonymously; the server ignores GITHUB_TOKEN (rv4-FEAT-04), which
+      # only `insideout setup --check` reads.
       INSIDEOUT_GH_WEBHOOK_SECRET: ${INSIDEOUT_GH_WEBHOOK_SECRET:-}
       INSIDEOUT_GH_APP_ID: ${INSIDEOUT_GH_APP_ID:-}
       INSIDEOUT_GH_PRIVATE_KEY: ${INSIDEOUT_GH_PRIVATE_KEY:-}

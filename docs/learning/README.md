@@ -6,6 +6,13 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-19 | [One owner per shared resource, and a brief checked against file ownership](2026-10-19-one-owner-per-shared-resource-in-a-multi-worker-wave.md) | [review-4 remediation](../changelogs/2026-10-18-rv4-remediation/index.md) |
+| 2026-10-19 | [CanvasKit ignores CSS font faces, so self-hosting fonts is a loader setting](2026-10-19-canvaskit-ignores-css-font-faces.md) | [wave 3, client assets](../changelogs/2026-10-18-rv4-remediation/w3-client-assets.md) |
+| 2026-10-19 | [A test on a global row takes the named lock and puts the row back](2026-10-19-a-test-on-a-global-row-takes-the-named-lock.md) | [wave 3, test hardening](../changelogs/2026-10-18-rv4-remediation/w3-test-hardening.md) |
+| 2026-10-19 | [A new exported client method needs a row in the escape sweep](2026-10-19-a-new-client-method-needs-a-row-in-the-escape-sweep.md) | [wave 3, first-run copy](../changelogs/2026-10-18-rv4-remediation/w3-first-run-copy.md) |
+| 2026-10-19 | [When the server takes over a write, remove the client's copy in the same wave](2026-10-19-when-the-server-takes-over-a-write-remove-the-clients-copy.md) | [wave 3, client apply](../changelogs/2026-10-18-rv4-remediation/w3-client-apply.md) |
+| 2026-10-19 | [A handler that never reads its body never sees the client leave](2026-10-19-a-handler-that-never-reads-its-body-never-sees-the-client-leave.md) | [wave 3, context and deadlines](../changelogs/2026-10-18-rv4-remediation/w3-context-deadlines.md) |
+| 2026-10-19 | [A release script fails open in three quiet ways](2026-10-19-a-release-script-fails-open-in-three-quiet-ways.md) | [wave 3, release and supply chain](../changelogs/2026-10-18-rv4-remediation/w3-release-supply.md) |
 | 2026-10-18 | [A route policy keys on the mux pattern and treats the zero value as denied](2026-10-18-a-route-policy-keys-on-the-pattern-and-fails-closed.md) | [wave 2, agent scope](../changelogs/2026-10-18-rv4-remediation/w2-agent-scope.md) |
 | 2026-10-18 | [A column grant turns "RLS hid the row" into "permission denied"](2026-10-18-a-column-grant-turns-zero-rows-into-permission-denied.md) | [wave 2, RLS](../changelogs/2026-10-18-rv4-remediation/w2-rls.md) |
 | 2026-10-18 | [A wall-clock test turns red by date, and a push-only CI never sees it](2026-10-18-a-wall-clock-test-needs-a-scheduled-run.md) | [multirole review 4](../changelogs/2026-10-18-multirole-review-4.md) |

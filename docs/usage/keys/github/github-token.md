@@ -1,9 +1,12 @@
 # GitHub token (optional PAT)
 
-`GITHUB_TOKEN` is an optional personal access token (PAT) that raises the
-GitHub REST rate limit for user-triggered commit sync. Public repositories work
-without it; the GitHub App credentials serve the separate signed-webhook guide
-path.
+`GITHUB_TOKEN` is an optional personal access token (PAT) that only
+`insideout setup --check` reads: it validates the token against the GitHub API.
+The server never sends it. Commit sync (`insideout sync` and the push webhook)
+reads a private repository with the GitHub App's installation token and a
+public one anonymously (rv4-FEAT-04), so a PAT no longer raises its rate limit.
+Whether to retire the key is residue R3-27 in the
+[open findings](../../../issues/2026-10-18-review-4-open-findings.md).
 
 ## 1. Where the `.key` file is
 
@@ -12,21 +15,22 @@ path.
 
 ## 2. How it is propagated
 
-When present, `dev.sh` exports it to the server. `github.FetchCommitsSince`
-adds a Bearer header for `insideout sync`; `insideout setup --check` also calls
-the GitHub API to validate the token. It is not used by webhook signature
-verification or App installation-token minting.
+When present, `dev.sh` exports it and compose passes it through, but the server
+does not read it: the commit sync takes its credential from the GitHub App
+([gh-app-id.md](gh-app-id.md)). `insideout setup --check` reads it from the
+environment or the repository's env file and calls the GitHub API to validate
+it. It is not used by webhook signature verification or App installation-token
+minting.
 
 ## 3. How to set it
 
 1. In GitHub token settings, create a fine-grained token with the narrowest
-   read-only repository permission needed for the projects you bind. Keep the
-   expiry and repository scope explicit.
+   read-only repository permission. Keep the expiry and repository scope
+   explicit; the token only has to be accepted by the GitHub API.
 2. Run `./scripts/env.sh edit`, choose `GITHUB_TOKEN`, and enter the token at
    the hidden prompt.
 3. Run the host `keys.py init` and `fill` commands from the GitHub module
-   README. An empty value remains valid when public repositories and the
-   unauthenticated rate limit are enough.
+   README. An empty value remains valid; nothing in the server needs the token.
 
 ## 4. How to test it
 
@@ -37,14 +41,16 @@ insideout setup --check
 ```
 
 **Expected result:** the `github` line is `ok`; the command reports only token
-metadata and never prints the token. For capability evidence, bind a private
-repository and run `insideout sync '<project-id>'`.
+metadata and never prints the token. This proves the token only. For evidence
+that a private repository syncs, install the GitHub App on it, bind it to a
+project and run `insideout sync '<project-id>'`: that exercises the App
+credentials ([gh-app-id.md](gh-app-id.md)), not this token.
 
 **If it fails:** HTTP 401/403 means the token is expired, revoked, or missing
-the repository permission. A sync rate-limit response means the token was not
-loaded by the running process; rerun through `scripts/dev.sh` and audit the
-host store without printing values. A public repository can still sync with an
-empty token, so do not create a PAT solely to make the shape test non-empty.
+the repository permission. A sync rate-limit or not-found response is not about
+this token, which the sync does not send; check the App installation on the
+repository instead. A public repository syncs with an empty token, so do not
+create a PAT solely to make the shape test non-empty.
 
 The automated placement check is:
 
@@ -54,9 +60,10 @@ cd scripts && python3 -m unittest discover -s tests/keys -t . -p 'test_github-to
 
 ## 5. How it is used
 
-The token is an optional Bearer credential on GitHub commit-list requests. It
-does not grant InsideOut user access and does not replace the App's webhook
-secret or private-key pair.
+Only `insideout setup --check` uses it, to confirm the GitHub API accepts it
+(status only, the value is never printed). It is not sent on commit sync, does
+not grant InsideOut user access and does not replace the App's webhook secret or
+private-key pair.
 
 ## 6. Installation guide
 

@@ -20,7 +20,9 @@ server/
                        with an `untrusted` block and the one fence rule (FenceData)
     api/               HTTP routes, middleware, per-domain handlers
     apiclient/         the shared HTTP client every non-web surface speaks: renews
-                       the saved session once on 401, trades a full token for an agent token
+                       the saved session once on 401, trades a full token for an agent token;
+                       every call rides a context (`SetContext`) with a per-route deadline
+                       (20 s, 5 min for build and expand) and no client-wide timeout
     audienceview/      audience projections of one PRD
     auth/              password hashing, JWT (with the scope claim), refresh-token helpers
     clientconfig/      one Resolve(flagAPI) for CLI and MCP: base from --api, INSIDEOUT_API,
@@ -61,11 +63,27 @@ The non-web clients (`cmd/insideout-mcp`, `apiclient`, `clientconfig`, `mcpserve
 `withMaxBody` (caps request bodies at 1 MiB everywhere except the GitHub
 webhook route, which gets 8 MiB — a push delivery listing every commit's
 files can outgrow 1 MiB) → the
-`net/http` mux → route-level `requireAuth` where needed.
+`net/http` mux → route-level `requireAuth` where needed. Inside `withMaxBody`,
+`withRequestDeadline` gives every route a 25 s context except seven exempt
+patterns (the two passive streams and the model-calling routes: coach messages,
+build and expand with their confirms), and `/healthz` pings the database under a
+2 s deadline and answers 503 when it cannot (rv4-REL-02). The two passive streams
+(presence, roadmap progress) are capped at 20 per user and 100 per project, with
+429 `APP_STREAM_LIMIT` past the cap, cursor posts are limited to 25 a second per
+user, and each 10 s heartbeat re-verifies the stream's own access token and the
+caller's project membership, so a stream ends when its session or membership
+does (rv4-REL-01, REL-03, SEC-08).
 
 Authentication is a short-lived JWT access token plus a rotating opaque
 refresh token (SHA-256 hash stored at rest, rotated on every `/auth/refresh`
-call). It is Bearer-first: `requireAuth` takes the access token from
+call). Rotated tokens form a session family (`sessions.family_id`, migration
+`20261018170000_sessions_family.sql`: a nullable column and an index, no
+backfill; a session from before it reads as a family of its own id): a spent
+token offered again after `refreshReuseGrace` (10 s, which covers a second tab
+or CLI process that lost a refresh race) ends the whole family, while a replay
+inside the grace is only a lost race (rv4-SEC-04). An access token issued before
+such a kill still works until `INSIDEOUT_ACCESS_TTL` runs out; `iss`/`aud`
+checks and a logout denylist are open. It is Bearer-first: `requireAuth` takes the access token from
 `Authorization: Bearer` and only then from the httpOnly access cookie
 (`bearerOrCookie` in `cookies.go`). Every first-party client sends the header
 (the Flutter client, the CLI, MCP); sign-in still sets the httpOnly cookies and
@@ -109,7 +127,12 @@ attempt budget; issuing a new one supersedes the previous unused token of
 that kind). Delivery is `internal/mail` (Resend HTTP API; an empty
 `INSIDEOUT_MAIL_API_KEY` selects dev mode, which logs messages instead of
 sending them), and request endpoints answer a uniform 200 so account
-existence is not enumerable.
+existence is not enumerable. Sends leave the request path through a small
+bounded queue in `internal/mail` (4 workers, 64 waiting; a full queue drops the
+send and logs it), so the 200 is uniform in time as well as in body (rv4-SEC-03,
+rv4-REL-07). Per-client throttles key on the TCP peer, or on the address
+`INSIDEOUT_TRUSTED_PROXY_HOPS` hops from the right of `X-Forwarded-For` when the
+server sits behind proxies (rv4-SEC-02; see [deployment](../usage/deployment.md)).
 
 ## Store layer
 
@@ -155,8 +178,10 @@ Domain handlers live in `internal/api`, grouped by resource:
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
   `project_updates.go`, `ideas.go`, `guide.go`
 - PRDs: `prd*.go` (PRDs, audience views, readiness, Commit), `conversations.go`
-  (the coach's SSE turns), `conversations_trust.go` (parked finding resolutions
-  on the confirm card)
+  (the coach's SSE turns, the stage confirm and the human-only `stage/decline`
+  route, and the conversation view with `criticSkipped` and `criticRounds`),
+  `conversations_trust.go` (the parked finding resolutions the view lists as
+  `pendingResolutions` on the confirm card)
 - roadmap: `roadmap*.go` (nodes, drafting, evidence, progress, validation),
   `presence_routes.go`
 - GitHub: `github*.go` (repo sync, the webhook and its evidence)

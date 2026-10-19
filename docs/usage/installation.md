@@ -81,7 +81,7 @@ from `command -v insideout-mcp`. Reload MCP servers after writing the
 file. Details:
 [cli-mcp-and-guidance.md](cli-mcp-and-guidance.md#mcp-server).
 
-Signup on the hosted service is invitation-only. Register with an invite
+Signup on the hosted service is invitation-only. Register with an invitation
 code, then sign in with a password, emailed code, or magic link:
 
 ```bash
@@ -91,6 +91,13 @@ insideout register --invite "$INVITE_CODE" "$ACCOUNT_EMAIL"
 insideout login --code "$ACCOUNT_EMAIL"
 insideout login --magic "$ACCOUNT_EMAIL"
 ```
+
+An invitation code comes from the server's administrator. Until the owner
+picks a permanent route (rv4-USER-12), a stranger asks the way the
+[README](../../README.md) says: an "Invite request" issue without an e-mail
+address, or the repository owner through GitHub. With no code you can still try
+the product on a server of your own: from a checkout, `insideout setup --local
+--postgres bundled` (it needs Docker; see [Your own server](#your-own-server)).
 
 Confirm the hosted path without installing again:
 

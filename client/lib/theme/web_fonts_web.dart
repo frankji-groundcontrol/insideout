@@ -2,6 +2,15 @@ import 'dart:js_interop';
 
 import 'package:web/web.dart';
 
+// STALE SINCE rv4-COMP-03: index.html no longer links the Google Fonts
+// stylesheet this gate was written for, and CanvasKit ignores CSS @font-face
+// rules (it fetches its fonts itself, from web/fonts via
+// web/flutter_bootstrap.js). The faces below are expected never to report
+// loaded, so loadWebFonts() should wait its full 10 s: a cold start was
+// measured at about 10.5 s after mount, which matches but does not prove it.
+// Open residue R3-30 in docs/issues/2026-10-18-review-4-open-findings.md, for
+// the client owner. The text below describes the original design.
+//
 // CanvasKit paints the first frame with whatever glyphs are available;
 // the Google Fonts CJK subsets arrive a second or two later, so an
 // ungated first frame flashes tofu boxes. The bootstrap script is async

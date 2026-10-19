@@ -37,7 +37,7 @@ a var can be defaulted doesn't mean it is left out.
 | [github/](github/README.md) | [gh-client-secret.md](github/gh-client-secret.md) | `INSIDEOUT_GH_CLIENT_SECRET` | `github/app.yaml` |
 | [github/](github/README.md) | [gh-private-key-file.md](github/gh-private-key-file.md) | `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) | `github/app.yaml` |
 | [github/](github/README.md) | [gh-webhook-secret.md](github/gh-webhook-secret.md) | `INSIDEOUT_GH_WEBHOOK_SECRET` | `github/webhooks.yaml` |
-| [github/](github/README.md) | [github-token.md](github/github-token.md) | `GITHUB_TOKEN` (optional) | `github/tokens.yaml` |
+| [github/](github/README.md) | [github-token.md](github/github-token.md) | `GITHUB_TOKEN` (optional; read only by `setup --check`) | `github/tokens.yaml` |
 | [llm/](llm/README.md) | [llm-api-key.md](llm/llm-api-key.md) | `INSIDEOUT_LLM_API_KEY` | `llm/provider.yaml` |
 | [llm/](llm/README.md) | [llm-base-url.md](llm/llm-base-url.md) | `INSIDEOUT_LLM_BASE_URL` | `llm/provider.yaml` |
 | [llm/](llm/README.md) | [llm-model.md](llm/llm-model.md) | `INSIDEOUT_LLM_MODEL` | `llm/provider.yaml` |

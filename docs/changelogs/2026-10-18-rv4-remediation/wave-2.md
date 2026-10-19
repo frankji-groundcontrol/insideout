@@ -21,15 +21,17 @@ insertions, 807 deletions), adds two migrations
 stays unused) and no dependency.
 
 Outcome lists (23 rows): `FIXED` 21; `PARTIAL` 2 (`FEAT-02-CLIENT-APPLY`,
-rv4-DATA-03); `NOT_REAL` none; `BLOCKED` none. rv4-SEC-05 was `PARTIAL` in its
-own cluster (the client half) and is `FIXED` here because rv4-AIDEV-04 closed the
-admin-tools half in the same wave. `FEAT-02-CLIENT-APPLY` is the worker's id for
-the web feed that re-applies an accepted proposal (rows 2.3 and 2.4); R1-03 and
-R1-09 are residue rows of wave 1 that this wave closed, and R1-09 is the
-`LEAD-PROPOSE-VALIDATE` row. `DEFERRED_OWNER` is two owner calls (may an agent
-token ever decide a proposal; the repository variable that feeds the
-`DefaultBase` link flag) and two operator actions (confirm the hosted database
-role, deploy the server before the MCP binary), all in the last table of the
+rv4-DATA-03; wave 3 closed both: [w3-client-apply](w3-client-apply.md),
+[w3-users-read-grant](w3-users-read-grant.md)); `NOT_REAL` none; `BLOCKED` none.
+rv4-SEC-05 was `PARTIAL` in its own cluster (the client half) and is `FIXED` here
+because rv4-AIDEV-04 closed the admin-tools half in the same wave.
+`FEAT-02-CLIENT-APPLY` is the worker's id for the web feed that re-applies an
+accepted proposal (rows 2.3 and 2.4); R1-03 and R1-09 are residue rows of wave 1
+that this wave closed, and R1-09 is the `LEAD-PROPOSE-VALIDATE` row.
+`DEFERRED_OWNER` is two owner calls (may an agent token ever decide a proposal;
+the repository variable that feeds the `DefaultBase` link flag) and two operator
+actions (confirm the hosted database role, deploy the server before the MCP
+binary), all in the last table of the
 [open-findings record](../../issues/2026-10-18-review-4-open-findings.md#owner-decisions-no-engineering-action-until-decided).
 
 ### Clusters
@@ -63,7 +65,7 @@ which also carries one line per finding.
 | rv4-USER-05 | client-credentials | 2.2 | FIXED | `719b780` | `76b55a2` | An unreachable server stays a `skip`, on purpose: the check also runs offline right after install |
 | rv4-FULL-05 | client-credentials | 2.2 | FIXED | `f3d51af` | `1d9d1ff` | none |
 | rv4-FEAT-02 | proposal-apply | 2.3 | FIXED | `f624efb` | `a512e0a`; guard `70d3136` | Server half. The web feed's own re-apply is the next row. `AddProposalItems`, `ApplyProposalItems` and `ApplyProposalItemsForUpdate` have no production caller (R2-14) |
-| FEAT-02-CLIENT-APPLY | proposal-apply | 2.3, 2.4 | PARTIAL | the changed test in the staged patch (red on the old feed, scratch copy) | not applied | `project_updates_feed.dart` re-creates every accepted `add_node` item after the server already did; the patch was not in the cluster's files and the integrator took no product code (R2-01, `w3-client-apply`) |
+| FEAT-02-CLIENT-APPLY | proposal-apply | 2.3, 2.4 | PARTIAL (FIXED in wave 3) | the changed test in the staged patch (red on the old feed, scratch copy) | not applied | `project_updates_feed.dart` re-creates every accepted `add_node` item after the server already did; the patch was not in the cluster's files and the integrator took no product code (R2-01). Closed in wave 3 by `w3-client-apply`: red `6096862`, fix `0d33077` ([record](w3-client-apply.md)) |
 | rv4-FEAT-09 | proposal-apply | 2.3 | FIXED | `3891f08` | `f8c9959` | Older migrations keep their historical "immutable" comments (migrations are not edited) |
 | rv4-LEAD-PROPOSE-VALIDATE (R1-09) | proposal-apply | 2.3 | FIXED | `6d8e957` | `bfe019e` | none; R1-09 is closed |
 | rv4-FULL-01 | proposal-apply | 2.4 | FIXED | `2046fb5` | `29c0956` | The expand route takes no per-project position lock and gates on membership only (R2-04) |
@@ -74,15 +76,17 @@ which also carries one line per finding.
 | R1-03 | agent-scope | 2.5 | FIXED | `0b2e9fd` | `f9e9894` | none; a JWT login no longer offers `invite_create`, so the sentence serves a process with no credential or an opaque token |
 | rv4-DATA-01 | rls | 2.6 | FIXED | `91098a7` | `f696db4` | A seat can still be re-pointed by its workspace's admin (R2-03) |
 | rv4-DATA-02 | rls | 2.6 | FIXED | `91098a7` | `f108e64` | The write walk shares its red commit with DATA-01 and DATA-03; its third test is green on the base on purpose |
-| rv4-DATA-03 | rls | 2.6 | PARTIAL | `91098a7` | `f108e64` | Write half done. Read half: a co-member's `password_hash` is readable by anything that holds the app role (no API response carries it) (R2-02, `w3-users-read-grant`) |
+| rv4-DATA-03 | rls | 2.6 | PARTIAL (read half FIXED in wave 3) | `91098a7` | `f108e64` | Write half done. Read half: a co-member's `password_hash` is readable by anything that holds the app role (no API response carries it) (R2-02). Closed in wave 3 by `w3-users-read-grant`: red `8f57d77`, fix `c57073b` ([record](w3-users-read-grant.md)) |
 | rv4-DATA-04 | rls | 2.6 | FIXED | `ad7ce63` | `e9d8a79` | Hosted `DATABASE_URL` must be the app role before the first deploy (owner decisions); `SUPERUSER` is covered by a table test only |
 
-Why `FEAT-02-CLIENT-APPLY` stays open: the pre-gate rule keeps product code and
-tests out of the records pass, and the worker's staged patch edits
-`client/lib/features/project/project_updates_feed.dart` and
-`client/test/project_page_test.dart`. Until `w3-client-apply` lands, an accept
-through the web feed makes the server's nodes and then the feed's own copy. The
-server-side once-only guarantee holds for every other caller (API, CLI, MCP).
+Why `FEAT-02-CLIENT-APPLY` was still open at the end of wave 2: the pre-gate rule
+keeps product code and tests out of the records pass, and the worker's staged
+patch edits `client/lib/features/project/project_updates_feed.dart` and
+`client/test/project_page_test.dart`. Until `w3-client-apply` landed, an accept
+through the web feed made the server's nodes and then the feed's own copy. The
+server-side once-only guarantee held for every other caller (API, CLI, MCP).
+Wave 3 closed it: the feed now only asks the server to decide and apply
+(`6096862` red, `0d33077` fix; [w3-client-apply](w3-client-apply.md)).
 
 ### Gates (integrator, at `e6bc637`)
 

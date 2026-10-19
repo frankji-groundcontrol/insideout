@@ -6,7 +6,9 @@ import 'cobalt.dart';
 /// Pubspec-registered fonts are fetched eagerly on every platform,
 /// including web — ~43 MB the hosted app must never download. The Noto
 /// files therefore ship as plain (lazily fetched) assets, registered at
-/// startup on non-web targets only; web keeps index.html's CDN fonts.
+/// startup on non-web targets only. Web loads no font from a CDN: CanvasKit
+/// fetches its own fonts, which web/fonts mirrors and
+/// web/flutter_bootstrap.js points it at (rv4-COMP-03).
 /// Family names pair with [Cobalt.serifNative] / [Cobalt.sansNative].
 Future<void> loadNativeFonts() async {
   if (kIsWeb) return;

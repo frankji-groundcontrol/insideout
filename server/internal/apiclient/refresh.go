@@ -106,8 +106,10 @@ func (c *Client) renewSession(ctx context.Context) (string, error) {
 // renewalGrace is how long a renewal that lost the race waits for the winner's
 // pair to be stored before it takes the refusal for the session's end. A var
 // so tests can shorten it.
-// ponytail: polls the store instead of locking across processes; if the server
-// ever revokes a token family on reuse, or bursts still lose, serialize
+// ponytail: polls the store instead of locking across processes. The server now
+// revokes a token family on reuse, but only after refreshReuseGrace (10 s,
+// internal/api/auth.go), which covers this wait with room to spare; if that
+// grace is ever shortened below this wait, or bursts still lose, serialize
 // renewals with a lock file beside the config.
 var renewalGrace = 500 * time.Millisecond
 

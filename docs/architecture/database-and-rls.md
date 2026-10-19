@@ -39,6 +39,14 @@ runner (`server/internal/store/migrate.go`) — no external migration tool.
 Applied filenames are tracked in `insideout.schema_migrations`; each file runs
 in its own transaction, in filename order.
 
+Every foreign key of the schema has an index on its referencing columns
+(migration `20261018210000_index_foreign_keys.sql`, rv4-DATA-07). PostgreSQL
+indexes only the referenced side, so without one a cascade scans the child table
+once per deleted parent row. The migration finds the unindexed keys in the
+catalog instead of listing them, and `store/fk_index_test.go` reads the catalog
+after `migrate` and fails when a new foreign key arrives without a supporting
+index (its exemption map is empty; an entry needs a written reason).
+
 The bootstrap step only creates the `insideout` schema when it is actually
 missing (checked via `information_schema.schemata`) — `CREATE SCHEMA`, even a
 redundant `IF NOT EXISTS`, requires database-level `CREATE` privilege, which
@@ -75,7 +83,10 @@ the only RLS tables that trust an unset `app.user_id`
 (`current_user_id() IS NULL`), since `insideout_app` is never called by
 anything but this repo's own backend. `users`: `CreateUser` (registration) and
 `GetUserByEmail` (login) run **without** `app.user_id` set — there is no
-authenticated identity yet at that point in the flow. `ai_runs`: the stale-run
+authenticated identity yet at that point in the flow; login reads the stored
+credential only through `insideout._credential_for_email`, which answers in that
+same unset-context state and nowhere else (the users read grant, below).
+`ai_runs`: the stale-run
 reaper (`ReapStaleAIRuns`) is a background sweep with no acting user
 (migration `20260721160000`). Joining a workspace by invite code has a
 similar, narrower exception: `JoinWorkspace` sets a second session variable,
@@ -169,6 +180,30 @@ as `system_role = 'admin'` or rewrite its own `role`, `system_role`, `email`,
   stays pinned until someone adds it to that list. A role RLS does not apply to
   (`BYPASSRLS` or superuser: `insideout_owner`, which runs migrations and
   `promote-admin`) is trusted with every column, the same line RLS draws.
+
+**`users.password_hash` is not readable by the app role** (rv4-DATA-03, read
+half; migration `20261018200000_users_read_grants.sql`). `users_select` shows a
+user every co-member's row, and `insideout_app` once held table-wide `SELECT`,
+so a co-member's stored credential was one `SELECT password_hash` away for a
+read bug (`SELECT *`, a join, a `RETURNING`, a dump). The migration revokes the
+table-wide `SELECT`, grants every column except `password_hash` by name, and
+ends in a `DO` assertion that fails if the app role can still read the column
+through an inherited role or `PUBLIC`. Login, the one flow that verifies a
+password, reads it through `insideout._credential_for_email(email)`: a
+`SECURITY DEFINER` function owned by `insideout_owner`, `search_path` pinned,
+`EXECUTE` for the app role only, which returns a row only while `app.user_id` is
+unset. Inside a request's own transaction it returns nothing, so a handler that
+forgets this cannot read a co-member's hash by passing an email. `UPDATE` stays
+table-wide (pinned by `users_pin_columns`; `SET password_hash = $2 WHERE id = $1`
+needs only `UPDATE` on the column and `SELECT` on `id`). Ceilings: the
+unset-context condition is a convention the app role could satisfy with
+arbitrary SQL (a hard boundary needs a second role and pool); the sibling hash
+columns on `sessions`, `auth_tokens` and `invitations` are unchanged; a later
+blanket `GRANT` on `users` is caught only by the CI guard
+(`users_read_grant_test.go`); a new `users` column needs its own `GRANT SELECT`;
+and the previous image fails user reads once this migration is applied (the
+rollback statement is in the
+[w3-users-read-grant record](../changelogs/2026-10-18-rv4-remediation/w3-users-read-grant.md)).
 
 **The server refuses to serve on a role that skips RLS** (rv4-DATA-04).
 `BYPASSRLS` and superuser ignore every policy above, `FORCE ROW LEVEL SECURITY`

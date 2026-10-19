@@ -11,10 +11,12 @@ the [keys README](../README.md).
 Use the [setup tutorial](../../key-setup-tutorial.md#6-configure-github-evidence-access)
 after the [own-server installation path](../../installation.md#your-own-server).
 The [testing tutorial](../../key-testing-tutorial.md#7-prove-github-access)
-defines the capability proof for each credential. App ID + PEM credentials are
-used when a signed GitHub App delivery fetches a private `insideout.yaml`;
-`insideout sync` uses the optional `GITHUB_TOKEN` (or GitHub's unauthenticated
-public API path) and is not an App-key test. The OAuth client secret is retained
+defines the capability proof for each credential. App ID + PEM credentials mint
+the installation tokens that read a private repository: a signed GitHub App
+delivery's `insideout.yaml`, and the commits `insideout sync` fetches for a
+project that holds the repo's one binding (a public repository is read
+anonymously). The optional `GITHUB_TOKEN` is read only by
+`insideout setup --check` (rv4-FEAT-04). The OAuth client secret is retained
 for a future consumer and is placement-only today. All App and webhook kinds
 are optional: a blank placeholder means the GitHub App integration is disabled;
 a nonblank value must pass its shape and capability check.
@@ -29,5 +31,6 @@ a nonblank value must pass its shape and capability check.
   `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) (`github/app.yaml`)
 - [gh-webhook-secret.md](gh-webhook-secret.md) —
   `INSIDEOUT_GH_WEBHOOK_SECRET` (`github/webhooks.yaml`)
-- [github-token.md](github-token.md) — `GITHUB_TOKEN` (optional)
+- [github-token.md](github-token.md) — `GITHUB_TOKEN` (optional; read only by
+  `setup --check`)
   (`github/tokens.yaml`)

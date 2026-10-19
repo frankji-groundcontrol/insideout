@@ -42,6 +42,17 @@ belong to different provider protocols. Correct them as a pair, restart the
 server, and repeat the app-level turn. A skipped `messages` probe is expected;
 it is not a failure or a successful live test.
 
+The server also checks that a reply is whole: it takes a turn as complete only
+after the stream's closing event (`message_stop` on `messages`;
+`response.completed` or `response.incomplete` on `responses`). A gateway or
+proxy that cuts or never sends that event makes every turn fail with a
+transient provider error ("stream ended before message_stop" or "before
+response.completed"), and one that rejects the `parallel_tool_calls` field on
+`responses` answers 400, shown as a provider-configuration error. Both are
+settings or gateway faults, not model faults: point the base URL at the
+provider's own endpoint or one that relays the closing event, and repeat the
+turn.
+
 The automated placement check is:
 
 ```bash

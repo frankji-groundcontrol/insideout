@@ -50,7 +50,9 @@ views (PRODUCT.md principle 3).
   The apply runs in the decision's own transaction and once per item
   (`proposal_items.applied_at`): a second accept builds nothing, a failed
   apply answers 500 and records no decision, and the response carries
-  `appliedNodes`, always a list (empty on a repeat).
+  `appliedNodes`, always a list (empty on a repeat). The web updates feed
+  asks for the apply once through this route and creates no node of its own
+  (rv4-FEAT-02), so an accepted plan is built exactly once.
 
 ## Time-first roadmap
 
@@ -88,9 +90,29 @@ views (PRODUCT.md principle 3).
 - Webhook `POST /api/v1/hooks/github` (`<prod-domain>`):
   HMAC-SHA256 verification against `INSIDEOUT_GH_WEBHOOK_SECRET`
   (constant time; unset → 503). `push`/`pull_request` deliveries
-  resolve the repo's projects via the SECURITY DEFINER helper
+  resolve the repo's project via the SECURITY DEFINER helper
   `_projects_by_repo` (the webhook has no RLS identity) and re-run the
-  per-project commit sync as each project owner.
+  commit sync as that project's owner.
+- One repo, one project (rv4-COMP-05): linking canonicalises the URL, and a
+  second project linking the same repo, in any letter case, gets 409
+  `GITHUB_REPO_ALREADY_LINKED`. With the App configured the repo must also be
+  visible to the server (an installation covers it, or it is public), else
+  400 `GITHUB_REPO_NOT_VISIBLE`. `_projects_by_repo` therefore names at most
+  one project, the earliest-created one with an owner; the bind check,
+  webhook delivery and the token gate all ask it. Migration
+  `20261018180000_github_repo_binding.sql` rewrites the URLs already stored to
+  the canonical spelling (a one-way `UPDATE` that also moves `updated_at`),
+  replaces the lookup and adds an index on `lower(repo_url)`; the index is not
+  unique, so rows that already share a repo keep sharing it, and one-per-repo is
+  enforced under an advisory lock in `store.SetProjectRepo`. The policy half
+  (proof that the linker controls the repo) is an open owner decision.
+- Commit sync reads GitHub with the holder's installation token, which also
+  reads private repos, and anonymously otherwise; the server-wide
+  `GITHUB_TOKEN` is no longer read by it (rv4-FEAT-04; only
+  `insideout setup --check` reads it). The token never leaves the API origin.
+- A deployment's creation is `activity`; only a successful `deployment_status`
+  is `release` evidence (rv4-FEAT-07), so the App must deliver
+  `deployment_status` events.
 - The repo's committed `insideout.yaml` matching guide (scaffolded by
   `GET /projects/{id}/guide`, `insideout guide`, or the MCP `guide`
   tool) maps branches/labels/paths to roadmap nodes; matched leaves

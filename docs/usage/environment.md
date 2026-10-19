@@ -84,9 +84,9 @@ browser drops the auth cookies (see [Recipes](#recipes)).
 ### Go backend
 
 Read by [`server/internal/config/config.go`](../../server/internal/config/config.go)
-(`GITHUB_TOKEN` is read ad hoc in `server/internal/github/github.go` and by
-`insideout setup --check` in
-[`server/cmd/insideout/cli_setup_check.go`](../../server/cmd/insideout/cli_setup_check.go)).
+(`GITHUB_TOKEN` is read only by `insideout setup --check` in
+[`server/cmd/insideout/cli_setup_check.go`](../../server/cmd/insideout/cli_setup_check.go);
+the server's commit sync no longer reads it, rv4-FEAT-04).
 That check also resolves the saved login through `clientconfig.Resolve`
 (`INSIDEOUT_TOKEN`, else the 0600 config, for the base it was saved for) and
 asks the API as that user: a rejected login fails the check, an unreachable
@@ -110,7 +110,7 @@ themselves when it is unset.
 | `INSIDEOUT_MAIL_DEV_BODY` | no | off | Dev mode only: exactly `1` includes full message bodies in the not-sent mail log (`scripts/dev.sh` sets it locally). Never set on a deployed host. |
 | `INSIDEOUT_MAIL_FROM` | no | `InsideOut <onboarding@resend.dev>` | From address for auth email; must be a Resend-verified sender. The default is Resend's sandbox address, which only delivers to the Resend account's own email. |
 | `INSIDEOUT_PUBLIC_URL` | no | `http://localhost:5173` | Browser origin of the Flutter app — the base of every emailed invite/magic/reset link. Set to the hosted domain in production. Locally, run the web dev server on this port (`flutter run --web-port=5173`) or set this to the port in use. |
-| `GITHUB_TOKEN` | no | — | Optional GitHub PAT; when non-empty, added as a Bearer `Authorization` header on commit-sync requests (raises rate limits). Also read by `insideout setup --check`, which validates it against the GitHub API. |
+| `GITHUB_TOKEN` | no | — | Optional GitHub PAT, read only by `insideout setup --check`, which validates it against the GitHub API. The server does not use it: commit sync reads a private repo with the GitHub App's installation token (a project holding the repo's one binding) and a public repo anonymously (rv4-FEAT-04). |
 | `INSIDEOUT_GH_APP_ID` | no | — | Numeric id of the GitHub App; with the App's private key it mints installation access tokens (server-to-server evidence sync). Authenticates nothing alone. |
 | `INSIDEOUT_GH_PRIVATE_KEY` | no | — | The App's `.pem` with newlines escaped as literal `\n` on a single line. Ignored when `INSIDEOUT_GH_PRIVATE_KEY_FILE` is set. |
 | `INSIDEOUT_GH_PRIVATE_KEY_FILE` | no | — | Path to the App's `.pem` on disk; wins over the escaped inline var when set — the file is read raw, no `\n` unescaping. |
@@ -131,6 +131,14 @@ offline coach, not an error.
 | `INSIDEOUT_AI_QUEUE_WAIT` | no | `15s` | How long a queued AI turn waits for a slot before rejection (Go `time.Duration`). |
 | `INSIDEOUT_AI_TURN_DEADLINE` | no | `12m` | Wall-clock bound on one whole coach turn (Go `time.Duration`). Stops an upstream that trickles output but never finishes from holding a slot and the conversation lock. Unset, unparsable or non-positive keeps `12m`. Env-only (not a key-store kind), and `docker-compose.yml` does not interpolate it yet, so a compose deployment runs the default. |
 
+**What lets user data leave the server.** Two keys do, and only when set:
+`INSIDEOUT_LLM_API_KEY` sends coach and roadmap-planner text to the model
+provider, and `INSIDEOUT_MAIL_API_KEY` sends sign-in, reset and invitation mail
+through Resend; empty, both stay on the server (offline coach, mail logged).
+The table of recipients is in [PRIVACY.md](../../PRIVACY.md). A hosted
+operator must publish a monitored contact and replace `<privacy-contact>` in
+that file before announcing a deployment.
+
 ### docker-compose only
 
 Read by [`docker-compose.yml`](../../docker-compose.yml) for interpolation;
@@ -145,7 +153,7 @@ regardless.
 | `POSTGRES_OWNER_PASSWORD` | no | `insideout_owner_dev_password` (dev-only) | Init password for `insideout_owner`. Same dev-only default posture; must match `DATABASE_OWNER_URL` when that URL is set. |
 | `POSTGRES_SUPERUSER_PASSWORD` | no | `insideout_dev_password` | Bootstrap superuser password for the postgres image. The app never connects with it. |
 | `POSTGRES_PORT` | no | `5442` | Host side of the postgres mapping (`5432` inside). |
-| `SERVER_PORT` | no | `8080` | Host side of the server mapping (`:8080` inside, hardcoded). |
+| `SERVER_PORT` | no | `8080` | Host side of the server mapping (`:8080` inside, hardcoded), published on `127.0.0.1` only (rv4-SEC-02); the client service is the front door. |
 | `CLIENT_PORT` | no | `5173` | Host side of the client mapping (nginx on `:8080` inside); default matches `INSIDEOUT_PUBLIC_URL`. |
 
 Compose also interpolates the operator-facing vars that flow into the Go
@@ -154,7 +162,7 @@ provider set, `INSIDEOUT_AI_MAX_CONCURRENT` / `INSIDEOUT_AI_QUEUE_WAIT`,
 the `INSIDEOUT_MAIL_*` set with `INSIDEOUT_PUBLIC_URL`, the browser knobs
 (`INSIDEOUT_CORS_ORIGINS`, `INSIDEOUT_DEV_CORS`, `INSIDEOUT_COOKIE_SECURE`,
 `INSIDEOUT_ACCESS_TTL`, `INSIDEOUT_REFRESH_TTL`), and the GitHub
-integration (`INSIDEOUT_GH_*`, `GITHUB_TOKEN`).
+integration (`INSIDEOUT_GH_*`; `GITHUB_TOKEN` is passed through but the server ignores it).
 The first two carry `:?` guards (see above); the LLM key defaults to empty,
 while model/schema/base take the same fallbacks `config.Load` applies.
 `DATABASE_URL` deliberately has no

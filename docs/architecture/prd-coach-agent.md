@@ -45,6 +45,22 @@ blocks are concatenated. `internal/agent/anthropic_test.go` uses real SSE
 payloads captured from a live endpoint as test fixtures for exactly this
 case.
 
+A turn is whole only when its stream ends the way the provider says it does
+(rv4-AIDEV-05). An Anthropic stream must reach `message_stop`; a Responses
+stream (parsed in `trust_responses.go`) must reach `response.completed` or
+`response.incomplete`. One that ends earlier is `ErrProviderTransient`, retried
+once when nothing had been streamed yet. A tool call cut by the token cap
+(`max_tokens` / `incomplete`) is never run: the turn is marked truncated and
+the stored answer ends with the truncation marker. `response.failed` and
+`error` frames are read as provider errors: a server error is retried, an
+`invalid_prompt`-class one is `PROVIDER_CONFIG`, and neither is a content
+refusal. Responses requests that carry tools send `parallel_tool_calls: false`,
+and each call's arguments are filed under the provider's item id, so two calls
+are never merged into one: the first announced call runs and later ones are
+dropped (rv4-AIDEV-06). The cost is that a gateway which never sends the
+closing event now fails every turn; the one-condition escape hatches are in the
+[w3-coach-trust record](../changelogs/2026-10-18-rv4-remediation/w3-coach-trust.md).
+
 Tool results are sent back the way Anthropic expects: a `user`-role message
 with a `tool_result` content block — Anthropic has no separate "tool" role.
 
@@ -68,15 +84,44 @@ when its exit criteria are met.
 | `critique` | Scores each section empty/thin/solid, targets the weakest two. | No section below "solid", or user override |
 | `finalize` | Summary + completeness checklist, suggests a revision snapshot + submitting for review. | Conversation marked `completed` |
 
+### Confirming, declining and parked resolutions
+
+A stage change the model proposes waits as `pendingStage` on the conversation
+until the person answers. Finding resolutions the model reports meanwhile
+(`resolve_finding`) are parked as `pendingFindingResolutions` and applied only
+when the stage is confirmed (`POST /api/v1/conversations/{id}/stage`). The
+conversation view lists them as `pendingResolutions` (id, section, severity,
+issue, status) using the same filter confirm applies, so the card never shows a
+resolution confirm would skip (rv4-AIDEV-03). `POST
+/api/v1/conversations/{id}/stage/decline` (human-only, see
+[agent token scope](agent-token-scope.md)) removes both while a stage is
+pending: the stage and the findings stay as they were, a second decline or a
+confirm after a decline is a 409, and a decline is no longer something only the
+client remembers (rv4-CLOSE-03). A second tab keeps its card until it refreshes,
+and its confirm then meets the 409.
+
 ## Tools
 
-`internal/agent/tools.go` defines three tools and executes them against the
+`internal/agent/tools.go` defines six tools and executes them against the
 store: `get_prd()`, `update_prd_section(section, markdown)` (validated
-against the 8 fixed section keys, emits a `prd_updated` SSE event), and
-`advance_stage(next)` (validated against the legal transition order). Only
-one tool call per assistant turn is ever surfaced (`parseAnthropicStream` in
-`anthropic_parse.go` returns on the first tool_use content block it finds) — the
+against the 8 fixed section keys, emits a `prd_updated` SSE event),
+`advance_stage(next)` (validated against the legal transition order), and the
+trust-layer tools `record_fact(kind, text, quote)`, `mark_assumption(text)` and
+`resolve_finding(id, status)` (the status change is parked until the person
+confirms the stage change). Only one tool call per assistant turn is ever
+surfaced: both parsers (`parseAnthropicStream` in `anthropic_parse.go`, and the
+Responses parser) run the first tool call they find and drop later ones — the
 coach's own prompting discipline never asks for more than one anyway.
+
+`record_fact` attests a fact only on the person's own words (rv4-AIDEV-07,
+`trust_facts.go`): the quote must appear verbatim in what they said, must hold
+at least 12 characters of content once spaces and punctuation are dropped (a
+Han, kana or hangul character counts twice), and the fact's text must share at
+least 0.2 of its character n-grams with the quote. Both numbers are tunables
+chosen on a hand-written calibration set and pinned by
+`trust_facts_bounds_test.go`; support is lexical, so it catches text about
+something else, not a restatement that merely sounds like the quote. The stored
+status stays `attested`; the interface and the gate copy say "recorded fact".
 
 ## Streaming contract
 
@@ -87,9 +132,20 @@ event: message_start   data: {"id": "<assistant message uuid>"}
 event: delta            data: {"text": "..."}
 event: prd_updated      data: {"section": "goals"}
 event: stage_changed    data: {"stage": "draft"}
+event: critic_skipped   data: {"reason": "contention", "rounds": 0}
 event: message_end      data: {"id": "...", "tokens": 812}
 event: error            data: {"error": "...", "code": "..."}
 ```
+
+`critic_skipped` is sent before `message_end` when a critic pass did not run
+(`reason` is `contention` or `critic-output-failure`), so a skipped review is
+never silent (rv4-AIDEV-02). It is announced once per run of skips; the marker
+clears when a round runs. The conversation view then carries
+`criticSkipped` and `criticRounds`, and the finalize card says no critic review
+ran. The finalize gate still counts a skip as a pass, on purpose (a busy or
+misconfigured critic must not hold a PRD hostage); whether a skip should refuse
+the gate is an open owner question, one condition in `tools.go` plus its pinning
+test, written up in the w3-coach-trust record under "The gate decision".
 
 Rate-limit and circuit-breaker checks (ported from the original Postgres
 functions, `server/db/migrations/20260720135755_ai_ops.sql`) run **before**

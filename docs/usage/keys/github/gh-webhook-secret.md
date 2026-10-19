@@ -21,7 +21,10 @@ receiver checks `X-Hub-Signature-256` before it parses a delivery.
    transcript.
 2. In the GitHub App settings, set the webhook URL to the deployment's public
    origin followed by `/api/v1/hooks/github`, then paste the generated value
-   into the **Secret** field.
+   into the **Secret** field. Subscribe the App to `push`, `pull_request`,
+   `deployment` and `deployment_status`: only a successful `deployment_status`
+   is release evidence (rv4-FEAT-07), so without that subscription a deployment
+   never becomes release evidence.
 3. Run `./scripts/env.sh edit`, set `INSIDEOUT_GH_WEBHOOK_SECRET`, and then
    initialize/fill the host key store as described in the module README.
 

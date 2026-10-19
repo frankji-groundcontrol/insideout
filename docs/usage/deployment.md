@@ -19,7 +19,7 @@ browser ──> client (Flutter web + nginx, :8080) ── /api/ ──> server 
 | Service | Image / build | Container port | Host port |
 |---------|---------------|----------------|-----------|
 | `postgres` | `postgres:18` | 5432 | `127.0.0.1:${POSTGRES_PORT:-5442}` (localhost only) |
-| `server` | built from `server/` (golang:1.26-alpine → distroless/static, runs as nonroot) | 8080 | `${SERVER_PORT:-8080}` |
+| `server` | built from `server/` (golang:1.26-alpine → distroless/static, runs as nonroot) | 8080 | `127.0.0.1:${SERVER_PORT:-8080}` (localhost only) |
 | `client` | built from `client/` (Flutter build → nginx-unprivileged) | 8080 | `${CLIENT_PORT:-5173}` |
 
 The bundled `postgres` service is the self-hosted default. When
@@ -72,6 +72,18 @@ hand or wiping the volume.
 Migrations are embedded in the server binary and applied automatically on
 startup; no separate migration step is needed in the compose flow.
 
+One migration is not backward compatible with the previous image:
+`20261018200000_users_read_grants.sql` (rv4-DATA-03) takes `SELECT` on
+`insideout.users.password_hash` away from the app role, and the previous image
+reads that column in every user read, so those reads fail once it has run.
+Deploy the new image with the migration (one instance has no window in which
+the old one still serves). To put the previous image back, run once as the
+owner `GRANT SELECT (password_hash) ON insideout.users TO insideout_app;`,
+which reopens the finding until the new image is redeployed. The migration also
+fails loudly if the hosted role inherits that column from another role or from
+`PUBLIC`: check that before the deploy
+([record](../changelogs/2026-10-18-rv4-remediation/w3-users-read-grant.md)).
+
 Concurrent boots serialize: `Migrate` first takes a transaction-scoped Postgres
 advisory lock, so a second replica (or a manual `insideout migrate` during a
 deploy) waits for the first to finish and then finds nothing left to apply,
@@ -98,14 +110,43 @@ tokens (`INSIDEOUT_CORS_ORIGINS=localhost` matches loopback). Do not
 publish the server port to the public internet if the nginx proxy is
 the public front door.
 
-Client-IP trust chain (REL-13): on Railway the request passes
+Client-IP trust chain (REL-13, rv4-SEC-02): on Railway the request passes
 browser → Railway edge → nginx → server. The edge appends the real
 client IP to `X-Forwarded-For` (client-supplied spoofed values stay to
 its left), and nginx passes that chain through untouched instead of
-appending its own hop — so the server's rightmost XFF entry is the
-edge-appended client IP and the per-IP auth throttle stays per-client.
-Local compose has no edge in front of nginx, so a locally-spoofed XFF
-is trusted there; that is dev-only and acceptable.
+appending its own hop. The server takes the Nth entry from the right, N
+being `INSIDEOUT_TRUSTED_PROXY_HOPS`: the hosted value is **1**, so that
+entry is the edge-appended client IP and the per-IP auth throttle stays
+per-client. The default is 0, which ignores the header and keys on the TCP
+peer. A fewer-entries chain, or an entry that is not an IP address, falls back
+to the peer too.
+
+**A deployment behind a proxy must set it.** At 0 every client shares the
+proxy's address and so one throttle bucket: eight failed logins from anyone
+lock everyone out, and sign-in refresh is capped at 30 a minute for the whole
+population. The server logs one WARN naming the variable the first time it
+meets a header it is ignoring. Local compose has no edge in front of nginx, so
+the default 0 is right there (the bundled nginx passes the header through
+untouched, so trusting it would let any client choose its own bucket), and the
+compose `server` port is published on `127.0.0.1` only: that port is the one
+place a client could write the header itself, which makes the advice above, not
+to publish the server port, true by default. Set `INSIDEOUT_TRUSTED_PROXY_HOPS=1`
+on the hosted `server` before it receives this change.
+
+Bounds the server enforces on its own, whatever the proxy does:
+
+- Every request outside the exempt list ends after **25 s**
+  (`api/request_deadline.go`); a handler that outruns it answers 500. The
+  exempt routes are the two passive streams, the coach message POST and the four
+  roadmap-draft routes (`build`, `build/confirm`, `expand`, `expand/confirm`).
+- `GET /healthz` pings the database for at most **2 s** and answers 503
+  `database unreachable` instead of hanging.
+- At most **20** open SSE streams per user and **100** per project; the next
+  one is refused with 429 `APP_STREAM_LIMIT` before any header is sent. Cursor
+  posts are held to **25 a second** per user (429 `APP_THROTTLE`, `Retry-After: 1`).
+  A stream re-checks its token and the viewer's membership on every 10 s
+  heartbeat and ends when either has gone, so a stream also ends when its
+  access token expires (15 minutes by default) and the web client reconnects.
 
 Two cookie-related knobs on the server:
 
@@ -153,11 +194,15 @@ review-3 [SEC-03/REL-05](../review/2026-10-10-multirole-3/01-findings-register.m
 at startup the server
 logs its single-replica contract once, then holds the
 `insideout:singleton` Postgres advisory lock on a hijacked connection for
-the life of the process, and any process that finds the lock already held
-logs `singleton guard: another api server process already holds the
-singleton lock …` at ERROR on its first moments of life. The guard is
-advisory — it never blocks boot, serving, or `/healthz` — so alert on that
-ERROR line (or grep the logs when scaling) rather than waiting for a health
+the life of the process. A process that finds the lock already held logs a
+WARN (`singleton guard: another api server process holds the singleton lock
+…`) and retries every second for two minutes, because during a rolling deploy
+the old process is still shutting down. If the old one lets go the newcomer
+logs an INFO that it took over; if the lock is still held when the two minutes
+are up it logs `singleton guard: another api server process already holds the
+singleton lock …` at ERROR. The guard is advisory — it never blocks boot,
+serving, or `/healthz` — so alert on that ERROR line within two minutes of a
+start (or grep the logs when scaling) rather than waiting for a health
 signal, and note the held connection sits outside the request pool: each
 replica opens one extra database connection on top of the budget above.
 Redis- or table-backed registries remain out of scope; the counters move to
@@ -230,11 +275,16 @@ On `app`:
   pages included: `nosniff`, `Referrer-Policy`, `X-Frame-Options: DENY`, a
   Content-Security-Policy, and HSTS when the edge marks the request https
   (`X-Forwarded-Proto`; nginx itself only sees http behind the edge). The
-  CSP allows exactly what the Flutter web build loads from elsewhere:
-  CanvasKit's script and wasm from the gstatic CDN, the engine's fallback
-  fonts, and the Google Fonts stylesheet `index.html` links. When a Flutter
-  upgrade or a new `index.html` link makes the browser console report a CSP
-  violation, loosen only that directive in
+  CSP allows the page's own origin and nothing else (rv4-COMP-03): the image
+  is built with `flutter build web --no-web-resources-cdn`, CanvasKit's script
+  and wasm are served from `/canvaskit/`, and the fonts the engine would
+  fetch from the gstatic CDN are mirrored under `client/web/fonts` and
+  reached through `web/flutter_bootstrap.js`, which sets the font base. The
+  engine fetches its fonts with `fetch()`, so the directive that matters is
+  `connect-src`, not `font-src`. A first load therefore asks only its own
+  origin. When a Flutter upgrade makes the browser console report a CSP
+  violation, or the font mirror needs refreshing (the recipe is in
+  `client/web/fonts/NOTICE.txt`), loosen only that directive in
   [`client/nginx.conf`](../../client/nginx.conf) and run
   `python3 scripts/check_nginx_headers.py`
   ([local-development.md](local-development.md#testing)). The headers reach

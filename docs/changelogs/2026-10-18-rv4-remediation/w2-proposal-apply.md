@@ -139,7 +139,10 @@ expects `[(up1, true, true)]` and no client-side node. Verified in a scratch
 copy: the changed test is red against the old feed and green with the patch,
 the whole client suite passes (474), `dart format` and the analyzer are clean,
 `git apply --check` passes on this branch and on the integration tree. Until it
-lands the web accept shows the doubled nodes.
+landed the web accept showed the doubled nodes. **Closed in wave 3:**
+`w3-client-apply` re-derived the patch (red `6096862`, fix `0d33077`; the test
+also asserts the page re-reads the roadmap after the decision), see
+[w3-client-apply](w3-client-apply.md).
 
 ## Known ceilings, recorded on purpose
 
@@ -183,9 +186,9 @@ No code is waiting except the patch above.
 (`docs/architecture/database-and-rls.md`, `docs/architecture/product-subsystems.md`)
 and the stale line citation are done, and the dispositions are in the
 [open-findings record](../../issues/2026-10-18-review-4-open-findings.md#wave-2-open-residue-integrator-2026-10-19).
-Still open there: the web feed's own re-apply, the `PARTIAL` patch above (R2-01,
-`w3-client-apply`), the three store functions with no production caller (R2-14)
-and the expand route's lock and gate (R2-04, a final-review lead).
+Still open there: the three store functions with no production caller (R2-14)
+and the expand route's lock and gate (R2-04, a final-review lead). The web
+feed's own re-apply (R2-01) was closed in wave 3 by `w3-client-apply`.
 
 ## Verification
 

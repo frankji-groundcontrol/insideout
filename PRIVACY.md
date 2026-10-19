@@ -55,10 +55,13 @@ configured that service. The code can reach these:
 | --- | --- | --- |
 | A model provider chosen by the operator (the default endpoint is Anthropic's API; any service that speaks the Anthropic Messages or OpenAI Responses wire format works) | For a coach turn: the conversation so far, your latest message, the PRD title and section text, the recorded facts and the reviewer's findings. For the review pass: the PRD title, section text and recorded facts. For the roadmap planner: the PRD title and section text, or a project title with one roadmap node's title and description. Your e-mail address and username are not added to these requests. | Only when `INSIDEOUT_LLM_API_KEY` is set. Without it the coach runs offline from templates and nothing leaves the server. |
 | Resend, a mail provider | The recipient address, subject and body of sign-in links and codes, password-reset and invitation mails. | Only when `INSIDEOUT_MAIL_API_KEY` is set. Without it no mail is sent, and the server logs the recipient and subject (the body too, if the operator opted in for development). |
-| GitHub (`api.github.com`) | The repository you bind to a project, and requests made with the operator's GitHub credential; GitHub also calls the server's webhook. What it returns (commits, activity) is stored as project updates. | Only for a project bound to a repository. |
-| Google-operated hosts (`fonts.googleapis.com`, `fonts.gstatic.com`, `www.gstatic.com`) | Your IP address, browser details and the page's origin, when the web client loads its fonts and the CanvasKit renderer. | On every page load of the web client. Bundling both with the build is row 3.11 of the [remediation plan](docs/review/2026-10-18-multirole-4/40-remediation-plan.md); until that ships, this holds. |
+| GitHub (`api.github.com`) | The repository you bind to a project, and requests made with the operator's GitHub App credential (an installation token for a private repository, none for a public one); GitHub also calls the server's webhook. What it returns (commits, activity) is stored as project updates. | Only for a project bound to a repository. |
 
 The variables are described in [docs/usage/environment.md](docs/usage/environment.md).
+The web client takes its renderer (CanvasKit) and its fonts from the
+deployment's own origin, and the policy its web server sends
+([client/nginx.conf](client/nginx.conf)) lets a page load from that origin
+alone, so opening the client sends nothing to a font or renderer host.
 The client and the server contain no analytics or advertising code. The
 server sets two HttpOnly cookies, `insideout_access` and `insideout_refresh`,
 only to keep you signed in. The client also keeps its sign-in tokens and your

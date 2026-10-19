@@ -70,6 +70,27 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Working-version autosave](2026-10-11-prd-autosave.md) — saves are manual
   guardWrite actions; no autosave or debounce anywhere in the client.
 
+## Partial promises (2026-10-18)
+
+PRODUCT.md promises the product partly keeps, filed during review-4 wave 3
+(rv4-COMP-08) so every PARTIAL row has a dated record with a bounded fix
+prompt. Open by design; no `BUG-NNN` number consumed.
+
+- [Change Proposal for delivery-revealed change](2026-10-18-promise-partial-change-proposal.md)
+  — no surface shows the impact of a product change on views, journeys and the
+  Roadmap before a human accepts a new baseline.
+- [Roadmap tied to a PRD Commit baseline](2026-10-18-promise-partial-commit-baseline-tie.md)
+  — the Roadmap graph is not tied to an explicit Commit.
+- [Completion without evidence or a reason](2026-10-18-promise-partial-completion-override-reason.md)
+  — a node can move to done with neither linked evidence nor an override reason
+  (owner decision COMP-08-DECISION).
+- [Outcome target time ranges](2026-10-18-promise-partial-outcome-time-ranges.md)
+  — milestones and items carry deadlines; product outcomes carry no target range.
+- [Overdue work resolved with a reason](2026-10-18-promise-partial-overdue-resolution.md)
+  — overdue work can be closed or moved without a recorded reason.
+- [Secondary audiences on a working version](2026-10-18-promise-partial-secondary-audiences.md)
+  — one primary audience can be confirmed; secondary audiences cannot be attached.
+
 ## Bug records
 
 - [BUG-001 — happy-dom localStorage](2026-07-20-bug-001-happydom-localstorage.md)
@@ -240,6 +261,7 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 ### Reviews
 
 - [2026-10-18 — Review 4 open findings](2026-10-18-review-4-open-findings.md) — the ten Highs, the red `TestProjectQuietFlagged` on `main` and the owner decisions from [multirole review 4](../review/2026-10-18-multirole-4/README.md), each linked to a register ID and a plan row; after waves 0 to 2 it also holds the per-ID dispositions (wave 1: 30 `FIXED`, 4 `PARTIAL` of 34; wave 2: 21 `FIXED`, 2 `PARTIAL` of 23) and the residue tables R1-01 to R1-17 and R2-01 to R2-15 (R1-03 and R1-09 are closed). Open; no `BUG-NNN` number consumed.
+- [2026-10-19 — Retention and erasure: the policy only the owner can set](2026-10-18-rv4-retention-erasure.md) — rv4-DATA-06 (`DEFERRED_OWNER`): coach conversations are kept for ever and no route erases a user, because the owner decisions hold no retention window and no erasure rule; the options, what each costs, a recommended default and five questions. `PRIVACY.md` states today's behaviour as built. Open; no `BUG-NNN` number consumed.
 - [2026-10-18 — ci.yml is at its line budget](2026-10-18-ci-yml-split.md) — 346 of 350 lines after wave 1; the client image job (rv4-TEST-08) and the Shanghai-zone deadline test step (rv4-COMP-02) wait on moving the `android` and `env-suites` jobs into reusable workflows. Open; no `BUG-NNN` number consumed.
 - [2026-10-18 — PRODUCT.md and docs/SETENV.md are over the line budget](2026-10-18-product-and-setenv-over-line-budget.md) — 462 and 368 lines against about 350 (wave 2 added 2 and 5); the target is `PRODUCT.md` at about 260 lines with its seven delivery sections under `docs/product/`, and `SETENV.md` at about 285 with two reference blocks moved to `docs/usage/`. Open; no `BUG-NNN` number consumed.
 - [2026-10-18 — Review 4 privacy: what only the owner can finish](2026-10-18-rv4-owner-privacy-decisions.md) — the owner halves of wave-0 rows 0.1 to 0.4 (rotate the two addresses, the legacy project and its key, a `hosts/` example tree, history identities), each with what is done, the safe default and what closes it. Open; no `BUG-NNN` number consumed.

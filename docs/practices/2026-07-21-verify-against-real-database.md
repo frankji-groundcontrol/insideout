@@ -17,7 +17,8 @@ Any change that touches migrations, RLS policies, SQL text, pgx parameter bindin
    ```
    The suite (`server/internal/store/authz_test.go`) walks the full authorization checklist — including deny paths (non-member reads, non-admin mutations, cross-user conversation access) — against real PostgreSQL. It self-skips when `DATABASE_URL` is unset, so a green CI run without the variable proves nothing.
 3. If the change involves pooled connections, also run it through a transaction-pooling URL (`pgbouncer=true`), which switches pgx to the simple query protocol (`server/internal/store/pool.go`) and has its own failure modes.
-4. Only then mark the item done.
+4. A test that reads or writes a global row (the `signup_mode` setting, the production circuit-breaker row) takes the named lock first: `testlock.SignupMode(t, pool)` or `testlock.Acquire(t, pool, testlock.BreakerLock)` from `server/internal/testlock`, before it reads or saves the row. `go test ./...` runs every package's test binary as its own parallel process against the one database, so only a database advisory lock can order them. Add the test to that package's `testlock.AssertWaits` list, which fails when a test never takes the lock (rv4-TEST-02, rv4-CLOSE-08). Setting `INSIDEOUT_TEST_STRICT` makes these tests refuse a database on another machine; CI leaves it unset ([environment](../usage/environment.md)).
+5. Only then mark the item done.
 
 ## Verification
 
