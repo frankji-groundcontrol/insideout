@@ -3,11 +3,19 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+// ErrLastAdmin refuses a change that would leave a workspace without an admin.
+// Role changes, PRD approval and invites run on admins, JoinWorkspace writes
+// members only and the membership INSERT rule allows an admin row only for the
+// first member of a workspace, so an admin-less workspace can never be
+// administered again. It matches ErrConflict: handlers answer 409.
+var ErrLastAdmin = fmt.Errorf("%w: a workspace needs at least one admin", ErrConflict)
 
 type Membership struct {
 	ID          uuid.UUID
@@ -88,11 +96,20 @@ func (s *Store) ListMembers(ctx context.Context, actorID, workspaceID uuid.UUID)
 }
 
 // UpdateMemberRole requires actorID to be a workspace admin, re-checked in
-// the same transaction as the write (TOCTOU-safe).
+// the same transaction as the write (TOCTOU-safe), and refuses (ErrLastAdmin)
+// to take the role away from the workspace's only admin.
 func (s *Store) UpdateMemberRole(ctx context.Context, actorID, workspaceID, targetUserID uuid.UUID, newRole string) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		if err := lockWorkspaceAdmins(ctx, tx, workspaceID); err != nil {
+			return err
+		}
 		if err := requireAdminMember(ctx, tx, workspaceID, actorID); err != nil {
 			return err
+		}
+		if newRole != "admin" {
+			if err := requireAnotherAdmin(ctx, tx, workspaceID, targetUserID); err != nil {
+				return err
+			}
 		}
 
 		tag, err := tx.Exec(ctx, `
@@ -111,13 +128,21 @@ func (s *Store) UpdateMemberRole(ctx context.Context, actorID, workspaceID, targ
 }
 
 // RemoveMember allows a workspace admin to remove anyone, or a member to
-// remove themselves (self-leave).
+// remove themselves (self-leave). The workspace's only admin cannot leave or
+// be removed (ErrLastAdmin): they promote someone first, or delete the
+// workspace.
 func (s *Store) RemoveMember(ctx context.Context, actorID, workspaceID, targetUserID uuid.UUID) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		if err := lockWorkspaceAdmins(ctx, tx, workspaceID); err != nil {
+			return err
+		}
 		if actorID != targetUserID {
 			if err := requireAdminMember(ctx, tx, workspaceID, actorID); err != nil {
 				return err
 			}
+		}
+		if err := requireAnotherAdmin(ctx, tx, workspaceID, targetUserID); err != nil {
+			return err
 		}
 
 		tag, err := tx.Exec(ctx, `
@@ -132,6 +157,39 @@ func (s *Store) RemoveMember(ctx context.Context, actorID, workspaceID, targetUs
 		}
 		return nil
 	})
+}
+
+// lockWorkspaceAdmins serialises the changes that can shrink a workspace's set
+// of admins, for the rest of the transaction. Two admins demoting each other
+// would otherwise each read "two admins" and both write. It is an advisory
+// lock and not FOR UPDATE on the rows: row locks under FORCE RLS silently
+// return zero rows when a policy calls another table (BUG-007), and the lock
+// must come before the actor check so a loser re-reads who is still an admin.
+// The key is per workspace, so unrelated workspaces never wait for each other.
+func lockWorkspaceAdmins(ctx context.Context, tx pgx.Tx, workspaceID uuid.UUID) error {
+	_, err := tx.Exec(ctx,
+		`SELECT pg_advisory_xact_lock(hashtext('insideout.workspace_admins'), hashtext($1))`, workspaceID.String())
+	return err
+}
+
+// requireAnotherAdmin returns ErrLastAdmin when targetUserID is an admin of the
+// workspace and nobody else is. Call it with the admin lock held, before the
+// write that takes the target's admin role (or membership) away.
+func requireAnotherAdmin(ctx context.Context, tx pgx.Tx, workspaceID, targetUserID uuid.UUID) error {
+	var targetIsAdmin bool
+	var others int
+	if err := tx.QueryRow(ctx, `
+		SELECT COALESCE(bool_or(user_id = $2), false), count(*) FILTER (WHERE user_id <> $2)
+		FROM insideout.workspace_memberships
+		WHERE workspace_id = $1 AND role = 'admin'`,
+		workspaceID, targetUserID,
+	).Scan(&targetIsAdmin, &others); err != nil {
+		return err
+	}
+	if targetIsAdmin && others == 0 {
+		return ErrLastAdmin
+	}
+	return nil
 }
 
 func requireAdminMember(ctx context.Context, tx pgx.Tx, workspaceID, actorID uuid.UUID) error {

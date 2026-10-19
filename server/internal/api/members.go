@@ -80,6 +80,10 @@ func (s *Server) handleUpdateMemberRole(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can change member roles", "", nil)
 		return
 	}
+	if errors.Is(err, store.ErrLastAdmin) {
+		httpx.WriteError(w, http.StatusConflict, "a workspace needs at least one admin", "", nil)
+		return
+	}
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "member not found", "", nil)
 		return
@@ -106,6 +110,10 @@ func (s *Server) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 	err := s.store.RemoveMember(r.Context(), actorID, wsID, targetID)
 	if errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can remove other members", "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrLastAdmin) {
+		httpx.WriteError(w, http.StatusConflict, "a workspace needs at least one admin", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrNotFound) {
