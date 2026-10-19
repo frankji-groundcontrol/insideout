@@ -21,8 +21,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
-// Review-4 rv4-FR-F70, the client half: Client.Logout. Moved out of
-// rv4_review_apiclient_test.go unchanged, to leave that file room.
+// Review-4 rv4-FR-F70, the client half: Client.Logout.
 
 type rvApiClientLogouter interface{ Logout() error }
 
@@ -70,12 +69,13 @@ func TestRvApiClientLogoutRevokesTheServerSession(t *testing.T) {
 		return resp.StatusCode
 	}
 	leaving, staying := signIn(), signIn() // two sessions of one user: the one that logs out, and a control
+	spent := leaving.RefreshToken()        // Logout empties the client; the server has to refuse this one afterwards
 
 	if err := rvApiClientHas[rvApiClientLogouter](t, leaving, "Logout").Logout(); err != nil {
 		t.Fatalf("Logout: %v", err)
 	}
 
-	if got := renewStatus(leaving.RefreshToken()); got != http.StatusUnauthorized {
+	if got := renewStatus(spent); got != http.StatusUnauthorized {
 		t.Errorf("after Logout the refresh token still renews: HTTP %d, want 401", got)
 	}
 	if got := renewStatus(staying.RefreshToken()); got != http.StatusOK {
@@ -96,9 +96,13 @@ func init() {
 	})
 }
 
-// What Logout sends and how it fails: the refresh token and no bearer; no token,
-// no request; an unanswered request is told apart from a refusal, and a
-// cancelled one from both (the CLI words each differently).
+// What Logout sends and how it ends. The refresh token goes in the body, no
+// bearer; no refresh token, no request. A nil return means the client holds no
+// credentials, and a 401 (the handler never answers one: something in front of
+// the server did) is the same "already signed out". Any failure leaves the
+// tokens, so a retry presents the same refresh token instead of reporting a
+// revocation that never happened. An unanswered request is told apart from a
+// refusal, and a cancelled one from both (the CLI words each differently).
 func TestRvApiClientLogoutRequestAndFailures(t *testing.T) {
 	var mu sync.Mutex
 	var seen []string
@@ -112,6 +116,7 @@ func TestRvApiClientLogoutRequestAndFailures(t *testing.T) {
 		w.WriteHeader(code)
 	}))
 	t.Cleanup(srv.Close)
+	setStatus := func(code int) { mu.Lock(); status = code; mu.Unlock() }
 	signedIn := func(base string) *Client {
 		c := New(base)
 		c.SetToken("access")
@@ -119,32 +124,59 @@ func TestRvApiClientLogoutRequestAndFailures(t *testing.T) {
 		return c
 	}
 	requests := func() []string { mu.Lock(); defer mu.Unlock(); return append([]string(nil), seen...) }
+	cleared := func(what string, c *Client) {
+		t.Helper()
+		if c.Token() != "" || c.RefreshToken() != "" {
+			t.Errorf("%s: the client holds access %q and refresh %q, want neither", what, c.Token(), c.RefreshToken())
+		}
+	}
+	kept := func(what string, c *Client) {
+		t.Helper()
+		if c.Token() != "access" || c.RefreshToken() != "ref-1" {
+			t.Errorf("%s: the client holds access %q and refresh %q, want both kept for a retry", what, c.Token(), c.RefreshToken())
+		}
+	}
 
-	if err := signedIn(srv.URL).Logout(); err != nil {
+	ok := signedIn(srv.URL)
+	if err := ok.Logout(); err != nil {
 		t.Fatalf("Logout: %v", err)
 	}
 	if got, want := requests(), []string{`POST /auth/logout [] {"refreshToken":"ref-1"}`}; len(got) != 1 || got[0] != want[0] {
 		t.Errorf("server saw %q, want %q", got, want)
 	}
+	cleared("answered 200", ok)
 
 	anonymous := New(srv.URL)
 	anonymous.SetToken("access") // an access token alone cannot be revoked
 	if err := anonymous.Logout(); err != nil || len(requests()) != 1 {
 		t.Errorf("without a refresh token: err = %v, %d requests, want nil and no request", err, len(requests())-1)
 	}
+	cleared("no refresh token", anonymous)
 
-	mu.Lock()
-	status = http.StatusServiceUnavailable
-	mu.Unlock()
-	if err := signedIn(srv.URL).Logout(); err == nil || !strings.Contains(err.Error(), "503") || errors.Is(err, ErrLogoutUnreachable) {
+	setStatus(http.StatusUnauthorized)
+	gated := signedIn(srv.URL)
+	if err := gated.Logout(); err != nil {
+		t.Errorf("answered 401: err = %v, want nil (already signed out)", err)
+	}
+	if n := len(requests()); n != 2 {
+		t.Errorf("answered 401: %d requests so far, want one more than before and not a retry", n)
+	}
+	cleared("answered 401", gated)
+
+	setStatus(http.StatusServiceUnavailable)
+	refused := signedIn(srv.URL)
+	if err := refused.Logout(); err == nil || !strings.Contains(err.Error(), "503") || errors.Is(err, ErrLogoutUnreachable) {
 		t.Errorf("refused: err = %v, want the status named and not the unreachable sentinel", err)
 	}
+	kept("answered 503", refused)
 
 	dead := httptest.NewServer(http.NotFoundHandler())
 	dead.Close()
-	if err := signedIn(dead.URL).Logout(); !errors.Is(err, ErrLogoutUnreachable) {
+	silent := signedIn(dead.URL)
+	if err := silent.Logout(); !errors.Is(err, ErrLogoutUnreachable) {
 		t.Errorf("no answer: err = %v, want it to wrap ErrLogoutUnreachable", err)
 	}
+	kept("no answer", silent)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
@@ -153,4 +185,5 @@ func TestRvApiClientLogoutRequestAndFailures(t *testing.T) {
 	if err := gone.Logout(); !errors.Is(err, context.Canceled) || errors.Is(err, ErrLogoutUnreachable) {
 		t.Errorf("cancelled: err = %v, want context.Canceled and not the unreachable sentinel", err)
 	}
+	kept("cancelled", gone)
 }
