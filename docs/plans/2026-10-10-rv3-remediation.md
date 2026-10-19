@@ -51,7 +51,8 @@ record.*
 `4464330` (150 commits since `5c8f54f`); the whole-change adversarial review
 accepted with no blocking items. Dispositions live in the
 [ledger](../review/2026-10-10-disposition-ledger/04-multirole-3.md) (83 rows:
-73 closed by code, 3 satisfied by the report, 1 parked, 6 owner-blocked).
+63 closed by code, 10 recorded (docs-only fix; first count 73 closed by code,
+recomputed 2026-10-18), 3 satisfied by the report, 1 parked, 6 owner-blocked).
 What remains is the owner's — deploy, mail/LLM keys, the first `v*` tag —
 enumerated in [HANDOFF](../HANDOFF.md) and the
 [promise register](../review/2026-10-10-multirole-3/50-promise-register.md).
