@@ -117,19 +117,22 @@ var expandFailAt int
 
 // ExpandRoadmapNode inserts all proposed children under parentID in one
 // transaction — either the whole AI expansion lands or none of it does.
-// Children append after any existing siblings. Any workspace member.
+// Children append after any existing siblings. Like every plan write it takes
+// the project owner or a workspace admin (BUG-020), and each child goes in
+// through createRoadmapNodeTx, behind the same per-project lock as a manual add.
 func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UUID, children []RoadmapPlanNode) ([]RoadmapNode, error) {
 	var out []RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := nodeWorkspace(ctx, tx, parentID)
+		var projectID uuid.UUID
+		err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, parentID).Scan(&projectID)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
 		if err != nil {
 			return err
 		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
-			return err
-		}
-		var projectID uuid.UUID
-		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, parentID).Scan(&projectID); err != nil {
+		// Up front, so an expansion with nothing to add is refused too.
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 
@@ -137,15 +140,7 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 			if expandFailAt > 0 && i+1 == expandFailAt {
 				return errors.New("expand: injected failure")
 			}
-			row := tx.QueryRow(ctx, `
-				INSERT INTO insideout.roadmap_nodes (project_id, parent_id, title, description, position, created_by, updated_by)
-				SELECT $1, $2, $3, $4, COALESCE(MAX(position) + 1, 0), $5, $5
-				FROM insideout.roadmap_nodes
-				WHERE project_id = $1 AND parent_id IS NOT DISTINCT FROM $2
-				RETURNING `+roadmapNodeColumns,
-				projectID, parentID, c.Title, c.Description, actorID,
-			)
-			n, err := scanRoadmapNode(row)
+			n, err := createRoadmapNodeTx(ctx, tx, actorID, projectID, &parentID, c.Title, c.Description)
 			if err != nil {
 				return err
 			}
