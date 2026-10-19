@@ -220,14 +220,14 @@ func (w *contractWorld) mcpSignedOut(t *testing.T) {
 		t.Fatalf("signup_mode = %q, want what the database holds (%q)", got, want)
 	}
 
-	t.Cleanup(func() { callTool(t, s, "auth_logout", nil) }) // the session is process state: leave none behind
+	t.Cleanup(func() { callTool(t, s, "auth_logout", kv{"confirm": true}) }) // the session is process state: leave none behind
 	if out := callTool(t, s, "auth_login", kv{"email": w.email, "password": w.password}); out.isError || !strings.Contains(out.text, "signed in as "+w.email) {
 		t.Fatalf("auth_login = %+v, want it to sign %s in", out, w.email)
 	}
 	if me := toolJSON[doc](t, s, "whoami", nil); me.Email != w.email {
 		t.Fatalf("whoami after auth_login = %+v, want %s", me, w.email)
 	}
-	if out := callTool(t, s, "auth_logout", nil); out.isError || out.text != "session cleared" {
+	if out := callTool(t, s, "auth_logout", kv{"confirm": true}); out.isError || out.text != "session cleared" {
 		t.Fatalf("auth_logout = %+v, want the session cleared", out)
 	}
 	notSignedIn("after auth_logout")
