@@ -254,11 +254,26 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusBadRequest, "drafted subtasks are required", "", nil)
 		return
 	}
+	// The caps every other node write has, counted in characters (COMP-01): the
+	// planner returns at most 40 subtasks, a node title is at most 200.
+	const maxChildren, maxTitle, maxDescription = 40, 200, 2000
+	if len(req.Children) > maxChildren {
+		httpx.WriteError(w, http.StatusBadRequest, "too many drafted subtasks (max 40)", "", nil)
+		return
+	}
 
 	children := make([]store.RoadmapPlanNode, len(req.Children))
 	for i, c := range req.Children {
 		if c.Title == "" {
 			httpx.WriteError(w, http.StatusBadRequest, "each drafted subtask needs a title", "", nil)
+			return
+		}
+		if tooLong(c.Title, maxTitle) {
+			httpx.WriteError(w, http.StatusBadRequest, "a drafted subtask title is too long (max 200 characters)", "", nil)
+			return
+		}
+		if tooLong(c.Description, maxDescription) {
+			httpx.WriteError(w, http.StatusBadRequest, "a drafted subtask description is too long (max 2000 characters)", "", nil)
 			return
 		}
 		children[i] = store.RoadmapPlanNode{Title: c.Title, Description: c.Description}
