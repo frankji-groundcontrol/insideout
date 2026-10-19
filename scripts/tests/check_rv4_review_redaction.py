@@ -10,9 +10,12 @@ the proof does not depend on how this checkout happens to look:
 
   LedgerHistoryArm  F45  the ledger-honesty history arm in a shallow clone
   ProviderIdArm     F46  the UUID-shaped provider-id scan beyond three named records
+  GitleaksConfig    F53, F55  the repo gitleaks config that clears one test fixture
 """
 import os
 import pathlib
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -212,6 +215,79 @@ class ProviderIdArm(unittest.TestCase):
     def test_the_nil_uuid_is_not_a_provider_id(self):
         r = self.run_arm({"docs/learning/probe.md": f"NULLIF($3::uuid, '{self.NIL}'::uuid)\n"})
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
+class GitleaksConfig(unittest.TestCase):
+    """rv4-FR-F53, F55: security.yml runs gitleaks over the added commits and a test
+    fixture of this change (a 48-hex JWT secret in BASE_ENV) trips generic-api-key, so
+    the job was red on arrival. gitleaks scans each commit's patch, so a later edit
+    cannot clear the range: the repo config must allow exactly that value in exactly
+    that file, and nothing wider. The static cases pin the config's shape anywhere;
+    the scan cases run the real binary when it is installed (CI runs it in
+    security.yml; env-suites does not)."""
+
+    FIXTURE = "scripts/tests/keys/database/test_database-owner-dsn.py"
+    GITLEAKS = shutil.which("gitleaks")
+
+    def config(self):
+        path = ROOT / ".gitleaks.toml"
+        self.assertTrue(path.is_file(), "no .gitleaks.toml at the repo root")
+        return path.read_text(encoding="utf-8")
+
+    def test_the_config_extends_the_default_rules(self):
+        text = self.config()
+        self.assertRegex(text, r"(?m)^\[extend\]\s*$")
+        self.assertRegex(text, r"(?m)^useDefault\s*=\s*true\s*$")
+
+    def test_one_allowlist_names_the_fixture_path_and_value_and_says_why(self):
+        text = self.config()
+        self.assertEqual(text.count("[[allowlists]]"), 1)
+        self.assertNotIn("[allowlist]", text, "the legacy table would be a second allowlist")
+        self.assertRegex(text, r'(?m)^condition\s*=\s*"AND"\s*$')
+        paths = re.findall(r"(?ms)^paths\s*=\s*\[(.*?)\]", text)
+        self.assertEqual(len(paths), 1)
+        self.assertEqual(re.findall(r"'''(.*?)'''", paths[0]),
+                         [r"^scripts/tests/keys/database/test_database-owner-dsn\.py$"])
+        self.assertEqual(len(re.findall(r"(?ms)^regexes\s*=\s*\[(.*?)\]", text)), 1)
+        self.assertRegex(text, r"(?mi)^#.*fixture")
+
+    # --- the real binary ---------------------------------------------------
+
+    def fixture_text(self):
+        return (ROOT / self.FIXTURE).read_text(encoding="utf-8")
+
+    def scan(self, files):
+        """gitleaks over a one-commit throwaway repo; returns (exit code, finding lines).
+        The lines carry rule, file and line only: never an author, address or secret."""
+        with tempfile.TemporaryDirectory() as tmp:
+            git(["init", "-q"], tmp)
+            if (ROOT / ".gitleaks.toml").is_file():
+                files = {".gitleaks.toml": (ROOT / ".gitleaks.toml").read_text(encoding="utf-8"), **files}
+            commit(tmp, files, "fixture")
+            clean = {k: v for k, v in env().items() if not k.startswith("GITLEAKS")}
+            r = subprocess.run([self.GITLEAKS, "git", "--redact", "--verbose", "--no-banner", "--exit-code", "1", "."],
+                               cwd=tmp, capture_output=True, text=True, env=clean)
+        seen = [l.strip() for l in r.stdout.splitlines() if re.match(r"\s*(RuleID|File|Line):", l)]
+        return r.returncode, seen
+
+    @unittest.skipUnless(GITLEAKS, "gitleaks is not installed; security.yml runs it")
+    def test_the_fixture_as_committed_is_allowed(self):
+        code, seen = self.scan({self.FIXTURE: self.fixture_text()})
+        self.assertEqual(code, 0, f"gitleaks reports {seen}")
+
+    @unittest.skipUnless(GITLEAKS, "gitleaks is not installed; security.yml runs it")
+    def test_the_same_value_in_another_file_is_still_reported(self):
+        for other in ("scripts/tests/keys/database/test_other.py", "scripts/tests/test_other.py", "server/other.py"):
+            with self.subTest(file=other):
+                code, seen = self.scan({other: self.fixture_text()})
+                self.assertEqual(code, 1, "the allowlist reaches past the fixture file")
+
+    @unittest.skipUnless(GITLEAKS, "gitleaks is not installed; security.yml runs it")
+    def test_a_different_secret_in_the_fixture_file_is_still_reported(self):
+        value = re.search(r'"INSIDEOUT_JWT_SECRET": "([0-9a-f]{48})"', self.fixture_text()).group(1)
+        other = ("fedcba9876543210" * 3)
+        code, _ = self.scan({self.FIXTURE: self.fixture_text().replace(value, other)})
+        self.assertEqual(code, 1, "the allowlist exempts the whole file, not just the fixture value")
 
 
 if __name__ == "__main__":
