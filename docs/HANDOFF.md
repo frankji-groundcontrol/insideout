@@ -10,26 +10,30 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-10-19: multirole review 4 is delivered and its remediation is under
-way.** [The report](review/2026-10-18-multirole-4/README.md) (145 findings,
+**2026-10-20: waves 0 to 4 are on `main`; wave 4b is local.**
+[The report](review/2026-10-18-multirole-4/README.md) (145 findings,
 10 High) says the core held but the front door and the gates did not. The
-fixes are four waves, built on `rv4/integration` from `main` @
-`d53035a`. Waves 0 to 4 are integrated. The tested code head is `97cf4c06`; the branch tip carries the landing
-record. The gate re-run is in
-[wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). The owner
-directed this branch onto `main` on 2026-10-20. Resume at the open prose
-to-dos and the wave-4b carry-forward in that file. The
+fixes were built on `rv4/integration` from `main` @ `d53035a`. Waves 0 to 4
+are on `main` at `e6a3d14` (`origin/main` matches). Their tested code head
+is `97cf4c06`. The gate re-run is in
+[wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). The first CI
+run on `e6a3d14` is red on `env-suites` only. Wave 4b cherry-picked the four
+ACCEPTED clusters onto local `main` at `460c33cf`
+([wave 4b](changelogs/2026-10-18-rv4-remediation/wave-4b.md)). `w4b-prose`
+was REJECTED and was not cherry-picked. Resume at that open box in
+[the plan](plans/2026-10-20-rv4-wave-4b/2026-10-20-rv4-wave-4b.md). The
 [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
 and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md) still
-govern. `TestProjectQuietFlagged` was red on `main` from 2026-10-16
-until this landing; the clock fix comes with the branch. Do not tag a
-release until the release-job test gate from plan row 1.5 has run in CI. The first CI run after a push
-settles every workflow property of waves 1 and 3. Before the first deploy of
-the branch, confirm the hosted `DATABASE_URL` is the app role (`serve` now
+govern. `TestProjectQuietFlagged` was red on `main` from 2026-10-16 until
+`e6a3d14`; the clock fix is on `main`. Do not tag a release until the
+release-job test gate from plan row 1.5 has run in CI. Before the first
+deploy, confirm the hosted `DATABASE_URL` is the app role (`serve` now
 refuses a role that bypasses row-level security), set
 `INSIDEOUT_TRUSTED_PROXY_HOPS=1`, inspect the hosted app role for migration
 `20261018200000` (the users read grant) and deploy the server before the MCP
-binary. Board row: [plan](plans/2026-10-18-multirole-4.md); open records:
+binary. `DATABASE_URL` was unset for this integration, so the wave-4b
+`record_fact` database gate was not run. Board row:
+[plan](plans/2026-10-18-multirole-4.md); open records:
 [issues](issues/2026-10-18-review-4-open-findings.md).
 
 **Engineering is not closed: nine product-promise slices are open, and the
@@ -98,10 +102,11 @@ Every other thread is closed with its exact status and links on its
   lockfile, so never commit a rewritten `client/pubspec.lock`.
 - **GitHub Actions billing (2026-10-11):** the repository is now
   **public**, so Actions are free and CI runs normally. Last green `ci`
-  run: `9f0b1c7` (2026-10-11); the run on `d53035a` (2026-10-18) is red on
-  the server job (`TestProjectQuietFlagged`), fixed on `rv4/integration` and
-  not yet on `main`. The ten billing-blocked runs were purged as
-  superseded. A failed payment may still be sitting on the account for other
+  run: `9f0b1c7` (2026-10-11). The run on `d53035a` (2026-10-18) was red on
+  the server job (`TestProjectQuietFlagged`); that clock fix is on `main`
+  as of `e6a3d14`. The first CI run on `e6a3d14` is red on `env-suites`
+  only. Wave 4b's fetch-depth fix is local at `460c33cf`. The ten
+  billing-blocked runs were purged as superseded. A failed payment may still be sitting on the account for other
   GitHub services — worth a look in Settings → Billing.
 - **Shipping:** Railway autodeploy is off for both services, and
   `railway redeploy` re-runs the last image instead of building. Ship landed

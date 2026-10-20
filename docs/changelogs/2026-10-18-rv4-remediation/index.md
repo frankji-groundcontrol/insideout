@@ -1,12 +1,13 @@
-# 2026-10-18 — Review-4 remediation: waves 0 to 3 recorded
+# 2026-10-18 — Review-4 remediation
 
 Execution of the [review-4 remediation plan](../../review/2026-10-18-multirole-4/40-remediation-plan.md)
 under its [execution contract](../../review/2026-10-18-multirole-4/41-remediation-contract.md):
 four waves on the local branch `rv4/integration` (base `main` @ `d53035a`),
 one worker per cluster, a red test before every fix, and a fresh adversarial
 verifier before any cherry-pick. Findings are cited as `rv4-<ID>` because
-review IDs restart per review. Nothing is pushed, merged or deployed; landing
-the branch on `main` is the owner's step. Per-ID state for the Highs, the red
+review IDs restart per review. Waves 0 to 4 are on `main` at `e6a3d14`
+(`origin/main` is that commit). Wave 4b is local only. Nothing in this
+remediation is tagged or deployed. Per-ID state for the Highs, the red
 test and the owner decisions is in the
 [open-findings record](../../issues/2026-10-18-review-4-open-findings.md).
 Each wave has a file of its own here (outcome lists, per-ID dispositions,
@@ -19,7 +20,8 @@ line budget; this page is the way in.
 | 1 | 9 clusters (rows 1.1 to 1.18) | integrated; gates green; 30 of 34 findings `FIXED`, 4 `PARTIAL` | [wave-1.md](wave-1.md) |
 | 2 | 4 clusters (rows 2.1 to 2.6) | integrated at `e6bc637`; gates and a live check green; 23 rows: 21 `FIXED`, 2 `PARTIAL` | [wave-2.md](wave-2.md) |
 | 3 | 13 clusters (rows 3.1 to 3.11, plus `w3-client-apply` and `w3-users-read-grant` added after wave 2) | integrated at `3a1c4ac` (171 commits above the wave-2 records head); gates green, workflow properties pending the first CI run; 64 rows: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` | [wave-3.md](wave-3.md), [wave-3-dispositions.md](wave-3-dispositions.md) |
-| 4 | 21 clusters (carry-forward plus the whole-change review) | integrated at `97cf4c06` (174 cherry-picks, two pre-gate fixups); gates green on a re-run; not pushed | [wave-4.md](wave-4.md) |
+| 4 | 21 clusters (carry-forward plus the whole-change review) | on `main` at `e6a3d14` (tested code head `97cf4c06`; 174 cherry-picks, two pre-gate fixups); gates were green before that landing; the first CI run is red on `env-suites` only | [wave-4.md](wave-4.md) |
+| 4b | four ACCEPTED clusters; `w4b-prose` rejected and skipped | local `main` at `460c33cf`; this tip is not on `origin/main` | [wave-4b.md](wave-4b.md) |
 
 ## Cluster fragments
 
@@ -97,6 +99,8 @@ the ceilings and the integrator's to-do. The wave files hold the dispositions.
   two rows of `docs/usage/environment.md`, and the `go.mod` toolchain and
   `x/text` bump. See
   [the coordinator note](wave-3.md#applied-before-the-gates-coordinator-note).
-- Wave 4 is integrated. What is still open (prose to-dos, the wave-4b
-  carry-forward, owner questions) is in [wave-4.md](wave-4.md). The first
-  CI run after a push is still pending. Nothing is pushed.
+- Wave 4 is on `main` at `e6a3d14`. The first CI run on that commit is red
+  on `env-suites` only. Owner questions stay in [wave-4.md](wave-4.md).
+- Wave 4b's four ACCEPTED clusters are on local `main` at `460c33cf`
+  ([wave-4b.md](wave-4b.md)). `w4b-prose` was REJECTED and was not
+  cherry-picked. That tip is not on `origin/main`.

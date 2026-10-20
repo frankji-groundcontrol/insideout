@@ -1,0 +1,2 @@
+{"at":"2026-10-20","event":"opened","note":"Wave 4b started after the e6a3d14 CI run failed on the shallow env-suites checkout."}
+{"at":"2026-10-20T05:21:20Z","action":"main","changes":{"status":"active","next_evidence":"w4b-prose REJECTED (f8600ccd, no red-then-green) and not cherry-picked. Four ACCEPTED clusters are on local main at 460c33cf and are not on origin/main. DATABASE_URL was unset, so TestRecordFact_WholeFourCharacterAnswerIsStored was not run."}}

@@ -1,0 +1,23 @@
+version: 2
+task: 'Close review-4 wave 4b: full git history on the env-suites checkout, the findings-register
+  deploy id scrubbed, record_fact wired to the evidence check, and the audited test
+  opens guarded.'
+coordinator: grok
+history_file: 2026-10-20-rv4-wave-4b.track.history.jsonl
+plan:
+- step: Five file-disjoint clusters in one workflow (ci fetch-depth, register scrub,
+    agent wiring, test-strict opens, living-doc sentences), then verify and cherry-pick.
+  owner: rv4-wave-4b
+  status: in_progress
+main:
+  outcome: The four code gaps named in wave-4.md are fixed on main, with the env-suites
+    history arm able to see the cited commits, and living docs matching the code they
+    describe.
+  owner: grok
+  status: active
+  next_evidence: w4b-prose REJECTED (f8600ccd, no red-then-green) and not cherry-picked.
+    Four ACCEPTED clusters are on local main at 460c33cf and are not on origin/main.
+    DATABASE_URL was unset, so TestRecordFact_WholeFourCharacterAnswerIsStored was
+    not run.
+side_tracks: []
+updated_at: '2026-10-20T05:21:20Z'
