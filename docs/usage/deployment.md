@@ -155,8 +155,9 @@ Bounds the server enforces on its own, whatever the proxy does:
 
 - Every request outside the exempt list ends after **25 s**
   (`api/request_deadline.go`); a handler that outruns it answers 500. The
-  exempt routes are the two passive streams, the coach message POST and the four
-  roadmap-draft routes (`build`, `build/confirm`, `expand`, `expand/confirm`).
+  exempt routes are the two passive streams, the coach message POST, and the
+  roadmap-draft routes `build` and `expand` (not `build/confirm` or
+  `expand/confirm`, which run under the 25 s deadline).
 - `GET /healthz` pings the database for at most **2 s** and answers 503
   `database unreachable` instead of hanging.
 - At most **20** open SSE streams per user and **100** per project; the next

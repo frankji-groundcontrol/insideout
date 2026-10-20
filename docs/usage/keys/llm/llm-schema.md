@@ -45,13 +45,15 @@ it is not a failure or a successful live test.
 The server also checks that a reply is whole: it takes a turn as complete only
 after the stream's closing event (`message_stop` on `messages`;
 `response.completed` or `response.incomplete` on `responses`). A gateway or
-proxy that cuts or never sends that event makes every turn fail with a
+proxy that cuts or never sends that event makes the turn fail with a
 transient provider error ("stream ended before message_stop" or "before
-response.completed"), and one that rejects the `parallel_tool_calls` field on
-`responses` answers 400, shown as a provider-configuration error. Both are
-settings or gateway faults, not model faults: point the base URL at the
-provider's own endpoint or one that relays the closing event, and repeat the
-turn.
+response.completed"). A Responses stream cut mid-read is a transient failure
+too, retried once while nothing has been sent. A gateway that rejects
+`parallel_tool_calls` is retried once without the field and then remembered,
+so later requests leave it out; a 400 that does not name that field is still
+a provider-configuration error. A missing closing event is a settings or
+gateway fault, not a model fault: point the base URL at the provider's own
+endpoint or one that relays the closing event, and repeat the turn.
 
 The automated placement check is:
 

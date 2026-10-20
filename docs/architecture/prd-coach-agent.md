@@ -49,13 +49,17 @@ A turn is whole only when its stream ends the way the provider says it does
 (rv4-AIDEV-05). An Anthropic stream must reach `message_stop`; a Responses
 stream (parsed in `trust_responses.go`) must reach `response.completed` or
 `response.incomplete`. One that ends earlier is `ErrProviderTransient`, retried
-once when nothing had been streamed yet. A tool call cut by the token cap
+once when nothing had been streamed yet. A Responses stream cut mid-read is a
+transient failure too, retried once while nothing has been sent (a cancel stays
+a cancel). A tool call cut by the token cap
 (`max_tokens` / `incomplete`) is never run: the turn is marked truncated and
 the stored answer ends with the truncation marker. `response.failed` and
 `error` frames are read as provider errors: a server error is retried, an
 `invalid_prompt`-class one is `PROVIDER_CONFIG`, and neither is a content
-refusal. Responses requests that carry tools send `parallel_tool_calls: false`,
-and each call's arguments are filed under the provider's item id, so two calls
+refusal. Responses requests that carry tools send `parallel_tool_calls: false`.
+A gateway that rejects that field is retried once without it and then remembered,
+so later requests leave it out. Each call's arguments are filed under the
+provider's item id, so two calls
 are never merged into one: the first announced call runs and later ones are
 dropped (rv4-AIDEV-06). The cost is that a gateway which never sends the
 closing event now fails every turn; the one-condition escape hatches are in the

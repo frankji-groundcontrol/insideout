@@ -64,11 +64,12 @@ The non-web clients (`cmd/insideout-mcp`, `apiclient`, `clientconfig`, `mcpserve
 webhook route, which gets 8 MiB — a push delivery listing every commit's
 files can outgrow 1 MiB) → the
 `net/http` mux → route-level `requireAuth` where needed. Inside `withMaxBody`,
-`withRequestDeadline` gives every route a 25 s context except seven exempt
-patterns (the two passive streams and the model-calling routes: coach messages,
-build and expand with their confirms), and `/healthz` pings the database under a
-2 s deadline and answers 503 when it cannot (rv4-REL-02). The two passive streams
-(presence, roadmap progress) are capped at 20 per user and 100 per project, with
+`withRequestDeadline` gives every route a 25 s context except five exempt
+patterns (the two passive streams, the coach message POST, `build`, and
+`expand`). The two confirms run under the 25 s deadline. `/healthz` pings the
+database under a 2 s deadline and answers 503 when it cannot (rv4-REL-02).
+The two passive streams (presence, roadmap progress) are capped at 20 per user
+and 100 per project, with
 429 `APP_STREAM_LIMIT` past the cap, cursor posts are limited to 25 a second per
 user, and each 10 s heartbeat re-verifies the stream's own access token and the
 caller's project membership, so a stream ends when its session or membership
