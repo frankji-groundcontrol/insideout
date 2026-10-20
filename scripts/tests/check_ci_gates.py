@@ -21,7 +21,9 @@ one, so the first CI run after a push is what proves the behavior.
   scripts/tests/check_*.py with `python3 -I` from the repo root and a failing
   guard fails the step (the step's own script runs against a made-up tree), so
   a guard written red-first is not left for nobody to run. Its checkout fetches
-  the tags, because check_docs_truth.py asks git for them.
+  the tags, because check_docs_truth.py asks git for them, and sets
+  fetch-depth: 0: fetch-tags leaves a depth-1 clone, and the ledger history
+  arm then sees none of the cited fix commits (rv4-FR-F45).
 - rv4-PM-12, PUB-09: the Ubuntu install lane accepts no Go older than
   server/go.mod's floor - it asks the go command (`GOTOOLCHAIN=local go list
   -m` in server/) instead of grepping `go version` for a hand-written range,
@@ -214,6 +216,19 @@ def guards_see_the_tags():
     ]
 
 
+def env_suites_fetches_history():
+    """FR-F45: fetch-tags does not fetch commits. A depth-1 clone holds none of
+    the cited fixes, and under CI the ledger history arm then fails closed."""
+    checkout = next((s for s in steps(job(read(CI), "env-suites")) if "actions/checkout" in s), "")
+    if "fetch-depth: 0" in code(checkout):
+        return []
+    return [
+        f"{CI}: the env-suites checkout lacks `fetch-depth: 0` - fetch-tags "
+        "alone leaves a depth-1 clone, so the ledger history arm sees none of "
+        "the cited fix commits (rv4-FR-F45)"
+    ]
+
+
 def ubuntu_go_floor():
     """PM-12, PUB-09: the premise (go.mod's floor) is read from the tree by the go
     command itself - GOTOOLCHAIN=local makes it refuse an older toolchain - so
@@ -273,7 +288,8 @@ def mod_tidy_checked():
 
 CHECKS = [weekly_schedule, scheduled_shuffle, cancel_only_pull_requests,
           pushes_get_their_own_group, contract_guards_run, guards_see_the_tags,
-          ubuntu_go_floor, analyzer_ratchet, mod_tidy_checked]
+          env_suites_fetches_history, ubuntu_go_floor, analyzer_ratchet,
+          mod_tidy_checked]
 
 if __name__ == "__main__":
     failures = [message for check in CHECKS for message in check()]
