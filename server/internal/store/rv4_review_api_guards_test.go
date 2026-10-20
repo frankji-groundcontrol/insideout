@@ -7,12 +7,15 @@ import (
 )
 
 // rv4-FR-F195, rv4-FR-F201: INSIDEOUT_TEST_STRICT refused a database on another
-// machine only in the tests that called testlock; newTestStore, the door the
-// store tests share, and writeWalkStore, the RLS write walks' door, never did.
-// Each probe is one helper and nothing else; the parent runs it in a child
-// process aimed at a DSN that never resolves and needs the guard's refusal.
+// machine only in the tests that called testlock. newTestStore and writeWalkStore
+// ask first; the two tests below still open a DSN themselves. Each child is aimed
+// at a DSN that never resolves and must fail with the guard's refusal.
 func TestRvGuardsStrictModeRefusesARemoteDatabase(t *testing.T) {
-	testlock.AssertRefuses(t, "TestRvGuardsProbeNewTestStore", "TestRvGuardsProbeWriteWalkStore")
+	testlock.AssertRefuses(t,
+		"TestRvGuardsProbeNewTestStore",
+		"TestRvGuardsProbeWriteWalkStore",
+		"TestServeRoleRefusesABypassRLSPool",
+		"TestCircuitFunctions_TakeARowID")
 }
 
 func TestRvGuardsProbeNewTestStore(t *testing.T)   { newTestStore(t) }
