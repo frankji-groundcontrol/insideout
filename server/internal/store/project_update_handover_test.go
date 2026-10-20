@@ -121,6 +121,26 @@ func TestRvHandoverPlainEditsAndAdminHandOversStayAllowed(t *testing.T) {
 	}
 }
 
+// An edit that leaves the owner out keeps whoever owns the project. A nil
+// OwnerID is that omission (ClearOwner is the explicit clear). Both the
+// project's owner and an admin may make the edit; neither unowns it.
+func TestRvHandoverAnOmittedOwnerIsKept(t *testing.T) {
+	w := newRvHandoverWorld(t)
+	ctx := context.Background()
+	omit := func(title, status string) ProjectUpdateFields {
+		return ProjectUpdateFields{Title: title, Description: w.project.Description, Status: status}
+	}
+
+	p, err := w.st.UpdateProject(ctx, w.owner.ID, w.project.ID, omit("Retitled", "paused"))
+	if err != nil || p == nil || p.Title != "Retitled" || p.Status != "paused" || p.OwnerID == nil || *p.OwnerID != w.owner.ID {
+		t.Fatalf("a non-admin owner's edit that omits the owner = %+v, %v; want the edit applied and the owner kept", p, err)
+	}
+	p, err = w.st.UpdateProject(ctx, w.admin.ID, w.project.ID, omit("Retitled by an admin", "active"))
+	if err != nil || p.Title != "Retitled by an admin" || p.Status != "active" || p.OwnerID == nil || *p.OwnerID != w.owner.ID {
+		t.Fatalf("an admin's edit that omits the owner = %+v, %v; want the edit applied and the owner kept", p, err)
+	}
+}
+
 // The refusal is decided before the UPDATE is tried. Holding the project row's
 // lock makes that visible: a call that reached the UPDATE waits for the lock
 // and runs out its deadline, a refused one answers at once. The admin's

@@ -120,3 +120,20 @@ func TestRvHandoverTheRefusalSaysAnAdminIsNeeded(t *testing.T) {
 		t.Fatalf("title = %q after the refused edits, want it untouched", title)
 	}
 }
+
+// Leaving ownerId out of PATCH keeps the current owner, for the owner and
+// for an admin. null and "" still clear; this test does not send them.
+func TestRvHandoverAnOmittedOwnerIdKeepsTheOwner(t *testing.T) {
+	w := newCoverageWorld(t)
+	rvHandoverGiveTo(t, w, w.member)
+	own := w.member.ID.String()
+
+	got := decodeAs[projectView](t, w.must(t, w.member, "PATCH", w.proj(), rvHandoverPatch("Kept by owner", "paused", ""), http.StatusOK))
+	if got.OwnerID == nil || *got.OwnerID != own || got.Title != "Kept by owner" || got.Status != "paused" {
+		t.Fatalf("owner edit omitting ownerId = %+v, want the member kept and the edit applied", got)
+	}
+	got = decodeAs[projectView](t, w.must(t, w.owner, "PATCH", w.proj(), rvHandoverPatch("Kept by admin", "active", ""), http.StatusOK))
+	if got.OwnerID == nil || *got.OwnerID != own || got.Title != "Kept by admin" || got.Status != "active" {
+		t.Fatalf("admin edit omitting ownerId = %+v, want the member kept and the edit applied", got)
+	}
+}
