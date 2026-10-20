@@ -211,10 +211,11 @@ func TestRvMcpLogoutRestoresPasswordTools(t *testing.T) {
 	}
 }
 
-// TestRvMcpHeldLoginRefusesSessionSwap is F176. The agent profile keeps
-// auth_login_code_verify, auth_magic_link_consume and auth_logout on the list
-// (withholding them is an owner decision). Calling a swap tool while a login is
-// held must not replace the session; auth_logout must demand confirm=true.
+// TestRvMcpHeldLoginRefusesSessionSwap is F176. While a login is held the
+// process does not advertise auth_login_code_verify, auth_magic_link_consume
+// or auth_logout. Calling one anyway must not replace the session;
+// auth_logout must demand confirm=true. A human restarts the process to
+// change identity.
 func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 	pinConfigHome(t)
 	t.Cleanup(func() { setSessionToken("") })
@@ -247,8 +248,13 @@ func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 	s := Build(api.URL)
 	names := offeredTools(t, s)
 	for _, tool := range []string{"auth_login_code_verify", "auth_magic_link_consume", "auth_logout"} {
+		if slices.Contains(names, tool) {
+			t.Errorf("%s is still advertised while a login is held", tool)
+		}
+	}
+	for _, tool := range []string{"auth_login_code_request", "auth_magic_link_request"} {
 		if !slices.Contains(names, tool) {
-			t.Errorf("%s left the tool list; refuse the call instead of hiding the tool", tool)
+			t.Errorf("%s left the list; a held login still needs the request tools", tool)
 		}
 	}
 

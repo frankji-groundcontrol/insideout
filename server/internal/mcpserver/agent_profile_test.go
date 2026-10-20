@@ -44,6 +44,11 @@ func TestAProcessHoldingALoginDoesNotOfferTheHumanOnlyTools(t *testing.T) {
 					t.Errorf("the agent's tool %q is missing", want)
 				}
 			}
+			for _, hidden := range []string{"auth_login_code_verify", "auth_magic_link_consume", "auth_logout"} {
+				if slices.Contains(names, hidden) {
+					t.Errorf("%s is advertised while a login is held", hidden)
+				}
+			}
 		})
 	}
 }

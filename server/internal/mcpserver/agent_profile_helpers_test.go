@@ -26,11 +26,12 @@ var humanOnlyTools = []string{
 }
 
 // agentTools must survive the profile: the agent's own vocabulary, the edits it
-// makes for the user and the passwordless sign-in that can still start a session.
+// makes for the user, and the passwordless requests that can still start a
+// session. auth_login_code_verify, auth_magic_link_consume and auth_logout do
+// not: they leave the offered list once a login is held.
 var agentTools = []string{
 	"whoami", "workspaces", "projects", "prd", "prd_update", "idea_create", "roadmap_add", "agent_context",
-	"checkpoint", "propose", "auth_login_code_request", "auth_login_code_verify",
-	"auth_magic_link_request", "auth_magic_link_consume", "auth_logout",
+	"checkpoint", "propose", "auth_login_code_request", "auth_magic_link_request",
 }
 
 const exampleAPI = "http://api.example.com"
