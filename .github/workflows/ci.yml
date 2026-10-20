@@ -319,6 +319,7 @@ jobs:
       # rv4-PM-01: check_docs_truth.py lists v* tags and a default checkout has none.
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          fetch-depth: 0
           fetch-tags: true
       # TEST-17: a pinned interpreter instead of whatever python3 the runner
       # image ships (the scripts target 3.9 or newer).
