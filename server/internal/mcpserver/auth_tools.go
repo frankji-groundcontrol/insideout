@@ -30,7 +30,9 @@ func addAuthTools(s *server.MCPServer, api string) {
 	// refuseSessionSwap blocks a second identity while one is already held, so a
 	// prompt cannot point auth_magic_link_consume or auth_login_code_verify at
 	// an attacker's account (rv4-FR-F176). auth_logout with confirm clears the
-	// gate. The tools stay listed; withholding them is an owner decision.
+	// gate. While a login is held those three are not advertised; this refusal
+	// is the backstop if a client calls one anyway. Restart the process to
+	// change identity.
 	refuseSessionSwap := func() error {
 		session.Lock()
 		unlocked := session.swapUnlocked
