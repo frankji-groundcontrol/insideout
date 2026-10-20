@@ -6,49 +6,41 @@ Not pushed, not tagged, not deployed.
 
 ## Landed
 
-Cherry-picked onto local `main` from `d9d7641`, each accepted cluster's SHAs in order.
+The workflow accepted retention and session-withhold and cherry-picked them.
+The completion fix conflicted in five doc indexes; that conflict was resolved
+and the fix landed. The omitted-owner fix and the decision record were
+rejected by the verifier for leaving their file lists; both were reviewed
+and cherry-picked after that.
 
-- Retention and erasure. `77eeed7` then `9ec7b31`, now `d5a45fe` and `3ecef69`.
-  Idle coach conversations are purged 365 days after the newest message, and
-  `DELETE /api/v1/me` tombstones the account. Detail:
-  [retention changelog](2026-10-20-retention-and-erasure.md).
-- Session-tool withhold. `59a57c3` then `e235c15`, now `8f3a76d` and `9e6e68e`.
-  While a login is held, the MCP server does not advertise
-  `auth_login_code_verify`, `auth_magic_link_consume`, or `auth_logout`.
+- Retention and erasure. `d5a45fe` and `3ecef69`. Idle coach conversations
+  are purged 365 days after the newest message, and `DELETE /api/v1/me`
+  tombstones the account.
+  [Detail](2026-10-20-retention-and-erasure.md).
+- Session-tool withhold. `8f3a76d` and `9e6e68e`. While a login is held, the
+  MCP server does not advertise `auth_login_code_verify`,
+  `auth_magic_link_consume`, or `auth_logout`.
+- Completion. `0a87f91`, from worker fix `1cb3d1d`. `in_progress` to `done`
+  needs linked evidence or a one-sentence reason. Migration
+  `20261020150000`.
+  [Detail](2026-10-20-completion-evidence-or-reason.md).
+- Omitted owner. `e25bb80` and `269391f`, from `c2ee18e` and `221fb87`. A
+  PATCH that leaves `ownerId` out keeps the current owner. `null` and `""`
+  still clear it, and clearing still needs a workspace admin. The API
+  change was required to tell an omitted key from `null`.
+  [Detail](2026-10-20-omitted-project-owner.md). The last admin was already
+  refused by `ErrLastAdmin` in `memberships.go`.
+- Keep-as-built decisions. `5938aa5`, from `17f15e7`.
+  [Record](../issues/2026-10-20-rv4-decisions-adopted.md).
 
-## Stopped on conflict
+## Still the owner's console
 
-Completion. Red `65569dc` landed as `2986f4b`
-(`TestRoadmapCompletion_RefusesDoneWithoutEvidenceOrReason` only). Fix
-`1cb3d1d` conflicted and the cherry-pick was aborted, so the cluster stopped.
-The conflict was in:
-
-- `docs/HANDOFF.md`
-- `docs/changelogs/README.md`
-- `docs/changelogs/index/2026-10.md`
-- `docs/learning/README.md`
-- `docs/plans/README.md`
-
-The red test is on local `main` without the store rule, the migration, or the
-web prompt. It fails when `DATABASE_URL` is set.
-
-## Skipped
-
-Rejected clusters were not cherry-picked.
-
-- Omitted owner and last admin. `c2ee18e`, `221fb87`. The diff did not stay
-  inside the handover store files: it also edited
-  `server/internal/api/projects.go`, three API tests, changelog indexes, and
-  this plan. `memberships.go` was not changed.
-- Decision record for the keep-as-built rows. `17f15e7`. The new decision file
-  does not state only the settings in the plan. It adds decisions the plan
-  does not adopt, says the last-admin half was not decided, and never states
-  the plan's retention, completion, session-withhold, or omitted-ownerId
-  settings.
+The hosted database role, `INSIDEOUT_TRUSTED_PROXY_HOPS=1`, GitHub
+`deployment_status`, key rotation, and the Railway `VERSION` variable.
+What makes `v1.0.0` was not decided. Viewer-zone timestamps were not decided.
 
 ## Verification
 
-`go test ./internal/mcpserver/ -count=1` passed. Those tests do not need a
-database. The database gate was not re-run here: `DATABASE_URL` was unset and
-was not loaded from `.env`. The verifiers had already run the database tests
-for the accepted clusters.
+`go test ./internal/mcpserver/ -count=1` passed during integration. Those
+tests do not need a database. The verifiers ran the retention, completion,
+and hand-over tests on private Postgres. This checkout did not re-run them:
+`DATABASE_URL` was unset and was not loaded from `.env`.

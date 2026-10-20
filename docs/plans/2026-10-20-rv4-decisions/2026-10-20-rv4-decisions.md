@@ -25,4 +25,4 @@ History is not rewritten.
 - [x] Completion rule — landed after the doc-index conflict was resolved.
 - [x] Session-tool withhold — on local `main` as `8f3a76d` and `9e6e68e`.
 - [x] Omitted owner. The last admin was already refused in `memberships.go` (`ErrLastAdmin`).
-- [ ] Decision record for the keep-as-built rows.
+- [x] Decision record for the keep-as-built rows — [adopted](../../issues/2026-10-20-rv4-decisions-adopted.md).

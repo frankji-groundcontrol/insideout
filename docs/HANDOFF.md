@@ -39,7 +39,7 @@ Board row:
 
 Retention and erasure (rv4-DATA-06) are on local `main` and not pushed: a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
 
-Session-swap tools are withheld while a login is held. Marking a roadmap node done needs evidence or a one-sentence reason ([changelog](changelogs/2026-10-20-completion-evidence-or-reason.md), migration `20261020150000`). The verifier ran that store test on private Postgres. This checkout did not re-run it.
+Session-swap tools are withheld while a login is held. Marking a roadmap node done needs evidence or a one-sentence reason ([changelog](changelogs/2026-10-20-completion-evidence-or-reason.md), migration `20261020150000`). A PATCH that omits `ownerId` keeps the project owner ([changelog](changelogs/2026-10-20-omitted-project-owner.md)). The keep-as-built decisions are in [the adopted record](issues/2026-10-20-rv4-decisions-adopted.md). The verifier ran the new database tests on private Postgres. This checkout did not re-run them. Still the owner's console: the hosted database role, `INSIDEOUT_TRUSTED_PROXY_HOPS=1`, GitHub `deployment_status`, key rotation, and the Railway `VERSION` variable.
 
 **Engineering is not closed: nine product-promise slices are open, and the
 owner's account actions below remain.** The slices are what
