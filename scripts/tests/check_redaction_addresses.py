@@ -276,7 +276,9 @@ class TrackedTree(unittest.TestCase):
 
     def test_dated_records_carry_no_provider_ids(self):
         # Paths and line numbers only, so a red run does not echo the ids.
-        spots = [s for s in provider_id_spots() if s.rsplit(":", 1)[0] not in QUOTES_EVIDENCE]
+        # The QUOTES_EVIDENCE exception is not applied: a quoted provider id
+        # fails while that allowlist still names the file and the id is present.
+        spots = list(provider_id_spots())
         self.assertEqual(spots, [], "provider ids at these path:line spots")
 
     def test_the_evidence_allowlist_holds_no_scrubbed_record(self):
