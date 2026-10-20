@@ -42,6 +42,9 @@ type RoadmapNode struct {
 	ValidationReason string
 	ValidatedBy      *uuid.UUID
 	ValidatedAt      *time.Time
+	// CompletionReason is the one-sentence override for an in_progress →
+	// done move that had no linked evidence ('' when unset).
+	CompletionReason string
 	// Display names resolved by ListRoadmap's LEFT JOIN (never stored on the
 	// row). Single-node reads leave them nil; the canvas re-lists after every
 	// mutation, so it always sees the joined names.
@@ -69,13 +72,16 @@ type RoadmapNodeFields struct {
 	// assigned owner must be a member of the node's workspace.
 	OwnerID    *uuid.UUID
 	ClearOwner bool
+	// CompletionReason records the one-sentence override on in_progress →
+	// done. Nil leaves the column untouched.
+	CompletionReason *string
 }
 
-const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by, acceptance, owner_user_id, validation_reason, validated_by, validated_at`
+const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by, acceptance, owner_user_id, validation_reason, validated_by, validated_at, completion_reason`
 
 func scanRoadmapNode(row pgx.Row) (*RoadmapNode, error) {
 	var n RoadmapNode
-	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt)
+	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
 	}
@@ -201,7 +207,7 @@ func (s *Store) ListRoadmap(ctx context.Context, actorID, projectID uuid.UUID) (
 
 		for rows.Next() {
 			var n RoadmapNode
-			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CreatorName, &n.EditorName, &n.OwnerName); err != nil {
+			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason, &n.CreatorName, &n.EditorName, &n.OwnerName); err != nil {
 				return err
 			}
 			out = append(out, n)
@@ -275,6 +281,9 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 		if f.Status != nil && !statusTransitionAllowed(current, *f.Status) {
 			return fmt.Errorf("%w: status %q cannot move to %q", ErrInvalidTransition, current, *f.Status)
 		}
+		if err := requireDoneEvidenceOrReason(ctx, tx, nodeID, current, &f); err != nil {
+			return err
+		}
 
 		row := tx.QueryRow(ctx, `
 			UPDATE insideout.roadmap_nodes
@@ -284,10 +293,11 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 			    deadline = CASE WHEN $6 THEN NULL ELSE COALESCE($7, deadline) END,
 			    acceptance = COALESCE($8, acceptance),
 			    owner_user_id = CASE WHEN $9 THEN NULL ELSE COALESCE($10, owner_user_id) END,
+			    completion_reason = COALESCE($11, completion_reason),
 			    updated_by = $5
 			WHERE id = $1
 			RETURNING `+roadmapNodeColumns,
-			nodeID, f.Title, f.Description, f.Status, actorID, f.ClearDeadline, f.Deadline, f.Acceptance, f.ClearOwner, f.OwnerID,
+			nodeID, f.Title, f.Description, f.Status, actorID, f.ClearDeadline, f.Deadline, f.Acceptance, f.ClearOwner, f.OwnerID, f.CompletionReason,
 		)
 		var scanErr error
 		n, scanErr = scanRoadmapNode(row)

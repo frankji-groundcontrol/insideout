@@ -12,8 +12,7 @@ const enWorkspace = <String, String>{
   'workspace.joinTitle': 'Join with a code',
   'workspace.joinCodePlaceholder': 'Workspace code',
   'workspace.join': 'Join',
-  'workspace.empty':
-      "You haven't joined any workspace yet. Create one or enter a workspace code.",
+  'workspace.empty': "You haven't joined any workspace yet. Create one or enter a workspace code.",
   'workspace.inviteCode': 'Workspace code: {code}',
   'workspace.members': '{count} members',
   'workspace.membersOne': '{count} member',
@@ -21,8 +20,7 @@ const enWorkspace = <String, String>{
   'workspace.settings': 'Settings',
   'workspace.settingsTitle': 'Workspace settings',
   'workspace.inviteHint': 'Share this workspace code with teammates:',
-  'workspace.inviteAccountHint':
-      'Teammates need an InsideOut account first. If sign-up is invitation-only, an admin can create a site invitation under Profile > Admin.',
+  'workspace.inviteAccountHint': 'Teammates need an InsideOut account first. If sign-up is invitation-only, an admin can create a site invitation under Profile > Admin.',
   'workspace.membersTitle': 'Members',
   'workspace.role.admin': 'Admin',
   'workspace.role.member': 'Member',
@@ -54,10 +52,8 @@ const enWorkspace = <String, String>{
   'project.edit': 'Edit project',
   'project.statusLabel': 'Status',
   'roadmap.title': 'Roadmap',
-  'roadmap.empty':
-      'No roadmap yet. Add a top-level goal and branch it into parallel tracks.',
-  'roadmap.noneScheduled':
-      'Nothing is scheduled yet. Give an item a deadline and it appears here; all items are in Bands and Canvas.',
+  'roadmap.empty': 'No roadmap yet. Add a top-level goal and branch it into parallel tracks.',
+  'roadmap.noneScheduled': 'Nothing is scheduled yet. Give an item a deadline and it appears here; all items are in Bands and Canvas.',
   'roadmap.rootPlaceholder': 'A top-level goal (e.g. Ship the MVP)',
   'roadmap.addRoot': 'Add goal',
   'roadmap.addChild': 'Add sub-task',
@@ -76,6 +72,9 @@ const enWorkspace = <String, String>{
   'roadmap.validate': 'Mark validated',
   'roadmap.validateHint':
       'Why this counts as validated (the reason is recorded)',
+  'roadmap.completionReason': 'Why this is done',
+  'roadmap.completionReasonHint':
+      'One sentence. It is recorded because there is no evidence yet.',
   'roadmap.acceptance': 'Done when',
   'workspace.nowDone': 'Now {now} · Done {done}',
   'evidence.doneTitle': 'Done, with its evidence',
@@ -108,15 +107,13 @@ const enWorkspace = <String, String>{
   'idea.contentPlaceholder': 'Describe the idea in a sentence or two...',
   'idea.capture': 'Capture',
   'idea.empty': 'No ideas yet. What are you thinking about?',
-  'idea.privateHint':
-      'Private to you — ideas are visible only to their author (workspace admins excepted) until converted.',
+  'idea.privateHint': 'Private to you — ideas are visible only to their author (workspace admins excepted) until converted.',
   'idea.convert': 'Convert to PRD',
   'idea.drop': 'Drop',
   'idea.dropConfirm': 'Drop this idea?',
   'view.entry': 'Audience view',
   'view.title': 'Audience view',
-  'view.projectionNote':
-      'Projected from the working version — the PRD core stays the single source.',
+  'view.projectionNote': 'Projected from the working version — the PRD core stays the single source.',
   'view.whyYouRead': 'Why you read this',
   'view.gapsTitle': 'Open gaps for this audience',
   'view.carriedOpen': '(not yet written — carried as an open question)',
@@ -140,8 +137,7 @@ const enWorkspace = <String, String>{
   'roadmap.viewBands': 'Bands',
   'roadmap.viewProgress': 'Progress',
   'roadmap.newItem': 'New item',
-  'roadmap.lead':
-      'Plan the work, then write the cohort. Shade is distance, not decoration.',
+  'roadmap.lead': 'Plan the work, then write the cohort. Shade is distance, not decoration.',
   'evidence.title': 'Evidence',
   'evidence.lead': 'Git and project updates sit on the same field.',
   'proposal.accept': 'Accept',

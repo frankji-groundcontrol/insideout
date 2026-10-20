@@ -70,9 +70,10 @@ func runRoadmapCommand(args []string) (bool, int) {
 		description := fs.String("description", "", "new description")
 		status := fs.String("status", "", "locked|pending|in_progress|done")
 		deadline := fs.String("deadline", "", "RFC3339 deadline, or clear")
+		reason := fs.String("completion-reason", "", "one sentence when marking done with no evidence")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 ||
-			(*title == "" && *description == "" && *status == "" && *deadline == "") {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap update [--title T] [--description D] [--status S] [--deadline RFC3339|clear] <node-id>")
+			(*title == "" && *description == "" && *status == "" && *deadline == "" && *reason == "") {
+			fmt.Fprintln(os.Stderr, "usage: insideout roadmap update [--title T] [--description D] [--status S] [--deadline RFC3339|clear] [--completion-reason SENTENCE] <node-id>")
 			return true, 2
 		}
 		var dl *string
@@ -86,7 +87,7 @@ func runRoadmapCommand(args []string) (bool, int) {
 			}
 			dl = deadline
 		}
-		return printJSON(clientFromFlag(*api).RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status), dl))
+		return printJSON(clientFromFlag(*api).RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status), dl, strPtrIfSet(*reason)))
 	case "move":
 		fs := flag.NewFlagSet("roadmap move", flag.ContinueOnError)
 		api := apiFlag(fs)

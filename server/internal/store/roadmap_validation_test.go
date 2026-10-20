@@ -109,7 +109,11 @@ func TestValidatedState_RequiresHumanConfirmWithReason(t *testing.T) {
 		t.Fatalf("create leaf: %v", err)
 	}
 	for _, status := range []string{"in_progress", "done"} {
-		if _, err := st.UpdateRoadmapNode(ctx, admin.ID, leaf.ID, RoadmapNodeFields{Status: sptr(status)}); err != nil {
+		fields := RoadmapNodeFields{Status: sptr(status)}
+		if status == "done" {
+			fields.CompletionReason = sptr("The pilot shipped.")
+		}
+		if _, err := st.UpdateRoadmapNode(ctx, admin.ID, leaf.ID, fields); err != nil {
 			t.Fatalf("walk to %s: %v", status, err)
 		}
 	}

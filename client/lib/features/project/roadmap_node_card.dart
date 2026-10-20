@@ -14,6 +14,7 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
+import 'roadmap_completion_prompt.dart';
 
 part 'roadmap_expand_draft.dart';
 part 'roadmap_node_menu.dart';

@@ -119,6 +119,7 @@ class _NodeMenu extends StatelessWidget {
     final desc = TextEditingController(text: node.description);
     final acceptance = TextEditingController(text: node.acceptance);
     var status = node.status;
+    String? completionReason;
     String? deadline = node.deadline;
     String? ownerId = node.ownerId;
     List<WorkspaceMember> members = const [];
@@ -160,6 +161,7 @@ class _NodeMenu extends StatelessWidget {
             ),
             const SizedBox(height: Cobalt.space4),
             BlockSelect<String>(
+              key: const Key('status-picker'),
               value: status,
               options: [
                 for (final s in const [
@@ -170,7 +172,20 @@ class _NodeMenu extends StatelessWidget {
                 ])
                   (value: s, label: t('roadmap.status.$s')),
               ],
-              onChanged: (v) => setLocal(() => status = v ?? status),
+              onChanged: (v) {
+                pickRoadmapDoneStatus(
+                  context: ctx,
+                  node: node,
+                  current: status,
+                  picked: v,
+                  loadEvidence: () => api.listNodeEvidence(node.id),
+                  t: t,
+                  apply: (next, reason) => setLocal(() {
+                    status = next;
+                    completionReason = reason;
+                  }),
+                );
+              },
             ),
             const SizedBox(height: Cobalt.space4),
             Row(
@@ -246,6 +261,9 @@ class _NodeMenu extends StatelessWidget {
           deadline: deadline == '' ? '' : deadline,
           acceptance: acceptance.text.trim(),
           ownerId: ownerId ?? '',
+          completionReason: status == 'done' && node.status == 'in_progress'
+              ? completionReason
+              : null,
         ),
       );
       if (done && context.mounted) await onReload();

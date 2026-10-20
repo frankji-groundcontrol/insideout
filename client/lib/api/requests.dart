@@ -89,6 +89,7 @@ ApiCall patchRoadmapNode(
   String? deadline,
   String? acceptance,
   String? ownerId,
+  String? completionReason,
 }) {
   return ApiCall('PATCH', '/roadmap/$nodeId', {
     if (title != null) 'title': title,
@@ -97,6 +98,7 @@ ApiCall patchRoadmapNode(
     if (deadline != null) 'deadline': deadline,
     if (acceptance != null) 'acceptance': acceptance,
     if (ownerId != null) 'ownerId': ownerId,
+    if (completionReason != null) 'completionReason': completionReason,
   });
 }
 

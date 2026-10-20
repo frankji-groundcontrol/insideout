@@ -133,6 +133,7 @@ mixin _ProjectVerbs on _ApiCore {
     String? deadline,
     String? acceptance,
     String? ownerId,
+    String? completionReason,
   }) async {
     final res = await _exec(
       req.patchRoadmapNode(
@@ -143,6 +144,7 @@ mixin _ProjectVerbs on _ApiCore {
         deadline: deadline,
         acceptance: acceptance,
         ownerId: ownerId,
+        completionReason: completionReason,
       ),
     );
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));

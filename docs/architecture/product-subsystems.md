@@ -57,6 +57,11 @@ views (PRODUCT.md principle 3).
 ## Time-first roadmap
 
 - `roadmap_nodes.deadline` (nullable — deadlines are commitments).
+- Moving a node from `in_progress` to `done` needs a linked
+  `roadmap_evidence` row or a one-sentence `completion_reason` on that
+  update. The store enforces it for the API, CLI and MCP. The web status
+  control asks for the sentence when the node has no evidence. A reason
+  stored on an earlier completion does not cover the next close.
 - `internal/roadmaptime`: pressure states (normal → near → high risk →
   overdue) and the Progress assembly — **Now admits deadlined work
   only**; in-progress items without a deadline surface as

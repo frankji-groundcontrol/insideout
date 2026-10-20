@@ -115,8 +115,12 @@ func TestValidateNodeConfirmEndpoint(t *testing.T) {
 
 	// Walk the leaf to done over the public API, like the canvas does.
 	for _, status := range []string{"in_progress", "done"} {
+		body := `{"status":"` + status + `"}`
+		if status == "done" {
+			body = `{"status":"done","completionReason":"The pilot shipped."}`
+		}
 		validationStatus(t, ts, token, http.StatusOK, http.MethodPatch,
-			"/api/v1/roadmap/"+leaf.ID.String(), `{"status":"`+status+`"}`)
+			"/api/v1/roadmap/"+leaf.ID.String(), body)
 	}
 
 	// The plain status PATCH cannot reach validated: it is not a human

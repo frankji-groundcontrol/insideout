@@ -187,7 +187,7 @@ func TestRoadmap_PartialUpdate(t *testing.T) {
 	}
 
 	// All three at once still works (parity with the old full write).
-	got, err = st.UpdateRoadmapNode(ctx, admin.ID, n.ID, RoadmapNodeFields{Title: sp("T"), Description: sp("D"), Status: sp("done")})
+	got, err = st.UpdateRoadmapNode(ctx, admin.ID, n.ID, RoadmapNodeFields{Title: sp("T"), Description: sp("D"), Status: sp("done"), CompletionReason: sp("The pilot shipped.")})
 	if err != nil {
 		t.Fatalf("full update: %v", err)
 	}

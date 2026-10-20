@@ -74,7 +74,7 @@ func runeLimits() []runeLimit {
 	ws := func(w *routeWorld) string { return w.project.WorkspaceID.String() }
 	node := func(t *testing.T, w *routeWorld) string { return w.roadmapNode(t, "seed node") }
 	doneNode := func(t *testing.T, w *routeWorld) string {
-		return w.roadmapNode(t, "seed done node", `{"status":"in_progress"}`, `{"status":"done"}`)
+		return w.roadmapNode(t, "seed done node", `{"status":"in_progress"}`, `{"status":"done","completionReason":"The pilot shipped."}`)
 	}
 	owner := func(t *testing.T, w *routeWorld, method, path string, body map[string]any) (int, string) {
 		return w.send(t, w.owner, method, path, body)

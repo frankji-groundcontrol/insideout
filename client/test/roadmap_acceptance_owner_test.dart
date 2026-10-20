@@ -51,6 +51,7 @@ class _MembersApi extends ApiClient {
     String? deadline,
     String? acceptance,
     String? ownerId,
+    String? completionReason,
   }) async {
     saved = {
       'title': title,
@@ -59,6 +60,7 @@ class _MembersApi extends ApiClient {
       'deadline': deadline,
       'acceptance': acceptance,
       'ownerId': ownerId,
+      'completionReason': completionReason,
     };
     return node;
   }

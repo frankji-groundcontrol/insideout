@@ -136,7 +136,7 @@ func TestPrdThroughApprovalToProgress(t *testing.T) {
 	patch(t, ts, token, "/api/v1/roadmap/"+leaf.ID.String(),
 		`{"deadline":"`+deadline+`"}`, http.StatusOK)
 	patch(t, ts, token, "/api/v1/roadmap/"+leaf.ID.String(),
-		`{"status":"done"}`, http.StatusOK)
+		`{"status":"done","completionReason":"The pilot shipped."}`, http.StatusOK)
 
 	progress := doJSON(t, ts, token, http.MethodGet,
 		"/api/v1/projects/"+built.ProjectID+"/roadmap/progress", "")

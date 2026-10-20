@@ -77,6 +77,13 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
 - [Working-version autosave](2026-10-11-prd-autosave.md) — saves are manual
   guardWrite actions; no autosave or debounce anywhere in the client.
 
+## Resolved partial promises
+
+- [Completion without evidence or a reason](2026-10-18-promise-partial-completion-override-reason.md)
+  — fixed 2026-10-20. `in_progress` to `done` needs linked evidence or a
+  one-sentence completion reason.
+  [Changelog](../changelogs/2026-10-20-completion-evidence-or-reason.md).
+
 ## Partial promises (2026-10-18)
 
 PRODUCT.md promises the product partly keeps, filed during review-4 wave 3
@@ -88,9 +95,6 @@ prompt. Open by design; no `BUG-NNN` number consumed.
   Roadmap before a human accepts a new baseline.
 - [Roadmap tied to a PRD Commit baseline](2026-10-18-promise-partial-commit-baseline-tie.md)
   — the Roadmap graph is not tied to an explicit Commit.
-- [Completion without evidence or a reason](2026-10-18-promise-partial-completion-override-reason.md)
-  — a node can move to done with neither linked evidence nor an override reason
-  (owner decision COMP-08-DECISION).
 - [Outcome target time ranges](2026-10-18-promise-partial-outcome-time-ranges.md)
   — milestones and items carry deadlines; product outcomes carry no target range.
 - [Overdue work resolved with a reason](2026-10-18-promise-partial-overdue-resolution.md)

@@ -15,6 +15,7 @@ class RoadmapNode {
     this.ownerId,
     this.ownerName = '',
     this.validationReason = '',
+    this.completionReason = '',
   });
 
   final String id;
@@ -39,6 +40,10 @@ class RoadmapNode {
   /// human confirm's own words.
   final String validationReason;
 
+  /// The one-sentence override that marked this node done with no
+  /// evidence ('' when unset).
+  final String completionReason;
+
   factory RoadmapNode.fromJson(Map<String, dynamic> j) => RoadmapNode(
     id: j['id'] as String,
     projectId: j['projectId'] as String,
@@ -55,6 +60,7 @@ class RoadmapNode {
     ownerId: j['ownerId'] as String?,
     ownerName: (j['ownerName'] as String?) ?? '',
     validationReason: (j['validationReason'] as String?) ?? '',
+    completionReason: (j['completionReason'] as String?) ?? '',
   );
 }
 

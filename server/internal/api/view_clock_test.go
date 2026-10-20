@@ -137,7 +137,7 @@ func TestRoadmapNodePressureFollowsTheServerClock(t *testing.T) {
 	}
 
 	t.Run("the validate response follows the clock too", func(t *testing.T) {
-		vid := w.roadmapNode(t, "Prove the pilot", `{"status":"in_progress",`+roadmapDeadlineJSON()+`}`, `{"status":"done"}`)
+		vid := w.roadmapNode(t, "Prove the pilot", `{"status":"in_progress",`+roadmapDeadlineJSON()+`}`, `{"status":"done","completionReason":"The pilot shipped."}`)
 		w.pinClock(roadmapDeadline.Add(-30 * 24 * time.Hour))
 		code, body := w.call(w.owner, "POST", "/api/v1/roadmap/"+vid+"/validate", `{"reason":"pilot users finished the tour"}`)
 		expect(t, "validate", code, body, http.StatusOK)
@@ -153,7 +153,7 @@ func TestRoadmapProgressPressureFollowsTheServerClock(t *testing.T) {
 	w := newRouteWorld(t)
 	w.roadmapNode(t, "Building now", `{"status":"in_progress",`+roadmapDeadlineJSON()+`}`)
 	w.roadmapNode(t, "Up next", `{`+roadmapDeadlineJSON()+`}`)
-	w.roadmapNode(t, "Finished", `{"status":"in_progress",`+roadmapDeadlineJSON()+`}`, `{"status":"done"}`)
+	w.roadmapNode(t, "Finished", `{"status":"in_progress",`+roadmapDeadlineJSON()+`}`, `{"status":"done","completionReason":"The pilot shipped."}`)
 	path := "/api/v1/projects/" + w.project.ID.String() + "/roadmap/progress"
 
 	for _, tc := range pressureAt {

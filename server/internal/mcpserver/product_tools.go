@@ -67,7 +67,8 @@ func addProductTools(s *server.MCPServer, api string) {
 	addTextTool("roadmap_update", "Partially update a node (title/description/status)",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("title", "new title"),
 			strOpt("description", "new description"), strOpt("status", "locked|pending|in_progress|done"),
-			strOpt("deadline", "RFC3339 deadline, or empty string to clear")},
+			strOpt("deadline", "RFC3339 deadline, or empty string to clear"),
+			strOpt("completion_reason", "one sentence when marking done with no evidence")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			arg := func(k string) *string {
 				if v, ok := req.GetArguments()[k].(string); ok && v != "" {
@@ -80,7 +81,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			if hasDeadline {
 				dl = &deadline
 			}
-			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status"), dl))
+			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status"), dl, arg("completion_reason")))
 		})
 	addTextTool("roadmap_move", "Re-parent / reposition a node",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", "new parent id; empty = root"),

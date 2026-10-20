@@ -79,7 +79,7 @@ func (c *Client) RoadmapAdd(projectID, title, description string, parentID *stri
 // RoadmapUpdate partially updates a node (PATCH /roadmap/{id}); nil
 // fields are left untouched server-side. deadline: non-nil sets
 // (RFC3339) or clears (empty string).
-func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadline *string) (json.RawMessage, error) {
+func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadline, completionReason *string) (json.RawMessage, error) {
 	body := map[string]any{}
 	if title != nil {
 		body["title"] = *title
@@ -92,6 +92,9 @@ func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadli
 	}
 	if deadline != nil {
 		body["deadline"] = *deadline
+	}
+	if completionReason != nil {
+		body["completionReason"] = *completionReason
 	}
 	var out json.RawMessage
 	if err := c.do(http.MethodPatch, apiPath("roadmap", nodeID), body, &out); err != nil {

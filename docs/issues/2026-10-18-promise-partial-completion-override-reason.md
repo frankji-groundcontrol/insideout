@@ -1,6 +1,15 @@
 # A node can be completed without evidence or a reason
 
-Open, recorded 2026-10-18 (review-4 wave 3, finding COMP-08; row 126 of the
+**Fixed 2026-10-20.** The sections below are the state when this was opened.
+Moving `in_progress` to `done` now requires at least one linked evidence row
+or a one-sentence `completion_reason` written on that update. The store
+enforces it, so the API, CLI and MCP share the rule. The web status control
+asks for the sentence when the node has no evidence. A reason left on the
+row from an earlier completion does not cover a later close after reopen.
+Other transitions are unchanged.
+[Changelog](../changelogs/2026-10-20-completion-evidence-or-reason.md).
+
+Open when recorded, 2026-10-18 (review-4 wave 3, finding COMP-08; row 126 of the
 [promise register](../review/2026-10-10-multirole-3/50-promise-register.md),
 a gap no earlier review list carried). Context in the
 [promise-gap enumeration](2026-10-11-product-promise-gaps.md).

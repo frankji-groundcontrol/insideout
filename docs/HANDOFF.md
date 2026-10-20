@@ -37,9 +37,9 @@ Board row:
 [plan](plans/2026-10-18-multirole-4.md); open records:
 [issues](issues/2026-10-18-review-4-open-findings.md).
 
-Retention and erasure (rv4-DATA-06) are implemented in this worktree and not pushed: a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
+Retention and erasure (rv4-DATA-06) are on local `main` and not pushed: a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
 
-Session-tool withhold is on local `main` (`8f3a76d`, `9e6e68e`). The completion fix `1cb3d1d` conflicted in `docs/HANDOFF.md`, `docs/changelogs/README.md`, `docs/changelogs/index/2026-10.md`, `docs/learning/README.md`, and `docs/plans/README.md`, and was aborted; red test `2986f4b` is on the branch without the fix. Omitted-owner and the keep-as-built decision record were rejected and were not cherry-picked. `go test ./internal/mcpserver/ -count=1` passed. The database gate was not re-run here: `DATABASE_URL` was unset and was not loaded from `.env`.
+Session-swap tools are withheld while a login is held. Marking a roadmap node done needs evidence or a one-sentence reason ([changelog](changelogs/2026-10-20-completion-evidence-or-reason.md), migration `20261020150000`). The verifier ran that store test on private Postgres. This checkout did not re-run it.
 
 **Engineering is not closed: nine product-promise slices are open, and the
 owner's account actions below remain.** The slices are what

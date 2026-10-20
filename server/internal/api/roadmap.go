@@ -47,6 +47,9 @@ type roadmapNodeView struct {
 	// The reason a validated node counts as validated ('' when unset) —
 	// the human confirm's own words (FEAT-04).
 	ValidationReason string `json:"validationReason"`
+	// The one-sentence override used to mark the node done with no
+	// linked evidence ('' when unset).
+	CompletionReason string `json:"completionReason"`
 	// B3 attribution (D10): display names, not ids — the card shows the last
 	// editor's initial plus a "created by X · edited by Y" tooltip. Omitted when
 	// unknown (pre-migration rows, or a removed author → ON DELETE SET NULL).
@@ -80,6 +83,7 @@ func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	}
 	v.OwnerName = n.OwnerName
 	v.ValidationReason = n.ValidationReason
+	v.CompletionReason = n.CompletionReason
 	return v
 }
 
@@ -176,6 +180,9 @@ type updateRoadmapNodeRequest struct {
 	// OwnerID: a workspace member's user id. "" clears the owner; absent
 	// leaves it.
 	OwnerID *string `json:"ownerId"`
+	// CompletionReason: one sentence, required when status moves
+	// in_progress → done and the node has no evidence. Absent leaves it.
+	CompletionReason *string `json:"completionReason"`
 }
 
 func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request) {
@@ -191,8 +198,8 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	}
 	// Partial update: at least one field must be present. Only present fields
 	// are validated and written; absent fields are left untouched (D1/D9).
-	if req.Title == nil && req.Description == nil && req.Status == nil && req.Deadline == nil && req.Acceptance == nil && req.OwnerID == nil {
-		httpx.WriteError(w, http.StatusBadRequest, "at least one of title, description, status, deadline, acceptance, or ownerId is required", "", nil)
+	if req.Title == nil && req.Description == nil && req.Status == nil && req.Deadline == nil && req.Acceptance == nil && req.OwnerID == nil && req.CompletionReason == nil {
+		httpx.WriteError(w, http.StatusBadRequest, "at least one of title, description, status, deadline, acceptance, ownerId, or completionReason is required", "", nil)
 		return
 	}
 	if req.Title != nil {
@@ -211,6 +218,10 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	if req.Acceptance != nil {
 		*req.Acceptance = strings.TrimSpace(*req.Acceptance)
 		fields.Acceptance = req.Acceptance
+	}
+	if req.CompletionReason != nil {
+		trimmed := strings.TrimSpace(*req.CompletionReason)
+		fields.CompletionReason = &trimmed
 	}
 	if req.OwnerID != nil {
 		if *req.OwnerID == "" {
@@ -247,6 +258,10 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	}
 	if errors.Is(err, store.ErrInvalidTransition) {
 		httpx.WriteError(w, http.StatusBadRequest, err.Error(), "", nil)
+		return
+	}
+	if errors.Is(err, store.ErrValidation) {
+		httpx.WriteError(w, http.StatusBadRequest, "moving in_progress to done needs linked evidence or a one-sentence completion reason", "", nil)
 		return
 	}
 	if err != nil {

@@ -1,0 +1,21 @@
+version: 2
+task: Completion needs evidence or a sentence
+coordinator: grok
+main:
+  owner: grok
+  status: completed
+  outcome: in_progress to done needs evidence or a one-sentence reason.
+  next_evidence: None. Apply migration 20261020150000 on the next deploy.
+side_tracks: []
+plan:
+  - id: red
+    status: completed
+    evidence: TestRoadmapCompletion_RefusesDoneWithoutEvidenceOrReason failed with err nil before the rule.
+  - id: rule
+    status: completed
+    evidence: Store check, migration, API CLI MCP field, Flutter prompt. The same test passed, including evidence and a one-sentence reason.
+    dependencies: [red]
+  - id: closure
+    status: completed
+    evidence: Issue marked fixed, changelog and architecture note written.
+    dependencies: [rule]

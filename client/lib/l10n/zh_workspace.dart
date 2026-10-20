@@ -71,6 +71,8 @@ const zhWorkspace = <String, String>{
   'roadmap.observeSave': '记录',
   'roadmap.validate': '标记为已验证',
   'roadmap.validateHint': '为何算已验证（理由会被记录）',
+  'roadmap.completionReason': '为何算完成',
+  'roadmap.completionReasonHint': '写一句话。没有证据时，这句话会被记录。',
   'roadmap.acceptance': '完成标准',
   'workspace.nowDone': '进行中 {now} · 已完成 {done}',
   'evidence.doneTitle': '已完成，及其证据',

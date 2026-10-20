@@ -130,7 +130,7 @@ func TestRoadmap_StatusTransitions(t *testing.T) {
 	if moved.Status != "in_progress" {
 		t.Fatalf("status = %q, want in_progress", moved.Status)
 	}
-	if _, err := st.UpdateRoadmapNode(ctx, admin.ID, leaf.ID, RoadmapNodeFields{Status: sptr("done")}); err != nil {
+	if _, err := st.UpdateRoadmapNode(ctx, admin.ID, leaf.ID, RoadmapNodeFields{Status: sptr("done"), CompletionReason: sptr("The pilot shipped.")}); err != nil {
 		t.Fatalf("in_progress → done: %v", err)
 	}
 	if _, err := st.UpdateRoadmapNode(ctx, admin.ID, leaf.ID, RoadmapNodeFields{Status: sptr("in_progress")}); err != nil {

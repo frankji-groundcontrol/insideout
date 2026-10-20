@@ -46,6 +46,7 @@ class _Api extends ApiClient {
     String? deadline,
     String? acceptance,
     String? ownerId,
+    String? completionReason,
   }) async {
     sent.add(deadline);
     return _node(deadline);
