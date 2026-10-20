@@ -72,19 +72,29 @@ the web, in the system's secure storage in a native build.
 
 Today, as built:
 
-- **Your account** is kept until the operator deletes it by hand. Nothing
-  expires it and no route deletes it.
-- **What you create** (ideas, projects, PRDs, roadmaps, project updates) is
-  kept until the item or its workspace is deleted. Dropping an idea only marks
-  it dropped; its text stays.
-- **Coach conversations** (messages and summaries) have no automatic purge and
-  no retention window. They go only when their workspace is deleted; no route
-  deletes a single conversation or PRD.
+- **Your account** is kept. Deleting it does not remove the row. The e-mail
+  address, username, password hash, avatar address, bio and keywords are
+  overwritten with placeholders that are not your address, and with a password
+  hash that does not accept a password. Nothing expires an account on a timer.
+- **Work other members rely on** (projects, PRDs, revisions, commits, project
+  updates, proposal decisions) is kept until the item or its workspace is
+  deleted. After you delete your account it stays attributed to your account
+  id. Dropping an idea only marks it dropped; the text stays until you delete
+  the account or the workspace is deleted.
+- **Ideas** of every status, including dropped ones, are deleted when you
+  delete your account.
+- **Coach conversations** (every message, tool-call payload and rolling
+  summary) are deleted 365 days after the newest message. A conversation with
+  no messages is deleted 365 days after the conversation was created. A new
+  message resets the clock, so an active conversation is not touched. They are
+  also deleted when you delete your account, and when their workspace is
+  deleted. The PRD is a separate record and is not deleted on that timer.
 - **Run records** (your prompt and the reply) and **usage telemetry** are
   deleted 30 days after they were created, by a routine in the server that
-  runs every five minutes.
+  runs every five minutes, and also when you delete your account.
 - **Sign-in sessions, one-time tokens and invitations** are deleted 30 days
-  after they expire.
+  after they expire. Your sessions and one-time tokens are also deleted when
+  you delete your account.
 - **Logs and backups** follow the hosting platform and the operator's backup
   rotation; database backups hold everything above until rotated.
 
@@ -93,14 +103,20 @@ Today, as built:
 You can edit your profile, delete the project updates you wrote, drop your
 ideas, leave a workspace, and delete a workspace you created, which deletes
 everything in it: its ideas, projects, PRDs, coach conversations and run
-records. A single PRD can be exported as Markdown from its export page.
+records. A single PRD can be exported as Markdown from its export page. There
+is no export of a whole account, and this notice does not require one.
 
-There is no self-service account deletion and no export of a whole account.
-Ask at the contact below; this notice promises neither a route nor a response
-time. Which retention windows and which erasure rule to adopt is an open
-decision, recorded in
-[docs/issues/2026-10-18-rv4-retention-erasure.md](docs/issues/2026-10-18-rv4-retention-erasure.md);
-this notice changes when it is made.
+You can delete your account yourself. While signed in with your own session,
+not with an agent token, send your current password to `DELETE /api/v1/me`.
+That deletes your conversations and messages, run records, ideas of every
+status, sessions, one-time tokens and memberships, and overwrites the account
+fields described above. It does not delete other members' PRDs, revisions,
+commits or projects. A workspace you created that still has another member
+stays, and one of those members becomes its creator. A workspace you created
+that has no other member is deleted with everything in it.
+
+This notice promises no response time. The decision is recorded in
+[docs/issues/2026-10-18-rv4-retention-erasure.md](docs/issues/2026-10-18-rv4-retention-erasure.md).
 
 ## Contact
 

@@ -25,15 +25,18 @@ backups) are kept in [HANDOFF](../HANDOFF.md) and the [board](../plans/README.md
 "Open product slices" below — open by design, they track promises the
 running system does not implement yet.
 
-**Update 2026-10-19:** five records are open for a reason other than design —
+**Update 2026-10-20:** the
+[retention and erasure policy](2026-10-18-rv4-retention-erasure.md) is closed
+(365 days after the newest message, tombstone erasure, self-service delete,
+no whole-account export, no response time). Four records stay open for a
+reason other than design —
 [review 4's open findings](2026-10-18-review-4-open-findings.md) (ten Highs, the
 wave-1 to wave-3 residue, the gate notes and the owner decisions; the red test on
 `main` is fixed on `rv4/integration`; the closed rows are in its
 [dispositions record](2026-10-18-review-4-dispositions.md)), its
 [privacy decisions](2026-10-18-rv4-owner-privacy-decisions.md) (what only the
 owner can finish after wave 0), the
-[retention and erasure policy](2026-10-18-rv4-retention-erasure.md) (rv4-DATA-06),
-the [ci.yml line-budget split](2026-10-18-ci-yml-split.md) (the workflow is at 349
+[ci.yml line-budget split](2026-10-18-ci-yml-split.md) (the workflow is at 349
 of 350 lines, which blocks two CI additions) and the
 [PRODUCT.md and SETENV.md line-budget split](2026-10-18-product-and-setenv-over-line-budget.md)
 (462 and 368 lines); the full register lives in the

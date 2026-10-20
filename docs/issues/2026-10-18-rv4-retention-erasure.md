@@ -1,24 +1,48 @@
 # Retention and erasure: the policy only the owner can set
 
-Open, recorded 2026-10-19. Row 3.5 of the
+Closed 2026-10-20. The owner adopted the recommended answers and the behavior below is what the code does. Row 3.5 of the
 [review-4 remediation plan](../review/2026-10-18-multirole-4/40-remediation-plan.md)
 covers two findings. rv4-PUB-02 (no privacy notice) is closed by
 [PRIVACY.md](../../PRIVACY.md) and a link on the sign-in and sign-up door.
-rv4-DATA-06 (no way to erase a user, conversations kept for ever) is a policy
-choice, not a bug fix: the
-[owner decisions record](2026-10-18-rv4-owner-privacy-decisions.md) holds no
-retention window and no erasure rule, so this wave wrote none and changed no
-migration, store routine or route. This record gives the options, what each
-costs, a recommended default and the one question to answer. It spells no
-address, host or key.
+rv4-DATA-06 (no way to erase a user, conversations kept for ever) was a policy
+choice. The owner filled the answers on 2026-10-20; what the code does now is
+in "What shipped". The rest of this file is how the choice was framed. It
+spells no address, host or key.
+
+
+## What shipped
+
+- A coach conversation is deleted by the reaper when its newest message is
+  older than 365 days. A conversation with no messages is dated from its own
+  `created_at`. Messages cascade. `ai_runs.conversation_id` is set null.
+  Migration `20261020140000` gives `agent_conversations_all` and
+  `agent_messages_all` the `current_user_id() IS NULL` branch the reaper
+  needs, the same shape as `20260721160000`.
+- `Store.EraseUser` runs in one transaction. It deletes that user's
+  conversations and messages, run records and events, ideas of every status,
+  sessions, tokens and memberships. It overwrites email, username, password
+  hash and profile text with unique placeholders and a hash that does not
+  verify. It does not delete other members' PRDs, revisions, commits or
+  projects. A workspace this user created that still has another member stays,
+  with `creator_id` moved to a remaining member. A workspace with no other
+  member is deleted.
+- `DELETE /api/v1/me` requires the current password and is human-only in
+  `server/internal/api/agent_scope.go`.
+- A whole-account export is not required. [PRIVACY.md](../../PRIVACY.md)
+  promises no response time and still names `<privacy-contact>`, not an
+  address.
+
+The sections under this one describe the choice as it stood before the
+answers were filled. They are the record of why, not of what the code does
+now.
 
 ## Decision
 
 | Row | Register IDs | The owner decides | Holds until decided | Closes when |
 |---|---|---|---|---|
-| 3.5 | rv4-DATA-06 | How long a coach conversation may live after its last message, and what an erasure request does to an account. | Today's behaviour, stated as built in PRIVACY.md: conversations kept until their workspace is deleted, accounts deleted by hand, no response time promised. | The owner fills the answers in "The question" below. |
+| 3.5 | rv4-DATA-06 | How long a coach conversation may live after its last message, and what an erasure request does to an account. | Closed 2026-10-20. See "What shipped". | The owner filled the answers below, and the code matches them. |
 
-## What the code does today
+## What the code did before this change
 
 | Data | Kept for | Mechanism |
 |---|---|---|
@@ -98,11 +122,11 @@ These are proposals for the owner, not policy. PRIVACY.md invents no window.
 
 | # | Question | Options | Recommended | Owner's answer |
 |---|---|---|---|---|
-| 1 | How long is a coach conversation kept after its last message? | Keep / 365 / 180 / 90 days | 365 days | |
-| 2 | What does an erasure request do to an account? | Tombstone / hard delete / by hand only | Tombstone | |
-| 3 | Build a self-service delete? | After 1 and 2 / by hand only | After 1 and 2 | |
-| 4 | Export an account before erasure? | Required / not required | Not required; per-PRD export exists | |
-| 5 | Who is `<privacy-contact>`, and may PRIVACY.md promise a response time? | A monitored address or a form; a number of days or none | A form; no promise | |
+| 1 | How long is a coach conversation kept after its last message? | Keep / 365 / 180 / 90 days | 365 days | 365 days after the newest message, or after the conversation's own creation when it has none |
+| 2 | What does an erasure request do to an account? | Tombstone / hard delete / by hand only | Tombstone | Tombstone |
+| 3 | Build a self-service delete? | After 1 and 2 / by hand only | After 1 and 2 | Self-service `DELETE /api/v1/me`, after 1 and 2 |
+| 4 | Export an account before erasure? | Required / not required | Not required; per-PRD export exists | Not required |
+| 5 | Who is `<privacy-contact>`, and may PRIVACY.md promise a response time? | A monitored address or a form; a number of days or none | A form; no promise | A form; no promise. The notice keeps the `<privacy-contact>` placeholder. No address was added. |
 
 ## Bounded fix prompt
 

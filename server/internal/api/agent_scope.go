@@ -98,6 +98,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"DELETE /api/v1/updates/{uid}":                    humanOnly,
 	"DELETE /api/v1/workspaces/{id}":                  humanOnly,
 	"DELETE /api/v1/workspaces/{id}/members/{userId}": humanOnly,
+	"DELETE /api/v1/me":                               humanOnly,
 
 	// No agent tool calls these: the coach conversation (the web client's),
 	// edits to people, workspaces and projects, live streams, evidence entry.

@@ -29,12 +29,13 @@ import (
 // which way it goes.
 
 // rlsTables maps every RLS table to whether a session without an actor may
-// read it. Only users (pre-auth login and registration, users.go) and ai_runs
-// (the stale-run reaper, 20260721160000) are: each has a
+// read it. users (pre-auth login and registration, users.go), ai_runs (the
+// stale-run reaper, 20260721160000) and agent_conversations / agent_messages
+// (the idle-conversation purge, 20261020140000) are: each has a
 // `insideout.current_user_id() IS NULL` policy clause on purpose.
 var rlsTables = map[string]bool{
-	"agent_conversations":   false,
-	"agent_messages":        false,
+	"agent_conversations":   true,
+	"agent_messages":        true,
 	"ai_runs":               true,
 	"ideas":                 false,
 	"prd_commits":           false,

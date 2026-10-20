@@ -78,7 +78,7 @@ since the 2026-08-19 role split): `agent_conversations`, `agent_messages`,
 intentionally left without RLS: backend-only auth plumbing, deployment
 settings, system telemetry and bookkeeping with no per-end-user access story.
 
-Two system-context exceptions are load-bearing and deliberate, and they are
+Four system-context exceptions are load-bearing and deliberate, and they are
 the only RLS tables that trust an unset `app.user_id`
 (`current_user_id() IS NULL`), since `insideout_app` is never called by
 anything but this repo's own backend. `users`: `CreateUser` (registration) and
@@ -88,7 +88,10 @@ credential only through `insideout._credential_for_email`, which answers in that
 same unset-context state and nowhere else (the users read grant, below).
 `ai_runs`: the stale-run
 reaper (`ReapStaleAIRuns`) is a background sweep with no acting user
-(migration `20260721160000`). Joining a workspace by its workspace code has a
+(migration `20260721160000`). `agent_conversations` and `agent_messages`: that
+same reaper deletes a coach conversation 365 days after its newest message, or
+after the conversation's own creation when it has none (migration
+`20261020140000`). Joining a workspace by its workspace code has a
 similar, narrower exception: `JoinWorkspace` sets a second session variable,
 `app.join_code`, so the one-time "look up a workspace I'm not a member of yet,
 by the code I was given" read can pass RLS without a blanket bypass (see the

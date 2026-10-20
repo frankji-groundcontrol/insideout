@@ -1,0 +1,15 @@
+version: 2
+task: 'Retain coach conversations for 365 days and tombstone an account on DELETE /me.'
+coordinator: grok
+history_file: 2026-10-20-retention-erasure.track.history.jsonl
+plan:
+- step: Red test, then migration, purge, EraseUser, DELETE /me, and the notice.
+  owner: retention-erasure
+  status: completed
+main:
+  outcome: Idle conversations past 365 days are purged, erasure is a tombstone, and the privacy notice states both. Not pushed.
+  owner: grok
+  status: done
+  next_evidence: Private Postgres tests TestErase passed after migration 20261020140000.
+side_tracks: []
+updated_at: '2026-10-20T07:10:00Z'

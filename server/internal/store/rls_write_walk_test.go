@@ -242,8 +242,8 @@ func TestRLSWriteWalk_NoRowChanges(t *testing.T) {
 			}
 			for who, actor := range map[string]uuid.UUID{"an outsider": outsider.ID, "no actor": uuid.Nil} {
 				switch {
-				case name == "ai_runs" && actor == uuid.Nil:
-					continue // the stale-run reaper's deliberate actor-less policy
+				case actor == uuid.Nil && (name == "ai_runs" || name == "agent_conversations" || name == "agent_messages"):
+					continue // the reaper's deliberate actor-less policy (runs, then idle conversations)
 				case name == "users" && verb == "UPDATE" && actor != uuid.Nil:
 					continue // an outsider may edit their own row
 				}

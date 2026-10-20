@@ -219,8 +219,8 @@ func (s *Store) TouchAIRun(ctx context.Context, actorID, runID uuid.UUID) error 
 // retentionWindow is how long rows stay queryable before the reaper's
 // purge deletes them: ai_runs (carrying raw prompt/response text, and
 // cascading their ai_run_events telemetry) created before the window, and
-// sessions, auth_tokens and invitations that expired before it. 30 days
-// is a conservative default — no retention policy is documented anywhere.
+// sessions, auth_tokens and invitations that expired before it. Coach
+// conversations use conversationRetention (conversation_retention.go).
 // Operator note: the purge is permanent and archives nothing first; raise
 // this constant to keep data longer.
 const retentionWindow = 30 * 24 * time.Hour
@@ -233,7 +233,8 @@ const retentionWindow = 30 * 24 * time.Hour
 // Runs with no authenticated actor (a background ticker, not a request)
 // — the ai_runs RLS policy treats an unset app.user_id as this trusted
 // system context, same pattern as the users table (see
-// 20260721160000_ai_runs_reaper_system_context.sql); sessions,
+// 20260721160000_ai_runs_reaper_system_context.sql). Conversations use the
+// same unset-actor branch (20261020140000). Sessions,
 // auth_tokens and invitations sit outside RLS entirely.
 // Returns the number of runs reaped.
 func (s *Store) ReapStaleAIRuns(ctx context.Context, staleAfter time.Duration) (int, error) {
@@ -247,6 +248,9 @@ func (s *Store) ReapStaleAIRuns(ctx context.Context, staleAfter time.Duration) (
 		return 0, err
 	}
 	if err := s.purgePastRetention(ctx); err != nil {
+		return 0, err
+	}
+	if err := s.purgeIdleConversations(ctx); err != nil {
 		return 0, err
 	}
 	return int(tag.RowsAffected()), nil

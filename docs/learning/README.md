@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-10-20 | [Pinned columns and a creator pin block the app role from erasing an account](2026-10-20-pinned-columns-block-erasure.md) | [retention and erasure](../changelogs/2026-10-20-retention-and-erasure.md) |
 | 2026-10-19 | [One owner per shared resource, and a brief checked against file ownership](2026-10-19-one-owner-per-shared-resource-in-a-multi-worker-wave.md) | [review-4 remediation](../changelogs/2026-10-18-rv4-remediation/index.md) |
 | 2026-10-19 | [CanvasKit ignores CSS font faces, so self-hosting fonts is a loader setting](2026-10-19-canvaskit-ignores-css-font-faces.md) | [wave 3, client assets](../changelogs/2026-10-18-rv4-remediation/w3-client-assets.md) |
 | 2026-10-19 | [A test on a global row takes the named lock and puts the row back](2026-10-19-a-test-on-a-global-row-takes-the-named-lock.md) | [wave 3, test hardening](../changelogs/2026-10-18-rv4-remediation/w3-test-hardening.md) |

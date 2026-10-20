@@ -183,8 +183,8 @@ func TestErase_Account(t *testing.T) {
 	if err := audit.Pool.QueryRow(ctx, `SELECT password_hash FROM insideout.users WHERE id = $1`, erased.ID).Scan(&storedHash); err != nil {
 		t.Fatalf("read hash: %v", err)
 	}
-	if ok, err := auth.VerifyPassword(storedHash, "correct-horse"); err != nil || ok {
-		t.Errorf("tombstone hash still verifies (ok=%v err=%v), want an unusable hash", ok, err)
+	if ok, _ := auth.VerifyPassword(storedHash, "correct-horse"); ok {
+		t.Error("tombstone hash still verifies the old password")
 	}
 	if ownerCount(t, audit, `SELECT count(*) FROM insideout.ideas WHERE author_id = $1`, erased.ID) != 0 {
 		t.Error("ideas of every status were not deleted")

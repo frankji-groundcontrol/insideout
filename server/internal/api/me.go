@@ -11,6 +11,7 @@ import (
 func (s *Server) registerMeRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me", s.requireAuth(s.handleGetMe))
 	mux.HandleFunc("PATCH /api/v1/me", s.requireAuth(s.handleUpdateMe))
+	s.registerDeleteMeRoute(mux)
 }
 
 // userView is the client-facing shape of a user — never includes

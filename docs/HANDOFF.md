@@ -36,6 +36,8 @@ Board row:
 [plan](plans/2026-10-18-multirole-4.md); open records:
 [issues](issues/2026-10-18-review-4-open-findings.md).
 
+Retention and erasure (rv4-DATA-06) are implemented in this worktree and not pushed: a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
+
 **Engineering is not closed: nine product-promise slices are open, and the
 owner's account actions below remain.** The slices are what
 [PRODUCT.md](../PRODUCT.md) promises and the running system does not

@@ -87,6 +87,7 @@ var humanOnlyRoutes = []string{
 	"DELETE /api/v1/updates/{uid}",
 	"DELETE /api/v1/workspaces/{id}",
 	"DELETE /api/v1/workspaces/{id}/members/{userId}",
+	"DELETE /api/v1/me",
 	"GET /api/v1/conversations/{id}",
 	"GET /api/v1/conversations/{id}/messages",
 	"POST /api/v1/conversations/{id}/messages",
