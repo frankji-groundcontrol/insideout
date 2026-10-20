@@ -54,13 +54,13 @@ func coachTools() []Tool {
 		},
 		{
 			Name:        "record_fact",
-			Description: "Record a fact the user actually stated — quote must be their verbatim words. Call this before relying on anything the user told you; never invent a quote.",
+			Description: "Record a fact the user actually stated, written in the quote language — quote must be their verbatim words. A short answer is quoted whole (4 letters suffice for a whole message, 12 otherwise). Call this before relying on anything the user told you; never invent a quote.",
 			Parameters: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
 					"kind":  map[string]any{"type": "string", "enum": kindEnum},
 					"text":  map[string]any{"type": "string", "description": "the fact, restating what the quote says — stay close to its words and add no claim the user did not make"},
-					"quote": map[string]any{"type": "string", "description": "the user's verbatim words that support this fact — a whole clause, not a word or two (quotes that short are refused)"},
+					"quote": map[string]any{"type": "string", "description": "the user's verbatim words that support this fact — quote a short answer whole (4 letters suffice for a whole message, 12 otherwise)"},
 				},
 				"required": []any{"kind", "text", "quote"},
 			},
@@ -280,7 +280,7 @@ func (e *toolExecutor) checkStageGate(ctx context.Context, next string) error {
 			}
 		}
 		if len(missing) > 0 {
-			return fmt.Errorf("agent: cannot draft yet — no recorded fact for: %s. Ask the user and call record_fact, or if they want to skip, record a decision fact saying so", strings.Join(missing, ", "))
+			return fmt.Errorf("agent: cannot draft yet — no recorded fact for: %s. Ask the user about each and call record_fact of that kind with their own words; if they would rather skip one, record what they said about it, even that they do not know, as a fact of that kind. A decision fact does not stand in for a missing kind.", strings.Join(missing, ", "))
 		}
 		for _, f := range lm.Facts {
 			if f.Kind == "segment" && f.Status == FactStatusAttested && segmentFailsEveryoneLint(f.Text) {

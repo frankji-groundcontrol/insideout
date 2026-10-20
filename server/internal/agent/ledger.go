@@ -254,7 +254,7 @@ func (e *toolExecutor) recordFact(ctx context.Context, argsJSON string) (string,
 	if len([]rune(quote)) > maxQuoteLen {
 		quote = string([]rune(quote)[:maxQuoteLen])
 	}
-	if err := checkFactEvidence(args.Text, quote); err != nil {
+	if err := checkFactEvidence(args.Text, quote, userMessages...); err != nil {
 		return "", err
 	}
 
