@@ -15,8 +15,15 @@ The download checks in `scripts/bootstrap.sh` (an https-only base, the
 attestation check) are the consumer half of that row
 ([Verifying a download](#verifying-a-download)): a local mirror and a stub `gh`
 prove them, but their real attestation path also waits for that first tag.
-Still open, so this page is not a finished runbook: the
-[owner decisions](#owner-decisions) at the end.
+Decided 2026-10-20. Each sentence is the whole decision, with no further
+policy
+([adopted record](../issues/2026-10-20-rv4-decisions-adopted.md)): while the
+major is 0, a break of a documented command, flag, config key, or API
+contract raises MINOR and anything else raises PATCH; every tag remains a
+normal release; a bad release is superseded, not deleted; the release job
+keeps waiting for a green ci run and does not gain Postgres; installs
+without gh stay on the checksum; the release workflow reads no API-base
+variable. Still the owner's: key rotation, and the Railway VERSION variable.
 
 ## The tag rule
 
@@ -51,7 +58,8 @@ job.
    `actions: read` to list it). `ci.yml` is the only place the
    `DATABASE_URL`-gated suites run; this runner has no PostgreSQL service, so a
    green `ci` run is the evidence they passed. An API error, an unreadable
-   answer or a zero count stops the run: the gate cannot fail open.
+   answer or a zero count stops the run: the gate cannot fail open. The release
+   job keeps waiting for a green ci run and does not gain Postgres.
 2. **Tests.** `go test ./... -race -count=1` in `server/`. A red test stops the
    job, so nothing is built or uploaded. The `DATABASE_URL`-gated suites skip
    here.
@@ -61,7 +69,7 @@ job.
    section 3.2 source offer and the license texts), plus `checksums.txt`
    (SHA-256) and `bootstrap.sh`. `insideout` is stamped with the tag
    (`-X main.version`); see [Version policy](#version-policy) for what the other
-   build recipes print.
+   build recipes print. The release workflow reads no API-base variable.
 4. **Attest.** `actions/attest-build-provenance` (pinned by commit SHA) signs a
    build-provenance attestation for every file in `dist/`, with the job's OIDC
    identity (`id-token: write`, `attestations: write`). It sits after the build
@@ -94,16 +102,12 @@ exist):
 To stamp a local image:
 `docker build --build-arg VERSION="$(git describe --tags --always --dirty)" server`.
 Nothing in this repository passes the argument (`docker-compose.yml` sets none),
-so an image built from it prints `dev`. Stamping the hosted image is an owner
-decision, below.
+so an image built from it prints `dev`. The Railway VERSION variable is still
+the owner's, below.
 
-**What raises which number is not decided.** Proposed default, for the owner to
-accept or change: while the major version is 0, a change that breaks a
-documented command, flag, config key or API contract raises MINOR and anything
-else raises PATCH. Open with it: what makes `v1.0.0`, and whether a tag with a
-suffix (`v0.2.0-rc.1`) should publish as a pre-release. Today every tag
-publishes as a normal release and takes `latest`; a pre-release lane would be a
-`--prerelease` condition in `release.yml`.
+While the major is 0, a break of a documented command, flag, config key, or
+API contract raises MINOR and anything else raises PATCH. Every tag remains a
+normal release. What makes `v1.0.0` was not decided.
 
 ## Verifying a download
 
@@ -117,7 +121,8 @@ publishes as a normal release and takes `latest`; a pre-release lane would be a
   after the checksum, when `gh` is installed, signed in to github.com and new
   enough to have the command, and installs nothing if it fails. Otherwise it
   prints `Provenance not checked` with the reason and installs on the checksum
-  alone. By hand: `gh attestation verify insideout-linux-amd64.tar.gz --repo
+  alone. Installs without gh stay on the checksum.
+  By hand: `gh attestation verify insideout-linux-amd64.tar.gz --repo
   frankji-groundcontrol/insideout --signer-workflow
   frankji-groundcontrol/insideout/.github/workflows/release.yml` (the script
   passes exactly those; the second flag requires that this workflow built it).
@@ -140,10 +145,8 @@ break that. A bad release is superseded by a new tag.
 
 - **Published and bad.** Fix on `main`, wait for `ci`, and tag the next version.
   The new release becomes `latest`, so the one-liner installs it. Say what is
-  wrong in the bad release's notes. Until the fix ships the bad release is still
-  `latest`. Whether to also mark it a pre-release (which takes it out of `latest`)
-  or delete it is open; see [Owner decisions](#owner-decisions). Nothing in the
-  workflow does either.
+  wrong in the bad release's notes. A bad release is superseded, not deleted.
+  Until the fix ships the bad release is still `latest`.
 - **The run died before the release existed.** Nothing was published: re-run the
   failed job.
 - **The run died after the draft was created.** `gh release view <tag>` shows a
@@ -172,22 +175,29 @@ pin these properties and run in the `ci` `env-suites` job. The `security`
 workflow is not part of the release gate. Gap still open: the Docker base images
 are pinned by tag, not digest, and are not in `dependabot.yml`.
 
-## Owner decisions
+## Decisions
 
-Written down so nobody assumes an answer. None of them is a workflow edit an
-agent can make for you. The click paths for the repository settings are also in
-the
+Decided 2026-10-20. Each sentence is the whole decision. The same sentences
+are in [the adopted record](../issues/2026-10-20-rv4-decisions-adopted.md).
+
+- **Version policy.** While the major is 0, a break of a documented command, flag, config key, or API contract raises MINOR and anything else raises PATCH.
+- **Tags.** Every tag remains a normal release.
+- **Rollback.** A bad release is superseded, not deleted.
+- **The release gate.** The release job keeps waiting for a green ci run and does not gain Postgres.
+- **Installs without `gh`.** Installs without gh stay on the checksum.
+- **API base.** The release workflow reads no API-base variable.
+
+## Still the owner's
+
+- **Key rotation.** Key rotation.
+- **Hosted version.** The Railway VERSION variable. Railway service `server` > Variables is where `VERSION` is set: the Dockerfile declares `ARG VERSION`, and Railway hands a service variable to a declared `ARG`.
+
+## Not decided
+
+Repository settings an agent cannot change. The click paths stay in the
 [release-supply record](../changelogs/2026-10-18-rv4-remediation/w3-release-supply.md#owner-decisions-deferred_owner).
+What makes `v1.0.0` was not decided.
 
-- **Version policy.** What raises MINOR versus PATCH while the major is 0, what
-  makes `v1.0.0`, and whether a suffixed tag publishes as a pre-release. The
-  proposal is in [Version policy](#version-policy).
-- **Rollback of a published release.** Mark a bad one a pre-release, delete it,
-  or leave it and supersede it only. Today only the last is documented.
-- **The release gate.** The release waits for a green `ci` run on the tagged
-  commit because its runner has no PostgreSQL service, so the `DATABASE_URL`-gated
-  suites cannot run there. Keep that, or add a PostgreSQL service to the release
-  job and run them in it?
 - **Immutable releases.** Make a published release's tag and assets unchangeable?
   Settings > General > Releases > "Enable release immutability".
 - **Who may tag.** Restrict creating, updating and deleting `v*` tags to the
@@ -200,20 +210,12 @@ the
 - **GitHub secret and dependency features.** Turn on secret scanning, push
   protection, Dependabot alerts and Dependabot security updates? Settings >
   Advanced Security (older UI: Code security and analysis).
-- **Old history (rv4-PUB-05).** A full-history `gitleaks` run reports 7 findings.
-  Allow-list the fixtures in a `.gitleaksignore`, and rotate or disable the key
-  behind the deleted-file ones? History is never rewritten by an agent.
-- **Installs without `gh`.** `bootstrap.sh` installs on the checksum alone when
-  `gh` is missing, signed out or too old, and says so; most people who run the
-  one-liner have no `gh`. Requiring it would lock them out, and nothing here
-  decides that for you.
-- **Hosted version.** Should the hosted image report a version rather than
-  `dev`? Railway service `server` > Variables, add `VERSION`: the Dockerfile
-  declares `ARG VERSION`, and Railway hands a service variable to a declared
-  `ARG`. Confirm on the first deploy that sets it.
+- **Old gitleaks findings.** Whether to allow-list the seven historical findings
+  in a `.gitleaksignore`. History authors are accepted and history is not rewritten.
 
 Records: rv4-PM-04, rv4-PM-05, rv4-TEST-01, rv4-PUB-03, rv4-PUB-04, rv4-PUB-07,
 rv4-SEC-07 and rv4-PUB-09 in the
 [review-4 open findings](../issues/2026-10-18-review-4-open-findings.md);
+[adopted decisions](../issues/2026-10-20-rv4-decisions-adopted.md);
 [wave 3, release supply chain](../changelogs/2026-10-18-rv4-remediation/w3-release-supply.md);
 [wave 4, release version](../changelogs/2026-10-18-rv4-remediation/w4-release-version.md).
