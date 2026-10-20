@@ -35,11 +35,6 @@ DEFAULT_BASE_TEXT = 'package apiclient\n\nconst DefaultBase = "https://hosted.ex
 # <deploy-id> instead. The nil UUID is no id of anything and stays allowed.
 UUID = re.compile(r"(?<![0-9a-f])[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}(?![0-9a-f])", re.I)
 NIL_UUID = "00000000-0000-0000-0000-000000000000"
-# INTEGRATOR TODO: the findings register still quotes the PUB-12 evidence line, id
-# and all. Scrub it to <deploy-id> and delete this entry; the stale-entry test
-# below goes red until you do.
-QUOTES_EVIDENCE = ("docs/review/2026-10-18-multirole-4/01-findings-register.md",)
-
 
 def addr(local, domain):
     return f"{local}{AT}{domain}"
@@ -276,15 +271,7 @@ class TrackedTree(unittest.TestCase):
 
     def test_dated_records_carry_no_provider_ids(self):
         # Paths and line numbers only, so a red run does not echo the ids.
-        # The QUOTES_EVIDENCE exception is not applied: a quoted provider id
-        # fails while that allowlist still names the file and the id is present.
-        spots = list(provider_id_spots())
-        self.assertEqual(spots, [], "provider ids at these path:line spots")
-
-    def test_the_evidence_allowlist_holds_no_scrubbed_record(self):
-        spotted = {s.rsplit(":", 1)[0] for s in provider_id_spots()}
-        self.assertEqual([n for n in QUOTES_EVIDENCE if n not in spotted], [],
-                         "no id is left in these records: drop them from QUOTES_EVIDENCE")
+        self.assertEqual(provider_id_spots(), [], "provider ids at these path:line spots")
 
 
 if __name__ == "__main__":
