@@ -1,7 +1,7 @@
 # Wave 4 — integrated 2026-10-20
 
-Local branch `rv4/integration` only. Nothing was pushed, merged to `main`,
-or deployed.
+The owner directed this branch onto `main` on 2026-10-20. The push is a
+fast-forward. Nothing is tagged, and nothing is deployed.
 
 ## What landed
 

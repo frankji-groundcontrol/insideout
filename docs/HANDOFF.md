@@ -13,18 +13,17 @@ path and current warnings, never history.
 **2026-10-19: multirole review 4 is delivered and its remediation is under
 way.** [The report](review/2026-10-18-multirole-4/README.md) (145 findings,
 10 High) says the core held but the front door and the gates did not. The
-fixes are four waves on the local branch `rv4/integration` (base `main` @
-`d53035a`, nothing pushed). Waves 0 to 4 are integrated. Wave 4 head is
-`97cf4c06` (499 commits above `d53035a`); the gate re-run is in
-[wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). Resume at the
-open prose to-dos and the wave-4b carry-forward in that file. Do not push
-until the owner says so. The
+fixes are four waves, built on `rv4/integration` from `main` @
+`d53035a`. Waves 0 to 4 are integrated. The tested code head is `97cf4c06`; the branch tip carries the landing
+record. The gate re-run is in
+[wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). The owner
+directed this branch onto `main` on 2026-10-20. Resume at the open prose
+to-dos and the wave-4b carry-forward in that file. The
 [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
 and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md) still
-govern. `main`
-still has the red test (`TestProjectQuietFlagged`, wall clock, red since
-2026-10-16) until that branch lands; do not tag a release from `main` before
-it does (the release test gate is plan row 1.5). The first CI run after a push
+govern. `TestProjectQuietFlagged` was red on `main` from 2026-10-16
+until this landing; the clock fix comes with the branch. Do not tag a
+release until the release-job test gate from plan row 1.5 has run in CI. The first CI run after a push
 settles every workflow property of waves 1 and 3. Before the first deploy of
 the branch, confirm the hosted `DATABASE_URL` is the app role (`serve` now
 refuses a role that bypasses row-level security), set
