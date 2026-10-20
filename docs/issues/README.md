@@ -42,6 +42,8 @@ of 350 lines, which blocks two CI additions) and the
 (462 and 368 lines); the full register lives in the
 [review folder](../review/2026-10-18-multirole-4/01-findings-register.md).
 
+2026-10-20 decision clusters: retention and session-withhold landed; the completion fix conflicted; omitted-owner and the keep-as-built record were skipped ([changelog](../changelogs/2026-10-20-rv4-decisions.md)).
+
 ## Open product slices (2026-10-11)
 
 PRODUCT.md promises with no end-to-end implementation, one dated record per

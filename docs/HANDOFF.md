@@ -19,8 +19,9 @@ is `97cf4c06`. The gate re-run is in
 [wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). The first CI
 run on `e6a3d14` is red on `env-suites` only. Wave 4b is local `main` at
 `4e16d1b` ([wave 4b](changelogs/2026-10-18-rv4-remediation/wave-4b.md)):
-the four code clusters and the five living-doc files. Resume at a push,
-which this session does not do, and at the owner decisions. The
+the four code clusters and the five living-doc files. Do not push. What
+landed from the owner settings is in
+[the decisions record](changelogs/2026-10-20-rv4-decisions.md). The
 [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
 and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md) still
 govern. `TestProjectQuietFlagged` was red on `main` from 2026-10-16 until
@@ -37,6 +38,8 @@ Board row:
 [issues](issues/2026-10-18-review-4-open-findings.md).
 
 Retention and erasure (rv4-DATA-06) are implemented in this worktree and not pushed: a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
+
+Session-tool withhold is on local `main` (`8f3a76d`, `9e6e68e`). The completion fix `1cb3d1d` conflicted in `docs/HANDOFF.md`, `docs/changelogs/README.md`, `docs/changelogs/index/2026-10.md`, `docs/learning/README.md`, and `docs/plans/README.md`, and was aborted; red test `2986f4b` is on the branch without the fix. Omitted-owner and the keep-as-built decision record were rejected and were not cherry-picked. `go test ./internal/mcpserver/ -count=1` passed. The database gate was not re-run here: `DATABASE_URL` was unset and was not loaded from `.env`.
 
 **Engineering is not closed: nine product-promise slices are open, and the
 owner's account actions below remain.** The slices are what
