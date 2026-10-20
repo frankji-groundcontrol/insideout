@@ -10,18 +10,17 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-10-20: waves 0 to 4 are on `main`; wave 4b is local.**
+**2026-10-20: wave 4b is on local `main`, not pushed.**
 [The report](review/2026-10-18-multirole-4/README.md) (145 findings,
 10 High) says the core held but the front door and the gates did not. The
 fixes were built on `rv4/integration` from `main` @ `d53035a`. Waves 0 to 4
-are on `main` at `e6a3d14` (`origin/main` matches). Their tested code head
+are on `origin/main` at `e6a3d14`. Their tested code head
 is `97cf4c06`. The gate re-run is in
 [wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). The first CI
-run on `e6a3d14` is red on `env-suites` only. Wave 4b cherry-picked the four
-ACCEPTED clusters onto local `main` at `460c33cf`
-([wave 4b](changelogs/2026-10-18-rv4-remediation/wave-4b.md)). `w4b-prose`
-was REJECTED and was not cherry-picked. Resume at that open box in
-[the plan](plans/2026-10-20-rv4-wave-4b/2026-10-20-rv4-wave-4b.md). The
+run on `e6a3d14` is red on `env-suites` only. Wave 4b is local `main` at
+`4e16d1b` ([wave 4b](changelogs/2026-10-18-rv4-remediation/wave-4b.md)):
+the four code clusters and the five living-doc files. Resume at a push,
+which this session does not do, and at the owner decisions. The
 [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
 and the [plan](review/2026-10-18-multirole-4/40-remediation-plan.md) still
 govern. `TestProjectQuietFlagged` was red on `main` from 2026-10-16 until
@@ -31,8 +30,9 @@ deploy, confirm the hosted `DATABASE_URL` is the app role (`serve` now
 refuses a role that bypasses row-level security), set
 `INSIDEOUT_TRUSTED_PROXY_HOPS=1`, inspect the hosted app role for migration
 `20261018200000` (the users read grant) and deploy the server before the MCP
-binary. `DATABASE_URL` was unset for this integration, so the wave-4b
-`record_fact` database gate was not run. Board row:
+binary. The wave-4b `record_fact` database gate was run by the verifier
+on a private Postgres at `127.0.0.1:55442`, not re-run in this checkout.
+Board row:
 [plan](plans/2026-10-18-multirole-4.md); open records:
 [issues](issues/2026-10-18-review-4-open-findings.md).
 

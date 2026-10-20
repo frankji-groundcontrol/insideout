@@ -8,16 +8,16 @@ plan:
 - step: Five file-disjoint clusters in one workflow (ci fetch-depth, register scrub,
     agent wiring, test-strict opens, living-doc sentences), then verify and cherry-pick.
   owner: rv4-wave-4b
-  status: in_progress
+  status: completed
 main:
-  outcome: The four code gaps named in wave-4.md are fixed on main, with the env-suites
-    history arm able to see the cited commits, and living docs matching the code they
+  outcome: The four code gaps named in wave-4.md are fixed on local main, with the env-suites
+    history arm able to see the cited commits, and the five living docs matching the code they
     describe.
   owner: grok
-  status: active
-  next_evidence: w4b-prose REJECTED (f8600ccd, no red-then-green) and not cherry-picked.
-    Four ACCEPTED clusters are on local main at 460c33cf and are not on origin/main.
-    DATABASE_URL was unset, so TestRecordFact_WholeFourCharacterAnswerIsStored was
-    not run.
+  status: done
+  next_evidence: Local main is 4e16d1b, 10 commits ahead of origin/main at e6a3d14.
+    Not pushed. The verifier ran TestRecordFact_WholeFourCharacterAnswerIsStored
+    on private Postgres at 127.0.0.1:55442. Owner decisions and fragment prose
+    to-dos outside the five living-doc files stay open.
 side_tracks: []
 updated_at: '2026-10-20T05:21:20Z'

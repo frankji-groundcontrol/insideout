@@ -1,9 +1,10 @@
 # Wave 4b — integrated locally 2026-10-20
 
 Four ACCEPTED clusters were cherry-picked onto local `main`, in worker order,
-with no conflicts. Each landed patch matches its worker patch. `w4b-prose`
-was REJECTED and was not cherry-picked. Nothing in this wave is pushed,
-tagged, or deployed. `origin/main` remains `e6a3d14`.
+with no conflicts. Each landed patch matches its worker patch. The prose
+commit was rejected by the verifier because a docs edit has no red test;
+the coordinator read that diff and cherry-picked it. Nothing in this wave
+is pushed, tagged, or deployed. `origin/main` remains `e6a3d14`.
 
 ## What landed
 
@@ -15,15 +16,16 @@ tagged, or deployed. `origin/main` remains `e6a3d14`.
 | `w4b-test-strict` | `f81acbbc4b63c4b4d18b77bd53de855b697ac188`, `a65744d597cc897099d359b6f68e80b735b16eac` | `6c0299e0e6c64ca3898cf5c674c1389d8f79d4c2`, `460c33cfdbd46a70e43d826c94f3e500d00c4e38` |
 
 The code tip after those eight commits is `460c33cfdbd46a70e43d826c94f3e500d00c4e38`.
+The prose tip on top is `4e16d1b`.
 
 - `w4b-ci-fetch` sets `fetch-depth: 0` on the env-suites checkout and adds the gate that requires it (`rv4-FR-F45`).
 - `w4b-register-scrub` replaces the quoted deploy id in the findings register with `<deploy-id>` and deletes the `QUOTES_EVIDENCE` allowlist (`rv4-PUB-12`).
 - `w4b-agent-wiring` passes the conversation's user messages into the `record_fact` evidence check (`rv4-FR-F94` / `rv4-FR-F86`).
 - `w4b-test-strict` calls `testlock.RequireLocalURL` before the remaining audited test opens, and `scripts/dev.sh` follows (`rv4-FR-F195`).
 
-## Skipped
+## Prose
 
-`w4b-prose` worker commit `f8600ccd4400d3cda6e045222c959551b7f7e7a5` was REJECTED: there was no red commit and no red-then-green mutation. It was not cherry-picked. The five living-doc files stay as they were at `e6a3d14`.
+`w4b-prose` worker commit `f8600ccd4400d3cda6e045222c959551b7f7e7a5` was REJECTED by the verifier: there was no red commit. The coordinator read the five-file diff (deadline exemptions, the strict-test coverage sentence, and the Responses retry) and cherry-picked it as `4e16d1b`. `check_docs_truth.py`, `check_docs_truth_rv4.py`, and `check-redaction.sh` exit 0 on that tip.
 
 ## Checks
 
@@ -32,4 +34,4 @@ The code tip after those eight commits is `460c33cfdbd46a70e43d826c94f3e500d00c4
 - `sh scripts/check-redaction.sh`: exit 0.
 - `gofmt -l` on the Go files these commits touched: no output.
 - `go test -count=1 -run '^TestRvGuardsStrictModeRefusesARemoteDatabase$'` in `server` for `./internal/store/`, `./internal/api/`, and `./cmd/insideout/`: ok (1.141s, 0.487s, 0.646s). Those tests do not need a database.
-- `DATABASE_URL` was unset. It was not loaded from `.env`. The database gate for `TestRecordFact_WholeFourCharacterAnswerIsStored` was not run.
+- `DATABASE_URL` was unset in the parent checkout. It was not loaded from `.env`. The integrator did not re-run `TestRecordFact_WholeFourCharacterAnswerIsStored`. The verifier had already run it on a private Postgres 18 at `127.0.0.1:55442`: red at `be7ae64`, green at `47b9330`.
