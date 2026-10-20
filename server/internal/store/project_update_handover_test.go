@@ -70,9 +70,12 @@ func rvHandoverUnchanged(t *testing.T, w *rvHandoverWorld) {
 
 func TestRvHandoverANonAdminOwnerCannotGiveTheProjectAway(t *testing.T) {
 	w := newRvHandoverWorld(t)
-	for name, to := range map[string]*uuid.UUID{"to another member": &w.other.ID, "to nobody": nil} {
+	for name, f0 := range map[string]ProjectUpdateFields{
+		"to another member": rvHandoverFields(w.project, &w.other.ID),
+		"to nobody":         rvHandoverClear(w.project),
+	} {
 		t.Run(name, func(t *testing.T) {
-			f := rvHandoverFields(w.project, to)
+			f := f0
 			f.Title = "Sneaked"
 			p, err := w.st.UpdateProject(context.Background(), w.owner.ID, w.project.ID, f)
 			if !errors.Is(err, ErrHandoverNeedsAdmin) || !errors.Is(err, ErrForbidden) {
@@ -87,9 +90,14 @@ func TestRvHandoverANonAdminOwnerCannotGiveTheProjectAway(t *testing.T) {
 // member who owns nothing here keeps the plain refusal, whatever they send.
 func TestRvHandoverAMemberWhoDoesNotOwnTheProjectKeepsThePlainRefusal(t *testing.T) {
 	w := newRvHandoverWorld(t)
-	for name, to := range map[string]*uuid.UUID{"keeping the owner": &w.owner.ID, "to themselves": &w.other.ID, "to nobody": nil} {
+	for name, f := range map[string]ProjectUpdateFields{
+		"keeping the owner":  rvHandoverFields(w.project, &w.owner.ID),
+		"omitting the owner": rvHandoverFields(w.project, nil),
+		"to themselves":      rvHandoverFields(w.project, &w.other.ID),
+		"to nobody":          rvHandoverClear(w.project),
+	} {
 		t.Run(name, func(t *testing.T) {
-			_, err := w.st.UpdateProject(context.Background(), w.other.ID, w.project.ID, rvHandoverFields(w.project, to))
+			_, err := w.st.UpdateProject(context.Background(), w.other.ID, w.project.ID, f)
 			if !errors.Is(err, ErrForbidden) || errors.Is(err, ErrHandoverNeedsAdmin) {
 				t.Fatalf("a non-owner's edit %s = %v; want the plain ErrForbidden", name, err)
 			}
@@ -115,10 +123,17 @@ func TestRvHandoverPlainEditsAndAdminHandOversStayAllowed(t *testing.T) {
 	if err != nil || p.OwnerID == nil || *p.OwnerID != w.other.ID {
 		t.Fatalf("the admin's hand-over = %+v, %v; want the other member to own it", p, err)
 	}
-	p, err = w.st.UpdateProject(ctx, w.admin.ID, w.project.ID, rvHandoverFields(p, nil))
+	p, err = w.st.UpdateProject(ctx, w.admin.ID, w.project.ID, rvHandoverClear(p))
 	if err != nil || p.OwnerID != nil {
 		t.Fatalf("the admin clearing the owner = %+v, %v; want it ownerless", p, err)
 	}
+}
+
+// rvHandoverClear is an edit that names no owner on purpose (null or "").
+func rvHandoverClear(p *Project) ProjectUpdateFields {
+	f := rvHandoverFields(p, nil)
+	f.ClearOwner = true
+	return f
 }
 
 // An edit that leaves the owner out keeps whoever owns the project. A nil

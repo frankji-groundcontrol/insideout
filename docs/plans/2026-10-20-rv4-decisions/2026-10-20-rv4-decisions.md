@@ -21,8 +21,8 @@ History is not rewritten.
 
 ## Checklist
 
-- [x] Retention and erasure — on local `main` as `d5a45fe` and `3ecef69` (from `77eeed7`, `9ec7b31`).
-- [ ] Completion rule — stopped. Red `65569dc` is `2986f4b`. Fix `1cb3d1d` conflicted in five doc indexes and was aborted.
-- [x] Session-tool withhold — on local `main` as `8f3a76d` and `9e6e68e` (from `59a57c3`, `e235c15`).
-- [ ] Omitted owner and last admin — skipped. Verdict REJECTED (`c2ee18e`, `221fb87`): the diff left the handover files.
-- [ ] Decision record for the keep-as-built rows — skipped. Verdict REJECTED (`17f15e7`): the record does not state only these settings.
+- [x] Retention and erasure — on local `main` as `d5a45fe` and `3ecef69`.
+- [x] Completion rule — landed after the doc-index conflict was resolved.
+- [x] Session-tool withhold — on local `main` as `8f3a76d` and `9e6e68e`.
+- [x] Omitted owner. The last admin was already refused in `memberships.go` (`ErrLastAdmin`).
+- [ ] Decision record for the keep-as-built rows.

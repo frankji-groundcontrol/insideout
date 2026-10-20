@@ -11,19 +11,18 @@ import (
 
 // Whole-change review of the repo binding (rv4-FR-F193, F205, F200, F121): the
 // lookup that decides "who holds this repo" skipped every project without an
-// owner, so a project that kept its repo_url but lost its owner (PATCH
-// /projects/{pid} without an ownerId writes owner_id = NULL) stopped holding
+// owner, so a project that kept its repo_url but lost its owner stopped holding
 // the repo, another project could take it, and deliveries moved without a word.
 // A project holds its repo for as long as it carries the link; whom a delivery
 // acts as is a separate question (its owner, while that owner is still a member
 // of the workspace).
 
-// rvGhBindOwnerless clears a project's owner the way PATCH /projects/{pid} does
-// when no ownerId is sent: UpdateProject writes owner_id = NULL for a nil
-// OwnerID. admin must own or administer the project.
+// rvGhBindOwnerless clears a project's owner the way PATCH /projects/{pid}
+// does for ownerId null or "": ClearOwner. An omitted ownerId keeps the
+// owner and would not make this fixture. admin must own or administer it.
 func rvGhBindOwnerless(t *testing.T, st *Store, admin *User, p *Project) {
 	t.Helper()
-	f := ProjectUpdateFields{Title: p.Title, Description: p.Description, Status: p.Status}
+	f := ProjectUpdateFields{Title: p.Title, Description: p.Description, Status: p.Status, ClearOwner: true}
 	if _, err := st.UpdateProject(context.Background(), admin.ID, p.ID, f); err != nil {
 		t.Fatalf("clear the owner of project %s: %v", p.ID, err)
 	}

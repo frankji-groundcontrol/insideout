@@ -142,7 +142,12 @@ type ProjectUpdateFields struct {
 	Title       string
 	Description string
 	Status      string
-	OwnerID     *uuid.UUID
+	// OwnerID sets the owner when non-nil. ClearOwner removes the owner
+	// (a PATCH ownerId of null or ""). Neither keeps the current owner,
+	// which is what a PATCH that omits ownerId asks for. Both set is
+	// ErrValidation, and only after the caller is allowed to edit.
+	OwnerID    *uuid.UUID
+	ClearOwner bool
 }
 
 // ErrHandoverNeedsAdmin is the ErrForbidden a project's owner gets for one thing
@@ -153,13 +158,14 @@ var ErrHandoverNeedsAdmin = fmt.Errorf("%w: giving a project to someone else nee
 // UpdateProject requires actorID to be the project's owner or the
 // workspace's admin, re-checked transactionally. Changing the owner is
 // narrower: an owner who is not a workspace admin may edit the project but
-// not give it away, and gets ErrHandoverNeedsAdmin before the UPDATE is tried
-// (an edit that keeps the current owner is still the owner's). A new owner
-// who is not a member of the workspace is ErrValidation. No explicit
-// row lock (FOR UPDATE) — see the comment on requireCreatorOrAdmin in
-// workspaces.go for why: this table's SELECT policy references
-// workspace_memberships, which Postgres cannot correctly re-evaluate
-// under EvalPlanQual row-locking.
+// not give it away, and gets ErrHandoverNeedsAdmin before the UPDATE is tried.
+// Omitting the owner (OwnerID nil, ClearOwner false) keeps the current one,
+// so that edit is still the owner's. ClearOwner, or a different OwnerID, is
+// a hand-over. A new owner who is not a member of the workspace is
+// ErrValidation. No explicit row lock (FOR UPDATE) — see the comment on
+// requireCreatorOrAdmin in workspaces.go for why: this table's SELECT policy
+// references workspace_memberships, which Postgres cannot correctly
+// re-evaluate under EvalPlanQual row-locking.
 func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID, f ProjectUpdateFields) (*Project, error) {
 	var p *Project
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -174,10 +180,12 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 			return err
 		}
 
-		// The owner needs no other standing for an edit that keeps the owner;
-		// any other edit, and any change of owner, needs an admin.
+		// The owner needs no other standing for an edit that keeps the owner,
+		// including one that leaves the owner out. Any hand-over needs an admin.
 		isOwner := ownerID != nil && *ownerID == actorID
-		keepsOwner := ownerID != nil && f.OwnerID != nil && *f.OwnerID == *ownerID
+		omitted := !f.ClearOwner && f.OwnerID == nil
+		sameOwner := !f.ClearOwner && f.OwnerID != nil && ownerID != nil && *f.OwnerID == *ownerID
+		keepsOwner := omitted || sameOwner
 		if !isOwner || !keepsOwner {
 			role, err := requireMember(ctx, tx, workspaceID, actorID)
 			if err != nil {
@@ -196,6 +204,9 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 		// caller who may not change the owner learns nothing about who is in
 		// the workspace; and only for a change, so a project whose owner has
 		// since left stays editable with the owner the client was shown.
+		if f.ClearOwner && f.OwnerID != nil {
+			return ErrValidation
+		}
 		if f.OwnerID != nil && !keepsOwner {
 			_, err := requireMember(ctx, tx, workspaceID, *f.OwnerID)
 			if errors.Is(err, ErrForbidden) {
@@ -206,8 +217,17 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 			}
 		}
 
+		// Resolve the column before the UPDATE. An omission writes the owner
+		// the row already has, so the policy sees no change of owner; a clear
+		// writes NULL.
+		write := f
+		if f.ClearOwner {
+			write.OwnerID = nil
+		} else if f.OwnerID == nil {
+			write.OwnerID = ownerID
+		}
 		var upErr error
-		p, upErr = updateProjectRow(ctx, tx, projectID, f)
+		p, upErr = updateProjectRow(ctx, tx, projectID, write)
 		return upErr
 	})
 	if err != nil {

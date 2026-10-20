@@ -93,8 +93,8 @@ func TestProjectsAreCreatedByMembersWithATitle(t *testing.T) {
 
 // Editing is for the project's owner or a workspace admin; owning a project
 // is not administering the workspace, so it never reaches deleting. The edit
-// replaces the whole record, owner included: the client always sends ownerId,
-// and leaving it out (or sending "") leaves the project unowned.
+// replaces the fields it sends. Leaving ownerId out keeps the owner; null
+// or "" leaves the project unowned.
 func TestProjectEditsFollowTheirRoles(t *testing.T) {
 	w := newCoverageWorld(t)
 	patch := func(as routeUser, payload string, want int) string {
@@ -147,10 +147,15 @@ func TestProjectEditsFollowTheirRoles(t *testing.T) {
 		t.Fatalf("title = %q, want the admin's edit, and the project still standing", got)
 	}
 
-	// Leaving ownerId out unowns the project; from then on only an admin edits.
-	got = decodeAs[projectView](t, patch(w.owner, `{"title":"Ownerless","status":"active"}`, http.StatusOK))
-	if got.OwnerID != nil {
-		t.Fatalf("owner after an edit that omitted ownerId = %v, want none", *got.OwnerID)
+	// Leaving ownerId out keeps the member who owns it. null unowns it, and
+	// from then on only an admin edits.
+	got = decodeAs[projectView](t, patch(w.owner, `{"title":"Still owned","status":"active"}`, http.StatusOK))
+	if got.OwnerID == nil || *got.OwnerID != w.member.ID.String() || got.Title != "Still owned" {
+		t.Fatalf("owner after an edit that omitted ownerId = %v, title %q; want the member kept", got.OwnerID, got.Title)
+	}
+	got = decodeAs[projectView](t, patch(w.owner, `{"title":"Ownerless","status":"active","ownerId":null}`, http.StatusOK))
+	if got.OwnerID != nil || got.Title != "Ownerless" {
+		t.Fatalf("owner after an explicit null = %+v, want none", got)
 	}
 	patch(w.member, edit("Taken back", "active", w.member), http.StatusForbidden)
 	got = decodeAs[projectView](t, patch(w.owner, `{"title":"Still ownerless","status":"active","ownerId":""}`, http.StatusOK))
@@ -176,7 +181,8 @@ func TestProjectOwnerWhoIsNotAnAdminCannotGiveTheProjectAway(t *testing.T) {
 
 	for name, payload := range map[string]string{
 		"to another member": owned(other),
-		"to nobody":         `{"title":"Sneaked","status":"active"}`,
+		"null":              `{"title":"Sneaked","status":"active","ownerId":null}`,
+		"an empty string":   `{"title":"Sneaked","status":"active","ownerId":""}`,
 	} {
 		t.Run(name, func(t *testing.T) {
 			status, body := w.call(w.member, "PATCH", w.proj(), payload)

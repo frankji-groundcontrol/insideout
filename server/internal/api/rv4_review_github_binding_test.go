@@ -28,12 +28,12 @@ func rvGhBindSecondProject(t *testing.T, w *routeWorld) *store.Project {
 	return p
 }
 
-// rvGhBindOwnerless clears a project's owner the way PATCH /projects/{pid} does
-// when no ownerId is sent (UpdateProject writes owner_id = NULL), as w.owner,
-// the workspace admin.
+// rvGhBindOwnerless clears a project's owner the way PATCH /projects/{pid}
+// does for ownerId null or "" (ClearOwner). An omitted ownerId keeps the
+// owner. w.owner is the workspace admin.
 func rvGhBindOwnerless(t *testing.T, w *routeWorld, p *store.Project) {
 	t.Helper()
-	f := store.ProjectUpdateFields{Title: p.Title, Description: p.Description, Status: p.Status}
+	f := store.ProjectUpdateFields{Title: p.Title, Description: p.Description, Status: p.Status, ClearOwner: true}
 	if _, err := w.st.UpdateProject(context.Background(), w.owner.ID, p.ID, f); err != nil {
 		t.Fatalf("clear the owner of project %s: %v", p.ID, err)
 	}
@@ -48,7 +48,7 @@ func rvGhBindTimelineLines(t *testing.T, w *routeWorld, viewer routeUser, p *sto
 	return len(ups)
 }
 
-// A project that kept its link and lost its owner (PATCH without an ownerId)
+// A project that kept its link and lost its owner
 // still holds the repo: a sibling project in the same workspace is told the repo
 // is taken instead of silently taking it, and the admin can release the link.
 func TestRvGhBindAnOwnerlessProjectStillHoldsItsRepoOverHTTP(t *testing.T) {

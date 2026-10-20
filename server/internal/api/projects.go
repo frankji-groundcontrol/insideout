@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -208,10 +209,12 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 }
 
 type updateProjectRequest struct {
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Status      string  `json:"status"`
-	OwnerID     *string `json:"ownerId"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	// OwnerID is the raw value so an omitted key (nil) stays distinct from
+	// null. Absent keeps the owner; null and "" clear it.
+	OwnerID json.RawMessage `json:"ownerId"`
 }
 
 var validProjectStatuses = map[string]bool{"planning": true, "active": true, "paused": true, "done": true, "archived": true}
@@ -236,13 +239,13 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid status", "", nil)
 		return
 	}
-	ownerID, ok := parseOptionalUUID(w, req.OwnerID)
+	ownerID, clearOwner, ok := projectOwnerFromJSON(w, req.OwnerID)
 	if !ok {
 		return
 	}
 
 	p, err := s.store.UpdateProject(r.Context(), userID, pid, store.ProjectUpdateFields{
-		Title: req.Title, Description: req.Description, Status: req.Status, OwnerID: ownerID,
+		Title: req.Title, Description: req.Description, Status: req.Status, OwnerID: ownerID, ClearOwner: clearOwner,
 	})
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
@@ -253,8 +256,7 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, store.ErrHandoverNeedsAdmin) {
-		// An owner's edit sends the owner it keeps; leaving ownerId out clears it.
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can give the project to someone else or leave it without an owner (send the current ownerId to keep it)", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can give the project to someone else or leave it without an owner", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
@@ -290,6 +292,32 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// projectOwnerFromJSON reads PATCH ownerId. An omitted key keeps the
+// current owner. null and "" clear it. Any other value must be a user id.
+func projectOwnerFromJSON(w http.ResponseWriter, raw json.RawMessage) (id *uuid.UUID, clear bool, ok bool) {
+	raw = json.RawMessage(strings.TrimSpace(string(raw)))
+	if len(raw) == 0 {
+		return nil, false, true
+	}
+	if string(raw) == "null" {
+		return nil, true, true
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid ownerId", "", nil)
+		return nil, false, false
+	}
+	if s == "" {
+		return nil, true, true
+	}
+	parsed, err := uuid.Parse(s)
+	if err != nil {
+		httpx.WriteError(w, http.StatusBadRequest, "invalid ownerId", "", nil)
+		return nil, false, false
+	}
+	return &parsed, false, true
 }
 
 func parseOptionalUUID(w http.ResponseWriter, raw *string) (*uuid.UUID, bool) {

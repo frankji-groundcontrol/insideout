@@ -57,8 +57,7 @@ func TestRvHandoverAPlainEditByANonAdminOwnerStaysAllowed(t *testing.T) {
 }
 
 // An admin may hand the project to a member and take it away from one, or
-// leave it ownerless, however the empty owner is spelled. These pass without
-// the fix and must keep passing with it.
+// leave it ownerless with null or "". Leaving the key out keeps the owner.
 func TestRvHandoverAnAdminCanStillHandTheProjectOverOrClearIt(t *testing.T) {
 	w := newCoverageWorld(t)
 	other := w.newMember(t, "other")
@@ -73,7 +72,6 @@ func TestRvHandoverAnAdminCanStillHandTheProjectOverOrClearIt(t *testing.T) {
 	for name, fragment := range map[string]string{
 		"an empty string": `,"ownerId":""`,
 		"null":            `,"ownerId":null`,
-		"left out":        "",
 	} {
 		t.Run("clear with "+name, func(t *testing.T) {
 			rvHandoverGiveTo(t, w, w.member)
@@ -83,10 +81,18 @@ func TestRvHandoverAnAdminCanStillHandTheProjectOverOrClearIt(t *testing.T) {
 			}
 		})
 	}
+	t.Run("left out keeps the owner", func(t *testing.T) {
+		rvHandoverGiveTo(t, w, w.member)
+		w.must(t, w.owner, "PATCH", w.proj(), rvHandoverPatch("Kept", "active", ""), http.StatusOK)
+		owner, title := rvHandoverOwnerOf(t, w)
+		if owner == nil || *owner != w.member.ID.String() || title != "Kept" {
+			t.Fatalf("after an edit that left ownerId out: owner %v, title %q, want the member kept", owner, title)
+		}
+	})
 }
 
-// The 403 says what is needed. A caller who only left ownerId out (which, in
-// this API, clears it) learns the way out; a member who is not the owner keeps
+// The 403 says what is needed. Explicit null or "" clears the owner and needs
+// an admin; leaving the key out does not. A member who is not the owner keeps
 // the plain answer.
 func TestRvHandoverTheRefusalSaysAnAdminIsNeeded(t *testing.T) {
 	w := newCoverageWorld(t)
@@ -99,11 +105,12 @@ func TestRvHandoverTheRefusalSaysAnAdminIsNeeded(t *testing.T) {
 	}
 	for name, payload := range map[string]string{
 		"to another member": rvHandoverPatch("Sneaked", "active", rvHandoverOwner(other.ID.String())),
-		"to nobody":         rvHandoverPatch("Sneaked", "active", ""),
+		"null":              rvHandoverPatch("Sneaked", "active", `,"ownerId":null`),
+		"an empty string":   rvHandoverPatch("Sneaked", "active", `,"ownerId":""`),
 	} {
 		t.Run(name, func(t *testing.T) {
 			msg := refusal(t, w.member, payload)
-			for _, want := range []string{"workspace admin", "someone else", "ownerId"} {
+			for _, want := range []string{"workspace admin", "someone else", "without an owner"} {
 				if !strings.Contains(msg, want) {
 					t.Fatalf("refusal %q does not mention %q", msg, want)
 				}

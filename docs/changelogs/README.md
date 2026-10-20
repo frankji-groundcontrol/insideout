@@ -28,6 +28,7 @@ carry the one-line descriptions:
 
 ### 2026-10
 
+- [2026-10-20-omitted-project-owner.md](2026-10-20-omitted-project-owner.md)
 - [2026-10-20-completion-evidence-or-reason.md](2026-10-20-completion-evidence-or-reason.md)
 - [2026-10-20-rv4-decisions.md](2026-10-20-rv4-decisions.md)
 - [2026-10-20-retention-and-erasure.md](2026-10-20-retention-and-erasure.md)
