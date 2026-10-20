@@ -6,6 +6,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
 
 // rv4-DATA-04: CheckServeRole against real PostgreSQL. The request-pool role
@@ -26,6 +28,7 @@ func TestServeRoleRefusesABypassRLSPool(t *testing.T) {
 	if ownerURL == "" {
 		t.Skip("DATABASE_OWNER_URL not set, skipping the BYPASSRLS refusal check")
 	}
+	testlock.RequireLocalURL(t, ownerURL)
 	ctx := context.Background()
 	owner, err := Open(ctx, ownerURL)
 	if err != nil {

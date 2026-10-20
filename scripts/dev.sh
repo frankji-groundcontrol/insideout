@@ -59,6 +59,12 @@ set -a
 . "$repo/.env"
 set +a
 
+# Go tests refuse a database on another machine unless the operator opted out.
+# Empty counts as unset. serve does not read this; only the tests do.
+if [ -z "${INSIDEOUT_TEST_STRICT:-}" ]; then
+  export INSIDEOUT_TEST_STRICT=1
+fi
+
 # Flutter web dev serves from a random localhost port, so browser API calls
 # are cross-origin. Default the CORS allow-list to the `localhost` token
 # (any loopback port) for the server unless the user set one explicitly.

@@ -27,6 +27,8 @@ func TestRvGuardsStrictModeRefusesARemoteDatabase(t *testing.T) {
 		"TestProbeRolesReadsTheCatalog",
 		"TestCLIAndMCPAgainstTheRealAPI",
 		"TestRunPromoteAdmin_LogsTheFactNotTheAddress",
+		"TestRvGuardsProbePromoteAdminLogAppURL",
+		"TestRvGuardsProbePromoteAdminLogOwnerURL",
 		"TestSeedDemo_RerunDoesNotDuplicateTheDemoWorkspace",
 		"TestRunServe_ShutdownEndsAnOpenProgressStream",
 		"TestRvGuardsProbeShutdownAppURL",
@@ -57,4 +59,20 @@ func TestRvGuardsProbeShutdownOwnerURL(t *testing.T) {
 	}
 	t.Setenv("DATABASE_URL", "postgres://app:secret@127.0.0.1:1/app?sslmode=disable")
 	startShutdownRig(t, "")
+}
+
+func TestRvGuardsProbePromoteAdminLogAppURL(t *testing.T) {
+	if os.Getenv("DATABASE_URL") != remoteFixtureDSN {
+		t.Skip("app-DSN probe runs in the strict-refusal child")
+	}
+	t.Setenv("DATABASE_OWNER_URL", "postgres://owner:secret@127.0.0.1:1/app?sslmode=disable")
+	TestRunPromoteAdmin_LogsTheFactNotTheAddress(t)
+}
+
+func TestRvGuardsProbePromoteAdminLogOwnerURL(t *testing.T) {
+	if os.Getenv("DATABASE_OWNER_URL") != remoteFixtureDSN {
+		t.Skip("owner-DSN probe runs in the strict-refusal child")
+	}
+	t.Setenv("DATABASE_URL", "postgres://app:secret@127.0.0.1:1/app?sslmode=disable")
+	TestRunPromoteAdmin_LogsTheFactNotTheAddress(t)
 }

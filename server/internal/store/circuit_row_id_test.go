@@ -28,6 +28,7 @@ func TestCircuitFunctions_TakeARowID(t *testing.T) {
 	if url == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
 	ctx := context.Background()
 	st, err := Open(ctx, url)
 	if err != nil {

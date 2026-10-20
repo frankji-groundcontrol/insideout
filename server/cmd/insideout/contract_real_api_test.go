@@ -62,6 +62,9 @@ func newContractWorld(t *testing.T) *contractWorld {
 	if dsn == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	// Before the open: store.Open pings, and SignupMode later in this test
+	// only locks a pool that already reached the host.
+	testlock.RequireLocalURL(t, dsn)
 	ctx := context.Background()
 	st, err := store.Open(ctx, dsn)
 	if err != nil {

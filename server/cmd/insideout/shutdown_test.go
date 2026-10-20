@@ -15,6 +15,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -42,13 +43,18 @@ func startShutdownRig(t *testing.T, llmBaseURL string) *shutdownRig {
 	if url == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	owner := os.Getenv("DATABASE_OWNER_URL")
+	testlock.RequireLocalURL(t, url)
+	if owner != "" {
+		testlock.RequireLocalURL(t, owner)
+	}
 	ctx := context.Background()
 	st, err := store.Open(ctx, url)
 	if err != nil {
 		t.Fatalf("open store: %v", err)
 	}
 	t.Cleanup(st.Close)
-	if owner := os.Getenv("DATABASE_OWNER_URL"); owner != "" {
+	if owner != "" {
 		if err := st.AttachMigratePool(ctx, owner); err != nil {
 			t.Fatalf("attach owner pool: %v", err)
 		}

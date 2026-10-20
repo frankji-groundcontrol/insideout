@@ -19,6 +19,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -46,6 +47,7 @@ func newGateFixture(t *testing.T) gateFixture {
 	if url == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
 	ctx := context.Background()
 	st, err := store.Open(ctx, url)
 	if err != nil {

@@ -22,6 +22,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
 
 // rv4-CLOSE-02: `insideout idea convert` sent an empty body, so every idea it
@@ -120,6 +121,7 @@ func TestIdeaConvertStoresTheLocaleOverTheRealServer(t *testing.T) {
 	if dsn == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, dsn)
 	ctx := context.Background()
 	st, err := store.Open(ctx, dsn)
 	if err != nil {

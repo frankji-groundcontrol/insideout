@@ -341,18 +341,3 @@ func checkProbeRoles(t *testing.T, pool *pgxpool.Pool) {
 		}
 	}
 }
-
-// Same gate as the store integration tests: unset DATABASE_URL skips, and CI's
-// skip gate guarantees it is set there.
-func TestProbeRolesReadsTheCatalog(t *testing.T) {
-	url := os.Getenv("DATABASE_URL")
-	if url == "" {
-		t.Skip("DATABASE_URL not set, skipping integration test")
-	}
-	pool, err := pgxpool.New(context.Background(), url)
-	if err != nil {
-		t.Fatalf("open pool: %v", err)
-	}
-	t.Cleanup(pool.Close)
-	checkProbeRoles(t, pool)
-}

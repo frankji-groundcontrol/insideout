@@ -15,6 +15,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -39,12 +40,15 @@ type routeWorld struct {
 }
 
 // newRouteWorld skips without DATABASE_URL, the same gate as the store suite.
+// With INSIDEOUT_TEST_STRICT set it refuses a database on another machine
+// before it connects.
 func newRouteWorld(t *testing.T) *routeWorld {
 	t.Helper()
 	url := os.Getenv("DATABASE_URL")
 	if url == "" {
 		t.Skip("DATABASE_URL not set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
 	ctx := context.Background()
 	st, err := store.Open(ctx, url)
 	if err != nil {

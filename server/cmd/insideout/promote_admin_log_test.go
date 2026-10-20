@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 	"github.com/google/uuid"
 )
 
@@ -21,6 +22,8 @@ func TestRunPromoteAdmin_LogsTheFactNotTheAddress(t *testing.T) {
 	if url == "" || owner == "" {
 		t.Skip("DATABASE_URL and DATABASE_OWNER_URL not both set, skipping integration test")
 	}
+	testlock.RequireLocalURL(t, url)
+	testlock.RequireLocalURL(t, owner)
 	ctx := context.Background()
 	st, err := store.Open(ctx, url)
 	if err != nil {
