@@ -21,7 +21,7 @@ line budget; this page is the way in.
 | 2 | 4 clusters (rows 2.1 to 2.6) | integrated at `e6bc637`; gates and a live check green; 23 rows: 21 `FIXED`, 2 `PARTIAL` | [wave-2.md](wave-2.md) |
 | 3 | 13 clusters (rows 3.1 to 3.11, plus `w3-client-apply` and `w3-users-read-grant` added after wave 2) | integrated at `3a1c4ac` (171 commits above the wave-2 records head); gates green, workflow properties pending the first CI run; 64 rows: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` | [wave-3.md](wave-3.md), [wave-3-dispositions.md](wave-3-dispositions.md) |
 | 4 | 21 clusters (carry-forward plus the whole-change review) | on `main` at `e6a3d14` (tested code head `97cf4c06`; 174 cherry-picks, two pre-gate fixups); gates were green before that landing; the first CI run is red on `env-suites` only | [wave-4.md](wave-4.md) |
-| 4b | four code clusters plus the five living-doc files | local `main` at `4e16d1b`; this tip is not on `origin/main` | [wave-4b.md](wave-4b.md) |
+| 4b | four code clusters plus the five living-doc files | on `origin/main` since 2026-11-21 (landed at `4e16d1b`, pushed within `4d186da9`; [sync record](../2026-11-21-wave-4b-sync-and-push.md)) | [wave-4b.md](wave-4b.md) |
 
 ## Cluster fragments
 
@@ -103,4 +103,5 @@ the ceilings and the integrator's to-do. The wave files hold the dispositions.
   on `env-suites` only. Owner questions stay in [wave-4.md](wave-4.md).
 - Wave 4b is on local `main` at `4e16d1b`
   ([wave-4b.md](wave-4b.md)): four code clusters plus the five living-doc
-  files. That tip is not on `origin/main`. Owner decisions stay deferred.
+  files. That tip reached `origin/main` 2026-11-21 within `4d186da9`
+  ([sync record](../2026-11-21-wave-4b-sync-and-push.md)). The owner decisions were adopted 2026-10-20 ([adopted record](../../issues/2026-10-20-rv4-decisions-adopted.md)).

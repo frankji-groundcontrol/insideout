@@ -15,9 +15,10 @@ main:
     describe.
   owner: grok
   status: done
-  next_evidence: Local main is 4e16d1b, 10 commits ahead of origin/main at e6a3d14.
-    Not pushed. The verifier ran TestRecordFact_WholeFourCharacterAnswerIsStored
-    on private Postgres at 127.0.0.1:55442. Owner decisions and fragment prose
-    to-dos outside the five living-doc files stay open.
+  next_evidence: Local main 4e16d1b reached origin/main 2026-11-21 within 4d186da9
+    (owner-directed sync from MBP and push; docs/changelogs/2026-11-21-wave-4b-sync-and-push.md).
+    The verifier ran TestRecordFact_WholeFourCharacterAnswerIsStored
+    on private Postgres at 127.0.0.1:55442. Owner decisions were adopted 2026-10-20;
+    fragment prose to-dos outside the five living-doc files stay open.
 side_tracks: []
-updated_at: '2026-10-20T05:21:20Z'
+updated_at: '2026-11-20T17:53:23Z'

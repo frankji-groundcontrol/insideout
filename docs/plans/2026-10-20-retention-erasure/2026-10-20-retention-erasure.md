@@ -2,7 +2,7 @@
 
 Closed 2026-10-20. The owner answers in
 [the retention record](../../issues/2026-10-18-rv4-retention-erasure.md) are
-the ones this plan built. Not pushed.
+the ones this plan built. Pushed to `origin/main` 2026-11-21.
 
 ## Done
 

@@ -17,6 +17,7 @@ code) with relative links.
 
 Per-month index files ([folder README](index/README.md)), newest first:
 
+- [November 2026](index/2026-11.md)
 - [October 2026](index/2026-10.md)
 - [September 2026](index/2026-09.md)
 - [August 2026](index/2026-08.md)
@@ -25,6 +26,10 @@ Per-month index files ([folder README](index/README.md)), newest first:
 Every record file and dated folder directly in this folder, newest first
 (folder entries link the folder's `index.md`) — the month indexes above
 carry the one-line descriptions:
+
+### 2026-11
+
+- [2026-11-21-wave-4b-sync-and-push.md](2026-11-21-wave-4b-sync-and-push.md)
 
 ### 2026-10
 

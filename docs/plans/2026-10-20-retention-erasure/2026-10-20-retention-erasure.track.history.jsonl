@@ -1,1 +1,2 @@
 {"at":"2026-10-20T07:10:00Z","event":"done","note":"365-day conversation purge and tombstone DELETE /me verified on a private Postgres 18"}
+{"at":"2026-11-20T17:53:23Z","event":"pushed","note":"Owner-directed sync from MBP and push: on origin/main within 4d186da9 (docs/changelogs/2026-11-21-wave-4b-sync-and-push.md)."}

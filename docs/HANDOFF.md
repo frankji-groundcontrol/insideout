@@ -10,16 +10,19 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-10-20: wave 4b is on local `main`, not pushed.**
+**2026-11-21: wave 4b and the adopted decisions are on `origin/main` at
+`4d186da9`** — the owner directed the sync from MBP and the push
+([sync record](changelogs/2026-11-21-wave-4b-sync-and-push.md)).
 [The report](review/2026-10-18-multirole-4/README.md) (145 findings,
 10 High) says the core held but the front door and the gates did not. The
 fixes were built on `rv4/integration` from `main` @ `d53035a`. Waves 0 to 4
 are on `origin/main` at `e6a3d14`. Their tested code head
 is `97cf4c06`. The gate re-run is in
 [wave-4.md](changelogs/2026-10-18-rv4-remediation/wave-4.md). The first CI
-run on `e6a3d14` is red on `env-suites` only. Wave 4b is local `main` at
-`4e16d1b` ([wave 4b](changelogs/2026-10-18-rv4-remediation/wave-4b.md)):
-the four code clusters and the five living-doc files. Do not push. What
+run on `e6a3d14` is red on `env-suites` only. Wave 4b landed at `4e16d1b`
+([wave 4b](changelogs/2026-10-18-rv4-remediation/wave-4b.md)):
+the four code clusters and the five living-doc files; it reached
+`origin/main` 2026-11-21 within `4d186da9`. What
 landed from the owner settings is in
 [the decisions record](changelogs/2026-10-20-rv4-decisions.md). The
 [execution contract](review/2026-10-18-multirole-4/41-remediation-contract.md)
@@ -37,7 +40,7 @@ Board row:
 [plan](plans/2026-10-18-multirole-4.md); open records:
 [issues](issues/2026-10-18-review-4-open-findings.md).
 
-Retention and erasure (rv4-DATA-06) are on local `main` and not pushed: a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
+Retention and erasure (rv4-DATA-06) are on `origin/main` (pushed 2026-11-21): a coach conversation lives 365 days after its newest message, erasure is a tombstone, and `DELETE /api/v1/me` requires the current password and is human-only ([record](issues/2026-10-18-rv4-retention-erasure.md), [changelog](changelogs/2026-10-20-retention-and-erasure.md)).
 
 Session-swap tools are withheld while a login is held. Marking a roadmap node done needs evidence or a one-sentence reason ([changelog](changelogs/2026-10-20-completion-evidence-or-reason.md), migration `20261020150000`). A PATCH that omits `ownerId` keeps the project owner ([changelog](changelogs/2026-10-20-omitted-project-owner.md)). The keep-as-built decisions are in [the adopted record](issues/2026-10-20-rv4-decisions-adopted.md). The verifier ran the new database tests on private Postgres. This checkout did not re-run them. Still the owner's console: the hosted database role, `INSIDEOUT_TRUSTED_PROXY_HOPS=1`, GitHub `deployment_status`, key rotation, and the Railway `VERSION` variable.
 
@@ -95,7 +98,10 @@ Every other thread is closed with its exact status and links on its
 
 - **`main` is meant to be one commit on GitHub, MBP, and MBP2**; confirm with
   the three-way check in the
-  [sync practice](practices/2026-10-09-sync-two-macs-and-github.md). Untracked
+  [sync practice](practices/2026-10-09-sync-two-macs-and-github.md).
+  2026-11-21: all three at `4d186da9` (same tree); MBP carries uncommitted
+  `README.md` / `SKILL.md` edits — disposition them there before the next
+  sync ([record](changelogs/2026-11-21-wave-4b-sync-and-push.md)). Untracked
   `.grok/` and `.qoder/` are tool scratch and raw agent journals, held out by
   rule and listed in the local manifest `.git/info/untracked-manifest.tsv`.
   **Do not `git add .`** — stage and checkpoint one task at a time, and do not
@@ -110,7 +116,10 @@ Every other thread is closed with its exact status and links on its
   run: `9f0b1c7` (2026-10-11). The run on `d53035a` (2026-10-18) was red on
   the server job (`TestProjectQuietFlagged`); that clock fix is on `main`
   as of `e6a3d14`. The first CI run on `e6a3d14` is red on `env-suites`
-  only. Wave 4b's fetch-depth fix is local at `460c33cf`. The ten
+  only. Wave 4b's fetch-depth fix (`460c33cf`) is on `origin/main` since
+  2026-11-21. On the pushed tip `4d186da9` the `security` workflow is red on
+  [govulncheck toolchain findings](issues/2026-11-21-govulncheck-go-toolchain.md)
+  (gitleaks passed); the `ci` run was still in progress at recording time. The ten
   billing-blocked runs were purged as superseded. A failed payment may still be sitting on the account for other
   GitHub services — worth a look in Settings → Billing.
 - **Shipping:** Railway autodeploy is off for both services, and
