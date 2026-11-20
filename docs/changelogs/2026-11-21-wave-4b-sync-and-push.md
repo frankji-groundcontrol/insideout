@@ -20,6 +20,11 @@ the [2026-10-20 decision clusters](2026-10-20-rv4-decisions.md).
   "ahead 22"). Refreshed it ref-only over SSH
   (`git push <ssh-url> 4d186da9:refs/remotes/origin/main`); MBP's checked-out
   `main` was already at `4d186da9` and now reports up to date.
+- After the record commit (`c828b9ed`) an attempt to fast-forward MBP onto
+  it aborted safely: MBP's uncommitted work also edits `docs/HANDOFF.md`,
+  `docs/changelogs/README.md`, and `docs/changelogs/index/2026-10.md`.
+  MBP's checkout and its in-progress slice were left untouched; its `main`
+  stays at `4d186da9`, behind GitHub by the record commits.
 
 ## Verification
 
@@ -27,9 +32,11 @@ the [2026-10-20 decision clusters](2026-10-20-rv4-decisions.md).
   and MBP all at commit `4d186da9`, tree `a32375a4`.
 - On-disk tracked-file digest
   (`git ls-files -z | xargs -0 shasum -a 1 | shasum`): MBP2
-  `cf609ef5…`, MBP `f073860e…`. They differ because MBP carries uncommitted
-  edits to `README.md` and `SKILL.md` — in-progress work on that machine,
-  left untouched. Neither file changed in the pushed range.
+  `cf609ef5…`, MBP `f073860e…`. They differ because MBP carries a whole
+  uncommitted feature slice — the install front door, the password-reset
+  watch, and the reset-code-on-the-page work (35 modified tracked files
+  across `server/`, `client/`, `docs/`, plus new files and draft
+  changelogs dated 2026-10-20 to 2026-10-22). Left untouched.
 - Post-push privacy scan of every added line (`git diff e6a3d140..4d186da9
   -U0`): only the repository's own import paths, loopback/`.invalid` test
   fixture DSNs, and code identifiers. No home paths, real DSNs, tokens, or
@@ -51,5 +58,7 @@ the [2026-10-20 decision clusters](2026-10-20-rv4-decisions.md).
   two new migrations `20261020140000` / `20261020150000` (see
   [retention and erasure](2026-10-20-retention-and-erasure.md) and
   [completion evidence](2026-10-20-completion-evidence-or-reason.md)).
-- MBP still has the uncommitted `README.md` / `SKILL.md` edits; whoever
-  resumes there should disposition them before the next sync.
+- MBP holds the uncommitted install/reset slice described above. Whoever
+  resumes there should commit and push it (its draft changelogs are
+  untracked in that checkout); until then MBP's `main` stays at `4d186da9`
+  and the three-way "one commit" check is knowingly open.

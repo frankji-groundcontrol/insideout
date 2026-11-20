@@ -99,9 +99,11 @@ Every other thread is closed with its exact status and links on its
 - **`main` is meant to be one commit on GitHub, MBP, and MBP2**; confirm with
   the three-way check in the
   [sync practice](practices/2026-10-09-sync-two-macs-and-github.md).
-  2026-11-21: all three at `4d186da9` (same tree); MBP carries uncommitted
-  `README.md` / `SKILL.md` edits — disposition them there before the next
-  sync ([record](changelogs/2026-11-21-wave-4b-sync-and-push.md)). Untracked
+  2026-11-21: GitHub and MBP2 carry the sync record commits on top of
+  `4d186da9`; MBP stays at `4d186da9` with a whole uncommitted feature
+  slice (install front door, reset watch, reset code — 35 tracked files
+  plus new files). Commit that slice on MBP before the next sync
+  ([record](changelogs/2026-11-21-wave-4b-sync-and-push.md)). Untracked
   `.grok/` and `.qoder/` are tool scratch and raw agent journals, held out by
   rule and listed in the local manifest `.git/info/untracked-manifest.tsv`.
   **Do not `git add .`** — stage and checkpoint one task at a time, and do not
