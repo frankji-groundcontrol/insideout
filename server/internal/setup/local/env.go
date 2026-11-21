@@ -86,7 +86,7 @@ func EnvPath(repoRoot string) string {
 	return filepath.Join(repoRoot, ".env")
 }
 
-// jwtNeedsRotation mirrors scripts/setup.sh: placeholder, or shorter
+// jwtNeedsRotation is the rule the old scripts/setup.sh had: placeholder, or shorter
 // than 32 characters, is not a usable secret.
 func jwtNeedsRotation(s string) bool {
 	return s == "" || s == "change_me_to_a_long_random_string" || len(s) < 32

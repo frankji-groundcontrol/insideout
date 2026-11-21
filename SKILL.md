@@ -32,7 +32,7 @@ hidden input) and saves the token to a 0600 config file every client
 surface reads (env vars still win); `--local` writes `.env`, migrates,
 and can boot the server; `--check` re-runs the health probes.
 
-A server on this machine is `./scripts/setup.sh --local` (bundled
+A server on this machine is `insideout setup --local --postgres bundled|own` (bundled
 Docker Postgres, or your own URL on stdin). Then set
 `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI keeps calling
 the hosted API. Full steps, including the questions an agent should

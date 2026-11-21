@@ -228,11 +228,12 @@ second; run it after any change to the headers or the CSP.
 On a Mac whose CommandLineTools SDK the linker rejects, a source build of nginx
 needs `SDKROOT` pointed at the Xcode SDK; the Homebrew `nginx` formula avoids it.
 
-Credential + env script suites (Python; the same two batteries CI runs
+Credential + env script suites (Python; the same batteries CI runs
 in its env-suites job — from `scripts/`):
 
 ```bash
 python3 tests/env/test_env_catalog.py && python3 tests/env/test_env_writes.py   # env catalog + write batteries (plain-assert scripts)
+python3 tests/env/test_setup_shim.py                                         # setup.sh forwards to `insideout setup`
 python3 -m unittest discover -s tests/keys -t .           # key store suites
 ```
 

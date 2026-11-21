@@ -21,9 +21,9 @@ Versions that matter (this repo's own pins — do not guess):
 ## 1. Base tools
 
 Needed by: A, B, C. `git` (clone + version control), `curl` (the
-smoke test and downloads), `jq` (smoke test), `python3` (the env
-scripts `env.sh`/`setup.sh` write `.env` through it, and the key-store
-tool runs on it), `openssl` (`setup.sh` generates the JWT secret with
+smoke test and downloads), `jq` (smoke test), `python3` (`env.sh edit`
+writes `.env` through it, and the key-store
+tool runs on it), `openssl` (`env.sh init` generates the JWT secret with
 `openssl rand -hex 32`).
 
 **macOS**

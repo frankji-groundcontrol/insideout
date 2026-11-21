@@ -259,4 +259,4 @@ Do not read `.env`. Do not print secret values, tokens, or database URLs.
    and promotes it.
 5. Verify everything with `insideout setup --check`.
 
-Non-interactive `setup.sh` with no flags exits 2 and points here.
+Non-interactive `insideout setup` (or `setup.sh`, which forwards to it) with no flags exits 2 and names the flags.

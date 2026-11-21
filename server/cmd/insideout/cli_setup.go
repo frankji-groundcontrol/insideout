@@ -4,7 +4,7 @@ package main
 // phase): wires the slot packages together — clientconfig (A),
 // flow+ui (B), the hidden-prompt CLI (C) — behind one subcommand.
 // `insideout setup` with no flags is the interactive form; the flags
-// mirror scripts/setup.sh's agent contract so an agent can drive the
+// are the agent contract scripts/setup.sh forwards, so an agent can drive the
 // same door without a terminal.
 
 import (

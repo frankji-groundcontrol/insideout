@@ -102,7 +102,7 @@ on PATH, appends one marked export line to your shell rc (zsh →
 The CLI and MCP server then call the hosted API with no environment
 variables. `./scripts/default-api.sh` prints that URL. Sign in with
 `insideout login <email>`. A server on this machine, including
-PostgreSQL, is `./scripts/setup.sh`. The full walk-through is
+PostgreSQL, is `insideout setup --local --postgres bundled|own` in a checkout. The full walk-through is
 [docs/usage/installation.md](docs/usage/installation.md).
 Manual fallback without the script: `cd server && go build -o
 /usr/local/bin/insideout ./cmd/insideout` (same for `insideout-mcp`).

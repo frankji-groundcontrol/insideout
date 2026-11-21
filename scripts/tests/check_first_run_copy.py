@@ -9,8 +9,9 @@ Usage: python3 -I scripts/tests/check_first_run_copy.py
 Stdlib only; no network, database or Go toolchain. The scripts are run, not
 just read, wherever they stop before doing any work: scripts/install.sh stops
 at its Go check when no go is on PATH, scripts/bootstrap.sh stops at its OS
-check when uname names another system, and scripts/setup.sh --hosted prints
-its blurb and exits before it looks at any env file. Each check derives its
+check when uname names another system. scripts/setup.sh only forwards to
+`insideout setup` (rv5-STRC-02), so its hosted blurb is read from the one
+copy, the hosted case in server/cmd/insideout/cli_setup.go. Each check derives its
 premise from the tree first (the style of check_ops_hardening.py). Exits 1
 naming every offending property; exit 2 when a premise cannot be derived.
 """
@@ -140,36 +141,33 @@ def line_at(lines, text):
 
 
 def hosted_blurb_teaches_login_then_whoami(failures):
-    """LEAD-SETUP-BLURB: `setup.sh --hosted` taught
+    """LEAD-SETUP-BLURB: `setup --hosted` taught
     `export INSIDEOUT_TOKEN="$(insideout login ...)"`, an access token that
     nothing renews, though `insideout login` already saves a login that does
     renew. The blurb teaches login then whoami, keeps INSIDEOUT_TOKEN as the
     headless or CI alternative, and says how a stranger gets an account: an
     invitation code from the server's administrator."""
-    code, out, err = run("setup.sh", ["--hosted"], tools=["dirname", "sed", "cat"])
-    if code != 0:
-        fail(failures, f"scripts/setup.sh --hosted: exit {code}, stderr {err.strip()!r}; want 0")
-        return
+    out = hosted_case_text()
     lines = out.splitlines()
     login = line_at(lines, "insideout login you@example.com")
     whoami = line_at(lines, "insideout whoami")
     if login < 0 or whoami < 0 or login > whoami:
-        fail(failures, "scripts/setup.sh --hosted does not teach `insideout login you@example.com` "
+        fail(failures, "insideout setup --hosted does not teach `insideout login you@example.com` "
                        "and then `insideout whoami`")
     for no, line in enumerate(lines):
         if "INSIDEOUT_TOKEN" not in line:
             continue
         if "insideout login" in line:
-            fail(failures, "scripts/setup.sh --hosted teaches an exported INSIDEOUT_TOKEN from `insideout login` "
+            fail(failures, "insideout setup --hosted teaches an exported INSIDEOUT_TOKEN from `insideout login` "
                            "as the sign-in; the saved login renews, an exported token does not")
         elif whoami < 0 or no < whoami or not re.search(r"headless|\bCI\b", paragraph(lines, no), re.I):
-            fail(failures, "scripts/setup.sh --hosted mentions INSIDEOUT_TOKEN other than as the headless or CI "
+            fail(failures, "insideout setup --hosted mentions INSIDEOUT_TOKEN other than as the headless or CI "
                            "alternative after the sign-in lines")
     register = line_at(lines, "insideout register --invite <invitation-code> you@example.com")
     if register < 0 or register < whoami:
-        fail(failures, "scripts/setup.sh --hosted does not give the sign-up route "
+        fail(failures, "insideout setup --hosted does not give the sign-up route "
                        "`insideout register --invite <invitation-code> you@example.com` after the sign-in lines")
-    name_invitation(failures, "scripts/setup.sh --hosted", out)
+    name_invitation(failures, "insideout setup --hosted", out)
 
 
 def name_invitation(failures, where, text):
@@ -241,29 +239,12 @@ def hosted_case_text():
     return text[start:end]
 
 
-def setup_sh_taught_lines():
-    """The sign-in lines scripts/setup.sh --hosted teaches. Exit 2 when the
-    script no longer has them: the Go blurb is checked against the script,
-    not against a second copy of the words."""
-    match = re.search(r"cat <<EOF\n(.*?)\nEOF", read("scripts/setup.sh"), re.S)
-    if not match:
-        print("no hosted blurb in scripts/setup.sh", file=sys.stderr)
-        sys.exit(2)
-    blurb = match.group(1)
-    lines = ("insideout whoami", "insideout register --invite <invitation-code> you@example.com")
-    for line in lines:
-        if line not in blurb:
-            print(f"scripts/setup.sh blurb has no `{line}`", file=sys.stderr)
-            sys.exit(2)
-    return lines
-
-
 def cli_and_docs_name_the_two_codes(failures):
     """USER-10 and the hosted half of PM-08. The web copy has two names. The
     CLI help, the register usage line, `setup --hosted` and two docs still
     said "invite code" for both, and the hosted blurb did not teach whoami
     or the invitation. `insideout setup --local` in that blurb exits 2 with
-    no checkout (internal/setup/local/env.go); the script's blurb does not say it."""
+    no checkout (internal/setup/local/env.go)."""
     workspace, invitation = two_code_names()
     join = verb_summaries()["join"]
     if workspace not in join.lower():
@@ -277,10 +258,6 @@ def cli_and_docs_name_the_two_codes(failures):
         fail(failures, "server/cmd/insideout/cli_auth.go: the register usage line does not say "
                        f"{invitation!r} (the flag stays --invite): {usage.strip()}")
     hosted = hosted_case_text()
-    for line in setup_sh_taught_lines():
-        if line not in hosted:
-            fail(failures, "server/cmd/insideout/cli_setup.go hosted blurb does not teach "
-                           f"`{line}`, which scripts/setup.sh does")
     name_invitation(failures, "server/cmd/insideout/cli_setup.go hosted blurb", hosted)
     if "insideout setup --local" in hosted and "no repository checkout found" in read(
             "server/internal/setup/local/env.go"):
@@ -309,9 +286,8 @@ def quoted_commands_exist(failures):
     if len(verbs) < 20 or "register" not in verbs:
         print("cannot read the verb table in server/cmd/insideout/cli.go", file=sys.stderr)
         sys.exit(2)
-    _, blurb, _ = run("setup.sh", ["--hosted"], tools=["dirname", "sed", "cat"])
     bootstrap = re.search(r"cat <<EOF\n(.*?)\nEOF(?:\n|\Z)", read("scripts/bootstrap.sh"), re.S)
-    texts = {"scripts/setup.sh --hosted": blurb, "scripts/install.sh": read("scripts/install.sh"),
+    texts = {"insideout setup --hosted": hosted_case_text(), "scripts/install.sh": read("scripts/install.sh"),
              "scripts/bootstrap.sh": bootstrap.group(1) if bootstrap else ""}
     for where, text in texts.items():
         for verb in re.findall(r'^\s*(?:echo\s+")?\s*insideout (?!-)([a-z][a-z-]*)', text, re.M):

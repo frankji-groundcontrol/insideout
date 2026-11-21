@@ -12,8 +12,8 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
-// The setup subcommand's flag surface mirrors scripts/setup.sh's
-// agent contract (docs/plans/2026-10-07-setup-tui.md, join phase).
+// The setup subcommand's flag surface is the agent contract scripts/setup.sh
+// forwards (docs/plans/2026-10-07-setup-tui.md, join phase).
 // HOME and XDG_CONFIG_HOME are pinned per test so the user's real
 // config never influences a result, on macOS or Linux. Credential
 // precedence itself is tested where it lives, in internal/clientconfig.
