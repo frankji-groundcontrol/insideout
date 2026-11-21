@@ -51,8 +51,10 @@ client/lib/
                       workspace, profile;
                       project (project page and the roadmap: page, its
                       controller (nodes, progress, presence, cursors, stream
-                      retries), header, breadcrumb, bands, the canvas graph
-                      (layout, painters, node box), progress view, node
+                      retries), header, breadcrumb, bands, the canvas (one
+                      level of steps ordered by lifted dependencies in
+                      roadmap_step_flow.dart, step box, flow painter,
+                      pan/zoom view), progress view, node
                       menu, dependency picker, edit, delegate and detail);
                       prd (desk, coach, versions stack + commit details,
                       revisions, export)

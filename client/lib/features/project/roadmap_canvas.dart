@@ -5,9 +5,11 @@ import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
-import 'roadmap_graph_layout.dart';
-import 'roadmap_graph_node.dart';
+import 'roadmap_canvas_view.dart';
 import 'roadmap_painters.dart';
+import 'roadmap_step_box.dart';
+import 'roadmap_step_flow.dart';
+import 'roadmap_tree.dart';
 
 export 'roadmap_painters.dart';
 
@@ -25,15 +27,16 @@ class CursorDot {
   final double y;
 }
 
-/// The Canvas: the opened root(s) as a top-down hierarchy two levels deep
-/// (RoadmapGraphLayout), connector lines between parent and children, and
-/// dependency arrows between drawn nodes. Several roots, as in a project with
-/// many goals or the Mine view, stand side by side. It scrolls both ways.
+/// The Canvas: one level of steps, in order. Steps run left to right in
+/// columns by their dependencies (RoadmapStepFlow), arrows join a step to
+/// the ones waiting on it, and opening a step shows its own steps. The view
+/// pans by drag and zooms by wheel, pinch or the zoom block.
 class RoadmapCanvas extends StatefulWidget {
   const RoadmapCanvas({
     super.key,
     required this.projectId,
-    required this.nodes,
+    required this.steps,
+    required this.all,
     this.titles = const {},
     this.inheritedOwner,
     this.menu,
@@ -43,16 +46,19 @@ class RoadmapCanvas extends StatefulWidget {
 
   final String projectId;
 
-  /// The nodes to lay out; their roots are the trees' tops.
-  final List<RoadmapNode> nodes;
+  /// The steps to draw (roadmapSteps, or Mine's topmost owned nodes).
+  final List<RoadmapNode> steps;
 
-  /// Node titles by id, beyond [nodes] too, to name what a node waits on.
+  /// Every loaded node: the dependencies to lift and the items to count.
+  final List<RoadmapNode> all;
+
+  /// Node titles by id, beyond [all] too, to name what a step waits on.
   final Map<String, String> titles;
   final ({String name, String via})? Function(RoadmapNode node)? inheritedOwner;
   final Widget Function(RoadmapNode node)? menu;
 
-  /// onCursor receives pointer moves in graph space, which is the same for
-  /// everyone looking at the same tree (nullable for tests).
+  /// onCursor receives pointer moves in flow space: the view's pan and zoom
+  /// do not change it (nullable for tests).
   final void Function(double x, double y)? onCursor;
 
   /// Other sessions' live cursors, rendered as labeled pointers.
@@ -63,118 +69,171 @@ class RoadmapCanvas extends StatefulWidget {
 }
 
 class _RoadmapCanvasState extends State<RoadmapCanvas> {
-  final _down = ScrollController();
-  final _across = ScrollController();
+  final _view = TransformationController();
+  final _flowKey = GlobalKey();
+  final _keys = <String, GlobalKey>{};
+  var _viewport = Size.zero;
+  var _placed = false;
 
   @override
   void dispose() {
-    _down.dispose();
-    _across.dispose();
+    _view.dispose();
     super.dispose();
   }
 
+  Size? get _flowSize =>
+      (_flowKey.currentContext?.findRenderObject() as RenderBox?)?.size;
+
+  /// Where step [id] sits in flow space, once laid out.
+  Rect? _rectOf(String id) {
+    final box = _keys[id]?.currentContext?.findRenderObject() as RenderBox?;
+    final flow = _flowKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || flow == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero, ancestor: flow) & box.size;
+  }
+
+  void _place() {
+    final size = _flowSize;
+    if (!mounted || _placed || size == null) return;
+    _placed = true;
+    _view.value = roadmapStartMatrix(size, _viewport);
+  }
+
+  void _fit() {
+    final size = _flowSize;
+    if (size != null) _view.value = roadmapFitMatrix(size, _viewport);
+  }
+
+  void _zoom(double factor) => _view.value = roadmapZoomAbout(
+    _view.value,
+    factor,
+    _viewport.center(Offset.zero),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final graph = _graph(context);
+    final flow = _flow(context);
+    if (!_placed) WidgetsBinding.instance.addPostFrameCallback((_) => _place());
     return LayoutBuilder(
-      builder: (context, box) => Scrollbar(
-        controller: _down,
-        child: SingleChildScrollView(
-          controller: _down,
-          padding: EdgeInsets.only(
-            bottom: ProductDock.height + MediaQuery.paddingOf(context).bottom,
-          ),
-          child: SingleChildScrollView(
-            controller: _across,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.all(Cobalt.space4),
-            // A graph narrower than the page sits in its middle.
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: box.maxWidth - 2 * Cobalt.space4,
+      builder: (context, box) {
+        // The dock floats over the foot of the view.
+        final dock = ProductDock.height + MediaQuery.paddingOf(context).bottom;
+        _viewport = Size(box.maxWidth, box.maxHeight - dock);
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                transformationController: _view,
+                constrained: false,
+                boundaryMargin: const EdgeInsets.all(double.infinity),
+                minScale: roadmapMinScale,
+                maxScale: roadmapMaxScale,
+                child: flow,
               ),
-              child: Align(alignment: Alignment.topCenter, child: graph),
             ),
-          ),
-        ),
-      ),
+            Positioned(
+              top: Cobalt.space3,
+              right: Cobalt.space3,
+              child: RoadmapZoomControls(
+                onZoomIn: () => _zoom(1.25),
+                onZoomOut: () => _zoom(0.8),
+                onFit: _fit,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _graph(BuildContext context) {
+  Widget _flow(BuildContext context) {
     final t = context.watch<Appearance>().t;
+    final theme = Theme.of(context);
     final palette = Cobalt.of(context);
-    final nodes = widget.nodes;
-    final layout = RoadmapGraphLayout.of(nodes);
-    final byId = {for (final n in nodes) n.id: n};
-    final parents = {for (final n in nodes) n.parentId};
-    final drawn = [for (final id in layout.boxes.keys) byId[id]!];
-    final edges = [
-      for (final n in drawn)
-        for (final d in n.dependsOn)
-          if (layout.boxes.containsKey(d)) (from: d, to: n.id),
-    ];
+    final flow = RoadmapStepFlow.of(widget.steps, widget.all);
     String title(String id) => widget.titles[id] ?? t('roadmap.someItem');
-    final graph = SizedBox.fromSize(
-      size: layout.size,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Positioned.fill(
+    final steps = Row(
+      spacing: 72,
+      children: [
+        for (final column in flow.columns)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Cobalt.space6,
+            children: [for (final s in column) _step(s, flow, title)],
+          ),
+      ],
+    );
+    final stack = Stack(
+      key: _flowKey,
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: Semantics(
+            label: [
+              for (final e in flow.edges)
+                t('roadmap.dependencyEdge', {
+                  'to': title(e.to),
+                  'from': title(e.from),
+                }),
+              for (final group in flow.loops)
+                t('roadmap.dependencyLoop', {
+                  'steps': _list(t, [for (final id in group) title(id)]),
+                }),
+            ].join('. '),
             child: CustomPaint(
-              painter: RoadmapTreePainter(layout, palette.strokeStrong),
-            ),
-          ),
-          for (final n in drawn)
-            Positioned(
-              left: layout.boxes[n.id]!.left,
-              top: layout.boxes[n.id]!.top,
-              width: RoadmapGraphLayout.boxWidth,
-              child: RoadmapGraphNode(
-                key: Key('roadmap-graph-node-${n.id}'),
-                projectId: widget.projectId,
-                node: n,
-                branch: parents.contains(n.id),
-                hidden: layout.hidden[n.id] ?? 0,
-                waitsOn: [
-                  for (final d in n.dependsOn)
-                    if (!layout.boxes.containsKey(d)) title(d),
-                ],
-                inheritedOwner: widget.inheritedOwner?.call(n),
-                menu: widget.menu?.call(n),
-              ),
-            ),
-          Positioned.fill(
-            child: Semantics(
-              label: [
-                for (final e in edges)
-                  t('roadmap.dependencyEdge', {
-                    'to': title(e.to),
-                    'from': title(e.from),
-                  }),
-              ].join('. '),
-              child: IgnorePointer(
-                child: CustomPaint(
-                  painter: RoadmapDependencyPainter(
-                    layout,
-                    edges,
-                    palette.brand,
-                  ),
+              painter: RoadmapFlowPainter(
+                edges: flow.edges,
+                loops: flow.loops,
+                loopLabel: t('roadmap.loop'),
+                rectOf: _rectOf,
+                color: palette.brand,
+                labelStyle: theme.textTheme.labelSmall!.copyWith(
+                  color: palette.fgBrand,
                 ),
+                labelFill: palette.surfaceRaised,
               ),
             ),
           ),
-          for (final c in widget.cursors) _cursor(context, c),
-        ],
-      ),
+        ),
+        Padding(padding: const EdgeInsets.all(Cobalt.space6), child: steps),
+        for (final c in widget.cursors) _cursor(context, c),
+      ],
     );
     final onCursor = widget.onCursor;
-    if (onCursor == null) return graph;
+    if (onCursor == null) return stack;
     return MouseRegion(
       onHover: (e) => onCursor(e.localPosition.dx, e.localPosition.dy),
-      child: graph,
+      child: stack,
     );
   }
+
+  /// "A, B and C" in the active language.
+  static String _list(
+    String Function(String, [Map<String, Object?>?]) t,
+    List<String> items,
+  ) => items.length < 2
+      ? items.join()
+      : t('roadmap.listAnd', {
+          'rest': items.sublist(0, items.length - 1).join(t('roadmap.listSep')),
+          'last': items.last,
+        });
+
+  Widget _step(
+    RoadmapNode s,
+    RoadmapStepFlow flow,
+    String Function(String) title,
+  ) => KeyedSubtree(
+    key: _keys.putIfAbsent(s.id, GlobalKey.new),
+    child: RoadmapStepBox(
+      key: Key('roadmap-step-${s.id}'),
+      projectId: widget.projectId,
+      node: s,
+      inside: roadmapDescendantCount(widget.all, s),
+      waitsOn: [for (final d in flow.waitsOn[s.id] ?? const []) title(d)],
+      inheritedOwner: widget.inheritedOwner?.call(s),
+      menu: widget.menu?.call(s),
+    ),
+  );
 
   Widget _cursor(BuildContext context, CursorDot c) {
     final theme = Theme.of(context);

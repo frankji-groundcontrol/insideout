@@ -3,62 +3,34 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../theme/cobalt.dart';
-import 'roadmap_graph_layout.dart';
 
-/// The tree's connectors, behind the boxes: from a parent's bottom edge down
-/// to a rail halfway to the next level, along the rail over its children, and
-/// down into each child's top edge. Square corners, 2px, in the strong stroke.
-class RoadmapTreePainter extends CustomPainter {
-  RoadmapTreePainter(this.layout, this.color);
+/// The flow arrows behind the steps: a 2px curve in the brand hue from the
+/// right edge of a step waited on to the left edge of the waiting step, with
+/// an arrowhead at the waiting end. An arrow that carries several links says
+/// how many in a small squared label near its head. Steps that wait on each
+/// other (a loop group, stacked in one column) share one two-headed bracket
+/// on their right with a [loopLabel] mark. The boxes' places are read at
+/// paint time through [rectOf], after the steps have laid out.
+class RoadmapFlowPainter extends CustomPainter {
+  RoadmapFlowPainter({
+    required this.edges,
+    required this.loops,
+    required this.loopLabel,
+    required this.rectOf,
+    required this.color,
+    required this.labelStyle,
+    required this.labelFill,
+  });
 
-  final RoadmapGraphLayout layout;
+  final List<({String from, String to, int count})> edges;
+  final List<List<String>> loops;
+  final String loopLabel;
+  final Rect? Function(String id) rectOf;
   final Color color;
+  final TextStyle labelStyle;
+  final Color labelFill;
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = Cobalt.borderContainer;
-    for (final link in layout.links) {
-      final parent = layout.boxes[link.parent]!;
-      final rail = parent.bottom + RoadmapGraphLayout.levelGap / 2;
-      final kids = [for (final id in link.children) layout.boxes[id]!];
-      canvas.drawLine(
-        parent.bottomCenter,
-        Offset(parent.center.dx, rail),
-        paint,
-      );
-      canvas.drawLine(
-        Offset(kids.first.center.dx, rail),
-        Offset(kids.last.center.dx, rail),
-        paint,
-      );
-      for (final kid in kids) {
-        canvas.drawLine(Offset(kid.center.dx, rail), kid.topCenter, paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(RoadmapTreePainter old) =>
-      old.layout != layout || old.color != color;
-}
-
-/// The dependency arrows, over the boxes: a dashed curve in the brand hue from
-/// the node waited on to the waiting node, arrowhead at the waiting end. It
-/// leaves and enters a quarter box off centre, clear of the tree connectors,
-/// and a pair on one level dips through the gap below it.
-class RoadmapDependencyPainter extends CustomPainter {
-  RoadmapDependencyPainter(this.layout, this.edges, this.color);
-
-  final RoadmapGraphLayout layout;
-  final List<({String from, String to})> edges;
-  final Color color;
-
-  static const _dash = 6.0;
-  static const _gap = 4.0;
-  static const _head = 10.0;
+  static const _headLength = 10.0;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -67,57 +39,83 @@ class RoadmapDependencyPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = Cobalt.borderContainer;
     for (final e in edges) {
-      final path = _route(layout.boxes[e.from]!, layout.boxes[e.to]!);
-      for (final metric in path.computeMetrics()) {
-        for (var d = 0.0; d < metric.length; d += _dash + _gap) {
-          canvas.drawPath(metric.extractPath(d, d + _dash), paint);
-        }
-        final tip = metric.getTangentForOffset(metric.length)!;
-        final back = -tip.vector * _head;
-        for (final turn in [0.45, -0.45]) {
-          final wing = Offset(
-            back.dx * math.cos(turn) - back.dy * math.sin(turn),
-            back.dx * math.sin(turn) + back.dy * math.cos(turn),
-          );
-          canvas.drawLine(tip.position, tip.position + wing, paint);
-        }
+      final from = rectOf(e.from);
+      final to = rectOf(e.to);
+      if (from == null || to == null) continue;
+      final start = from.centerRight;
+      final end = to.centerLeft - const Offset(Cobalt.borderContainer, 0);
+      final pull = math.max(40.0, (end.dx - start.dx).abs() / 2);
+      final path = Path()
+        ..moveTo(start.dx, start.dy)
+        ..cubicTo(
+          start.dx + pull,
+          start.dy,
+          end.dx - pull,
+          end.dy,
+          end.dx,
+          end.dy,
+        );
+      canvas.drawPath(path, paint);
+      final metric = path.computeMetrics().first;
+      final tip = metric.getTangentForOffset(metric.length)!;
+      _head(canvas, tip.position, -tip.vector, paint);
+      if (e.count > 1) {
+        final at = metric.getTangentForOffset(math.max(0, metric.length - 28))!;
+        _label(canvas, '${e.count}', at.position, paint);
       }
     }
-  }
-
-  Path _route(Rect from, Rect to) {
-    final dx = RoadmapGraphLayout.boxWidth / 4;
-    final bend = RoadmapGraphLayout.levelGap * 0.8;
-    final Offset start;
-    final Offset end;
-    final double out;
-    final double into;
-    if (to.top > from.bottom) {
-      start = from.bottomCenter + Offset(dx, 0);
-      end = to.topCenter + Offset(dx, 0);
-      (out, into) = (bend, -bend);
-    } else if (to.bottom < from.top) {
-      start = from.topCenter + Offset(dx, 0);
-      end = to.bottomCenter + Offset(dx, 0);
-      (out, into) = (-bend, bend);
-    } else {
-      start = from.bottomCenter + Offset(dx, 0);
-      end = to.bottomCenter + Offset(dx, 0);
-      (out, into) = (bend, bend);
+    for (final group in loops) {
+      final rects = [for (final id in group) rectOf(id)].nonNulls.toList();
+      if (rects.length > 1) _loop(canvas, rects, paint);
     }
-    return Path()
-      ..moveTo(start.dx, start.dy)
-      ..cubicTo(
-        start.dx,
-        start.dy + out,
-        end.dx,
-        end.dy + into,
-        end.dx,
-        end.dy,
-      );
   }
 
+  /// An arrowhead at [tip], its wings swept back along [back].
+  void _head(Canvas canvas, Offset tip, Offset back, Paint paint) {
+    final b = back * _headLength;
+    for (final turn in [0.45, -0.45]) {
+      final wing = Offset(
+        b.dx * math.cos(turn) - b.dy * math.sin(turn),
+        b.dx * math.sin(turn) + b.dy * math.cos(turn),
+      );
+      canvas.drawLine(tip, tip + wing, paint);
+    }
+  }
+
+  /// A loop group's bracket: a spine right of the stacked steps, a tick into
+  /// each with a head at both ends, and the loop mark on the spine.
+  void _loop(Canvas canvas, List<Rect> rects, Paint paint) {
+    final x = rects.map((r) => r.right).reduce(math.max) + Cobalt.space4;
+    final top = rects.first.center.dy;
+    final bottom = rects.last.center.dy;
+    canvas.drawLine(Offset(x, top), Offset(x, bottom), paint);
+    for (final (i, r) in rects.indexed) {
+      final tip = r.centerRight + const Offset(Cobalt.borderContainer, 0);
+      canvas.drawLine(Offset(x, r.center.dy), tip, paint);
+      if (i == 0 || i == rects.length - 1) {
+        _head(canvas, tip, const Offset(1, 0), paint);
+      }
+    }
+    _label(canvas, loopLabel, Offset(x, (top + bottom) / 2), paint);
+  }
+
+  void _label(Canvas canvas, String text, Offset centre, Paint stroke) {
+    final tp = TextPainter(
+      text: TextSpan(text: text, style: labelStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final box = Rect.fromCenter(
+      center: centre,
+      width: tp.width + Cobalt.space2,
+      height: tp.height + Cobalt.space1,
+    );
+    canvas
+      ..drawRect(box, Paint()..color = labelFill)
+      ..drawRect(box, stroke);
+    tp.paint(canvas, box.topLeft + const Offset(Cobalt.space1, 2));
+  }
+
+  // The boxes move with layout, not with this painter's fields.
   @override
-  bool shouldRepaint(RoadmapDependencyPainter old) =>
-      old.layout != layout || old.edges != edges || old.color != color;
+  bool shouldRepaint(RoadmapFlowPainter old) => true;
 }

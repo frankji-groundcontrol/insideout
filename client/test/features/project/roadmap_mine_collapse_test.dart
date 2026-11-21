@@ -5,9 +5,9 @@ import 'package:insideout/api/models.dart';
 import '_roadmap_tree_helpers.dart';
 
 // rv5-TREEX-03: the roadmap page's Mine view shows the caller's topmost owned
-// nodes and their subtrees, nothing else, on the same graph as the Canvas.
-// rv5-TREEX-10, FE-11: a card's bar and count come from the server roll-up,
-// validated included. The Canvas folds nothing since the 2026-11-22 graph.
+// nodes as the Canvas's steps, nothing else; what is inside them opens one
+// click down. rv5-TREEX-10, FE-11: a card's bar and count come from the
+// server roll-up, validated included.
 
 Future<void> _view(WidgetTester tester, String label) async {
   await tester.tap(find.text(label));
@@ -15,7 +15,7 @@ Future<void> _view(WidgetTester tester, String label) async {
 }
 
 void main() {
-  testWidgets('Mine shows only the caller\'s nodes and their subtrees', (
+  testWidgets('Mine\'s steps are the caller\'s topmost owned nodes', (
     tester,
   ) async {
     final api = TreeApi();
@@ -27,8 +27,9 @@ void main() {
     await tester.pumpAndSettle();
     await _view(tester, 'Mine');
 
-    expect(find.text('Payments'), findsWidgets);
-    expect(find.text('Refunds'), findsWidgets);
+    expect(find.byKey(const Key('roadmap-step-a')), findsOneWidget);
+    expect(find.text('1 item inside'), findsOneWidget);
+    expect(find.text('Refunds'), findsNothing);
     expect(find.text('Ship'), findsNothing);
     expect(find.text('Search'), findsNothing);
   });
@@ -41,28 +42,6 @@ void main() {
 
     expect(find.text('Payments'), findsNothing);
     expect(find.text('Nothing in this tree is yours yet.'), findsOneWidget);
-  });
-
-  testWidgets('Mine draws the caller\'s topmost node as a graph root', (
-    tester,
-  ) async {
-    final api = TreeApi();
-    final router = await pumpTreeRouter(
-      tester,
-      treeSession(api, userId: 'u-dana'),
-    );
-    router.go('/projects/p1/roadmap');
-    await tester.pumpAndSettle();
-    await _view(tester, 'Mine');
-
-    final payments = tester.getRect(
-      find.byKey(const Key('roadmap-graph-node-a')),
-    );
-    final refunds = tester.getRect(
-      find.byKey(const Key('roadmap-graph-node-a1')),
-    );
-    expect(refunds.top, greaterThan(payments.bottom));
-    expect(find.byKey(const Key('roadmap-collapse-a')), findsNothing);
   });
 
   testWidgets('a parent with one validated and one done leaf shows 2 of 2', (

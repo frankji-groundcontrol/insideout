@@ -69,22 +69,17 @@ void main() {
 
   testWidgets('an unowned child names the owner it inherits', (tester) async {
     final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
-    router.go('/projects/p1/roadmap');
+    router.go('/projects/p1/roadmap?view=canvas');
     await tester.pumpAndSettle();
-    await _view(tester, 'Canvas');
-
-    expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
     expect(find.text('Owner: dana'), findsOneWidget);
 
-    // The leaf's detail says the same.
-    await tester.tap(
-      find.descendant(
-        of: find.byKey(const Key('roadmap-graph-node-a1')),
-        matching: find.byType(PopupMenuButton<String>),
-      ),
-    );
+    // One step down, Payments' own step names it.
+    router.go('/projects/p1/roadmap/a?view=canvas');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Details'));
+    expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
+
+    // The leaf's detail says the same.
+    await tester.tap(find.text('Refunds'));
     await tester.pumpAndSettle();
     expect(find.text('dana (via Payments)'), findsOneWidget);
   });

@@ -41,8 +41,10 @@ final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/workspace/:id/settings': (c, s) =>
       SettingsPage(workspaceId: s.pathParameters['id']!),
   '/projects/:id': (c, s) => ProjectPage(id: s.pathParameters['id']!),
-  '/projects/:id/roadmap': (c, s) =>
-      RoadmapPage(projectId: s.pathParameters['id']!),
+  '/projects/:id/roadmap': (c, s) => RoadmapPage(
+    projectId: s.pathParameters['id']!,
+    view: s.uri.queryParameters['view'],
+  ),
   // go_router keys a page by route pattern; key by node id so moving
   // between opened nodes builds a fresh page instead of keeping the old tree.
   '/projects/:id/roadmap/:nodeId': (c, s) => RoadmapPage(

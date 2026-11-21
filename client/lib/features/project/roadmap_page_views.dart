@@ -67,11 +67,12 @@ extension _RoadmapViews on _RoadmapPageState {
           );
         }
         final all = snap.data!;
-        // Mine lays out only the caller's branches, each topmost owned node
-        // a tree; the nodes still read the whole list for parent and count.
-        // Under an ancestor the caller owns, the whole opened tree is theirs.
+        // Mine's steps are the caller's topmost owned nodes; under an
+        // ancestor the caller owns, the whole opened tree is theirs. The
+        // steps still read the whole list for links and counts.
         final uid = context.read<Session>().user?.id ?? '';
-        final shown = _view == _RoadmapView.mine ? _c.mine(all, uid) : all;
+        final mine = _view == _RoadmapView.mine;
+        final shown = mine ? _c.mine(all, uid) : all;
         if (shown.isEmpty) {
           return BlockEmpty(
             icon: Icons.person_outline,
@@ -80,7 +81,8 @@ extension _RoadmapViews on _RoadmapPageState {
         }
         return RoadmapCanvas(
           projectId: widget.projectId,
-          nodes: shown,
+          steps: mine ? roadmapRoots(shown) : roadmapSteps(all),
+          all: all,
           titles: {..._c.outsideTitles, for (final n in all) n.id: n.title},
           inheritedOwner: (n) => _inherited(n, all),
           menu: (n) => RoadmapNodeMenu(
@@ -93,10 +95,10 @@ extension _RoadmapViews on _RoadmapPageState {
             inheritedOwner: _inherited(n, all),
             openedRoot: n.id == widget.rootId,
           ),
-          // Shared cursors live in the whole tree's graph; Mine lays out
-          // other trees, so it neither sends nor shows them.
-          onCursor: shown == all ? _c.sendCursor : null,
-          cursors: shown == all ? _c.cursors.values.toList() : const [],
+          // Shared cursors live in the steps' flow; Mine lays out other
+          // steps, so it neither sends nor shows them.
+          onCursor: mine ? null : _c.sendCursor,
+          cursors: mine ? const [] : _c.cursors.values.toList(),
         );
       },
     );

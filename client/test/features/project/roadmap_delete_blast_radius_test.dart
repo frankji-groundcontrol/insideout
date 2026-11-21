@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/chrome/loop_focus.dart';
-import 'package:insideout/features/project/roadmap_graph_node.dart';
+import 'package:insideout/features/project/roadmap_step_box.dart';
 import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
@@ -110,7 +110,7 @@ Future<void> _askToDelete(WidgetTester tester, String title) async {
       .ancestor(
         of: find.text(title),
         matching: find.byWidgetPredicate(
-          (w) => w is RoadmapNodeCard || w is RoadmapGraphNode,
+          (w) => w is RoadmapNodeCard || w is RoadmapStepBox,
         ),
       )
       .first;
@@ -145,12 +145,17 @@ void main() {
       await _cancel(tester);
 
       // A middle node counts only its own branch: itself and Grandchild.
-      await _askToDelete(tester, 'Child');
-      expect(
-        find.text('This deletes 2 nodes: this one and everything beneath it.'),
-        findsOneWidget,
-      );
-      await _cancel(tester);
+      // The Canvas shows only the top steps, so Child is a Bands card.
+      if (view == 'Bands') {
+        await _askToDelete(tester, 'Child');
+        expect(
+          find.text(
+            'This deletes 2 nodes: this one and everything beneath it.',
+          ),
+          findsOneWidget,
+        );
+        await _cancel(tester);
+      }
     });
 
     testWidgets('$view: a node with nothing beneath keeps the leaf wording', (
