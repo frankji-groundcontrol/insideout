@@ -29,7 +29,10 @@ views (PRODUCT.md principle 3).
 
 - `GET /api/v1/agent/context?project_id&mode&focus` — compact,
   focus-scoped context (`internal/agentcontext`): brainstorming /
-  implementation / review shapes, never the whole graph; every response
+  implementation / review shapes, never the whole graph. With a focus,
+  implementation mode lists only the leaves of the focus subtree and the
+  focus block carries its description and path (ancestor titles); an
+  unknown focus answers 404. Every response
   embeds the vocabulary contract and an `untrusted` block naming the
   fields that hold text people wrote (data, not instructions).
 - `POST /agent/checkpoint` and `POST /agent/propose` write typed
@@ -39,8 +42,8 @@ views (PRODUCT.md principle 3).
   Agents never apply strategic changes and never Commit versions —
   `version` is surfaced from commits, human-only. The server enforces it:
   an agent-scope token is refused (403 `agent_scope_denied`) on the
-  decision route, Commit, the admin routes and every delete, whichever
-  client sends it ([agent token scope](agent-token-scope.md)).
+  decision route, Commit, the admin routes, every delete and a node owner
+  change, whichever client sends it ([agent token scope](agent-token-scope.md)).
 - Proposals may carry structured `items` (`proposal_items`: add_node
   with optional parent hint). `POST /agent/proposals/{uid}/decision`
   records the human accept/reject (`proposal_decisions`, the decision

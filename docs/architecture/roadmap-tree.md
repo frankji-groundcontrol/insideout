@@ -36,90 +36,103 @@ The store selects every column except `meta`
 
 ### The owner column
 
-`owner_user_id` is a label. It is set through `ownerId` on
-`PATCH /api/v1/roadmap/{nid}` (`server/internal/api/roadmap.go:180-182`); the
-store refuses an owner who is not a member of the node's workspace
-(`server/internal/store/roadmap.go:268-272`). Setting it grants the owner no
-right, records no history (no "delegated by" or "when"), and leaves the
-node's children ownerless. Only the web sets it, through the owner picker in
-the Edit form (`client/lib/features/project/roadmap_node_menu.dart:153`); the
-Go client's `RoadmapUpdate` carries no owner
-(`server/internal/apiclient/roadmap.go:82`), so neither the CLI nor MCP can
-delegate.
+`owner_user_id` is the one human responsible for a node, and owning a node is
+write authority over it and everything below it (next section). It is set
+through `ownerId` on `PATCH /api/v1/roadmap/{nid}`
+(`server/internal/api/roadmap.go`); the store refuses an owner who is not a
+member of the node's workspace, and an agent token is refused on any `ownerId`
+(owner decision 4). Moving an ownerless leaf to `in_progress` makes the acting
+human its owner, and a build seeds its first in-progress leaf owned by the
+builder, so work in progress has one owner (`claimStartedLeaf`,
+`server/internal/store/roadmap_completion.go`). A member who leaves or is
+removed from a workspace stops owning its nodes in the same transaction
+(`RemoveMember`, `server/internal/store/memberships.go`). No history is
+recorded yet (no "delegated by" or "when"), and the node's children stay
+ownerless. Only the web sets an owner, through the owner picker in the Edit
+form (`client/lib/features/project/roadmap_node_menu.dart`); the Go client's
+`RoadmapUpdate` carries no owner (`server/internal/apiclient/roadmap.go`), so
+neither the CLI nor MCP can delegate.
 
 ### One write rule
 
-`requirePlanWriter` (`server/internal/store/memberships.go:232-259`) is the
-single write rule for the tree: the project owner or a workspace admin may
-write; a plain member may read and leave notes. Every tree write calls it:
+The tree has one write rule, in SQL:
+`insideout._can_write_node(node, user)`
+(`server/db/migrations/20261121100000_roadmap_node_writer.sql`) is true for the
+project owner, a workspace admin of the node's workspace
+(`insideout._is_plan_writer`), or a current workspace member who owns the node
+or any ancestor of it. The store calls it through `requireNodeWriter` and the
+row-level security policies call it directly, so the two cannot drift. The
+store's predicates live in `server/internal/store/authz.go`:
 
-| Write | Call site |
+| Write | Rule |
 | --- | --- |
-| Create a node | `server/internal/store/roadmap.go:136` |
-| Edit a node, including status and owner | `server/internal/store/roadmap.go:261` |
-| Delete a node and its subtree | `server/internal/store/roadmap.go:324` |
-| Move a node | `server/internal/store/roadmap_move.go:25` |
-| Replace the whole tree (Build) | `server/internal/store/roadmap_plan.go:59` |
-| Add confirmed children (Break down) | `server/internal/store/roadmap_plan.go:155` |
-| Add a validation observation | `server/internal/store/roadmap_validation.go:44` |
-| Validate a node | `server/internal/store/roadmap_validation.go:74` |
-| File an agent proposal | `server/internal/store/project_updates.go:57` |
-| Apply proposal items | `server/internal/store/proposal_items.go:131` |
+| Edit a node (title, description, status, deadline, acceptance, completion reason) | `requireNodeWriter` on the node |
+| Change a node's owner | `requireNodeManager`: a plan writer, or a writer of the node's parent |
+| Create a node | a root: `requirePlanWriter`; a child: `requireNodeWriter` on the parent |
+| Move a node | `requireNodeManager` on the node, and `requireNodeWriter` on the new parent (a new root: `requirePlanWriter`) |
+| Delete a node and its subtree | `requireNodeManager` |
+| Break a node down (expand and its confirm) | `requireNodeWriter` on the node; the draft route refuses before the planner runs |
+| Add a validation observation | `requireNodeWriter` on the node |
+| Validate a node | `requirePlanWriter` |
+| Replace the whole tree (Build) | `requirePlanWriter` |
+| File an agent proposal, apply proposal items | `requirePlanWriter` (project-level writes) |
 
-The rule never reads `owner_user_id`, so the person a node is assigned to is
-refused on every write inside it unless they already own the project or are
-an admin (`TREEB-02`).
+`requireNodeManager` is what keeps a delegate inside the subtree they were
+handed: they may edit their root R and everything under it, add and break
+down anywhere in it, and move, delete or re-delegate nodes strictly below R,
+but never move, delete or reassign R itself, validate, or replace the tree.
+Plan writers keep every right. Pinned on PostgreSQL by
+`server/internal/store/roadmap_delegate_test.go`.
 
 ### Row-level security
 
-The policies on `roadmap_nodes` are looser than the store:
-
-- `roadmap_nodes_select`, `roadmap_nodes_update` and `roadmap_nodes_delete`
-  admit any member of the project's workspace
-  (`server/db/migrations/20260722120000_roadmap_nodes.sql:38-72`).
-- `roadmap_nodes_insert` admits any workspace member whose `created_by` is
-  the caller
-  (`server/db/migrations/20260726100000_roadmap_attribution.sql:20-28`).
-
-A plain member therefore passes the database check on update and delete;
-only the Go rule stops the write (`TREEB-07`, reproduced on PostgreSQL). The
-evidence insert policy does match the store: project owner or workspace admin
-(`server/db/migrations/20260821130000_roadmap_evidence.sql:30-39`).
+`roadmap_nodes_update` and `roadmap_nodes_delete` call
+`_can_write_node(id, current_user_id())`; `roadmap_nodes_insert` pins
+`created_by` to the caller and calls it on the parent, with
+`_is_plan_writer` for a root; `evidence_owner_insert` on `roadmap_evidence`
+calls it on the node. `roadmap_nodes_select` stays workspace-wide, so every
+member reads the whole project (owner decision 2). The functions are
+`SECURITY DEFINER`, owned by `insideout_owner`, so a policy on
+`roadmap_nodes` never queries the table it guards (BUG-007). The finer points
+(R itself, strictly-below moves) are the store's; the database holds the
+subtree boundary.
 
 ### Routes
 
 | Route | Effect | Code |
 | --- | --- | --- |
-| `GET /api/v1/projects/{pid}/roadmap` | Whole tree as a flat list, any member | `server/internal/api/roadmap.go:17`, `server/internal/store/roadmap.go:178` |
-| `POST /api/v1/projects/{pid}/roadmap` | Create a node | `server/internal/api/roadmap.go:18` |
-| `PATCH /api/v1/roadmap/{nid}` | Edit fields, status and owner | `server/internal/api/roadmap.go:19` |
-| `POST /api/v1/roadmap/{nid}/move` | Re-parent or reorder | `server/internal/api/roadmap.go:20` |
-| `DELETE /api/v1/roadmap/{nid}` | Delete with subtree | `server/internal/api/roadmap.go:21` |
-| `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping | `server/internal/api/roadmap.go:23-24` |
-| `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap.go:25-26` |
-| `POST /api/v1/roadmap/{nid}/validate` | Human validation | `server/internal/api/roadmap.go:27` |
-| `POST /api/v1/prds/{pid}/build` and `/confirm` | Draft (read-only, approved PRD only) and replace the tree; confirm creates the project and refuses to erase evidence or done or validated nodes without `force` | `server/internal/api/roadmap_ai.go:68-69` |
-| `POST /api/v1/roadmap/{nid}/expand` and `/confirm` | Break a node down | `server/internal/api/roadmap_ai.go:70-71` |
-| `GET /api/v1/agent/context` | Agent briefing | `server/internal/api/agent_routes.go:19` |
+| `GET /api/v1/projects/{pid}/roadmap` | Whole tree as a flat list, any member; `?root={nid}` restricts it to that node and its descendants, root first (404 for a node outside the project) | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_read.go` |
+| `GET /api/v1/roadmap/{nid}` | One node: `{node, ancestors: [{id, title}] root first, projectId, projectName}`; 404 when not visible | `server/internal/api/roadmap_read.go` |
+| `POST /api/v1/projects/{pid}/roadmap` | Create a node | `server/internal/api/roadmap.go` |
+| `PATCH /api/v1/roadmap/{nid}` | Edit fields, status and owner | `server/internal/api/roadmap.go` |
+| `POST /api/v1/roadmap/{nid}/move` | Re-parent or reorder | `server/internal/api/roadmap_move.go` |
+| `DELETE /api/v1/roadmap/{nid}` | Delete with subtree | `server/internal/api/roadmap.go` |
+| `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping | `server/internal/api/roadmap_progress.go` |
+| `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap_validation.go` |
+| `POST /api/v1/roadmap/{nid}/validate` | Human validation | `server/internal/api/roadmap_validation.go` |
+| `POST /api/v1/prds/{pid}/build` and `/confirm` | Draft (read-only, approved PRD only) and replace the tree; confirm creates the project and refuses to erase evidence or done or validated nodes without `force` | `server/internal/api/roadmap_ai.go` |
+| `POST /api/v1/roadmap/{nid}/expand` and `/confirm` | Break a node down | `server/internal/api/roadmap_ai.go` |
+| `GET /api/v1/agent/context` | Agent briefing | `server/internal/api/agent_routes.go` |
 
-There is no read of one node or one subtree, and no read of the nodes a
-person owns. An agent token may call `PATCH /roadmap/{nid}`, so it can change
-an owner (`server/internal/api/agent_scope.go:73`); delete is human-only
-(`agent_scope.go:97`). The only change signal is an in-memory callback
-(`server/internal/store/pool.go:49`) that pings open progress streams. The web
-has one roadmap route per project (`client/lib/router.dart:43`). MCP exposes
+Every node view carries `canWrite`, the caller's right under
+`_can_write_node`, computed inside the one list query (a write's own response
+says `true`). There is no read of the nodes a person owns yet. An agent token
+may read one node and the subtree list, and may edit through `PATCH`, but is
+refused on `ownerId` (`server/internal/api/agent_scope.go`); delete is
+human-only. The only change signal is an in-memory callback
+(`server/internal/store/pool.go`) that pings open progress streams. The web
+has one roadmap route per project (`client/lib/router.dart`). MCP exposes
 `roadmap_list`, `roadmap_add`, `roadmap_update`, `roadmap_move`,
 `roadmap_delete` and `roadmap_evidence`
-(`server/internal/mcpserver/product_tools.go`).
+(`server/internal/mcpserver/product_tools.go`); none of them takes a root yet.
 
 ### Agent context focus
 
-`GET /api/v1/agent/context?focus={nid}` reads the whole project tree
-(`server/internal/api/agent_routes.go:38-50`). In implementation mode the
-assembler adds one `focus` block for the node and then lists every leaf of
-the project, without parent ids
-(`server/internal/agentcontext/agentcontext.go:95-111`). An unknown focus id is
-ignored rather than refused (`TREEX-05`).
+`GET /api/v1/agent/context?focus={nid}` answers 404 for a focus that is not a
+node of the project. In implementation mode the `focus` block carries the
+node's description and `path` (ancestor titles, root first), and `leaves`
+lists only the leaves of the focus subtree (the focus itself when it is a
+leaf) (`server/internal/agentcontext/agentcontext.go`).
 
 ## Target
 
@@ -172,8 +185,13 @@ refused outside it.
 
 ## Status
 
-None of the target is built. It lands in wave 2 (rows 2.1 to 2.9) of the
-review 5 remediation, after the destructive-write guards of rows 1.4 and 1.5:
-[execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
-[row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md).
+Built (wave 2 of the review 5 remediation): the one write rule in SQL and its
+policies, `canWrite` on node views, the subtree and single-node reads, the
+focus-scoped agent context, the agent-token refusal on owner changes, owner
+clearing on member removal, and the owner of started work. Still to land:
+the assignment history, delegate and hand-back routes, node rows in the
+project feed, the per-person `mine` read, roll-ups, agent tokens carrying a
+root node, and the web, MCP and CLI surfaces
+([execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
+[row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
 Update this page as each slice lands.

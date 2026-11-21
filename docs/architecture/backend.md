@@ -154,7 +154,7 @@ concern inside a family:
 - the coach: `agent_*.go` (conversations, messages, the context queries, the
   retention purge), `conversation_retention.go` (the idle-conversation purge)
 - proposals: `proposal_*.go` (the human decision, the structured items)
-- roadmap: `roadmap*.go` (nodes, evidence, moves, plans, validation)
+- roadmap: `roadmap*.go` (nodes, reads, evidence, moves, plans, validation)
 - GitHub: `github_webhook.go` (the system-run webhook path)
 - plumbing: `pool.go`, `errors.go` (the sentinels the api maps to statuses),
   `migrate*.go`, `serve_role.go`
@@ -164,7 +164,10 @@ Authorization is enforced twice, deliberately:
 1. **Go app layer** — every mutating function re-checks the caller's
    membership/ownership/admin role inside the same transaction as the write
    (the TOCTOU-safe pattern; see [database and RLS](database-and-rls.md) for
-   why explicit row locks were removed from these checks).
+   why explicit row locks were removed from these checks). The predicates
+   live in `authz.go` (`requireMember`, `requireAdminMember`,
+   `requirePlanWriter`, and the roadmap tree's `requireNodeWriter` and
+   `requireNodeManager`, which call the same SQL function as the policies).
 2. **PostgreSQL RLS** — a database-level backstop matching the same rules,
    described in [database and RLS](database-and-rls.md).
 
