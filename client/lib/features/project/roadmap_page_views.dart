@@ -78,10 +78,12 @@ extension _RoadmapViews on _RoadmapPageState {
             body: l10n.t('roadmap.mineEmpty'),
           );
         }
+        // The minimap jumps between bands, so one band needs none.
+        final bands = roadmapRoots(shown).length;
         return Column(
           children: [
-            RoadmapMinimap(nodes: shown, onTapBand: _scrollToBand),
-            const Divider(height: 1),
+            if (bands > 1)
+              RoadmapMinimap(nodes: shown, onTapBand: _scrollToBand),
             Expanded(
               child: RoadmapCanvas(
                 nodes: shown,

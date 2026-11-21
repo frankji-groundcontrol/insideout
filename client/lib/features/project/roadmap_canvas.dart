@@ -183,6 +183,11 @@ class _Band extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    bool isBranch(RoadmapNode node) =>
+        onToggle != null && all.any((n) => n.parentId == node.id);
+    // Only a band that holds a branch needs the fold gutter; a band of leaves
+    // gives its cards the full width.
+    final gutter = nodes.any(isBranch);
     return Container(
       width: width,
       decoration: BoxDecoration(
@@ -192,22 +197,24 @@ class _Band extends StatelessWidget {
       ),
       child: ListView.builder(
         shrinkWrap: true,
+        // Explicit, so the list does not inherit the page's MediaQuery
+        // padding (the dock's height) and run on past its last card.
+        padding: const EdgeInsets.fromLTRB(8, 8, 12, 12),
         itemCount: nodes.length,
         itemBuilder: (context, i) {
           final node = nodes[i];
           final depth = _depth(node);
-          final branch =
-              onToggle != null && all.any((n) => n.parentId == node.id);
           return Padding(
-            padding: EdgeInsets.only(left: depth * 18),
+            padding: EdgeInsets.only(left: depth * 18, top: i == 0 ? 0 : 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // The house icon button is 36 wide; the rest is the gutter.
-                SizedBox(
-                  width: 40,
-                  child: branch ? _fold(context, node) : null,
-                ),
+                if (gutter)
+                  SizedBox(
+                    width: 40,
+                    child: isBranch(node) ? _fold(context, node) : null,
+                  ),
                 Expanded(child: tileBuilder(node, 0)),
               ],
             ),
