@@ -14,6 +14,7 @@ How to run InsideOut — as a developer or an operator.
 | [local-development.md](./local-development.md) | Developers | Prerequisites, env setup, database setup, running server + frontend, tests |
 | [account-deletion.md](./account-deletion.md) | Operators | How a signed-in person deletes their own account, what is removed, and what other members keep |
 | [../client/README.md](../../client/README.md) | Developers | Flutter client (`client/`): web / iOS / Android against the Go API |
+| [demo-data.md](./demo-data.md) | Developers | Seed a fresh local database with the Spark dating-app story through the API, and its logins |
 | [environment.md](./environment.md) | Everyone | Environment variable reference: required/optional vars, defaults, the .env→process bridges (dev.sh, docker-compose), offline AI mode |
 | [keys/](./keys/README.md) | Operators | The host key store: one standalone six-part file per credential kind (where / propagated / set / tested / used / install guide), index + shared flow + two-layer testing (shape suite + live probes) + per-host state |
 | [../SETENV.md](../SETENV.md) | First-timers | The environment operating manual: create the file, choose each key (`env.sh init` / `edit`), propagate to the components, prove it works |
