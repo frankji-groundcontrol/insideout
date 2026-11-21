@@ -19,7 +19,6 @@ records, open and closed, follows under the later headings.
 | Record | Kind | Since | What is open |
 | --- | --- | --- | --- |
 | [Per-Project roles](./2026-11-21-per-project-roles.md) | product slice | 2026-11-21 | Decision Owner, Driver, Contributor, Reviewer and Viewer have no storage or check |
-| [Key manifests: one shared set](./2026-11-21-key-manifests-one-set.md) | structural debt | 2026-11-21 | each host folder copies the key manifests; a test now holds them to `.env.example`, the move to one set is open |
 | [Long functions over the function budget](./2026-11-21-long-functions.md) | structural debt | 2026-11-21 | eight functions over 80 lines after wave 4, listed in the function guard; the list only shrinks |
 | [Store-error ladders outside the converted handlers](./2026-11-21-store-error-ladders.md) | structural debt | 2026-11-21 | members, workspaces, conversations, GitHub, auth, guide and presence handlers still map store errors by hand |
 | [Review 5 open findings](./2026-11-21-review-5-open-findings.md) | review ledger | 2026-11-21 | the review 5 High defects not yet remediated, and the owner decisions on them (proposals inside a subtree: decision 7) |
@@ -83,6 +82,11 @@ workflows or prose); the full register lives in the
 `security` workflow on `4d186da9` flags two Go stdlib vulnerabilities; the
 fix is a `server/go.mod` toolchain bump to go1.26.11. *Resolved on
 `rv5/remediation` (`7bcb71e`).*
+
+**Update 2026-11-21:** a structural record from the review 5 remediation
+was closed in the follow-up round: the
+[key manifests are one shared set](./2026-11-21-key-manifests-one-set.md)
+(*resolved*).
 
 **Update 2026-11-21:** [focused review 5](../review/2026-11-21-focused-review-5/README.md) opened
 [fifteen High defects and six owner decisions](./2026-11-21-review-5-open-findings.md);
