@@ -128,7 +128,7 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		if renamed := toolJSON[doc](t, s, "roadmap_update", kv{"node_id": child.ID, "title": "Renamed " + r.sfx}); renamed.Title != "Renamed "+r.sfx {
 			t.Fatalf("roadmap_update = %+v, want the new title", renamed)
 		}
-		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "", "position": 0}) // to the root
+		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "root", "position": 0}) // to the root
 		nodes := map[string]doc{}
 		for _, n := range toolJSON[[]doc](t, s, "roadmap_list", kv{"project_id": r.project}) {
 			nodes[n.ID] = n

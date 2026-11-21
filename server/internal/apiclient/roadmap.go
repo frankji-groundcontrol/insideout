@@ -109,10 +109,13 @@ func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadli
 }
 
 // RoadmapMove re-parents and/or repositions a branch
-// (POST /roadmap/{id}/move). nil parentID makes it a root.
+// (POST /roadmap/{id}/move). nil parentID keeps the current parent; a pointer
+// to "" makes the node a root (sent as an explicit null).
 func (c *Client) RoadmapMove(nodeID string, parentID *string, position *int) (json.RawMessage, error) {
 	body := map[string]any{}
-	if parentID != nil {
+	if parentID != nil && *parentID == "" {
+		body["parentId"] = nil
+	} else if parentID != nil {
 		body["parentId"] = *parentID
 	}
 	if position != nil {

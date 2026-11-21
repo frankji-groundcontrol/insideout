@@ -91,14 +91,15 @@ func runRoadmapCommand(args []string) (bool, int) {
 	case "move":
 		fs := flag.NewFlagSet("roadmap move", flag.ContinueOnError)
 		api := apiFlag(fs)
-		parent := fs.String("parent", "", "new parent id (empty = root)")
+		parent := fs.String("parent", "", "new parent id (omit to keep the parent)")
+		root := fs.Bool("root", false, "make the node a root")
 		position := fs.Int("position", -1, "position among siblings")
-		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap move [--parent id] [--position n] <node-id>")
+		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 || (*root && *parent != "") {
+			fmt.Fprintln(os.Stderr, "usage: insideout roadmap move [--parent id | --root] [--position n] <node-id>")
 			return true, 2
 		}
-		var parentID *string
-		if *parent != "" {
+		var parentID *string // nil keeps the parent; "" asks for a root
+		if *root || *parent != "" {
 			parentID = parent
 		}
 		var pos *int

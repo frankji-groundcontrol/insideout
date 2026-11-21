@@ -83,12 +83,15 @@ func addProductTools(s *server.MCPServer, api string) {
 			}
 			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status"), dl, arg("completion_reason")))
 		})
-	addTextTool("roadmap_move", "Re-parent / reposition a node",
-		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", "new parent id; empty = root"),
+	addTextTool("roadmap_move", "Re-parent / reposition a node; omit parent_id to keep the parent (a position-only move)",
+		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", `new parent id, or "root" to make the node a root; omit to keep the parent`),
 			mcp.WithNumber("position", mcp.Description("position among siblings (0-based)"))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			var parent *string
+			var parent *string // nil keeps the parent; "" asks for a root
 			if v, ok := req.GetArguments()["parent_id"].(string); ok && v != "" {
+				if v == "root" {
+					v = ""
+				}
 				parent = &v
 			}
 			var pos *int
