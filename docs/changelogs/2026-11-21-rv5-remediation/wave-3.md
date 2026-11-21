@@ -1,9 +1,8 @@
 # Wave 3 · Keep the four surfaces in step
 
-Rows 3.2 to 3.7 of the
+Rows 3.1 to 3.7 of the
 [remediation plan](../../review/2026-11-21-focused-review-5/40-remediation-plan.md).
-Row 3.1, the parity test, comes last, after the wave 4 MCP and CLI splits; this
-record gains it then. The wave ran in stacked stages. Server-contract went
+Row 3.1, the parity test, ran last, after the wave 4 MCP and CLI splits. The wave ran in stacked stages. Server-contract went
 first; the CLI and MCP (surfaces) and the web then ran in parallel on top of it.
 Each worker wrote a failing test first, an adversarial verifier re-ran the
 gates, and the coordinator cherry-picked the result and re-ran every gate on the
@@ -13,6 +12,7 @@ integrated tree.
 
 | Row | IDs | Disposition | Commits |
 | --- | --- | --- | --- |
+| 3.1 | PARC-03, COMP-02 | FIXED: the test-only package `server/internal/surfaceparity` finds every route's decoded JSON keys by AST. It checks each key against three surfaces: the Go client, by calling its methods by reflection against a recording server, and the CLI and MCP, at their client call sites. A key reachable on no surface fails unless it is in a 22-entry omission table with a reason. The test also fails on a stale omission and on any disagreement with the agent route policy. Its first run found one real gap, now wired: `profile update --keywords`. A captured, fully set roadmap node pins the response shape on the server, and the Dart model must read every key (practice: [surface parity guards](../../practices/2026-11-21-surface-parity-guards.md)) | `aaf18875`, `ca73280c`, `14e9de3e`, `e888f410`, `0284fba3`, `7e43fad9` |
 | 3.2 | STRS-06, PARC-07, PARC-09, PARA-09 | FIXED: one patch rule on the CLI and MCP (an absent or empty value leaves a field, the word `clear` clears it), shared request structs for the edits; `avatarUrl` and `coverUrl` are kept when absent and cleared by `null` or `""`, on the server and in every client | `4174628d`, `436ccf84`, `037d0ae2`, `6e34ce7b`, `639e854a`, `7575aea8`, `fe13a74a`, `64511bc1`, `297dec18` |
 | 3.2 | STRS-02 | Moved to wave 4 (the MCP registration helper) | |
 | 3.3 | FE-02, PARB-03, PARB-07 | FIXED: `GET /workspaces/{id}/prds`; `prdId` on every project view; `GET /projects/{pid}/updates?before=&limit=` with `nextCursor`; the same on the CLI, MCP and web (a PRD list on the workspace page, a project links to its PRD, "Load older updates") | `8fbee6a3`, `5cd05c87`, `3e9f5554`, `01082424`, `f7535a85`, `f612ca26`, `c70cef2b`, `bd028b73`, `0da25777`, `098f27c2` |
@@ -59,7 +59,8 @@ The tree includes waves 3 and 4 so far.
 
 ## Left open
 
-- Row 3.1, the parity test.
+- The parity walk reads top-level request keys only, not nested `items` or
+  `tree` fields, and matches CLI and MCP client calls by method name.
 - Picked up by the wave 4 follow-up cluster:
   - `canDelete` and `canEdit` on the workspace view: the server lets only the
     creator delete a workspace, but the web shows Delete to every admin;

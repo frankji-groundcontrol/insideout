@@ -11,12 +11,12 @@ path and current warnings, never history.
 ## What to do next
 
 **2026-11-21: the review 5 remediation is running on branch `rv5/remediation`.**
-Waves 0 to 2 and 4 are done, and wave 3 apart from its parity test
-(row 3.1): the build path checks before it writes, the task tree for roles
+Waves 0 to 4 are done: the build path checks before it writes, the task tree for roles
 is built on every surface, the CLI, MCP and web reach the same routes under
 one error style and one patch rule, and the code follows a responsibility
-rule with a function-length guard. Next: the parity test, then the
-documentation graph (wave 5 rows 5.1, 5.2, 5.4, 5.5). Progress per wave:
+rule with a function-length guard; a parity test fails on any request field a
+surface cannot reach. Next: the documentation graph (wave 5 rows 5.1, 5.2,
+5.4, 5.5). Progress per wave:
 [changelog folder](changelogs/2026-11-21-rv5-remediation/index.md); plan:
 [rv5 remediation](plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
 The branch is pushed after each wave; the owner asked that CI not be run
