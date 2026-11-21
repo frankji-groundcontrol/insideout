@@ -91,40 +91,24 @@ func (c *Client) RoadmapAdd(projectID, title, description string, parentID *stri
 	return out, nil
 }
 
-// RoadmapPatch is a partial node update (PATCH /roadmap/{id}). A nil pointer
-// leaves its field alone; a pointer to "" sends "", which clears description
-// and acceptance. Deadline is RFC3339 ("" leaves it) and ClearDeadline
-// removes it; OwnerID is a member's user id ("" leaves it) and ClearOwner
-// removes the owner. The server refuses an owner change to an agent token.
+// RoadmapPatch is the node edit the CLI and MCP both fill (PATCH /roadmap/{id})
+// and the request body itself: nil leaves a field alone, a pointer to "" clears
+// it (fill the clearable fields with PatchText). Deadline is RFC3339; OwnerID is
+// a member's user id, which the server refuses to change for an agent token.
 type RoadmapPatch struct {
-	Title, Description, Status, Acceptance, CompletionReason *string
-	Deadline                                                 string
-	ClearDeadline                                            bool
-	OwnerID                                                  string
-	ClearOwner                                               bool
+	Title            *string `json:"title,omitempty"`
+	Description      *string `json:"description,omitempty"`
+	Status           *string `json:"status,omitempty"`
+	Deadline         *string `json:"deadline,omitempty"`
+	Acceptance       *string `json:"acceptance,omitempty"`
+	OwnerID          *string `json:"ownerId,omitempty"`
+	CompletionReason *string `json:"completionReason,omitempty"`
 }
 
 // RoadmapUpdate sends patch to PATCH /roadmap/{id}.
 func (c *Client) RoadmapUpdate(nodeID string, patch RoadmapPatch) (json.RawMessage, error) {
-	body := map[string]any{}
-	for key, v := range map[string]*string{"title": patch.Title, "description": patch.Description,
-		"status": patch.Status, "acceptance": patch.Acceptance, "completionReason": patch.CompletionReason} {
-		if v != nil {
-			body[key] = *v
-		}
-	}
-	if patch.ClearDeadline {
-		body["deadline"] = ""
-	} else if patch.Deadline != "" {
-		body["deadline"] = patch.Deadline
-	}
-	if patch.ClearOwner {
-		body["ownerId"] = ""
-	} else if patch.OwnerID != "" {
-		body["ownerId"] = patch.OwnerID
-	}
 	var out json.RawMessage
-	if err := c.do(http.MethodPatch, apiPath("roadmap", nodeID), body, &out); err != nil {
+	if err := c.do(http.MethodPatch, apiPath("roadmap", nodeID), patch, &out); err != nil {
 		return nil, err
 	}
 	return out, nil

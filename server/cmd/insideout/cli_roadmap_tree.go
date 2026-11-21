@@ -24,8 +24,8 @@ var treeUsage = map[string]string{
 	"assignments": "insideout roadmap assignments <node-id>",
 	"delegate":    "insideout roadmap delegate --to <user-id> [--note N] <node-id>",
 	"handback":    "insideout roadmap handback [--note N] <node-id>",
-	"update": "insideout roadmap update [--title T] [--description D] [--status S] [--deadline RFC3339|clear] " +
-		"[--acceptance A] [--owner user-id|me|none] [--completion-reason SENTENCE] <node-id>",
+	"update": "insideout roadmap update [--title T] [--description D|clear] [--status S] [--deadline RFC3339|clear] " +
+		"[--acceptance A|clear] [--owner user-id|me|clear] [--completion-reason SENTENCE|clear] <node-id>",
 }
 
 // runRoadmapTreeCommand runs `roadmap <sub>` when sub is a tree verb; handled
@@ -72,53 +72,40 @@ func runRoadmapTreeCommand(sub string, args []string) (handled bool, exitCode in
 	}
 }
 
-// runRoadmapUpdate is `roadmap update`. --acceptance "" clears the acceptance;
-// --owner takes a user id, me (the signed-in user) or none (no owner).
+// runRoadmapUpdate is `roadmap update`. An empty flag leaves its field alone
+// and the word clear clears it (apiclient.PatchText); --owner also takes me
+// (the signed-in user).
 func runRoadmapUpdate(fs *flag.FlagSet, api *string, args []string) (bool, int) {
 	title := fs.String("title", "", "new title")
-	description := fs.String("description", "", "new description")
+	description := fs.String("description", "", "new description, or clear")
 	status := fs.String("status", "", "locked|pending|in_progress|done")
 	deadline := fs.String("deadline", "", "RFC3339 deadline, or clear")
-	acceptance := fs.String("acceptance", "", `what done means ("" clears it)`)
-	owner := fs.String("owner", "", "owner: a member's user id, me, or none")
-	reason := fs.String("completion-reason", "", "one sentence when marking done with no evidence")
+	acceptance := fs.String("acceptance", "", "what done means, or clear")
+	owner := fs.String("owner", "", "owner: a member's user id, me, or clear")
+	reason := fs.String("completion-reason", "", "one sentence when marking done with no evidence, or clear")
 	err := fs.Parse(args)
-	acceptanceSet := false
-	fs.Visit(func(f *flag.Flag) { acceptanceSet = acceptanceSet || f.Name == "acceptance" })
-	if err != nil || len(fs.Args()) != 1 || (*title == "" && *description == "" && *status == "" &&
-		*deadline == "" && !acceptanceSet && *owner == "" && *reason == "") {
+	patch := apiclient.RoadmapPatch{Title: apiclient.NonEmpty(*title), Description: apiclient.PatchText(*description),
+		Status: apiclient.NonEmpty(*status), Deadline: apiclient.PatchText(*deadline),
+		Acceptance: apiclient.PatchText(*acceptance), OwnerID: apiclient.PatchText(*owner),
+		CompletionReason: apiclient.PatchText(*reason)}
+	if err != nil || len(fs.Args()) != 1 || patch == (apiclient.RoadmapPatch{}) {
 		fmt.Fprintln(os.Stderr, "usage: "+treeUsage["update"])
 		return true, 2
 	}
-	patch := apiclient.RoadmapPatch{Title: strPtrIfSet(*title), Description: strPtrIfSet(*description),
-		Status: strPtrIfSet(*status), CompletionReason: strPtrIfSet(*reason)}
-	if acceptanceSet {
-		patch.Acceptance = acceptance
-	}
-	switch *deadline {
-	case "":
-	case "clear":
-		patch.ClearDeadline = true
-	default:
-		if _, err := time.Parse(time.RFC3339, *deadline); err != nil {
+	if d := *deadline; d != "" && d != apiclient.ClearWord {
+		if _, err := time.Parse(time.RFC3339, d); err != nil {
 			fmt.Fprintln(os.Stderr, "deadline must be RFC3339 or clear")
 			return true, 2
 		}
-		patch.Deadline = *deadline
 	}
 	c := clientFromFlag(*api)
-	switch *owner {
-	case "none":
-		patch.ClearOwner = true
-	case "me":
+	if *owner == "me" {
 		id, err := signedInUserID(c)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return true, 1
 		}
-		patch.OwnerID = id
-	default:
-		patch.OwnerID = *owner
+		patch.OwnerID = &id
 	}
 	return printJSON(c.RoadmapUpdate(fs.Args()[0], patch))
 }

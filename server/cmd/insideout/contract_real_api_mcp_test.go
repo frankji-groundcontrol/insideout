@@ -135,7 +135,7 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		}
 		// An agent token may say what done means, never who owns the node (rv5-PARC-01).
 		toolData(t, s, "roadmap_update", kv{"node_id": child.ID, "acceptance": "Ships"})
-		if out := callTool(t, s, "roadmap_update", kv{"node_id": child.ID, "owner_id": "none"}); !out.isError || !strings.Contains(out.text, "agent token") {
+		if out := callTool(t, s, "roadmap_update", kv{"node_id": child.ID, "owner_id": "clear"}); !out.isError || !strings.Contains(out.text, "agent token") {
 			t.Fatalf("roadmap_update owner_id = %+v, want the agent-scope refusal", out)
 		}
 		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "root", "position": 0}) // to the root

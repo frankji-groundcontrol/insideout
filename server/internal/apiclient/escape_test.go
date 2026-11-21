@@ -125,7 +125,7 @@ var sweep = []sweepCase{
 	{"RoadmapList", "GET", "/projects/{h}/roadmap?root={h}", func(c *Client, h string) error { return drop(c.RoadmapList(h, h)) }},
 	{"RoadmapAdd", "POST", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapAdd(h, h, h, &h)) }},
 	{"RoadmapUpdate", "PATCH", "/roadmap/{h}", func(c *Client, h string) error {
-		return drop(c.RoadmapUpdate(h, RoadmapPatch{Title: &h, Description: &h, Status: &h, Acceptance: &h, CompletionReason: &h, Deadline: h, OwnerID: h}))
+		return drop(c.RoadmapUpdate(h, RoadmapPatch{Title: &h, Description: &h, Status: &h, Acceptance: &h, CompletionReason: &h, Deadline: &h, OwnerID: &h}))
 	}},
 	{"RoadmapNode", "GET", "/roadmap/{h}", func(c *Client, h string) error { return drop(c.RoadmapNode(h)) }},
 	{"RoadmapMine", "GET", "/workspaces/{h}/roadmap/mine", func(c *Client, h string) error { return drop(c.RoadmapMine(h)) }},

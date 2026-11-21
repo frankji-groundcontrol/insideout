@@ -165,10 +165,3 @@ func runGithubCommand(cmd string, args []string) (bool, int) {
 	}
 	return false, 0
 }
-
-func strPtrIfSet(v string) *string {
-	if v == "" {
-		return nil
-	}
-	return &v
-}
