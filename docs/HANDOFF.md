@@ -10,18 +10,16 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-11-21: the review 5 remediation is complete on branch `rv5/remediation`.**
-All six waves are in, with every gate green on the integrated tree
+**2026-11-21: the review 5 remediation is merged to `main`** (#24,
+`a945784`). Every gate was green on the integrated tree
 ([final state](changelogs/2026-11-21-rv5-remediation/index.md#final-state)):
-the build path checks before it writes; the task tree for roles works on
-web, REST, CLI and MCP; the four surfaces reach the same routes under one
-error style, with a parity test to keep them there; the code follows a
-responsibility rule with a function-length guard; and the documentation
-graph is checked, with Marksman at 0. Next is the owner's: merge the branch
-to `main`, and decide whether a delegate's agent may file proposals
-([open findings](issues/2026-11-21-review-5-open-findings.md)). Plan:
-[rv5 remediation](plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
-No CI was run for this work (owner's request); `main` is not pushed.
+the build path checks before it writes; the task tree for roles works on web,
+REST, CLI and MCP; the four surfaces reach the same routes under one error
+style, with a parity test; the code follows a responsibility rule with a
+function-length guard; and the documentation graph is checked, with Marksman
+at 0. Owner decision 7 (a node writer may file proposals inside their
+subtree) follows in its own PR. CI is skipped on PRs and merges at the owner's
+request (`[skip ci]`); verification is local.
 
 **2026-11-21: focused review 5 is delivered.**
 [The report](./review/2026-11-21-focused-review-5/README.md) (127 findings,
