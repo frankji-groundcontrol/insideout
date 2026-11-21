@@ -49,22 +49,26 @@ Future<void> buildRoadmapFromPrd(BuildContext context, String prdId) async {
         final replace = e.code == 'replace_conflict' && expected != live;
         if (live == null || !(history || replace)) rethrow;
         if (!context.mounted) return;
+        String count(String many, String one, int n) =>
+            t(n == 1 ? one : many, {'n': n});
+        final counts = {
+          'nodes': count('prd.nodeCount', 'prd.nodeCountOne', live),
+          'evidence': count(
+            'prd.evidenceCount',
+            'prd.evidenceCountOne',
+            e.evidenceCount ?? 0,
+          ),
+        };
         final ok = await showBlockConfirm(
           context: context,
           title: t(history ? 'prd.buildHistoryTitle' : 'prd.buildMVP'),
           message: history
               ? t('prd.buildHistoryConfirm', {
-                  'nodes': live,
-                  'evidence': e.evidenceCount ?? 0,
+                  ...counts,
                   'done': e.doneCount ?? 0,
                   'validated': e.validatedCount ?? 0,
                 })
-              : t(
-                  live == 1
-                      ? 'prd.buildReplaceConfirmOne'
-                      : 'prd.buildReplaceConfirm',
-                  {'count': live, 'evidence': e.evidenceCount ?? 0},
-                ),
+              : t('prd.buildReplaceConfirm', counts),
           confirmText: history
               ? t('prd.buildHistoryAction')
               : t('common.confirm'),

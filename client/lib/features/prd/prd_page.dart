@@ -270,6 +270,12 @@ class _PrdPageState extends State<PrdPage> {
       onDeclineStage: _declineStage,
       onTurnDone: _refreshConversation,
       onMessage: (m) => setState(() => messages = [...messages, m]),
+      onMessageDropped: (m) => setState(
+        () => messages = [
+          for (final x in messages)
+            if (!identical(x, m)) x,
+        ],
+      ),
     );
   }
 

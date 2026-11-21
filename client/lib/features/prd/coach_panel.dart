@@ -32,6 +32,7 @@ class CoachPanel extends StatefulWidget {
     this.onDeclineStage,
     this.onTurnDone,
     this.onMessage,
+    this.onMessageDropped,
   });
 
   final String prdId;
@@ -56,6 +57,10 @@ class CoachPanel extends StatefulWidget {
   /// streamed reply when the turn ends (rv5-FE-01); [onTurnDone] then re-reads
   /// the stored ones.
   final void Function(ChatMessage message)? onMessage;
+
+  /// Takes back a sent message [onMessage] added when the send failed: its
+  /// text returns to the composer, and a re-read shows it if it was stored.
+  final void Function(ChatMessage message)? onMessageDropped;
 
   @override
   State<CoachPanel> createState() => _CoachPanelState();
@@ -121,7 +126,8 @@ class _CoachPanelState extends State<CoachPanel> {
     // A suggestion chip is not the member's text: leave the composer alone.
     final fromDraft = preset == null;
     if (fromDraft) draft.clear();
-    widget.onMessage?.call(ChatMessage(id: '', role: 'user', content: text));
+    final sent = ChatMessage(id: '', role: 'user', content: text);
+    widget.onMessage?.call(sent);
     var delivered = false;
     try {
       await context.read<Session>().api.sendCoach(
@@ -169,6 +175,7 @@ class _CoachPanelState extends State<CoachPanel> {
       if (mounted) {
         // A failed send gives the text back, unless they have typed since.
         if (fromDraft && !delivered && draft.text.isEmpty) draft.text = text;
+        if (!delivered) widget.onMessageDropped?.call(sent);
         // The reply joins the transcript before the buffer empties, so it
         // stays on screen even when the re-read below fails.
         final reply = stream;

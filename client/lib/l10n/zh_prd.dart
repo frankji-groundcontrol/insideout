@@ -27,15 +27,17 @@ const zhPrd = <String, String>{
   'prd.exportTitle': '导出',
   'prd.buildMVP': '起草路线图',
   'prd.buildReplaceConfirm':
-      '这个项目已有 {count} 个路线图节点和 {evidence} 条证据记录。用审阅过的草稿替换吗？当前树及其证据会丢失。',
-  'prd.buildReplaceConfirmOne':
-      '这个项目已有 {count} 个路线图节点和 {evidence} 条证据记录。用审阅过的草稿替换吗？当前树及其证据会丢失。',
+      '这个项目的路线图已有 {nodes}和 {evidence}。用审阅过的草稿替换吗？当前树及其证据会丢失。',
+  'prd.nodeCount': '{n} 个节点',
+  'prd.nodeCountOne': '{n} 个节点',
+  'prd.evidenceCount': '{n} 条证据记录',
+  'prd.evidenceCountOne': '{n} 条证据记录',
   'prd.buildReviewTitle': '审阅起草的路线图',
   'prd.buildReviewHint': '应用之前不会写入任何内容。应用后将创建这些条目。',
   'prd.buildApply': '应用',
   'prd.buildHistoryTitle': '这个路线图已有记录的工作',
   'prd.buildHistoryConfirm':
-      '替换将删除 {nodes} 个节点、{evidence} 条证据记录、{done} 个已完成和 {validated} 个已验证条目。此操作无法撤销。',
+      '替换将删除 {nodes}、{evidence}、{done} 个已完成和 {validated} 个已验证条目。此操作无法撤销。',
   'prd.buildHistoryAction': '删除并替换',
   'prd.exportPrint': '打印 / 另存为 PDF',
   'prd.revisionsTitle': '版本历史',
