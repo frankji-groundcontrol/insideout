@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import 'features/auth/forgot_password_page.dart';
@@ -42,7 +43,10 @@ final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/projects/:id': (c, s) => ProjectPage(id: s.pathParameters['id']!),
   '/projects/:id/roadmap': (c, s) =>
       RoadmapPage(projectId: s.pathParameters['id']!),
+  // go_router keys a page by route pattern; key by node id so moving
+  // between opened nodes builds a fresh page instead of keeping the old tree.
   '/projects/:id/roadmap/:nodeId': (c, s) => RoadmapPage(
+    key: ValueKey(s.pathParameters['nodeId']),
     projectId: s.pathParameters['id']!,
     rootId: s.pathParameters['nodeId']!,
   ),
