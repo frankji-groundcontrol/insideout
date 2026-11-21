@@ -48,9 +48,21 @@ func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
 	httpx.WriteJSON(w, http.StatusOK, views)
 }
 
+// nodeRefView is one ancestor: ownerId (null: none) lets a client see that
+// the caller owns the opened tree through an ancestor.
 type nodeRefView struct {
-	ID    string `json:"id"`
-	Title string `json:"title"`
+	ID      string  `json:"id"`
+	Title   string  `json:"title"`
+	OwnerID *string `json:"ownerId"`
+}
+
+func nodeRefResponse(a store.RoadmapNodeRef) nodeRefView {
+	v := nodeRefView{ID: a.ID.String(), Title: a.Title}
+	if a.OwnerID != nil {
+		id := a.OwnerID.String()
+		v.OwnerID = &id
+	}
+	return v
 }
 
 type roadmapNodeReadView struct {
@@ -85,7 +97,7 @@ func (s *Server) handleReadRoadmapNode(w http.ResponseWriter, r *http.Request) {
 		ProjectName: read.ProjectName,
 	}
 	for i, a := range read.Ancestors {
-		out.Ancestors[i] = nodeRefView{ID: a.ID.String(), Title: a.Title}
+		out.Ancestors[i] = nodeRefResponse(a)
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)
 }
@@ -124,7 +136,7 @@ func (s *Server) handleMyRoadmap(w http.ResponseWriter, r *http.Request) {
 			ProjectName: root.ProjectName, Ancestors: make([]nodeRefView, len(root.Ancestors)),
 		}
 		for j, a := range root.Ancestors {
-			out[i].Ancestors[j] = nodeRefView{ID: a.ID.String(), Title: a.Title}
+			out[i].Ancestors[j] = nodeRefResponse(a)
 		}
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)

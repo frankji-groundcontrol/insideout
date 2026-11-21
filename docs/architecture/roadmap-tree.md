@@ -131,7 +131,7 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | Route | Effect | Code |
 | --- | --- | --- |
 | `GET /api/v1/projects/{pid}/roadmap` | Whole tree as a flat list, any member; `?root={nid}` restricts it to that node and its descendants, root first (404 for a node outside the project) | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_read.go` |
-| `GET /api/v1/roadmap/{nid}` | One node: `{node, ancestors: [{id, title}] root first, projectId, projectName}`; 404 when not visible | `server/internal/api/roadmap_read.go` |
+| `GET /api/v1/roadmap/{nid}` | One node: `{node, ancestors: [{id, title, ownerId}] root first, projectId, projectName}` (`ownerId` is a user id or null, so a client sees that the caller owns the opened tree through an ancestor; `mine` ancestors carry it too); 404 when not visible | `server/internal/api/roadmap_read.go` |
 | `POST /api/v1/projects/{pid}/roadmap` | Create a node | `server/internal/api/roadmap.go` |
 | `PATCH /api/v1/roadmap/{nid}` | Edit fields, status and owner | `server/internal/api/roadmap.go` |
 | `POST /api/v1/roadmap/{nid}/move` | Re-parent or reorder | `server/internal/api/roadmap_move.go` |

@@ -94,7 +94,7 @@ func ancestorsTx(ctx context.Context, tx pgx.Tx, ids []uuid.UUID) (map[uuid.UUID
 			SELECT up.start, a.parent_id, up.depth + 1 FROM up JOIN insideout.roadmap_nodes a ON a.id = up.id
 			WHERE a.parent_id IS NOT NULL
 		)
-		SELECT up.start, a.id, a.title FROM up JOIN insideout.roadmap_nodes a ON a.id = up.id
+		SELECT up.start, a.id, a.title, a.owner_user_id FROM up JOIN insideout.roadmap_nodes a ON a.id = up.id
 		ORDER BY up.start, up.depth DESC`, ids)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func ancestorsTx(ctx context.Context, tx pgx.Tx, ids []uuid.UUID) (map[uuid.UUID
 	for rows.Next() {
 		var start uuid.UUID
 		var a RoadmapNodeRef
-		if err := rows.Scan(&start, &a.ID, &a.Title); err != nil {
+		if err := rows.Scan(&start, &a.ID, &a.Title, &a.OwnerID); err != nil {
 			return nil, err
 		}
 		out[start] = append(out[start], a)

@@ -140,10 +140,11 @@ func (s *Store) NodeInSubtree(ctx context.Context, actorID, rootID, nodeID uuid.
 	return in, err
 }
 
-// RoadmapNodeRef names a node in a path.
+// RoadmapNodeRef names a node in a path, with its owner (nil: none).
 type RoadmapNodeRef struct {
-	ID    uuid.UUID
-	Title string
+	ID      uuid.UUID
+	Title   string
+	OwnerID *uuid.UUID
 }
 
 // RoadmapNodeRead is one node opened on its own: the node, its ancestors from
