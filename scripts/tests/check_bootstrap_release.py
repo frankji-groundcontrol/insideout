@@ -23,6 +23,8 @@ property, 2 when a premise cannot be derived.
   the release.yml that builds the release. A failed verification installs
   nothing and shows gh's reason. Without a usable gh the script says so, loudly,
   and installs on the checksum alone. The docs say both.
+- rv5-STRC-11: the shell-startup PATH block (`on_path() {` to its closing `fi`)
+  is byte-identical in bootstrap.sh and install.sh.
 
 CI-config property of a script a release ships: the first real proof is the
 first tag run after the workflow lands; this runs it against a local mirror and
@@ -271,6 +273,20 @@ def workflow_attests():
             "gh attestation verify in bootstrap.sh would fail for every release"]
 
 
+def path_blocks_agree():
+    """bootstrap.sh is piped from a download, so it cannot source install.sh: its
+    shell-startup PATH block (from `on_path() {` to the closing `fi`) is a copy,
+    and the two copies must stay equal."""
+    def block(path):
+        match = re.search(r"^on_path\(\) \{\n.*?^fi$", (ROOT / path).read_text(encoding="utf-8"), re.M | re.S)
+        if not match:
+            premise(f"{path}: no on_path() block ending in a top-level fi")
+        return match.group(0)
+    if block("scripts/install.sh") == block("scripts/bootstrap.sh"):
+        return []
+    return ["scripts/bootstrap.sh: the on_path PATH block differs from scripts/install.sh's; keep the copies equal"]
+
+
 def docs_say_provenance():
     flat = lambda path: " ".join((ROOT / path).read_text(encoding="utf-8").split())
     installing, releasing = flat("docs/usage/installation.md"), flat("docs/usage/releasing.md")
@@ -303,7 +319,7 @@ def main():
     try:
         failures = (release_base_is_https(name, repo.group(1)) + redirects_stay_https(mirror) + docs_say_https()
                     + provenance_is_checked(mirror, repo.group(1), name, data) + workflow_attests()
-                    + docs_say_provenance())
+                    + docs_say_provenance() + path_blocks_agree())
     finally:
         mirror.shutdown()
         mirror.server_close()
@@ -312,7 +328,7 @@ def main():
     if failures:
         sys.exit(1)
     print("bootstrap release ok: https-only release base and redirects, provenance checked when gh can, "
-          "loopback mirror installs")
+          "loopback mirror installs, PATH block equal to install.sh's")
 
 
 if __name__ == "__main__":
