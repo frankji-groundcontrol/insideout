@@ -17,12 +17,26 @@ type RoadmapPlanNode struct {
 }
 
 // ReplaceConflictError reports a tree-replace precondition failure: the live
-// roadmap holds LiveCount nodes the caller did not confirm overwriting. It
-// matches ErrConflict so handlers map it to 409 and can surface the count.
-type ReplaceConflictError struct{ LiveCount int }
+// roadmap holds LiveCount nodes the caller did not confirm overwriting, or,
+// with History set, nodes with evidence or done or validated that the caller
+// did not force away (rv5-FEAT-03). It matches ErrConflict so handlers map it
+// to 409 and can surface the counts.
+type ReplaceConflictError struct {
+	LiveCount, EvidenceCount, DoneCount, ValidatedCount int
+	History                                             bool
+}
 
 func (e *ReplaceConflictError) Error() string        { return "roadmap replace not confirmed" }
 func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConflict }
+
+// ReplaceOptions are what a replace's caller confirmed.
+type ReplaceOptions struct {
+	// ExpectedCount is the live node count the caller saw; a non-empty
+	// roadmap is only replaced when it matches.
+	ExpectedCount *int
+	// Force discards nodes that have evidence or are done or validated.
+	Force bool
+}
 
 // ReplaceRoadmapTree atomically swaps a project's whole roadmap for the given
 // tree — used by "build the MVP" generation. Returns the number of nodes
@@ -30,11 +44,13 @@ func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConfl
 // the project owner or a workspace admin (BUG-020). The expected count below is
 // a staleness guard, not an authorisation.
 //
-// Guard: a non-empty roadmap is only replaced when expectedCount confirms the
-// exact live count, else ReplaceConflictError. The count check runs behind a
-// per-project advisory lock so two concurrent builds can't both pass the check
-// then both delete (check-then-act TOCTOU). An empty roadmap needs no confirm.
-func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.UUID, expectedCount *int, root RoadmapPlanNode) (int, error) {
+// Guard: a non-empty roadmap is only replaced when ExpectedCount confirms the
+// exact live count, and, while any node has evidence or is done or validated
+// (the delete cascades through all of it), only with Force; else
+// ReplaceConflictError. The checks run behind a per-project advisory lock so
+// two concurrent builds can't both pass them then both delete (check-then-act
+// TOCTOU). An empty roadmap needs no confirm.
+func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.UUID, opts ReplaceOptions, root RoadmapPlanNode) (int, error) {
 	count := 0
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
@@ -47,12 +63,21 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 			return err
 		}
 
-		var liveCount int
-		if err := tx.QueryRow(ctx, `SELECT count(*) FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID).Scan(&liveCount); err != nil {
+		var c ReplaceConflictError
+		if err := tx.QueryRow(ctx, `
+			SELECT count(*), count(*) FILTER (WHERE status = 'done'), count(*) FILTER (WHERE status = 'validated'),
+				(SELECT count(*) FROM insideout.roadmap_evidence e
+				 JOIN insideout.roadmap_nodes en ON en.id = e.node_id WHERE en.project_id = $1)
+			FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID,
+		).Scan(&c.LiveCount, &c.DoneCount, &c.ValidatedCount, &c.EvidenceCount); err != nil {
 			return err
 		}
-		if liveCount > 0 && (expectedCount == nil || *expectedCount != liveCount) {
-			return &ReplaceConflictError{LiveCount: liveCount}
+		if c.LiveCount > 0 && (opts.ExpectedCount == nil || *opts.ExpectedCount != c.LiveCount) {
+			return &c
+		}
+		if !opts.Force && c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
+			c.History = true
+			return &c
 		}
 
 		if _, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID); err != nil {

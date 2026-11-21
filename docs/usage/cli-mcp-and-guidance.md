@@ -90,6 +90,7 @@ insideout reset-password                            # paste link/token + new pas
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>` (without `--content` the body is kept), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
+| Build | `build <prd>` drafts a roadmap from an approved PRD and writes nothing (409 `prd_not_approved` otherwise); `build-confirm [-expected-count N] [-force] -tree '<json>' <prd>` writes it, creating and linking the project on the first build (PRD author or workspace admin only); over a roadmap with evidence or done or validated nodes it answers 409 `roadmap_replace_has_history` with the counts until `-force`; `expand <node>`, `expand-confirm -children '<json>' <node>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
 | Admin | `invite [--ttl hours] <email>`, `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
 | Server operator | `migrate`, `seed`, `promote-admin <email>` (creates the account, password on stdin, when absent); these need the server config (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`), and `promote-admin` also the owner DSN (`DATABASE_OWNER_URL`) |
@@ -242,7 +243,10 @@ must deliver `deployment_status` events). Unmatched activity stays visible but
 attaches to nothing;
 evidence never auto-proves outcomes. Redeliveries are idempotent.
 Re-generate the guide any time with `insideout guide`; node ids are
-stable, so committed matchers survive regeneration.
+stable, so committed matchers survive regeneration. A rebuild from the PRD
+(`build-confirm`) is the exception: it replaces every node with new ids and,
+with `-force`, erases their evidence, so regenerate and recommit the guide
+after one.
 
 ## What agents may and may not do
 

@@ -116,8 +116,10 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 }
 
 type confirmBuildRequest struct {
-	ExpectedCount *int         `json:"expectedCount"`
-	Tree          planNodeView `json:"tree"`
+	ExpectedCount *int `json:"expectedCount"`
+	// Force discards nodes with evidence or done or validated (rv5-FEAT-03).
+	Force bool         `json:"force"`
+	Tree  planNodeView `json:"tree"`
 }
 
 // handleConfirmBuildFromPrd writes a tree the caller already drafted.
@@ -146,10 +148,16 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, req.ExpectedCount, planNodeFromView(req.Tree))
+	opts := store.ReplaceOptions{ExpectedCount: req.ExpectedCount, Force: req.Force}
+	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, opts, planNodeFromView(req.Tree))
 	var rc *store.ReplaceConflictError
-	if errors.As(err, &rc) {
-		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount})
+	if errors.As(err, &rc) && rc.History {
+		httpx.WriteError(w, http.StatusConflict, "the roadmap has evidence or finished nodes a rebuild would erase; confirm with force", "roadmap_replace_has_history", map[string]interface{}{
+			"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount, "doneCount": rc.DoneCount, "validatedCount": rc.ValidatedCount})
+		return
+	}
+	if rc != nil {
+		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount})
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {

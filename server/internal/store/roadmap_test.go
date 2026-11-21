@@ -213,7 +213,7 @@ func TestRoadmap_ReplaceTreeGuard(t *testing.T) {
 	tree := RoadmapPlanNode{Title: "Root", Children: []RoadmapPlanNode{{Title: "c1"}, {Title: "c2"}}}
 
 	// Empty roadmap replaces with no expectedCount.
-	count, err := st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, nil, tree)
+	count, err := st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ReplaceOptions{}, tree)
 	if err != nil {
 		t.Fatalf("replace empty: %v", err)
 	}
@@ -222,7 +222,7 @@ func TestRoadmap_ReplaceTreeGuard(t *testing.T) {
 	}
 
 	// Non-empty, no confirm → ReplaceConflictError carrying the live count.
-	_, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, nil, tree)
+	_, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ReplaceOptions{}, tree)
 	var rc *ReplaceConflictError
 	if !errors.As(err, &rc) {
 		t.Fatalf("no-confirm: want ReplaceConflictError, got %v", err)
@@ -235,7 +235,7 @@ func TestRoadmap_ReplaceTreeGuard(t *testing.T) {
 	}
 
 	// Wrong count → conflict, tree untouched.
-	if _, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ip(99), tree); !errors.Is(err, ErrConflict) {
+	if _, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ReplaceOptions{ExpectedCount: ip(99)}, tree); !errors.Is(err, ErrConflict) {
 		t.Fatalf("wrong-count: want ErrConflict, got %v", err)
 	}
 	if nodes, _ := st.ListRoadmap(ctx, admin.ID, proj.ID); len(nodes) != 3 {
@@ -243,7 +243,7 @@ func TestRoadmap_ReplaceTreeGuard(t *testing.T) {
 	}
 
 	// Correct live count → replace succeeds.
-	if _, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ip(3), tree); err != nil {
+	if _, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ReplaceOptions{ExpectedCount: ip(3)}, tree); err != nil {
 		t.Fatalf("confirmed replace: %v", err)
 	}
 }

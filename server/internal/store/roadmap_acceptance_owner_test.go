@@ -154,7 +154,7 @@ func TestReplaceRoadmapTree_FirstLeafSeeded(t *testing.T) {
 		t.Fatalf("create project: %v", err)
 	}
 
-	_, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, nil, RoadmapPlanNode{Title: "Milestone", Children: []RoadmapPlanNode{
+	_, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ReplaceOptions{}, RoadmapPlanNode{Title: "Milestone", Children: []RoadmapPlanNode{
 		{Title: "First step"},
 		{Title: "Second step"},
 	}})

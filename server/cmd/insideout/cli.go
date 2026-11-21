@@ -77,7 +77,7 @@ var cliVerbs = []cliVerb{
 	{groupRoadmap, "roadmap", "list, add, update, move or delete nodes; progress; presence"},
 	{groupRoadmap, "presence", "show who is active on a project's roadmap"},
 	{groupRoadmap, "build", "draft a roadmap from an approved PRD (apply it with build-confirm)"},
-	{groupRoadmap, "build-confirm", "apply a drafted roadmap"},
+	{groupRoadmap, "build-confirm", "apply a drafted roadmap (-force to erase evidence and done nodes)"},
 	{groupRoadmap, "expand", "draft children for a roadmap node (apply with expand-confirm)"},
 	{groupRoadmap, "expand-confirm", "apply drafted children"},
 	{groupRoadmap, "agent-context", "fetch the agent briefing for a project (--mode, --focus)"},

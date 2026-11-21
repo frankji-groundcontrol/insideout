@@ -113,7 +113,7 @@ var sweep = []sweepCase{
 
 	{"BuildFromPrd", "POST", "/prds/{h}/build", func(c *Client, h string) error { return drop(c.BuildFromPrd(h)) }},
 	{"ConfirmBuildFromPrd", "POST", "/prds/{h}/build/confirm", func(c *Client, h string) error {
-		return drop(c.ConfirmBuildFromPrd(h, emptyJSON, 3))
+		return drop(c.ConfirmBuildFromPrd(h, emptyJSON, 3, true))
 	}},
 	{"ExpandNode", "POST", "/roadmap/{h}/expand", func(c *Client, h string) error { return drop(c.ExpandNode(h)) }},
 	{"ConfirmExpandNode", "POST", "/roadmap/{h}/expand/confirm", func(c *Client, h string) error {

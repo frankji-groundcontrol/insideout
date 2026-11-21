@@ -22,17 +22,19 @@ func addDraftTools(
 		})
 	addTextTool("build_confirm", "Agent: write a previously drafted roadmap tree",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strReq("tree", "the drafted tree JSON from build"),
-			mcp.WithNumber("expected_count", mcp.Description("live node count; required to confirm a replace_conflict 409 retry"))},
+			mcp.WithNumber("expected_count", mcp.Description("live node count; required to confirm a replace_conflict 409 retry")),
+			mcp.WithBoolean("force", mcp.Description("discard nodes with evidence or done or validated (answers a roadmap_replace_has_history 409); an agent token may only build onto an empty roadmap, so this is the human's"))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			count := 0
 			if v, ok := req.GetArguments()["expected_count"].(float64); ok {
 				count = int(v)
 			}
+			force, _ := req.GetArguments()["force"].(bool)
 			tree := json.RawMessage(reqStr(req, "tree"))
 			if !json.Valid(tree) {
 				return "", fmt.Errorf("tree must be the drafted JSON object from build")
 			}
-			return call(c.ConfirmBuildFromPrd(reqStr(req, "prd_id"), tree, count))
+			return call(c.ConfirmBuildFromPrd(reqStr(req, "prd_id"), tree, count, force))
 		})
 	addTextTool("expand", "Agent: draft subtasks for one node. Writes nothing until expand_confirm.",
 		[]mcp.ToolOption{strReq("node_id", "node id")},

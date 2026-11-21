@@ -131,9 +131,11 @@ func runAgentCommand(cmd string, args []string) (bool, int) {
 	api := apiFlag(fs)
 	count := 0
 	draft := ""
+	force := false
 	switch cmd {
 	case "build-confirm":
 		fs.IntVar(&count, "expected-count", 0, "live node count; required when replacing an existing roadmap")
+		fs.BoolVar(&force, "force", false, "discard nodes that have evidence or are done or validated")
 		fs.StringVar(&draft, "tree", "", "drafted tree JSON from build")
 	case "expand-confirm":
 		fs.StringVar(&draft, "children", "", "drafted children JSON from expand")
@@ -141,7 +143,7 @@ func runAgentCommand(cmd string, args []string) (bool, int) {
 	usage := map[string]string{
 		"build":          " <prd-id>",
 		"expand":         " <node-id>",
-		"build-confirm":  " <prd-id> -tree '<json>'",
+		"build-confirm":  " [-expected-count N] [-force] -tree '<json>' <prd-id>",
 		"expand-confirm": " <node-id> -children '<json>'",
 	}
 	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
@@ -157,7 +159,7 @@ func runAgentCommand(cmd string, args []string) (bool, int) {
 	case "build":
 		return printJSON(c.BuildFromPrd(fs.Args()[0]))
 	case "build-confirm":
-		return printJSON(c.ConfirmBuildFromPrd(fs.Args()[0], json.RawMessage(draft), count))
+		return printJSON(c.ConfirmBuildFromPrd(fs.Args()[0], json.RawMessage(draft), count, force))
 	case "expand-confirm":
 		return printJSON(c.ConfirmExpandNode(fs.Args()[0], json.RawMessage(draft)))
 	default:

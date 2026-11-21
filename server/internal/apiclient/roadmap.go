@@ -17,11 +17,16 @@ func (c *Client) BuildFromPrd(prdID string) (json.RawMessage, error) {
 }
 
 // ConfirmBuildFromPrd writes a previously drafted tree
-// (POST /prds/{id}/build/confirm).
-func (c *Client) ConfirmBuildFromPrd(prdID string, tree json.RawMessage, expectedCount int) (json.RawMessage, error) {
+// (POST /prds/{id}/build/confirm). force discards nodes that have evidence or
+// are done or validated, which the server otherwise refuses with 409
+// roadmap_replace_has_history.
+func (c *Client) ConfirmBuildFromPrd(prdID string, tree json.RawMessage, expectedCount int, force bool) (json.RawMessage, error) {
 	body := map[string]any{"tree": json.RawMessage(tree)}
 	if expectedCount > 0 {
 		body["expectedCount"] = expectedCount
+	}
+	if force {
+		body["force"] = true
 	}
 	var out json.RawMessage
 	if err := c.do(http.MethodPost, apiPath("prds", prdID, "build", "confirm"), body, &out); err != nil {

@@ -238,16 +238,16 @@ func TestRvExpandReplaceTreeNeedsAPlanWriter(t *testing.T) {
 	live := 3 // the parent and its two children
 	tree := RoadmapPlanNode{Title: "Replaced", Children: []RoadmapPlanNode{{Title: "only child"}}}
 
-	if n, err := st.ReplaceRoadmapTree(ctx, w.member.ID, w.project.ID, &live, tree); !errors.Is(err, ErrForbidden) {
+	if n, err := st.ReplaceRoadmapTree(ctx, w.member.ID, w.project.ID, ReplaceOptions{ExpectedCount: &live}, tree); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("member ReplaceRoadmapTree: want ErrForbidden, got %d nodes written and err %v", n, err)
 	}
 	if nodes, err := st.ListRoadmap(ctx, w.owner.ID, w.project.ID); err != nil || len(nodes) != live {
 		t.Fatalf("after the refused replace: want the %d original nodes, got %d (err %v)", live, len(nodes), err)
 	}
-	if _, err := st.ReplaceRoadmapTree(ctx, w.stranger.ID, w.project.ID, &live, tree); !errors.Is(err, ErrNotFound) {
+	if _, err := st.ReplaceRoadmapTree(ctx, w.stranger.ID, w.project.ID, ReplaceOptions{ExpectedCount: &live}, tree); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("stranger ReplaceRoadmapTree: want ErrNotFound (existence not disclosed), got %v", err)
 	}
-	if n, err := st.ReplaceRoadmapTree(ctx, w.owner.ID, w.project.ID, &live, tree); err != nil || n != 2 {
+	if n, err := st.ReplaceRoadmapTree(ctx, w.owner.ID, w.project.ID, ReplaceOptions{ExpectedCount: &live}, tree); err != nil || n != 2 {
 		t.Fatalf("owner ReplaceRoadmapTree: want 2 nodes written, got %d (err %v)", n, err)
 	}
 }
