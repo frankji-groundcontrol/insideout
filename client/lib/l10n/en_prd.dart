@@ -106,6 +106,8 @@ const enPrd = <String, String>{
   'coach.offline':
       'AI coaching is offline on this server. Replies are echoes, not AI answers.',
   'coach.stage.clarify': 'Clarifying',
+  'coach.role.user': 'You',
+  'coach.role.assistant': 'Coach',
   'coach.stage.draft': 'Drafting',
   'coach.stage.critique': 'Reviewing',
   'coach.stage.finalize': 'Finalizing',

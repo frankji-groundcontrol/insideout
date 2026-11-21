@@ -93,6 +93,8 @@ const zhPrd = <String, String>{
   'coach.serviceUnavailable': 'AI 服务暂时不可用，{seconds} 秒后重试...',
   'coach.offline': '此服务器未配置 AI，教练回复为原样回显，并非 AI 回答。',
   'coach.stage.clarify': '澄清中',
+  'coach.role.user': '你',
+  'coach.role.assistant': '教练',
   'coach.stage.draft': '起草中',
   'coach.stage.critique': '批判中',
   'coach.stage.finalize': '定稿中',

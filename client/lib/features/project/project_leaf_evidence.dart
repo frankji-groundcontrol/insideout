@@ -13,6 +13,19 @@ typedef LeafEvidence = ({
   int more,
 });
 
+const _kinds = {
+  'activity',
+  'implementation',
+  'review',
+  'release',
+  'validation',
+};
+
+/// An evidence kind in the reader's language (FE-10); one the table does not
+/// know stays as the server sent it.
+String _kind(TFn t, Object? kind) =>
+    _kinds.contains(kind) ? t('evidence.kind.$kind') : '${kind ?? ''}';
+
 /// "Done, with its evidence": the evidence rows of the finished leaves, so
 /// the Evidence screen shows what finished work actually produced. The page
 /// owns [future] (it reloads with the rest of the page).
@@ -61,7 +74,7 @@ class ProjectLeafEvidence extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          '${row['kind'] ?? ''}: ${row['detail'] ?? ''}',
+                          '${_kind(l10n.t, row['kind'])}: ${row['detail'] ?? ''}',
                           style: theme.textTheme.bodySmall,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

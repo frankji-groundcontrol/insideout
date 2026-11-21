@@ -273,11 +273,14 @@ class _CoachPanelState extends State<CoachPanel> {
                     ...widget.messages.map(
                       (m) => CoachQuote(
                         text: _displayText(m.content),
-                        role: m.role,
+                        role: coachRoleLabel(l10n.t, m.role),
                       ),
                     ),
                     if (stream.isNotEmpty)
-                      CoachQuote(text: stream, role: 'assistant'),
+                      CoachQuote(
+                        text: stream,
+                        role: coachRoleLabel(l10n.t, 'assistant'),
+                      ),
                     for (final finding in findings)
                       CoachFinding(finding: finding),
                   ],

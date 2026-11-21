@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
@@ -19,6 +20,11 @@ Color coachSlab(BuildContext context) =>
 
 Color coachInk(BuildContext context) =>
     coachIsDark(context) ? Cobalt.of(context).fgPrimary : Cobalt.darkType;
+
+/// The speaker under a coach quote in the reader's language (FE-10); a role
+/// the table does not know stays as the server sent it.
+String coachRoleLabel(TFn t, String role) =>
+    role == 'user' || role == 'assistant' ? t('coach.role.$role') : role;
 
 /// Large pull-quote — the Coach's signed-off voice. Serif, 26, w600, 1.35.
 class CoachQuote extends StatelessWidget {
