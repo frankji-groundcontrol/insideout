@@ -22,7 +22,7 @@ Hosted web is built with `--dart-define=API_BASE=/api/v1`. nginx on the
 Railway `app` service serves the static Flutter bundle and proxies
 `/api/` to `$NGINX_API_UPSTREAM` (default `http://server.railway.internal:8080`,
 looked up per request; buffering off for Coach SSE). Native and `flutter run` use the public Go URL
-(`https://server-production-9c338.up.railway.app/api/v1`). Login and
+(`https://<server-host>/api/v1`). Login and
 register still set httpOnly cookies (unused by Flutter web) and also
 return top-level `accessToken` / `refreshToken`.
 
