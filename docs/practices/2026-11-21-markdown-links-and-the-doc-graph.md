@@ -10,11 +10,11 @@ reachable from an index (review 5, `IDX-03`, `IDX-05`, `IDX-11`).
 
 ## Rules
 
-1. A link to a sibling or child starts with `./`: `[plan](./40-remediation-plan.md)`,
-   `[keys](./keys/README.md)`. A link upward starts with `../`. Marksman
-   matches a link with neither prefix as a path suffix across the whole
-   workspace, so `README.md` or `01-findings-register.md` without `./` is
-   ambiguous the moment a second file has that name.
+1. A link to a sibling or child starts with `./`, as in
+   `./40-remediation-plan.md` or `./keys/README.md`; a link upward starts
+   with `../`. Marksman matches a link with neither prefix as a path suffix
+   across the whole workspace, so `README.md` or `01-findings-register.md`
+   without `./` is ambiguous the moment a second file has that name.
 2. A new file gets a link from its folder's index: the `README.md` or
    `index.md` beside it, or (for the board and the changelogs) the month
    file under that folder's `index/`. A new folder gets a link into it.
