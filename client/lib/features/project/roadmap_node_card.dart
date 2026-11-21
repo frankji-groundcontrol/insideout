@@ -106,7 +106,9 @@ class RoadmapNodeCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(node.title, style: theme.textTheme.titleMedium),
-          if (node.editorName != null)
+          // The last editor, unlabelled; a compact band card leaves it out so
+          // it does not read as a second owner line.
+          if (node.editorName != null && !compact)
             Text(node.editorName!, style: theme.textTheme.bodySmall),
           if (node.deadline != null)
             Padding(

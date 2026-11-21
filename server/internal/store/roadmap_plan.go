@@ -150,7 +150,7 @@ func insertPlanNode(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID
 	return count, nil
 }
 
-// seedFirstLeaf sets the first leaf in_progress with a deadline, so a freshly
+// seedFirstLeaf sets the first leaf (depth first, by position) in_progress with a deadline, so a freshly
 // built tree shows on Progress instead of filtering out entirely (every new
 // node would otherwise be pending + undeadlined). The builder owns it: work in
 // progress has one human owner (rv5-FEAT-05), on the record as a delegate row
@@ -161,9 +161,18 @@ func seedFirstLeaf(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID)
 			UPDATE insideout.roadmap_nodes leaf
 			SET status = 'in_progress', deadline = now() + interval '7 days', owner_user_id = $2
 			WHERE leaf.id = (
-				SELECT n.id FROM insideout.roadmap_nodes n
-				WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
-				ORDER BY n.created_at, n.position
+				-- Depth first by position: one build shares one created_at.
+				WITH RECURSIVE walk AS (
+					SELECT n.id, ARRAY[n.position] AS path FROM insideout.roadmap_nodes n
+					WHERE n.project_id = $1 AND n.parent_id IS NULL
+					UNION ALL
+					SELECT c.id, w.path || c.position FROM insideout.roadmap_nodes c
+					JOIN walk w ON c.parent_id = w.id
+				)
+				SELECT w.id FROM walk w
+				WHERE cardinality(w.path) > 1 AND NOT EXISTS (
+					SELECT 1 FROM insideout.roadmap_nodes k WHERE k.parent_id = w.id)
+				ORDER BY w.path
 				LIMIT 1
 			)
 			RETURNING leaf.id

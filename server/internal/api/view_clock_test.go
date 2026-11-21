@@ -136,13 +136,14 @@ func TestRoadmapNodePressureFollowsTheServerClock(t *testing.T) {
 		})
 	}
 
-	t.Run("the validate response follows the clock too", func(t *testing.T) {
+	// Validated work is finished, so its response carries no pressure at all.
+	t.Run("the validate response carries no pressure", func(t *testing.T) {
 		vid := w.roadmapNode(t, "Prove the pilot", `{"status":"in_progress",`+roadmapDeadlineJSON()+`}`, `{"status":"done","completionReason":"The pilot shipped."}`)
 		w.pinClock(roadmapDeadline.Add(-30 * 24 * time.Hour))
 		code, body := w.call(w.owner, "POST", "/api/v1/roadmap/"+vid+"/validate", `{"reason":"pilot users finished the tour"}`)
 		expect(t, "validate", code, body, http.StatusOK)
-		if got := decodeAs[roadmapNodeView](t, body).Pressure; got != roadmaptime.Normal {
-			t.Errorf("validate response pressure = %q, want %q", got, roadmaptime.Normal)
+		if got := decodeAs[roadmapNodeView](t, body).Pressure; got != "" {
+			t.Errorf("validate response pressure = %q, want none", got)
 		}
 	})
 }
@@ -169,8 +170,12 @@ func TestRoadmapProgressPressureFollowsTheServerClock(t *testing.T) {
 				name string
 				item roadmaptime.ProgressItem
 			}{{"now", p.Now[0]}, {"next", p.Next[0]}, {"done", p.DoneItems[0]}} {
-				if lane.item.Pressure != tc.want {
-					t.Errorf("%s pressure = %q, want %q", lane.name, lane.item.Pressure, tc.want)
+				want := tc.want
+				if lane.name == "done" {
+					want = "" // finished work carries no pressure
+				}
+				if lane.item.Pressure != want {
+					t.Errorf("%s pressure = %q, want %q", lane.name, lane.item.Pressure, want)
 				}
 			}
 		})

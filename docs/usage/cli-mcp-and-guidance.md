@@ -76,7 +76,7 @@ insideout register you@example.com "Display Name"   # password prompt
 insideout login you@example.com                     # password prompt (default)
 insideout login --code you@example.com              # emailed 6-digit code prompt
 insideout login --magic you@example.com             # paste the emailed link (or token)
-insideout forgot-password you@example.com           # emails a reset link
+insideout forgot-password you@example.com           # emails a reset link, then waits (up to 60 min) until it is used
 insideout reset-password                            # paste link/token + new password
 ```
 

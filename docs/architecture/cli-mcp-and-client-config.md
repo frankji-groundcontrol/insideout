@@ -187,8 +187,11 @@ contract is stated and checked rather than assumed
   pool budget (the pool still serves its full size) and shutdown does not wait
   on it.
 - The holder keeps the lock for the process lifetime; Postgres ends the session,
-  and so the lock, when the process exits. A second process finds the lock held
-  and logs an ERROR naming it.
+  and so the lock, when the process exits. A second process finds the lock held,
+  logs a WARN, and retries every second for two minutes (a rolling deploy's old
+  process may still be shutting down). It logs an INFO if it takes the lock
+  over, or an ERROR naming the lock once the two minutes run out
+  ([deployment](../usage/deployment.md)).
 - It is advisory: it never blocks startup or serving, and a database that
   cannot be reached for the check only logs a warning. It is separate from the
   `insideout:migrate` lock, which only serializes migration runs.

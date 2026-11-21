@@ -23,6 +23,19 @@ func TestPressure(t *testing.T) {
 	}
 }
 
+func TestNodePressureFinishedWorkHasNone(t *testing.T) {
+	now := time.Date(2026, 8, 22, 12, 0, 0, 0, time.UTC)
+	late := now.Add(-time.Hour)
+	for _, s := range []string{"done", "validated"} {
+		if got := NodePressure(s, late, now); got != "" {
+			t.Errorf("NodePressure(%s, overdue) = %q, want none", s, got)
+		}
+	}
+	if got := NodePressure("in_progress", late, now); got != Overdue {
+		t.Errorf("NodePressure(in_progress, overdue) = %q, want %s", got, Overdue)
+	}
+}
+
 func ptr(t time.Time) *time.Time { return &t }
 
 func TestAssemble(t *testing.T) {

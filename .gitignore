@@ -141,6 +141,7 @@ vite.config.ts.timestamp-*
 
 .trae/
 .playwright-mcp/
+.impeccable/
 # Local agent/tool config (machine-specific paths; never commit)
 .claude/
 # JuanLeMe-era coding-tool scratch (untracked + purged from history 2026-07-27)
