@@ -97,12 +97,12 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 			httpx.WriteError(w, http.StatusForbidden, "an invitation is required to register", "", nil)
 			return
 		}
+		// Kept on purpose: a bad invitation is a 403 refusal, not a 404.
 		if err := s.store.ConsumeInvitation(r.Context(), req.Email, auth.HashOneTimeToken(req.InviteCode), uuid.Nil); err == store.ErrNotFound {
 			httpx.WriteError(w, http.StatusForbidden, "invalid or expired invitation", "", nil)
 			return
 		} else if err != nil {
-			s.log.Error("register: consume invitation", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+			s.writeStoreError(w, "register: consume invitation", err, nil)
 			return
 		}
 	}
@@ -115,13 +115,8 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user, err := s.store.CreateUser(r.Context(), req.Email, hash, req.Username)
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "an account with this email already exists", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("create user", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create user", err, errMsgs{store.ErrConflict: "an account with this email already exists"})
 		return
 	}
 	if mode == store.SignupInvitationOnly {
@@ -161,8 +156,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		s.log.Error("get user by email", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get user by email", err, nil)
 		return
 	}
 
@@ -201,6 +195,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	}
 
 	hash := auth.HashRefreshToken(raw)
+	// Kept on purpose: a spent or unknown token is a 401, not a 404.
 	sess, err := s.store.GetActiveSessionByHash(r.Context(), hash)
 	if errors.Is(err, store.ErrNotFound) {
 		s.refuseNotLiveRefresh(r.Context(), w, hash)
@@ -208,8 +203,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		s.log.Error("get session", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get session", err, nil)
 		return
 	}
 
@@ -230,8 +224,7 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		s.log.Error("rotate session", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "rotate session", err, nil)
 		return
 	}
 

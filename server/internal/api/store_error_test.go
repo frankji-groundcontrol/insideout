@@ -28,6 +28,7 @@ func TestWriteStoreErrorMapsEachStoreErrorOnce(t *testing.T) {
 		// A wrapped error is matched before the sentinel it wraps.
 		{store.ErrHandoverNeedsAdmin, http.StatusForbidden, "handover_needs_admin", ""},
 		{store.ErrOwnerNotMember, http.StatusBadRequest, "owner_not_member", ""},
+		{store.ErrRepoTaken, http.StatusConflict, "github_repo_already_linked", "this repository is already linked to another project"},
 		{fmt.Errorf("%w: a to b", store.ErrInvalidTransition), http.StatusBadRequest, "invalid_transition", "invalid status transition: a to b"},
 		{errors.New("boom"), http.StatusInternalServerError, "internal_server_error", "internal error"},
 	} {

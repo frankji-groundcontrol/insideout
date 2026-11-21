@@ -213,8 +213,7 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 
 	project, err := s.store.GetProjectForMember(r.Context(), node.ProjectID, userID)
 	if err != nil {
-		s.log.Error("get project for expand", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get project for expand", err, nil)
 		return
 	}
 

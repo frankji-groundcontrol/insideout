@@ -51,10 +51,10 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		s.writeStoreError(w, "agent context: project", err, errMsgs{store.ErrNotFound: "project not found"})
 		return
 	}
+	// Kept on purpose: a project with no roadmap yet reads as an empty one.
 	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
-		s.log.Error("agent context: roadmap", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent context: roadmap", err, nil)
 		return
 	}
 	evidence, err := s.store.EvidenceCountsByProject(r.Context(), userID, pid)

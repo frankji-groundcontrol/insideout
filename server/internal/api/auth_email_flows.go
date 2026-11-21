@@ -45,14 +45,14 @@ func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Kept on purpose: an unknown account answers like a known one (no enumeration).
 	user, err := s.store.GetUserByEmail(r.Context(), email)
 	if errors.Is(err, store.ErrNotFound) {
 		s.writeAuthMail(w, nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("magic link: get user by email", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "magic link: get user by email", err, nil)
 		return
 	}
 
@@ -77,25 +77,25 @@ func (s *Server) handleMagicLinkConsume(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Kept on purpose: a spent or unknown token is a 401, not a 404.
 	userID, err := s.store.ConsumeAuthToken(r.Context(), store.AuthTokenMagicLink, auth.HashOneTimeToken(strings.TrimSpace(req.Token)))
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired link", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("magic link: consume", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "magic link: consume", err, nil)
 		return
 	}
 
+	// Kept on purpose: a link whose account is gone is a 401, like a dead link.
 	user, err := s.store.GetUserByID(r.Context(), userID)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired link", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("magic link: get user", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "magic link: get user", err, nil)
 		return
 	}
 
@@ -142,14 +142,14 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenHash := auth.HashOneTimeToken(req.Token)
+	// Kept on purpose: a spent or unknown token is a 401, not a 404.
 	userID, err := s.store.ConsumeAuthToken(r.Context(), store.AuthTokenPasswordReset, tokenHash)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired reset link", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("reset password: consume", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "reset password: consume", err, nil)
 		return
 	}
 
@@ -160,8 +160,7 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.UpdatePasswordHash(r.Context(), userID, hash); err != nil {
-		s.log.Error("reset password: update hash", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "reset password: update hash", err, nil)
 		return
 	}
 	if err := s.store.RevokeUserSessions(r.Context(), userID); err != nil {
@@ -191,14 +190,14 @@ func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Kept on purpose: an unknown account answers like a known one (no enumeration).
 	user, err := s.store.GetUserByEmail(r.Context(), email)
 	if errors.Is(err, store.ErrNotFound) {
 		s.writeAuthMail(w, nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("login code: get user by email", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "login code: get user by email", err, nil)
 		return
 	}
 
@@ -231,23 +230,23 @@ func (s *Server) handleLoginCodeVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Kept on purpose: an unknown account answers like a known one (no enumeration).
 	user, err := s.store.GetUserByEmail(r.Context(), email)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired code", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("login code: get user by email", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "login code: get user by email", err, nil)
 		return
 	}
 
+	// Kept on purpose: a spent or unknown token is a 401, not a 404.
 	if err := s.store.VerifyLoginCode(r.Context(), user.ID, auth.HashOneTimeToken(code)); errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired code", "", nil)
 		return
 	} else if err != nil {
-		s.log.Error("login code: verify", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "login code: verify", err, nil)
 		return
 	}
 

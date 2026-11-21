@@ -27,10 +27,22 @@ var storeErrors = []struct {
 	{store.ErrOwnerNotMember, http.StatusBadRequest, "owner_not_member", "the new owner must be a member of this workspace"},
 	{store.ErrLastAdmin, http.StatusConflict, "last_admin", "a workspace needs at least one admin"},
 	{store.ErrInvalidTransition, http.StatusBadRequest, "invalid_transition", ""},
+	{store.ErrRepoTaken, http.StatusConflict, "github_repo_already_linked", "this repository is already linked to another project"},
 	{store.ErrNotFound, http.StatusNotFound, "", "not found"},
 	{store.ErrForbidden, http.StatusForbidden, "", "you may not do this"},
 	{store.ErrConflict, http.StatusConflict, "", "conflict"},
 	{store.ErrValidation, http.StatusBadRequest, "", "invalid request"},
+}
+
+// isStoreError reports whether writeStoreError has a status for err, for a
+// handler whose call can fail in the store or elsewhere.
+func isStoreError(err error) bool {
+	for _, e := range storeErrors {
+		if errors.Is(err, e.err) {
+			return true
+		}
+	}
+	return false
 }
 
 // writeStoreError answers err from a store call: a known store error with its

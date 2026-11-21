@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -48,7 +47,7 @@ func (s *Server) handlePresenceList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := s.store.GetProjectForMember(r.Context(), pid, userID); err != nil {
-		presenceProjectError(w, err)
+		s.writeStoreError(w, "presence: get project", err, presenceProjectMsgs)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, s.presence.List(pid.String()))
@@ -68,7 +67,7 @@ func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := s.store.GetProjectForMember(r.Context(), pid, userID); err != nil {
-		presenceProjectError(w, err)
+		s.writeStoreError(w, "presence: get project", err, presenceProjectMsgs)
 		return
 	}
 	var req struct {
@@ -94,7 +93,7 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if _, err := s.store.GetProjectForMember(r.Context(), pid, userID); err != nil {
-		presenceProjectError(w, err)
+		s.writeStoreError(w, "presence: get project", err, presenceProjectMsgs)
 		return
 	}
 	release, ok := s.takeStreamSlot(w, userID, pid)
@@ -173,13 +172,9 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func presenceProjectError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, store.ErrNotFound):
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-	case errors.Is(err, store.ErrForbidden):
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-	default:
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-	}
+// presenceProjectMsgs is what the presence routes say when the project read
+// before them fails.
+var presenceProjectMsgs = errMsgs{
+	store.ErrNotFound:  "project not found",
+	store.ErrForbidden: "you must be a member of this workspace",
 }

@@ -28,10 +28,10 @@ func (s *Server) answerForgotPassword(w http.ResponseWriter, r *http.Request, em
 	{
 		user, err := s.store.GetUserByEmail(r.Context(), email)
 		switch {
+		// Kept on purpose: an unknown account answers like a known one (no enumeration).
 		case errors.Is(err, store.ErrNotFound):
 		case err != nil:
-			s.log.Error("forgot password: get user by email", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+			s.writeStoreError(w, "forgot password: get user by email", err, nil)
 			return
 		default:
 			token, hash, err := auth.GenerateOneTimeToken()
@@ -41,8 +41,7 @@ func (s *Server) answerForgotPassword(w http.ResponseWriter, r *http.Request, em
 				return
 			}
 			if err := s.store.CreateAuthToken(r.Context(), user.ID, store.AuthTokenPasswordReset, hash, expires); err != nil {
-				s.log.Error("forgot password: store token", "error", err)
-				httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+				s.writeStoreError(w, "forgot password: store token", err, nil)
 				return
 			}
 			tokenHash = hash
@@ -54,8 +53,7 @@ func (s *Server) answerForgotPassword(w http.ResponseWriter, r *http.Request, em
 	}
 	watch, err := s.store.CreateResetWatch(r.Context(), tokenHash, expires)
 	if err != nil {
-		s.log.Error("forgot password: create watch", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "forgot password: create watch", err, nil)
 		return
 	}
 	s.writeAuthMail(w, map[string]any{"watch": watch.String()})
@@ -94,8 +92,7 @@ func (s *Server) handleResetWatch(w http.ResponseWriter, r *http.Request) {
 	}
 	status, err := s.store.ResetWatchStatus(r.Context(), id)
 	if err != nil {
-		s.log.Error("reset watch", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "reset watch", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]string{"status": status})

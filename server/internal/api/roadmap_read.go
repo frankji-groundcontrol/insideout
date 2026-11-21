@@ -74,14 +74,14 @@ func (s *Server) handleReadRoadmapNode(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Kept on purpose: a refusal answers 404 so a non-member cannot learn the row exists.
 	read, err := s.store.ReadRoadmapNode(r.Context(), userID, nid)
 	if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("read roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "read roadmap node", err, nil)
 		return
 	}
 	out := roadmapNodeReadView{
@@ -112,14 +112,14 @@ func (s *Server) handleMyRoadmap(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Kept on purpose: a refusal answers 404 so a non-member cannot learn the row exists.
 	roots, err := s.store.ListMyRoadmapRoots(r.Context(), userID, wsID)
 	if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("list my roadmap", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list my roadmap", err, nil)
 		return
 	}
 	now := s.now()

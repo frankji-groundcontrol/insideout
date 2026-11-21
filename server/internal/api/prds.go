@@ -153,19 +153,18 @@ func (s *Server) handleListRevisions(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// PRD read pre-check, kept on purpose: an unreadable PRD is a 404 before the list.
 	if _, err := s.store.GetPrdForMember(r.Context(), pid, userID); errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
 		return
 	} else if err != nil {
-		s.log.Error("get prd", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get prd", err, nil)
 		return
 	}
 
 	revs, err := s.store.ListRevisions(r.Context(), userID, pid)
 	if err != nil {
-		s.log.Error("list revisions", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list revisions", err, nil)
 		return
 	}
 	views := make([]revisionView, len(revs))
@@ -297,12 +296,12 @@ func (s *Server) handleGetPrdConversation(w http.ResponseWriter, r *http.Request
 	if !ok {
 		return
 	}
+	// PRD read pre-check, kept on purpose: an unreadable PRD is a 404 before the list.
 	if _, err := s.store.GetPrdForMember(r.Context(), pid, userID); errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
 		return
 	} else if err != nil {
-		s.log.Error("get prd", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get prd", err, nil)
 		return
 	}
 

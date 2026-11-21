@@ -66,7 +66,8 @@ func (s *Server) handleDelegateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	n, err := s.store.DelegateRoadmapNode(r.Context(), userID, nid, to, note)
-	s.writeOwnerChange(w, n, err, "delegate roadmap node")
+	s.writeOwnerChange(w, n, err, "delegate roadmap node",
+		"only the project owner, a workspace admin, or the owner of the branch above can change this node's owner")
 }
 
 func (s *Server) handleHandBackNode(w http.ResponseWriter, r *http.Request) {
@@ -87,20 +88,13 @@ func (s *Server) handleHandBackNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	n, err := s.store.HandBackRoadmapNode(r.Context(), userID, nid, note)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the node's current owner can hand it back", "", nil)
-		return
-	}
-	s.writeOwnerChange(w, n, err, "hand back roadmap node")
+	s.writeOwnerChange(w, n, err, "hand back roadmap node", "only the node's current owner can hand it back")
 }
 
-// writeOwnerChange answers a delegate or hand-back.
-func (s *Server) writeOwnerChange(w http.ResponseWriter, n *store.RoadmapNode, err error, what string) {
+// writeOwnerChange answers a delegate or hand-back; forbidden says who may.
+func (s *Server) writeOwnerChange(w http.ResponseWriter, n *store.RoadmapNode, err error, what, forbidden string) {
 	if err != nil {
-		s.writeStoreError(w, what, err, errMsgs{
-			store.ErrNotFound:  "node not found",
-			store.ErrForbidden: "only the project owner, a workspace admin, or the owner of the branch above can change this node's owner",
-		})
+		s.writeStoreError(w, what, err, errMsgs{store.ErrNotFound: "node not found", store.ErrForbidden: forbidden})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
@@ -125,14 +119,14 @@ func (s *Server) handleListAssignments(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Kept on purpose: a refusal answers 404 so a non-member cannot learn the row exists.
 	rows, err := s.store.ListNodeAssignments(r.Context(), userID, nid)
 	if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
 		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error("list node assignments", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list node assignments", err, nil)
 		return
 	}
 	out := make([]nodeAssignmentView, len(rows))

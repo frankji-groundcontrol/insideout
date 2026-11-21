@@ -93,19 +93,14 @@ func (s *Server) requireRepoVisible(ctx context.Context, owner, repo string) err
 // the answer does not tell which repos are linked in other workspaces
 // (rv4-FR-F199).
 func (s *Server) writeRepoStoreError(w http.ResponseWriter, err error) {
-	switch {
-	case errors.Is(err, store.ErrNotFound):
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-	case errors.Is(err, store.ErrForbidden):
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can link a repo", "", nil)
-	case errors.Is(err, store.ErrRepoHeldOutOfReach):
+	if errors.Is(err, store.ErrRepoHeldOutOfReach) {
 		s.writeGithubError(w, errRepoNotVisible, "")
-	case errors.Is(err, store.ErrRepoTaken):
-		httpx.WriteError(w, http.StatusConflict, "this repository is already linked to another project", "github_repo_already_linked", nil)
-	default:
-		s.log.Error("set project repo", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
 	}
+	s.writeStoreError(w, "set project repo", err, errMsgs{
+		store.ErrNotFound:  "project not found",
+		store.ErrForbidden: "only the project owner or a workspace admin can link a repo",
+	})
 }
 
 // writeGithubError answers a failed call about a repo to GitHub. Transport
@@ -154,12 +149,11 @@ func (s *Server) handleSyncGithub(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "no GitHub repo linked to this project yet", "", nil)
 		return
 	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can sync", "", nil)
+	if isStoreError(err) {
+		s.writeStoreError(w, "sync github", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "only the project owner or a workspace admin can sync",
+		})
 		return
 	}
 	if err != nil {

@@ -37,13 +37,8 @@ func (s *Server) agentRootRefuses(w http.ResponseWriter, r *http.Request, nodes 
 			return true
 		}
 		in, err := s.store.NodeInSubtree(r.Context(), userID, *root, *n)
-		if errors.Is(err, store.ErrNotFound) {
-			httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-			return true
-		}
 		if err != nil {
-			s.log.Error("agent root check", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+			s.writeStoreError(w, "agent root check", err, errMsgs{store.ErrNotFound: "node not found"})
 			return true
 		}
 		if !in {
@@ -75,14 +70,14 @@ func (s *Server) handleAgentToken(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			return
 		}
+		// Kept on purpose: a refusal answers 404 so a non-member cannot learn the row exists.
 		_, err := s.store.GetRoadmapNode(r.Context(), userID, id)
 		if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
 			httpx.WriteError(w, http.StatusNotFound, "root node not found", "", nil)
 			return
 		}
 		if err != nil {
-			s.log.Error("agent token root", "error", err)
-			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+			s.writeStoreError(w, "agent token root", err, nil)
 			return
 		}
 		root = &id

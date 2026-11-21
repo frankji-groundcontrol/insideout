@@ -96,6 +96,14 @@ func TestStoreErrorAnswersOfTheProjectSideRoutes(t *testing.T) {
 		{"sync an unknown project", w.member, "POST", noProj + "/sync-github", "", http.StatusNotFound, "not_found", "project not found"},
 		{"sync by a plain member", w.member, "POST", w.proj() + "/sync-github", "", http.StatusForbidden, "forbidden", "only the project owner or a workspace admin can sync"},
 	})
+	node := decodeAs[struct{ ID string }](t, w.must(t, w.owner, "POST", w.proj()+"/roadmap", `{"title":"Pinned"}`, http.StatusCreated))
+	nodePath := "/api/v1/roadmap/" + node.ID
+	w.expectErrors(t, []errCase{
+		{"hand back by a non-owner", w.member, "POST", nodePath + "/handback", `{}`, http.StatusForbidden, "forbidden", "only the node's current owner can hand it back"},
+		{"delegate by a plain member", w.member, "POST", nodePath + "/delegate", `{"toUserId":` + js(w.member.ID.String()) + `}`, http.StatusForbidden, "forbidden",
+			"only the project owner, a workspace admin, or the owner of the branch above can change this node's owner"},
+		{"hand back an unknown node", w.member, "POST", "/api/v1/roadmap/" + uuid.NewString() + "/handback", `{}`, http.StatusNotFound, "not_found", "node not found"},
+	})
 }
 
 func TestStoreErrorAnswerOfInvitationRevoke(t *testing.T) {

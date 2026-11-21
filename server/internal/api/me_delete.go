@@ -31,14 +31,12 @@ func (s *Server) handleDeleteMe(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := s.store.GetUserByID(r.Context(), userID)
 	if err != nil {
-		s.log.Error("delete me: get user", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete me: get user", err, nil)
 		return
 	}
 	cred, err := s.store.GetUserByEmail(r.Context(), user.Email)
 	if err != nil {
-		s.log.Error("delete me: credential", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete me: credential", err, nil)
 		return
 	}
 	ok, err := auth.VerifyPassword(cred.PasswordHash, req.Password)
@@ -52,8 +50,7 @@ func (s *Server) handleDeleteMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.store.EraseUser(r.Context(), userID); err != nil {
-		s.log.Error("delete me", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete me", err, nil)
 		return
 	}
 	s.clearAuthCookies(w)

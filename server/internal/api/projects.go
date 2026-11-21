@@ -116,19 +116,18 @@ func (s *Server) handleListProjects(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Membership pre-check, kept on purpose: a non-member gets 404, not an empty list.
 	if _, err := s.store.GetMembership(r.Context(), wsID, userID); errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
 		return
 	} else if err != nil {
-		s.log.Error("get membership", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get membership", err, nil)
 		return
 	}
 
 	list, err := s.store.ListProjectsForWorkspace(r.Context(), userID, wsID)
 	if err != nil {
-		s.log.Error("list projects", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list projects", err, nil)
 		return
 	}
 	now := s.now()

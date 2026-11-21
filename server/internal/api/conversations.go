@@ -62,13 +62,8 @@ func (s *Server) handleGetConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	conv, err := s.store.GetConversationForOwner(r.Context(), cid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "conversation not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get conversation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get conversation", err, errMsgs{store.ErrNotFound: "conversation not found"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, conversationResponse(*conv))
@@ -97,17 +92,11 @@ func (s *Server) handleStartPrdConversation(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	conv, created, err := s.store.EnsureConversationForPrd(r.Context(), userID, pid, req.Locale)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author or a workspace admin can coach this PRD", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("start prd conversation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "start prd conversation", err, errMsgs{
+			store.ErrNotFound:  "PRD not found",
+			store.ErrForbidden: "only the author or a workspace admin can coach this PRD",
+		})
 		return
 	}
 	status := http.StatusOK
@@ -130,19 +119,14 @@ func (s *Server) handleListConversationMessages(w http.ResponseWriter, r *http.R
 	if !ok {
 		return
 	}
-	if _, err := s.store.GetConversationForOwner(r.Context(), cid, userID); errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "conversation not found", "", nil)
-		return
-	} else if err != nil {
-		s.log.Error("get conversation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+	if _, err := s.store.GetConversationForOwner(r.Context(), cid, userID); err != nil {
+		s.writeStoreError(w, "get conversation", err, errMsgs{store.ErrNotFound: "conversation not found"})
 		return
 	}
 
 	msgs, err := s.store.ListAgentMessages(r.Context(), userID, cid)
 	if err != nil {
-		s.log.Error("list messages", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list messages", err, nil)
 		return
 	}
 	views := make([]messageView, 0, len(msgs))
@@ -178,13 +162,8 @@ func (s *Server) handleSendConversationMessage(w http.ResponseWriter, r *http.Re
 	}
 
 	conv, err := s.store.GetConversationForOwner(r.Context(), cid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "conversation not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get conversation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get conversation", err, errMsgs{store.ErrNotFound: "conversation not found"})
 		return
 	}
 	if conv.Status != "active" {
@@ -254,20 +233,19 @@ func (s *Server) answerStage(w http.ResponseWriter, r *http.Request, verb string
 		httpx.WriteError(w, http.StatusBadRequest, "stage is required", "", nil)
 		return
 	}
+	// Kept on purpose: no stage waiting is a 409 conflict, not a 404.
 	err := answer(r.Context(), userID, cid, req.Stage)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusConflict, "that stage is not waiting for confirmation", "", nil)
 		return
 	}
 	if err != nil {
-		s.log.Error(verb+" conversation stage", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, verb+" conversation stage", err, nil)
 		return
 	}
 	conv, err := s.store.GetConversationForOwner(r.Context(), cid, userID)
 	if err != nil {
-		s.log.Error("get conversation after "+verb, "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get conversation after "+verb, err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, conversationResponse(*conv))
