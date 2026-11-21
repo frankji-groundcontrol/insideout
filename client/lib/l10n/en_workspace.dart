@@ -168,6 +168,7 @@ const enWorkspace = <String, String>{
       'Plan the work, then write the cohort. Shade is distance, not decoration.',
   'evidence.title': 'Evidence',
   'evidence.lead': 'Git and project updates sit on the same field.',
+  'proposal.pending': 'Awaiting a decision',
   'proposal.accept': 'Accept',
   'proposal.reject': 'Reject',
   // project (close-open-gaps)

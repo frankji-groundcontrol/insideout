@@ -24,6 +24,7 @@ Future<void> _pump(WidgetTester tester, String locale) async {
         home: Scaffold(
           body: SingleChildScrollView(
             child: ProjectUpdatesFeed(
+              canDecide: true,
               projectId: 'p1',
               onChanged: () async {},
               onEdit: (u, content) async {},

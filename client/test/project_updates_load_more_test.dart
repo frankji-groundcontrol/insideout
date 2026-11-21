@@ -69,6 +69,7 @@ void main() {
           home: Scaffold(
             body: SingleChildScrollView(
               child: ProjectUpdatesFeed(
+                canDecide: true,
                 projectId: 'p1',
                 nextCursor: 'u1',
                 onChanged: () async {},

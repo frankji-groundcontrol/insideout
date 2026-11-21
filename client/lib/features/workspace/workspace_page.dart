@@ -216,25 +216,28 @@ class _WorkspacePageState extends State<WorkspacePage> {
               label: l10n.t('workspace.settings'),
               onTap: () => context.go('/workspace/${widget.id}/settings'),
             ),
-            const SizedBox(height: Cobalt.space4),
-            Wrap(
-              spacing: Cobalt.space3,
-              runSpacing: Cobalt.space3,
-              children: [
-                BlockButton(
-                  label: l10n.t('common.edit'),
-                  icon: Icons.edit_outlined,
-                  variant: BlockButtonVariant.secondary,
-                  onPressed: () => _edit(data.ws),
-                ),
-                BlockButton(
-                  label: l10n.t('workspace.deleteWorkspace'),
-                  icon: Icons.delete_outline,
-                  variant: BlockButtonVariant.danger,
-                  onPressed: _delete,
-                ),
-              ],
-            ),
+            // Edit and delete are an admin's (FE-05; delete is the creator's).
+            if (data.ws.myRole == 'admin') ...[
+              const SizedBox(height: Cobalt.space4),
+              Wrap(
+                spacing: Cobalt.space3,
+                runSpacing: Cobalt.space3,
+                children: [
+                  BlockButton(
+                    label: l10n.t('common.edit'),
+                    icon: Icons.edit_outlined,
+                    variant: BlockButtonVariant.secondary,
+                    onPressed: () => _edit(data.ws),
+                  ),
+                  BlockButton(
+                    label: l10n.t('workspace.deleteWorkspace'),
+                    icon: Icons.delete_outline,
+                    variant: BlockButtonVariant.danger,
+                    onPressed: _delete,
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: Cobalt.space8),
             if (data.projects.isEmpty)
               BlockEmpty(

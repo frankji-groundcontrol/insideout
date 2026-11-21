@@ -154,12 +154,13 @@ class _SettingsPageState extends State<SettingsPage> {
                           controller: description,
                         ),
                         const SizedBox(height: Cobalt.space4),
-                        BlockButton(
-                          label: l10n.t('common.save'),
-                          icon: Icons.save_outlined,
-                          expand: true,
-                          onPressed: _save,
-                        ),
+                        if (_admin(snap.data!.ws))
+                          BlockButton(
+                            label: l10n.t('common.save'),
+                            icon: Icons.save_outlined,
+                            expand: true,
+                            onPressed: _save,
+                          ),
                         const SizedBox(height: Cobalt.space8),
                         _inviteCard(context, snap.data!.ws),
                         const SizedBox(height: Cobalt.space8),
@@ -169,17 +170,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         const SizedBox(height: Cobalt.space3),
                         for (final m in snap.data!.members) ...[
-                          _memberCard(context, m),
+                          _memberCard(context, m, _admin(snap.data!.ws)),
                           const SizedBox(height: Cobalt.space3),
                         ],
                         const SizedBox(height: Cobalt.space4),
-                        BlockButton(
-                          label: l10n.t('workspace.deleteWorkspace'),
-                          icon: Icons.delete_outline,
-                          variant: BlockButtonVariant.danger,
-                          expand: true,
-                          onPressed: _delete,
-                        ),
+                        if (_admin(snap.data!.ws))
+                          BlockButton(
+                            label: l10n.t('workspace.deleteWorkspace'),
+                            icon: Icons.delete_outline,
+                            variant: BlockButtonVariant.danger,
+                            expand: true,
+                            onPressed: _delete,
+                          ),
                       ],
                     ),
                   ),
@@ -222,7 +224,12 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _memberCard(BuildContext context, WorkspaceMember m) {
+  /// Workspace edits and member management are an admin's (FE-05).
+  bool _admin(Workspace ws) => ws.myRole == 'admin';
+
+  /// [admin] manages everyone; anyone else only leaves (removes themselves).
+  Widget _memberCard(BuildContext context, WorkspaceMember m, bool admin) {
+    final self = m.userId == context.read<Session>().user?.id;
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     return FieldCard(
@@ -244,24 +251,27 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          PopupMenuButton<String>(
-            tooltip: l10n.t('common.moreActions'),
-            onSelected: (value) => _memberAction(m, value),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'admin',
-                child: Text(l10n.t('workspace.role.admin')),
-              ),
-              PopupMenuItem(
-                value: 'member',
-                child: Text(l10n.t('workspace.role.member')),
-              ),
-              PopupMenuItem(
-                value: 'remove',
-                child: Text(l10n.t('workspace.removeMember')),
-              ),
-            ],
-          ),
+          if (admin || self)
+            PopupMenuButton<String>(
+              tooltip: l10n.t('common.moreActions'),
+              onSelected: (value) => _memberAction(m, value),
+              itemBuilder: (_) => [
+                if (admin) ...[
+                  PopupMenuItem(
+                    value: 'admin',
+                    child: Text(l10n.t('workspace.role.admin')),
+                  ),
+                  PopupMenuItem(
+                    value: 'member',
+                    child: Text(l10n.t('workspace.role.member')),
+                  ),
+                ],
+                PopupMenuItem(
+                  value: 'remove',
+                  child: Text(l10n.t('workspace.removeMember')),
+                ),
+              ],
+            ),
         ],
       ),
     );

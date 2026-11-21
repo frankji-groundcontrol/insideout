@@ -25,6 +25,12 @@ class _Api extends ApiClient {
   final calls = <String>[];
   var loads = 0;
 
+  // The signed-in u1 is a workspace admin: every project control shows.
+  @override
+  Future<List<WorkspaceMember>> listMembers(String id) async => [
+    WorkspaceMember(userId: 'u1', username: 'u1', email: '', role: 'admin'),
+  ];
+
   @override
   Future<Map<String, dynamic>> getProject(String id) async {
     loads++;
@@ -36,6 +42,7 @@ class _Api extends ApiClient {
       'status': 'active',
       'repoUrl': '',
       'ownerId': 'u1',
+      'canWritePlan': true,
       'updates': [
         {
           'id': 'up1',
@@ -113,7 +120,14 @@ Future<_Api> _pump(WidgetTester tester) async {
   final api = _Api();
   final session = Session()
     ..ready = true
-    ..api = api;
+    ..api = api
+    ..user = UserProfile(
+      id: 'u1',
+      email: '',
+      username: 'u1',
+      bio: '',
+      keywords: const [],
+    );
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -164,7 +178,7 @@ void main() {
     final fields = _inDialog(find.byType(TextField));
     await tester.enterText(fields.at(0), '  Renamed  ');
     await tester.enterText(fields.at(1), 'new desc');
-    await tester.tap(_inDialog(find.byType(DropdownButton<String>)));
+    await tester.tap(_inDialog(find.byType(DropdownButton<String>)).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Paused').last);
     await tester.pumpAndSettle();
@@ -207,7 +221,7 @@ void main() {
     final api = await _pump(tester);
     await tester.tap(find.text('Post an update'));
     await tester.pumpAndSettle();
-    await tester.tap(_inDialog(find.byType(DropdownButton<String>)));
+    await tester.tap(_inDialog(find.byType(DropdownButton<String>)).first);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Blocker').last);
     await tester.pumpAndSettle();
@@ -269,7 +283,7 @@ void main() {
     tester,
   ) async {
     await _pump(tester);
-    await tester.tap(find.text('Roadmap'));
+    await tester.tap(find.text('Roadmap').first);
     await tester.pumpAndSettle();
     expect(find.text('roadmap p1'), findsOneWidget);
   });

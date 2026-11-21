@@ -40,6 +40,7 @@ class _FakeApi extends ApiClient {
     'status': 'active',
     'repoUrl': '',
     'ownerId': 'u1',
+    'canWritePlan': true,
     'updates': updates,
   };
 

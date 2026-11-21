@@ -24,6 +24,7 @@ class ProjectUpdatesFeed extends StatefulWidget {
     required this.onChanged,
     required this.onEdit,
     required this.onRemove,
+    required this.canDecide,
     this.nextCursor,
   });
 
@@ -34,6 +35,10 @@ class ProjectUpdatesFeed extends StatefulWidget {
   final Future<void> Function() onChanged;
   final Future<void> Function(ProjectUpdate update, String content) onEdit;
   final Future<void> Function(ProjectUpdate update) onRemove;
+
+  /// The project owner or an admin (the view's canWritePlan): only they
+  /// decide a proposal, so only they see Accept and Reject (FE-05).
+  final bool canDecide;
 
   /// Where the older updates start; null when [updates] reach the first one.
   final String? nextCursor;
@@ -172,7 +177,12 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                   // FEAT-03: an agent proposal is decided, not
                   // edited — Accept/Reject own the record.
                   child: u.kind == 'agent_proposal' && u.decision.isEmpty
-                      ? _decision(u, l10n)
+                      ? (widget.canDecide
+                            ? _decision(u, l10n)
+                            : Text(
+                                l10n.t('proposal.pending'),
+                                style: theme.textTheme.bodySmall,
+                              ))
                       : PopupMenuButton<String>(
                           onSelected: (value) async {
                             if (value == 'edit') {

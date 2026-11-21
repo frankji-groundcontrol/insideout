@@ -156,6 +156,7 @@ const zhWorkspace = <String, String>{
   'roadmap.lead': '先排工作，再写同期。深浅是距离，不是装饰。',
   'evidence.title': '证据',
   'evidence.lead': 'Git 与项目更新落在同一块场地上。',
+  'proposal.pending': '等待决定',
   'proposal.accept': '接受',
   'proposal.reject': '驳回',
   // project (close-open-gaps)

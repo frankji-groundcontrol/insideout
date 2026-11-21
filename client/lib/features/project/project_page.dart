@@ -202,18 +202,21 @@ class _ProjectPageState extends State<ProjectPage> {
                                   context.go('/prd/$prdId');
                                 },
                               ),
-                            BlockButton(
-                              label: l10n.t('project.edit'),
-                              icon: Icons.edit_outlined,
-                              variant: BlockButtonVariant.secondary,
-                              onPressed: () => _edit(snap.data!),
-                            ),
-                            BlockButton(
-                              label: l10n.t('project.delete'),
-                              icon: Icons.delete_outline,
-                              variant: BlockButtonVariant.danger,
-                              onPressed: () => _delete(snap.data!),
-                            ),
+                            if (snap.data!['canWritePlan'] == true)
+                              BlockButton(
+                                label: l10n.t('project.edit'),
+                                icon: Icons.edit_outlined,
+                                variant: BlockButtonVariant.secondary,
+                                onPressed: () => _edit(snap.data!),
+                              ),
+                            // Deleting a project is an admin's alone.
+                            if (_isAdmin)
+                              BlockButton(
+                                label: l10n.t('project.delete'),
+                                icon: Icons.delete_outline,
+                                variant: BlockButtonVariant.danger,
+                                onPressed: () => _delete(snap.data!),
+                              ),
                           ],
                         ),
                         const SizedBox(height: 20),
@@ -228,6 +231,7 @@ class _ProjectPageState extends State<ProjectPage> {
                           projectId: widget.id,
                           updates: updates,
                           nextCursor: snap.data!['nextCursor'] as String?,
+                          canDecide: snap.data!['canWritePlan'] == true,
                           onChanged: _reload,
                           onEdit: (u, content) => context
                               .read<Session>()

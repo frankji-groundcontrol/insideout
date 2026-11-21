@@ -172,6 +172,7 @@ Future<void> _pumpFeed(
         home: Scaffold(
           body: SingleChildScrollView(
             child: ProjectUpdatesFeed(
+              canDecide: true,
               projectId: 'p1',
               updates: updates,
               onChanged: () async => api.reloads++,
