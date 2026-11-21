@@ -60,17 +60,19 @@ func TestRoadmapTreeToolsSendTheirRequests(t *testing.T) {
 		tool, args string
 		want       treeRequest
 	}{
-		{"roadmap_update", `{"node_id":"n1","owner_id":"u2","acceptance":"ships"}`,
-			treeRequest{"PATCH /roadmap/n1", map[string]any{"ownerId": "u2", "acceptance": "ships"}}},
+		{"roadmap_update", `{"node_id":"n1","acceptance":"ships"}`,
+			treeRequest{"PATCH /roadmap/n1", map[string]any{"acceptance": "ships"}}},
 		// The CLI's rule (rv5-STRS-06, PARC-07, PARC-09): an absent or empty
 		// argument leaves a field alone and the word clear clears it.
-		{"roadmap_update", `{"node_id":"n1","owner_id":"clear"}`,
-			treeRequest{"PATCH /roadmap/n1", map[string]any{"ownerId": ""}}},
 		{"roadmap_update", `{"node_id":"n1","acceptance":"clear","description":"clear"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"acceptance": "", "description": ""}}},
-		{"roadmap_update", `{"node_id":"n1","deadline":"clear","completion_reason":"clear"}`,
-			treeRequest{"PATCH /roadmap/n1", map[string]any{"deadline": "", "completionReason": ""}}},
-		{"roadmap_update", `{"node_id":"n1","title":"T","deadline":"","acceptance":"","owner_id":""}`,
+		{"roadmap_update", `{"node_id":"n1","deadline":"clear"}`,
+			treeRequest{"PATCH /roadmap/n1", map[string]any{"deadline": ""}}},
+		{"roadmap_update", `{"node_id":"n1","title":"T","deadline":"","acceptance":""}`,
+			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
+		// An owner and a completion reason are a human's: the tool takes neither,
+		// so a model that passes them anyway sends nothing the server must refuse.
+		{"roadmap_update", `{"node_id":"n1","title":"T","owner_id":"u2","completion_reason":"why"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
 		{"roadmap_update", `{"node_id":"n1","title":"T"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
@@ -95,17 +97,22 @@ func TestRoadmapTreeToolsSendTheirRequests(t *testing.T) {
 	}
 }
 
-// roadmap_update tells an agent that a token of its kind cannot change an
-// owner, and what to do instead.
-func TestRoadmapUpdateDescribesTheOwnerRefusal(t *testing.T) {
+// Every MCP call runs on an agent-scope token, and the server refuses that token
+// an owner change and a completion reason, so roadmap_update does not offer
+// either argument; its description says what to do instead.
+func TestRoadmapUpdateOffersNoHumanOnlyArgument(t *testing.T) {
 	pinConfigHome(t)
 	for _, tool := range listTools(t, Build(exampleAPI)) {
 		if tool.Name != "roadmap_update" {
 			continue
 		}
-		owner := tool.InputSchema.Properties["owner_id"]
-		if !strings.Contains(owner.Description, "propose") || tool.InputSchema.Properties["acceptance"].Description == "" {
-			t.Errorf("roadmap_update owner_id = %q, want the agent-token refusal and propose named; acceptance must be described", owner.Description)
+		for _, human := range []string{"owner_id", "completion_reason"} {
+			if _, ok := tool.InputSchema.Properties[human]; ok {
+				t.Errorf("roadmap_update offers %s, which an agent token can never set", human)
+			}
+		}
+		if !strings.Contains(tool.Description, "propose") || tool.InputSchema.Properties["acceptance"].Description == "" {
+			t.Errorf("roadmap_update description = %q, want propose named for an owner change; acceptance must be described", tool.Description)
 		}
 		return
 	}
