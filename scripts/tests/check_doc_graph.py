@@ -33,9 +33,6 @@ INDEX_EXCEPTIONS = {
     "docs/review/2026-10-10-multirole-3/README.md": {
         "checks": "dated record keeps its words; the report files cite these check scripts by path",
     },
-    "docs/issues/README.md": {
-        "2026-11-21-store-error-ladders.md": "open, reached from backend.md; delete once the Open table lists it",
-    },
 }
 
 INLINE = re.compile(r"\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
