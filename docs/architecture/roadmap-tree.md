@@ -262,8 +262,8 @@ the page session; every card's bar and "n of m done" come from the server
 only direct children. Known limitation:
 in an opened tree the root's parent is not loaded, so a delegate who holds a
 branch above it (but is not a plan writer) sees no Move, Delete or Delegate
-on the opened root's card; they do it from the parent's tree. Still to land:
-the MCP and CLI surfaces
+on the opened root's card; they do it from the parent's tree. The slice
+landed in wave 2 of the review 5 remediation
 ([execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
 [row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
 Update this page as each slice lands.
