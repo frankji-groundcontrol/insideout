@@ -66,6 +66,7 @@ class _MembersApi extends ApiClient {
   }
 
   static final node = RoadmapNode(
+    canWrite: true,
     id: 'n1',
     projectId: 'p1',
     title: 'Wire the flow',
@@ -96,6 +97,7 @@ Future<void> _pumpCard(
       child: MaterialApp(
         home: Scaffold(
           body: RoadmapNodeCard(
+            planWriter: true,
             projectId: 'p1',
             node: node,
             onReload: () async {},
@@ -144,6 +146,7 @@ void main() {
   ) async {
     final leaf = _MembersApi.node;
     final parent = RoadmapNode(
+      canWrite: true,
       id: 'r1',
       projectId: 'p1',
       parentId: null,
@@ -153,6 +156,7 @@ void main() {
       position: 0,
     );
     final childA = RoadmapNode(
+      canWrite: true,
       id: 'c1',
       projectId: 'p1',
       parentId: 'r1',
@@ -162,6 +166,7 @@ void main() {
       position: 0,
     );
     final childB = RoadmapNode(
+      canWrite: true,
       id: 'c2',
       projectId: 'p1',
       parentId: 'r1',

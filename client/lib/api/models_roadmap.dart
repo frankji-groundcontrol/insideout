@@ -16,6 +16,8 @@ class RoadmapNode {
     this.ownerName = '',
     this.validationReason = '',
     this.completionReason = '',
+    this.canWrite = false,
+    this.rollup = const RoadmapRollup(),
   });
 
   final String id;
@@ -44,6 +46,13 @@ class RoadmapNode {
   /// evidence ('' when unset).
   final String completionReason;
 
+  /// The caller may write this node (the server's authority rule): write
+  /// controls show only where they would succeed.
+  final bool canWrite;
+
+  /// The leaves at or below this node (a leaf counts itself).
+  final RoadmapRollup rollup;
+
   factory RoadmapNode.fromJson(Map<String, dynamic> j) => RoadmapNode(
     id: j['id'] as String,
     projectId: j['projectId'] as String,
@@ -61,6 +70,96 @@ class RoadmapNode {
     ownerName: (j['ownerName'] as String?) ?? '',
     validationReason: (j['validationReason'] as String?) ?? '',
     completionReason: (j['completionReason'] as String?) ?? '',
+    canWrite: (j['canWrite'] as bool?) ?? false,
+    rollup: j['rollup'] is Map<String, dynamic>
+        ? RoadmapRollup.fromJson(j['rollup'] as Map<String, dynamic>)
+        : const RoadmapRollup(),
+  );
+}
+
+/// Leaf counts under a node; done includes validated, as in Progress.
+class RoadmapRollup {
+  const RoadmapRollup({
+    this.leaves = 0,
+    this.done = 0,
+    this.validated = 0,
+    this.earliestDeadline,
+  });
+
+  final int leaves;
+  final int done;
+  final int validated;
+
+  /// The earliest deadline among the unfinished leaves, if any.
+  final String? earliestDeadline;
+
+  factory RoadmapRollup.fromJson(Map<String, dynamic> j) => RoadmapRollup(
+    leaves: (j['leaves'] as num?)?.toInt() ?? 0,
+    done: (j['done'] as num?)?.toInt() ?? 0,
+    validated: (j['validated'] as num?)?.toInt() ?? 0,
+    earliestDeadline: j['earliestDeadline'] as String?,
+  );
+}
+
+class RoadmapNodeRef {
+  const RoadmapNodeRef({required this.id, required this.title});
+
+  final String id;
+  final String title;
+
+  factory RoadmapNodeRef.fromJson(Map<String, dynamic> j) =>
+      RoadmapNodeRef(id: j['id'] as String, title: j['title'] as String);
+}
+
+/// GET /roadmap/{nid}: the node, its ancestors root first, and its project.
+class RoadmapNodeRead {
+  const RoadmapNodeRead({
+    required this.node,
+    required this.ancestors,
+    required this.projectId,
+    required this.projectName,
+  });
+
+  final RoadmapNode node;
+  final List<RoadmapNodeRef> ancestors;
+  final String projectId;
+  final String projectName;
+
+  factory RoadmapNodeRead.fromJson(Map<String, dynamic> j) => RoadmapNodeRead(
+    node: RoadmapNode.fromJson(j['node'] as Map<String, dynamic>),
+    ancestors: ((j['ancestors'] as List?) ?? const [])
+        .map((e) => RoadmapNodeRef.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    projectId: j['projectId'] as String,
+    projectName: (j['projectName'] as String?) ?? '',
+  );
+}
+
+/// One row of a node's assignment history (delegate, handback, cleared).
+class NodeAssignment {
+  const NodeAssignment({
+    required this.kind,
+    required this.createdAt,
+    this.fromName,
+    this.toName,
+    this.assignedByName,
+    this.note = '',
+  });
+
+  final String kind;
+  final String? fromName;
+  final String? toName;
+  final String? assignedByName;
+  final String note;
+  final String createdAt;
+
+  factory NodeAssignment.fromJson(Map<String, dynamic> j) => NodeAssignment(
+    kind: j['kind'] as String,
+    fromName: j['fromName'] as String?,
+    toName: j['toName'] as String?,
+    assignedByName: j['assignedByName'] as String?,
+    note: (j['note'] as String?) ?? '',
+    createdAt: j['createdAt'] as String,
   );
 }
 

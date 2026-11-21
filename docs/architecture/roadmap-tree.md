@@ -65,10 +65,13 @@ same transaction, each recorded as a `cleared` row and a `node_handed_back`
 feed row by the remover (`RemoveMember`, `server/internal/store/memberships.go`);
 an account erasure records `cleared` rows too (`server/internal/store/erasure.go`).
 A node's children stay ownerless; ownership is inherited as authority, not
-copied. The web sets an owner through the owner picker in the Edit form
-(`client/lib/features/project/roadmap_node_menu.dart`); the Go client's
-`RoadmapUpdate` carries no owner (`server/internal/apiclient/roadmap.go`), so
-neither the CLI nor MCP delegates yet.
+copied. The web hands a node on through the node menu's "Delegate to…" and
+"Hand back" items, and the Edit form's owner picker shows only to a caller who
+may change that node's owner
+(`client/lib/features/project/roadmap_node_delegate.dart`,
+`roadmap_node_edit.dart`); the Go client's `RoadmapUpdate` carries no owner
+(`server/internal/apiclient/roadmap.go`), so neither the CLI nor MCP delegates
+yet.
 
 ### One write rule
 
@@ -240,8 +243,14 @@ history, delegate and hand-back routes, node rows in the project feed, the
 per-person `mine` read, roll-ups and subtree Progress, agent tokens carrying a
 root node, and the history guard on a subtree delete; on the Go client, the
 CLI and MCP, owner and acceptance edits, the subtree root, the node and `mine`
-reads, delegation, its history and the member list. Still to land: the web
-surface
+reads, delegation, its history and the member list. On the web: the
+`/projects/:id/roadmap/:nodeId` route with its breadcrumb, a card tap that
+opens a branch as its tree (a leaf opens its read-only detail), the "Open as
+tree", "Details", "Delegate to…" and "Hand back" menu items, and write items
+shown only where `canWrite` (and, for move, delete, delegate and validate, the
+plan-writer or parent rule) says they succeed
+(`client/lib/features/project/roadmap_node_menu.dart`). Still to land: the
+web "Mine" toggle and landing list, canvas collapse and the roll-up bar
 ([execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
 [row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
 Update this page as each slice lands.

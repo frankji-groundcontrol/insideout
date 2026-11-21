@@ -81,6 +81,7 @@ void main() {
       '/workspace/:id/settings',
       '/projects/:id',
       '/projects/:id/roadmap',
+      '/projects/:id/roadmap/:nodeId',
       '/prd/:id',
       '/prd/:id/revisions',
       '/prd/:id/versions',

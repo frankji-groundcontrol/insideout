@@ -116,6 +116,18 @@ ApiCall moveRoadmapNode(
 ApiCall deleteRoadmapNode(String nodeId) =>
     ApiCall('DELETE', '/roadmap/$nodeId');
 
+/// Hands a node to a workspace member, on the record (an assignment row and
+/// a feed update); the server answers the node view.
+ApiCall delegateRoadmapNode(String nodeId, String toUserId, String note) =>
+    ApiCall('POST', '/roadmap/$nodeId/delegate', {
+      'toUserId': toUserId,
+      'note': note,
+    });
+
+/// The current owner returns the node to whoever delegated it.
+ApiCall handBackRoadmapNode(String nodeId, String note) =>
+    ApiCall('POST', '/roadmap/$nodeId/handback', {'note': note});
+
 /// Drafts sub-tasks for a node with the AI. Nothing is written: the response
 /// is `{children: [{title, description?}]}`, to be sent on through
 /// [confirmExpandRoadmapNode].

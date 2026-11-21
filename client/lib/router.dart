@@ -42,6 +42,10 @@ final productRouteBuilders = <String, GoRouterWidgetBuilder>{
   '/projects/:id': (c, s) => ProjectPage(id: s.pathParameters['id']!),
   '/projects/:id/roadmap': (c, s) =>
       RoadmapPage(projectId: s.pathParameters['id']!),
+  '/projects/:id/roadmap/:nodeId': (c, s) => RoadmapPage(
+    projectId: s.pathParameters['id']!,
+    rootId: s.pathParameters['nodeId']!,
+  ),
   '/prd/:id': (c, s) => PrdPage(id: s.pathParameters['id']!),
   '/prd/:id/revisions': (c, s) => RevisionsPage(prdId: s.pathParameters['id']!),
   '/prd/:id/versions': (c, s) => VersionsPage(prdId: s.pathParameters['id']!),

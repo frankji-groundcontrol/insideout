@@ -30,6 +30,13 @@ class _FakeApi extends ApiClient {
 
   final _parked = Completer<void>();
 
+  // A plan writer sees "New item".
+  @override
+  Future<Map<String, dynamic>> getProject(String id) async => {
+    'id': id,
+    'canWritePlan': true,
+  };
+
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];
 

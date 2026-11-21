@@ -54,6 +54,7 @@ class _Api extends ApiClient {
 }
 
 RoadmapNode _node(String? deadline) => RoadmapNode(
+  canWrite: true,
   id: 'n1',
   projectId: 'p1',
   title: 'Ship it',
@@ -72,7 +73,12 @@ Widget _host(Session session, RoadmapNode node) => MultiProvider(
   ],
   child: MaterialApp(
     home: Scaffold(
-      body: RoadmapNodeCard(projectId: 'p1', onReload: () async {}, node: node),
+      body: RoadmapNodeCard(
+        projectId: 'p1',
+        onReload: () async {},
+        node: node,
+        planWriter: true,
+      ),
     ),
   ),
 );

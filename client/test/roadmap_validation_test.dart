@@ -67,6 +67,7 @@ class _ValidationApi extends ApiClient {
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [
     RoadmapNode(
+      canWrite: true,
       id: 'root',
       projectId: projectId,
       title: 'Ship',
@@ -75,6 +76,7 @@ class _ValidationApi extends ApiClient {
       position: 0,
     ),
     RoadmapNode(
+      canWrite: true,
       id: 'n1',
       projectId: projectId,
       parentId: 'root',
@@ -92,6 +94,7 @@ class _ValidationApi extends ApiClient {
   ];
 
   static final _doneLeaf = RoadmapNode(
+    canWrite: true,
     id: 'n1',
     projectId: 'p1',
     title: 'Tour',
@@ -125,6 +128,7 @@ Future<void> _pumpCard(
         home: Scaffold(
           body: SingleChildScrollView(
             child: RoadmapNodeCard(
+              planWriter: true,
               projectId: 'p1',
               node: node,
               onReload: () async {},
@@ -138,6 +142,7 @@ Future<void> _pumpCard(
 }
 
 RoadmapNode _leaf(String status) => RoadmapNode(
+  canWrite: true,
   id: 'n1',
   projectId: 'p1',
   parentId: 'root',
@@ -206,6 +211,7 @@ void main() {
       tester,
       api,
       RoadmapNode(
+        canWrite: true,
         id: 'n1',
         projectId: 'p1',
         parentId: 'root',

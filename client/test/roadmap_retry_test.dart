@@ -30,6 +30,10 @@ class _ScriptedApi extends ApiClient {
   int presenceCalls = 0;
   final _open = Completer<void>(); // an open stream, with no timers
 
+  // No project read leaves a network timer behind the page.
+  @override
+  Future<Map<String, dynamic>> getProject(String id) async => {'id': id};
+
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];
 

@@ -18,6 +18,7 @@ import '../../theme/cobalt_chip.dart';
 import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
+import 'roadmap_breadcrumb.dart';
 import 'roadmap_canvas.dart';
 import 'roadmap_header.dart';
 import 'roadmap_node_card.dart';
@@ -27,9 +28,13 @@ import 'roadmap_tree.dart';
 part 'roadmap_live.dart';
 
 class RoadmapPage extends StatefulWidget {
-  const RoadmapPage({super.key, required this.projectId});
+  const RoadmapPage({super.key, required this.projectId, this.rootId});
 
   final String projectId;
+
+  /// The node opened as its own tree (/projects/:id/roadmap/:nodeId): the
+  /// page shows it and the nodes below it. Null for the whole project.
+  final String? rootId;
 
   @override
   State<RoadmapPage> createState() => _RoadmapPageState();
@@ -40,8 +45,12 @@ enum _RoadmapView { progress, bands, canvas }
 class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   late Future<List<RoadmapNode>> _future;
   late Future<RoadmapProgress> _progressFuture;
+  Future<RoadmapNodeRead>? _read;
   _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
+
+  /// The caller writes the whole plan (GET /projects/{pid} canWritePlan).
+  bool _planWriter = false;
 
   @override
   void dispose() {
@@ -52,14 +61,40 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   @override
   void initState() {
     super.initState();
+    final api = context.read<Session>().api;
     context.read<LoopFocus>().rememberProject(widget.projectId);
-    _future = context.read<Session>().api.listRoadmap(widget.projectId);
-    _progressFuture = context.read<Session>().api.roadmapProgress(
-      widget.projectId,
-    );
-    _progressLoop(context.read<Session>().api);
-    _presenceLoop(context.read<Session>().api);
+    _fetch(api);
+    api
+        .getProject(widget.projectId)
+        .then((p) {
+          if (mounted) setState(() => _planWriter = p['canWritePlan'] == true);
+        })
+        // A failed read leaves the plan-writer items hidden; the server
+        // refuses them anyway.
+        .catchError((_) {});
+    // The live progress reading is project-wide: a subtree keeps its own.
+    if (widget.rootId == null) _progressLoop(api);
+    _presenceLoop(api);
   }
+
+  void _fetch(ApiClient api) {
+    final root = widget.rootId;
+    _future = root == null
+        ? api.listRoadmap(widget.projectId)
+        : api.listRoadmapSubtree(widget.projectId, root);
+    _progressFuture = root == null
+        ? api.roadmapProgress(widget.projectId)
+        : api.roadmapSubtreeProgress(widget.projectId, root);
+    _read = root == null ? null : api.readRoadmapNode(root);
+    _read
+        ?.then((r) {
+          if (mounted) setState(() => _rootWritable = r.node.canWrite);
+        })
+        .catchError((_) {});
+  }
+
+  /// The opened node's canWrite: "New item" adds under it.
+  bool _rootWritable = false;
 
   void _scrollToBand(int i) {
     if (!_canvasController.hasClients) return;
@@ -79,23 +114,20 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   }
 
   Future<void> _reload() async {
-    final nodes = context.read<Session>().api.listRoadmap(widget.projectId);
-    final progress = context.read<Session>().api.roadmapProgress(
-      widget.projectId,
-    );
     setState(() {
-      _future = nodes;
-      _progressFuture = progress;
+      _fetch(context.read<Session>().api);
       _liveProgress = null;
     });
-    await Future.wait([nodes, progress]);
+    await Future.wait([_future, _progressFuture, ?_read]);
   }
 
+  /// "New item": a top-level goal for a plan writer, or in an opened node a
+  /// child of that node for whoever may write it.
   Future<void> _addRoot() async {
     final t = context.read<Appearance>().t;
     final values = await showBlockForm(
       context: context,
-      title: t('roadmap.addRoot'),
+      title: t(widget.rootId == null ? 'roadmap.addRoot' : 'roadmap.addChild'),
       confirmLabel: t('roadmap.add'),
       fields: [
         BlockFormField(label: t('roadmap.rootPlaceholder'), required: true),
@@ -109,6 +141,7 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
       () => context.read<Session>().api.createRoadmapNode(
         widget.projectId,
         title,
+        parentId: widget.rootId,
       ),
     );
     if (done && mounted) await _reload();
@@ -137,7 +170,16 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RoadmapHeader(compact: narrow, viewChoices: choices, onAdd: _addRoot),
+          RoadmapHeader(
+            compact: narrow,
+            viewChoices: choices,
+            onAdd: (widget.rootId == null ? _planWriter : _rootWritable)
+                ? _addRoot
+                : null,
+            breadcrumb: _read == null
+                ? null
+                : RoadmapBreadcrumb(projectId: widget.projectId, read: _read!),
+          ),
           if (_presence.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
@@ -209,6 +251,7 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
                               nodes: snap.data!,
                               onReload: _reload,
                               progress: progress,
+                              planWriter: _planWriter,
                             );
                           },
                         );
@@ -232,6 +275,11 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
                                   node,
                                 ),
                                 descendants: roadmapDescendantCount(
+                                  snap.data!,
+                                  node,
+                                ),
+                                planWriter: _planWriter,
+                                parentWritable: roadmapParentWritable(
                                   snap.data!,
                                   node,
                                 ),

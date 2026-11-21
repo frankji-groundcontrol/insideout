@@ -48,7 +48,8 @@ client/lib/
                       request builders, errors, SSE transport
   features/           landing, auth (AuthDoor), dashboard, workspace, profile;
                       project (project page and the roadmap: page, header,
-                      bands, canvas, minimap, progress view); prd (desk, coach,
+                      breadcrumb, bands, canvas, minimap, progress view, node
+                      menu, edit, delegate and detail); prd (desk, coach,
                       versions stack + commit details, revisions, export)
   l10n/               zh-CN + en-US; en.dart and zh.dart spread four namespace
                       files each (shell, workspace, account, prd)

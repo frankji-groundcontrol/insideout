@@ -41,17 +41,21 @@ extension _NodeEdit on _NodeMenu {
               label: t('roadmap.acceptanceHint'),
             ),
             const SizedBox(height: Cobalt.space4),
-            BlockSelect<String?>(
-              key: const Key('owner-picker'),
-              value: members.any((m) => m.userId == ownerId) ? ownerId : null,
-              placeholder: t('roadmap.ownerPick'),
-              options: [
-                (value: null, label: t('roadmap.ownerNone')),
-                for (final m in members) (value: m.userId, label: m.username),
-              ],
-              onChanged: (v) => setLocal(() => ownerId = v),
-            ),
-            const SizedBox(height: Cobalt.space4),
+            // A delegate keeps the root they were handed: no owner picker,
+            // and the unchanged owner they send back is no change.
+            if (_restructure) ...[
+              BlockSelect<String?>(
+                key: const Key('owner-picker'),
+                value: members.any((m) => m.userId == ownerId) ? ownerId : null,
+                placeholder: t('roadmap.ownerPick'),
+                options: [
+                  (value: null, label: t('roadmap.ownerNone')),
+                  for (final m in members) (value: m.userId, label: m.username),
+                ],
+                onChanged: (v) => setLocal(() => ownerId = v),
+              ),
+              const SizedBox(height: Cobalt.space4),
+            ],
             BlockSelect<String>(
               key: const Key('status-picker'),
               value: status,

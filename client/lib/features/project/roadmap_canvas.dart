@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../theme/cobalt.dart';
+import 'roadmap_tree.dart';
 
 export 'roadmap_minimap.dart';
 export 'roadmap_painters.dart';
@@ -65,11 +66,7 @@ class RoadmapCanvas extends StatelessWidget {
     ),
   };
 
-  List<RoadmapNode> get _roots {
-    final roots = nodes.where((n) => n.parentId == null).toList()
-      ..sort((a, b) => a.position.compareTo(b.position));
-    return roots;
-  }
+  List<RoadmapNode> get _roots => roadmapRoots(nodes);
 
   List<RoadmapNode> _subtree(RoadmapNode root) {
     final out = <RoadmapNode>[root];

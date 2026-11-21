@@ -6,39 +6,55 @@ class _NodeMenu extends StatelessWidget {
     required this.node,
     required this.onReload,
     required this.descendants,
+    required this.planWriter,
+    required this.parentWritable,
   });
 
   final String projectId;
   final RoadmapNode node;
   final Future<void> Function() onReload;
   final int descendants;
+  final bool planWriter;
+  final bool parentWritable;
+
+  /// Move, delete and change the owner: a plan writer, or the owner of a
+  /// branch above this node — a delegate keeps the root they were handed.
+  bool get _restructure => node.canWrite && (planWriter || parentWritable);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    PopupMenuItem<String> item(String value, String key) =>
+        PopupMenuItem(value: value, child: Text(l10n.t(key)));
     return PopupMenuButton<String>(
       onSelected: (value) => _act(context, value),
+      // Read items for everyone; write items only where the server's
+      // authority rule (canWrite) says they would succeed.
       itemBuilder: (_) => [
-        PopupMenuItem(value: 'edit', child: Text(l10n.t('roadmap.edit'))),
-        PopupMenuItem(value: 'child', child: Text(l10n.t('roadmap.addChild'))),
-        PopupMenuItem(value: 'up', child: Text(l10n.t('roadmap.moveUp'))),
-        PopupMenuItem(value: 'down', child: Text(l10n.t('roadmap.moveDown'))),
-        PopupMenuItem(value: 'expand', child: Text(l10n.t('roadmap.expandAI'))),
-        // The validation leg lives on leaves: observations name one
-        // piece of shipped work, and only a done leaf has an outcome to
-        // confirm.
-        if (descendants == 0) ...[
-          PopupMenuItem(
-            value: 'observe',
-            child: Text(l10n.t('roadmap.observe')),
-          ),
-          if (node.status == 'done')
-            PopupMenuItem(
-              value: 'validate',
-              child: Text(l10n.t('roadmap.validate')),
-            ),
+        item('open', 'roadmap.openTree'),
+        item('details', 'roadmap.details'),
+        if (node.canWrite) ...[
+          item('edit', 'roadmap.edit'),
+          item('child', 'roadmap.addChild'),
+          if (_restructure) ...[
+            item('up', 'roadmap.moveUp'),
+            item('down', 'roadmap.moveDown'),
+          ],
+          item('expand', 'roadmap.expandAI'),
+          // The validation leg lives on leaves: observations name one
+          // piece of shipped work, and only a done leaf has an outcome to
+          // confirm — a plan writer's call.
+          if (descendants == 0) ...[
+            item('observe', 'roadmap.observe'),
+            if (node.status == 'done' && planWriter)
+              item('validate', 'roadmap.validate'),
+          ],
+          if (_restructure) item('delegate', 'roadmap.delegate'),
         ],
-        PopupMenuItem(value: 'delete', child: Text(l10n.t('roadmap.delete'))),
+        if (node.ownerId != null &&
+            node.ownerId == context.read<Session>().user?.id)
+          item('handback', 'roadmap.handBack'),
+        if (_restructure) item('delete', 'roadmap.delete'),
       ],
     );
   }
@@ -46,7 +62,15 @@ class _NodeMenu extends StatelessWidget {
   Future<void> _act(BuildContext context, String value) async {
     final api = context.read<Session>().api;
     final l10n = context.read<Appearance>();
-    if (value == 'edit') {
+    if (value == 'open') {
+      GoRouter.maybeOf(context)?.go('/projects/$projectId/roadmap/${node.id}');
+    } else if (value == 'details') {
+      await showRoadmapNodeDetail(context, node);
+    } else if (value == 'delegate') {
+      await _delegate(context, l10n);
+    } else if (value == 'handback') {
+      await _handBack(context, l10n);
+    } else if (value == 'edit') {
       await _edit(context, l10n);
     } else if (value == 'child') {
       final t = l10n.t;

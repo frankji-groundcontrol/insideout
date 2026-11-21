@@ -21,6 +21,7 @@ void main() {
           read('lib/features/project/roadmap_page.dart') +
           read('lib/features/project/roadmap_node_card.dart') +
           read('lib/features/project/roadmap_node_menu.dart') +
+          read('lib/features/project/roadmap_node_edit.dart') +
           read('lib/features/project/roadmap_expand_draft.dart');
       final prd =
           read('lib/features/prd/prd_page.dart') +

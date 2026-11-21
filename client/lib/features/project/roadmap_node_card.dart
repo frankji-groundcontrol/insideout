@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
@@ -15,8 +16,10 @@ import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_completion_prompt.dart';
+import 'roadmap_node_detail.dart';
 
 part 'roadmap_expand_draft.dart';
+part 'roadmap_node_delegate.dart';
 part 'roadmap_node_edit.dart';
 part 'roadmap_node_menu.dart';
 
@@ -29,6 +32,8 @@ class RoadmapNodeCard extends StatelessWidget {
     this.compact = false,
     this.childProgress,
     this.descendants = 0,
+    this.planWriter = false,
+    this.parentWritable = false,
   });
 
   final String projectId;
@@ -38,6 +43,12 @@ class RoadmapNodeCard extends StatelessWidget {
 
   /// Nodes beneath this one; the server deletes the branch with it.
   final int descendants;
+
+  /// The caller writes the whole plan (project owner or workspace admin),
+  /// and the caller may write this node's parent (owns a branch above it):
+  /// together they decide the move, delete and delegate items.
+  final bool planWriter;
+  final bool parentWritable;
 
   /// Share of this node's children that are done (0..1), or null for a
   /// leaf — leaves show no bar rather than an invented percentage. Only a
@@ -57,6 +68,13 @@ class RoadmapNodeCard extends StatelessWidget {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     return FieldCard(
+      // A branch opens as its own tree; a leaf has nothing below it, so it
+      // opens its read-only detail instead.
+      onTap: descendants > 0
+          ? () => GoRouter.maybeOf(
+              context,
+            )?.go('/projects/$projectId/roadmap/${node.id}')
+          : () => showRoadmapNodeDetail(context, node),
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -73,6 +91,8 @@ class RoadmapNodeCard extends StatelessWidget {
                 node: node,
                 onReload: onReload,
                 descendants: descendants,
+                planWriter: planWriter,
+                parentWritable: parentWritable,
               ),
             ],
           ),

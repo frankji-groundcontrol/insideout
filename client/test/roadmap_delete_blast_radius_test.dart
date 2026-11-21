@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 // ON DELETE CASCADE), so the confirm must say how many nodes go with it.
 
 RoadmapNode _node(String id, String? parent, int position) => RoadmapNode(
+  canWrite: true,
   id: id,
   projectId: 'p1',
   parentId: parent,
@@ -43,6 +44,13 @@ class _Api extends ApiClient {
       );
 
   final _parked = Completer<void>();
+
+  // Delete is a plan writer's item (a delegate keeps the root they hold).
+  @override
+  Future<Map<String, dynamic>> getProject(String id) async => {
+    'id': id,
+    'canWritePlan': true,
+  };
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => _tree;

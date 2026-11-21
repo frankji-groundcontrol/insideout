@@ -114,6 +114,60 @@ mixin _ProjectVerbs on _ApiCore {
     );
   }
 
+  /// [rootId] and the nodes below it: the node opened as its own tree.
+  Future<List<RoadmapNode>> listRoadmapSubtree(
+    String projectId,
+    String rootId,
+  ) async {
+    final res = await _dio.get(
+      '/projects/$projectId/roadmap',
+      queryParameters: {'root': rootId},
+    );
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => RoadmapNode.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  /// One node with its ancestors (root first) and its project.
+  Future<RoadmapNodeRead> readRoadmapNode(String nodeId) async {
+    final res = await _dio.get('/roadmap/$nodeId');
+    return _parse(
+      res,
+      (d) => RoadmapNodeRead.fromJson(d as Map<String, dynamic>),
+    );
+  }
+
+  Future<RoadmapNode> delegateRoadmapNode(
+    String nodeId,
+    String toUserId, {
+    String note = '',
+  }) async {
+    final res = await _exec(req.delegateRoadmapNode(nodeId, toUserId, note));
+    return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
+  }
+
+  Future<RoadmapNode> handBackRoadmapNode(
+    String nodeId, {
+    String note = '',
+  }) async {
+    final res = await _exec(req.handBackRoadmapNode(nodeId, note));
+    return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
+  }
+
+  /// Who held the node, newest first.
+  Future<List<NodeAssignment>> listNodeAssignments(String nodeId) async {
+    final res = await _dio.get('/roadmap/$nodeId/assignments');
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => NodeAssignment.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
   Future<RoadmapNode> createRoadmapNode(
     String projectId,
     String title, {
@@ -205,6 +259,21 @@ mixin _ProjectVerbs on _ApiCore {
 
   Future<RoadmapProgress> roadmapProgress(String projectId) async {
     final res = await _dio.get('/projects/$projectId/roadmap/progress');
+    return _parse(
+      res,
+      (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>),
+    );
+  }
+
+  /// Progress over the leaves below [rootId] only.
+  Future<RoadmapProgress> roadmapSubtreeProgress(
+    String projectId,
+    String rootId,
+  ) async {
+    final res = await _dio.get(
+      '/projects/$projectId/roadmap/progress',
+      queryParameters: {'root': rootId},
+    );
     return _parse(
       res,
       (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>),

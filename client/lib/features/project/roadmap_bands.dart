@@ -17,6 +17,7 @@ class RoadmapBands extends StatelessWidget {
     required this.nodes,
     required this.onReload,
     this.progress,
+    this.planWriter = false,
   });
 
   final String projectId;
@@ -27,6 +28,9 @@ class RoadmapBands extends StatelessWidget {
   /// this view agrees with the Progress tab; without it the status sort below
   /// stands, which like the server keeps Now to in-progress work.
   final RoadmapProgress? progress;
+
+  /// The caller writes the whole plan (from the project view).
+  final bool planWriter;
 
   List<RoadmapNode> _band(String Function(RoadmapNode n) bucket, String name) {
     return nodes.where((n) => bucket(n) == name).toList()
@@ -74,6 +78,7 @@ class RoadmapBands extends StatelessWidget {
           allNodes: nodes,
           projectId: projectId,
           onReload: onReload,
+          planWriter: planWriter,
         ),
         const SizedBox(height: 16),
         _BandRow(
@@ -83,6 +88,7 @@ class RoadmapBands extends StatelessWidget {
           allNodes: nodes,
           projectId: projectId,
           onReload: onReload,
+          planWriter: planWriter,
         ),
         const SizedBox(height: 16),
         _BandRow(
@@ -93,6 +99,7 @@ class RoadmapBands extends StatelessWidget {
           allNodes: nodes,
           projectId: projectId,
           onReload: onReload,
+          planWriter: planWriter,
         ),
       ],
     );
@@ -107,6 +114,7 @@ class _BandRow extends StatelessWidget {
     required this.allNodes,
     required this.projectId,
     required this.onReload,
+    required this.planWriter,
     this.labelColor,
   });
 
@@ -120,6 +128,7 @@ class _BandRow extends StatelessWidget {
   final List<RoadmapNode> allNodes;
   final String projectId;
   final Future<void> Function() onReload;
+  final bool planWriter;
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +147,8 @@ class _BandRow extends StatelessWidget {
               compact: true,
               childProgress: RoadmapNodeCard.childDoneShare(allNodes, n),
               descendants: roadmapDescendantCount(allNodes, n),
+              planWriter: planWriter,
+              parentWritable: roadmapParentWritable(allNodes, n),
             ),
           ),
       ],

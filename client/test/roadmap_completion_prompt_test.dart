@@ -43,6 +43,7 @@ class _DoneApi extends ApiClient {
   }
 
   static final node = RoadmapNode(
+    canWrite: true,
     id: 'n1',
     projectId: 'p1',
     title: 'Ship the pilot',
@@ -68,6 +69,7 @@ Future<void> _openStatus(WidgetTester tester, _DoneApi api) async {
       child: MaterialApp(
         home: Scaffold(
           body: RoadmapNodeCard(
+            planWriter: true,
             projectId: 'p1',
             node: _DoneApi.node,
             onReload: () async {},

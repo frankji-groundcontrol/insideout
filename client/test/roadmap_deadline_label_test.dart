@@ -45,9 +45,11 @@ void main() {
         child: MaterialApp(
           home: Scaffold(
             body: RoadmapNodeCard(
+              planWriter: true,
               projectId: 'p1',
               onReload: () async {},
               node: RoadmapNode(
+                canWrite: true,
                 id: 'n1',
                 projectId: 'p1',
                 title: 'Ship it',

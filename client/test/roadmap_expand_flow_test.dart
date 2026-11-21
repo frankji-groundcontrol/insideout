@@ -14,6 +14,7 @@ import '_expand_fixture_helpers.dart';
 // client is the real ApiClient over the responses a running server sent.
 
 final _node = RoadmapNode(
+  canWrite: true,
   id: 'n1',
   projectId: 'p1',
   title: 'Ship the first version',
@@ -44,6 +45,7 @@ Future<void> _pumpCard(
         home: Scaffold(
           body: SingleChildScrollView(
             child: RoadmapNodeCard(
+              planWriter: true,
               projectId: 'p1',
               node: _node,
               onReload: () async => onReload(),
