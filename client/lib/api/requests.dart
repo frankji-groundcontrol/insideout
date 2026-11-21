@@ -248,6 +248,10 @@ ApiCall getProjectUpdates(String projectId, {String? before}) => ApiCall(
       '${before == null ? '' : '?before=${Uri.encodeQueryComponent(before)}'}',
 );
 
+/// The scaffolded insideout.yaml matching guide, as text/yaml.
+ApiCall getProjectGuide(String projectId) =>
+    ApiCall('GET', '/projects/$projectId/guide');
+
 ApiCall postSyncGithub(String projectId) =>
     ApiCall('POST', '/projects/$projectId/sync-github');
 

@@ -170,6 +170,8 @@ void main() {
     ], onDecide: (id, accept) => decided.add('$id:${accept ? 'y' : 'n'}'));
     await _pump(tester, api);
 
+    await tester.ensureVisible(find.text('Reject'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Reject'));
     await tester.pumpAndSettle();
     expect(decided, ['up1:n']);

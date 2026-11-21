@@ -309,7 +309,9 @@ Connecting a repository so pushes and PRs feed your roadmap:
    answer is 400 `github_repo_not_visible` (rv4-COMP-05).
 2. **Scaffold the guide**: `insideout guide --out insideout.yaml
    <project-id>` — generated from your roadmap: every leaf node with
-   editable matchers, branch nodes documented as comments.
+   editable matchers, branch nodes documented as comments. On the web, the
+   project's GitHub card has **Get insideout.yaml**, which saves the same
+   file (or copies it where no file can be saved).
 3. **Edit and commit** the file at the repo root:
 
    ```yaml

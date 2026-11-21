@@ -112,6 +112,11 @@ const enWorkspace = <String, String>{
   'roadmap.status.validated': 'Validated',
   'roadmap.moveUp': 'Move up',
   'roadmap.moveDown': 'Move down',
+  'github.guide': 'Get insideout.yaml',
+  'github.guideHint':
+      'Commit insideout.yaml at the repository root so pushes and pull requests attach to roadmap items.',
+  'github.guideCopied':
+      'insideout.yaml copied to the clipboard — paste it into a file at the repository root.',
   'github.title': 'GitHub sync',
   'github.empty': 'Link a GitHub repo to pull real commits into this timeline.',
   'github.sync': 'Sync now',

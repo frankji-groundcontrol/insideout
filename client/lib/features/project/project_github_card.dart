@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
+import '../../api/download_stub.dart'
+    if (dart.library.ui_web) '../../api/download_web.dart';
 
 import '../../session/appearance.dart';
 import '../../session/session.dart';
@@ -24,6 +28,20 @@ class ProjectGithubCard extends StatelessWidget {
   final TextEditingController repo;
   final Future<void> Function() onChanged;
 
+  /// Saves the guide as a file on the web, copies it elsewhere (PARB-11).
+  Future<void> _guide(BuildContext context, Appearance l10n) async {
+    final api = context.read<Session>().api;
+    final messenger = ScaffoldMessenger.of(context);
+    await guardWrite(context, () async {
+      final text = await api.getGuide(projectId);
+      if (downloadTextFile('insideout.yaml', text, mime: 'text/yaml')) return;
+      await Clipboard.setData(ClipboardData(text: text));
+      messenger.showSnackBar(
+        SnackBar(content: Text(l10n.t('github.guideCopied'))),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
@@ -33,6 +51,8 @@ class ProjectGithubCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(l10n.t('github.title'), style: theme.textTheme.titleMedium),
+          const SizedBox(height: Cobalt.space2),
+          Text(l10n.t('github.guideHint'), style: theme.textTheme.bodySmall),
           const SizedBox(height: Cobalt.space3),
           BlockField(controller: repo, label: l10n.t('github.placeholder')),
           const SizedBox(height: Cobalt.space3),
@@ -75,6 +95,12 @@ class ProjectGithubCard extends StatelessWidget {
                     }
                   });
                 },
+              ),
+              BlockButton(
+                label: l10n.t('github.guide'),
+                icon: Icons.download_outlined,
+                variant: BlockButtonVariant.secondary,
+                onPressed: () => _guide(context, l10n),
               ),
             ],
           ),

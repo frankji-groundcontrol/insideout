@@ -98,6 +98,12 @@ mixin _ProjectVerbs on _ApiCore {
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
+  /// The insideout.yaml guide generated from the roadmap (PARB-11).
+  Future<String> getGuide(String projectId) async {
+    final res = await _exec(req.getProjectGuide(projectId));
+    return _parse(res, (d) => d.toString());
+  }
+
   /// FEAT-03 (review 2): proposals stay proposals until a human decides.
   /// Accept defaults to apply=true so the structured items become roadmap
   /// nodes as the deciding human — the same default the CLI/MCP carries.
