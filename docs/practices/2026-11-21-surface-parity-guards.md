@@ -18,16 +18,25 @@ instead of waiting for a review (review 5, `PARC-03` and `COMP-02`).
 1. It parses `server/internal/api` and finds every route from the
    `mux.HandleFunc` calls, the handler each wraps, and the JSON keys that
    handler decodes through `httpx.DecodeJSON` (in the handler or a function it
-   calls). Nothing is listed by hand.
+   calls). A field whose type is a struct, a pointer to one or a slice of them
+   adds its own keys below it: `items[].title`, `tree.title`. Nothing is
+   listed by hand.
 2. It calls every exported `apiclient.Client` method, and every method of a
    struct argument that runs on a `*Client` (the read-then-write `Apply`),
    by reflection against a server that only records. Each argument, and each
-   field of a struct argument, is then zeroed in turn: a key that changes
-   depends on that argument.
-3. It parses `cmd/insideout` (CLI) and `internal/mcpserver` (MCP). A surface
-   reaches a key when it calls the client method that sends it and passes a
-   non-zero argument there, or sets the struct field in an `apiclient.T{...}`
-   literal or an assignment.
+   field inside one (a struct argument's fields, and the fields of a struct a
+   pointer, slice or field holds), is then zeroed in turn: a key that changes
+   depends on the innermost one that changes it, so `items[].title` depends
+   on `ProposeItem.Title`, not on the `items` argument. A key below a
+   `json.RawMessage` the client forwards (the drafted `tree` and `children`)
+   depends on that argument: the caller writes everything inside it.
+3. It parses and type-checks `cmd/insideout` (CLI) and `internal/mcpserver`
+   (MCP) with `go/types` and the source importer. A call counts only when its
+   receiver resolves to the apiclient type that declares the method
+   (`*apiclient.Client`, or the patch struct of an `Apply`): a same-named
+   method on another type does not. A surface reaches a key when it calls the
+   client method that sends it and passes a non-zero argument there, or sets
+   the struct field in an `apiclient.T{...}` literal or an assignment.
 4. Every key not reached on a surface must be in `omissions`
    ([`omissions_test.go`](../../server/internal/surfaceparity/omissions_test.go))
    with a one-line reason. An entry marked `humanOnly` must match a `humanOnly`
@@ -39,6 +48,22 @@ When it fails: wire the field on the surface (the usual fix), or add an
 omission whose reason a reviewer would accept. If wiring is too large for the
 change at hand, record a dated issue under [`docs/issues/`](../issues/README.md)
 and list the field as an omission that names the issue.
+
+### Limits
+
+What the walk still does not prove (the nested walk and the receiver match
+closed the two earlier limits, `PARC-03`):
+
+- A type nested inside itself is walked once: `tree.children` is checked,
+  the keys under each child are not (they are the same struct's keys).
+- Keys below a forwarded `json.RawMessage` are reached when the argument is:
+  the walk does not check the shape the caller writes inside it.
+- A field set counts when an `apiclient.T{...}` literal names it, or when a
+  file that names `apiclient.T` assigns `x.Field`; the assignment's receiver
+  type is not resolved.
+- A call through a method value or an interface is not counted; the surfaces
+  call the client directly today.
+- The type check adds about 8 seconds to the package's test run.
 
 ## Guard 2: every response key is read
 

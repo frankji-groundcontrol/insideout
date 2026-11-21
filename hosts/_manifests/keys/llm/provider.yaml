@@ -1,0 +1,27 @@
+schema_version: 1
+module: llm
+setting: provider
+recorded: '2026-10-05'
+secrets:
+  llm-api-key:
+    var: INSIDEOUT_LLM_API_KEY
+    kind: value
+    optional: true
+    note: blank selects the offline template-reply coach
+  llm-base-url:
+    var: INSIDEOUT_LLM_BASE_URL
+    kind: value
+    optional: true
+    note: config companion; blank = catalog default (fallback). The
+      file exists so the kind is always findable
+  llm-model:
+    var: INSIDEOUT_LLM_MODEL
+    kind: value
+    optional: true
+    note: config companion; blank = catalog default (fallback)
+  llm-schema:
+    var: INSIDEOUT_LLM_SCHEMA
+    kind: value
+    optional: true
+    note: config companion; blank = catalog default (fallback);
+      messages (Anthropic wire) or responses (OpenAI wire)

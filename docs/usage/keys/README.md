@@ -7,7 +7,9 @@ used**, and **where the installation guide** covers it (the
 convention agents_home's `docs/usage/keys/` established, model ids
 and endpoints included). The filename is the **key name** — exactly
 like the `.key` file it documents — inside the module folder of its
-manifest under [`hosts/<host>/keys/`](../../../hosts/README.md).
+manifest under the shared
+[`hosts/_manifests/keys/`](../../../hosts/README.md); each host keeps the
+value at `hosts/<host>/keys/<module>/.secrets/<name>.key`.
 
 **Never-absent rule** — a kind may be *blank* (a catalog or compose
 default is in effect) but never *missing*: every mapped kind has a
@@ -23,6 +25,7 @@ a var can be defaulted doesn't mean it is left out.
 | [app/](./app/README.md) | [dev-cors.md](./app/dev-cors.md) | `INSIDEOUT_DEV_CORS` | `app/runtime.yaml` |
 | [app/](./app/README.md) | [access-ttl.md](./app/access-ttl.md) | `INSIDEOUT_ACCESS_TTL` | `app/runtime.yaml` |
 | [app/](./app/README.md) | [refresh-ttl.md](./app/refresh-ttl.md) | `INSIDEOUT_REFRESH_TTL` | `app/runtime.yaml` |
+| [app/](./app/README.md) | [trusted-proxy-hops.md](./app/trusted-proxy-hops.md) | `INSIDEOUT_TRUSTED_PROXY_HOPS` | `app/runtime.yaml` |
 | [auth/](./auth/README.md) | [jwt-secret.md](./auth/jwt-secret.md) | `INSIDEOUT_JWT_SECRET` | `auth/jwt.yaml` |
 | [compose/](./compose/README.md) | [server-port.md](./compose/server-port.md) | `SERVER_PORT` | `compose/stack.yaml` |
 | [compose/](./compose/README.md) | [postgres-port.md](./compose/postgres-port.md) | `POSTGRES_PORT` | `compose/stack.yaml` |
@@ -34,7 +37,6 @@ a var can be defaulted doesn't mean it is left out.
 | [database/](./database/README.md) | [postgres-owner-password.md](./database/postgres-owner-password.md) | `POSTGRES_OWNER_PASSWORD` | `database/local-stack.yaml` |
 | [github/](./github/README.md) | [gh-app-id.md](./github/gh-app-id.md) | `INSIDEOUT_GH_APP_ID` | `github/app.yaml` |
 | [github/](./github/README.md) | [gh-app-private-key.md](./github/gh-app-private-key.md) | `INSIDEOUT_GH_PRIVATE_KEY` | `github/app.yaml` |
-| [github/](./github/README.md) | [gh-client-secret.md](./github/gh-client-secret.md) | `INSIDEOUT_GH_CLIENT_SECRET` | `github/app.yaml` |
 | [github/](./github/README.md) | [gh-private-key-file.md](./github/gh-private-key-file.md) | `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) | `github/app.yaml` |
 | [github/](./github/README.md) | [gh-webhook-secret.md](./github/gh-webhook-secret.md) | `INSIDEOUT_GH_WEBHOOK_SECRET` | `github/webhooks.yaml` |
 | [github/](./github/README.md) | [github-token.md](./github/github-token.md) | `GITHUB_TOKEN` (optional; read only by `setup --check`) | `github/tokens.yaml` |
@@ -44,6 +46,7 @@ a var can be defaulted doesn't mean it is left out.
 | [llm/](./llm/README.md) | [llm-schema.md](./llm/llm-schema.md) | `INSIDEOUT_LLM_SCHEMA` | `llm/provider.yaml` |
 | [llm/](./llm/README.md) | [ai-max-concurrent.md](./llm/ai-max-concurrent.md) | `INSIDEOUT_AI_MAX_CONCURRENT` | `llm/coach.yaml` |
 | [llm/](./llm/README.md) | [ai-queue-wait.md](./llm/ai-queue-wait.md) | `INSIDEOUT_AI_QUEUE_WAIT` | `llm/coach.yaml` |
+| [llm/](./llm/README.md) | [ai-turn-deadline.md](./llm/ai-turn-deadline.md) | `INSIDEOUT_AI_TURN_DEADLINE` | `llm/coach.yaml` |
 | [mail/](./mail/README.md) | [mail-api-key.md](./mail/mail-api-key.md) | `INSIDEOUT_MAIL_API_KEY` | `mail/resend.yaml` |
 | [mail/](./mail/README.md) | [mail-from.md](./mail/mail-from.md) | `INSIDEOUT_MAIL_FROM` | `mail/resend.yaml` |
 | [mail/](./mail/README.md) | [public-url.md](./mail/public-url.md) | `INSIDEOUT_PUBLIC_URL` | `mail/resend.yaml` |
@@ -127,10 +130,11 @@ never-absent rule satisfied).
 | llm-api-key | filled | filled |
 | llm-base-url / llm-model / llm-schema | blank (offline coach locally; live values ride the deployment) | filled 2026-10-06 |
 | ai-max-concurrent / ai-queue-wait | blank-fallback | blank-fallback |
+| ai-turn-deadline / trusted-proxy-hops (mapped 2026-11-21) | run `keys.py init` | run `keys.py init` |
 | mail-api-key | filled | filled |
 | mail-from / public-url | filled 2026-10-06 | filled 2026-10-06 |
 | mail-dev-body | blank-fallback | blank-fallback |
-| gh-webhook-secret / gh-app-id / gh-app-private-key / gh-client-secret | filled | filled (PEM normalized to real multi-line for the `_FILE` consumer) |
+| gh-webhook-secret / gh-app-id / gh-app-private-key | filled | filled (PEM normalized to real multi-line for the `_FILE` consumer) |
 | gh-private-key-file | blank (env-embedded PEM lane on that host) | filled 2026-10-06 |
 | postgres-app-password | filled | filled |
 | postgres-owner-password / github-token | empty by design | empty by design |

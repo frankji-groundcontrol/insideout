@@ -119,8 +119,8 @@ For the evidence loop, store the GitHub App credentials together:
 - [webhook secret](./keys/github/gh-webhook-secret.md)
 - [optional GitHub token](./keys/github/github-token.md)
 
-[The OAuth client secret](./keys/github/gh-client-secret.md) is retained for a
-future invite-link consumer and has placement-only verification today.
+The GitHub App OAuth client secret is not part of the store: no server code
+reads it, so no key kind maps it.
 
 After the App is installed, bind a project and follow the
 [CLI guidance guide](./cli-mcp-and-guidance.md). The testing tutorial separates

@@ -11,9 +11,10 @@ for the day-to-day dev workflow see
 
 `.env` stays the only file processes read. Its values have a second,
 out-of-git home since 2026-10-05: the host key store under
-[`hosts/`](../hosts/README.md) — one `keys/` folder per host with
-functional-module subfolders, tracked YAML manifests per module, and
-git-ignored `.secrets/*.key` values, managed with
+[`hosts/`](../hosts/README.md) — one shared set of tracked YAML manifests
+per functional module under `hosts/_manifests/keys/`, and one `keys/` folder
+per host whose module subfolders hold the git-ignored `.secrets/*.key`
+values, managed with
 `python3 scripts/keys.py init|audit|fill` (never prints values). Every
 mapped kind — credential or config companion — has a `.key` file; a
 blank file means a catalog/compose default is in effect (never-absent

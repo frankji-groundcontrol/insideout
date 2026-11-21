@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/guide"
-	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -19,23 +18,17 @@ func (s *Server) handleProjectGuide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.store.GetProjectForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("guide: get project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "guide: get project", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
+	// Kept on purpose: a project with no roadmap yet reads as an empty one.
 	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
 	if err != nil && !errors.Is(err, store.ErrNotFound) {
-		s.log.Error("guide: list roadmap", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "guide: list roadmap", err, nil)
 		return
 	}
 	parents := make(map[string]bool, len(nodes))

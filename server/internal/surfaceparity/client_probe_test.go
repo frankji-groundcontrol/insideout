@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -16,19 +17,9 @@ import (
 
 // The Go client half: every exported apiclient.Client method is called by
 // reflection against a server that only records, with each argument set, and
-// then once more per argument (and per field of a struct argument) left zero.
+// then once more per argument (and per field inside one, arg_deps_test.go) left zero.
 // A key whose value changes or vanishes depends on that argument, which is
 // what the CLI and MCP call sites are then checked against.
-
-// dep is what a sent key hangs on: method's argument arg (-1: nothing, any
-// call sends it), and for a struct argument its field.
-type dep struct {
-	method string
-	arg    int
-	field  string // Go field name of a struct argument, or ""
-	typ    string // that struct's type name
-	tail   bool   // arg is a variadic tail
-}
 
 // sent is one recorded request: route pattern and its body's keys and values.
 type sent map[string]map[string]string
@@ -43,15 +34,11 @@ func (rc *recorder) handler(patterns map[string]string) http.Handler {
 	for p := range patterns {
 		mux.HandleFunc(p, func(w http.ResponseWriter, r *http.Request) {
 			raw, _ := io.ReadAll(r.Body)
-			var body map[string]json.RawMessage
-			_ = json.Unmarshal(raw, &body)
 			rc.mu.Lock()
 			if rc.got[p] == nil {
 				rc.got[p] = map[string]string{}
 			}
-			for k, v := range body {
-				rc.got[p][k] = string(v)
-			}
+			flatten("", raw, rc.got[p])
 			rc.mu.Unlock()
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = io.WriteString(w, `{"accessToken":"a","refreshToken":"r","id":"x"}`)
@@ -60,11 +47,41 @@ func (rc *recorder) handler(patterns map[string]string) http.Handler {
 	return mux
 }
 
+// flatten records each key of a JSON object under prefix. An object or array
+// value stands as its shape and its own keys follow (key.x, key[].x; the probe
+// sends one element, so a key under an array has one value). A value the probe
+// passed in as raw JSON stays opaque: key.* marks every key below it as the
+// caller's to send.
+func flatten(prefix string, raw []byte, out map[string]string) {
+	var obj map[string]json.RawMessage
+	if json.Unmarshal(raw, &obj) != nil {
+		return
+	}
+	for k, v := range obj {
+		key := prefix + k
+		var arr []json.RawMessage
+		switch {
+		case string(v) == rawProbe:
+			out[key], out[key+".*"] = rawProbe, rawProbe
+		case len(v) > 0 && v[0] == '{':
+			out[key] = "{}"
+			flatten(key+".", v, out)
+		case len(v) > 0 && v[0] == '[' && json.Unmarshal(v, &arr) == nil:
+			out[key] = "[" + strconv.Itoa(len(arr)) + "]"
+			for _, el := range arr {
+				flatten(key+"[].", el, out)
+			}
+		default:
+			out[key] = string(v)
+		}
+	}
+}
+
 // probe is one exported method that sends requests: a Client method, or a
 // method of a struct a Client method takes that runs on a *Client (the
 // read-then-write Apply of a patch). clientAt is the *Client's place in ft.In.
 type probe struct {
-	name     string
+	name     string // "Type.Method", as surface.calls keys it
 	fn       reflect.Value
 	ft       reflect.Type
 	clientAt int
@@ -77,7 +94,7 @@ func probes() []probe {
 	structs := map[reflect.Type]bool{}
 	for i := range clientType.NumMethod() {
 		m := clientType.Method(i)
-		out = append(out, probe{m.Name, m.Func, m.Type, 0})
+		out = append(out, probe{"Client." + m.Name, m.Func, m.Type, 0})
 		for a := 1; a < m.Type.NumIn(); a++ {
 			if m.Type.In(a).Kind() == reflect.Struct {
 				structs[m.Type.In(a)] = true
@@ -89,7 +106,7 @@ func probes() []probe {
 			m := st.Method(i)
 			for a := 1; a < m.Type.NumIn(); a++ {
 				if m.Type.In(a) == clientType {
-					out = append(out, probe{m.Name, m.Func, m.Type, a})
+					out = append(out, probe{st.Name() + "." + m.Name, m.Func, m.Type, a})
 				}
 			}
 		}
@@ -122,7 +139,7 @@ func clientSends(t *testing.T, patterns map[string]string) map[string]map[string
 
 	out := map[string]map[string][]dep{}
 	for _, p := range probes() {
-		if p.name == "SetContext" || p.name == "SetRenewal" {
+		if p.name == "Client.SetContext" || p.name == "Client.SetRenewal" {
 			continue
 		}
 		in, ok := fullArgs(p.ft, p.clientAt)
@@ -134,7 +151,7 @@ func clientSends(t *testing.T, patterns map[string]string) map[string]map[string
 				out[pattern] = map[string][]dep{}
 			}
 			for key, val := range keys {
-				deps := argDeps(p, in, func(alt []reflect.Value) bool { return changes(run(p, alt), pattern, key, val) })
+				deps := argDeps(p, func(alt []reflect.Value) bool { return changes(run(p, alt), pattern, key, val) })
 				out[pattern][key] = append(out[pattern][key], deps...)
 			}
 		}
@@ -143,40 +160,6 @@ func clientSends(t *testing.T, patterns map[string]string) map[string]map[string
 		t.Fatalf("the Go client reached only %d routes; the probe is broken", len(out))
 	}
 	return out
-}
-
-// argDeps zeroes each argument of p in turn (each exported field of a struct
-// argument) and returns those whose zeroing changes the key. The call-site
-// index of ft.In(i) is i-1: In(0) is the receiver.
-func argDeps(p probe, in []reflect.Value, changed func([]reflect.Value) bool) []dep {
-	var deps []dep
-	for a := range in {
-		if a == p.clientAt {
-			continue
-		}
-		if in[a].Kind() == reflect.Struct {
-			for f := range in[a].NumField() {
-				if !in[a].Type().Field(f).IsExported() {
-					continue
-				}
-				alt := cloneArgs(in)
-				alt[a].Field(f).SetZero()
-				if changed(alt) {
-					deps = append(deps, dep{method: p.name, arg: a - 1, field: in[a].Type().Field(f).Name, typ: in[a].Type().Name()})
-				}
-			}
-			continue
-		}
-		alt := cloneArgs(in)
-		alt[a] = reflect.Zero(alt[a].Type())
-		if changed(alt) {
-			deps = append(deps, dep{method: p.name, arg: a - 1, tail: p.ft.IsVariadic() && a == len(in)-1})
-		}
-	}
-	if len(deps) == 0 {
-		deps = []dep{{method: p.name, arg: -1}}
-	}
-	return deps
 }
 
 // changes reports whether a run with one argument zeroed still reached pattern
@@ -219,10 +202,13 @@ func fullArgs(mt reflect.Type, clientAt int) ([]reflect.Value, bool) {
 // any other free string is wanted.
 const probeID = "00000000-0000-4000-8000-0000000000a1"
 
+// rawProbe is what the probe passes for a json.RawMessage the client forwards.
+const rawProbe = `{"probe":1}`
+
 func nonZero(t reflect.Type) (reflect.Value, bool) {
 	v := reflect.New(t).Elem()
 	if t == reflect.TypeOf(json.RawMessage(nil)) {
-		v.SetBytes([]byte(`{"probe":1}`))
+		v.SetBytes([]byte(rawProbe))
 		return v, true
 	}
 	switch t.Kind() {

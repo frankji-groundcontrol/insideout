@@ -32,7 +32,7 @@ func TestEveryRequestFieldIsReachable(t *testing.T) {
 		for _, key := range fields[route] {
 			for _, surf := range []string{"client", "cli", "mcp"} {
 				i := findOmission(route, key, surf)
-				ok := reached[surf](sends[route][key])
+				ok := reached[surf](depsOf(sends[route], key))
 				switch {
 				case !ok && i < 0:
 					gaps = append(gaps, route+" "+key+": not reachable from "+surf)
@@ -66,6 +66,21 @@ func TestEveryRequestFieldIsReachable(t *testing.T) {
 			}
 		}
 	}
+}
+
+// depsOf returns what key hangs on. A key below a value the client forwards
+// as raw JSON (key.*, see flatten) hangs on that value: the caller writes it.
+func depsOf(sends map[string][]dep, key string) []dep {
+	if d := sends[key]; len(d) > 0 {
+		return d
+	}
+	for k := key; strings.Contains(k, "."); {
+		k = strings.TrimSuffix(k[:strings.LastIndex(k, ".")], "[]")
+		if d := sends[k+".*"]; len(d) > 0 {
+			return d
+		}
+	}
+	return nil
 }
 
 // findOmission returns the index of the entry that omits route's key on surf.

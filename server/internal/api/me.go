@@ -43,8 +43,7 @@ func (s *Server) handleGetMe(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	user, err := s.store.GetUserByID(r.Context(), userID)
 	if err != nil {
-		s.log.Error("get user", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get user", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, userResponse(user))
@@ -81,8 +80,7 @@ func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
 
 	user, err := s.store.UpdateProfile(r.Context(), userID, req.Username, req.Bio, req.Keywords, avatar)
 	if err != nil {
-		s.log.Error("update profile", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update profile", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, userResponse(user))

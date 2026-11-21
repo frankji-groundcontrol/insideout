@@ -33,8 +33,8 @@ keeps its original bilingual text as a historical record).
   the host record.
 - [skills/insideout-server/](../skills/insideout-server/SKILL.md) — run the
   server on this machine or develop the Flutter client.
-- [hosts/](../hosts/README.md) — per-host metadata and the key manifests for
-  the machines that run this repository.
+- [hosts/](../hosts/README.md) — per-host metadata and the shared key
+  manifests for the machines that run this repository.
 
 ## Repository policy
 

@@ -70,24 +70,9 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 			return err
 		}
 
-		var c ReplaceConflictError
-		if err := tx.QueryRow(ctx, `
-			SELECT count(*), count(*) FILTER (WHERE status = 'done'), count(*) FILTER (WHERE status = 'validated'),
-				(SELECT count(*) FROM insideout.roadmap_evidence e
-				 JOIN insideout.roadmap_nodes en ON en.id = e.node_id WHERE en.project_id = $1)
-			FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID,
-		).Scan(&c.LiveCount, &c.DoneCount, &c.ValidatedCount, &c.EvidenceCount); err != nil {
+		c, err := checkReplaceAllowed(ctx, tx, projectID, opts)
+		if err != nil {
 			return err
-		}
-		if opts.EmptyOnly && c.LiveCount > 0 {
-			return ErrRoadmapNotEmpty
-		}
-		if c.LiveCount > 0 && (opts.ExpectedCount == nil || *opts.ExpectedCount != c.LiveCount) {
-			return &c
-		}
-		if !opts.Force && c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
-			c.History = true
-			return &c
 		}
 
 		if _, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID); err != nil {
@@ -96,65 +81,96 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 		// A forced rebuild discards history: the feed keeps a note of it.
 		if c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
 			if _, err := addProjectUpdateTx(ctx, tx, actorID, projectID, "note",
-				fmt.Sprintf("Rebuilt the roadmap (%d nodes), discarding %s", c.LiveCount, discardedHistory(&c)), nil); err != nil {
+				fmt.Sprintf("Rebuilt the roadmap (%d nodes), discarding %s", c.LiveCount, discardedHistory(c)), nil); err != nil {
 				return err
 			}
 		}
 
-		var insert func(parentID *uuid.UUID, n RoadmapPlanNode) error
-		insert = func(parentID *uuid.UUID, n RoadmapPlanNode) error {
-			var id uuid.UUID
-			err := tx.QueryRow(ctx, `
-				INSERT INTO insideout.roadmap_nodes (project_id, parent_id, title, description, position, created_by, updated_by)
-				SELECT $1, $2, $3, $4, COALESCE(MAX(position) + 1, 0), $5, $5
-				FROM insideout.roadmap_nodes
-				WHERE project_id = $1 AND parent_id IS NOT DISTINCT FROM $2
-				RETURNING id`,
-				projectID, parentID, n.Title, n.Description, actorID,
-			).Scan(&id)
-			if err != nil {
-				return err
-			}
-			count++
-			for _, c := range n.Children {
-				if err := insert(&id, c); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-		if err := insert(nil, root); err != nil {
+		if count, err = insertPlanNode(ctx, tx, actorID, projectID, nil, root); err != nil {
 			return err
 		}
-		// Seed the first leaf in_progress with a deadline, so a freshly
-		// built tree shows on Progress instead of filtering out entirely
-		// (every new node would otherwise be pending + undeadlined). The
-		// builder owns it: work in progress has one human owner (rv5-FEAT-05),
-		// on the record as a delegate row by the builder (no feed row), so
-		// hand-back and history agree.
-		if _, err := tx.Exec(ctx, `
-			WITH leaf AS (
-				UPDATE insideout.roadmap_nodes leaf
-				SET status = 'in_progress', deadline = now() + interval '7 days', owner_user_id = $2
-				WHERE leaf.id = (
-					SELECT n.id FROM insideout.roadmap_nodes n
-					WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
-					ORDER BY n.created_at, n.position
-					LIMIT 1
-				)
-				RETURNING leaf.id
-			)
-			INSERT INTO insideout.roadmap_node_assignments (node_id, to_user_id, assigned_by, kind)
-			SELECT id, $2, $2, 'delegate' FROM leaf`, projectID, actorID); err != nil {
-			return err
-		}
-		return nil
+		return seedFirstLeaf(ctx, tx, actorID, projectID)
 	})
 	if err != nil {
 		return 0, err
 	}
 	s.noteRoadmapChange(projectID)
 	return count, nil
+}
+
+// checkReplaceAllowed counts the live roadmap and refuses a replace the caller
+// did not confirm: ErrRoadmapNotEmpty for an EmptyOnly replace, else a
+// ReplaceConflictError. It runs behind the caller's per-project lock.
+func checkReplaceAllowed(ctx context.Context, tx pgx.Tx, projectID uuid.UUID, opts ReplaceOptions) (*ReplaceConflictError, error) {
+	var c ReplaceConflictError
+	if err := tx.QueryRow(ctx, `
+		SELECT count(*), count(*) FILTER (WHERE status = 'done'), count(*) FILTER (WHERE status = 'validated'),
+			(SELECT count(*) FROM insideout.roadmap_evidence e
+			 JOIN insideout.roadmap_nodes en ON en.id = e.node_id WHERE en.project_id = $1)
+		FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID,
+	).Scan(&c.LiveCount, &c.DoneCount, &c.ValidatedCount, &c.EvidenceCount); err != nil {
+		return nil, err
+	}
+	if opts.EmptyOnly && c.LiveCount > 0 {
+		return nil, ErrRoadmapNotEmpty
+	}
+	if c.LiveCount > 0 && (opts.ExpectedCount == nil || *opts.ExpectedCount != c.LiveCount) {
+		return nil, &c
+	}
+	if !opts.Force && c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
+		c.History = true
+		return nil, &c
+	}
+	return &c, nil
+}
+
+// insertPlanNode writes n under parentID, then its children under it, each
+// after its existing siblings. It returns how many nodes it wrote.
+func insertPlanNode(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID, parentID *uuid.UUID, n RoadmapPlanNode) (int, error) {
+	var id uuid.UUID
+	err := tx.QueryRow(ctx, `
+		INSERT INTO insideout.roadmap_nodes (project_id, parent_id, title, description, position, created_by, updated_by)
+		SELECT $1, $2, $3, $4, COALESCE(MAX(position) + 1, 0), $5, $5
+		FROM insideout.roadmap_nodes
+		WHERE project_id = $1 AND parent_id IS NOT DISTINCT FROM $2
+		RETURNING id`,
+		projectID, parentID, n.Title, n.Description, actorID,
+	).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	count := 1
+	for _, c := range n.Children {
+		written, err := insertPlanNode(ctx, tx, actorID, projectID, &id, c)
+		if err != nil {
+			return 0, err
+		}
+		count += written
+	}
+	return count, nil
+}
+
+// seedFirstLeaf sets the first leaf in_progress with a deadline, so a freshly
+// built tree shows on Progress instead of filtering out entirely (every new
+// node would otherwise be pending + undeadlined). The builder owns it: work in
+// progress has one human owner (rv5-FEAT-05), on the record as a delegate row
+// by the builder (no feed row), so hand-back and history agree.
+func seedFirstLeaf(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID) error {
+	_, err := tx.Exec(ctx, `
+		WITH leaf AS (
+			UPDATE insideout.roadmap_nodes leaf
+			SET status = 'in_progress', deadline = now() + interval '7 days', owner_user_id = $2
+			WHERE leaf.id = (
+				SELECT n.id FROM insideout.roadmap_nodes n
+				WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
+				ORDER BY n.created_at, n.position
+				LIMIT 1
+			)
+			RETURNING leaf.id
+		)
+		INSERT INTO insideout.roadmap_node_assignments (node_id, to_user_id, assigned_by, kind)
+		SELECT id, $2, $2, 'delegate' FROM leaf`, projectID, actorID)
+	return err
 }
 
 // expandFailAt, when > 0, makes ExpandRoadmapNode fail the Nth child insert

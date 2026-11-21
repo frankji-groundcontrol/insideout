@@ -22,12 +22,12 @@ func (s *Server) handleListMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Membership pre-check, kept on purpose: a non-member gets 404, not a roster.
 	if _, err := s.store.GetMembership(r.Context(), wsID, userID); errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
 		return
 	} else if err != nil {
-		s.log.Error("get membership", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get membership", err, nil)
 		return
 	}
 
@@ -38,8 +38,7 @@ func (s *Server) handleListMembers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		s.log.Error("list members", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list members", err, nil)
 		return
 	}
 
@@ -76,21 +75,11 @@ func (s *Server) handleUpdateMemberRole(w http.ResponseWriter, r *http.Request) 
 	}
 
 	err := s.store.UpdateMemberRole(r.Context(), actorID, wsID, targetID, req.Role)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can change member roles", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrLastAdmin) {
-		httpx.WriteError(w, http.StatusConflict, "a workspace needs at least one admin", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "member not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update member role", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update member role", err, errMsgs{
+			store.ErrForbidden: "only a workspace admin can change member roles",
+			store.ErrNotFound:  "member not found",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
@@ -108,21 +97,11 @@ func (s *Server) handleRemoveMember(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := s.store.RemoveMember(r.Context(), actorID, wsID, targetID)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can remove other members", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrLastAdmin) {
-		httpx.WriteError(w, http.StatusConflict, "a workspace needs at least one admin", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "member not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("remove member", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "remove member", err, errMsgs{
+			store.ErrForbidden: "only a workspace admin can remove other members",
+			store.ErrNotFound:  "member not found",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

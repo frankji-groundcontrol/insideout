@@ -23,3 +23,5 @@ sequence is [SETENV Step 4](../../../SETENV.md#step-4--local-dev-toggles).
   (`app/runtime.yaml`)
 - [refresh-ttl.md](./refresh-ttl.md) — `INSIDEOUT_REFRESH_TTL`
   (`app/runtime.yaml`)
+- [trusted-proxy-hops.md](./trusted-proxy-hops.md) —
+  `INSIDEOUT_TRUSTED_PROXY_HOPS` (`app/runtime.yaml`)

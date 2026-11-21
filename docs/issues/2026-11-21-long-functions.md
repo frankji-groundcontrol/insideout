@@ -1,5 +1,9 @@
 # 2026-11-21 — sixteen server functions over the 80-line function budget
 
+> **Resolved 2026-11-21** in the round that closed the review 5 gaps: every
+> listed function is split, and the guard's `longFunctions` map is empty. A new
+> function over the threshold now fails the guard outright.
+
 **Date:** 2026-11-21
 **Kind:** structural debt (function length), no behaviour change
 **Found by:** review 5 ([COMP-05](../review/2026-11-21-focused-review-5/30-completeness-critic.md),
@@ -25,15 +29,15 @@ Length is counted from the `func` line to the closing brace, at `87c95f5`:
 | ~~`parseAnthropicStream`~~ | `internal/agent/anthropic_parse.go` | 136: split in wave 4 |
 | ~~`runVersionCommands`~~ | `cmd/insideout/cli_version.go` | 117: split per verb in wave 4 (`cli_prd.go`, `cli_prd_versions.go`, `cli_agent.go`) |
 | ~~`runCrudCommand`~~ | `cmd/insideout/cli_crud.go` | 103: split per verb in wave 4 (`cli_idea.go`, `cli_workspace.go`, `cli_prd.go`) |
-| `Store.Migrate` | `internal/store/migrate.go` | 100 |
-| `Store.ReplaceRoadmapTree` | `internal/store/roadmap_plan.go` | 99 |
-| `parseResponsesStream` | `internal/llm/responses_parse.go` (moved by wave 4) | 98 |
-| `Server.handleUpdateRoadmapNode` | `internal/api/roadmap.go` | 97 |
-| `Store.MoveRoadmapNode` | `internal/store/roadmap_move.go` | 94 |
-| `Server.handleAgentContext` | `internal/api/agent_routes.go` | 89 |
+| ~~`Store.Migrate`~~ | `internal/store/migrate.go` | 100: split into bootstrap, list and apply steps in the closing-gaps round |
+| ~~`Store.ReplaceRoadmapTree`~~ | `internal/store/roadmap_plan.go` | 99: split into guard, insert and seed steps in the closing-gaps round |
+| ~~`parseResponsesStream`~~ | `internal/llm/responses_parse.go` (moved by wave 4) | 98: split into a per-event handler in the closing-gaps round |
+| ~~`Server.handleUpdateRoadmapNode`~~ | `internal/api/roadmap.go` | 97: split in the gaps round (`roadmapNodeFields`) |
+| ~~`Store.MoveRoadmapNode`~~ | `internal/store/roadmap_move.go` | 94: split into authorize, cycle-check and sibling-shift steps in the closing-gaps round |
+| ~~`Server.handleAgentContext`~~ | `internal/api/agent_routes.go` | 89: split in the gaps round (`agentContextQuery`, `agentContextNodes`, `addAgentContextPrd`) |
 | ~~`runServe`~~ | `cmd/insideout/main.go` | 87: split in wave 4 (`newModel`) |
-| `Server.handlePresenceStream` | `internal/api/presence_routes.go` | 85 |
-| `runRegister` | `internal/setup/ui/register.go` | 84 |
+| ~~`Server.handlePresenceStream`~~ | `internal/api/presence_routes.go` | 85: split in the gaps round (`streamPresence`, `presenceName`) |
+| ~~`runRegister`~~ | `internal/setup/ui/register.go` | 84: submit step split out in the closing-gaps round |
 
 Each is listed in `longFunctions` with its current length. A listed function
 may not grow; an entry whose function is gone or back under the limit fails,

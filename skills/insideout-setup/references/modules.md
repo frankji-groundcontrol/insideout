@@ -233,7 +233,7 @@ the module view:
 | --- | --- | --- |
 | CLI + MCP binaries | `./scripts/install.sh` | `insideout`, `insideout-mcp` in `~/.local/bin`, PATH appended once |
 | `.env` | `./scripts/env.sh init` or `setup.sh` | the only file holding real values; never printed, never committed |
-| Host key store | `python3 scripts/keys.py init` + `fill` | `hosts/<host>/keys/` — one `.key` per mapped kind, never absent |
+| Host key store | `python3 scripts/keys.py init` + `fill` | `hosts/<host>/keys/` — one `.key` per kind the shared `hosts/_manifests/keys/` maps, never absent |
 | Database schema | `./scripts/dev.sh -C server go run ./cmd/insideout migrate` (bundled path runs it via `setup.sh`) | embedded SQL in `server/db/migrations/`, inside the `insideout` schema only |
 | MCP registration | the user's agent MCP config (the `insideout-mcp` entry from Step 4 of the skill) | standard `mcpServers` entry; the agent lists the `insideout` tools after a reload |
 

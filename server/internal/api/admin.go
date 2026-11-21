@@ -55,8 +55,7 @@ func (s *Server) handlePutAdminSettings(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := s.store.SetSetting(r.Context(), "signup_mode", `"`+req.SignupMode+`"`); err != nil {
-		s.log.Error("admin: set signup mode", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "admin: set signup mode", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]string{"signupMode": req.SignupMode})
@@ -131,8 +130,7 @@ func (s *Server) handleCreateInvitation(w http.ResponseWriter, r *http.Request) 
 	adminID, _ := UserID(r.Context())
 	inv, err := s.store.CreateInvitation(r.Context(), adminID, email, hash, time.Now().Add(ttl))
 	if err != nil {
-		s.log.Error("admin: create invitation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "admin: create invitation", err, nil)
 		return
 	}
 
@@ -173,8 +171,7 @@ func invitationEmail(link string, ttl time.Duration) (subject, text, html string
 func (s *Server) handleListInvitations(w http.ResponseWriter, r *http.Request) {
 	invs, err := s.store.ListInvitations(r.Context())
 	if err != nil {
-		s.log.Error("admin: list invitations", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "admin: list invitations", err, nil)
 		return
 	}
 	out := make([]invitationView, 0, len(invs))
@@ -190,12 +187,8 @@ func (s *Server) handleRevokeInvitation(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusBadRequest, "invalid invitation id", "", nil)
 		return
 	}
-	if err := s.store.RevokeInvitation(r.Context(), id); err == store.ErrNotFound {
-		httpx.WriteError(w, http.StatusNotFound, "invitation not found or already used", "", nil)
-		return
-	} else if err != nil {
-		s.log.Error("admin: revoke invitation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+	if err := s.store.RevokeInvitation(r.Context(), id); err != nil {
+		s.writeStoreError(w, "admin: revoke invitation", err, errMsgs{store.ErrNotFound: "invitation not found or already used"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

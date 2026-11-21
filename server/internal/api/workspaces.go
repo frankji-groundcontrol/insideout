@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -54,8 +53,7 @@ func (s *Server) handleListWorkspaces(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	list, err := s.store.ListWorkspacesForUser(r.Context(), userID)
 	if err != nil {
-		s.log.Error("list workspaces", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list workspaces", err, nil)
 		return
 	}
 	views := make([]workspaceView, len(list))
@@ -85,15 +83,13 @@ func (s *Server) handleCreateWorkspace(w http.ResponseWriter, r *http.Request) {
 
 	ws, err := s.store.CreateWorkspace(r.Context(), userID, req.Title, req.Description)
 	if err != nil {
-		s.log.Error("create workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create workspace", err, nil)
 		return
 	}
 
 	summary, err := s.store.GetWorkspaceForMember(r.Context(), ws.ID, userID)
 	if err != nil {
-		s.log.Error("get created workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get created workspace", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, workspaceResponse(*summary, userID))
@@ -117,24 +113,17 @@ func (s *Server) handleJoinWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ws, err := s.store.JoinWorkspace(r.Context(), userID, code)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "no active workspace with this code", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "already a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("join workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "join workspace", err, errMsgs{
+			store.ErrNotFound: "no active workspace with this code",
+			store.ErrConflict: "already a member of this workspace",
+		})
 		return
 	}
 
 	summary, err := s.store.GetWorkspaceForMember(r.Context(), ws.ID, userID)
 	if err != nil {
-		s.log.Error("get joined workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get joined workspace", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*summary, userID))
@@ -148,13 +137,8 @@ func (s *Server) handleGetWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ws, err := s.store.GetWorkspaceForMember(r.Context(), wsID, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get workspace", err, errMsgs{store.ErrNotFound: "workspace not found"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*ws, userID))
@@ -189,24 +173,17 @@ func (s *Server) handleUpdateWorkspace(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err := s.store.UpdateWorkspace(r.Context(), userID, wsID, req.Title, req.Description, cover)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the workspace admin or creator can do this", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update workspace", err, errMsgs{
+			store.ErrNotFound:  "workspace not found",
+			store.ErrForbidden: "only the workspace admin or creator can do this",
+		})
 		return
 	}
 
 	summary, err := s.store.GetWorkspaceForMember(r.Context(), wsID, userID)
 	if err != nil {
-		s.log.Error("get updated workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get updated workspace", err, nil)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*summary, userID))
@@ -219,13 +196,8 @@ func (s *Server) handleDeleteWorkspace(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := s.store.DeleteWorkspace(r.Context(), userID, wsID)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the workspace creator can delete it", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("delete workspace", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete workspace", err, errMsgs{store.ErrForbidden: "only the workspace creator can delete it"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

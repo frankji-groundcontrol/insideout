@@ -18,7 +18,7 @@ python3 scripts/tests/env/test_env_writes.py
 (cd scripts && python3 -m unittest discover -s tests/keys -t . -p 'test_*.py' -v)
 ```
 
-The key suite checks all 31 mapped kinds for placement, mode `0600`, mapped
+The key suite checks all 32 mapped kinds for placement, mode `0600`, mapped
 variable, and type-specific shape. It does not compare values or prove an
 external service. A missing host key is an error; an empty key is valid only
 when the manifest declares a default or optional lane.
@@ -117,8 +117,7 @@ send a signed delivery from GitHub and require HTTP 200; a mismatched signature
 must be rejected. To prove commit sync on a private repository, install the App
 on it and run the sync above: the installation token reads it. The
 [optional GitHub token](./keys/github/github-token.md) is read only by
-`insideout setup --check` and is validated there when present. The stored OAuth
-client secret has no live consumer and receives placement-only verification.
+`insideout setup --check` and is validated there when present.
 
 ## 8. Troubleshoot by evidence
 
