@@ -18,6 +18,23 @@ Owner answers, 2026-11-22:
   shows as a "+N" summary. Clicking any node opens it as the root, which is
   what its owner sees.
 
+Later owner changes, 2026-11-22, which supersede the two-level answer:
+
+- > "In canvas I want 1. drag to move center view 2. zoom in and out"
+- > "I do not want to see hierarchy on canvas, only things in order. hierarchy
+  > is represented when I click into a certain step, namely node"
+
+  The Canvas shows **one level**: the steps under the current node, ordered
+  left to right by their dependencies. A link between any descendants of two
+  steps counts as a link between the steps. Opening a step shows its own
+  steps.
+- > "check if cli mcp api also follow this product logic. I want each person
+  > cares about what they need to care at the first glance. namely
+  > people-in-charge mode"
+
+  An audit of the API, CLI, MCP and agent context against these rules runs
+  before any surface change.
+
 Three clusters run in parallel from `main` at `59e45b34`, each in its own
 worktree. Their files do not overlap, except `roadmap_page.dart` (C1 owns the
 header, C3 only the canvas state) and the l10n tables. The coordinator
@@ -57,7 +74,7 @@ resolves those by hand, reviews each diff, runs the full gates once on
 
 ## Checklist
 
-- [ ] C1, band polish (client):
+- [x] C1, band polish (client):
   - Now is the only emphasised band; every slab is neutral.
   - Pressure shows as a chip, and "normal" is hidden.
   - Bands' Later moves finished work to Done and groups the rest by
@@ -67,17 +84,19 @@ resolves those by hand, reviews each diff, runs the full gates once on
   - The header scrolls away.
   - Light muted text passes AA on lanes.
   - One presence chip per user; empty bands are hidden.
-- [ ] C2, dependencies (server, CLI, MCP, docs): the contract above, with
+- [x] C2, dependencies (server, CLI, MCP, docs): the contract above, with
       real-PostgreSQL tests.
-- [ ] C3, Canvas graph (client):
-  - Top-down hierarchy: two levels below the root, connector lines, no fold
-    toggles.
-  - A "+N" summary for deeper subtrees.
-  - Clicking a node opens it as the root.
-  - Dependency edges are drawn between nodes in view; a "waits on" chip
-    covers nodes out of view.
-  - A "Depends on…" action in the node menu.
-  - Mine uses the same graph.
+- [x] C3, first pass: a two-level hierarchy graph, then superseded by the
+      owner's later changes.
+- [ ] C3, Canvas as an ordered flow (client):
+  - One level of steps, ordered by lifted dependencies, with merge arrows.
+  - Opening a step shows its own steps; a leaf opens its detail.
+  - Drag to pan, wheel or pinch to zoom, and +/−/fit buttons.
+  - A "Depends on…" picker in the node menu.
+  - Mine shows the caller's topmost owned nodes as the steps.
+- [ ] People-in-charge audit of the API, CLI, MCP and agent context; then the
+      owner chooses which changes to make.
+- [x] The Spark demo seed adds eight dependencies and checks three refusals.
 - [ ] Integrated gates green; design QA and changelog recorded; UI checked live
       on the Spark data.
 - [ ] PR merged.

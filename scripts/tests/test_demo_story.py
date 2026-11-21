@@ -103,6 +103,26 @@ class StoryTable(unittest.TestCase):
         self.assertEqual(len(handbacks), 1)
         self.assertEqual(paths[handbacks[0]["title"]], ("priya", S.CREATOR), "Priya hands a task back to Maya")
 
+    def test_dependencies(self):
+        parent = {n["title"]: p for p, n in S.walk()}
+
+        def ancestors(t):
+            while parent.get(t):
+                t = parent[t]
+                yield t
+        waits = {}
+        for waiting, on in S.DEPENDENCIES:
+            self.assertIn(waiting, parent)
+            self.assertIn(on, parent)
+            self.assertNotIn(on, ancestors(waiting), "the tree already says that")
+            self.assertNotIn(waiting, ancestors(on), "the tree already says that")
+            waits.setdefault(waiting, set()).add(on)
+
+        def reaches(a, b, seen=()):
+            return any(x == b or (x not in seen and reaches(x, b, seen + (x,))) for x in waits.get(a, ()))
+        for waiting, on in S.DEPENDENCIES:
+            self.assertFalse(reaches(on, waiting), f"{waiting} and {on} form a cycle")
+
     def test_proposals_and_updates(self):
         _, acting = owners_on_path()
         titles = {n["title"] for _, n in S.walk()}
