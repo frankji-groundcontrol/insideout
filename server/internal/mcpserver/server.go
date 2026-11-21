@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"sync"
 
@@ -55,17 +56,29 @@ func Build(api string) *server.MCPServer {
 	addProductTools(s, api)
 	addAdminTools(s, api)
 	applyAgentProfile(s, api)
+	warnIgnoredAgentRoot()
 	return s
+}
+
+// warnIgnoredAgentRoot says once, on stderr, that INSIDEOUT_AGENT_ROOT does
+// nothing beside an INSIDEOUT_TOKEN that already carries a scope: such a token
+// is sent as it is, never traded for a root-scoped one.
+func warnIgnoredAgentRoot() {
+	if os.Getenv("INSIDEOUT_AGENT_ROOT") == "" {
+		return
+	}
+	if c, ok := apiclient.ParseTokenClaims(os.Getenv("INSIDEOUT_TOKEN")); ok && c.Scope != "" {
+		fmt.Fprintln(os.Stderr, "insideout-mcp: INSIDEOUT_AGENT_ROOT is ignored: INSIDEOUT_TOKEN already carries a scope and is sent as it is")
+	}
 }
 
 // withheldFromAgents are the tools an agent-scope token cannot use, because the
 // server refuses their routes (Commit, the proposal decision, the instance
-// switches, every delete, delegation and the member list), and the password tools, which would put a password
+// switches, every delete), and the password tools, which would put a password
 // in the conversation.
 var withheldFromAgents = []string{
 	"commit", "proposal_decide", "signup_mode", "invite_create", "invite_list", "invite_revoke",
 	"idea_delete", "roadmap_delete", "auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
-	"roadmap_delegate", "roadmap_handback", "members",
 }
 
 // profileNarrowed remembers that the human-only tools were removed, so a

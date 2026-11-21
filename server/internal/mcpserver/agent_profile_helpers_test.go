@@ -23,7 +23,6 @@ import (
 var humanOnlyTools = []string{
 	"commit", "proposal_decide", "signup_mode", "invite_create", "invite_list", "invite_revoke",
 	"idea_delete", "roadmap_delete", "auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
-	"roadmap_delegate", "roadmap_handback", "members",
 }
 
 // agentTools must survive the profile: the agent's own vocabulary, the edits it

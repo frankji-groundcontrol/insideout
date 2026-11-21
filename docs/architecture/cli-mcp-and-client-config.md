@@ -116,14 +116,21 @@ saved login's tokens only ever go to the server they were issued by.
 - Two clients exist inside it. `humanClient` is `Resolve` plus the process's own
   login (an `auth_*` tool's token is process state, never conversation output);
   only the `auth_*` tools and the token exchange use it. `client` is
-  `apiclient.AgentScoped(humanClient(api))`, and every product tool calls
-  through that: the login traded for an agent-scope token, held in one slot per
-  server and user and minted again with about a third of its life left. A failed
-  trade is a client that fails every call; no tool falls back to the full login.
+  `apiclient.AgentScopedTo(humanClient(api), root)`, and every product tool
+  calls through that: the login traded for an agent-scope token, held in one
+  slot keyed by server, user and root, and minted again with about a third of
+  its life left. `root` is `INSIDEOUT_AGENT_ROOT`, a roadmap node id that
+  confines the token's node writes to that subtree ("" mints an unconfined
+  token). A token that already carries a scope is sent as it is, so a root
+  beside a scoped `INSIDEOUT_TOKEN` is ignored and `Build` prints one warning
+  line on stderr at startup. A failed trade is a client that fails every call;
+  no tool falls back to the full login.
 - The registry has a profile. When the process holds a JWT login,
   `applyAgentProfile` removes the tools in `withheldFromAgents` (Commit, the
   proposal decision, the instance switches, the deletes, the password tools).
   Without a login the registry stays whole so the process can still sign in.
+  Delegation, hand-back and the member list are never registered: every tool
+  acts through an agent-scope token, which their human-only routes refuse.
   That removal is advice to the model; the server's 403 for an agent-scope
   token is what holds. See [agent token scope](agent-token-scope.md), which also
   states the deploy order (server first, then the new binary).

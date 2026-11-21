@@ -146,13 +146,14 @@ process as `INSIDEOUT_TOKEN`) is sent as it is, and the server decides.
 The registry follows the credential. When the credential in use is a JWT (at
 startup, or right after an in-process sign-in), the profile removes `commit`,
 `proposal_decide`, `signup_mode`, `invite_create`, `invite_list`, `invite_revoke`,
-`idea_delete`, `roadmap_delete`, `roadmap_delegate`, `roadmap_handback`,
-`members` and the password tools (`auth_register`,
+`idea_delete`, `roadmap_delete` and the password tools (`auth_register`,
 `auth_login`, `auth_forgot_password`, `auth_reset_password`). The passwordless
 sign-in tools stay so an unauthenticated process can still be signed in. A token
 that is not a JWT cannot carry a scope and no InsideOut server accepts it, so it is
 passed through unchanged and the registry stays whole. Removal is advice to the
-model; the 403 above is the guarantee.
+model; the 403 above is the guarantee. Delegation, hand-back and the member list
+are not registered at all (rv5-COMP-03): every tool acts through an agent-scope
+token, so they could never succeed.
 
 ## Fencing and labelling
 

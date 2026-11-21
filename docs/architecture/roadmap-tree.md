@@ -169,11 +169,11 @@ has one roadmap route per project (`client/lib/router.dart`). MCP exposes
 `roadmap_add`, `roadmap_move`, `roadmap_delete` and `roadmap_evidence`
 (`server/internal/mcpserver/product_tools.go`), and the tree tools
 `roadmap_list` and `progress` (both take `root`), `roadmap_node`,
-`roadmap_mine`, `roadmap_update` (with `acceptance` and `owner_id`),
-`roadmap_delegate`, `roadmap_handback`, `roadmap_assignments` and `members`
-(`server/internal/mcpserver/roadmap_tree_tools.go`); delegate, hand-back and
-`members` are withheld once the MCP holds a login, since their routes are
-human-only. The CLI has the same verbs (`roadmap show`, `mine`, `delegate`,
+`roadmap_mine`, `roadmap_update` (with `acceptance` and `owner_id`) and
+`roadmap_assignments` (`server/internal/mcpserver/roadmap_tree_tools.go`); it
+has no delegate, hand-back or member-list tool, since every MCP tool acts
+through an agent-scope token and those routes are human-only. The CLI has the
+tree verbs and those three (`roadmap show`, `mine`, `delegate`,
 `handback`, `assignments`, `--root`, `update --owner/--acceptance`, and
 `members`; `server/cmd/insideout/cli_roadmap_tree.go`) over the Go client
 (`server/internal/apiclient/roadmap.go`, `roadmap_tree.go`).
@@ -229,8 +229,9 @@ on an owner change through `PATCH`.
 tapping a card opens it; the node menu gains "Open as tree" and "Delegate
 to"; write items hide when `canWrite` is false; a "Mine" toggle and the
 signed-in landing list the caller's nodes. MCP and the CLI ship the same
-slice at the same time: a root on `roadmap_list`, `roadmap_mine`,
-`roadmap_delegate` and a `members` lookup.
+slice at the same time: a root on `roadmap_list` and `roadmap_mine`; delegate
+and a `members` lookup are CLI-only, since every MCP tool acts through an
+agent-scope token that those routes refuse.
 
 **Agents.** `agent-context --focus` returns only the focus subtree and answers
 404 for an unknown node. An agent token may carry a root node and is refused

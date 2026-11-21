@@ -8,10 +8,10 @@ import (
 
 // addRoadmapTreeTools registers the task tree (docs/architecture/roadmap-tree.md):
 // the tree or one subtree, one node, the caller's own nodes, node edits with
-// owner and acceptance, delegation and its history, and workspace members.
-// roadmap_delegate, roadmap_handback and members run on routes the server
-// keeps for a human, so a process holding a login does not offer them
-// (withheldFromAgents).
+// owner and acceptance, and the owner history. Delegation, hand-back and the
+// member list run on routes the server keeps for a human, and every tool acts
+// through an agent-scoped token, so the MCP has no tool for them (the CLI and
+// the web do).
 func addRoadmapTreeTools(
 	addTextTool func(name, desc string, opts []mcp.ToolOption, call func(c *apiclient.Client, req mcp.CallToolRequest) (string, error)),
 	strReq, strOpt func(name, desc string) mcp.ToolOption,
@@ -61,26 +61,10 @@ func addRoadmapTreeTools(
 			}
 			return call(c.RoadmapUpdate(reqStr(req, "node_id"), patch))
 		})
-	addTextTool("roadmap_delegate", "Human: hand a node to a workspace member (they own it and the nodes below it); find user ids with members",
-		[]mcp.ToolOption{strReq("node_id", "roadmap node id"), strReq("to_user_id", "the member's user id"),
-			strOpt("note", "a note for the record (at most 500 characters)")},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.RoadmapDelegate(reqStr(req, "node_id"), reqStr(req, "to_user_id"), optStr(req, "note")))
-		})
-	addTextTool("roadmap_handback", "Human: hand a node you own back to whoever delegated it",
-		append(nodeReq, strOpt("note", "a note for the record (at most 500 characters)")),
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.RoadmapHandBack(reqStr(req, "node_id"), optStr(req, "note")))
-		})
 	addTextTool("roadmap_assignments", "Who held a node: delegations, hand-backs and cleared owners, newest first",
 		nodeReq,
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.RoadmapAssignments(reqStr(req, "node_id")))
-		})
-	addTextTool("members", "Human: list a workspace's members with their user ids, names, emails and roles",
-		[]mcp.ToolOption{strReq("workspace_id", "workspace id")},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.Members(reqStr(req, "workspace_id")))
 		})
 }
 

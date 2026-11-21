@@ -151,14 +151,16 @@ this binary ([design](../architecture/agent-token-scope.md)). It also refuses
 an agent's `build_confirm` over a roadmap that is not empty, and an agent's
 `completion_reason` or `owner_id` on `roadmap_update` (an agent suggests an
 owner through `propose`, which only a plan writer's agent may file). The registry
-follows the login: fifteen tools are not offered while the process holds a JWT
+follows the login: twelve tools are not offered while the process holds a JWT
 login — `commit`, `proposal_decide`, `signup_mode`, `invite_create`,
-`invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete`,
-`roadmap_delegate`, `roadmap_handback`, `members` and the four
+`invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete` and the four
 password tools (`auth_register`, `auth_login`, `auth_forgot_password`,
 `auth_reset_password`, so a password never enters the conversation). Run
 those from the CLI or the web. Before any sign-in the whole registry is
 listed, so a process can still sign in; the first sign-in narrows it.
+Delegation, hand-back and the member list have no MCP tool at all: every tool
+acts through an agent-scope token, which the server always refuses there, so
+use `roadmap delegate`, `roadmap handback` and `members` in the CLI.
 
 - `"env": { "INSIDEOUT_AGENT_ROOT": "<node-id>" }` confines the agent token to
   one node's subtree: node writes outside it answer 403 `agent_scope_denied`,
@@ -166,8 +168,9 @@ listed, so a process can still sign in; the first sign-in narrows it.
   default.
 - A failed exchange is a tool error and never falls back to the full token.
   An `INSIDEOUT_TOKEN` that already carries a scope is sent as it is (the
-  server decides); one that is not a JWT is passed through and the registry
-  stays whole.
+  server decides), so `INSIDEOUT_AGENT_ROOT` beside it does nothing and the
+  process prints one warning line on stderr at startup; a token that is not a
+  JWT is passed through and the registry stays whole.
 - Deploy the server before the MCP binary: a new binary against a server
   without `POST /agent/token` fails every tool with a hint to update the
   server.
