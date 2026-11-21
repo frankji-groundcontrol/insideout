@@ -19,6 +19,17 @@ type contentBlockAcc struct {
 	toolInput strings.Builder
 }
 
+// anthropicStream is the state parseAnthropicStream accumulates, one event
+// at a time.
+type anthropicStream struct {
+	blocks     map[int]*contentBlockAcc
+	order      []int
+	stopReason string
+	usage      Usage
+	sawStop    bool
+	onDelta    func(string)
+}
+
 // parseAnthropicStream reads Anthropic's Messages API SSE stream
 // (message_start / content_block_start / content_block_delta /
 // content_block_stop / message_delta / message_stop — see
@@ -30,12 +41,7 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 
-	blocks := make(map[int]*contentBlockAcc)
-	var order []int
-	var stopReason string
-	var usage Usage
-	var sawStop bool
-
+	st := &anthropicStream{blocks: make(map[int]*contentBlockAcc), onDelta: onDelta}
 	for scanner.Scan() {
 		if tick != nil {
 			tick()
@@ -50,73 +56,96 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		if err := json.Unmarshal([]byte(data), &event); err != nil {
 			continue // blank lines between events, "event: X" lines, etc.
 		}
-		eventType, _ := event["type"].(string)
-
-		switch eventType {
-		case "message_start":
-			if msg, ok := event["message"].(map[string]any); ok {
-				readUsage(msg["usage"], &usage)
-			}
-
-		case "content_block_start":
-			idx, ok := event["index"].(float64)
-			if !ok {
-				continue
-			}
-			index := int(idx)
-			cb, _ := event["content_block"].(map[string]any)
-			acc := &contentBlockAcc{blockType: fmt.Sprint(cb["type"])}
-			if acc.blockType == "tool_use" {
-				acc.toolID, _ = cb["id"].(string)
-				acc.toolName, _ = cb["name"].(string)
-			}
-			blocks[index] = acc
-			order = append(order, index)
-
-		case "content_block_delta":
-			idx, ok := event["index"].(float64)
-			if !ok {
-				continue
-			}
-			acc := blocks[int(idx)]
-			if acc == nil {
-				continue
-			}
-			delta, _ := event["delta"].(map[string]any)
-			switch delta["type"] {
-			case "text_delta":
-				chunk, _ := delta["text"].(string)
-				acc.text.WriteString(chunk)
-				if onDelta != nil && chunk != "" {
-					onDelta(chunk)
-				}
-			case "input_json_delta":
-				chunk, _ := delta["partial_json"].(string)
-				acc.toolInput.WriteString(chunk)
-			case "thinking_delta", "signature_delta":
-				// Not surfaced to the coach — see the doc comment above.
-			}
-
-		case "message_delta":
-			if delta, ok := event["delta"].(map[string]any); ok {
-				stopReason, _ = delta["stop_reason"].(string)
-			}
-			readUsage(event["usage"], &usage)
-
-		case "message_stop":
-			sawStop = true
-
-		case "error":
-			errBody, _ := event["error"].(map[string]any)
-			errType, _ := errBody["type"].(string)
-			errMsg, _ := errBody["message"].(string)
-			return Turn{}, classifyInStreamError(errType, errMsg)
+		if err := st.handle(event); err != nil {
+			return Turn{}, err
 		}
 	}
 	if err := scanner.Err(); err != nil {
 		return Turn{}, classifyStreamReadErr(err)
 	}
+	return st.turn()
+}
 
+// handle applies one stream event; an in-stream "error" event ends the turn.
+func (st *anthropicStream) handle(event map[string]any) error {
+	eventType, _ := event["type"].(string)
+	switch eventType {
+	case "message_start":
+		if msg, ok := event["message"].(map[string]any); ok {
+			readUsage(msg["usage"], &st.usage)
+		}
+
+	case "content_block_start":
+		st.blockStart(event)
+
+	case "content_block_delta":
+		st.blockDelta(event)
+
+	case "message_delta":
+		if delta, ok := event["delta"].(map[string]any); ok {
+			st.stopReason, _ = delta["stop_reason"].(string)
+		}
+		readUsage(event["usage"], &st.usage)
+
+	case "message_stop":
+		st.sawStop = true
+
+	case "error":
+		errBody, _ := event["error"].(map[string]any)
+		errType, _ := errBody["type"].(string)
+		errMsg, _ := errBody["message"].(string)
+		return classifyInStreamError(errType, errMsg)
+	}
+	return nil
+}
+
+// blockStart opens the content block a content_block_start event names.
+func (st *anthropicStream) blockStart(event map[string]any) {
+	idx, ok := event["index"].(float64)
+	if !ok {
+		return
+	}
+	index := int(idx)
+	cb, _ := event["content_block"].(map[string]any)
+	acc := &contentBlockAcc{blockType: fmt.Sprint(cb["type"])}
+	if acc.blockType == "tool_use" {
+		acc.toolID, _ = cb["id"].(string)
+		acc.toolName, _ = cb["name"].(string)
+	}
+	st.blocks[index] = acc
+	st.order = append(st.order, index)
+}
+
+// blockDelta appends a content_block_delta to its block, streaming text on.
+func (st *anthropicStream) blockDelta(event map[string]any) {
+	idx, ok := event["index"].(float64)
+	if !ok {
+		return
+	}
+	acc := st.blocks[int(idx)]
+	if acc == nil {
+		return
+	}
+	delta, _ := event["delta"].(map[string]any)
+	switch delta["type"] {
+	case "text_delta":
+		chunk, _ := delta["text"].(string)
+		acc.text.WriteString(chunk)
+		if st.onDelta != nil && chunk != "" {
+			st.onDelta(chunk)
+		}
+	case "input_json_delta":
+		chunk, _ := delta["partial_json"].(string)
+		acc.toolInput.WriteString(chunk)
+	case "thinking_delta", "signature_delta":
+		// Not surfaced to the coach — see parseAnthropicStream's doc comment.
+	}
+}
+
+// turn assembles the finished stream into one Turn: the first tool call
+// wins, otherwise every text block is concatenated.
+func (st *anthropicStream) turn() (Turn, error) {
+	stopReason, usage := st.stopReason, st.usage
 	if stopReason == "refusal" {
 		return Turn{}, fmt.Errorf("%w: model declined to respond", ErrContentRefusal)
 	}
@@ -125,14 +154,14 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	// looks exactly like this — so the half it delivered is never taken for
 	// the whole (rv4-AIDEV-05). A stream with no content at all stays the
 	// empty-response case below.
-	if !sawStop && len(order) > 0 {
+	if !st.sawStop && len(st.order) > 0 {
 		return Turn{}, fmt.Errorf("%w: anthropic stream ended before message_stop", ErrProviderTransient)
 	}
 
 	var text strings.Builder
 	var cutCall bool
-	for _, index := range order {
-		acc := blocks[index]
+	for _, index := range st.order {
+		acc := st.blocks[index]
 		switch acc.blockType {
 		case "tool_use":
 			if stopReason == "max_tokens" {
@@ -151,7 +180,7 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	if cutCall {
 		return Turn{Text: text.String(), Usage: usage, Truncated: true}, nil
 	}
-	if len(order) == 0 {
+	if len(st.order) == 0 {
 		return Turn{}, fmt.Errorf("agent: empty response from provider")
 	}
 	if text.Len() == 0 {
