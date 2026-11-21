@@ -257,8 +257,10 @@ Auth can also happen at runtime: the `auth_*` tools
 the token is kept in memory and never echoed into the conversation, and
 every later tool call rides that session. `auth_logout` drops that
 in-memory session only; the saved login file stays until `insideout logout`. Once the process holds a JWT
-login, the four password tools are no longer offered (see "Agent scope");
-the code and magic-link tools stay. The code flow is the
+login, the four password tools are no longer offered (see "Agent scope"),
+and neither are `auth_login_code_verify`, `auth_magic_link_consume` and
+`auth_logout`: restart `insideout-mcp` to change identity, which is also
+what its errors say. The code flow is the
 agent-friendly one: the human gets the email and supplies the digits, so
 no password ever appears in a transcript. (Until 2026-08-24 there was
 deliberately no login tool; the all-surfaces-agree product call reversed

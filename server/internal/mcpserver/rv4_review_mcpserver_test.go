@@ -175,8 +175,8 @@ func TestRvMcpInProcessFinal401NamesAuthTools(t *testing.T) {
 	setSessionToken(expired)
 
 	_, err := client(api.URL).Whoami()
-	if err == nil || !strings.Contains(err.Error(), "auth_login_code_request") || !strings.Contains(err.Error(), "auth_logout") {
-		t.Fatalf("whoami = %v, want advice that names auth_login_code_request and auth_logout", err)
+	if err == nil || !strings.Contains(err.Error(), "auth_login_code_request") || !strings.Contains(err.Error(), "restart insideout-mcp") {
+		t.Fatalf("whoami = %v, want advice to restart and sign in with auth_login_code_request (rv5-PARA-04)", err)
 	}
 }
 
@@ -259,11 +259,11 @@ func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 	}
 
 	swap := callTool(t, s, 1, "auth_magic_link_consume", `{"token":"attacker-link"}`)
-	if !swap.Result.IsError || !strings.Contains(rvMcpText(t, swap), "auth_logout") {
+	if !swap.Result.IsError || !strings.Contains(rvMcpText(t, swap), "restart insideout-mcp") {
 		t.Fatalf("auth_magic_link_consume while a login is held: %s", rvMcpText(t, swap))
 	}
 	code := callTool(t, s, 2, "auth_login_code_verify", `{"email":"a@example.com","code":"999999"}`)
-	if !code.Result.IsError || !strings.Contains(rvMcpText(t, code), "auth_logout") {
+	if !code.Result.IsError || !strings.Contains(rvMcpText(t, code), "restart insideout-mcp") {
 		t.Fatalf("auth_login_code_verify while a login is held: %s", rvMcpText(t, code))
 	}
 	if out := callTool(t, s, 3, "auth_logout", `{}`); !out.Result.IsError || !strings.Contains(rvMcpText(t, out), "confirm") {

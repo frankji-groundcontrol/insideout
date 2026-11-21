@@ -40,7 +40,7 @@ func addAuthTools(s *server.MCPServer, api string) {
 		if unlocked || humanClient(api).Token() == "" {
 			return nil
 		}
-		return fmt.Errorf("a login is already held; run auth_logout first")
+		return fmt.Errorf("a login is already held; restart insideout-mcp to change identity")
 	}
 
 	// signedIn confirms the freshly stored session via /me and reports the

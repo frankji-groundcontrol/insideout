@@ -104,7 +104,7 @@ func applyAgentProfile(s *server.MCPServer, api string) {
 // mcpInProcessHint replaces "run insideout login" for an in-process sign-in.
 // That command writes the saved file, which this session ignores until the
 // in-process credential is cleared or finally refused.
-const mcpInProcessHint = "call auth_login_code_request and auth_login_code_verify again, or auth_logout to fall back to the saved login"
+const mcpInProcessHint = "restart insideout-mcp to sign in again: a restarted process uses the saved `insideout login`, or signs in with auth_login_code_request"
 
 // session is the login an auth tool acquired. Process memory, never conversation
 // output. Each tool call builds its own client armed from here: a Client serves
