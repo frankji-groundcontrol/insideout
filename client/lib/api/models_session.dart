@@ -46,6 +46,8 @@ class Workspace {
     required this.memberCount,
     required this.myRole,
     required this.createdAt,
+    this.canEdit = false,
+    this.canDelete = false,
   });
 
   final String id;
@@ -57,6 +59,11 @@ class Workspace {
   final String myRole;
   final String createdAt;
 
+  /// What the server lets the viewer do (rv5-FE-05): the creator or an admin
+  /// edits; only the creator deletes.
+  final bool canEdit;
+  final bool canDelete;
+
   factory Workspace.fromJson(Map<String, dynamic> j) => Workspace(
     id: j['id'] as String,
     title: j['title'] as String,
@@ -66,6 +73,8 @@ class Workspace {
     memberCount: (j['memberCount'] as num?)?.toInt() ?? 0,
     myRole: j['myRole'] as String,
     createdAt: j['createdAt'] as String,
+    canEdit: j['canEdit'] == true,
+    canDelete: j['canDelete'] == true,
   );
 }
 

@@ -36,6 +36,8 @@ class _Api extends ApiClient {
     'status': 'active',
     'memberCount': 2,
     'myRole': role,
+    'canEdit': role == 'admin',
+    'canDelete': role == 'admin',
     'createdAt': '2026-01-01T00:00:00Z',
   });
 

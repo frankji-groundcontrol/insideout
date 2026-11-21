@@ -64,6 +64,8 @@ Workspace _ws({
   'status': 'active',
   'memberCount': 2,
   'myRole': 'admin',
+  'canEdit': true,
+  'canDelete': true,
   'createdAt': '2026-01-01T00:00:00Z',
 });
 

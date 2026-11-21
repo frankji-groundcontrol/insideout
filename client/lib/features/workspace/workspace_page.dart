@@ -223,25 +223,27 @@ class _WorkspacePageState extends State<WorkspacePage> {
               label: l10n.t('workspace.settings'),
               onTap: () => context.go('/workspace/${widget.id}/settings'),
             ),
-            // Edit and delete are an admin's (FE-05; delete is the creator's).
-            if (data.ws.myRole == 'admin') ...[
+            // Only what the server would let this viewer do (rv5-FE-05).
+            if (data.ws.canEdit || data.ws.canDelete) ...[
               const SizedBox(height: Cobalt.space4),
               Wrap(
                 spacing: Cobalt.space3,
                 runSpacing: Cobalt.space3,
                 children: [
-                  BlockButton(
-                    label: l10n.t('common.edit'),
-                    icon: Icons.edit_outlined,
-                    variant: BlockButtonVariant.secondary,
-                    onPressed: () => _edit(data.ws),
-                  ),
-                  BlockButton(
-                    label: l10n.t('workspace.deleteWorkspace'),
-                    icon: Icons.delete_outline,
-                    variant: BlockButtonVariant.danger,
-                    onPressed: _delete,
-                  ),
+                  if (data.ws.canEdit)
+                    BlockButton(
+                      label: l10n.t('common.edit'),
+                      icon: Icons.edit_outlined,
+                      variant: BlockButtonVariant.secondary,
+                      onPressed: () => _edit(data.ws),
+                    ),
+                  if (data.ws.canDelete)
+                    BlockButton(
+                      label: l10n.t('workspace.deleteWorkspace'),
+                      icon: Icons.delete_outline,
+                      variant: BlockButtonVariant.danger,
+                      onPressed: _delete,
+                    ),
                 ],
               ),
             ],

@@ -144,23 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ProductDock.clearance,
                       ),
                       children: [
-                        BlockField(
-                          label: l10n.t('workspace.createNamePlaceholder'),
-                          controller: title,
-                        ),
-                        const SizedBox(height: Cobalt.space3),
-                        BlockTextarea(
-                          label: l10n.t('workspace.createDescPlaceholder'),
-                          controller: description,
-                        ),
-                        const SizedBox(height: Cobalt.space4),
-                        if (_admin(snap.data!.ws))
-                          BlockButton(
-                            label: l10n.t('common.save'),
-                            icon: Icons.save_outlined,
-                            expand: true,
-                            onPressed: _save,
-                          ),
+                        ..._about(context, snap.data!.ws),
                         const SizedBox(height: Cobalt.space8),
                         _inviteCard(context, snap.data!.ws),
                         const SizedBox(height: Cobalt.space8),
@@ -174,7 +158,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           const SizedBox(height: Cobalt.space3),
                         ],
                         const SizedBox(height: Cobalt.space4),
-                        if (_admin(snap.data!.ws))
+                        if (snap.data!.ws.canDelete)
                           BlockButton(
                             label: l10n.t('workspace.deleteWorkspace'),
                             icon: Icons.delete_outline,
@@ -224,7 +208,41 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  /// Workspace edits and member management are an admin's (FE-05).
+  /// The title and description: fields and Save for whoever the server lets
+  /// edit, read-only text for anyone else (rv5-FE-05).
+  List<Widget> _about(BuildContext context, Workspace ws) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    if (!ws.canEdit) {
+      return [
+        Text(ws.title, style: theme.textTheme.titleLarge),
+        if (ws.description.isNotEmpty) ...[
+          const SizedBox(height: Cobalt.space2),
+          Text(ws.description, style: theme.textTheme.bodyMedium),
+        ],
+      ];
+    }
+    return [
+      BlockField(
+        label: l10n.t('workspace.createNamePlaceholder'),
+        controller: title,
+      ),
+      const SizedBox(height: Cobalt.space3),
+      BlockTextarea(
+        label: l10n.t('workspace.createDescPlaceholder'),
+        controller: description,
+      ),
+      const SizedBox(height: Cobalt.space4),
+      BlockButton(
+        label: l10n.t('common.save'),
+        icon: Icons.save_outlined,
+        expand: true,
+        onPressed: _save,
+      ),
+    ];
+  }
+
+  /// Member management is an admin's (FE-05).
   bool _admin(Workspace ws) => ws.myRole == 'admin';
 
   /// [admin] manages everyone; anyone else only leaves (removes themselves).
