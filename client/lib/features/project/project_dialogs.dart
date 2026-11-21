@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/models.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_field.dart';
@@ -8,11 +9,14 @@ import '../../theme/block_modal.dart';
 import '../../theme/cobalt.dart';
 
 /// The edit-project modal. Resolves to the fields to save, or null when the
-/// user cancelled; the page owns the write.
-Future<({String title, String description, String status})?> showProjectEdit(
+/// user cancelled; the page owns the write. [members] adds the owner picker
+/// (admins only: only they may hand a project over); ownerId '' is no owner.
+Future<({String title, String description, String status, String ownerId})?>
+showProjectEdit(
   BuildContext context,
-  Map<String, dynamic> data,
-) async {
+  Map<String, dynamic> data, {
+  List<WorkspaceMember>? members,
+}) async {
   final t = context.read<Appearance>().t;
   final navigator = Navigator.of(context);
   final titleCtrl = TextEditingController(text: data['title'] as String? ?? '');
@@ -20,6 +24,7 @@ Future<({String title, String description, String status})?> showProjectEdit(
     text: data['description'] as String? ?? '',
   );
   var status = (data['status'] as String?) ?? 'planning';
+  var ownerId = (data['ownerId'] as String?) ?? '';
   final ok = await showBlockModal<bool>(
     context: context,
     title: t('project.edit'),
@@ -50,6 +55,20 @@ Future<({String title, String description, String status})?> showProjectEdit(
             ],
             onChanged: (v) => setLocal(() => status = v ?? status),
           ),
+          if (members != null) ...[
+            const SizedBox(height: Cobalt.space4),
+            BlockSelect<String>(
+              key: const Key('project-owner-picker'),
+              label: t('project.ownerLabel'),
+              // An owner who left the workspace reads as none until changed.
+              value: members.any((m) => m.userId == ownerId) ? ownerId : '',
+              options: [
+                (value: '', label: t('project.noOwner')),
+                for (final m in members) (value: m.userId, label: m.username),
+              ],
+              onChanged: (v) => setLocal(() => ownerId = v ?? ownerId),
+            ),
+          ],
         ],
       ),
     ),
@@ -73,6 +92,7 @@ Future<({String title, String description, String status})?> showProjectEdit(
     title: titleCtrl.text.trim(),
     description: descCtrl.text,
     status: status,
+    ownerId: ownerId,
   );
 }
 

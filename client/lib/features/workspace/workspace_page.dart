@@ -20,6 +20,7 @@ import '../../theme/cobalt_theme.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 import 'block_refresh.dart';
+import '../project/project_header.dart';
 import 'board_project_card.dart';
 import 'quick_capture_fab.dart';
 import 'workspace_prd_list.dart';
@@ -34,6 +35,12 @@ const double _bottomInset =
     quickCaptureSize +
     kFloatingActionButtonMargin +
     Cobalt.space4;
+
+typedef _Board = ({
+  Workspace ws,
+  List<Project> projects,
+  List<WorkspaceMember> members,
+});
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key, required this.id});
@@ -56,7 +63,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     );
   }
 
-  late Future<({Workspace ws, List<Project> projects})> _future;
+  late Future<_Board> _future;
 
   @override
   void initState() {
@@ -65,16 +72,21 @@ class _WorkspacePageState extends State<WorkspacePage> {
     _future = _load();
   }
 
-  Future<({Workspace ws, List<Project> projects})> _load() async {
+  Future<_Board> _load() async {
     final api = context.read<Session>().api;
     final ws = await api.getWorkspace(widget.id);
     final projects = await api.listProjects(widget.id);
-    if (!mounted) return (ws: ws, projects: projects);
+    // Owner names only; the board stands without them.
+    final members = await api
+        .listMembers(widget.id)
+        .catchError((_) => <WorkspaceMember>[]);
+    final board = (ws: ws, projects: projects, members: members);
+    if (!mounted) return board;
     final focus = context.read<LoopFocus>();
     if (focus.projectFor(widget.id) == null && projects.isNotEmpty) {
       focus.rememberProject(projects.first.id, workspaceId: widget.id);
     }
-    return (ws: ws, projects: projects);
+    return board;
   }
 
   Future<void> _reload() async {
@@ -153,7 +165,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<({Workspace ws, List<Project> projects})>(
+    return FutureBuilder<_Board>(
       future: _future,
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
@@ -177,10 +189,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     );
   }
 
-  Widget _board(
-    BuildContext context,
-    ({Workspace ws, List<Project> projects}) data,
-  ) {
+  Widget _board(BuildContext context, _Board data) {
     final l10n = context.watch<Appearance>();
     final width = MediaQuery.sizeOf(context).width;
     final hPad = width >= Cobalt.bpDesk
@@ -259,6 +268,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                 BoardProjectCard(
                   project: p,
                   progress: progressFutureFor(p.id),
+                  ownerName: projectOwnerName(p.ownerId, data.members),
                   onOpen: () {
                     context.read<LoopFocus>().rememberProject(
                       p.id,

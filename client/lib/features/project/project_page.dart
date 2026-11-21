@@ -13,10 +13,10 @@ import '../../session/session.dart';
 import '../../theme/block_button.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
-import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'project_dialogs.dart';
 import 'project_github_card.dart';
+import 'project_header.dart';
 import 'project_leaf_evidence.dart';
 import 'project_updates_feed.dart';
 
@@ -42,6 +42,15 @@ class _ProjectPageState extends State<ProjectPage> {
   var _flash = false;
   var _lastPulse = 0;
   late final LoopFocus _focus;
+
+  /// The workspace members: the owner's name and the edit dialog's picker.
+  List<WorkspaceMember> _members = const [];
+
+  /// Only an admin hands a project over (the server refuses anyone else).
+  bool get _isAdmin {
+    final me = context.read<Session>().user?.id;
+    return _members.any((m) => m.userId == me && m.role == 'admin');
+  }
 
   @override
   void initState() {
@@ -91,6 +100,11 @@ class _ProjectPageState extends State<ProjectPage> {
     final ws = data['workspaceId'] as String?;
     _focus.rememberProject(widget.id, workspaceId: ws);
     repo.text = (data['repoUrl'] as String?) ?? '';
+    if (ws != null) {
+      // The page still works without names; the owner line just stays empty.
+      final members = await api.listMembers(ws).catchError((_) => _members);
+      if (mounted) _members = members;
+    }
     return data;
   }
 
@@ -137,8 +151,6 @@ class _ProjectPageState extends State<ProjectPage> {
       future: _future,
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
-        final theme = Theme.of(context);
-        final palette = Cobalt.of(context);
         final title =
             snap.data?['title'] as String? ?? l10n.t('evidence.title');
         final updates = ((snap.data?['updates'] as List?) ?? const [])
@@ -161,43 +173,13 @@ class _ProjectPageState extends State<ProjectPage> {
                         ProductDock.clearance,
                       ),
                       children: [
-                        // The dock's Evidence pulse flashes this header — a
-                        // brandSubtle fill behind a strokeStrong border that
-                        // fades back out (Cobalt-Neo tokens, 0 radius).
-                        AnimatedContainer(
-                          key: const ValueKey('evidence-pulse-flash'),
-                          duration: inkReduceMotion(context)
-                              ? Duration.zero
-                              : const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: _flash
-                                ? palette.brandSubtle
-                                : palette.brandSubtle.withValues(alpha: 0),
-                            border: Border.all(
-                              color: _flash
-                                  ? palette.strokeStrong
-                                  : palette.strokeStrong.withValues(alpha: 0),
-                              width: Cobalt.borderContainer,
-                            ),
+                        ProjectHeader(
+                          title: title,
+                          ownerName: projectOwnerName(
+                            snap.data!['ownerId'] as String?,
+                            _members,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                l10n.t('evidence.title').toUpperCase(),
-                                style: theme.textTheme.labelSmall,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(title, style: theme.textTheme.displaySmall),
-                              const SizedBox(height: 8),
-                              Text(
-                                l10n.t('evidence.lead'),
-                                style: theme.textTheme.bodyLarge,
-                              ),
-                            ],
-                          ),
+                          flash: _flash,
                         ),
                         const SizedBox(height: 20),
                         Wrap(
@@ -270,7 +252,11 @@ class _ProjectPageState extends State<ProjectPage> {
   }
 
   Future<void> _edit(Map<String, dynamic> data) async {
-    final saved = await showProjectEdit(context, data);
+    final saved = await showProjectEdit(
+      context,
+      data,
+      members: _isAdmin ? _members : null,
+    );
     if (saved == null || !mounted) return;
     final done = await guardWrite(
       context,
@@ -279,7 +265,10 @@ class _ProjectPageState extends State<ProjectPage> {
         title: saved.title,
         description: saved.description,
         status: saved.status,
-        ownerId: data['ownerId'] as String?,
+        // Sent only when changed (PARB-08); '' hands the project to no one.
+        ownerId: saved.ownerId == (data['ownerId'] ?? '')
+            ? null
+            : saved.ownerId,
       ),
     );
     if (done && mounted) await _reload();

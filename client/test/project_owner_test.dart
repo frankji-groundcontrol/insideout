@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/api/requests.dart';
@@ -118,7 +119,12 @@ Future<_Api> _pump(WidgetTester tester, Widget page) async {
         ),
         ChangeNotifierProvider(create: (_) => LoopFocus()),
       ],
-      child: MaterialApp(home: page),
+      // A signed-in session shows the dock, which reads the router.
+      child: MaterialApp.router(
+        routerConfig: GoRouter(
+          routes: [GoRoute(path: '/', builder: (_, _) => page)],
+        ),
+      ),
     ),
   );
   await tester.pumpAndSettle();
@@ -144,7 +150,7 @@ void main() {
   testWidgets('a save that keeps the owner does not send it', (tester) async {
     final api = await _pump(tester, const ProjectPage(id: 'p1'));
     await _openEdit(tester);
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Save').last);
     await tester.pumpAndSettle();
     expect(api.saves, [null]);
   });
@@ -156,7 +162,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('frank').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Save'));
+    await tester.tap(find.text('Save').last);
     await tester.pumpAndSettle();
     expect(api.saves, ['u-me']);
   });

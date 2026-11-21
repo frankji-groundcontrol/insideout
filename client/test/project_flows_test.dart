@@ -171,7 +171,8 @@ void main() {
     await tester.tap(_inDialog(find.text('Save')));
     await tester.pumpAndSettle();
 
-    expect(api.calls, ['updateProject:p1:Renamed:new desc:paused:u1']);
+    // The owner did not change, so it is not sent (rv5-PARB-08).
+    expect(api.calls, ['updateProject:p1:Renamed:new desc:paused:null']);
     expect(api.loads, 2, reason: 'a saved edit reloads the page');
   });
 

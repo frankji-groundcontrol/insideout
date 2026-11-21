@@ -69,7 +69,8 @@ ApiCall patchProject(
     'title': title,
     'description': description,
     'status': status,
-    'ownerId': ownerId,
+    // Absent keeps the owner; only an admin may change it (PARB-08).
+    'ownerId': ?ownerId,
   });
 }
 
