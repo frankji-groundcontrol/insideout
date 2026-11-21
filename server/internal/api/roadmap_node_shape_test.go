@@ -20,7 +20,9 @@ func TestRoadmapNodeWithEveryFieldKeepsItsCapturedShape(t *testing.T) {
 		body := w.must(t, w.owner, http.MethodPost, w.proj()+"/roadmap", `{"title":"`+title+`","parentId":"`+parentID+`"}`, http.StatusCreated)
 		return decodeAs[roadmapNodeView](t, body).ID
 	}
-	patch := func(id, body string) { w.must(t, w.owner, http.MethodPatch, "/api/v1/roadmap/"+id, body, http.StatusOK) }
+	patch := func(id, body string) {
+		w.must(t, w.owner, http.MethodPatch, "/api/v1/roadmap/"+id, body, http.StatusOK)
+	}
 
 	pilot := add("Pilot", w.roadmapNode(t, "Programme"))
 	patch(pilot, `{"ownerId":"`+w.owner.ID.String()+`","acceptance":"Ten teams use it",`+roadmapDeadlineJSON()+`}`)
