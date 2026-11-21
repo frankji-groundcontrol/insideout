@@ -18,12 +18,9 @@ import (
 // fails too, so the list only shrinks.
 var longFunctions = map[string]int{
 	"cmd/insideout/cli_crud.go:runCrudCommand":                    103,
-	"cmd/insideout/cli_setup_local.go:runLocalSetup":              160,
 	"cmd/insideout/cli_version.go:runVersionCommands":             117,
 	"cmd/insideout/main.go:runServe":                              87,
-	"internal/agent/anthropic_parse.go:parseAnthropicStream":      136,
-	"internal/agent/coach.go:Coach.HandleMessage":                 219,
-	"internal/agent/trust_responses.go:parseResponsesStream":      98,
+	"internal/llm/responses_parse.go:parseResponsesStream":        98,
 	"internal/api/agent_routes.go:Server.handleAgentContext":      89,
 	"internal/api/presence_routes.go:Server.handlePresenceStream": 85,
 	"internal/api/roadmap.go:Server.handleUpdateRoadmapNode":      97,

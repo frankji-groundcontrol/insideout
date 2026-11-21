@@ -10,20 +10,22 @@ when the line rule was replaced by a responsibility rule with a function-length 
 
 ## What is over
 
+*2026-11-21, wave 4: `Coach.HandleMessage`, `runLocalSetup` and `parseAnthropicStream` are split and out of the guard's list; `parseResponsesStream` moved to `internal/llm`. Thirteen remain.*
+
 Length is counted from the `func` line to the closing brace, at `87c95f5`:
 
 | Function | File (under `server/`) | Lines |
 |---|---|---|
 | `addProductTools` | `internal/mcpserver/product_tools.go` | 294 |
-| `Coach.HandleMessage` | `internal/agent/coach.go` | 219 |
-| `runLocalSetup` | `cmd/insideout/cli_setup_local.go` | 160 |
+| ~~`Coach.HandleMessage`~~ | `internal/agent/coach.go` | 219: split in wave 4 |
+| ~~`runLocalSetup`~~ | `cmd/insideout/cli_setup_local.go` | 160: split in wave 4 |
 | `addAuthTools` | `internal/mcpserver/auth_tools.go` | 152 |
-| `parseAnthropicStream` | `internal/agent/anthropic_parse.go` | 136 |
+| ~~`parseAnthropicStream`~~ | `internal/agent/anthropic_parse.go` | 136: split in wave 4 |
 | `runVersionCommands` | `cmd/insideout/cli_version.go` | 117 |
 | `runCrudCommand` | `cmd/insideout/cli_crud.go` | 103 |
 | `Store.Migrate` | `internal/store/migrate.go` | 100 |
 | `Store.ReplaceRoadmapTree` | `internal/store/roadmap_plan.go` | 99 |
-| `parseResponsesStream` | `internal/agent/trust_responses.go` | 98 |
+| `parseResponsesStream` | `internal/llm/responses_parse.go` (moved by wave 4) | 98 |
 | `Server.handleUpdateRoadmapNode` | `internal/api/roadmap.go` | 97 |
 | `Store.MoveRoadmapNode` | `internal/store/roadmap_move.go` | 94 |
 | `Server.handleAgentContext` | `internal/api/agent_routes.go` | 89 |
