@@ -192,12 +192,6 @@ func (c *Client) Guide(projectID string) ([]byte, error) {
 	return c.getBytes(apiPath("projects", projectID, "guide"))
 }
 
-// Cursor moves this session's canvas cursor (POST /projects/{id}/cursor).
-func (c *Client) Cursor(projectID string, x, y float64) error {
-	return c.do(http.MethodPost, apiPath("projects", projectID, "cursor"),
-		map[string]float64{"x": x, "y": y}, nil)
-}
-
 // ProjectPresence returns who is currently viewing a project
 // (GET /projects/{id}/presence).
 func (c *Client) ProjectPresence(projectID string) (json.RawMessage, error) {

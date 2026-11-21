@@ -138,13 +138,6 @@ var sweep = []sweepCase{
 	{"SetRepo", "PUT", "/projects/{h}/repo", func(c *Client, h string) error { return drop(c.SetRepo(h, h)) }},
 	{"SyncGithub", "POST", "/projects/{h}/sync-github", func(c *Client, h string) error { return drop(c.SyncGithub(h)) }},
 	{"Guide", "GET", "/projects/{h}/guide", func(c *Client, h string) error { return drop(c.Guide(h)) }},
-	{"Cursor", "POST", "/projects/{h}/cursor", func(c *Client, h string) error {
-		// The real route answers 204; this server's JSON body only trips
-		// Cursor's nil decoder after the request was recorded, and what is
-		// under test is the request, not the reply.
-		_ = c.Cursor(h, 1, 2)
-		return nil
-	}},
 	{"ProjectPresence", "GET", "/projects/{h}/presence", func(c *Client, h string) error { return drop(c.ProjectPresence(h)) }},
 }
 

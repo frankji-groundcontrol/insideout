@@ -44,7 +44,7 @@ func sessionAPI(t *testing.T, refresh func(w http.ResponseWriter, body string)) 
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(`{"error":"invalid credentials"}`))
 		case r.Header.Get("Authorization") == "Bearer new" && r.Method == http.MethodPost:
-			w.WriteHeader(http.StatusNoContent) // like POST /projects/{id}/cursor: no body to decode
+			w.WriteHeader(http.StatusNoContent) // a write that answers with no body to decode
 		case r.Header.Get("Authorization") == "Bearer new":
 			w.Write([]byte(`{}`))
 		default:
@@ -92,15 +92,15 @@ func TestRenewalReplaysTheCallWithItsBodyAndTheNewToken(t *testing.T) {
 	base, calls := sessionAPI(t, swap)
 	f := &file{access: "old", refresh: "ref-1"}
 
-	if err := armed(base, f).Cursor("p1", 1, 2); err != nil {
-		t.Fatalf("Cursor: %v", err)
+	if _, err := armed(base, f).JoinWorkspace("ABC123"); err != nil {
+		t.Fatalf("JoinWorkspace: %v", err)
 	}
 
 	got := calls()
-	if want := "POST /projects/p1/cursor Bearer old | POST /auth/refresh  | POST /projects/p1/cursor Bearer new"; paths(got) != want {
+	if want := "POST /workspaces/join Bearer old | POST /auth/refresh  | POST /workspaces/join Bearer new"; paths(got) != want {
 		t.Fatalf("calls = %s\nwant   %s", paths(got), want)
 	}
-	if got[0].body != `{"x":1,"y":2}` || got[2].body != got[0].body {
+	if got[0].body != `{"code":"ABC123"}` || got[2].body != got[0].body {
 		t.Errorf("replayed body %q, original %q", got[2].body, got[0].body)
 	}
 	if f.access != "new" || f.refresh != "ref-2" || f.saved != 1 {
