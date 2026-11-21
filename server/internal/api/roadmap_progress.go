@@ -24,7 +24,11 @@ func (s *Server) handleRoadmapProgress(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	view, err := s.roadmapProgress(r, userID, pid)
+	root, ok := progressRoot(w, r)
+	if !ok {
+		return
+	}
+	view, err := s.roadmapProgress(r, userID, pid, root)
 	if err != nil {
 		s.writeRoadmapProgressError(w, err)
 		return
@@ -46,7 +50,11 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 		httpx.WriteError(w, http.StatusInternalServerError, "streaming unsupported", "", nil)
 		return
 	}
-	view, err := s.roadmapProgress(r, userID, pid)
+	root, ok := progressRoot(w, r)
+	if !ok {
+		return
+	}
+	view, err := s.roadmapProgress(r, userID, pid, root)
 	if err != nil {
 		s.writeRoadmapProgressError(w, err)
 		return
@@ -84,7 +92,7 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 			if !okCh {
 				return
 			}
-			next, err := s.roadmapProgress(r, userID, pid)
+			next, err := s.roadmapProgress(r, userID, pid, root)
 			if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
 				return // the viewer's membership ended
 			}
@@ -104,8 +112,27 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID) (roadmaptime.Progress, error) {
-	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
+// progressRoot reads the optional ?root={nid} that scopes Progress to one
+// subtree (rv5-TREEB-08).
+func progressRoot(w http.ResponseWriter, r *http.Request) (*uuid.UUID, bool) {
+	raw := r.URL.Query().Get("root")
+	if raw == "" {
+		return nil, true
+	}
+	id, ok := parseUUIDParam(w, "root", raw)
+	return &id, ok
+}
+
+// roadmapProgress assembles Progress from the project's nodes, or from root
+// and the nodes below it: the leaves of a subtree are leaves of the project.
+func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *uuid.UUID) (roadmaptime.Progress, error) {
+	var nodes []store.RoadmapNode
+	var err error
+	if root != nil {
+		nodes, err = s.store.ListRoadmapSubtree(r.Context(), userID, pid, *root)
+	} else {
+		nodes, err = s.store.ListRoadmap(r.Context(), userID, pid)
+	}
 	if err != nil {
 		return roadmaptime.Progress{}, err
 	}
@@ -124,7 +151,7 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID) (roadma
 
 func (s *Server) writeRoadmapProgressError(w http.ResponseWriter, err error) {
 	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
+		httpx.WriteError(w, http.StatusNotFound, "project or root node not found", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {

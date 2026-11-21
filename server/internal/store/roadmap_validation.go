@@ -91,9 +91,12 @@ func (s *Store) ValidateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UU
 			WHERE id = $1
 			RETURNING `+roadmapNodeColumns,
 			nodeID, reason, actorID)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
+		written, err := scanRoadmapNode(row)
+		if err != nil {
+			return err
+		}
+		n, err = readNodeViewTx(ctx, tx, actorID, written.ID)
+		return err
 	})
 	if err != nil {
 		return nil, err

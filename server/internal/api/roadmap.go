@@ -59,6 +59,17 @@ type roadmapNodeView struct {
 	// CanWrite: the caller may write this node (insideout._can_write_node),
 	// so a client shows write controls only where they would succeed.
 	CanWrite bool `json:"canWrite"`
+	// Rollup counts the leaves at or below the node (a leaf counts itself):
+	// done includes validated, as in Progress (rv5-TREEB-08).
+	Rollup nodeRollupView `json:"rollup"`
+}
+
+type nodeRollupView struct {
+	Leaves    int `json:"leaves"`
+	Done      int `json:"done"`
+	Validated int `json:"validated"`
+	// EarliestDeadline is the earliest deadline among the unfinished leaves.
+	EarliestDeadline *string `json:"earliestDeadline"`
 }
 
 // roadmapNodeResponse takes the instant a deadline is measured against;
@@ -89,6 +100,11 @@ func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	v.ValidationReason = n.ValidationReason
 	v.CompletionReason = n.CompletionReason
 	v.CanWrite = n.CanWrite
+	v.Rollup = nodeRollupView{Leaves: n.Rollup.Leaves, Done: n.Rollup.Done, Validated: n.Rollup.Validated}
+	if d := n.Rollup.EarliestDeadline; d != nil {
+		s := d.Format(time.RFC3339)
+		v.Rollup.EarliestDeadline = &s
+	}
 	return v
 }
 

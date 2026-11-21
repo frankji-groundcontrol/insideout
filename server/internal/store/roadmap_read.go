@@ -93,7 +93,11 @@ func (s *Store) listRoadmap(ctx context.Context, actorID, projectID uuid.UUID, r
 			}
 			out = append(out, n)
 		}
-		return rows.Err()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+		setRollups(out)
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -104,30 +108,19 @@ func (s *Store) listRoadmap(ctx context.Context, actorID, projectID uuid.UUID, r
 // GetRoadmapNode returns one node for a workspace member, with its display
 // names and the actor's CanWrite.
 func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (*RoadmapNode, error) {
-	var n RoadmapNode
+	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		if _, err := nodeWorkspace(ctx, tx, nodeID); err != nil {
 			return err
 		}
-		var scanErr error
-		n, scanErr = scanNodeView(tx.QueryRow(ctx, nodeViewSelect()+` WHERE n.id = $2`, actorID, nodeID))
-		return scanErr
+		var err error
+		n, err = readNodeViewTx(ctx, tx, actorID, nodeID)
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &n, nil
-}
-
-// readNodeViewTx reads one node as the actor sees it, inside the caller's
-// transaction: after a write, so CanWrite is computed, not assumed (handing
-// back the node you were handed leaves you without the right to write it).
-func readNodeViewTx(ctx context.Context, tx pgx.Tx, actorID, nodeID uuid.UUID) (*RoadmapNode, error) {
-	n, err := scanNodeView(tx.QueryRow(ctx, nodeViewSelect()+` WHERE n.id = $2`, actorID, nodeID))
-	if err != nil {
-		return nil, err
-	}
-	return &n, nil
+	return n, nil
 }
 
 // RoadmapNodeRef names a node in a path.
@@ -156,9 +149,11 @@ func (s *Store) ReadRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) 
 		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
 			return err
 		}
-		if out.Node, err = scanNodeView(tx.QueryRow(ctx, nodeViewSelect()+` WHERE n.id = $2`, actorID, nodeID)); err != nil {
+		node, err := readNodeViewTx(ctx, tx, actorID, nodeID)
+		if err != nil {
 			return err
 		}
+		out.Node = *node
 		if err := tx.QueryRow(ctx, `SELECT title FROM insideout.projects WHERE id = $1`, out.Node.ProjectID).Scan(&out.ProjectName); err != nil {
 			return err
 		}

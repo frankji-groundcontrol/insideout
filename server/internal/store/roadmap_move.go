@@ -94,9 +94,12 @@ func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, 
 				RETURNING `+roadmapNodeColumns,
 			nodeID, newParentID, position, actorID,
 		)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
+		written, err := scanRoadmapNode(row)
+		if err != nil {
+			return err
+		}
+		n, err = readNodeViewTx(ctx, tx, actorID, written.ID)
+		return err
 	})
 	if err != nil {
 		return nil, err

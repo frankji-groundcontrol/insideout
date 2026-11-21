@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/roadmaptime"
 )
 
 // RoadmapNode is one node in a project's branched roadmap tree. A NULL
@@ -51,9 +53,11 @@ type RoadmapNode struct {
 	CreatorName *string
 	EditorName  *string
 	// CanWrite: the reading actor may write this node under
-	// insideout._can_write_node. Reads compute it; a write's own result
-	// sets it, since the write just passed the rule.
+	// insideout._can_write_node, computed by every read and by the re-read
+	// that ends every write (roadmap_views.go).
 	CanWrite bool
+	// Rollup counts the leaves at or below the node (rv5-TREEB-08).
+	Rollup roadmaptime.Rollup
 }
 
 // RoadmapNodeFields are the mutable fields of a node (status transitions and
@@ -83,10 +87,10 @@ type RoadmapNodeFields struct {
 
 const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by, acceptance, owner_user_id, validation_reason, validated_by, validated_at, completion_reason`
 
-// scanRoadmapNode reads the RETURNING row of a write. The actor has just
-// passed the write rule, so CanWrite is true; reads use nodeViewSelect.
+// scanRoadmapNode reads the RETURNING row of a write: the bare columns. What
+// a caller is shown comes from readNodeViewTx after the write.
 func scanRoadmapNode(row pgx.Row) (*RoadmapNode, error) {
-	n := RoadmapNode{CanWrite: true}
+	var n RoadmapNode
 	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
@@ -124,8 +128,11 @@ func nodeWorkspace(ctx context.Context, tx pgx.Tx, nodeID uuid.UUID) (uuid.UUID,
 func (s *Store) CreateRoadmapNode(ctx context.Context, actorID, projectID uuid.UUID, parentID *uuid.UUID, title, description string) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		var err error
-		n, err = createRoadmapNodeTx(ctx, tx, actorID, projectID, parentID, title, description)
+		created, err := createRoadmapNodeTx(ctx, tx, actorID, projectID, parentID, title, description)
+		if err != nil {
+			return err
+		}
+		n, err = readNodeViewTx(ctx, tx, actorID, created.ID)
 		return err
 	})
 	if err != nil {

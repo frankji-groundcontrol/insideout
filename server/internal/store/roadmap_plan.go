@@ -169,6 +169,7 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 		if err := requireNodeWriter(ctx, tx, parentID, actorID); err != nil {
 			return err
 		}
+		var ids []uuid.UUID
 
 		for i, c := range children {
 			if expandFailAt > 0 && i+1 == expandFailAt {
@@ -178,9 +179,10 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 			if err != nil {
 				return err
 			}
-			out = append(out, *n)
+			ids = append(ids, n.ID)
 		}
-		return nil
+		out, err = readNodeViewsTx(ctx, tx, actorID, ids)
+		return err
 	})
 	if err != nil {
 		return nil, err
