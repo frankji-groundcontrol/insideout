@@ -209,6 +209,12 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		fields.CompletionReason = &trimmed
 	}
 	if req.OwnerID != nil {
+		// Ownership grants write rights over the subtree: a human decision.
+		// An agent files a proposal instead (owner decision 4, 2026-11-21).
+		if isAgentToken(r) {
+			writeAgentScopeDenied(w)
+			return
+		}
 		if *req.OwnerID == "" {
 			fields.ClearOwner = true
 		} else {

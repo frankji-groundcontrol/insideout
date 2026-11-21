@@ -54,22 +54,25 @@ rule, not the MCP binary's.
 ## What each scope may do
 
 The agent scope is exactly the routes the MCP tools call, minus the human-only
-ones below, nothing wider: 36 of the 72 authenticated routes (the 71 that exist
+ones below, nothing wider: 37 of the 73 authenticated routes (the 72 that exist
 today plus the mint route). A route joins the agent list only when a tool needs it.
 
 Agent-allowed: `GET /me`; workspaces (list, create, join); projects (list, create);
 ideas (list, create, update, convert); PRDs (read, update, view, readiness, export,
 commits list, revisions list and create, and `POST /prds/{id}/status` to `draft` or
-`reviewing` only); roadmap (list, add, update, move, guide, progress, evidence
-read) and the four AI build/expand routes; repo bind and GitHub sync;
+`reviewing` only); roadmap (list, with an optional `?root=` subtree, one-node
+read `GET /roadmap/{nid}`, add, update, move, guide, progress, evidence read) and
+the four AI build/expand routes; repo bind and GitHub sync;
 `agent/context`, `agent/checkpoint`, `agent/propose`; the presence snapshot.
 
 Two agent-allowed routes refuse an agent token part of the way, in the handler,
 with the same 403 `agent_scope_denied` (rv5-FEAT-02): `POST /prds/{id}/build/confirm`
 builds onto an empty roadmap only, whatever count or `force` it sends (the check
 runs inside the replace's per-project lock), and `PATCH /roadmap/{nid}` refuses a
-non-empty `completionReason`, the human's override for done without evidence. An
-agent still moves a node to done when it has evidence.
+non-empty `completionReason`, the human's override for done without evidence, and
+any `ownerId` (owner decision 4, 2026-11-21: owning a node grants write rights
+over its subtree, so an agent files a proposal instead). An agent still moves a
+node to done when it has evidence.
 
 Human-only (the other 36): proposal decision (`POST /agent/proposals/{uid}/decision`);
 Commit (`POST /prds/{id}/commit`); all six `/admin/*` routes (`signup_mode`,
