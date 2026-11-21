@@ -26,8 +26,8 @@ class TestPostgresSuperuserPassword(unittest.TestCase):
             _helpers.assert_single_line(self, raw, f"{host}: must be one line")
             raw = _helpers.without_terminal_newline(raw).strip()
             if raw:
-                self.assertTrue(keys.PLACEHOLDER.search(raw.decode()) is None,
-                                f"{host}: placeholder text is not a password")
+                self.assertEqual(keys.env_state(raw.decode()), "set",
+                                 f"{host}: placeholder text is not a password")
 
 
 if __name__ == "__main__":

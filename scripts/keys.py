@@ -24,12 +24,11 @@ import argparse
 import glob
 import os
 import re
-import stat
 import sys
+from pathlib import Path
 
-# Bracket tokens are skeletons only without an @ (cf. <password>);
-# display-name senders (Name <addr@host>) are real values.
-PLACEHOLDER = re.compile(r"changeme|<[^@<>]*>|your[-_ ]|placeholder|xxx|^$", re.I)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # python -I drops the script's dir
+from env_catalog import PLACEHOLDERS, parse_env_file  # noqa: E402
 
 
 def repo_root() -> str:
@@ -114,26 +113,16 @@ def _parse_secrets_block(path: str) -> dict[str, dict[str, str]]:
     return entries
 
 
-def parse_env(path: str) -> dict[str, str]:
-    out: dict[str, str] = {}
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            if line.lstrip().startswith("#"):
-                continue
-            m = re.match(r"\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$", line)
-            if m:
-                out[m.group(1)] = m.group(2).strip("'\"")
-    return out
-
-
 def env_state(value: str | None) -> str:
     if value is None:
         return "missing in env"
-    return "placeholder" if PLACEHOLDER.search(value) else "set"
+    # The skeleton's markers, the rule env.sh and the Go catalog share.
+    real = value and not any(m in value.lower() for m in PLACEHOLDERS)
+    return "set" if real else "placeholder"
 
 
 def audit(root: str, host: str, envfile: str | None) -> int:
-    env = parse_env(envfile) if envfile else {}
+    env = parse_env_file(Path(envfile)) if envfile else {}
     rows = 0
     for var, (slug, path) in sorted(key_map(root, host).items()):
         filled = os.path.exists(path) and os.path.getsize(path) > 0
@@ -175,7 +164,7 @@ def init_cmd(root: str, host: str) -> int:
 
 
 def fill(root: str, host: str, envfile: str, dry_run: bool) -> int:
-    env = parse_env(envfile)
+    env = parse_env_file(Path(envfile))
     written = kept = skipped = 0
     for var, (slug, path) in sorted(key_map(root, host).items()):
         filled = os.path.exists(path) and os.path.getsize(path) > 0
