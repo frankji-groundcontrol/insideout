@@ -44,7 +44,7 @@ func TestStructKeysWalkNestedFields(t *testing.T) {
 		}
 	}
 	keys := map[string]bool{}
-	p.structKeys(ast.NewIdent("req"), keys, 0)
+	p.structKeys(ast.NewIdent("req"), keys)
 	got := sortedKeys(keys)
 	// A type met again inside itself is walked once: tree.children stops there.
 	want := []string{"items", "items[].parentHint", "items[].title", "kind",

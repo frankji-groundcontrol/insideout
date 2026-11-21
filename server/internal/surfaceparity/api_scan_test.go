@@ -185,7 +185,7 @@ func (p apiPackage) decodedKeys(fn string, keys, seen map[string]bool) {
 		if name == "DecodeJSON" && len(call.Args) == 2 {
 			if u, ok := call.Args[1].(*ast.UnaryExpr); ok {
 				if id, ok := u.X.(*ast.Ident); ok {
-					p.structKeys(localType(d.Body, id.Name), keys, 0)
+					p.structKeys(localType(d.Body, id.Name), keys)
 				}
 			}
 			return true
@@ -224,16 +224,26 @@ func localType(body *ast.BlockStmt, name string) ast.Expr {
 	return typ
 }
 
-// structKeys adds the top-level JSON keys of a struct type expression.
-func (p apiPackage) structKeys(e ast.Expr, keys map[string]bool, depth int) {
-	if depth > 5 {
-		return
-	}
+// structKeys adds the JSON keys of a struct type expression. A field whose
+// type is a struct, a pointer to one or a slice of them adds its own keys
+// below its key: items[].title, tree.title.
+func (p apiPackage) structKeys(e ast.Expr, keys map[string]bool) {
+	p.keysUnder(e, "", keys, map[string]bool{})
+}
+
+// keysUnder walks e with every key prefixed; onPath stops a type met again
+// inside itself (a tree node's children), so it is walked once.
+func (p apiPackage) keysUnder(e ast.Expr, prefix string, keys, onPath map[string]bool) {
 	switch e := e.(type) {
 	case *ast.StarExpr:
-		p.structKeys(e.X, keys, depth+1)
+		p.keysUnder(e.X, prefix, keys, onPath)
 	case *ast.Ident:
-		p.structKeys(p.types[e.Name], keys, depth+1)
+		if onPath[e.Name] {
+			return
+		}
+		onPath[e.Name] = true
+		defer delete(onPath, e.Name)
+		p.keysUnder(p.types[e.Name], prefix, keys, onPath)
 	case *ast.StructType:
 		for _, f := range e.Fields.List {
 			name := ""
@@ -241,16 +251,29 @@ func (p apiPackage) structKeys(e ast.Expr, keys map[string]bool, depth int) {
 				tag, _ := strconv.Unquote(f.Tag.Value)
 				name, _, _ = strings.Cut(reflect.StructTag(tag).Get("json"), ",")
 			}
+			names := []string{name}
 			switch {
 			case name == "-":
-			case name != "":
-				keys[name] = true
-			case len(f.Names) == 0:
-				p.structKeys(f.Type, keys, depth+1) // embedded
-			default:
+				continue
+			case name == "" && len(f.Names) == 0:
+				p.keysUnder(f.Type, prefix, keys, onPath) // embedded
+				continue
+			case name == "":
+				names = names[:0]
 				for _, n := range f.Names {
-					keys[n.Name] = true
+					names = append(names, n.Name)
 				}
+			}
+			for _, n := range names {
+				keys[prefix+n] = true
+				typ, below := f.Type, prefix+n+"."
+				if s, ok := typ.(*ast.StarExpr); ok {
+					typ = s.X
+				}
+				if a, ok := typ.(*ast.ArrayType); ok {
+					typ, below = a.Elt, prefix+n+"[]."
+				}
+				p.keysUnder(typ, below, keys, onPath)
 			}
 		}
 	}

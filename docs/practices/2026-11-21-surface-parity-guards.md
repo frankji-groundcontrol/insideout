@@ -18,12 +18,18 @@ instead of waiting for a review (review 5, `PARC-03` and `COMP-02`).
 1. It parses `server/internal/api` and finds every route from the
    `mux.HandleFunc` calls, the handler each wraps, and the JSON keys that
    handler decodes through `httpx.DecodeJSON` (in the handler or a function it
-   calls). Nothing is listed by hand.
+   calls). A field whose type is a struct, a pointer to one or a slice of them
+   adds its own keys below it: `items[].title`, `tree.title`. Nothing is
+   listed by hand.
 2. It calls every exported `apiclient.Client` method, and every method of a
    struct argument that runs on a `*Client` (the read-then-write `Apply`),
    by reflection against a server that only records. Each argument, and each
-   field of a struct argument, is then zeroed in turn: a key that changes
-   depends on that argument.
+   field inside one (a struct argument's fields, and the fields of a struct a
+   pointer, slice or field holds), is then zeroed in turn: a key that changes
+   depends on the innermost one that changes it, so `items[].title` depends
+   on `ProposeItem.Title`, not on the `items` argument. A key below a
+   `json.RawMessage` the client forwards (the drafted `tree` and `children`)
+   depends on that argument: the caller writes everything inside it.
 3. It parses `cmd/insideout` (CLI) and `internal/mcpserver` (MCP). A surface
    reaches a key when it calls the client method that sends it and passes a
    non-zero argument there, or sets the struct field in an `apiclient.T{...}`
