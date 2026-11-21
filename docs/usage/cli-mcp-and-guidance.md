@@ -117,6 +117,7 @@ Where a CLI verb and its MCP tool are named differently:
 | `join <code>`, `workspaces create` | `workspace_join`, `workspace_create` |
 | `projects create` | `project_create` |
 | `prds <ws>`, `updates <proj>`, `export <prd>` | `prd_list`, `project_updates`, `prd_export` |
+| `project update`, `update add`, `workspace update` | `project_update` (no `owner`), `update_add`, `workspace_update` |
 | `roadmap list`, `roadmap show`, `roadmap mine`, `roadmap add`, `roadmap update`, `roadmap move`, `roadmap assignments` | `roadmap_list`, `roadmap_node`, `roadmap_mine`, `roadmap_add`, `roadmap_update`, `roadmap_move`, `roadmap_assignments` |
 | `roadmap progress`, `roadmap presence` | `progress`, `presence` |
 | `repo set <proj> <url>` | `repo_set` |
@@ -220,20 +221,22 @@ routes with 403 `agent_scope_denied` (the proposal decision, Commit, the
 admin routes, every delete, delegate, hand-back and the member list), so the limit holds for any client, not just
 this binary ([design](../architecture/agent-token-scope.md)). It also refuses
 an agent's `build_confirm` over a roadmap that is not empty, and an agent's
-`completion_reason` or `owner_id` on `roadmap_update` (an agent suggests an
-owner through `propose`, which only a plan writer's agent may file).
+`completion_reason` or `owner_id` on `roadmap_update` and any `ownerId` on
+`PATCH /projects/{pid}` (an agent suggests an owner through `propose`, which
+only a plan writer's agent may file).
 
 MCP registers no tool for a human-only route, since no token the process
 sends can reach one. These are CLI and web only, on purpose: Commit
 (`commit`), the proposal decision (`proposal decide`), account deletion
 (`account delete`), validation (`evidence add`, `roadmap validate`), every
-delete (`idea delete`, `roadmap delete`, `project delete`), project, update
-and workspace edits (`project`, `project update`, `update add`,
-`workspace update`), delegation, hand-back and the member list
+delete (`idea delete`, `roadmap delete`, `project delete`), a project's
+owner (`project update --owner`), delegation, hand-back and the member list
 (`roadmap delegate`, `roadmap handback`, `members`), and the admin verbs
-(`invite`, `invites`, `invite revoke`, `signup-mode <mode>`). The project
-list (`projects`), the paged feed (`project_updates`) and the PRD list
-(`prd_list`) are the agent's reads. The registry also follows the login:
+(`invite`, `invites`, `invite revoke`, `signup-mode <mode>`). An agent reads
+and edits a project or workspace (`project`, `project_update`, `workspace`,
+`workspace_update`), posts and corrects updates (`update_add`,
+`update_edit`), and pages the feed and the PRD list (`project_updates`,
+`prd_list`). The registry also follows the login:
 the four password tools (`auth_register`, `auth_login`,
 `auth_forgot_password`, `auth_reset_password`) are not offered while the
 process holds a JWT login, so a password never enters the conversation.

@@ -47,6 +47,19 @@ func (c *Client) UpdateProject(projectID string, patch ProjectPatch) (json.RawMe
 	return c.requestJSON(http.MethodPatch, apiPath("projects", projectID), patch)
 }
 
+// Apply is the project edit of the CLI and MCP: it reads the project, fills
+// what p leaves out (Over) and sends the PATCH through c.
+func (p ProjectPatch) Apply(c *Client, projectID string) (json.RawMessage, error) {
+	cur, err := c.Project(projectID)
+	if err == nil {
+		p, err = p.Over(cur)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return c.UpdateProject(projectID, p)
+}
+
 // DeleteProject deletes a project and everything under it (DELETE
 // /projects/{id}; workspace admins only, never an agent token).
 func (c *Client) DeleteProject(projectID string) error {
@@ -80,6 +93,12 @@ func (c *Client) AddProjectUpdate(projectID string, u ProjectUpdate) (json.RawMe
 	return c.postRaw(apiPath("projects", projectID, "updates"), u)
 }
 
+// EditProjectUpdate rewrites an update's text (PATCH /updates/{id}; its
+// author or a workspace admin).
+func (c *Client) EditProjectUpdate(updateID, content string) (json.RawMessage, error) {
+	return c.requestJSON(http.MethodPatch, apiPath("updates", updateID), map[string]string{"content": content})
+}
+
 // Workspace reads one workspace (GET /workspaces/{id}).
 func (c *Client) Workspace(workspaceID string) (json.RawMessage, error) {
 	return c.get(apiPath("workspaces", workspaceID))
@@ -110,6 +129,19 @@ func (p WorkspacePatch) Over(current json.RawMessage) (WorkspacePatch, error) {
 // UpdateWorkspace sends patch as it is to PATCH /workspaces/{id}.
 func (c *Client) UpdateWorkspace(workspaceID string, patch WorkspacePatch) (json.RawMessage, error) {
 	return c.requestJSON(http.MethodPatch, apiPath("workspaces", workspaceID), patch)
+}
+
+// Apply reads the workspace, fills what p leaves out (Over) and sends the
+// PATCH through c, as ProjectPatch.Apply.
+func (p WorkspacePatch) Apply(c *Client, workspaceID string) (json.RawMessage, error) {
+	cur, err := c.Workspace(workspaceID)
+	if err == nil {
+		p, err = p.Over(cur)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return c.UpdateWorkspace(workspaceID, p)
 }
 
 // Prds lists every PRD of a workspace, newest first

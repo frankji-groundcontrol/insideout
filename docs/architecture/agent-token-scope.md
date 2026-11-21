@@ -55,11 +55,13 @@ rule, not the MCP binary's.
 ## What each scope may do
 
 The agent scope is exactly the routes the MCP tools call, minus the human-only
-ones below, nothing wider: 41 of the 81 authenticated routes (the mint route
+ones below, nothing wider: 47 of the 81 authenticated routes (the mint route
 included). A route joins the agent list only when a tool needs it.
 
-Agent-allowed: `GET /me`; workspaces (list, create, join); projects (list, create,
-the paged updates feed `GET /projects/{pid}/updates`);
+Agent-allowed: `GET /me`; workspaces (list, create, join, read
+`GET /workspaces/{id}`, edit `PATCH /workspaces/{id}`); projects (list, create,
+read `GET /projects/{pid}`, edit `PATCH /projects/{pid}`, the paged updates
+feed `GET /projects/{pid}/updates`, posting and editing an update);
 ideas (list, create, update, convert); PRDs (the workspace list
 `GET /workspaces/{id}/prds`, read, update, view, readiness, export,
 commits list, revisions list and create, and `POST /prds/{id}/status` to `draft` or
@@ -70,28 +72,28 @@ guide, progress, evidence read) and
 the four AI build/expand routes; repo bind and GitHub sync;
 `agent/context`, `agent/checkpoint`, `agent/propose`; the presence snapshot.
 
-Two agent-allowed routes refuse an agent token part of the way, in the handler,
+Three agent-allowed routes refuse an agent token part of the way, in the handler,
 with the same 403 `agent_scope_denied` (rv5-FEAT-02): `POST /prds/{id}/build/confirm`
 builds onto an empty roadmap only, whatever count or `force` it sends (the check
 runs inside the replace's per-project lock), and `PATCH /roadmap/{nid}` refuses a
 non-empty `completionReason`, the human's override for done without evidence, and
 any `ownerId` (owner decision 4, 2026-11-21: owning a node grants write rights
-over its subtree, so an agent files a proposal instead). An agent still moves a
+over its subtree, so an agent files a proposal instead), and `PATCH /projects/{pid}`
+refuses any `ownerId`, null included (rv5-PARB-04: an owner change is a human
+decision). An agent still moves a
 node to done when it has evidence. Filing a proposal stays a plan-writer right
 (BUG-020), so an agent acting for a delegate (who owns a subtree but is not a
 plan writer) has no route to propose an owner change; whether a node writer may
 file a proposal scoped to their subtree is an open owner question.
 
-Human-only (the other 40): delegating a node and handing it back
+Human-only (the other 34): delegating a node and handing it back
 (`POST /roadmap/{nid}/delegate`, `POST /roadmap/{nid}/handback`, owner
 decision 4); proposal decision (`POST /agent/proposals/{uid}/decision`);
 Commit (`POST /prds/{id}/commit`); all six `/admin/*` routes (`signup_mode`,
 `invite_*`, the mail probe); every `DELETE` (ideas, roadmap nodes, projects,
-updates, workspaces, members); member roles; workspace and project edits and
-timeline updates; `PATCH /me`; the coach conversation routes; evidence entry and
-validation; the SSE streams and cursor; the single-record reads no tool calls
-(`GET /ideas/{iid}`, `GET /projects/{pid}`, `GET /workspaces/{id}` and its member
-list); `POST /prds/{id}/status` to `approved` or `rejected` (a workspace-admin
+updates, workspaces, members); member roles; `PATCH /me`; the coach
+conversation routes; evidence entry and validation; the SSE streams and cursor;
+the reads no tool calls (`GET /ideas/{iid}` and a workspace's member list); `POST /prds/{id}/status` to `approved` or `rejected` (a workspace-admin
 review gate, so an agent holding an admin's token cannot approve its own
 submission); and `POST /agent/token`.
 
@@ -154,8 +156,8 @@ no InsideOut server accepts it, so it is passed through unchanged and the regist
 stays whole. No tool is registered for a human-only route (rv5-COMP-03,
 rv5-PARA-07): every tool acts through an agent-scope token, and before a login it
 answers 401, so Commit, the proposal decision, the admin writes, every delete,
-delegation, hand-back, the member list, account deletion, validation and the
-project and workspace edits could never succeed there. They are CLI and web verbs.
+delegation, hand-back, the member list, member roles, profile edits, account
+deletion and validation could never succeed there. They are CLI and web verbs.
 `signup_mode` stays as the public read of `GET /auth/config`.
 
 ## Fencing and labelling

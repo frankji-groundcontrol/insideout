@@ -81,9 +81,13 @@ func listTools(t *testing.T, s *server.MCPServer) []listedTool {
 	return out.Result.Tools
 }
 
-// argsFor fills a tool's required arguments with values the fake API accepts.
+// argsFor fills a tool's required arguments with values the fake API accepts,
+// and a title for an edit tool, which refuses a call with nothing to change.
 func argsFor(tool listedTool) string {
 	args := map[string]any{}
+	if _, ok := tool.InputSchema.Properties["title"]; ok {
+		args["title"] = "x"
+	}
 	for _, name := range tool.InputSchema.Required {
 		switch typ := tool.InputSchema.Properties[name].Type; {
 		case name == "tree":

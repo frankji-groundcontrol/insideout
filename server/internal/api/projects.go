@@ -217,6 +217,11 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
+	// An owner change is a human decision (owner decision 4), as on PATCH /roadmap.
+	if req.OwnerID != nil && isAgentToken(r) {
+		writeAgentScopeDenied(w)
+		return
+	}
 	req.Title = strings.TrimSpace(req.Title)
 	if req.Title == "" || tooLong(req.Title, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)

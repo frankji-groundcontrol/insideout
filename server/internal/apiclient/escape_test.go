@@ -157,6 +157,7 @@ var sweep = []sweepCase{
 	{"AddProjectUpdate", "POST", "/projects/{h}/updates", func(c *Client, h string) error {
 		return drop(c.AddProjectUpdate(h, ProjectUpdate{Kind: h, Content: h}))
 	}},
+	{"EditProjectUpdate", "PATCH", "/updates/{h}", func(c *Client, h string) error { return drop(c.EditProjectUpdate(h, h)) }},
 	{"Workspace", "GET", "/workspaces/{h}", func(c *Client, h string) error { return drop(c.Workspace(h)) }},
 	{"UpdateWorkspace", "PATCH", "/workspaces/{h}", func(c *Client, h string) error {
 		return drop(c.UpdateWorkspace(h, WorkspacePatch{Title: &h, Description: &h, CoverURL: &h}))

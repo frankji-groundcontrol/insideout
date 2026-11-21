@@ -116,10 +116,12 @@ is held). The deliberate exceptions:
 - **MCP has no tool for a human-only route**, because every MCP tool acts
   through an agent-scope token: Commit, the proposal decision, account
   deletion, validation (`evidence add`, `roadmap validate`), every delete,
-  project, update and workspace edits, delegation, hand-back, the member
-  list, and the admin writes (invitations, setting the signup mode).
-  Changing a node's owner is also refused to an agent token (`owner_id`);
-  file a `propose` instead. Ask the human to run these from the CLI or web.
+  delegation, hand-back, the member list, and the admin writes
+  (invitations, setting the signup mode). Changing a node's or a
+  project's owner is also refused to an agent token (`owner_id`); file a
+  `propose` instead. Ask the human to run these from the CLI or web.
+  `project_update`, `workspace_update`, `update_add` and `update_edit`
+  cover the rest of a project and workspace.
 - **Web only today**: workspace deletion, member role changes and removal,
   editing or deleting an update, and profile edits.
 - **The web** has no control that mints an agent token.

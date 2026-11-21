@@ -90,14 +90,7 @@ func runProjectCommand(verb string, args []string) (bool, int) {
 			}
 			patch.OwnerID = &me
 		}
-		cur, err := c.Project(id)
-		if err == nil {
-			patch, err = patch.Over(cur)
-		}
-		if err != nil {
-			return printJSON(nil, err)
-		}
-		return printJSON(c.UpdateProject(id, patch))
+		return printJSON(patch.Apply(c, id))
 	}
 	// workspace update
 	patch := apiclient.WorkspacePatch{Title: apiclient.NonEmpty(*title), Description: apiclient.PatchText(*desc),
@@ -106,12 +99,5 @@ func runProjectCommand(verb string, args []string) (bool, int) {
 		fmt.Fprintln(os.Stderr, "usage: "+usage)
 		return true, 2
 	}
-	cur, err := c.Workspace(id)
-	if err == nil {
-		patch, err = patch.Over(cur)
-	}
-	if err != nil {
-		return printJSON(nil, err)
-	}
-	return printJSON(c.UpdateWorkspace(id, patch))
+	return printJSON(patch.Apply(c, id))
 }
