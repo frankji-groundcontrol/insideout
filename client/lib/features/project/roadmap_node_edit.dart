@@ -146,17 +146,36 @@ extension _NodeEdit on _NodeMenu {
         ),
       ],
     );
-    if (ok == true && context.mounted) {
+    // Only what changed goes out (rv5-PARC-06): an untouched owner who has
+    // since left the workspace would otherwise fail the whole save.
+    String? changed(String now, String before) => now == before ? null : now;
+    final edits = (
+      title: changed(title.text.trim(), node.title),
+      description: changed(desc.text, node.description),
+      status: changed(status, node.status),
+      deadline: changed(deadline ?? '', node.deadline ?? ''),
+      acceptance: changed(acceptance.text.trim(), node.acceptance),
+      ownerId: changed(ownerId ?? '', node.ownerId ?? ''),
+    );
+    final any = [
+      edits.title,
+      edits.description,
+      edits.status,
+      edits.deadline,
+      edits.acceptance,
+      edits.ownerId,
+    ].any((v) => v != null);
+    if (ok == true && any && context.mounted) {
       final done = await guardWrite(
         context,
         () => api.updateRoadmapNode(
           node.id,
-          title: title.text.trim(),
-          description: desc.text,
-          status: status,
-          deadline: deadline == '' ? '' : deadline,
-          acceptance: acceptance.text.trim(),
-          ownerId: ownerId ?? '',
+          title: edits.title,
+          description: edits.description,
+          status: edits.status,
+          deadline: edits.deadline,
+          acceptance: edits.acceptance,
+          ownerId: edits.ownerId,
           completionReason: status == 'done' && node.status == 'in_progress'
               ? completionReason
               : null,
