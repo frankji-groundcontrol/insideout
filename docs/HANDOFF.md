@@ -10,6 +10,38 @@ path and current warnings, never history.
 
 ## What to do next
 
+**2026-11-21: the review 5 remediation is running on branch `rv5/remediation`.**
+Wave 0 is done (the install and password-reset slice is finished and
+committed there, the pushed-tip CI failures are fixed, the task tree is
+written into PRODUCT.md). Progress per wave:
+[changelog folder](changelogs/2026-11-21-rv5-remediation/index.md); plan:
+[rv5 remediation](plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
+The branch is pushed after each wave with a draft pull request for CI;
+`main` is not pushed.
+
+**2026-11-21: focused review 5 is delivered.**
+[The report](review/2026-11-21-focused-review-5/README.md) (127 findings,
+21 High) answers five questions from the owner. The task tree for roles is
+one quarter built: a node's assigned owner is refused on every write inside
+it, no node opens as its own tree, and delegation is web-only
+([target design](review/2026-11-21-focused-review-5/41-task-tree-target-design.md)).
+Three build-path defects lose or misplace data. The order is the
+[remediation plan](review/2026-11-21-focused-review-5/40-remediation-plan.md).
+The owner's decisions are recorded in the
+[open-findings record](issues/2026-11-21-review-5-open-findings.md).
+
+**2026-10-20: the install front door is the user guide, and `insideout setup` asks numbered questions.**
+A person starts at [the user guide](usage/user-guide.md). The wizard
+paths are maintained in [setup paths](usage/setup-paths.md).
+`insideout forgot-password` waits on a watch id and notices when the
+reset link is used somewhere else
+([record](changelogs/2026-10-21-reset-watch.md)). The developer
+key files are not part of that guide. Agents use
+[insideout-setup](../skills/insideout-setup/SKILL.md) for the hosted
+service and [insideout-server](../skills/insideout-server/SKILL.md) only
+when someone asked to run the server. Record:
+[install front door](changelogs/2026-10-20-install-front-door.md).
+
 **2026-11-21: wave 4b and the adopted decisions are on `origin/main` at
 `4d186da9`** — the owner directed the sync from MBP and the push
 ([sync record](changelogs/2026-11-21-wave-4b-sync-and-push.md)).
@@ -104,8 +136,8 @@ Every other thread is closed with its exact status and links on its
   slice (install front door, reset watch, reset code — 35 tracked files
   plus new files). Commit that slice on MBP before the next sync
   ([record](changelogs/2026-11-21-wave-4b-sync-and-push.md)). Untracked
-  `.grok/` and `.qoder/` are tool scratch and raw agent journals, held out by
-  rule and listed in the local manifest `.git/info/untracked-manifest.tsv`.
+  `.grok/` is tool scratch, held out by rule and listed in the local manifest
+  `.git/info/untracked-manifest.tsv`.
   **Do not `git add .`** — stage and checkpoint one task at a time, and do not
   revert unrelated edits.
 - **Flutter SDK pin:** the repo pins Flutter 3.44.x (CI and the Dockerfile run

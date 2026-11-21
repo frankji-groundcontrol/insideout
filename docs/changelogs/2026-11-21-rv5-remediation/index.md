@@ -8,4 +8,5 @@ Branch: `rv5/remediation`, pushed after each wave; `main` is not pushed.
 One record per wave, each with the rows it closed, the commits, the gate
 results and anything left open:
 
-- Wave 0 — in progress.
+- [Wave 0](./wave-0.md) — green tip, the install and password-reset slice
+  finished and committed, the task-tree concept written; all seven rows closed.

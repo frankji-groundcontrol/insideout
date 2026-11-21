@@ -40,7 +40,8 @@ PRD, no completion override by an agent.
 
 ## Checklist
 
-- [ ] Wave 0 · green tip, slice finished, concept written (rows 0.1 to 0.7)
+- [x] Wave 0 · green tip, slice finished, concept written (rows 0.1 to 0.7) —
+      [record](../../changelogs/2026-11-21-rv5-remediation/wave-0.md)
 - [ ] Wave 1 · data loss and misplaced writes (rows 1.1 to 1.8)
 - [ ] Wave 2 · the task tree (rows 2.1 to 2.9)
 - [ ] Wave 3 · surface parity (rows 3.1 to 3.7)

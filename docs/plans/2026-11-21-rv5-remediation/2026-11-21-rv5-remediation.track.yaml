@@ -5,16 +5,16 @@ main:
   outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
   owner: claude
   status: in_progress
-  next_evidence: "Wave 0 started: branch rv5/remediation cut from c2900fd with the in-flight slice and the review 5 records carried over (backup of the uncommitted state kept outside the repository)."
+  next_evidence: "Wave 0 closed (rows 0.1-0.7) in 50b7437, 454ab0b, 99b4bf3 and its record commit; verifier accepted round 1 with every gate green on a private PostgreSQL 18 database; branch pushed with a draft pull request for CI. Wave 1 next: three clusters (ideas-content, build-path, web-prd)."
 side_tracks: []
 updated_at: "2026-11-21T00:00:00Z"
 plan:
 - step: "Wave 0: green tip, slice finished, concept written"
   owner: claude
-  status: in_progress
+  status: completed
 - step: "Wave 1: data loss and misplaced writes"
   owner: claude
-  status: pending
+  status: in_progress
   depends_on: "Wave 0"
 - step: "Wave 2: the task tree"
   owner: claude
