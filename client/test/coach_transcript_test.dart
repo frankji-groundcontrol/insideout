@@ -27,6 +27,8 @@ class _ChatApi extends ApiClient {
   /// What the server has stored, as listMessages answers it.
   final stored = <ChatMessage>[];
   int turns = 0;
+  // Network down: nothing reaches the server and nothing can be re-read.
+  bool offline = false;
 
   @override
   Future<Prd> getPrd(String id) async => Prd(
@@ -44,12 +46,21 @@ class _ChatApi extends ApiClient {
       Conversation(id: 'c1', prdId: prdId, stage: 'clarify', status: 'active');
 
   @override
-  Future<Conversation> getConversation(String id) async =>
-      Conversation(id: id, prdId: 'prd-1', stage: 'clarify', status: 'active');
+  Future<Conversation> getConversation(String id) async {
+    if (offline) throw Exception('offline');
+    return Conversation(
+      id: id,
+      prdId: 'prd-1',
+      stage: 'clarify',
+      status: 'active',
+    );
+  }
 
   @override
-  Future<List<ChatMessage>> listMessages(String conversationId) async =>
-      List.of(stored);
+  Future<List<ChatMessage>> listMessages(String conversationId) async {
+    if (offline) throw Exception('offline');
+    return List.of(stored);
+  }
 
   @override
   Future<Workspace> getWorkspace(String id) async => Workspace.fromJson({
@@ -70,6 +81,7 @@ class _ChatApi extends ApiClient {
     CoachHandlers handlers, {
     Future<void>? stop,
   }) async {
+    if (offline) throw Exception('offline');
     turns++;
     final reply = 'Reply number $turns';
     stored.add(ChatMessage(id: 'u$turns', role: 'user', content: content));
@@ -137,5 +149,18 @@ void main() {
     ]) {
       expect(find.text('“$line”'), findsOneWidget, reason: line);
     }
+  });
+
+  testWidgets('a send that never arrives leaves no sent bubble behind', (
+    tester,
+  ) async {
+    final api = await _pump(tester);
+    api.offline = true;
+
+    await _say(tester, 'Lost question');
+
+    expect(find.text('“Lost question”'), findsNothing);
+    final composer = tester.widget<TextField>(find.byType(TextField).last);
+    expect(composer.controller?.text, 'Lost question');
   });
 }

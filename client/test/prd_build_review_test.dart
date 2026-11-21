@@ -291,4 +291,29 @@ void main() {
     );
     expect(_path(router), '/prd/prd-1');
   });
+
+  testWidgets('counts of one read in the singular', (tester) async {
+    final api = _BuildApi(
+      confirmErrors: [
+        _conflict({
+          'error': 'history',
+          'code': 'roadmap_replace_has_history',
+          'liveCount': 1,
+          'evidenceCount': 1,
+          'doneCount': 1,
+          'validatedCount': 0,
+        }),
+      ],
+    );
+    await _pump(tester, api);
+    await _draft(tester);
+    await _apply(tester);
+
+    expect(
+      find.textContaining('deletes 1 node, 1 evidence record, '),
+      findsOne,
+    );
+    expect(find.textContaining('1 nodes'), findsNothing);
+    expect(find.textContaining('1 evidence records'), findsNothing);
+  });
 }
