@@ -3,7 +3,7 @@ package main
 // `insideout help`, `insideout version` and the unknown-verb answer. They
 // run before config.Load(): the first thing a new user types
 // (insideout --help) must not meet "DATABASE_URL is required" (rv4-USER-02,
-// FULL-03, PM-04). The listing comes from the cliVerbs table in cli.go.
+// FULL-03, PM-04). The listing comes from the cliVerbs table in cli_verbs.go.
 
 import (
 	"fmt"
