@@ -136,7 +136,7 @@ offline coach, not an error.
 | `INSIDEOUT_LLM_SCHEMA` | no | `messages` | Wire format: `messages` (Anthropic Messages at `{base}/messages`) or `responses` (OpenAI Responses at `{base}/responses`). |
 | `INSIDEOUT_AI_MAX_CONCURRENT` | no | `4` | Concurrency ceiling for AI turns; excess turns queue briefly, then are rejected (503 with a retry hint). |
 | `INSIDEOUT_AI_QUEUE_WAIT` | no | `15s` | How long a queued AI turn waits for a slot before rejection (Go `time.Duration`). |
-| `INSIDEOUT_AI_TURN_DEADLINE` | no | `12m` | Wall-clock bound on one whole coach turn (Go `time.Duration`). Stops an upstream that trickles output but never finishes from holding a slot and the conversation lock. Unset, empty, unparsable or non-positive keeps `12m`. Env-only (not a key-store kind); `docker-compose.yml` passes it to the server (empty when `.env` leaves it unset), so a compose deployment honours it. |
+| `INSIDEOUT_AI_TURN_DEADLINE` | no | `12m` | Wall-clock bound on one whole coach turn (Go `time.Duration`). Stops an upstream that trickles output but never finishes from holding a slot and the conversation lock. Unset, empty, unparsable or non-positive keeps `12m`. Key-store kind [`ai-turn-deadline`](./keys/llm/ai-turn-deadline.md); `docker-compose.yml` passes it to the server (empty when `.env` leaves it unset), so a compose deployment honours it. |
 
 **What lets user data leave the server.** Two keys do, and only when set:
 `INSIDEOUT_LLM_API_KEY` sends coach and roadmap-planner text to the model

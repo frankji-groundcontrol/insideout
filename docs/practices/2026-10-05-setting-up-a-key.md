@@ -9,8 +9,8 @@ runtime knobs), the `init` placeholder step, and blank-lane legality
 Any time a kind must land on a machine in the
 [`hosts/<host>/keys/`](../../hosts/README.md) store: a new credential,
 a config companion or runtime knob, a new host, or a refill after
-rotation. **Never-absent rule:** every kind mapped in a host's
-manifests has a `.key` file on that host — blank means "default in
+rotation. **Never-absent rule:** every kind mapped in the shared
+manifests has a `.key` file on every host — blank means "default in
 effect", absent means the scheme is broken. Worked examples: the
 jwt-secret slice on `buddys-macbook-pro-2.local`
 ([changelog](../changelogs/2026-10-05-buddy-host-keys.md)); the
@@ -37,15 +37,15 @@ per setup.
    scaffold per the scheme if not). The value source is known from the
    key's own doc, `docs/usage/keys/<module>/<key-name>.md`. Never
    print a value at any step.
-2. **Manifest first.** Create
-   `hosts/<host>/keys/<module>/<setting>.yaml` — metadata only
+2. **Manifest first.** Create (once, for every host)
+   `hosts/_manifests/keys/<module>/<setting>.yaml` — metadata only
    (`<name>: {var, kind, note}`); values never appear in tracked files.
    Declare blank-legality in the entry itself: a `fallback:` field
    (with the catalog/compose default) when blank = that default, or
-   `optional:`/`operator_fills:` when blank is a deliberate lane on
-   that host — judged by the field's **presence**, not truthiness
+   `optional:`/`operator_fills:` when blank is a deliberate lane —
+   judged by the field's **presence**, not truthiness
    (`fallback: ''` is a legal blank). A new module folder gets its row
-   in the host's `keys/README.md`. The module name also fixes the
+   in each host's `keys/README.md`. The module name also fixes the
    per-key doc's folder (step 7).
 3. **Value into the live consumer.** `./scripts/env.sh edit` (or
    `init`) writes the root `.env` interactively and never prints. If

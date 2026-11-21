@@ -16,3 +16,8 @@ secrets:
     kind: value
     note: queue admission wait (Go duration); blank = '15s'
     fallback: 15s
+  ai-turn-deadline:
+    var: INSIDEOUT_AI_TURN_DEADLINE
+    kind: value
+    note: wall-clock bound on one coach turn (Go duration); blank = '12m'
+    fallback: 12m

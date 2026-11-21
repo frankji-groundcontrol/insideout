@@ -1,8 +1,8 @@
 # Key test suites (per key, mirroring the store)
 
 One test file per mapped kind — filename = the key name, module
-folder = the store's module — exactly mirroring
-[`hosts/<host>/keys/`](../../../hosts/README.md) and
+folder = the store's module — exactly mirroring the shared manifests in
+[`hosts/_manifests/keys/`](../../../hosts/README.md) and
 [docs/usage/keys/](../../../docs/usage/keys/README.md). Two
 cross-cutting suites sit at this root: the tool behaviors
 (`keys.py` parsing, init, fill, audit, multi-host scoping) and the
@@ -18,6 +18,7 @@ naming), plus secret-safe diagnostic regressions.
 | [app/](./app/) | [test_dev-cors.py](./app/test_dev-cors.py) | dev-cors (blank or exactly `1`) |
 | [app/](./app/) | [test_access-ttl.py](./app/test_access-ttl.py) | access-ttl (Go duration) |
 | [app/](./app/) | [test_refresh-ttl.py](./app/test_refresh-ttl.py) | refresh-ttl (Go duration) |
+| [app/](./app/) | [test_trusted-proxy-hops.py](./app/test_trusted-proxy-hops.py) | trusted-proxy-hops (non-negative int) |
 | [auth/](./auth/) | [test_jwt-secret.py](./auth/test_jwt-secret.py) | jwt-secret (`INSIDEOUT_JWT_SECRET`) |
 | [compose/](./compose/) | [test_server-port.py](./compose/test_server-port.py) | server-port (TCP port) |
 | [compose/](./compose/) | [test_postgres-port.py](./compose/test_postgres-port.py) | postgres-port (TCP port) |
@@ -29,7 +30,6 @@ naming), plus secret-safe diagnostic regressions.
 | [database/](./database/) | [test_postgres-owner-password.py](./database/test_postgres-owner-password.py) | postgres-owner-password (operator-filled) |
 | [github/](./github/) | [test_gh-app-id.py](./github/test_gh-app-id.py) | gh-app-id (`INSIDEOUT_GH_APP_ID`) |
 | [github/](./github/) | [test_gh-app-private-key.py](./github/test_gh-app-private-key.py) | gh-app-private-key (PEM shape) |
-| [github/](./github/) | [test_gh-client-secret.py](./github/test_gh-client-secret.py) | gh-client-secret (`INSIDEOUT_GH_CLIENT_SECRET`) |
 | [github/](./github/) | [test_gh-private-key-file.py](./github/test_gh-private-key-file.py) | gh-private-key-file (pointer target exists) |
 | [github/](./github/) | [test_gh-webhook-secret.py](./github/test_gh-webhook-secret.py) | gh-webhook-secret (`INSIDEOUT_GH_WEBHOOK_SECRET`) |
 | [github/](./github/) | [test_github-token.py](./github/test_github-token.py) | github-token (optional) |
@@ -39,6 +39,7 @@ naming), plus secret-safe diagnostic regressions.
 | [llm/](./llm/) | [test_llm-schema.py](./llm/test_llm-schema.py) | llm-schema (messages|responses) |
 | [llm/](./llm/) | [test_ai-max-concurrent.py](./llm/test_ai-max-concurrent.py) | ai-max-concurrent (positive int) |
 | [llm/](./llm/) | [test_ai-queue-wait.py](./llm/test_ai-queue-wait.py) | ai-queue-wait (Go duration) |
+| [llm/](./llm/) | [test_ai-turn-deadline.py](./llm/test_ai-turn-deadline.py) | ai-turn-deadline (Go duration) |
 | [mail/](./mail/) | [test_mail-api-key.py](./mail/test_mail-api-key.py) | mail-api-key (`INSIDEOUT_MAIL_API_KEY`) |
 | [mail/](./mail/) | [test_mail-from.py](./mail/test_mail-from.py) | mail-from (display-name sender) |
 | [mail/](./mail/) | [test_public-url.py](./mail/test_public-url.py) | public-url (absolute origin) |

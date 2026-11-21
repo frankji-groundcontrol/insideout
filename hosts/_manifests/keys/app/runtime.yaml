@@ -36,3 +36,9 @@ secrets:
     kind: value
     note: refresh-token TTL (Go duration); blank = '720h'
     fallback: 720h
+  trusted-proxy-hops:
+    var: INSIDEOUT_TRUSTED_PROXY_HOPS
+    kind: value
+    note: appending reverse proxies in front of the server; blank = '0'
+      for a bare server, '1' under compose
+    fallback: '0'

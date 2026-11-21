@@ -16,8 +16,8 @@ the installation tokens that read a private repository: a signed GitHub App
 delivery's `insideout.yaml`, and the commits `insideout sync` fetches for a
 project that holds the repo's one binding (a public repository is read
 anonymously). The optional `GITHUB_TOKEN` is read only by
-`insideout setup --check` (rv4-FEAT-04). The OAuth client secret is retained
-for a future consumer and is placement-only today. All App and webhook kinds
+`insideout setup --check` (rv4-FEAT-04). The OAuth client secret is not
+mapped: no server code reads it (rv5-STRC-04). All App and webhook kinds
 are optional: a blank placeholder means the GitHub App integration is disabled;
 a nonblank value must pass its shape and capability check.
 
@@ -25,8 +25,6 @@ a nonblank value must pass its shape and capability check.
   (manifest `github/app.yaml`)
 - [gh-app-private-key.md](./gh-app-private-key.md) —
   `INSIDEOUT_GH_PRIVATE_KEY` (`github/app.yaml`)
-- [gh-client-secret.md](./gh-client-secret.md) —
-  `INSIDEOUT_GH_CLIENT_SECRET` (`github/app.yaml`)
 - [gh-private-key-file.md](./gh-private-key-file.md) —
   `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) (`github/app.yaml`)
 - [gh-webhook-secret.md](./gh-webhook-secret.md) —
