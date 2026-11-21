@@ -3,8 +3,9 @@ bridge (tool behaviors: manifest parsing, no-value-leak, empty-only fills,
 multi-host scoping).
 
 Fixtures build miniature hosts/ trees in a temp dir using the same shape
-the real tree uses (hosts/<host>/keys/<module>/ holding one or more YAML
-manifests plus a shared .secrets/ dir). Organized under scripts/tests/keys/
+the real tree uses (the shared hosts/_manifests/keys/<module>/ holding one
+or more YAML manifests; hosts/<host>/keys/<module>/.secrets/ holding each
+host's values). Organized under scripts/tests/keys/
 mirroring the store; the per-key suites live in the module folders beside
 this file; store-wide invariants live in test_store.py.
 """
@@ -30,7 +31,6 @@ import keys  # noqa: E402
 
 BLOCK_MANIFEST = """# Metadata only — values live in .secrets/<name>.key, never here.
 schema_version: 1
-host: testhost
 module: {module}
 setting: {setting}
 secrets:
@@ -40,7 +40,6 @@ secrets:
 """
 
 FLOW_MANIFEST = """schema_version: 1
-host: testhost
 module: {module}
 setting: {setting}
 secrets:
@@ -51,13 +50,15 @@ secrets:
 def make_tree(root: Path, module: str, setting: str,
               a_name: str, a_env: str, a_filled: bool,
               b_name: str, b_env: str, b_filled: bool) -> None:
+    man = root / "hosts" / "_manifests" / "keys" / module
+    man.mkdir(parents=True, exist_ok=True)
     mod = root / "hosts" / "testhost" / "keys" / module
     (mod / ".secrets").mkdir(parents=True, mode=0o700)
     (root / "hosts" / "testhost" / "host.yml").write_text("name: testhost\n")
-    (mod / f"{setting}-block.yaml").write_text(
+    (man / f"{setting}-block.yaml").write_text(
         BLOCK_MANIFEST.format(module=module, setting=setting,
                               a_name=a_name, a_env=a_env))
-    (mod / f"{setting}-flow.yaml").write_text(
+    (man / f"{setting}-flow.yaml").write_text(
         FLOW_MANIFEST.format(module=module, setting=setting,
                              b_name=b_name, b_env=b_env))
     for name, filled in [(a_name, a_filled), (b_name, b_filled)]:
@@ -87,6 +88,16 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(m["B_KEY"][0], "db/b-key")
         self.assertTrue(m["A_DSN"][1].endswith("keys/db/.secrets/a-dsn.key"))
         self.assertTrue(m["B_KEY"][1].endswith("keys/db/.secrets/b-key.key"))
+        self.assertIn(os.path.join("hosts", "testhost", "keys"), m["A_DSN"][1],
+                      "the shared manifest resolves values under the host")
+
+    def test_host_folder_manifests_are_not_read(self):
+        # rv5-STRC-04: one shared manifest set; a stray per-host YAML maps nothing.
+        self.build_default()
+        (self.root / "hosts/testhost/keys/db/stray.yaml").write_text(
+            FLOW_MANIFEST.format(module="db", setting="stray",
+                                 b_name="stray-key", b_env="STRAY_KEY"))
+        self.assertNotIn("STRAY_KEY", keys.key_map(str(self.root), "testhost"))
 
     def test_multipleModules_shareTheKeysRoot(self):
         self.build_default()
@@ -156,7 +167,9 @@ class TestKeys(unittest.TestCase):
         # write nothing — the placeholder JWT secret is not a real value.
         host = keys.discover_hosts(REPO)[0]
         mapped = sorted(keys.key_map(REPO, host))
-        mod = self.root / "hosts" / "testhost" / "keys" / "all"
+        (self.root / "hosts" / "testhost").mkdir(parents=True)
+        (self.root / "hosts" / "testhost" / "host.yml").write_text("name: testhost\n")
+        mod = self.root / "hosts" / "_manifests" / "keys" / "all"
         mod.mkdir(parents=True)
         (mod / "all.yaml").write_text("secrets:\n" + "".join(
             f"  k{i}:\n    var: {var}\n    kind: value\n" for i, var in enumerate(mapped)))
@@ -205,20 +218,19 @@ class TestKeys(unittest.TestCase):
         self.assertIn("2 key kinds audited", r.stdout)
 
 
-def make_host(root: Path, host: str, module: str, setting: str,
-              name: str, env: str) -> None:
-    """A one-key host tree: manifest + a filled .key, for multi-host tests."""
-    mod = root / "hosts" / host / "keys" / module
-    (mod / ".secrets").mkdir(parents=True, mode=0o700)
+def make_host(root: Path, host: str, filled: dict) -> None:
+    """A host's value files for the shared db/main.yaml manifest."""
+    (root / "hosts" / host).mkdir(parents=True, exist_ok=True)
     (root / "hosts" / host / "host.yml").write_text(f"name: {host}\n")
-    (mod / f"{setting}.yaml").write_text(
-        FLOW_MANIFEST.format(module=module, setting=setting,
-                             b_name=name, b_env=env))
-    k = mod / ".secrets" / f"{name}.key"
-    fd = os.open(k, os.O_WRONLY | os.O_CREAT, 0o600)
-    with os.fdopen(fd, "w") as fh:
-        fh.write(f"value-of-{name}")
-    os.chmod(k, 0o600)
+    secrets = root / "hosts" / host / "keys" / "db" / ".secrets"
+    secrets.mkdir(parents=True, mode=0o700)
+    for name, is_filled in filled.items():
+        k = secrets / f"{name}.key"
+        fd = os.open(k, os.O_WRONLY | os.O_CREAT, 0o600)
+        with os.fdopen(fd, "w") as fh:
+            if is_filled:
+                fh.write(f"value-of-{name}")
+        os.chmod(k, 0o600)
 
 
 class TestMultiHostScoping(unittest.TestCase):
@@ -229,11 +241,16 @@ class TestMultiHostScoping(unittest.TestCase):
         self.root = Path(self.tmp.name)
         self.addCleanup(self.tmp.cleanup)
         self.keys_py = os.path.join(SCRIPTS, "keys.py")
-        make_host(self.root, "hosta", "db", "main", "a-dsn", "A_DSN")
-        make_host(self.root, "hostb", "db", "main", "b-dsn", "B_DSN")
+        man = self.root / "hosts" / "_manifests" / "keys" / "db"
+        man.mkdir(parents=True)
+        (man / "main.yaml").write_text(
+            "secrets:\n  a-dsn: { var: A_DSN, kind: value }\n"
+            "  b-dsn: { var: B_DSN, kind: value }\n")
+        make_host(self.root, "hosta", {"a-dsn": True, "b-dsn": False})
+        make_host(self.root, "hostb", {"a-dsn": False, "b-dsn": False})
         (self.root / "env").write_text("A_DSN=new-a\nB_DSN=new-b\n")
-        # Both keys start filled; a scoped fill must keep them (empty-only)
-        # while proving the *other* host's tree is never even a candidate.
+        # Both hosts share one manifest; a scoped fill writes only its own
+        # host's empty keys and never names the other host's tree.
 
     def test_cli_refuses_without_scoping(self):
         # envfile before --root: Python 3.9's argparse rejects an
@@ -257,10 +274,14 @@ class TestMultiHostScoping(unittest.TestCase):
         self.assertIn("hosts/hosta/keys", r.stdout)
         self.assertNotIn("hosts/hostb/keys", r.stdout,
                          "a scoped fill must never name another host's paths")
-        a = (self.root / "hosts/hosta/keys/db/.secrets/a-dsn.key").read_text()
-        b = (self.root / "hosts/hostb/keys/db/.secrets/b-dsn.key").read_text()
-        self.assertTrue(a == "value-of-a-dsn", "filled keys are kept, not rewritten")
-        self.assertTrue(b == "value-of-b-dsn",
+        hosta = self.root / "hosts/hosta/keys/db/.secrets"
+        hostb = self.root / "hosts/hostb/keys/db/.secrets"
+        self.assertTrue((hosta / "a-dsn.key").read_text() == "value-of-a-dsn",
+                        "filled keys are kept, not rewritten")
+        self.assertTrue((hosta / "b-dsn.key").read_text() == "new-b",
+                        "the scoped host's empty key is filled")
+        self.assertTrue((hostb / "a-dsn.key").read_text() == ""
+                        and (hostb / "b-dsn.key").read_text() == "",
                         "the other host's values are untouched")
 
 

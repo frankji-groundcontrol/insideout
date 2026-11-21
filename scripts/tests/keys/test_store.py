@@ -23,12 +23,26 @@ import _helpers  # noqa: E402
 
 class TestStoreInvariants(unittest.TestCase):
     def manifest_entries(self):
+        """(value path, fields) for every host x every shared manifest key."""
+        for host in keys.discover_hosts(REPO):
+            for y in keys.manifest_paths(REPO):
+                module = os.path.basename(os.path.dirname(y))
+                for name, fields in keys._parse_secrets_block(y).items():
+                    path = os.path.join(REPO, "hosts", host, "keys", module,
+                                        ".secrets", f"{name}.key")
+                    yield path, fields
+
+    def test_manifests_live_in_one_shared_set(self):
+        # rv5-STRC-04: one manifest set under hosts/_manifests/keys/ serves
+        # every host; a host folder keeps only host.yml, README and .secrets/.
         import glob
-        pattern = os.path.join(REPO, "hosts", "*", "keys", "*", "*.yaml")
-        for y in sorted(glob.glob(pattern)):
-            for name, fields in keys._parse_secrets_block(y).items():
-                path = os.path.join(os.path.dirname(y), ".secrets", f"{name}.key")
-                yield path, fields
+        shared = glob.glob(os.path.join(REPO, "hosts", "_manifests", "keys", "*", "*.yaml"))
+        self.assertGreater(len(shared), 0, "no shared manifests under hosts/_manifests/keys/")
+        per_host = sorted(
+            os.path.relpath(p, REPO)
+            for p in glob.glob(os.path.join(REPO, "hosts", "*", "keys", "*", "*.yaml"))
+            if os.sep + "_manifests" + os.sep not in p)
+        self.assertEqual(per_host, [], "per-host manifest copies remain")
 
     def test_every_manifest_key_honors_store_invariants(self):
         checked = 0
