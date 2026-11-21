@@ -21,6 +21,10 @@ ApiCall patchWorkspace(
   });
 }
 
+/// Deletes the signed-in account; the server asks for the current password.
+ApiCall deleteMe(String password) =>
+    ApiCall('DELETE', '/me', {'password': password});
+
 ApiCall deleteWorkspace(String id) => ApiCall('DELETE', '/workspaces/$id');
 
 ApiCall patchMemberRole(String workspaceId, String userId, String role) {

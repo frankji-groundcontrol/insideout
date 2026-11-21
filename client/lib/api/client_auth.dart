@@ -141,6 +141,12 @@ mixin _AuthVerbs on _ApiCore {
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
+  /// Deletes the signed-in account for good (FE-07). A wrong [password]
+  /// answers 403; the caller clears the local session after success.
+  Future<void> deleteMe(String password) async {
+    await _parse(await _exec(req.deleteMe(password)), (d) => d);
+  }
+
   Future<UserProfile> updateMe({
     required String username,
     required String bio,

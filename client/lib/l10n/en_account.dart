@@ -117,6 +117,15 @@ const enAccount = <String, String>{
       "Registration is closed on this server. Ask the server's administrator to open sign-up.",
   'register.inviteError':
       'That invitation code is missing, invalid or expired. Check it, or ask an admin for a new invitation.',
+  'profile.dangerTitle': 'Danger zone',
+  'profile.deleteHint':
+      'Deleting your account removes your ideas, coach conversations, sessions and memberships. Work you shared with a workspace stays.',
+  'profile.deleteAccount': 'Delete my account',
+  'profile.deleteConfirm':
+      'This cannot be undone. Enter your current password to confirm.',
+  'profile.currentPassword': 'Current password',
+  'profile.deleteForever': 'Delete forever',
+  'profile.deleteWrongPassword': 'That is not your current password.',
   'profile.title': 'Profile',
   'profile.username': 'Username',
   'profile.bio': 'Bio',

@@ -78,7 +78,7 @@ Future<void> _confirmWith(WidgetTester tester, String password) async {
   await tester.tap(find.text('Delete my account'));
   await tester.pumpAndSettle();
   await tester.enterText(find.byType(TextField).last, password);
-  await tester.tap(find.text('Delete account forever'));
+  await tester.tap(find.text('Delete forever'));
   await tester.pumpAndSettle();
 }
 

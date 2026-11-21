@@ -7,6 +7,10 @@ no response time. From a terminal, `insideout account delete` sends that
 request: it reads the current password from the hidden prompt (never from a
 flag) and then removes the saved login. MCP has no tool for it.
 
+On the web, the profile page ends with a danger block: Delete my account asks
+for the current password, sends this request, signs the browser out and returns
+to the landing page.
+
 What goes: that person's coach conversations and messages, run records, ideas
 of every status, sessions, one-time tokens and workspace memberships. The
 account row stays. Its address, username, password hash and profile text are
