@@ -1,8 +1,9 @@
 package main
 
-// `insideout idea create|convert` — the idea write verbs
-// (docs/plans/2026-08-21-cli-mcp-parity.md Stage 3; update and delete run in
-// cli_crud.go) — and `insideout proposal decide`.
+// The idea inbox on the CLI: `insideout ideas` lists a workspace's ideas and
+// `insideout idea create|update|delete|convert` writes them
+// (docs/plans/2026-08-21-cli-mcp-parity.md Stage 3,
+// docs/plans/2026-08-25-agent-crud-tool-surface.md).
 
 import (
 	"flag"
@@ -22,6 +23,10 @@ func runIdeaCommand(args []string) (bool, int) {
 	switch sub {
 	case "proposal-decide": // the old spelling of `proposal decide`
 		return runProposalDecide(rest)
+	case "update":
+		return runIdeaUpdate(rest)
+	case "delete":
+		return runIdeaDelete(rest)
 	case "create":
 		fs := flag.NewFlagSet("idea create", flag.ContinueOnError)
 		api := apiFlag(fs)
@@ -51,25 +56,35 @@ func runIdeaCommand(args []string) (bool, int) {
 	return true, 2
 }
 
-// runProposalDecide is `insideout proposal decide` (and the old
-// `idea proposal-decide`): a human accepts or rejects an agent proposal.
-// Acceptance applies the proposal's items unless --no-apply, the default the
-// web carries too (rv5-PARB-05); --apply=false, the old spelling, still holds.
-func runProposalDecide(args []string) (bool, int) {
-	fs := flag.NewFlagSet("proposal decide", flag.ContinueOnError)
-	api := apiFlag(fs)
-	accept := fs.Bool("accept", false, "accept the proposal")
-	reject := fs.Bool("reject", false, "reject the proposal")
-	reason := fs.String("reason", "", "why")
-	noApply := fs.Bool("no-apply", false, "accept without applying the proposal's items")
-	apply := fs.Bool("apply", true, "apply the proposal's items on acceptance (the default)")
-	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 || *accept == *reject {
-		fmt.Fprintln(os.Stderr, "usage: insideout proposal decide --accept|--reject [--no-apply] [--reason R] <update-id>")
+// runIdeas is `insideout ideas <workspace-id>`.
+func runIdeas(args []string) (bool, int) {
+	f, ok := parseWriteFlags("ideas", args)
+	if !ok || !f.need(1, "insideout ideas <workspace-id>") {
 		return true, 2
 	}
-	decision := "rejected"
-	if *accept {
-		decision = "accepted"
+	return printJSON(clientFromFlag(*f.api).Ideas(f.positional[0]))
+}
+
+// runIdeaUpdate is `insideout idea update`. An absent or empty --content
+// keeps the body (PARA-02); the word clear clears it.
+func runIdeaUpdate(args []string) (bool, int) {
+	f, ok := parseWriteFlags("idea update", args)
+	if !ok || !f.need(1, "insideout idea update --title T [--content C|clear] <id>") {
+		return true, 2
 	}
-	return printJSON(clientFromFlag(*api).DecideProposal(fs.Args()[0], decision, *reason, *accept && *apply && !*noApply))
+	return printJSON(clientFromFlag(*f.api).UpdateIdea(f.positional[0], *f.title, apiclient.PatchText(*f.content)))
+}
+
+// runIdeaDelete is `insideout idea delete <id>`, a soft delete.
+func runIdeaDelete(args []string) (bool, int) {
+	f, ok := parseWriteFlags("idea delete", args)
+	if !ok || !f.need(1, "insideout idea delete <id>") {
+		return true, 2
+	}
+	if err := clientFromFlag(*f.api).DeleteIdea(f.positional[0]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return true, 1
+	}
+	fmt.Println("dropped (soft — it no longer appears in your ideas list)")
+	return true, 0
 }

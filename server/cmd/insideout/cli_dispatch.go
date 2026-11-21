@@ -9,21 +9,23 @@ import (
 	"os"
 )
 
-// runClientCommand handles login/whoami/workspaces/projects/prd and
-// reports whether the argument was a client command (already executed;
-// the caller should exit with the returned code).
+// runClientCommand reports whether the argument was a client command
+// (already executed; the caller should exit with the returned code).
 func runClientCommand(args []string) (handled bool, exitCode int) {
 	if len(args) == 0 {
 		return false, 0
 	}
 	cmd, rest := args[0], args[1:]
 
-	// CRUD-completion sub-verbs piggyback on the existing read verbs
-	// (idea/prd/workspaces/projects) and add ideas/evidence.
+	// Two-word verbs whose first word is also a verb of its own.
 	if len(rest) > 0 {
 		switch cmd + " " + rest[0] {
-		case "idea update", "idea delete", "prd update", "workspaces create", "projects create":
-			return runCrudCommand(cmd+" "+rest[0], rest[1:])
+		case "prd update":
+			return runPrdUpdate(rest[1:])
+		case "workspaces create":
+			return runWorkspacesCreate(rest[1:])
+		case "projects create":
+			return runProjectsCreate(rest[1:])
 		case "project update", "update add", "workspace update":
 			return runProjectCommand(cmd+" "+rest[0], rest[1:])
 		case "project delete", "workspace delete", "member role", "member remove", "update edit", "update delete", "profile update":
@@ -50,18 +52,28 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 	case "health":
 		// Container probe: no API client, no flags — see cli_health.go.
 		return true, runHealthCommand()
-	case "ideas", "evidence", "join":
-		return runCrudCommand(cmd, rest)
+	case "ideas":
+		return runIdeas(rest)
+	case "evidence":
+		return runEvidence(rest)
+	case "join":
+		return runJoin(rest)
 	case "roadmap":
 		return runRoadmapCommand(rest)
 	case "build", "expand", "build-confirm", "expand-confirm":
-		return runAgentCommand(cmd, rest)
+		return runDraftCommand(cmd, rest)
 	case "repo", "sync":
 		return runGithubCommand(cmd, rest)
 	case "guide":
 		return runGuideCommand(rest)
-	case "commit", "versions", "readiness", "view", "agent-context", "checkpoint", "propose", "revisions", "snapshot":
-		return runVersionCommands(cmd, rest)
+	case "commit", "versions", "revisions", "snapshot":
+		return runPrdVersionCommand(cmd, rest)
+	case "view":
+		return runPrdView(rest)
+	case "readiness":
+		return runPrdReadiness(rest)
+	case "agent-context", "checkpoint", "propose":
+		return runAgentCommand(cmd, rest)
 	case "presence":
 		return runRoadmapCommand(append([]string{"presence"}, rest...))
 	case "members":
@@ -73,10 +85,14 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 	case "invite", "invites", "signup-mode":
 		return runAdminCommand(cmd, rest)
 	case "whoami", "workspaces", "projects", "prd":
-	default:
-		return false, 0
+		return runReadCommand(cmd, rest)
 	}
+	return false, 0
+}
 
+// runReadCommand runs whoami, workspaces, projects or prd: one GET, its JSON
+// printed as the API sends it.
+func runReadCommand(cmd string, rest []string) (bool, int) {
 	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
 	api := apiFlag(fs)
 	if err := fs.Parse(rest); err != nil {
@@ -95,12 +111,10 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 			return true, 2
 		}
 		return printJSON(c.Projects(fs.Args()[0]))
-	case "prd":
-		if len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout prd <prd-id>")
-			return true, 2
-		}
-		return printJSON(c.Prd(fs.Args()[0]))
 	}
-	return false, 0
+	if len(fs.Args()) != 1 {
+		fmt.Fprintln(os.Stderr, "usage: insideout prd <prd-id>")
+		return true, 2
+	}
+	return printJSON(c.Prd(fs.Args()[0]))
 }

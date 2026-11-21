@@ -1,12 +1,11 @@
 package main
 
 // Roadmap CLI verbs — the roadmap projection of the /api/v1 contract
-// (docs/plans/2026-08-21-roadmap-parity-and-github.md). Agent planning
-// (build, expand), branch CRUD (roadmap add/update/move/delete), and
-// GitHub binding live here; reads print the API's raw JSON.
+// (docs/plans/2026-08-21-roadmap-parity-and-github.md): branch CRUD
+// (roadmap add/move/delete), presence and a node's evidence; the tree reads
+// and node edits run in cli_roadmap_tree.go. Reads print the API's raw JSON.
 
 import (
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -97,71 +96,12 @@ func runRoadmapCommand(args []string) (bool, int) {
 	return true, 2
 }
 
-// runAgentCommand handles the draft verbs (`build`, `expand`) and the
-// confirm verbs that write them (`build-confirm`, `expand-confirm`).
-func runAgentCommand(cmd string, args []string) (bool, int) {
-	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	api := apiFlag(fs)
-	count := 0
-	draft := ""
-	force := false
-	switch cmd {
-	case "build-confirm":
-		fs.IntVar(&count, "expected-count", 0, "live node count; required when replacing an existing roadmap")
-		fs.BoolVar(&force, "force", false, "discard nodes that have evidence or are done or validated")
-		fs.StringVar(&draft, "tree", "", "drafted tree JSON from build")
-	case "expand-confirm":
-		fs.StringVar(&draft, "children", "", "drafted children JSON from expand")
-	}
-	usage := map[string]string{
-		"build":          " <prd-id>",
-		"expand":         " <node-id>",
-		"build-confirm":  " [-expected-count N] [-force] -tree '<json>' <prd-id>",
-		"expand-confirm": " -children '<json>' <node-id>",
-	}
-	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
-		fmt.Fprintf(os.Stderr, "usage: insideout %s%s\n", cmd, usage[cmd])
+// runEvidence is `insideout evidence <node-id>`: the evidence behind a node.
+// `evidence add` runs in cli_human.go.
+func runEvidence(args []string) (bool, int) {
+	f, ok := parseWriteFlags("evidence", args)
+	if !ok || !f.need(1, "insideout evidence <node-id>") {
 		return true, 2
 	}
-	if (cmd == "build-confirm" || cmd == "expand-confirm") && !json.Valid([]byte(draft)) {
-		fmt.Fprintln(os.Stderr, "confirm needs the drafted JSON from the matching draft command")
-		return true, 2
-	}
-	c := clientFromFlag(*api)
-	switch cmd {
-	case "build":
-		return printJSON(c.BuildFromPrd(fs.Args()[0]))
-	case "build-confirm":
-		return printJSON(c.ConfirmBuildFromPrd(fs.Args()[0], json.RawMessage(draft), count, force))
-	case "expand-confirm":
-		return printJSON(c.ConfirmExpandNode(fs.Args()[0], json.RawMessage(draft)))
-	default:
-		return printJSON(c.ExpandNode(fs.Args()[0]))
-	}
-}
-
-// runGithubCommand handles `insideout repo set <project-id> <repo-url>`
-// and `insideout sync <project-id>`.
-func runGithubCommand(cmd string, args []string) (bool, int) {
-	fs := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	api := apiFlag(fs)
-	if err := fs.Parse(args); err != nil {
-		return true, 2
-	}
-	c := clientFromFlag(*api)
-	switch cmd {
-	case "repo":
-		if len(fs.Args()) != 3 || fs.Args()[0] != "set" {
-			fmt.Fprintln(os.Stderr, "usage: insideout repo set <project-id> <repo-url>")
-			return true, 2
-		}
-		return printJSON(c.SetRepo(fs.Args()[1], fs.Args()[2]))
-	case "sync":
-		if len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout sync <project-id>")
-			return true, 2
-		}
-		return printJSON(c.SyncGithub(fs.Args()[0]))
-	}
-	return false, 0
+	return printJSON(clientFromFlag(*f.api).NodeEvidence(f.positional[0]))
 }
