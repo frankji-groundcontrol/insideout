@@ -45,10 +45,14 @@ func requireDoneEvidenceOrReason(ctx context.Context, tx pgx.Tx, nodeID uuid.UUI
 
 // claimStartedLeaf gives work in progress its one human owner (PRODUCT.md,
 // rv5-FEAT-05): when an ownerless leaf moves to in_progress and the write
-// names no owner, the actor becomes its owner. A "clear" of an owner that is
-// already empty (the web form sends one) names none.
+// would leave it with no owner (none today, or this write clears it), the
+// actor becomes its owner.
 func claimStartedLeaf(ctx context.Context, tx pgx.Tx, nodeID, actorID uuid.UUID, from string, owner *uuid.UUID, f *RoadmapNodeFields) error {
-	if f.Status == nil || *f.Status != "in_progress" || from == "in_progress" || owner != nil || f.OwnerID != nil {
+	if f.Status == nil || *f.Status != "in_progress" || from == "in_progress" {
+		return nil
+	}
+	named := f.OwnerID != nil && *f.OwnerID != uuid.Nil
+	if named || (owner != nil && !f.ClearOwner && f.OwnerID == nil) {
 		return nil
 	}
 	var leaf bool

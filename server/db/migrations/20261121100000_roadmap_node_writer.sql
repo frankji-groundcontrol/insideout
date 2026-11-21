@@ -24,7 +24,8 @@ AS $$
   SELECT EXISTS (
     SELECT 1 FROM insideout.projects p
     WHERE p.id = p_project_id
-      AND (p.owner_id = p_user_id OR insideout._is_admin(p.workspace_id, p_user_id))
+      AND ((p.owner_id = p_user_id AND insideout._is_member(p.workspace_id, p_user_id))
+           OR insideout._is_admin(p.workspace_id, p_user_id))
   )
 $$;
 

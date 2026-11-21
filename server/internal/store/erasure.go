@@ -57,6 +57,8 @@ func (s *Store) EraseUser(ctx context.Context, userID uuid.UUID) error {
 			`DELETE FROM insideout.ideas WHERE author_id = $1`,
 			`DELETE FROM insideout.sessions WHERE user_id = $1`,
 			`DELETE FROM insideout.auth_tokens WHERE user_id = $1`,
+			// Node ownership goes before the memberships that authorise the update.
+			`UPDATE insideout.roadmap_nodes SET owner_user_id = NULL WHERE owner_user_id = $1`,
 			`DELETE FROM insideout.workspace_memberships WHERE user_id = $1`,
 		}
 		for _, q := range statements {
