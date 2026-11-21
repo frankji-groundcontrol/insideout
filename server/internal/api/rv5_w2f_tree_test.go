@@ -46,6 +46,16 @@ func (w *treeWorld) feedContent(t *testing.T, kind string, node uuid.UUID) []str
 	return out
 }
 
+// A root-scoped agent token writing a node that does not exist is told it does
+// not exist, as any other caller is, not that it is out of scope.
+func TestARootScopedAgentWritingAMissingNodeGets404(t *testing.T) {
+	w := newTreeWorld(t)
+	agent := w.rootAgent(t, w.owner, w.payments.ID)
+	missing := uuid.NewString()
+	w.must(t, agent, "PATCH", "/api/v1/roadmap/"+missing, `{"title":"x"}`, http.StatusNotFound)
+	w.must(t, agent, "POST", w.proj()+"/roadmap", `{"parentId":"`+missing+`","title":"x"}`, http.StatusNotFound)
+}
+
 // A build makes the builder owner of the seeded first leaf on the record: one
 // delegate row by the builder, so hand-back and history agree, and no feed row.
 func TestABuildRecordsTheSeededLeafsOwner(t *testing.T) {
