@@ -19,8 +19,6 @@ records, open and closed, follows under the later headings.
 | Record | Kind | Since | What is open |
 | --- | --- | --- | --- |
 | [Per-Project roles](./2026-11-21-per-project-roles.md) | product slice | 2026-11-21 | Decision Owner, Driver, Contributor, Reviewer and Viewer have no storage or check |
-| [Long functions over the function budget](./2026-11-21-long-functions.md) | structural debt | 2026-11-21 | eight functions over 80 lines after wave 4, listed in the function guard; the list only shrinks |
-| [Store-error ladders outside the converted handlers](./2026-11-21-store-error-ladders.md) | structural debt | 2026-11-21 | members, workspaces, conversations, GitHub, auth, guide and presence handlers still map store errors by hand |
 | [Review 5 open findings](./2026-11-21-review-5-open-findings.md) | review ledger | 2026-11-21 | the review 5 High defects not yet remediated, and the owner decisions on them (proposals inside a subtree: decision 7) |
 | [Review 4 open findings](./2026-10-18-review-4-open-findings.md) | review ledger | 2026-10-18 | review 4's open residue, gate notes and owner rows |
 | [Review 4 privacy: what only the owner can finish](./2026-10-18-rv4-owner-privacy-decisions.md) | owner decisions | 2026-10-18 | the owner halves of wave-0 rows 0.1 to 0.4 |
@@ -83,10 +81,11 @@ workflows or prose); the full register lives in the
 fix is a `server/go.mod` toolchain bump to go1.26.11. *Resolved on
 `rv5/remediation` (`7bcb71e`).*
 
-**Update 2026-11-21:** a structural record from the review 5 remediation
-was closed in the follow-up round: the
-[key manifests are one shared set](./2026-11-21-key-manifests-one-set.md)
-(*resolved*).
+**Update 2026-11-21:** three structural records from the review 5
+remediation were closed in the follow-up round, all *resolved*: the
+[key manifests are one shared set](./2026-11-21-key-manifests-one-set.md),
+[no function is over the function budget](./2026-11-21-long-functions.md),
+and [the store-error ladders answer through one helper](./2026-11-21-store-error-ladders.md).
 
 **Update 2026-11-21:** [focused review 5](../review/2026-11-21-focused-review-5/README.md) opened
 [fifteen High defects and six owner decisions](./2026-11-21-review-5-open-findings.md);

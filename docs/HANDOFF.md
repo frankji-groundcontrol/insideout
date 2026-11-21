@@ -19,7 +19,10 @@ style, with a parity test; the code follows a responsibility rule with a
 function-length guard; and the documentation graph is checked, with Marksman
 at 0. Owner decision 7 is built: a node writer, and their agent, may file
 proposals inside their subtree
-([changelog](changelogs/2026-11-21-proposals-inside-a-delegates-subtree.md)). CI is disabled in the repository at the owner's
+([changelog](changelogs/2026-11-21-proposals-inside-a-delegates-subtree.md)). The gaps the remediation left open are closed too
+([changelog](changelogs/2026-11-21-close-review-5-gaps.md)): no function is
+over the function budget, every store error answers through one helper, the
+key manifests are one shared set, and the parity walk reads nested fields. CI is disabled in the repository at the owner's
 request: the `ci`, `security`, `smoke` and `ubuntu install skill` workflows
 are off ([how to re-enable](usage/local-development.md)); verification is
 local.

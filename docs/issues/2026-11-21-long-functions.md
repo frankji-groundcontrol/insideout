@@ -1,5 +1,9 @@
 # 2026-11-21 — sixteen server functions over the 80-line function budget
 
+> **Resolved 2026-11-21** in the round that closed the review 5 gaps: every
+> listed function is split, and the guard's `longFunctions` map is empty. A new
+> function over the threshold now fails the guard outright.
+
 **Date:** 2026-11-21
 **Kind:** structural debt (function length), no behaviour change
 **Found by:** review 5 ([COMP-05](../review/2026-11-21-focused-review-5/30-completeness-critic.md),

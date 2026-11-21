@@ -11,17 +11,18 @@ integrated branch `rv5/close-gaps`. That branch goes to `main` in one PR with
 
 ## Checklist
 
-- [ ] api-errors: every remaining store-error ladder in `server/internal/api`
+- [x] api-errors: every remaining store-error ladder in `server/internal/api`
       uses `writeStoreError`
       ([record](../../issues/2026-11-21-store-error-ladders.md)); the three
       long API handlers are split.
-- [ ] long-funcs: the five long store, setup and LLM functions are split; the
+- [x] long-funcs: the five long store, setup and LLM functions are split; the
       function guard's list is empty
       ([record](../../issues/2026-11-21-long-functions.md)).
-- [ ] key-manifests: one shared manifest set under `hosts/_manifests/keys/`;
+- [x] key-manifests: one shared manifest set under `hosts/_manifests/keys/`;
       the drift between the manifests and `.env.example` is settled
       ([record](../../issues/2026-11-21-key-manifests-one-set.md)).
-- [ ] parity-nested: the parity walk covers nested request fields and matches
+- [x] parity-nested: the parity walk covers nested request fields and matches
       client calls by receiver type
       ([practice](../../practices/2026-11-21-surface-parity-guards.md)).
-- [ ] Integrated gates green; PR merged; records closed.
+- [x] Integrated gates green; records closed ([changelog](../../changelogs/2026-11-21-close-review-5-gaps.md)).
+- [ ] PR merged.
