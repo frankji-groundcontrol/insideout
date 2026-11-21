@@ -30,10 +30,11 @@ mixin _AuthVerbs on _ApiCore {
 
   /// Requests a magic-link email for [email]. Always resolves when the
   /// server accepts the request — the server answers 200 regardless of
-  /// whether the account exists.
-  Future<void> requestMagicLink(String email) async {
+  /// whether the account exists — with its mail word (PARA-05): `accepted`
+  /// for a provider, `logged` when the mail went only to the server log.
+  Future<String?> requestMagicLink(String email) async {
     final res = await _dio.post('/auth/magic-link', data: {'email': email});
-    await _parse(res, (d) => d);
+    return _parse(res, _mailWord);
   }
 
   /// Exchanges an emailed magic-link token for a full session (same shape
@@ -48,11 +49,14 @@ mixin _AuthVerbs on _ApiCore {
   }
 
   /// Requests a 6-digit sign-in code email for [email]. Always resolves
-  /// when the server accepts the request (uniform 200 contract).
-  Future<void> requestLoginCode(String email) async {
+  /// when the server accepts the request (uniform 200 contract), with the
+  /// mail word as [requestMagicLink].
+  Future<String?> requestLoginCode(String email) async {
     final res = await _dio.post('/auth/login-code', data: {'email': email});
-    await _parse(res, (d) => d);
+    return _parse(res, _mailWord);
   }
+
+  static String? _mailWord(dynamic d) => d is Map ? d['mail'] as String? : null;
 
   /// Exchanges an emailed sign-in code for a full session (same shape as
   /// login). Throws with status 401 when the code is wrong, expired, or

@@ -39,6 +39,7 @@ const zhAccount = <String, String>{
   'login.codeError': '验证码错误或已过期，请重新获取。',
   'login.codeSendError': '验证码发送失败，请重试。',
   'login.forgot': '忘记密码？',
+  'auth.mailLogged': '此服务器没有发送邮件：邮件内容只写入了服务器日志。请向服务器管理员索取。',
   'auth.mailOff': '此服务器未配置邮件发送：登录链接、验证码和重置密码邮件只会写入服务器日志，不会真正发出。',
   'forgot.title': '重置密码',
   'forgot.email': '邮箱',

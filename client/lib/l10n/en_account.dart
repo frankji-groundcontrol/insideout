@@ -47,6 +47,8 @@ const enAccount = <String, String>{
   'login.codeError': 'That code is wrong or has expired. Request a new one.',
   'login.codeSendError': 'Could not send the code. Please try again.',
   'login.forgot': 'Forgot password?',
+  'auth.mailLogged':
+      'This server did not send the email: it was only written to the server log. Ask the server operator for it.',
   'auth.mailOff':
       'Email is not configured on this server: sign-in links, codes and password-reset emails are only written to the server log.',
   'forgot.title': 'Reset your password',
