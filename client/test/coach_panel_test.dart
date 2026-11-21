@@ -98,9 +98,15 @@ Future<void> _pumpCoach(
   ApiClient api, {
   String locale = 'en-US',
 }) async {
+  // Room for the sent text and the reply under the panel chrome.
+  await tester.binding.setSurfaceSize(const Size(800, 1200));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
   final session = Session();
   session.ready = true;
   session.api = api;
+  // Holds the transcript the way PrdPage does: the panel hands it each sent
+  // text and finished reply (rv5-FE-01).
+  var messages = <ChatMessage>[];
 
   await tester.pumpWidget(
     MultiProvider(
@@ -113,17 +119,20 @@ Future<void> _pumpCoach(
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: CoachPanel(
-            prdId: 'prd-1',
-            conversation: Conversation(
-              id: 'c1',
+          body: StatefulBuilder(
+            builder: (context, setState) => CoachPanel(
               prdId: 'prd-1',
-              stage: 'critique',
-              status: 'active',
+              conversation: Conversation(
+                id: 'c1',
+                prdId: 'prd-1',
+                stage: 'critique',
+                status: 'active',
+              ),
+              messages: messages,
+              onPrdUpdated: () async {},
+              onStageChanged: (_) {},
+              onMessage: (m) => setState(() => messages = [...messages, m]),
             ),
-            messages: const [],
-            onPrdUpdated: () async {},
-            onStageChanged: (_) {},
           ),
         ),
       ),

@@ -49,6 +49,11 @@ Future<void> _pumpCoach(
   final session = Session();
   session.ready = true;
   session.api = api;
+  // Holds the transcript the way PrdPage does (rv5-FE-01), tall enough for
+  // the sent text and the reply under the badge.
+  await tester.binding.setSurfaceSize(const Size(800, 1200));
+  addTearDown(() => tester.binding.setSurfaceSize(null));
+  var messages = <ChatMessage>[];
 
   await tester.pumpWidget(
     MultiProvider(
@@ -61,17 +66,20 @@ Future<void> _pumpCoach(
       ],
       child: MaterialApp(
         home: Scaffold(
-          body: CoachPanel(
-            prdId: 'prd-1',
-            conversation: Conversation(
-              id: 'c1',
+          body: StatefulBuilder(
+            builder: (context, setState) => CoachPanel(
               prdId: 'prd-1',
-              stage: 'critique',
-              status: 'active',
+              conversation: Conversation(
+                id: 'c1',
+                prdId: 'prd-1',
+                stage: 'critique',
+                status: 'active',
+              ),
+              messages: messages,
+              onPrdUpdated: () async {},
+              onStageChanged: (_) {},
+              onMessage: (m) => setState(() => messages = [...messages, m]),
             ),
-            messages: const [],
-            onPrdUpdated: () async {},
-            onStageChanged: (_) {},
           ),
         ),
       ),

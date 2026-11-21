@@ -31,6 +31,7 @@ class CoachPanel extends StatefulWidget {
     this.onConfirmStage,
     this.onDeclineStage,
     this.onTurnDone,
+    this.onMessage,
   });
 
   final String prdId;
@@ -50,6 +51,11 @@ class CoachPanel extends StatefulWidget {
   /// Runs when a turn ends, however it ended: the page refreshes the stored
   /// conversation the proposal's trust notes come from.
   final Future<void> Function()? onTurnDone;
+
+  /// Adds a message to the page's transcript: the sent text at once, the
+  /// streamed reply when the turn ends (rv5-FE-01); [onTurnDone] then re-reads
+  /// the stored ones.
+  final void Function(ChatMessage message)? onMessage;
 
   @override
   State<CoachPanel> createState() => _CoachPanelState();
@@ -115,6 +121,7 @@ class _CoachPanelState extends State<CoachPanel> {
     // A suggestion chip is not the member's text: leave the composer alone.
     final fromDraft = preset == null;
     if (fromDraft) draft.clear();
+    widget.onMessage?.call(ChatMessage(id: '', role: 'user', content: text));
     var delivered = false;
     try {
       await context.read<Session>().api.sendCoach(
@@ -162,6 +169,15 @@ class _CoachPanelState extends State<CoachPanel> {
       if (mounted) {
         // A failed send gives the text back, unless they have typed since.
         if (fromDraft && !delivered && draft.text.isEmpty) draft.text = text;
+        // The reply joins the transcript before the buffer empties, so it
+        // stays on screen even when the re-read below fails.
+        final reply = stream;
+        if (reply.isNotEmpty) {
+          widget.onMessage?.call(
+            ChatMessage(id: '', role: 'assistant', content: reply),
+          );
+        }
+        setState(() => stream = '');
         // Refresh before the confirm button frees up (see CoachProposalRow).
         await widget.onTurnDone?.call();
       }

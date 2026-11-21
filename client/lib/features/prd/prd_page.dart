@@ -232,14 +232,22 @@ class _PrdPageState extends State<PrdPage> {
   }
 
   // The stored conversation carries what the confirm card must be honest
-  // about (a skipped critic review); fetch it when a turn ends. A failed
-  // refresh keeps what the page has: the next turn asks again.
+  // about (a skipped critic review) and the stored messages are the
+  // transcript; fetch both when a turn ends. A failed refresh keeps what the
+  // page has: the next turn asks again.
   Future<void> _refreshConversation() async {
     final conv = conversation;
     if (conv == null) return;
+    final api = context.read<Session>().api;
     try {
-      final fresh = await context.read<Session>().api.getConversation(conv.id);
-      if (mounted) setState(() => conversation = fresh);
+      final fresh = await api.getConversation(conv.id);
+      final msgs = await api.listMessages(conv.id);
+      if (mounted) {
+        setState(() {
+          conversation = fresh;
+          messages = msgs;
+        });
+      }
     } catch (_) {}
   }
 
@@ -306,6 +314,7 @@ class _PrdPageState extends State<PrdPage> {
       onConfirmStage: _confirmStage,
       onDeclineStage: _declineStage,
       onTurnDone: _refreshConversation,
+      onMessage: (m) => setState(() => messages = [...messages, m]),
     );
   }
 
