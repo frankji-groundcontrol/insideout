@@ -88,14 +88,14 @@ code or link).
 ## Verbs
 
 Every row runs on the CLI. MCP has a tool for each verb an agent token may
-call and none for a human-only route (see [Agent scope](#agent-scope)), and
-workspace deletion, member roles and removal, editing or deleting an update,
-and profile edits are web-only today.
+call and none for a human-only route (see [Agent scope](#agent-scope)).
+A delete of a project or a workspace takes everything under it, so the CLI
+asks for `--yes`.
 
 | Area | Verbs |
 | --- | --- |
 | Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `logout`, `forgot-password <email>`, `reset-password`, `account delete` (the current password from the hidden prompt; see [account deletion](account-deletion.md)) |
-| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `evidence add --detail D [--source URL] [--observed YYYY-MM-DD] <node-id>` (a validation observation on a leaf; the day defaults to today), `workspaces create --title [--desc]`, `workspace update [--title] [--description D\|clear] [--cover URL\|clear] <ws>`, `join <code>`, `projects create --title [--desc] <ws-id>`, `project update [--title] [--description D\|clear] [--status planning\|active\|paused\|done\|archived] [--owner user-id\|me\|clear] <proj>`, `project delete <proj>` (workspace admins), `update add --kind progress\|blocker\|note --content C <proj>` |
+| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `evidence add --detail D [--source URL] [--observed YYYY-MM-DD] <node-id>` (a validation observation on a leaf; the day defaults to today), `workspaces create --title [--desc]`, `workspace update [--title] [--description D\|clear] [--cover URL\|clear] <ws>`, `join <code>`, `projects create --title [--desc] <ws-id>`, `project update [--title] [--description D\|clear] [--status planning\|active\|paused\|done\|archived] [--owner user-id\|me\|clear] <proj>`, `project delete --yes <proj>` (workspace admins), `workspace delete --yes <ws>` (its creator), `update add --kind progress\|blocker\|note --content C <proj>`, `update edit --content C <update>`, `update delete <update>` (author or admin), `member role --role admin\|member <ws> <user>`, `member remove <ws> <user>` (admins), `profile update [--username U] [--bio B\|clear] [--avatar URL\|clear]` |
 | Read surface | `whoami`, `workspaces`, `workspace <ws>`, `projects <ws>`, `project <proj>`, `updates [--before c] [--limit n] <proj>`, `prds <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>`, `export [--format markdown\|print] [--audience A] [--out FILE] <prd>` (the whole PRD on stdout or in a file, as MCP `prd_export` gives it) |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>` (without `--content` the body is kept), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
@@ -117,7 +117,7 @@ Where a CLI verb and its MCP tool are named differently:
 | `join <code>`, `workspaces create` | `workspace_join`, `workspace_create` |
 | `projects create` | `project_create` |
 | `prds <ws>`, `updates <proj>`, `export <prd>` | `prd_list`, `project_updates`, `prd_export` |
-| `project update`, `update add`, `workspace update` | `project_update` (no `owner`), `update_add`, `workspace_update` |
+| `project update`, `update add`, `update edit`, `workspace update` | `project_update` (no `owner`), `update_add`, `update_edit`, `workspace_update` |
 | `roadmap list`, `roadmap show`, `roadmap mine`, `roadmap add`, `roadmap update`, `roadmap move`, `roadmap assignments` | `roadmap_list`, `roadmap_node`, `roadmap_mine`, `roadmap_add`, `roadmap_update`, `roadmap_move`, `roadmap_assignments` |
 | `roadmap progress`, `roadmap presence` | `progress`, `presence` |
 | `repo set <proj> <url>` | `repo_set` |
@@ -229,8 +229,10 @@ MCP registers no tool for a human-only route, since no token the process
 sends can reach one. These are CLI and web only, on purpose: Commit
 (`commit`), the proposal decision (`proposal decide`), account deletion
 (`account delete`), validation (`evidence add`, `roadmap validate`), every
-delete (`idea delete`, `roadmap delete`, `project delete`), a project's
-owner (`project update --owner`), delegation, hand-back and the member list
+delete (`idea delete`, `roadmap delete`, `project delete`, `workspace
+delete`, `update delete`, `member remove`), member roles and the profile
+(`member role`, `profile update`), a project's owner (`project update
+--owner`), delegation, hand-back and the member list
 (`roadmap delegate`, `roadmap handback`, `members`), and the admin verbs
 (`invite`, `invites`, `invite revoke`, `signup-mode <mode>`). An agent reads
 and edits a project or workspace (`project`, `project_update`, `workspace`,

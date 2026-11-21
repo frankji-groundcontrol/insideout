@@ -122,8 +122,6 @@ is held). The deliberate exceptions:
   `propose` instead. Ask the human to run these from the CLI or web.
   `project_update`, `workspace_update`, `update_add` and `update_edit`
   cover the rest of a project and workspace.
-- **Web only today**: workspace deletion, member role changes and removal,
-  editing or deleting an update, and profile edits.
 - **The web** has no control that mints an agent token.
 
 CLI verbs and MCP tools mostly share names; where they differ (`ideas` /

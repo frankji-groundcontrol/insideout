@@ -17,7 +17,6 @@ var projectUsage = map[string]string{
 	"project": "insideout project <project-id>",
 	"project update": "insideout project update [--title T] [--description D|clear] " +
 		"[--status planning|active|paused|done|archived] [--owner user-id|me|clear] <project-id>",
-	"project delete":   "insideout project delete <project-id>",
 	"updates":          "insideout updates [--before cursor] [--limit n] <project-id>",
 	"update add":       "insideout update add --kind progress|blocker|note --content C <project-id>",
 	"workspace":        "insideout workspace <workspace-id>",
@@ -29,7 +28,7 @@ var projectUsage = map[string]string{
 func runProjectCommand(verb string, args []string) (bool, int) {
 	usage, ok := projectUsage[verb]
 	if !ok { // `update` with no sub-verb, or an unknown one
-		usage = projectUsage["update add"]
+		usage = projectUsage["update add"] + "\n       " + peopleUsage["update edit"] + "\n       " + peopleUsage["update delete"]
 	}
 	fs := flag.NewFlagSet(verb, flag.ContinueOnError)
 	api := apiFlag(fs)
@@ -60,13 +59,6 @@ func runProjectCommand(verb string, args []string) (bool, int) {
 	switch verb {
 	case "project":
 		return printJSON(c.Project(id))
-	case "project delete":
-		if err := c.DeleteProject(id); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			return true, 1
-		}
-		fmt.Println("deleted")
-		return true, 0
 	case "updates":
 		return printJSON(c.ProjectUpdates(id, *before, *limit))
 	case "update add":

@@ -158,6 +158,11 @@ var sweep = []sweepCase{
 		return drop(c.AddProjectUpdate(h, ProjectUpdate{Kind: h, Content: h}))
 	}},
 	{"EditProjectUpdate", "PATCH", "/updates/{h}", func(c *Client, h string) error { return drop(c.EditProjectUpdate(h, h)) }},
+	{"DeleteProjectUpdate", "DELETE", "/updates/{h}", func(c *Client, h string) error { return c.DeleteProjectUpdate(h) }},
+	{"DeleteWorkspace", "DELETE", "/workspaces/{h}", func(c *Client, h string) error { return c.DeleteWorkspace(h) }},
+	{"UpdateMember", "PATCH", "/workspaces/{h}/members/{h}", func(c *Client, h string) error { return drop(c.UpdateMember(h, h, h)) }},
+	{"RemoveMember", "DELETE", "/workspaces/{h}/members/{h}", func(c *Client, h string) error { return c.RemoveMember(h, h) }},
+	{"UpdateMe", "PATCH", "/me", func(c *Client, h string) error { return drop(c.UpdateMe(MePatch{Username: &h, Bio: &h, AvatarURL: &h})) }},
 	{"Workspace", "GET", "/workspaces/{h}", func(c *Client, h string) error { return drop(c.Workspace(h)) }},
 	{"UpdateWorkspace", "PATCH", "/workspaces/{h}", func(c *Client, h string) error {
 		return drop(c.UpdateWorkspace(h, WorkspacePatch{Title: &h, Description: &h, CoverURL: &h}))

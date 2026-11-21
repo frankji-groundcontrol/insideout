@@ -92,8 +92,10 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		switch cmd + " " + rest[0] {
 		case "idea update", "idea delete", "prd update", "workspaces create", "projects create":
 			return runCrudCommand(cmd+" "+rest[0], rest[1:])
-		case "project update", "project delete", "update add", "workspace update":
+		case "project update", "update add", "workspace update":
 			return runProjectCommand(cmd+" "+rest[0], rest[1:])
+		case "project delete", "workspace delete", "member role", "member remove", "update edit", "update delete", "profile update":
+			return runPeopleCommand(cmd+" "+rest[0], rest[1:])
 		case "account delete", "evidence add", "roadmap validate":
 			return runHumanCommand(cmd+" "+rest[0], rest[1:])
 		case "proposal decide":
@@ -105,6 +107,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runProjectCommand(cmd, rest)
 	case "account":
 		return runHumanCommand(cmd, rest)
+	case "member", "profile":
+		return runPeopleCommand(cmd, rest)
 	case "proposal": // anything but `proposal decide` prints its usage
 		return runProposalDecide(nil)
 	case "export":

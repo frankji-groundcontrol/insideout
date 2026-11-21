@@ -283,10 +283,8 @@ Update this page as each slice lands.
 Surfaces (wave 3): the CLI carries the human-only node verbs too, `evidence
 add` and `roadmap validate`, and the project verbs around the tree (`project`,
 `project update`, `project delete`, `updates`, `update add`). MCP registers
-no tool on a route the server keeps for a human, which is wider than the
-wave's stated omission list: besides account deletion, validation, Commit and
-the proposal decision, it has no tool for reading one project
-(`GET /projects/{pid}`), editing or deleting a project, posting an update or
-editing a workspace, since those routes refuse an agent token. An agent reads
-a project through `projects`, `project_updates` and `roadmap_list`.
-`roadmap_delete` is gone from MCP for the same reason.
+no tool on a route the server keeps for a human: account deletion,
+validation, Commit, the proposal decision, every delete (`roadmap_delete` is
+gone), delegation and member roles. An agent reads and edits a project
+(`project`, `project_update`, which refuses an owner change) and posts
+updates (`update_add`).

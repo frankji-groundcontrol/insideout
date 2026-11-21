@@ -27,16 +27,15 @@ a time-first progress view.
 Three surfaces, one `/api/v1` contract:
 
 - **Web 应用** — Flutter 网页端：想法箱、PRD 编辑、AI 教练对话、路线图画布、版本历史。
-- **`insideout` CLI** — 终端里的动词：认证、想法箱、项目、PRD、路线图、版本、证据、代理词汇，以及只属于人的决定（Commit、提议决策、删除、验证、删除账户）。工作区删除、成员角色和个人资料目前只在网页端。
+- **`insideout` CLI** — 终端里的动词：认证、想法箱、项目、PRD、路线图、版本、证据、代理词汇，以及只属于人的决定（Commit、提议决策、删除、成员角色、验证、删除账户）和个人资料。
 - **`insideout-mcp` MCP 服务器** — 代理令牌可以调用的动词作为 MCP 工具暴露给任何支持 MCP 的编码代理（当前数量以 `tools/list` 为准，不在文档里写死）；只属于人的决定不提供工具。让 Claude Code、Cursor 或你自己的代理直接驱动这个产品。
 
 - **Web app** — the Flutter client: inbox, PRD editing, the AI coach
   conversation, the roadmap canvas, version history.
 - **`insideout` CLI** — the verbs in the terminal: auth, idea inbox,
   projects, PRDs, roadmap, versions, evidence, the agent vocabulary, and the
-  human-only decisions (Commit, proposal decisions, deletes, validation,
-  account deletion). Workspace deletion, member roles and the profile are
-  web-only today.
+  human-only decisions (Commit, proposal decisions, deletes, member roles,
+  validation, account deletion) and the profile.
 - **`insideout-mcp` MCP server** — the verbs an agent token may run, as MCP
   tools for any MCP-capable coding agent (`tools/list` answers the current
   count, so no number is frozen here); the human-only decisions have no
