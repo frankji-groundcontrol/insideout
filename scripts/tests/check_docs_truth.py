@@ -22,6 +22,12 @@ def read(name):
     return (ROOT / name).read_text(encoding="utf-8")
 
 
+def board():
+    """The task board plus the month files its finished rows move to (rv5-IDX-01)."""
+    months = sorted((ROOT / "docs/plans/index").glob("20*.md"))
+    return "\n".join([read("docs/plans/README.md")] + [p.read_text(encoding="utf-8") for p in months])
+
+
 def fail(failures, message):
     failures.append(message)
 
@@ -44,10 +50,10 @@ def board_row_matches_ci(failures):
     """PM-03: a CI android release-APK job voids the board's blocked row."""
     if "flutter build apk --release" not in read(".github/workflows/ci.yml"):
         return  # no android release build in CI; the row may stay blocked
-    row = next((line for line in read("docs/plans/README.md").splitlines()
+    row = next((line for line in board().splitlines()
                 if "2026-08-17-flutter-client.md" in line), "")
     if not row:
-        fail(failures, "docs/plans/README.md lost the 2026-08-17-flutter-client row")
+        fail(failures, "docs/plans/README.md and its index/ month files lost the 2026-08-17-flutter-client row")
         return
     if "In flight" in row or "blocked" in row:
         fail(failures, "plans/README.md's Nuxt→Flutter row is In flight/Android-blocked "
@@ -151,7 +157,7 @@ def product_baseline_scopes_sections(failures):
 def handoff_records_mail_state(failures):
     """COMP-04: while the board still records 'all five flows exercised
     live', HANDOFF must carry the mail/lead-15 reconciliation line."""
-    if "all five flows exercised live" not in read("docs/plans/README.md"):
+    if "all five flows exercised live" not in board():
         return  # board record gone; the contradiction is settled
     handoff = read("docs/HANDOFF.md")
     for needle in ("all five flows", "owner-blocked", "pre-wave"):
