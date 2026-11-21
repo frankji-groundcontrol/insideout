@@ -143,7 +143,8 @@ the row; the insert policy calls it on the parent (a root takes
 `roadmap_evidence` insert policy calls it on the node. Insert and update also
 require a child's `project_id` to equal its parent's, read through the
 `SECURITY DEFINER` helper `insideout._node_project(node)`, so a writable
-parent cannot link a row into another tenant's project. Select stays
+parent cannot link a row into another tenant's project, and an update may
+not change `project_id`. Select stays
 workspace-wide. The policies hold less than the store: they judge the row
 where it stood when the statement started, so a raw `UPDATE` can still move
 a writable row anywhere inside its project, and the rules for a delegate's

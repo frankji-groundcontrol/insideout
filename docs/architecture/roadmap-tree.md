@@ -92,7 +92,7 @@ Plan writers keep every right. Pinned on PostgreSQL by
 `_is_plan_writer` for a root; `evidence_owner_insert` on `roadmap_evidence`
 calls it on the node. A child's `project_id` must equal its parent's
 (`_node_project`), on insert and on update, so a writable parent never links
-a row into another project. `roadmap_nodes_select` stays workspace-wide, so
+a row into another project, and an update may not change `project_id`. `roadmap_nodes_select` stays workspace-wide, so
 every member reads the whole project (owner decision 2). The functions are
 `SECURITY DEFINER`, owned by `insideout_owner`, so a policy on
 `roadmap_nodes` never queries the table it guards (BUG-007).

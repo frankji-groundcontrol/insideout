@@ -93,6 +93,8 @@ CREATE POLICY roadmap_nodes_update ON insideout.roadmap_nodes
   FOR UPDATE USING (insideout._can_write_node(id, insideout.current_user_id()))
   WITH CHECK (
     insideout._can_write_node(id, insideout.current_user_id())
+    -- _node_project(id) reads the pre-update row: an update keeps project_id.
+    AND project_id = insideout._node_project(id)
     AND (parent_id IS NULL OR insideout._node_project(parent_id) = project_id)
   );
 
