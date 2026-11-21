@@ -146,7 +146,9 @@ life, cached and minted again before it expires) and sends every tool call
 with that token alone. The server refuses an agent token on the human-only
 routes with 403 `agent_scope_denied` (the proposal decision, Commit, the
 admin routes and every delete), so the limit holds for any client, not just
-this binary ([design](../architecture/agent-token-scope.md)). The registry
+this binary ([design](../architecture/agent-token-scope.md)). It also refuses
+an agent's `build_confirm` over a roadmap that is not empty and an agent's
+`completion_reason` on `roadmap_update`. The registry
 follows the login: twelve tools are not offered while the process holds a JWT
 login — `commit`, `proposal_decide`, `signup_mode`, `invite_create`,
 `invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete` and the four

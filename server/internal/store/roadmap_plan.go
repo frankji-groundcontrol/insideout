@@ -36,7 +36,13 @@ type ReplaceOptions struct {
 	ExpectedCount *int
 	// Force discards nodes that have evidence or are done or validated.
 	Force bool
+	// EmptyOnly refuses any non-empty roadmap with ErrRoadmapNotEmpty: an
+	// agent token builds only onto an empty roadmap (rv5-FEAT-02).
+	EmptyOnly bool
 }
+
+// ErrRoadmapNotEmpty is an EmptyOnly replace that met a live roadmap.
+var ErrRoadmapNotEmpty = errors.New("roadmap is not empty")
 
 // ReplaceRoadmapTree atomically swaps a project's whole roadmap for the given
 // tree — used by "build the MVP" generation. Returns the number of nodes
@@ -71,6 +77,9 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 			FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID,
 		).Scan(&c.LiveCount, &c.DoneCount, &c.ValidatedCount, &c.EvidenceCount); err != nil {
 			return err
+		}
+		if opts.EmptyOnly && c.LiveCount > 0 {
+			return ErrRoadmapNotEmpty
 		}
 		if c.LiveCount > 0 && (opts.ExpectedCount == nil || *opts.ExpectedCount != c.LiveCount) {
 			return &c

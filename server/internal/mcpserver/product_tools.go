@@ -68,7 +68,7 @@ func addProductTools(s *server.MCPServer, api string) {
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("title", "new title"),
 			strOpt("description", "new description"), strOpt("status", "locked|pending|in_progress|done"),
 			strOpt("deadline", "RFC3339 deadline, or empty string to clear"),
-			strOpt("completion_reason", "one sentence when marking done with no evidence")},
+			strOpt("completion_reason", "one sentence when marking done with no evidence; human tokens only, an agent token is refused (move to done on evidence instead)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			arg := func(k string) *string {
 				if v, ok := req.GetArguments()[k].(string); ok && v != "" {

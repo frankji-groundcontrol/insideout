@@ -64,6 +64,13 @@ commits list, revisions list and create, and `POST /prds/{id}/status` to `draft`
 read) and the four AI build/expand routes; repo bind and GitHub sync;
 `agent/context`, `agent/checkpoint`, `agent/propose`; the presence snapshot.
 
+Two agent-allowed routes refuse an agent token part of the way, in the handler,
+with the same 403 `agent_scope_denied` (rv5-FEAT-02): `POST /prds/{id}/build/confirm`
+builds onto an empty roadmap only, whatever count or `force` it sends (the check
+runs inside the replace's per-project lock), and `PATCH /roadmap/{nid}` refuses a
+non-empty `completionReason`, the human's override for done without evidence. An
+agent still moves a node to done when it has evidence.
+
 Human-only (the other 36): proposal decision (`POST /agent/proposals/{uid}/decision`);
 Commit (`POST /prds/{id}/commit`); all six `/admin/*` routes (`signup_mode`,
 `invite_*`, the mail probe); every `DELETE` (ideas, roadmap nodes, projects,
