@@ -198,7 +198,7 @@ func TestSetVarLeavesNoTempFileBehind(t *testing.T) {
 	}
 }
 
-// TestQuoteRoundTripsAwkwardValues mirrors scripts/test_env_writes.py's
+// TestQuoteRoundTripsAwkwardValues mirrors scripts/tests/env/test_env_writes.py's
 // t_quote_round_trips_awkward_values value-for-value: every rendered form must
 // read back through the catalog's parser as the original value.
 func TestQuoteRoundTripsAwkwardValues(t *testing.T) {

@@ -23,7 +23,7 @@ styles to this origin alone (rv4-COMP-03: a first load must not need a CDN).
 HSTS must appear only when the request says it came over https (the edge in
 front of nginx terminates TLS, so nginx itself only ever sees http).
 
-Usage:  python3 scripts/check_nginx_headers.py [--template FILE] [--nginx BIN]
+Usage:  python3 scripts/checks/check_nginx_headers.py [--template FILE] [--nginx BIN]
 
 Needs Python 3 and an nginx binary (--nginx, else $NGINX_BIN, else PATH). It
 installs nothing and writes only inside a temp directory.
@@ -92,7 +92,7 @@ def csp(seen):
 
 
 def main():
-    root = Path(__file__).resolve().parent.parent
+    root = Path(__file__).resolve().parents[2]
     ap = argparse.ArgumentParser()
     ap.add_argument("--template", default=str(root / "client" / "nginx.conf"))
     ap.add_argument("--nginx", default=os.environ.get("NGINX_BIN") or shutil.which("nginx"))

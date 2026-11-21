@@ -215,8 +215,8 @@ anchor-click download path).
 The app's nginx proxy (Python 3 and any nginx binary; nothing is installed):
 
 ```bash
-python3 scripts/check_nginx_reresolve.py [--nginx /path/to/nginx]   # follows the API upstream when DNS changes
-python3 scripts/check_nginx_headers.py [--nginx /path/to/nginx]     # sends the security headers
+python3 scripts/checks/check_nginx_reresolve.py [--nginx /path/to/nginx]   # follows the API upstream when DNS changes
+python3 scripts/checks/check_nginx_headers.py [--nginx /path/to/nginx]     # sends the security headers
 ```
 
 Both render `client/nginx.conf` as the image entrypoint does. The first runs it
@@ -232,7 +232,7 @@ Credential + env script suites (Python; the same two batteries CI runs
 in its env-suites job — from `scripts/`):
 
 ```bash
-python3 test_env_catalog.py && python3 test_env_writes.py   # env catalog + write batteries (plain-assert scripts)
+python3 tests/env/test_env_catalog.py && python3 tests/env/test_env_writes.py   # env catalog + write batteries (plain-assert scripts)
 python3 -m unittest discover -s tests/keys -t .           # key store suites
 ```
 

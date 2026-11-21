@@ -226,9 +226,9 @@ jobs:
         with:
           python-version: "3.12"
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq nginx
-      - run: python3 -I scripts/check_nginx_reresolve.py
-      - run: python3 -I scripts/check_nginx_headers.py
-      - run: python3 -I scripts/check_nginx_webhook_body.py
+      - run: python3 -I scripts/checks/check_nginx_reresolve.py
+      - run: python3 -I scripts/checks/check_nginx_headers.py
+      - run: python3 -I scripts/checks/check_nginx_webhook_body.py
 
   client:
     name: client (flutter)
@@ -331,8 +331,8 @@ jobs:
           # The two env batteries are plain-assert scripts that exit at import
           # (env_testlib.run), so `unittest test_env_catalog test_env_writes`
           # stopped after the first and never ran the second.
-          python3 test_env_catalog.py
-          python3 test_env_writes.py
+          python3 tests/env/test_env_catalog.py
+          python3 tests/env/test_env_writes.py
           python3 -m unittest discover -s tests/keys -t . -p "test_*.py" -v
       # SEC-14: blocks here; the pre-commit hook only warns. The script finds
       # the repo root itself, so the job's scripts/ working directory is fine.

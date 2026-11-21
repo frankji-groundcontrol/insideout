@@ -13,7 +13,7 @@ Static check, Python 3 only (no nginx binary needed): an exact-match
 location wins over the /api/ prefix location (nginx docs, "How nginx
 processes a request"), so the config shape is checkable by parsing. Live
 nginx behaviour (nginx -t, the BUG-027 re-resolution) stays with
-scripts/check_nginx_reresolve.py in the CI nginx job. Fails unless
+scripts/checks/check_nginx_reresolve.py in the CI nginx job. Fails unless
 
   1. an exact-match location for /api/v1/hooks/github exists,
   2. its client_max_body_size is at least the server's 8 MiB,
@@ -26,7 +26,7 @@ scripts/check_nginx_reresolve.py in the CI nginx job. Fails unless
      in the address nginx saw) — a literal in either would pin one stack's
      behaviour on the other (rv4-FR-F61).
 
-Usage:  python3 scripts/check_nginx_webhook_body.py [--template FILE]
+Usage:  python3 scripts/checks/check_nginx_webhook_body.py [--template FILE]
 """
 import argparse
 import re
@@ -75,7 +75,7 @@ def to_bytes(value):
 
 
 def main():
-    root = Path(__file__).resolve().parent.parent
+    root = Path(__file__).resolve().parents[2]
     ap = argparse.ArgumentParser()
     ap.add_argument("--template", default=str(root / "client" / "nginx.conf"))
     args = ap.parse_args()

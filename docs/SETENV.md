@@ -101,7 +101,7 @@ working code or compose default, so marking it required would make `check`
 report a non-problem — and a checker that cries wolf gets ignored.
 
 That convention is machine-read, so a violation is a bug rather than a typo.
-Two are enforced by `scripts/test_env_catalog.py`: the required set must equal
+Two are enforced by `scripts/tests/env/test_env_catalog.py`: the required set must equal
 exactly those two names, and every declared variable must have a real consumer
 (that second one exists because a `NAME` followed by `=` written inside an
 explanatory *comment* parses as a declaration like any other — which is how a
@@ -287,8 +287,8 @@ All commands from the repo root. The `dev.sh` ones preflight
 
 ```bash
 ./scripts/env.sh check --db                                # + a pg_isready probe
-python3 scripts/test_env_catalog.py                         # catalog: read path
-python3 scripts/test_env_writes.py                          # catalog: write path
+python3 scripts/tests/env/test_env_catalog.py               # catalog: read path
+python3 scripts/tests/env/test_env_writes.py                # catalog: write path
 ./scripts/dev.sh -C server go run ./cmd/insideout migrate   # apply migrations
 ./scripts/dev.sh -C server go run ./cmd/insideout           # boot: listens on :8080
 ./scripts/dev.sh -C server go test ./internal/store/... -run TestAuthz -v   # real-DB RLS proof

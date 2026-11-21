@@ -305,7 +305,7 @@ On `app`:
   violation, or the font mirror needs refreshing (the recipe is in
   `client/web/fonts/NOTICE.txt`), loosen only that directive in
   [`client/nginx.conf`](../../client/nginx.conf) and run
-  `python3 scripts/check_nginx_headers.py`
+  `python3 scripts/checks/check_nginx_headers.py`
   ([local-development.md](local-development.md#testing)). The headers reach
   the hosted app with the next `railway up --service app`.
 

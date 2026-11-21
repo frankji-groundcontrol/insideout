@@ -19,7 +19,7 @@ addresses, then checks that the proxy
      the address nginx itself saw, because the server's throttle trusts the
      rightmost entry and a client may write any other.
 
-Usage:  python3 scripts/check_nginx_reresolve.py [--template FILE] [--nginx BIN]
+Usage:  python3 scripts/checks/check_nginx_reresolve.py [--template FILE] [--nginx BIN]
 
 Needs Python 3 and an nginx binary (--nginx, else $NGINX_BIN, else PATH). It
 installs nothing and writes only inside a temp directory.
@@ -251,7 +251,7 @@ def forwarded(args, dns_port, xff):
 
 
 def main():
-    root = Path(__file__).resolve().parent.parent
+    root = Path(__file__).resolve().parents[2]
     ap = argparse.ArgumentParser()
     ap.add_argument("--template", default=str(root / "client" / "nginx.conf"))
     ap.add_argument("--nginx", default=os.environ.get("NGINX_BIN") or shutil.which("nginx"))

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Reading the environment — run: python3 scripts/test_env_catalog.py
+"""Reading the environment — run: python3 scripts/tests/env/test_env_catalog.py
 
 `env.sh edit` needs a tty and cannot be exercised headlessly, so every decision
 it makes lives in env_catalog and is asserted here instead. This file covers the
 READ path: the schema convention, the five states, masking, attribution and
 parsing — plus the linters that hold THIS repo's own skeletons honest. The write
-path is scripts/test_env_writes.py; the shared harness is env_testlib.py.
+path is scripts/tests/env/test_env_writes.py; the shared harness is env_testlib.py.
 
 These cover the LOGIC. They cannot see a curses crash: the rendering layer is
 driven separately in tmux (`tmux capture-pane -p` returns the rendered cell
@@ -19,7 +19,7 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path[:0] = [str(Path(__file__).resolve().parent), str(Path(__file__).resolve().parents[2])]  # here, scripts/
 import env_catalog as cat  # noqa: E402
 from env_testlib import REPO, check, run, scaffold  # noqa: E402
 

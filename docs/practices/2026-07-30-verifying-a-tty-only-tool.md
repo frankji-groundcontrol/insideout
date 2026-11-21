@@ -15,8 +15,8 @@ curses needs a tty, so a TUI cannot be exercised in a test run. Everything the
 screen *decides* therefore lives in [`scripts/env_catalog.py`](../../scripts/env_catalog.py)
 and [`env_tui.py`](../../scripts/env_tui.py) only draws. `env.sh edit --list`
 renders the same rows without a terminal, and that is the surface
-[`test_env_catalog.py`](../../scripts/test_env_catalog.py) and
-[`test_env_writes.py`](../../scripts/test_env_writes.py) assert on.
+[`test_env_catalog.py`](../../scripts/tests/env/test_env_catalog.py) and
+[`test_env_writes.py`](../../scripts/tests/env/test_env_writes.py) assert on.
 
 This is necessary, not sufficient. In the reference implementation this split
 produced 29 green assertions alongside a UI that crashed the first time Enter

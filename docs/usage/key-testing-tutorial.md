@@ -13,8 +13,8 @@ contain tokens. Keep `.env` and key values out of logs.
 From the repository root:
 
 ```bash
-python3 scripts/test_env_catalog.py
-python3 scripts/test_env_writes.py
+python3 scripts/tests/env/test_env_catalog.py
+python3 scripts/tests/env/test_env_writes.py
 (cd scripts && python3 -m unittest discover -s tests/keys -t . -p 'test_*.py' -v)
 ```
 

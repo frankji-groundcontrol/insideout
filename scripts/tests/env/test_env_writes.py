@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Writing the environment — run: python3 scripts/test_env_writes.py
+"""Writing the environment — run: python3 scripts/tests/env/test_env_writes.py
 
 The write path: set_var / clear_var / quote / env_path, file permissions, and
 _clip — the one piece of env_tui's rendering logic that can be exercised
-without a terminal. The read path is scripts/test_env_catalog.py; the shared
+without a terminal. The read path is scripts/tests/env/test_env_catalog.py; the shared
 harness is env_testlib.py.
 
 Several of these are regressions from the 2026-07-30 adversarial review, where
@@ -18,7 +18,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path[:0] = [str(Path(__file__).resolve().parent), str(Path(__file__).resolve().parents[2])]  # here, scripts/
 import env_catalog as cat  # noqa: E402
 from env_testlib import check, run  # noqa: E402
 

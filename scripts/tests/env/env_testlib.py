@@ -11,8 +11,8 @@ the repo's ~350-line budget and covers one responsibility:
                                       permissions, and the one piece of
                                       rendering logic testable without a tty
 
-Run them the same way:  python3 scripts/test_env_catalog.py
-                        python3 scripts/test_env_writes.py
+Run them the same way:  python3 scripts/tests/env/test_env_catalog.py
+                        python3 scripts/tests/env/test_env_writes.py
 """
 
 from __future__ import annotations
@@ -20,10 +20,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))  # scripts/, for env_catalog
 import env_catalog as cat  # noqa: E402
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[3]
 
 _ok = 0
 _fail = 0
