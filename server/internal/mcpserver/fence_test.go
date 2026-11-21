@@ -57,7 +57,8 @@ type listedTool struct {
 	Description string `json:"description"`
 	InputSchema struct {
 		Properties map[string]struct {
-			Type string `json:"type"`
+			Type        string `json:"type"`
+			Description string `json:"description"`
 		} `json:"properties"`
 		Required []string `json:"required"`
 	} `json:"inputSchema"`
