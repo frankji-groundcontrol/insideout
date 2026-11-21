@@ -178,4 +178,27 @@ func TestRLSKeepsADelegateInsideTheirSubtree(t *testing.T) {
 	if _, err := asApp(t, st, m, "", insert, w.project.ID, w.payments.ID, m); err != nil {
 		t.Errorf("insert under the delegated node: %v", err)
 	}
+
+	// A writable parent does not open another tenant's project: the row's
+	// project must be the parent's project, on insert and on a raw reparent.
+	ctx := context.Background()
+	fws, err := st.CreateWorkspace(ctx, w.other.ID, "Foreign", "")
+	if err != nil {
+		t.Fatalf("foreign workspace: %v", err)
+	}
+	fp, err := st.CreateProject(ctx, w.other.ID, fws.ID, "Foreign", "")
+	if err != nil {
+		t.Fatalf("foreign project: %v", err)
+	}
+	froot, err := st.CreateRoadmapNode(ctx, w.other.ID, fp.ID, nil, "Foreign root", "")
+	if err != nil {
+		t.Fatalf("foreign root: %v", err)
+	}
+	if _, err := asApp(t, st, m, "", insert, fp.ID, w.payments.ID, m); !denied(err) {
+		t.Errorf("insert into a foreign project under the delegated node: want 42501, got %v", err)
+	}
+	const reparent = `UPDATE insideout.roadmap_nodes SET parent_id = $2 WHERE id = $1`
+	if _, err := asApp(t, st, m, "", reparent, w.refunds.ID, froot.ID); !denied(err) {
+		t.Errorf("reparent under another project's node: want 42501, got %v", err)
+	}
 }
