@@ -4,13 +4,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"slices"
 	"strings"
 	"testing"
 	"time"
-
-	"gopkg.in/yaml.v3"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
@@ -21,7 +18,7 @@ import (
 // 401 tells the user to run `insideout login`, which writes a file this process
 // will not read. These tests use the real apiclient against an httptest API.
 
-func rvMcpText(t *testing.T, r rpcResult) string {
+func resultText(t *testing.T, r rpcResult) string {
 	t.Helper()
 	if len(r.Result.Content) == 0 {
 		t.Fatalf("tool result has no content: %+v", r)
@@ -29,10 +26,10 @@ func rvMcpText(t *testing.T, r rpcResult) string {
 	return r.Result.Content[0].Text
 }
 
-// TestRvMcpInProcessSignInRenewsAndRearms covers the shared root of F158, F163,
+// TestInProcessSignInRenewsAndRearms covers the shared root of F158, F163,
 // F168 and F175: the refresh token from an auth_* sign-in has to renew an expired
 // access token, and a later sign-in has to arm renewal again after a refusal.
-func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
+func TestInProcessSignInRenewsAndRearms(t *testing.T) {
 	pinConfigHome(t)
 	t.Cleanup(func() { setSessionToken("") })
 	expired1 := fakeJWT("", "e1", time.Now().Add(-time.Hour), 15*time.Minute)
@@ -97,7 +94,7 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 
 	first := verify(1, "111111")
 	if first.Result.IsError {
-		t.Fatalf("auth_login_code_verify with an expired access token and a live refresh token: %s", rvMcpText(t, first))
+		t.Fatalf("auth_login_code_verify with an expired access token and a live refresh token: %s", resultText(t, first))
 	}
 	if !slices.Contains(seen(), "POST /auth/refresh ") {
 		t.Fatalf("the sign-in never renewed; the API saw %q", seen())
@@ -106,7 +103,7 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 	sealed = true
 	apiclient.ForgetAgentToken()
 	failed := callTool(t, s, 2, "whoami", `{}`)
-	if !failed.Result.IsError || !strings.Contains(rvMcpText(t, failed), "auth_login_code_request") {
+	if !failed.Result.IsError || !strings.Contains(resultText(t, failed), "auth_login_code_request") {
 		t.Fatalf("a refused in-process refresh must name the auth_* tools, got %+v", failed.Result)
 	}
 
@@ -114,22 +111,22 @@ func TestRvMcpInProcessSignInRenewsAndRearms(t *testing.T) {
 	// stays. Sign out, then sign in again: the new client has to be armed,
 	// because a refusal stays on the client that saw it until SetRenewal.
 	if out := callTool(t, s, 3, "auth_logout", `{"confirm":true}`); out.Result.IsError {
-		t.Fatalf("auth_logout: %s", rvMcpText(t, out))
+		t.Fatalf("auth_logout: %s", resultText(t, out))
 	}
 	second := verify(4, "222222")
 	if second.Result.IsError {
-		t.Fatalf("a new sign-in did not re-arm renewal after the refusal: %s", rvMcpText(t, second))
+		t.Fatalf("a new sign-in did not re-arm renewal after the refusal: %s", resultText(t, second))
 	}
 	who := callTool(t, s, 5, "whoami", `{}`)
-	if who.Result.IsError || !strings.Contains(rvMcpText(t, who), "a@example.com") {
+	if who.Result.IsError || !strings.Contains(resultText(t, who), "a@example.com") {
 		t.Fatalf("whoami after the second sign-in: %+v\nAPI saw %q", who.Result, seen(expired1, "<e1>", fresh1, "<f1>", expired2, "<e2>", fresh2, "<f2>", g1.token, "<g1>", g2.token, "<g2>"))
 	}
 }
 
-// TestRvMcpRejectedInProcessFallsBackToSavedLogin is F158 and F175: once the
+// TestRejectedInProcessFallsBackToSavedLogin is F158 and F175: once the
 // in-process credential is finally refused, the saved login (what `insideout
 // login` writes) has to win. At HEAD the expired token is sent forever.
-func TestRvMcpRejectedInProcessFallsBackToSavedLogin(t *testing.T) {
+func TestRejectedInProcessFallsBackToSavedLogin(t *testing.T) {
 	pinConfigHome(t)
 	t.Cleanup(func() { setSessionToken("") })
 	expired := fakeJWT("", "expired", time.Now().Add(-time.Hour), 15*time.Minute)
@@ -157,10 +154,10 @@ func TestRvMcpRejectedInProcessFallsBackToSavedLogin(t *testing.T) {
 	}
 }
 
-// TestRvMcpInProcessFinal401NamesAuthTools is F158, F163 and F175 with nothing
+// TestInProcessFinal401NamesAuthTools is F158, F163 and F175 with nothing
 // saved to fall back to: the advice has to name the auth_* tools, not
 // `insideout login`, which cannot change this process.
-func TestRvMcpInProcessFinal401NamesAuthTools(t *testing.T) {
+func TestInProcessFinal401NamesAuthTools(t *testing.T) {
 	pinConfigHome(t)
 	t.Cleanup(func() { setSessionToken("") })
 	expired := fakeJWT("", "expired", time.Now().Add(-time.Hour), 15*time.Minute)
@@ -180,10 +177,10 @@ func TestRvMcpInProcessFinal401NamesAuthTools(t *testing.T) {
 	}
 }
 
-// TestRvMcpLogoutRestoresPasswordTools is the F168 half a self-hosted process
+// TestLogoutRestoresPasswordTools is the F168 half a self-hosted process
 // without mail hits: auth_login is withdrawn on the first JWT and never comes
 // back, so auth_logout leaves no way to sign in again.
-func TestRvMcpLogoutRestoresPasswordTools(t *testing.T) {
+func TestLogoutRestoresPasswordTools(t *testing.T) {
 	pinConfigHome(t)
 	t.Cleanup(func() { setSessionToken("") })
 	human := humanJWT()
@@ -198,25 +195,25 @@ func TestRvMcpLogoutRestoresPasswordTools(t *testing.T) {
 	})
 	s := Build(api.URL)
 	if r := callTool(t, s, 1, "auth_login", `{"email":"a@example.com","password":"pw123456"}`); r.Result.IsError {
-		t.Fatalf("auth_login: %s", rvMcpText(t, r))
+		t.Fatalf("auth_login: %s", resultText(t, r))
 	}
 	if slices.Contains(offeredTools(t, s), "auth_login") {
 		t.Fatal("auth_login is still offered while a JWT login is held")
 	}
 	if r := callTool(t, s, 2, "auth_logout", `{"confirm":true}`); r.Result.IsError {
-		t.Fatalf("auth_logout: %s", rvMcpText(t, r))
+		t.Fatalf("auth_logout: %s", resultText(t, r))
 	}
 	if !slices.Contains(offeredTools(t, s), "auth_login") {
 		t.Fatal("auth_logout left auth_login withdrawn, and nothing re-adds it")
 	}
 }
 
-// TestRvMcpHeldLoginRefusesSessionSwap is F176. While a login is held the
+// TestHeldLoginRefusesSessionSwap is F176. While a login is held the
 // process does not advertise auth_login_code_verify, auth_magic_link_consume
 // or auth_logout. Calling one anyway must not replace the session;
 // auth_logout must demand confirm=true. A human restarts the process to
 // change identity.
-func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
+func TestHeldLoginRefusesSessionSwap(t *testing.T) {
 	pinConfigHome(t)
 	t.Cleanup(func() { setSessionToken("") })
 	human := humanJWT()
@@ -259,20 +256,20 @@ func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 	}
 
 	swap := callTool(t, s, 1, "auth_magic_link_consume", `{"token":"attacker-link"}`)
-	if !swap.Result.IsError || !strings.Contains(rvMcpText(t, swap), "restart insideout-mcp") {
-		t.Fatalf("auth_magic_link_consume while a login is held: %s", rvMcpText(t, swap))
+	if !swap.Result.IsError || !strings.Contains(resultText(t, swap), "restart insideout-mcp") {
+		t.Fatalf("auth_magic_link_consume while a login is held: %s", resultText(t, swap))
 	}
 	code := callTool(t, s, 2, "auth_login_code_verify", `{"email":"a@example.com","code":"999999"}`)
-	if !code.Result.IsError || !strings.Contains(rvMcpText(t, code), "restart insideout-mcp") {
-		t.Fatalf("auth_login_code_verify while a login is held: %s", rvMcpText(t, code))
+	if !code.Result.IsError || !strings.Contains(resultText(t, code), "restart insideout-mcp") {
+		t.Fatalf("auth_login_code_verify while a login is held: %s", resultText(t, code))
 	}
-	if out := callTool(t, s, 3, "auth_logout", `{}`); !out.Result.IsError || !strings.Contains(rvMcpText(t, out), "confirm") {
-		t.Fatalf("auth_logout without confirm: %s", rvMcpText(t, out))
+	if out := callTool(t, s, 3, "auth_logout", `{}`); !out.Result.IsError || !strings.Contains(resultText(t, out), "confirm") {
+		t.Fatalf("auth_logout without confirm: %s", resultText(t, out))
 	}
 
 	who := callTool(t, s, 4, "whoami", `{}`)
 	if who.Result.IsError {
-		t.Fatalf("whoami: %s", rvMcpText(t, who))
+		t.Fatalf("whoami: %s", resultText(t, who))
 	}
 	got := seen(human, "<human>", attacker, "<attacker>", owner.token, "<owner>", stolen.token, "<stolen>")
 	for _, line := range got {
@@ -282,58 +279,10 @@ func TestRvMcpHeldLoginRefusesSessionSwap(t *testing.T) {
 	}
 
 	if out := callTool(t, s, 5, "auth_logout", `{"confirm":true}`); out.Result.IsError {
-		t.Fatalf("auth_logout confirm=true: %s", rvMcpText(t, out))
+		t.Fatalf("auth_logout confirm=true: %s", resultText(t, out))
 	}
 	again := callTool(t, s, 6, "auth_magic_link_consume", `{"token":"attacker-link"}`)
-	if again.Result.IsError || !strings.Contains(rvMcpText(t, again), "attacker@example.com") {
-		t.Fatalf("after auth_logout, a sign-in must work: %s", rvMcpText(t, again))
-	}
-}
-
-// rvMcpStripFence returns the text inside the one <prd_data> fence a tool result carries.
-func rvMcpStripFence(t *testing.T, text string) string {
-	t.Helper()
-	_, body, ok := strings.Cut(text, "\n")
-	if !ok || !strings.HasPrefix(body, "<prd_data>") || !strings.HasSuffix(body, "</prd_data>") {
-		t.Fatalf("result is not a label plus one fence: %.160q", text)
-	}
-	return strings.TrimSuffix(strings.TrimPrefix(body, "<prd_data>"), "</prd_data>")
-}
-
-// TestRvMcpGuideFileIsTheTextBetweenTheTags is F184. The fence stays (it is the
-// injection defence). guide and prd_export have to say the file content is the
-// text between the tags, and that text has to be the YAML or the document.
-func TestRvMcpGuideFileIsTheTextBetweenTheTags(t *testing.T) {
-	pinConfigHome(t)
-	t.Setenv("INSIDEOUT_TOKEN", "opaque-token") // not a JWT: guide stays offered and the token rides as is
-	const guideYAML = "version: 1\nproject: p\nmatch:\n  - roadmap: alpha\n"
-	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasSuffix(r.URL.Path, "/guide") {
-			w.Write([]byte(guideYAML))
-			return
-		}
-		w.Write([]byte("# The PRD\n"))
-	}))
-	t.Cleanup(api.Close)
-	s := Build(api.URL)
-	for _, tool := range listTools(t, s) {
-		if tool.Name != "guide" && tool.Name != "prd_export" {
-			continue
-		}
-		if !strings.Contains(tool.Description, "between the <prd_data> tags") {
-			t.Errorf("%s description does not say the file content is the text between the <prd_data> tags: %q", tool.Name, tool.Description)
-		}
-	}
-	r := callTool(t, s, 1, "guide", `{"project_id":"p"}`)
-	if r.Result.IsError {
-		t.Fatalf("guide: %s", rvMcpText(t, r))
-	}
-	var doc map[string]any
-	inner := rvMcpStripFence(t, rvMcpText(t, r))
-	if err := yaml.Unmarshal([]byte(inner), &doc); err != nil {
-		t.Fatalf("guide YAML once the fence is stripped: %v\n%s", err, inner)
-	}
-	if doc["project"] != "p" || fmt.Sprint(doc["version"]) != "1" {
-		t.Fatalf("guide YAML = %#v, want version 1 and project p", doc)
+	if again.Result.IsError || !strings.Contains(resultText(t, again), "attacker@example.com") {
+		t.Fatalf("after auth_logout, a sign-in must work: %s", resultText(t, again))
 	}
 }

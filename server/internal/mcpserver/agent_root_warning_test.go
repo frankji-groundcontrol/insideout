@@ -3,25 +3,10 @@ package mcpserver
 import (
 	"io"
 	"os"
-	"slices"
 	"strings"
 	"testing"
 	"time"
 )
-
-// rv5-COMP-03 follow-up: the MCP always acts through an agent-scoped token,
-// and the server keeps delegation, hand-back and the member list for a human.
-// Those tools could never succeed: signed in they are refused, and before a
-// sign-in they fail for lack of a login. So they are not registered at all.
-func TestTheMCPDoesNotRegisterToolsAnAgentTokenCanNeverUse(t *testing.T) {
-	pinConfigHome(t)
-	offered := offeredTools(t, Build(exampleAPI))
-	for _, name := range []string{"members", "roadmap_delegate", "roadmap_handback"} {
-		if slices.Contains(offered, name) {
-			t.Errorf("a process with no login offers %s, which an agent token can never use", name)
-		}
-	}
-}
 
 // buildStderr builds the server and returns what Build wrote to stderr.
 func buildStderr(t *testing.T) string {

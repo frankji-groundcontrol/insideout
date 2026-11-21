@@ -32,7 +32,7 @@ func TestHintsNameNoToolTheListHides(t *testing.T) {
 	if err == nil {
 		t.Fatal("whoami on a refused login succeeded")
 	}
-	swap := rvMcpText(t, callTool(t, s, 1, "auth_login_code_verify", `{"email":"a@example.com","code":"123456"}`))
+	swap := resultText(t, callTool(t, s, 1, "auth_login_code_verify", `{"email":"a@example.com","code":"123456"}`))
 	for _, text := range []string{err.Error(), swap} {
 		for _, hidden := range sessionSwapTools {
 			if !slices.Contains(offered, hidden) && strings.Contains(text, hidden) {

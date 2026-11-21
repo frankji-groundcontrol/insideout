@@ -67,17 +67,17 @@ func TestSessionSwapToolsLeaveTheListAfterLogin(t *testing.T) {
 			assertSessionSwapListing(t, offeredTools(t, s), false)
 
 			if r := callTool(t, s, 1, tc.tool, tc.args); r.Result.IsError {
-				t.Fatalf("%s: %s", tc.tool, rvMcpText(t, r))
+				t.Fatalf("%s: %s", tc.tool, resultText(t, r))
 			}
 			assertSessionSwapListing(t, offeredTools(t, s), true)
 
 			again := callTool(t, s, 2, "auth_login_code_verify", `{"email":"a@example.com","code":"999999"}`)
-			if !again.Result.IsError || !strings.Contains(rvMcpText(t, again), "a login is already held") {
-				t.Fatalf("verify while a login is held: %s", rvMcpText(t, again))
+			if !again.Result.IsError || !strings.Contains(resultText(t, again), "a login is already held") {
+				t.Fatalf("verify while a login is held: %s", resultText(t, again))
 			}
 			out := callTool(t, s, 3, "auth_logout", `{}`)
-			if !out.Result.IsError || !strings.Contains(rvMcpText(t, out), "confirm") {
-				t.Fatalf("auth_logout without confirm: %s", rvMcpText(t, out))
+			if !out.Result.IsError || !strings.Contains(resultText(t, out), "confirm") {
+				t.Fatalf("auth_logout without confirm: %s", resultText(t, out))
 			}
 		})
 	}

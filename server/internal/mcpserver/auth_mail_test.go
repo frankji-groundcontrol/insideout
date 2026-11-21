@@ -20,7 +20,7 @@ func TestEmailedSignInToolsSayWhatTheServerDidWithTheMail(t *testing.T) {
 	})
 	s := Build(api.URL)
 	for i, tool := range []string{"auth_login_code_request", "auth_magic_link_request"} {
-		text := rvMcpText(t, callTool(t, s, i+1, tool, `{"email":"a@example.com"}`))
+		text := resultText(t, callTool(t, s, i+1, tool, `{"email":"a@example.com"}`))
 		if !strings.Contains(text, "logged on the server, not delivered") {
 			t.Errorf("%s answered %q, want the server's mail status (logged, not delivered)", tool, text)
 		}
