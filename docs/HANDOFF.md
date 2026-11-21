@@ -11,11 +11,13 @@ path and current warnings, never history.
 ## What to do next
 
 **2026-11-21: the review 5 remediation is running on branch `rv5/remediation`.**
-Waves 0 and 1 are done (the install and password-reset slice is finished
-and committed there, the pushed-tip CI failures are fixed, the task tree is
-written into PRODUCT.md, the build path checks before it writes, a title-only
-idea update keeps the body, the coach transcript is live, Go is on
-go1.26.11). Progress per wave:
+Waves 0 to 2 are done (the install and password-reset slice is finished
+and committed there, the pushed-tip CI failures are fixed, the build path
+checks before it writes, a title-only idea update keeps the body, the coach
+transcript is live, Go is on go1.26.11, and the task tree for roles is built:
+one write rule for the store and row-level security, delegation with a
+record, a node opens as its own tree, the Mine view, an agent token confined
+to a root). Wave 3 (surface parity) is next. Progress per wave:
 [changelog folder](changelogs/2026-11-21-rv5-remediation/index.md); plan:
 [rv5 remediation](plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
 The branch is pushed after each wave; the owner asked that CI not be run

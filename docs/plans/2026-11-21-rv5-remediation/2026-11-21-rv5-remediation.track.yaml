@@ -5,7 +5,7 @@ main:
   outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
   owner: claude
   status: in_progress
-  next_evidence: "Waves 0 and 1 closed. Wave 2 stage 1 (tree-core) landed at 14a0c50 after three verifier rounds plus coordinator fixes for the last blocker (departed project owner passed RLS) and two nits, every gate green; stages tree-delegation, tree-surfaces with tree-web-open, and tree-web-mine running as one workflow. Open owner question: proposals stay plan-writer only (BUG-020), so a delegate agent cannot propose."
+  next_evidence: "Waves 0 to 2 closed (wave 2 record: docs/changelogs/2026-11-21-rv5-remediation/wave-2.md), every gate green on the integrated tree (flutter test +618, no skipped DB tests). Wave 3 (surface parity) next: server-contract, then surfaces and web, then the parity test. Open owner question: proposals stay plan-writer only (BUG-020), so a delegate agent cannot propose."
 side_tracks: []
 updated_at: "2026-11-21T00:00:00Z"
 plan:
@@ -18,11 +18,11 @@ plan:
   depends_on: "Wave 0"
 - step: "Wave 2: the task tree"
   owner: claude
-  status: in_progress
+  status: completed
   depends_on: "Wave 1"
 - step: "Wave 3: surface parity"
   owner: claude
-  status: pending
+  status: in_progress
   depends_on: "Wave 2"
 - step: "Wave 4: structure"
   owner: claude

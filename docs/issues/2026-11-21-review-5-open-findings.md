@@ -20,21 +20,15 @@ code. Wave 0 of the remediation wrote it into PRODUCT.md and
 Current state and the decided target:
 [architecture/roadmap-tree.md](../architecture/roadmap-tree.md).
 
-| ID | Finding | Where | Plan row | Priority | Owner |
-| --- | --- | --- | --- | --- | --- |
-| TREEB-02, TREEX-01 | The person a node is assigned to has no write right over it or anything under it (reproduced on PostgreSQL) | `server/internal/store/memberships.go:236` | 2.2 | P0 | unassigned |
-| TREEX-02, FE-03 | A node cannot be opened as its own tree | `client/lib/router.dart:43` | 2.1, 2.4 | P0 | unassigned |
-| TREEB-04, TREEX-03 | There is no "my tree" read, filter or landing | `server/internal/store/roadmap.go:201`, `client/lib/features/dashboard/dashboard_page.dart:118` | 2.5 | P0 | unassigned |
-| PARC-01, TREEX-04 | The node owner can be set only from the web; MCP and CLI cannot delegate | `server/internal/apiclient/roadmap.go:82` | 2.3 | P0 | unassigned |
-| TREEX-05 | The agent briefing called focus-scoped returns every leaf of the project | `server/internal/agentcontext/agentcontext.go:111` | 2.1 | P1 | unassigned |
+*Fixed on `rv5/remediation` in wave 2 ([record](../changelogs/2026-11-21-rv5-remediation/wave-2.md)): TREEB-02, TREEX-01, TREEX-02, FE-03, TREEB-04, TREEX-03, PARC-01, TREEX-04, TREEX-05, and with them the Medium task-tree rows of plan rows 2.1 to 2.9, plus the rest of TREEB-10. The write rule, the reads, delegation and its record, the Mine view, the roll-up and the agent root are described in [roadmap-tree.md](../architecture/roadmap-tree.md).*
 
 ## The build path writes before it checks
 
 *Fixed on `rv5/remediation` in wave 1
 ([record](../changelogs/2026-11-21-rv5-remediation/wave-1.md)): FEAT-01,
-PARB-02, FEAT-03, FEAT-02 and PARB-01. TREEB-10 (Medium) is partly fixed: the
-replace guard is in; a subtree delete with history and a record of a forced
-discard move to wave 2.*
+PARB-02, FEAT-03, FEAT-02 and PARB-01. TREEB-10 (Medium) was finished in wave 2: a
+subtree delete with history needs `force`, and a forced discard leaves a
+project update.*
 
 ## Other Highs
 

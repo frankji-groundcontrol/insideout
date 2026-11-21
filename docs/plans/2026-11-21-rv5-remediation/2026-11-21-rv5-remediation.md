@@ -47,7 +47,8 @@ PRD, no completion override by an agent.
       [record](../../changelogs/2026-11-21-rv5-remediation/wave-0.md)
 - [x] Wave 1 · data loss and misplaced writes (rows 1.1 to 1.8) —
       [record](../../changelogs/2026-11-21-rv5-remediation/wave-1.md)
-- [ ] Wave 2 · the task tree (rows 2.1 to 2.9)
+- [x] Wave 2 · the task tree (rows 2.1 to 2.9) —
+      [record](../../changelogs/2026-11-21-rv5-remediation/wave-2.md)
 - [ ] Wave 3 · surface parity (rows 3.1 to 3.7)
 - [ ] Wave 4 · structure (rows 4.1 to 4.7)
 - [ ] Wave 5 · documentation index (rows 5.1 to 5.6)
