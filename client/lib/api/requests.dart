@@ -16,7 +16,8 @@ ApiCall patchWorkspace(
   return ApiCall('PATCH', '/workspaces/$id', {
     'title': title,
     'description': description,
-    'coverUrl': coverUrl,
+    // Absent keeps the stored cover; the web has no cover control (PARA-09).
+    'coverUrl': ?coverUrl,
   });
 }
 
