@@ -19,11 +19,10 @@ records, open and closed, follows under the later headings.
 | Record | Kind | Since | What is open |
 | --- | --- | --- | --- |
 | [Per-Project roles](2026-11-21-per-project-roles.md) | product slice | 2026-11-21 | Decision Owner, Driver, Contributor, Reviewer and Viewer have no storage or check |
+| [Long functions over the function budget](2026-11-21-long-functions.md) | structural debt | 2026-11-21 | sixteen functions over 80 lines, listed in the function guard; the list only shrinks |
 | [Review 5 open findings](./2026-11-21-review-5-open-findings.md) | review ledger | 2026-11-21 | the review 5 High defects not yet remediated, and the open owner question on proposals |
 | [Review 4 open findings](2026-10-18-review-4-open-findings.md) | review ledger | 2026-10-18 | review 4's open residue, gate notes and owner rows |
 | [Review 4 privacy: what only the owner can finish](2026-10-18-rv4-owner-privacy-decisions.md) | owner decisions | 2026-10-18 | the owner halves of wave-0 rows 0.1 to 0.4 |
-| [ci.yml line-budget split](2026-10-18-ci-yml-split.md) | structural debt | 2026-10-18 | no status line; `ci.yml` is 350 lines |
-| [PRODUCT.md and SETENV.md line-budget split](2026-10-18-product-and-setenv-over-line-budget.md) | structural debt | 2026-10-19 | no status line; 477 and 368 lines |
 | [Change Proposal for delivery-revealed change](2026-10-18-promise-partial-change-proposal.md) | partial promise | 2026-10-18 | no impact view before a new baseline |
 | [Roadmap tied to a PRD Commit baseline](2026-10-18-promise-partial-commit-baseline-tie.md) | partial promise | 2026-10-18 | the Roadmap is not tied to a Commit |
 | [Outcome target time ranges](2026-10-18-promise-partial-outcome-time-ranges.md) | partial promise | 2026-10-18 | outcomes carry no target range |
@@ -39,8 +38,6 @@ records, open and closed, follows under the later headings.
 | [Roadmap dependency edges](2026-10-11-roadmap-dependency-edges.md) | product slice | 2026-10-11 | no depends_on edge |
 | [Focus surface](2026-10-11-focus-surface.md) | product slice | 2026-10-11 | no user focus pointer or team Now |
 | [Working-version autosave](2026-10-11-prd-autosave.md) | product slice | 2026-10-11 | no autosave |
-| [Historical records over the line budget](2026-10-11-historical-records-over-line-budget.md) | structural debt | 2026-10-11 | no status line; split deferred behind record immutability |
-| [Changelogs README line budget](2026-10-11-changelogs-readme-line-budget.md) | structural debt | 2026-10-11 | no status line; the split it asks for has landed (month files; the flat list dropped 2026-11-21, IDX-06) |
 
 ## State notes
 
@@ -71,10 +68,10 @@ wave-1 to wave-3 residue, the gate notes and the owner decisions; the red test o
 [dispositions record](2026-10-18-review-4-dispositions.md)), its
 [privacy decisions](2026-10-18-rv4-owner-privacy-decisions.md) (what only the
 owner can finish after wave 0), the
-[ci.yml line-budget split](2026-10-18-ci-yml-split.md) (the workflow is at 349
-of 350 lines, which blocks two CI additions) and the
+[ci.yml line-budget split](2026-10-18-ci-yml-split.md) and the
 [PRODUCT.md and SETENV.md line-budget split](2026-10-18-product-and-setenv-over-line-budget.md)
-(462 and 368 lines); the full register lives in the
+(both closed 2026-11-21: the responsibility rule sets no line limit for
+workflows or prose); the full register lives in the
 [review folder](../review/2026-10-18-multirole-4/01-findings-register.md).
 
 2026-10-20 decision clusters are on `main`: retention, session-withhold, completion, omitted owner, and the [adopted settings](2026-10-20-rv4-decisions-adopted.md) ([changelog](../changelogs/2026-10-20-rv4-decisions.md)). Pushed to GitHub 2026-11-21 ([sync record](../changelogs/2026-11-21-wave-4b-sync-and-push.md)).
@@ -324,7 +321,7 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 - [2026-10-18 — Review 4 open findings](2026-10-18-review-4-open-findings.md) — the ten Highs, the red `TestProjectQuietFlagged` on `main` (fixed on `rv4/integration`), the open residue (R1-01 to R1-17, R2-01 to R2-15 and R3-01 to R3-50), the gate notes of waves 0 to 3 and the owner decisions from [multirole review 4](../review/2026-10-18-multirole-4/README.md), each linked to a register ID and a plan row; the closed rows moved to the dispositions record below. Open; no `BUG-NNN` number consumed.
 - [2026-10-19 — Review 4 dispositions](2026-10-18-review-4-dispositions.md) — the closed rows of waves 1 to 3, one per finding with its red and fix commits (wave 1: 30 `FIXED`, 4 `PARTIAL` of 34; wave 2: 21 `FIXED`, 2 `PARTIAL` of 23; wave 3: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` of 64), kept beside the open-findings record so that both stay inside the line budget. A record, not an open issue; no `BUG-NNN` number consumed.
 - [2026-10-19 — Retention and erasure: the policy only the owner can set](2026-10-18-rv4-retention-erasure.md) — rv4-DATA-06 (`DEFERRED_OWNER`): coach conversations are kept for ever and no route erases a user, because the owner decisions hold no retention window and no erasure rule; the options, what each costs, a recommended default and five questions. `PRIVACY.md` states today's behaviour as built. Open; no `BUG-NNN` number consumed.
-- [2026-10-18 — ci.yml is at its line budget](2026-10-18-ci-yml-split.md) — 349 of 350 lines after wave 3 (346 after wave 1; wave 3 added the read-only `permissions` block); the client image job (rv4-TEST-08) and the Shanghai-zone deadline test step (rv4-COMP-02) wait on moving the `android` and `env-suites` jobs into reusable workflows. Open; no `BUG-NNN` number consumed.
-- [2026-10-18 — PRODUCT.md and docs/SETENV.md are over the line budget](2026-10-18-product-and-setenv-over-line-budget.md) — 462 and 368 lines against about 350 (wave 2 added 2 and 5); the target is `PRODUCT.md` at about 260 lines with its seven delivery sections under `docs/product/`, and `SETENV.md` at about 285 with two reference blocks moved to `docs/usage/`. Open; no `BUG-NNN` number consumed.
+- [2026-10-18 — ci.yml is at its line budget](2026-10-18-ci-yml-split.md) — 349 of 350 lines after wave 3 (346 after wave 1; wave 3 added the read-only `permissions` block); the client image job (rv4-TEST-08) and the Shanghai-zone deadline test step (rv4-COMP-02) wait on moving the `android` and `env-suites` jobs into reusable workflows. Closed 2026-11-21 as not applicable: the responsibility rule sets no line limit for workflows.
+- [2026-10-18 — PRODUCT.md and docs/SETENV.md are over the line budget](2026-10-18-product-and-setenv-over-line-budget.md) — 462 and 368 lines against about 350 (wave 2 added 2 and 5); the target is `PRODUCT.md` at about 260 lines with its seven delivery sections under `docs/product/`, and `SETENV.md` at about 285 with two reference blocks moved to `docs/usage/`. Closed 2026-11-21 as not applicable: the responsibility rule sets no line limit for prose.
 - [2026-10-18 — Review 4 privacy: what only the owner can finish](2026-10-18-rv4-owner-privacy-decisions.md) — the owner halves of wave-0 rows 0.1 to 0.4 (rotate the two addresses, the legacy project and its key, a `hosts/` example tree, history identities), each with what is done, the safe default and what closes it. Open; no `BUG-NNN` number consumed.
 - [2026-10-04 — Multirole review findings register](../review/2026-10-04-multirole/01-findings-register.md) — 75 verified findings (12 High confirmed) with a five-wave remediation plan; the review of record for prioritization. A second pass is in [multirole-2](../review/2026-10-04-multirole-2/01-findings-register.md).
