@@ -37,11 +37,27 @@ class IdeasPage extends StatefulWidget {
 class _IdeasPageState extends State<IdeasPage> {
   late Future<List<Idea>> _future;
   final _capture = TextEditingController();
+  final _captureFocus = FocusNode();
+  final _scroll = ScrollController();
+  late final LoopFocus _focus = context.read<LoopFocus>();
+  var _lastPulse = 0;
+
+  /// The dock's Capture/Ideas tap while this wall is on screen (FE-08): back
+  /// to the top, into the capture field. The counter filters other notices.
+  void _onIdeasPulse() {
+    if (_focus.ideasPulse == _lastPulse || !mounted) return;
+    _lastPulse = _focus.ideasPulse;
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+    _captureFocus.requestFocus();
+  }
 
   @override
   void initState() {
     super.initState();
-    context.read<LoopFocus>().rememberWorkspace(widget.workspaceId);
+    _lastPulse = _focus.ideasPulse;
+    _focus
+      ..rememberWorkspace(widget.workspaceId)
+      ..addListener(_onIdeasPulse);
     _future = context.read<Session>().api.listIdeas(widget.workspaceId);
     _seedProject();
   }
@@ -64,6 +80,9 @@ class _IdeasPageState extends State<IdeasPage> {
 
   @override
   void dispose() {
+    _focus.removeListener(_onIdeasPulse);
+    _captureFocus.dispose();
+    _scroll.dispose();
     _capture.dispose();
     super.dispose();
   }
@@ -152,6 +171,8 @@ class _IdeasPageState extends State<IdeasPage> {
           return _IdeasWall(
             ideas: snap.data!,
             capture: _capture,
+            captureFocus: _captureFocus,
+            scroll: _scroll,
             onCapture: _captureNow,
             onEdit: _edit,
             onDrop: _drop,
@@ -188,6 +209,8 @@ class _IdeasWall extends StatelessWidget {
   const _IdeasWall({
     required this.ideas,
     required this.capture,
+    required this.captureFocus,
+    required this.scroll,
     required this.onCapture,
     required this.onEdit,
     required this.onDrop,
@@ -198,6 +221,8 @@ class _IdeasWall extends StatelessWidget {
 
   final List<Idea> ideas;
   final TextEditingController capture;
+  final FocusNode captureFocus;
+  final ScrollController scroll;
   final VoidCallback onCapture;
   final void Function(Idea idea) onEdit;
   final void Function(Idea idea) onDrop;
@@ -221,6 +246,7 @@ class _IdeasWall extends StatelessWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: Cobalt.contentMaxWidth),
         child: ListView(
+          controller: scroll,
           padding: EdgeInsets.fromLTRB(
             hPad,
             _topInset,
@@ -246,6 +272,7 @@ class _IdeasWall extends StatelessWidget {
                     Expanded(
                       child: BlockField(
                         controller: capture,
+                        focusNode: captureFocus,
                         hint: l10n.t('idea.captureHint'),
                         onSubmitted: (_) => onCapture(),
                       ),
