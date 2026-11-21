@@ -134,14 +134,20 @@ Roadmap tree writes follow one rule in SQL (rv5 row 2.2, migration
 `20261121100000_roadmap_node_writer.sql`): `insideout._can_write_node(node,
 user)` is true for the project owner, a workspace admin of the node's
 workspace (`insideout._is_plan_writer(project, user)`), or a current member who
-owns the node or any ancestor of it. Both functions are `SECURITY DEFINER`,
+owns the node or any ancestor of it. The functions are `SECURITY DEFINER`,
 owned by `insideout_owner`, `STABLE`, with `search_path = insideout, pg_temp`:
 a policy on `roadmap_nodes` that queried `roadmap_nodes` itself would recurse
 (42P17, BUG-007). The `roadmap_nodes` update and delete policies call it on
 the row; the insert policy calls it on the parent (a root takes
 `_is_plan_writer`) and still pins `created_by` to the caller; the
-`roadmap_evidence` insert policy calls it on the node. Select stays
-workspace-wide. The Go store calls the same function through
+`roadmap_evidence` insert policy calls it on the node. Insert and update also
+require a child's `project_id` to equal its parent's, read through the
+`SECURITY DEFINER` helper `insideout._node_project(node)`, so a writable
+parent cannot link a row into another tenant's project. Select stays
+workspace-wide. The policies hold less than the store: they judge the row
+where it stood when the statement started, so a raw `UPDATE` can still move
+a writable row anywhere inside its project, and the rules for a delegate's
+own root are not in SQL. The Go store calls the same function through
 `requireNodeWriter` (`server/internal/store/authz.go`) and adds what a policy
 cannot see: moving, deleting or reassigning a node takes `requireNodeManager`
 (a plan writer, or a writer of the node's parent), so a delegate never moves,

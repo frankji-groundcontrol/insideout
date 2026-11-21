@@ -90,12 +90,20 @@ Plan writers keep every right. Pinned on PostgreSQL by
 `_can_write_node(id, current_user_id())`; `roadmap_nodes_insert` pins
 `created_by` to the caller and calls it on the parent, with
 `_is_plan_writer` for a root; `evidence_owner_insert` on `roadmap_evidence`
-calls it on the node. `roadmap_nodes_select` stays workspace-wide, so every
-member reads the whole project (owner decision 2). The functions are
+calls it on the node. A child's `project_id` must equal its parent's
+(`_node_project`), on insert and on update, so a writable parent never links
+a row into another project. `roadmap_nodes_select` stays workspace-wide, so
+every member reads the whole project (owner decision 2). The functions are
 `SECURITY DEFINER`, owned by `insideout_owner`, so a policy on
-`roadmap_nodes` never queries the table it guards (BUG-007). The finer points
-(R itself, strictly-below moves) are the store's; the database holds the
-subtree boundary.
+`roadmap_nodes` never queries the table it guards (BUG-007).
+
+What the database holds is narrower than the store's rule: a row can be
+updated or deleted only when its current position is writable, and an insert
+needs a writable parent in the same project. The policies judge the tree as
+it stood when the statement started, so they do not check where an updated
+row lands inside the project (a raw reparent under a sibling branch), the
+rules for R itself (move, delete, reassign), or validation. Those are
+enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 
 ### Routes
 

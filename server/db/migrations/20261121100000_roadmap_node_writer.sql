@@ -51,13 +51,29 @@ AS $$
   )
 $$;
 
+-- The project of a node, read past RLS: the policies below require a child's
+-- project to be its parent's, so a writable parent cannot link a row into
+-- another tenant's project.
+CREATE OR REPLACE FUNCTION insideout._node_project(p_node_id uuid)
+RETURNS uuid
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = insideout, pg_temp
+STABLE
+AS $$
+  SELECT project_id FROM insideout.roadmap_nodes WHERE id = p_node_id
+$$;
+
 REVOKE ALL ON FUNCTION insideout._is_plan_writer(uuid, uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION insideout._can_write_node(uuid, uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION insideout._node_project(uuid) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION insideout._is_plan_writer(uuid, uuid) TO insideout_app;
 GRANT EXECUTE ON FUNCTION insideout._can_write_node(uuid, uuid) TO insideout_app;
+GRANT EXECUTE ON FUNCTION insideout._node_project(uuid) TO insideout_app;
 
 -- Writes follow the rule; SELECT stays workspace-wide (a manager reads every
--- branch). An insert is checked on its parent; a root needs a plan writer.
+-- branch). An insert is checked on its parent, which must sit in the same
+-- project; a root needs a plan writer.
 DROP POLICY IF EXISTS roadmap_nodes_insert ON insideout.roadmap_nodes;
 CREATE POLICY roadmap_nodes_insert ON insideout.roadmap_nodes
   FOR INSERT WITH CHECK (
@@ -65,12 +81,20 @@ CREATE POLICY roadmap_nodes_insert ON insideout.roadmap_nodes
     AND CASE WHEN parent_id IS NULL
       THEN insideout._is_plan_writer(project_id, insideout.current_user_id())
       ELSE insideout._can_write_node(parent_id, insideout.current_user_id())
+        AND insideout._node_project(parent_id) = project_id
     END
   );
 
+-- USING judges the row where it stands before the statement; WITH CHECK keeps
+-- a raw reparent inside the row's own project. Where inside the project an
+-- updated row lands, and the rules for a delegate's own root, live in the store.
 DROP POLICY IF EXISTS roadmap_nodes_update ON insideout.roadmap_nodes;
 CREATE POLICY roadmap_nodes_update ON insideout.roadmap_nodes
-  FOR UPDATE USING (insideout._can_write_node(id, insideout.current_user_id()));
+  FOR UPDATE USING (insideout._can_write_node(id, insideout.current_user_id()))
+  WITH CHECK (
+    insideout._can_write_node(id, insideout.current_user_id())
+    AND (parent_id IS NULL OR insideout._node_project(parent_id) = project_id)
+  );
 
 DROP POLICY IF EXISTS roadmap_nodes_delete ON insideout.roadmap_nodes;
 CREATE POLICY roadmap_nodes_delete ON insideout.roadmap_nodes
