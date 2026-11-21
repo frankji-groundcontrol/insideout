@@ -236,6 +236,13 @@ ApiCall postCursor(
 ApiCall putProjectRepo(String projectId, String repoUrl) =>
     ApiCall('PUT', '/projects/$projectId/repo', {'repoUrl': repoUrl});
 
+/// The page of updates older than [before] (a nextCursor), newest first.
+ApiCall getProjectUpdates(String projectId, {String? before}) => ApiCall(
+  'GET',
+  '/projects/$projectId/updates'
+      '${before == null ? '' : '?before=${Uri.encodeQueryComponent(before)}'}',
+);
+
 ApiCall postSyncGithub(String projectId) =>
     ApiCall('POST', '/projects/$projectId/sync-github');
 

@@ -245,6 +245,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         ProjectUpdatesFeed(
                           projectId: widget.id,
                           updates: updates,
+                          nextCursor: snap.data!['nextCursor'] as String?,
                           onChanged: _reload,
                           onEdit: (u, content) => context
                               .read<Session>()

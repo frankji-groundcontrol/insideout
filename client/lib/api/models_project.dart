@@ -136,6 +136,9 @@ class ProjectUpdate {
   );
 }
 
+/// One page of a project's updates and the cursor of the next, older one.
+typedef UpdatesPage = ({List<ProjectUpdate> updates, String? nextCursor});
+
 class Idea {
   Idea({
     required this.id,

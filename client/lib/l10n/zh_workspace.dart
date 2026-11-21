@@ -34,6 +34,7 @@ const zhWorkspace = <String, String>{
   'workspace.prdProject': '项目：{title}',
   'workspace.prdLinked': '已关联项目',
   'project.openPrd': '打开 PRD',
+  'project.loadOlder': '加载更早的动态',
   'project.title': '项目',
   'project.newProject': '新项目',
   'project.namePlaceholder': '项目名称',

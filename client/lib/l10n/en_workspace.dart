@@ -37,6 +37,7 @@ const enWorkspace = <String, String>{
   'workspace.prdProject': 'Project: {title}',
   'workspace.prdLinked': 'Linked to a project',
   'project.openPrd': 'Open PRD',
+  'project.loadOlder': 'Load older updates',
   'project.title': 'Projects',
   'project.newProject': 'New project',
   'project.namePlaceholder': 'Project name',

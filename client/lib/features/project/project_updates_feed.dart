@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
@@ -23,6 +24,7 @@ class ProjectUpdatesFeed extends StatefulWidget {
     required this.onChanged,
     required this.onEdit,
     required this.onRemove,
+    this.nextCursor,
   });
 
   /// Unread since the server began applying accepted proposals (rv4-FEAT-02);
@@ -32,6 +34,9 @@ class ProjectUpdatesFeed extends StatefulWidget {
   final Future<void> Function() onChanged;
   final Future<void> Function(ProjectUpdate update, String content) onEdit;
   final Future<void> Function(ProjectUpdate update) onRemove;
+
+  /// Where the older updates start; null when [updates] reach the first one.
+  final String? nextCursor;
 
   @override
   State<ProjectUpdatesFeed> createState() => _ProjectUpdatesFeedState();
@@ -46,6 +51,46 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
   /// exist (rv4-FR-F02, F08, F15).
   final _deciding = <String, bool>{};
   final _decided = <String>{};
+
+  /// Older pages read with "Load older updates" (rv5-PARB-07); a new first
+  /// page from the page's reload starts the history over.
+  var _older = <ProjectUpdate>[];
+  late String? _cursor = widget.nextCursor;
+  var _loading = false;
+
+  @override
+  void didUpdateWidget(ProjectUpdatesFeed old) {
+    super.didUpdateWidget(old);
+    if (!identical(old.updates, widget.updates)) {
+      _older = [];
+      _cursor = widget.nextCursor;
+    }
+  }
+
+  Future<void> _loadOlder() async {
+    final cursor = _cursor;
+    if (cursor == null || _loading) return;
+    final api = context.read<Session>().api;
+    final t = context.read<Appearance>().t;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _loading = true);
+    try {
+      final page = await api.listProjectUpdates(
+        widget.projectId,
+        before: cursor,
+      );
+      if (mounted) {
+        setState(() {
+          _older = [..._older, ...page.updates];
+          _cursor = page.nextCursor;
+        });
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(localizedError(e, t))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   // FEAT-03: the proposal decision loop — the server resolves authority
   // (project owner or workspace admin); the web just surfaces the outcome.
@@ -107,7 +152,7 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
         const SizedBox(height: 12),
         if (widget.updates.isEmpty)
           Text(l10n.t('github.empty'), style: theme.textTheme.bodyLarge),
-        for (final u in widget.updates) ...[
+        for (final u in [...widget.updates, ..._older]) ...[
           FieldCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -179,6 +224,16 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (_cursor != null) ...[
+          BlockButton(
+            label: l10n.t('project.loadOlder'),
+            variant: BlockButtonVariant.secondary,
+            expand: true,
+            busy: _loading,
+            onPressed: _loadOlder,
           ),
           const SizedBox(height: 12),
         ],

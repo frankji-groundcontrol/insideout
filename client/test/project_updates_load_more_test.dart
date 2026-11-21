@@ -43,7 +43,7 @@ class _Api extends ApiClient {
 }
 
 void main() {
-  test('the page request names the cursor and the limit', () {
+  test('the page request names the cursor', () {
     final c = getProjectUpdates('p1', before: 'u1');
     expect(c.method, 'GET');
     expect(c.path, '/projects/p1/updates?before=u1');

@@ -70,6 +70,24 @@ mixin _ProjectVerbs on _ApiCore {
     await _parse(await _exec(req.deleteProjectUpdate(updateId)), (d) => d);
   }
 
+  /// The updates older than [before], a nextCursor from the project or an
+  /// earlier page (rv5-PARB-07).
+  Future<UpdatesPage> listProjectUpdates(
+    String projectId, {
+    String? before,
+  }) async {
+    final res = await _exec(req.getProjectUpdates(projectId, before: before));
+    return _parse(res, (d) {
+      final m = d as Map<String, dynamic>;
+      return (
+        updates: (m['updates'] as List)
+            .map((e) => ProjectUpdate.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        nextCursor: m['nextCursor'] as String?,
+      );
+    });
+  }
+
   Future<Project> setRepo(String projectId, String repoUrl) async {
     final res = await _exec(req.putProjectRepo(projectId, repoUrl));
     return _parse(res, (d) => Project.fromJson(d as Map<String, dynamic>));
