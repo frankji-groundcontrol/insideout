@@ -249,7 +249,10 @@ opens a branch as its tree (a leaf opens its read-only detail), the "Open as
 tree", "Details", "Delegate to…" and "Hand back" menu items, and write items
 shown only where `canWrite` (and, for move, delete, delegate and validate, the
 plan-writer or parent rule) says they succeed
-(`client/lib/features/project/roadmap_node_menu.dart`). Still to land: the
+(`client/lib/features/project/roadmap_node_menu.dart`). Known limitation:
+in an opened tree the root's parent is not loaded, so a delegate who holds a
+branch above it (but is not a plan writer) sees no Move, Delete or Delegate
+on the opened root's card; they do it from the parent's tree. Still to land: the
 web "Mine" toggle and landing list, canvas collapse and the roll-up bar
 ([execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
 [row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
