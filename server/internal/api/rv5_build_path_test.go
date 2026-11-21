@@ -195,7 +195,7 @@ func TestAnAgentTokenCannotWriteTheCompletionOverride(t *testing.T) {
 	path := "/api/v1/roadmap/" + node.ID.String()
 	w.must(t, w.owner, "PATCH", path, `{"status":"in_progress"}`, http.StatusOK)
 
-	status, body := w.call(agentOwner, "PATCH", path, `{"status":"done","completionReason":"it shipped"}`)
+	status, body := w.call(agentOwner, "PATCH", path, `{"status":"done","completionReason":"It shipped to every user."}`)
 	requireScopeRefusal(t, "agent completion reason", status, body)
 
 	// With evidence the agent may still move the node to done.

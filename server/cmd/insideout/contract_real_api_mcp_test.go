@@ -112,6 +112,9 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		if edited := toolJSON[doc](t, s, "idea_update", kv{"idea_id": idea.ID, "title": "Edited " + r.sfx, "content": "edited"}); edited.Title != "Edited "+r.sfx || edited.Content != "edited" {
 			t.Fatalf("idea_update = %+v, want the new title and content", edited)
 		}
+		if kept := toolJSON[doc](t, s, "idea_update", kv{"idea_id": idea.ID, "title": "Retitled " + r.sfx}); kept.Title != "Retitled "+r.sfx || kept.Content != "edited" {
+			t.Fatalf("title-only idea_update = %+v, want the body kept", kept)
+		}
 		if made := toolJSON[doc](t, s, "idea_convert", kv{"idea_id": idea.ID}); made.PrdID == "" || made.ConversationID == "" {
 			t.Fatalf("idea_convert = %+v, want a PRD and its coach conversation", made)
 		}
