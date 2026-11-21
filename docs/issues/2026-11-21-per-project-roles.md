@@ -45,8 +45,8 @@ current behavior". The promise register stamps the row
   workspace admin hold every power the five roles split.
 - No Contributor who may propose without writing the plan, and no Reviewer
   who may comment or request changes without editing; a plain member can only
-  read and leave notes. The open owner question in the review 5 record (may a
-  node writer or their agent file a proposal) is one face of this.
+  read and leave notes, or propose about a node they may write (owner decision 7
+  in the review 5 record narrowed this for delegates only).
 - No Viewer narrower than workspace membership: every member reads every
   project in the workspace.
 - No transfer of the Driver role, because there is no Driver role.

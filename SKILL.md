@@ -91,8 +91,10 @@ invitee yourself. Join an existing workspace with `workspace_join` /
 
 - `checkpoint <project> "<what was done>"` — record agent work; never
   applies changes.
-- `propose --kind structure|scope|priority <project> "<summary>"` —
-  propose changes; a **human** accepts or rejects them (`proposal decide`
+- `propose --kind structure|scope|priority [--node <id>] <project> "<summary>"` —
+  propose changes; without `--node` only the project owner or a workspace
+  admin may file, with it anyone who may write that node (a delegate inside
+  their subtree; MCP `node_id`); a **human** accepts or rejects them (`proposal decide`
   in the CLI or the web, owner/admin only; acceptance applies the items
   unless `--no-apply`). MCP has no decision tool, and the server answers
   an agent token on that route with 403 `agent_scope_denied`.
