@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -21,6 +22,7 @@ type treeNode struct {
 	ID, ProjectID, Title, Acceptance string
 	OwnerID                          *string
 	CanWrite                         bool
+	DependsOn                        []string
 	Rollup                           struct{ Leaves, Done int }
 }
 
@@ -40,6 +42,7 @@ func TestCLIDelegatesANodeOnTheRealAPI(t *testing.T) {
 	pr := cliJSON[doc](t, "projects", "create", "--title", "Board "+sfx, ws.ID)
 	branch := cliJSON[doc](t, "roadmap", "add", "--title", "Branch "+sfx, pr.ID)
 	leaf := cliJSON[doc](t, "roadmap", "add", "--title", "Leaf "+sfx, "--parent", branch.ID, pr.ID)
+	other := cliJSON[doc](t, "roadmap", "add", "--title", "Other "+sfx, pr.ID)
 
 	// The delegate signs up and joins with the workspace code.
 	email, password := "delegate-"+uuid.NewString()+"@example.org", "pw-for-tests-"+uuid.NewString()
@@ -99,6 +102,17 @@ func TestCLIDelegatesANodeOnTheRealAPI(t *testing.T) {
 	}
 	if sub := cliJSON[[]treeNode](t, "roadmap", "list", "--root", branch.ID, pr.ID); len(sub) != 2 {
 		t.Fatalf("roadmap list --root = %+v, want the branch and its leaf", sub)
+	}
+
+	// Work in their branch waits on a node outside it.
+	if waits := cliJSON[treeNode](t, "roadmap", "depend", "--on", other.ID, leaf.ID); len(waits.DependsOn) != 1 || waits.DependsOn[0] != other.ID {
+		t.Fatalf("roadmap depend = %+v, want the leaf waiting on %s", waits, other.ID)
+	}
+	if out := cliOut(t, "roadmap", "undepend", "--on", other.ID, leaf.ID); strings.TrimSpace(out) != "removed" {
+		t.Fatalf("roadmap undepend printed %q", out)
+	}
+	if n := cliJSON[struct{ Node treeNode }](t, "roadmap", "show", leaf.ID).Node; len(n.DependsOn) != 0 {
+		t.Fatalf("after undepend the leaf still waits on %v", n.DependsOn)
 	}
 
 	back := cliJSON[treeNode](t, "roadmap", "handback", "--note", "over to you", branch.ID)

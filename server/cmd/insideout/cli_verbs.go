@@ -60,7 +60,7 @@ var cliVerbs = []cliVerb{
 	{groupPRD, "revisions", "list a PRD's revisions"},
 	{groupPRD, "snapshot", "snapshot a PRD's current revision (--note)"},
 
-	{groupRoadmap, "roadmap", "list, show, add, update, move or delete nodes; mine; delegate, handback; validate; progress"},
+	{groupRoadmap, "roadmap", "list, show, add, update, move or delete nodes; mine; delegate, handback; depend, undepend; validate; progress"},
 	{groupRoadmap, "members", "list a workspace's members and their user ids (for delegate and --owner)"},
 	{groupRoadmap, "member", "member role --role admin|member <ws> <user>; member remove <ws> <user>"},
 	{groupRoadmap, "presence", "show who is active on a project's roadmap"},

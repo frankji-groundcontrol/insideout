@@ -6,8 +6,8 @@ import (
 )
 
 // The task tree (docs/architecture/roadmap-tree.md): one node with its
-// breadcrumb, the caller's own nodes, delegation and its history, and the
-// workspace members a node can be handed to.
+// breadcrumb, the caller's own nodes, delegation and its history, the
+// workspace members a node can be handed to, and the nodes one waits on.
 
 // RoadmapNode reads one node with its ancestors and project
 // (GET /roadmap/{id}).
@@ -51,4 +51,18 @@ func (c *Client) RoadmapAssignments(nodeID string) (json.RawMessage, error) {
 // (GET /workspaces/{id}/members).
 func (c *Client) Members(workspaceID string) (json.RawMessage, error) {
 	return c.get(apiPath("workspaces", workspaceID, "members"))
+}
+
+// AddRoadmapDependency makes a node wait on another node of its project
+// (POST /roadmap/{id}/dependencies) and returns the node's view; an existing
+// link is no change.
+func (c *Client) AddRoadmapDependency(nodeID, dependsOnID string) (json.RawMessage, error) {
+	return c.requestJSON(http.MethodPost, apiPath("roadmap", nodeID, "dependencies"), map[string]any{"dependsOnId": dependsOnID})
+}
+
+// RemoveRoadmapDependency drops the link
+// (DELETE /roadmap/{id}/dependencies/{dependsOnId}).
+func (c *Client) RemoveRoadmapDependency(nodeID, dependsOnID string) error {
+	var discard json.RawMessage
+	return c.do(http.MethodDelete, apiPath("roadmap", nodeID, "dependencies", dependsOnID), nil, &discard)
 }
