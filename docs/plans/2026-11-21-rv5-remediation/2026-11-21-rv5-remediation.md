@@ -20,9 +20,15 @@ PRD, no completion override by an agent.
   draft pull request opened for wave 0 (#23) was closed and no pull request
   is opened; verification is local only. `main` is never pushed from this
   plan.
-- Code clusters run as dynamic workflows: a worker in its own git worktree,
-  failing test first, then an adversarial verifier, then the coordinator
-  cherry-picks onto the branch and re-runs every gate.
+- Each code cluster gets a worker in its own git worktree, which writes the
+  failing test first; the coordinator cherry-picks the result onto the branch
+  and re-runs every gate. Waves 0 to 3 ran each cluster as a fixed workflow:
+  worker, then adversarial verifier, then up to two repair rounds. From wave 4
+  (2026-11-21, owner's feedback) the coordinator starts the workers directly,
+  reviews each report and diff itself, and fixes small findings itself. An
+  independent verifier is used only for authorization, row-level security,
+  migration or data-loss changes, and it probes the fixed rows instead of
+  re-running every gate. The full gates run once, on the integrated tree.
 - Database work runs against a private PostgreSQL 18 cluster on
   `127.0.0.1`, one database per worker, roles created the way `ci.yml`
   creates them ([practice](../../practices/2026-11-21-probe-a-real-database-without-touching-the-tree.md)).
