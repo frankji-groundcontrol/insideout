@@ -86,22 +86,22 @@ func TestParseCriticFindings_InvalidJSON(t *testing.T) {
 	}
 }
 
-func TestHasOpenBlockingFindings(t *testing.T) {
+func TestHasUnresolvedBlockingFindings(t *testing.T) {
 	findings := []CriticFinding{
 		{ID: "c1", Severity: "blocking", Status: FindingOpen},
 		{ID: "c2", Severity: "minor", Status: FindingOpen},
 	}
-	if !hasOpenBlockingFindings(findings) {
+	if !hasUnresolvedBlockingFindings(findings, nil) {
 		t.Fatal("an open blocking finding should gate finalize")
 	}
 
 	findings[0].Status = FindingResolved
-	if hasOpenBlockingFindings(findings) {
+	if hasUnresolvedBlockingFindings(findings, nil) {
 		t.Fatal("a resolved blocking finding should no longer gate finalize")
 	}
 
 	findings[0].Status = FindingOverridden
-	if hasOpenBlockingFindings(findings) {
+	if hasUnresolvedBlockingFindings(findings, nil) {
 		t.Fatal("an overridden blocking finding should no longer gate finalize")
 	}
 }

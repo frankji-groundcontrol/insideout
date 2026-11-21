@@ -58,7 +58,7 @@ func TestCaptureRankedCritique_RestatementCannotEraseStoredFindings(t *testing.T
 		byID[f.ID] = f
 	}
 	// The failure AIDEV-01 describes: the omitted open blocking finding
-	// must still be stored — hasOpenBlockingFindings reads exactly this
+	// must still be stored — hasUnresolvedBlockingFindings reads exactly this
 	// list (tools.go finalize gate).
 	c1, kept := byID["c1"]
 	if !kept || c1.Status != FindingOpen {

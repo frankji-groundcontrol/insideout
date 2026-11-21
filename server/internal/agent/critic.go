@@ -125,15 +125,6 @@ func (c *Coach) captureRankedCritique(ctx context.Context, actorID, conversation
 	_ = sse.criticFindings(merged)
 }
 
-func hasOpenBlockingFindings(findings []CriticFinding) bool {
-	for _, f := range findings {
-		if f.Status == FindingOpen && f.Severity == "blocking" {
-			return true
-		}
-	}
-	return false
-}
-
 // runCritic makes one fresh-context critic call (no chat history — only
 // the PRD and the ledger, per plan §4.4) and returns verified findings.
 // The prompt language follows the conversation's locale (zh prompts here,

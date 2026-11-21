@@ -169,13 +169,6 @@ func (s *Store) EnsureConversationForPrd(ctx context.Context, actorID, prdID uui
 	return conv, created, nil
 }
 
-func (s *Store) UpdateConversationStage(ctx context.Context, actorID, conversationID uuid.UUID, stage string) error {
-	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `UPDATE insideout.agent_conversations SET stage = $2 WHERE id = $1`, conversationID, stage)
-		return err
-	})
-}
-
 // MetaTransform rewrites conversation meta inside the confirmation
 // transaction — the apply half of a pending-confirm pair (the agent package
 // owns the actual transform; store stays free of agent imports).
