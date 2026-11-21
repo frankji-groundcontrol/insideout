@@ -119,7 +119,7 @@ func TestCLIAndMCPProjectVerbsOnTheRealAPI(t *testing.T) {
 		t.Fatalf("roadmap validate = %+v, want the node validated", got)
 	}
 
-	if out := strings.TrimSpace(cliOut(t, "project", "delete", pr.ID)); out != "deleted" {
+	if out := strings.TrimSpace(cliOut(t, "project", "delete", "--yes", pr.ID)); out != "deleted" {
 		t.Fatalf("project delete printed %q, want deleted", out)
 	}
 	if res := runCLI(t, cliEnv(), "", "project", pr.ID); res.code == 0 {

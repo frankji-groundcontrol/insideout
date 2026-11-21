@@ -39,7 +39,7 @@ func treeAPI(t *testing.T) func() []sent {
 		mu.Unlock()
 		switch {
 		case r.URL.Path == "/me":
-			w.Write([]byte(`{"id":"u-me"}`))
+			w.Write([]byte(`{"id":"u-me","username":"Me","bio":"Old bio","keywords":["go"],"avatarUrl":"https://img.example/a.png"}`))
 		case r.Method == http.MethodGet && (r.URL.Path == "/projects/p1" || r.URL.Path == "/workspaces/ws1"):
 			w.Write([]byte(`{"id":"x","title":"Old","description":"Old text","status":"active"}`))
 		default:

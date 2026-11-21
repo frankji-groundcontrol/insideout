@@ -33,7 +33,6 @@ func TestProjectVerbsSendTheirRequests(t *testing.T) {
 			[]sent{{"GET /projects/p1", nil}, {"PATCH /projects/p1", with("title", "New", "description", "", "ownerId", "")}}},
 		{words("project", "update", "--owner", "me", "p1"),
 			[]sent{{"GET /me", nil}, {"GET /projects/p1", nil}, {"PATCH /projects/p1", with("ownerId", "u-me")}}},
-		{words("project", "delete", "p1"), []sent{{"DELETE /projects/p1", nil}}},
 		{words("updates", "p1"), []sent{{"GET /projects/p1/updates", nil}}},
 		{words("updates", "--before", "c1", "--limit", "2", "p1"), []sent{{"GET /projects/p1/updates?before=c1&limit=2", nil}}},
 		{words("update", "add", "--kind", "blocker", "--content", "stuck", "p1"),
