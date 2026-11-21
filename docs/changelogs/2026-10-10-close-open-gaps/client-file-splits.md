@@ -75,7 +75,7 @@ No tracked source file is over 350 lines now.
 - **The Flutter suite's test-name set was identical** before and after each
   split (167 tests at that point).
 - **Behavior of the largest split, `project_page.dart`:** the Evidence write
-  flows test ([`project_flows_test.dart`](../../../client/test/project_flows_test.dart),
+  flows test ([`project_flows_test.dart`](../../../client/test/features/project/project_flows_test.dart),
   added after the split, 8 tests) passes unchanged on the tree from before
   the split (`78bf90a^`, run in a throwaway worktree) and on the tree after
   it.

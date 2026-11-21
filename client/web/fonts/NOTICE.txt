@@ -52,4 +52,4 @@ for any new family (https://github.com/google/fonts/tree/main/ofl), delete
 files the table no longer names, then
   cd client/web/fonts && find s -name '*.woff2' | LC_ALL=C sort | xargs shasum -a 256 > SHA256SUMS
 and update the two counts (725 files, 145 families) in
-client/test/web_csp_self_test.dart.
+client/test/scans/web_csp_self_test.dart.

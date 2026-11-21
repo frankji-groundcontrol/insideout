@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/models.dart';
 
-import '_roadmap_tree_helpers.dart';
+import '../project/_roadmap_tree_helpers.dart';
 
 // rv5-TREEX-03: the signed-in landing lists the caller's own nodes (GET
 // /workspaces/{id}/roadmap/mine per workspace) and each opens its tree.

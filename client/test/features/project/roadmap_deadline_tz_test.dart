@@ -18,7 +18,7 @@ import '_project_model_helpers.dart';
 // This drives the real edit dialog and its real date picker: pick a day, read
 // what the dialog shows, save, read what was sent, and read it back the way
 // the node card does. Run it where the bug lives, as the wave gate does:
-//   TZ=Asia/Shanghai flutter test test/roadmap_deadline_tz_test.dart
+//   TZ=Asia/Shanghai flutter test test/features/project/roadmap_deadline_tz_test.dart
 // It must also pass under TZ=UTC and TZ=America/New_York.
 
 class _Api extends ApiClient {

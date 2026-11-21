@@ -18,7 +18,7 @@ The [2026-10-06 Cobalt-Neo remediation](../plans/2026-10-06-frontend-cobalt-neo/
 ported the reference app's token layer and closed with a real gate:
 `flutter analyze` no errors or warnings, `flutter test` 143 passed,
 `dart format` clean, plus a WCAG contrast script and a six-shot visual
-pass. [`client/test/cobalt_test.dart`](../../client/test/cobalt_test.dart)
+pass. [`client/test/theme/cobalt_test.dart`](../../client/test/theme/cobalt_test.dart)
 asserts every radius token is `0.0`, `borderContainer` 2.0 /
 `borderDivider` 1.0, `cast`/`castSm` offsets (4,4)/(2,2) with
 `blurRadius` and `spreadRadius` both 0, `pressDuration` 100ms,
@@ -75,7 +75,7 @@ read as "done" to the next agent.
 
 Then make the tests assert consumption as well as declaration. A scan
 test that fails when a banned primitive reappears under `lib/features/`
-catches this class of drift permanently; `client/test/leftover_scan_test.dart`
+catches this class of drift permanently; `client/test/scans/leftover_scan_test.dart`
 is the natural home for that kind of check. Value assertions and a
 contrast script cannot substitute for it — they only ever see the
 tokens.

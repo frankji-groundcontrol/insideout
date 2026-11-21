@@ -33,7 +33,7 @@ wave 1):
   Dockerfile fails CI before a deploy finds it.
 - **The deadline test in a zone ahead of UTC** (rv4-COMP-02): after the
   `flutter test` step, run `TZ=Asia/Shanghai flutter test
-  test/roadmap_deadline_tz_test.dart`. CI's runner is UTC, where that test
+  test/features/project/roadmap_deadline_tz_test.dart`. CI's runner is UTC, where that test
   passes without ever meeting the bug it guards (it goes red only in a zone
   ahead of UTC), so without this step the regression test cannot fail in CI.
 

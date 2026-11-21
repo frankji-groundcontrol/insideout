@@ -64,9 +64,15 @@ roadmap, workspace, ideas, home and revisions views stack, and the PRD page
 embeds the desk column (`PrdDeskColumn(embedded: true)`, shrink-wrapped with no
 scroll of its own) so the page scrolls as one
 ([BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
-`client/test/l10n_unread_keys_test.dart` fails when a locale key has no reader in
-`lib/`, so a restyle cannot leave dead strings behind
+`client/test/scans/l10n_unread_keys_test.dart` fails when a locale key has no
+reader in `lib/`, so a restyle cannot leave dead strings behind
 ([BUG-026](../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md)).
+
+`client/test/` mirrors `lib/` (`api/`, `chrome/`, `features/<name>/`, `l10n/`,
+`session/`, `theme/`, `widgets/`), with each `_*_helpers.dart` beside the tests
+that own it. `scans/` holds the tests that read source, config or assets
+instead of running code, `web/` the browser-only suites, and the root the
+app-level and cross-feature tests and `line_budget_test.dart`.
 
 The custom blocks take keyboard focus and activate through `BlockFocus`, which
 binds both `ActivateIntent` and `ButtonActivateIntent`: on the web Enter is the

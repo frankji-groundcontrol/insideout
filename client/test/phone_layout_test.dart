@@ -14,7 +14,7 @@ import 'package:insideout/theme/block_button.dart';
 import 'package:insideout/theme/block_chrome.dart';
 import 'package:provider/provider.dart';
 
-import '_auth_test_helpers.dart';
+import 'features/auth/_auth_test_helpers.dart';
 
 // The reviewer's top five minus the pages that already had narrow tests:
 // landing, dashboard and workspace were only ever pumped at desktop sizes

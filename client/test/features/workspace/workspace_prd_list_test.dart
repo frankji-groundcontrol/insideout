@@ -9,7 +9,7 @@ import 'package:insideout/features/workspace/workspace_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
-import '_project_model_helpers.dart';
+import '../project/_project_model_helpers.dart';
 
 // rv5-FE-02: a teammate or the approving admin reaches any PRD of the
 // workspace from the workspace page, and a project links to its PRD.

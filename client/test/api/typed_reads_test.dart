@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import '_expand_fixture_helpers.dart';
+import '../features/project/_expand_fixture_helpers.dart';
 
 // rv5-STRC-08: GET /projects/{id} and GET /roadmap/{id}/evidence parse into
 // typed models. The bodies are real responses of a running server

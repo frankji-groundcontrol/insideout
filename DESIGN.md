@@ -151,7 +151,7 @@ The signed-off token table and its verification record live in
 | cobalt-700 | `#1D4ED8` | Pressed / chip text (light) |
 | cobalt-950 | `#1E2A5A` | `brandSubtle` (dark), dark status-chip bg only |
 
-Strokes (verified against the WCAG script in `client/test/cobalt_test.dart`):
+Strokes (verified against the WCAG script in `client/test/theme/cobalt_test.dart`):
 
 | Token | Theme | Hex | Measured contrast |
 | --- | --- | --- | --- |
@@ -259,7 +259,7 @@ gone quiet) sits on cobalt-200, where cobalt-700 text would be 4.49:1, so
 its label is ink (13.03:1): still in-palette, no new hue. Dark chips keep
 cobalt-200 on cobalt-950 (9.18:1); done and danger share it there by the
 one-hue decree, so the label, not a second colour, says which is which.
-Every chip label owes 4.5:1 and `client/test/cobalt_test.dart` pins each
+Every chip label owes 4.5:1 and `client/test/theme/cobalt_test.dart` pins each
 tone in both themes. Status marks are square blocks, never dots. Not chops.
 
 ### Cards

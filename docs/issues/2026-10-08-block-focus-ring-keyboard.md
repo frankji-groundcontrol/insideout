@@ -12,7 +12,7 @@ Wired into `BlockButton` (enabled path only — a disabled block is not
 wrapped, so it leaves Tab traversal), `BlockIconButton`, and
 `PressableBlock`, which carries `BlockChoice` and every `FieldCard`
 `onTap`. Seven widget tests in
-[`client/test/block_focus_test.dart`](../../client/test/block_focus_test.dart);
+[`client/test/theme/block_focus_test.dart`](../../client/test/theme/block_focus_test.dart);
 `block_primitives_test.dart` passes unmodified. Gate: analyze 0
 errors / 0 warnings (16 pre-existing infos), **167/167** tests, format
 clean, `cobalt_test.dart` untouched

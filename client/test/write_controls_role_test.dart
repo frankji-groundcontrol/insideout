@@ -10,7 +10,7 @@ import 'package:insideout/features/workspace/workspace_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
-import '_project_model_helpers.dart';
+import 'features/project/_project_model_helpers.dart';
 
 // rv5-FE-05: outside the roadmap, write controls show only to the people the
 // server lets write: workspace admins delete the workspace and manage members

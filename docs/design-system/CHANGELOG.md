@@ -26,7 +26,7 @@ to `0`), so this is not a major bump. It landed in three dated passes: tokens
 focus ([2026-10-08](../changelogs/2026-10-08-block-focus-ring.md)). The law is
 [`DESIGN.md`](../../DESIGN.md); the [lock screens](cobalt/README.md) predate
 this version. Token values stay pinned by
-[`client/test/cobalt_test.dart`](../../client/test/cobalt_test.dart) (frozen
+[`client/test/theme/cobalt_test.dart`](../../client/test/theme/cobalt_test.dart) (frozen
 assertions plus the WCAG contrast script).
 
 ### Changed — token values (keys unchanged)

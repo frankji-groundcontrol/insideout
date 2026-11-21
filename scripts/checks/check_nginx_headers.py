@@ -56,7 +56,7 @@ CSP_NEVER_IN_SCRIPT = ("'unsafe-inline'", "'unsafe-eval'")
 # Roboto and Noto fallback fonts from fontFallbackBaseUrl, which
 # web/flutter_bootstrap.js points at /fonts/s/ (every file the engine can ask
 # for is mirrored there). Keep it equal to engineFontHosts in
-# client/test/web_csp_self_test.dart.
+# client/test/scans/web_csp_self_test.dart.
 CSP_HOSTS_ALLOWED = ()
 
 
