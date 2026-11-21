@@ -42,8 +42,10 @@ func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID
 			projectID, repoURL,
 		)
 		var scanErr error
-		p, scanErr = scanProject(row)
-		return scanErr
+		if p, scanErr = scanProject(row); scanErr != nil {
+			return scanErr
+		}
+		return markPlanWriter(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err
