@@ -1,5 +1,4 @@
 schema_version: 1
-host: buddys-macbook-pro-2.local
 module: mail
 setting: dev
 recorded: '2026-10-05'

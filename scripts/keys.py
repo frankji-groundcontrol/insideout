@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Audit and fill the module-grouped key store under hosts/<host>/keys/.
 
-Each functional module (auth, database, github, ...) holds one or more
-tracked YAML manifests whose `secrets:` maps name every key —
-`<name>: {var: ENV_VAR, kind: value|path}` — plus the module's shared
-git-ignored .secrets/<name>.key per entry (mode 0600). This tool never
+One shared manifest set, hosts/_manifests/keys/<module>/*.yaml, serves
+every host: each tracked YAML's `secrets:` map names every key —
+`<name>: {var: ENV_VAR, kind: value|path}`. Each host keeps the values
+in hosts/<host>/keys/<module>/.secrets/<name>.key (git-ignored, mode
+0600). This tool never
 prints values — audit reports filled/empty, fill copies env-file values
 into EMPTY .key files only.
 
@@ -54,19 +55,24 @@ def pick_host(root: str, wanted: str | None) -> str:
     raise SystemExit(f"several hosts ({', '.join(hosts)}) — set INSIDEOUT_KEYS_HOST")
 
 
+def manifest_paths(root: str) -> list[str]:
+    """The shared manifests every host uses (discover_hosts skips
+    _manifests: it has no host.yml)."""
+    return sorted(glob.glob(os.path.join(root, "hosts", "_manifests", "keys", "*", "*.yaml")))
+
+
 def key_map(root: str, host: str) -> dict[str, tuple[str, str]]:
     """env_var -> (module/name, key path) from every manifest (no yaml dep).
 
-    Walks hosts/<host>/keys/*/*.yaml — one or more manifests per
-    functional module — reads each `secrets:` entry (block or flow
-    style) for its var/kind, and resolves the value file to the module's
-    shared .secrets/<name>.key.
+    Walks the shared hosts/_manifests/keys/*/*.yaml — one or more
+    manifests per functional module — reads each `secrets:` entry (block
+    or flow style) for its var/kind, and resolves the value file to the
+    host's hosts/<host>/keys/<module>/.secrets/<name>.key.
     """
     m: dict[str, tuple[str, str]] = {}
-    pattern = os.path.join(root, "hosts", host, "keys", "*", "*.yaml")
-    for y in sorted(glob.glob(pattern)):
+    for y in manifest_paths(root):
         module = os.path.basename(os.path.dirname(y))
-        secrets_dir = os.path.join(os.path.dirname(y), ".secrets")
+        secrets_dir = os.path.join(root, "hosts", host, "keys", module, ".secrets")
         for name, fields in _parse_secrets_block(y).items():
             var = fields.get("var")
             if not var:

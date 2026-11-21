@@ -1,15 +1,17 @@
 # Hosts
 
 Per-host metadata and the credential store for machines that run this
-repository. One folder per host; inside a host, all credentials live
-under a single `keys/` folder: subfolders by functional module, YAML
-manifests inside them (split or integrated as the module warrants), and
-each module's git-ignored `.secrets/` of `<name>.key` value files
-(mode 0600). Manifests note what keys exist and how each is structured —
-never one folder per key.
+repository. One manifest set, [`_manifests/keys/`](./_manifests/keys/),
+serves every host: subfolders by functional module, YAML manifests
+inside them (split or integrated as the module warrants) noting what
+keys exist and how each is structured — never one folder per key. One
+folder per host holds its `host.yml`, a `keys/README.md` of its state,
+and, under `keys/<module>/`, the git-ignored `.secrets/` of
+`<name>.key` value files (mode 0600).
 
 | Path | Host |
 | --- | --- |
+| [_manifests/keys/](./_manifests/keys/) | The shared key manifests (no host) |
 | [franks-macbook-pro.local/](./franks-macbook-pro.local/README.md) | The macOS development workstation |
 | [buddys-macbook-pro-2.local/](./buddys-macbook-pro-2.local/README.md) | The secondary macOS development workstation (being filled key-by-key) |
 

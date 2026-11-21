@@ -1,5 +1,4 @@
 schema_version: 1
-host: franks-macbook-pro.local
 module: auth
 setting: session-keys
 recorded: '2026-10-05'

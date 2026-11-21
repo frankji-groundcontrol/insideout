@@ -1,5 +1,4 @@
 schema_version: 1
-host: franks-macbook-pro.local
 module: github
 setting: tokens
 recorded: '2026-10-05'

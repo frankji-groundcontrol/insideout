@@ -1,18 +1,16 @@
 schema_version: 1
-host: buddys-macbook-pro-2.local
 module: github
 setting: app
 recorded: '2026-10-05'
 # The GitHub App installation: identity + authenticating material.
-# The PEM is consumed via INSIDEOUT_GH_PRIVATE_KEY_FILE pointing at
-# the .key itself — never a single-line env-file bridge. Metadata only.
 secrets:
   gh-app-id: { var: INSIDEOUT_GH_APP_ID, kind: value, optional: true }
   gh-app-private-key:
     var: INSIDEOUT_GH_PRIVATE_KEY
     kind: value
     optional: true
-    note: multi-line PEM (1702 B); read via INSIDEOUT_GH_PRIVATE_KEY_FILE
+    note: multi-line PEM; the server also accepts
+      INSIDEOUT_GH_PRIVATE_KEY_FILE pointing at the .key itself
   gh-client-secret:
     var: INSIDEOUT_GH_CLIENT_SECRET
     kind: value
@@ -22,5 +20,5 @@ secrets:
     var: INSIDEOUT_GH_PRIVATE_KEY_FILE
     kind: path
     optional: true
-    note: pointer to the canonical PEM .key above — the _FILE consumer
-      reads it raw, which is why the store keeps the multi-line form
+    note: pointer to the canonical PEM .key above; blank = the
+      env-embedded lane
