@@ -72,7 +72,10 @@ runs inside the replace's per-project lock), and `PATCH /roadmap/{nid}` refuses 
 non-empty `completionReason`, the human's override for done without evidence, and
 any `ownerId` (owner decision 4, 2026-11-21: owning a node grants write rights
 over its subtree, so an agent files a proposal instead). An agent still moves a
-node to done when it has evidence.
+node to done when it has evidence. Filing a proposal stays a plan-writer right,
+so an agent acting for a delegate (who owns a subtree but is not a plan writer)
+has no route to propose an owner change today; whether a node writer may file
+a proposal scoped to their subtree is open for the delegate/handback stage.
 
 Human-only (the other 36): proposal decision (`POST /agent/proposals/{uid}/decision`);
 Commit (`POST /prds/{id}/commit`); all six `/admin/*` routes (`signup_mode`,
