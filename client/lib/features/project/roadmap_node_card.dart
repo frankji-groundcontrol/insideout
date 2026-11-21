@@ -17,6 +17,7 @@ import '../../widgets/guarded_action.dart';
 import 'roadmap_completion_prompt.dart';
 
 part 'roadmap_expand_draft.dart';
+part 'roadmap_node_edit.dart';
 part 'roadmap_node_menu.dart';
 
 class RoadmapNodeCard extends StatelessWidget {
