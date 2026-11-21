@@ -211,6 +211,7 @@ Future<void> pumpTreeCard(
   Session session,
   RoadmapNode node, {
   bool planWriter = true,
+  int descendants = 0,
 }) async {
   await tester.pumpWidget(
     _providers(
@@ -222,6 +223,7 @@ Future<void> pumpTreeCard(
             node: node,
             onReload: () async {},
             planWriter: planWriter,
+            descendants: descendants,
           ),
         ),
       ),
