@@ -21,6 +21,7 @@ from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SCRIPTS = os.path.dirname(os.path.dirname(HERE))
+REPO = os.path.dirname(SCRIPTS)
 for p in (HERE, SCRIPTS):
     if p not in sys.path:
         sys.path.insert(0, p)
@@ -147,6 +148,24 @@ class TestKeys(unittest.TestCase):
         # skeleton placeholders (<password>, <your-domain>).
         self.assertEqual(keys.env_state("InsideOut <noreply@example.com>"), "set")
         self.assertEqual(keys.env_state("postgres://u:<password>@h/db"), "placeholder")
+
+    def test_fill_from_the_shipped_skeleton_writes_nothing(self):
+        # rv5-STRC-03: .env.example holds only skeleton values. A fill from it
+        # into a store that maps every variable the real manifests map must
+        # write nothing — the placeholder JWT secret is not a real value.
+        host = keys.discover_hosts(REPO)[0]
+        mapped = sorted(keys.key_map(REPO, host))
+        mod = self.root / "hosts" / "testhost" / "keys" / "all"
+        mod.mkdir(parents=True)
+        (mod / "all.yaml").write_text("secrets:\n" + "".join(
+            f"  k{i}:\n    var: {var}\n    kind: value\n" for i, var in enumerate(mapped)))
+        out = io.StringIO()
+        with redirect_stdout(out):
+            keys.fill(str(self.root), "testhost", os.path.join(REPO, ".env.example"), dry_run=False)
+        written = sorted(line.split()[0] for line in out.getvalue().splitlines()
+                         if line.split()[1:2] == ["write"])
+        self.assertEqual(written, [], "a fill from .env.example wrote skeleton values")
+        self.assertIn("0 written", out.getvalue())
 
     def test_init_creates_empty_placeholders_without_touching_filled(self):
         self.build_default()
