@@ -91,14 +91,14 @@ func TestValidationObservationEndpoint(t *testing.T) {
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("list evidence: status %d", resp.StatusCode)
 	}
-	var rows []store.RoadmapEvidence
+	var rows []evidenceView
 	if err := json.NewDecoder(resp.Body).Decode(&rows); err != nil {
 		t.Fatalf("decode evidence: %v", err)
 	}
 	if len(rows) != 1 || rows[0].Kind != "validation" {
 		t.Fatalf("rows = %+v, want one validation row", rows)
 	}
-	if rows[0].ObservedAt == nil || rows[0].ObservedAt.Format("2006-01-02") != "2026-10-02" {
+	if rows[0].ObservedAt == nil || *rows[0].ObservedAt != "2026-10-02" {
 		t.Fatalf("ObservedAt = %v, want 2026-10-02", rows[0].ObservedAt)
 	}
 

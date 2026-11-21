@@ -121,6 +121,10 @@ signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
   answers `{"updates": [...], "nextCursor": ...}` with the next page; without
   `before` it starts from the newest, and `limit` defaults to 50. An agent
   token may read it.
+- `GET /api/v1/roadmap/{nid}/evidence` (the `evidence` verb) answers 404
+  for a node that does not exist or that you cannot see. `createdAt` is a
+  timestamp like every other, and a validation observation's `observedAt`
+  is the date as entered (`YYYY-MM-DD`).
 
 ### Errors
 

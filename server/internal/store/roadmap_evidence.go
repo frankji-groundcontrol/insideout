@@ -12,15 +12,15 @@ import (
 // (commits, PRs, deployments — PRODUCT.md: evidence, never outcomes) or
 // one human-entered validation observation (kind 'validation').
 type RoadmapEvidence struct {
-	ID        uuid.UUID `json:"id"`
-	NodeID    uuid.UUID `json:"nodeId"`
-	Kind      string    `json:"kind"`
-	Detail    string    `json:"detail"`
-	SourceURL string    `json:"sourceUrl"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        uuid.UUID
+	NodeID    uuid.UUID
+	Kind      string
+	Detail    string
+	SourceURL string
+	CreatedAt time.Time
 	// ObservedAt: the date the human saw a validation observation
 	// (nil on the machine-appended kinds, which carry only CreatedAt).
-	ObservedAt *time.Time `json:"observedAt,omitempty"`
+	ObservedAt *time.Time
 }
 
 // AddRoadmapEvidence appends one evidence row as actorID (the webhook
@@ -56,12 +56,20 @@ func (s *Store) AddRoadmapEvidence(ctx context.Context, actorID, nodeID uuid.UUI
 	})
 }
 
-// ListRoadmapEvidence returns a node's evidence, newest first.
+// ListRoadmapEvidence returns a node's evidence, newest first, or ErrNotFound
+// for a node that does not exist or that actorID cannot see (rv5-PARC-10).
 func (s *Store) ListRoadmapEvidence(ctx context.Context, actorID, nodeID uuid.UUID) ([]RoadmapEvidence, error) {
-	// Membership rides the table's RLS policy; withUserContext supplies
+	// Membership rides the tables' RLS policies; withUserContext supplies
 	// the identity.
 	var out []RoadmapEvidence
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		var visible bool
+		if err := tx.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM insideout.roadmap_nodes WHERE id = $1)`, nodeID).Scan(&visible); err != nil {
+			return err
+		}
+		if !visible {
+			return ErrNotFound
+		}
 		rows, err := tx.Query(ctx, `
 			SELECT id, node_id, kind, detail, source_url, created_at, observed_at
 			FROM insideout.roadmap_evidence WHERE node_id = $1
