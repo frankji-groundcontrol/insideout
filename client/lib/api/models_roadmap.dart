@@ -102,13 +102,19 @@ class RoadmapRollup {
 }
 
 class RoadmapNodeRef {
-  const RoadmapNodeRef({required this.id, required this.title});
+  const RoadmapNodeRef({required this.id, required this.title, this.ownerId});
 
   final String id;
   final String title;
 
-  factory RoadmapNodeRef.fromJson(Map<String, dynamic> j) =>
-      RoadmapNodeRef(id: j['id'] as String, title: j['title'] as String);
+  /// The ancestor's own owner, if any: what an opened tree inherits.
+  final String? ownerId;
+
+  factory RoadmapNodeRef.fromJson(Map<String, dynamic> j) => RoadmapNodeRef(
+    id: j['id'] as String,
+    title: j['title'] as String,
+    ownerId: j['ownerId'] as String?,
+  );
 }
 
 /// GET /roadmap/{nid}: the node, its ancestors root first, and its project.

@@ -291,8 +291,11 @@ mixin _ProjectVerbs on _ApiCore {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
-  Future<void> deleteRoadmapNode(String nodeId) async {
-    await _parse(await _exec(req.deleteRoadmapNode(nodeId)), (d) => d);
+  Future<void> deleteRoadmapNode(String nodeId, {bool force = false}) async {
+    await _parse(
+      await _exec(req.deleteRoadmapNode(nodeId, force: force)),
+      (d) => d,
+    );
   }
 
   /// Asks the AI to draft sub-tasks for a node. The server writes nothing: the

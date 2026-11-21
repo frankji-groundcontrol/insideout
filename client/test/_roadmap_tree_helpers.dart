@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:insideout/api/client.dart';
+import 'package:insideout/api/errors.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/project/roadmap_node_card.dart';
@@ -32,6 +33,12 @@ class TreeApi extends ApiClient {
   ({String nodeId, String toUserId, String note})? delegated;
   ({String nodeId, String note})? handedBack;
 
+  /// Every delete asked for, and whether the branch has history: then a
+  /// delete without force answers 409 roadmap_delete_has_history.
+  final deletes = <({String nodeId, bool force})>[];
+  bool history = false;
+  final _gone = <String>{};
+
   RoadmapNode node(String id, String title, String? parent, {String? owner}) =>
       RoadmapNode(
         id: id,
@@ -51,7 +58,31 @@ class TreeApi extends ApiClient {
     node('a', 'Payments', 'r', owner: 'u-dana'),
     node('a1', 'Refunds', 'a'),
     node('b', 'Search', 'r'),
-  ];
+  ].where((n) => !_gone.contains(n.id)).toList();
+
+  ApiException get _notFound =>
+      ApiException('not found', status: 404, code: 'not_found');
+
+  @override
+  Future<void> deleteRoadmapNode(String nodeId, {bool force = false}) async {
+    deletes.add((nodeId: nodeId, force: force));
+    if (history && !force) {
+      throw ApiException(
+        'has history',
+        status: 409,
+        code: 'roadmap_delete_has_history',
+        liveCount: 2,
+        evidenceCount: 1,
+        doneCount: 1,
+        validatedCount: 0,
+      );
+    }
+    final doomed = {nodeId};
+    for (final n in all) {
+      if (doomed.contains(n.parentId)) doomed.add(n.id);
+    }
+    _gone.addAll(doomed);
+  }
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => all;
@@ -62,6 +93,7 @@ class TreeApi extends ApiClient {
     String rootId,
   ) async {
     subtreeRoots.add(rootId);
+    if (_gone.contains(rootId)) throw _notFound;
     final keep = {rootId};
     for (final n in all) {
       if (keep.contains(n.parentId)) keep.add(n.id);
@@ -70,16 +102,19 @@ class TreeApi extends ApiClient {
   }
 
   @override
-  Future<RoadmapNodeRead> readRoadmapNode(String nodeId) async =>
-      RoadmapNodeRead(
-        node: all.firstWhere((n) => n.id == nodeId),
-        ancestors: [
-          if (nodeId != 'r') const RoadmapNodeRef(id: 'r', title: 'Ship'),
-          if (nodeId == 'a1') const RoadmapNodeRef(id: 'a', title: 'Payments'),
-        ],
-        projectId: 'p1',
-        projectName: 'Loop project',
-      );
+  Future<RoadmapNodeRead> readRoadmapNode(String nodeId) async {
+    if (_gone.contains(nodeId)) throw _notFound;
+    return RoadmapNodeRead(
+      node: all.firstWhere((n) => n.id == nodeId),
+      ancestors: [
+        if (nodeId != 'r') const RoadmapNodeRef(id: 'r', title: 'Ship'),
+        if (nodeId == 'a1')
+          const RoadmapNodeRef(id: 'a', title: 'Payments', ownerId: 'u-dana'),
+      ],
+      projectId: 'p1',
+      projectName: 'Loop project',
+    );
+  }
 
   @override
   Future<RoadmapProgress> roadmapProgress(String projectId) async =>

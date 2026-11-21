@@ -113,8 +113,11 @@ ApiCall moveRoadmapNode(
   });
 }
 
-ApiCall deleteRoadmapNode(String nodeId) =>
-    ApiCall('DELETE', '/roadmap/$nodeId');
+/// Deletes a node and its subtree. A subtree with evidence or done or
+/// validated nodes answers 409 `roadmap_delete_has_history` with the counts;
+/// [force] accepts that loss.
+ApiCall deleteRoadmapNode(String nodeId, {bool force = false}) =>
+    ApiCall('DELETE', '/roadmap/$nodeId${force ? '?force=true' : ''}');
 
 /// Hands a node to a workspace member, on the record (an assignment row and
 /// a feed update); the server answers the node view.
