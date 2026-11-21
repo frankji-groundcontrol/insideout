@@ -154,7 +154,10 @@ concern inside a family:
 - the coach: `agent_*.go` (conversations, messages, the context queries, the
   retention purge), `conversation_retention.go` (the idle-conversation purge)
 - proposals: `proposal_*.go` (the human decision, the structured items)
-- roadmap: `roadmap*.go` (nodes, reads, evidence, moves, plans, validation)
+- roadmap: `roadmap*.go` (nodes, reads, evidence, moves, plans, validation;
+  `roadmap_views.go` the node views with roll-ups, `roadmap_assignments.go`
+  the owner history and delegation, `roadmap_mine.go` a person's own tree,
+  `roadmap_delete.go` the guarded subtree delete)
 - GitHub: `github_webhook.go` (the system-run webhook path)
 - plumbing: `pool.go`, `errors.go` (the sentinels the api maps to statuses),
   `migrate*.go`, `serve_role.go`
@@ -186,7 +189,8 @@ Domain handlers live in `internal/api`, grouped by resource:
   forgot-password with a watch id and serves `GET /auth/reset-watch/{id}`),
   `me.go`, `me_delete.go` (the human-only account erasure), `admin.go`
   (invitations and the signup-mode switch)
-- agents: `agent_*.go` (the agent vocabulary routes and `agentRoutePolicy`)
+- agents: `agent_*.go` (the agent vocabulary routes and `agentRoutePolicy`;
+  `agent_root.go` the token mint and the root-scoped token's subtree check)
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
   `project_updates.go`, `ideas.go`, `guide.go`
 - PRDs: `prd*.go` (PRDs, audience views, readiness, Commit), `conversations.go`
@@ -194,8 +198,9 @@ Domain handlers live in `internal/api`, grouped by resource:
   route, and the conversation view with `criticSkipped` and `criticRounds`),
   `conversations_trust.go` (the parked finding resolutions the view lists as
   `pendingResolutions` on the confirm card)
-- roadmap: `roadmap*.go` (nodes, drafting, evidence, progress, validation),
-  `presence_routes.go`
+- roadmap: `roadmap*.go` (nodes, reads and `mine`, drafting, evidence,
+  progress, validation; `roadmap_delegation.go` delegate, hand-back and the
+  owner history), `presence_routes.go`
 - GitHub: `github*.go` (repo sync, the webhook and its evidence)
 
 The single-replica contract and its guard are in

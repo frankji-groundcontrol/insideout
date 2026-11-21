@@ -69,8 +69,10 @@ views (PRODUCT.md principle 3).
   overdue) and the Progress assembly — **Now admits deadlined work
   only**; in-progress items without a deadline surface as
   `needsDeadline`; Next caps at three by earliest deadline.
-	`GET /projects/{id}/roadmap/progress`; node views carry `deadline` +
-	computed `pressure`; PATCH accepts `deadline` (RFC3339 or `""`). The web
+	`GET /projects/{id}/roadmap/progress` (`?root={nid}` for one subtree);
+	node views carry `deadline` + computed `pressure` and a `rollup` over the
+	leaves below (`roadmaptime.Rollups`, counting done and validated as
+	finished, as Progress does); PATCH accepts `deadline` (RFC3339 or `""`). The web
 	picker sends the picked day at noon UTC (RFC3339), so every member reads
 	the same calendar date.
 	`GET /projects/{id}/roadmap/progress/stream` (SSE) writes that same
