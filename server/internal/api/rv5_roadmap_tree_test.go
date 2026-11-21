@@ -136,3 +136,23 @@ func TestBreakingDownANodeYouCannotWriteIsRefusedUpFront(t *testing.T) {
 	w.must(t, w.member, "POST", "/api/v1/roadmap/"+w.shipping.ID.String()+"/expand", "", http.StatusForbidden)
 	w.must(t, w.member, "POST", "/api/v1/roadmap/"+w.payments.ID.String()+"/expand", "", http.StatusOK)
 }
+
+// The agent briefing for a focus lists only the focus subtree's leaves, and an
+// unknown focus is refused instead of ignored (rv5-TREEX-05, TREEB-06).
+func TestAgentContextKeepsToTheFocusSubtree(t *testing.T) {
+	w := newTreeWorld(t)
+	base := "/api/v1/agent/context?project_id=" + w.project.ID.String() + "&focus="
+	body := w.must(t, w.member, "GET", base+w.payments.ID.String(), "", http.StatusOK)
+	got := decodeAs[struct {
+		Focus  map[string]any   `json:"focus"`
+		Leaves []map[string]any `json:"leaves"`
+	}](t, body)
+	if len(got.Leaves) != 1 || got.Leaves[0]["id"] != w.card.ID.String() {
+		t.Errorf("leaves under Payments: %v, want Card only", got.Leaves)
+	}
+	if path, _ := got.Focus["path"].([]any); len(path) != 1 || path[0] != "Root" {
+		t.Errorf("focus path: %v, want [Root]", got.Focus["path"])
+	}
+	w.must(t, w.member, "GET", base+uuid.NewString(), "", http.StatusNotFound)
+	w.must(t, w.member, "GET", base+"not-a-node", "", http.StatusNotFound)
+}

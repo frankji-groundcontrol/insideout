@@ -28,8 +28,45 @@ func TestImplementationModeFocusScoped(t *testing.T) {
 		t.Errorf("siblings missing: %v", focus)
 	}
 	leaves := out["leaves"].([]map[string]any)
-	if len(leaves) != 2 {
-		t.Errorf("leaf count wrong: %v", leaves)
+	if len(leaves) != 1 || leaves[0]["id"] != "a" {
+		t.Errorf("a leaf focus lists only itself: %v", leaves)
+	}
+}
+
+// A branch focus lists the leaves below it and nothing else, and says what
+// the branch is and where it sits (rv5-TREEX-05, TREEB-06).
+func TestABranchFocusListsOnlyItsOwnLeaves(t *testing.T) {
+	out := Assemble(Inputs{
+		Mode: "implementation", FocusNodeID: "pay",
+		Nodes: []NodeIn{
+			{ID: "root", Title: "MVP"},
+			{ID: "pay", ParentID: "root", Title: "Payments", Description: "take money"},
+			{ID: "card", ParentID: "pay", Title: "Card"},
+			{ID: "ref", ParentID: "pay", Title: "Refunds"},
+			{ID: "part", ParentID: "ref", Title: "Partial refunds"},
+			{ID: "ship", ParentID: "root", Title: "Shipping"},
+		},
+	})
+	var ids []string
+	for _, l := range out["leaves"].([]map[string]any) {
+		ids = append(ids, l["id"].(string))
+	}
+	slices.Sort(ids)
+	if !slices.Equal(ids, []string{"card", "part"}) {
+		t.Errorf("leaves = %v, want card and part only", ids)
+	}
+	focus := out["focus"].(map[string]any)
+	if focus["description"] != "take money" {
+		t.Errorf("focus description = %v", focus["description"])
+	}
+	if path, _ := focus["path"].([]string); !slices.Equal(path, []string{"MVP"}) {
+		t.Errorf("focus path = %v, want [MVP]", focus["path"])
+	}
+	fields := out["untrusted"].(map[string]any)["fields"].([]string)
+	for _, f := range []string{"focus.description", "focus.path[]"} {
+		if !slices.Contains(fields, f) {
+			t.Errorf("untrusted fields %v miss %s", fields, f)
+		}
 	}
 }
 

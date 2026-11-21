@@ -62,7 +62,9 @@ type NodeIn struct {
 	ID       string
 	ParentID string // empty = root
 	Title    string
-	Status   string
+	// Description says what the node is; the focus block carries it.
+	Description string
+	Status      string
 	// Deadline is the node's commitment. Nil means none.
 	Deadline *time.Time
 	// Acceptance is the sentence that says what done means; OwnerName is
