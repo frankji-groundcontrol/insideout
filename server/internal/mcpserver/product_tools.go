@@ -87,6 +87,7 @@ func addProductTools(s *server.MCPServer, api string) {
 		})
 	addDraftTools(addTextTool, strReq)
 	addRoadmapTreeTools(addTextTool, strReq, strOpt)
+	addProjectTools(addTextTool, strReq, strOpt)
 	addTextTool("guide", "Scaffold the repo-side insideout.yaml matching guide for a project's roadmap; the file content to commit at the repo root is the text between the <prd_data> tags",
 		[]mcp.ToolOption{strReq("project_id", "project id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

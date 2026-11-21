@@ -85,8 +85,8 @@ insideout reset-password                            # paste link/token + new pas
 | Area | Verbs |
 | --- | --- |
 | Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `logout`, `forgot-password <email>`, `reset-password` |
-| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `join <code>`, `projects create --title [--desc] <ws-id>` |
-| Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
+| Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `workspace update [--title] [--description D\|clear] [--cover URL\|clear] <ws>`, `join <code>`, `projects create --title [--desc] <ws-id>`, `project update [--title] [--description D\|clear] [--status planning\|active\|paused\|done\|archived] [--owner user-id\|me\|clear] <proj>`, `project delete <proj>` (workspace admins), `update add --kind progress\|blocker\|note --content C <proj>` |
+| Read surface | `whoami`, `workspaces`, `workspace <ws>`, `projects <ws>`, `project <proj>`, `updates [--before c] [--limit n] <proj>`, `prds <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>` (without `--content` the body is kept), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
 | Roadmap | `roadmap list [--root node] <proj>` (with `--root`, that node and the nodes below it), `roadmap add`, `roadmap update [--title] [--description D\|clear] [--status] [--deadline RFC3339\|clear] [--acceptance A\|clear] [--owner user-id\|me\|clear] [--completion-reason S\|clear] <node>`, `roadmap move [--parent id \| --root] [--position n] <node>` (no `--parent` keeps the parent; the MCP `roadmap_move` takes `parent_id` `"root"` for a root), `roadmap delete [--force] <node>` (a branch holding evidence or done or validated nodes is refused with the counts it would erase; `--force` deletes it anyway), `roadmap progress [--root node] <proj>`, `roadmap presence <proj>` |
@@ -102,6 +102,13 @@ Flags precede positional ids (Go convention). Statuses are
 `locked|pending|in_progress|done`; audiences are
 `decision|management|delivery|validation`.
 
+Every request has a deadline: 5 minutes for the two calls that wait on a model
+(`POST /prds/{id}/build` and `POST /roadmap/{id}/expand`), 20 seconds for the
+rest, and an MCP tool call is bound by the same numbers. Ctrl-C (or SIGTERM)
+ends the request in flight and the command with status 130 and
+`insideout: interrupted`; a command still running 400 ms later, or a second
+signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
+
 ### Absent, empty and clear
 
 Every edit verb follows one rule on the CLI and on MCP: a flag or argument you
@@ -111,25 +118,22 @@ field as it is; the literal word `clear` clears a field that can be empty
 or status cannot be cleared. The CLI flags and the MCP arguments fill the same
 request struct in `server/internal/apiclient` (`apiclient.PatchText`).
 
-Every request has a deadline: 5 minutes for the two calls that wait on a model
-(`POST /prds/{id}/build` and `POST /roadmap/{id}/expand`), 20 seconds for the
-rest, and an MCP tool call is bound by the same numbers. Ctrl-C (or SIGTERM)
-ends the request in flight and the command with status 130 and
-`insideout: interrupted`; a command still running 400 ms later, or a second
-signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
+### Lists, paging and the rest of the contract
 
-### REST routes without a verb yet
-
-- `GET /api/v1/workspaces/{id}/prds` lists every PRD of a workspace to its
-  members, newest first: `id`, `title`, `status`, `authorId`, `authorName`,
-  `projectId` (null until built) and `updatedAt`. An agent token may read it.
-  Every project view carries `prdId`, the PRD it was built from, or null.
-- `GET /api/v1/projects/{pid}` embeds the newest 50 updates and a
-  `nextCursor` (null when no older update exists).
-  `GET /api/v1/projects/{pid}/updates?before=<nextCursor>&limit=<1..100>`
-  answers `{"updates": [...], "nextCursor": ...}` with the next page; without
-  `before` it starts from the newest, and `limit` defaults to 50. An agent
-  token may read it.
+- `prds <ws>` (MCP `prd_list`, `GET /api/v1/workspaces/{id}/prds`) lists
+  every PRD of a workspace to its members, newest first: `id`, `title`,
+  `status`, `authorId`, `authorName`, `projectId` (null until built) and
+  `updatedAt`. Every project view carries `prdId`, the PRD it was built from,
+  or null.
+- `project <id>` (`GET /api/v1/projects/{pid}`) embeds the newest 50 updates
+  and a `nextCursor` (null when no older update exists). `updates [--before
+  <nextCursor>] [--limit 1..100] <proj>` (MCP `project_updates` with `before`
+  and `limit`, `GET /api/v1/projects/{pid}/updates`) answers
+  `{"updates": [...], "nextCursor": ...}` with the next page; without
+  `before` it starts from the newest, and `limit` defaults to 50.
+- `project update` and `workspace update` read the row first, because the
+  server rewrites title, description and status on every PATCH; a flag left
+  out is sent as it was read.
 - `GET /api/v1/roadmap/{nid}/evidence` (the `evidence` verb) answers 404
   for a node that does not exist or that you cannot see. `createdAt` is a
   timestamp like every other, and a validation observation's `observedAt`

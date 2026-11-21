@@ -35,8 +35,12 @@ var cliVerbs = []cliVerb{
 	{groupAccount, "whoami", "show the signed-in user"},
 
 	{groupWork, "workspaces", "list workspaces (workspaces create --title T)"},
+	{groupWork, "workspace", "show a workspace (workspace update edits its title, description or cover)"},
 	{groupWork, "join", "join a workspace with its workspace code"},
 	{groupWork, "projects", "list a workspace's projects (projects create --title T <workspace-id>)"},
+	{groupWork, "project", "show a project (project update edits it, project delete removes it)"},
+	{groupWork, "updates", "page through a project's updates (--before the nextCursor)"},
+	{groupWork, "update", "post a progress, blocker or note update to a project (update add)"},
 	{groupWork, "ideas", "list a workspace's ideas"},
 	{groupWork, "idea", "create, update, delete or convert an idea; decide a proposal"},
 	{groupWork, "evidence", "show the evidence behind a roadmap node"},
@@ -44,6 +48,7 @@ var cliVerbs = []cliVerb{
 	{groupWork, "sync", "pull a project's GitHub activity into its roadmap"},
 	{groupWork, "guide", "print or write a project's insideout.yaml guide"},
 
+	{groupPRD, "prds", "list a workspace's PRDs, newest first"},
 	{groupPRD, "prd", "show a PRD (prd update edits its title, sections or status)"},
 	{groupPRD, "view", "render a PRD for an audience (--export FILE writes markdown)"},
 	{groupPRD, "readiness", "report how ready a PRD is to commit"},

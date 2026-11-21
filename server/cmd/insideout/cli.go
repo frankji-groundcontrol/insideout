@@ -92,9 +92,13 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		switch cmd + " " + rest[0] {
 		case "idea update", "idea delete", "prd update", "workspaces create", "projects create":
 			return runCrudCommand(cmd+" "+rest[0], rest[1:])
+		case "project update", "project delete", "update add", "workspace update":
+			return runProjectCommand(cmd+" "+rest[0], rest[1:])
 		}
 	}
 	switch cmd {
+	case "project", "updates", "update", "workspace", "prds":
+		return runProjectCommand(cmd, rest)
 	case "setup":
 		return runSetupCommand(rest)
 	case "health":
