@@ -39,6 +39,12 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 	if u, err := uuid.Parse(focus); err == nil {
 		focus = u.String() // the form node ids are compared in
 	}
+	// A root-scoped agent token is briefed on its root by default, when the
+	// root is a node of this project (rv5-TREEB-05).
+	defaulted := false
+	if root := RootOf(r.Context()); focus == "" && root != nil {
+		focus, defaulted = root.String(), true
+	}
 
 	project, err := s.store.GetProjectForMember(r.Context(), pid, userID)
 	if errors.Is(err, store.ErrNotFound) {
@@ -86,6 +92,9 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 	}
 	// An unknown focus is refused, not ignored: an agent asked for one
 	// subtree and must not get the whole project back (rv5-TREEX-05).
+	if defaulted && !focusFound {
+		focus, in.FocusNodeID = "", ""
+	}
 	if focus != "" && !focusFound {
 		httpx.WriteError(w, http.StatusNotFound, "focus node not found in this project", "", nil)
 		return

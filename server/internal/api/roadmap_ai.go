@@ -129,6 +129,11 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 	if !ok {
 		return
 	}
+	// Replacing the whole tree is outside any one subtree.
+	if RootOf(r.Context()) != nil {
+		writeAgentScopeDenied(w)
+		return
+	}
 
 	var req confirmBuildRequest
 	if err := httpx.DecodeJSON(r, &req); err != nil && !errors.Is(err, io.EOF) {
@@ -189,7 +194,7 @@ type expandDraftView struct {
 func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
+	if !ok || s.agentRootRefuses(w, r, &nid) {
 		return
 	}
 	if s.planner == nil {
@@ -267,7 +272,7 @@ type confirmExpandRequest struct {
 func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
+	if !ok || s.agentRootRefuses(w, r, &nid) {
 		return
 	}
 

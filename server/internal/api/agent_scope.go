@@ -175,22 +175,3 @@ func writeAgentScopeDenied(w http.ResponseWriter) {
 	httpx.WriteError(w, http.StatusForbidden,
 		"this needs your own signed-in session; an agent token cannot do it", "agent_scope_denied", nil)
 }
-
-// handleAgentToken trades the caller's full session for an agent-scope access
-// token: same user, same lifetime as an access token, no cookie and no refresh
-// token. insideout-mcp calls it so the tools run on a token that cannot decide,
-// commit or administer. The route is human-only (agentRoutePolicy), so an agent
-// token can never mint another one.
-func (s *Server) handleAgentToken(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserID(r.Context())
-	token, expires, err := s.tokens.MintAgentToken(userID)
-	if err != nil {
-		s.log.Error("mint agent token", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	w.Header().Set("Cache-Control", "no-store")
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"accessToken": token, "expiresAt": expires, "scope": string(auth.ScopeAgent),
-	})
-}

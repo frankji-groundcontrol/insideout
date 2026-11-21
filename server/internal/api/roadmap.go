@@ -143,6 +143,9 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
+	if s.agentRootRefuses(w, r, parentID) {
+		return
+	}
 
 	n, err := s.store.CreateRoadmapNode(r.Context(), userID, pid, parentID, req.Title, req.Description)
 	if errors.Is(err, store.ErrNotFound) {
@@ -185,7 +188,7 @@ type updateRoadmapNodeRequest struct {
 func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
+	if !ok || s.agentRootRefuses(w, r, &nid) {
 		return
 	}
 	var req updateRoadmapNodeRequest

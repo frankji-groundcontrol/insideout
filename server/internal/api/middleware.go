@@ -170,14 +170,15 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			httpx.WriteError(w, http.StatusUnauthorized, "authentication required", "", nil)
 			return
 		}
-		userID, scope, err := s.tokens.VerifyToken(token)
+		v, err := s.tokens.Verify(token)
 		if err != nil {
 			httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired session", "", nil)
 			return
 		}
-		setUserID(r.Context(), userID)
-		setScope(r.Context(), scope)
-		if scope == auth.ScopeAgent && !agentMayCall(r) {
+		setUserID(r.Context(), v.UserID)
+		setScope(r.Context(), v.Scope)
+		setRoot(r.Context(), v.Root)
+		if v.Scope == auth.ScopeAgent && !agentMayCall(r) {
 			writeAgentScopeDenied(w)
 			return
 		}

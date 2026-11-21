@@ -53,6 +53,9 @@ func (s *Server) handleMoveRoadmapNode(w http.ResponseWriter, r *http.Request) {
 		position = *req.Position
 	}
 
+	if err == nil && s.agentRootRefuses(w, r, &nid, parentID) {
+		return
+	}
 	var n *store.RoadmapNode
 	if err == nil {
 		n, err = s.store.MoveRoadmapNode(r.Context(), userID, nid, parentID, position)

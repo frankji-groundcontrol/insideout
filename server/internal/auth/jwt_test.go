@@ -106,7 +106,7 @@ func TestMintAgentTokenCarriesTheAgentScopeAndTheAccessLifetime(t *testing.T) {
 	userID := uuid.New()
 	before := time.Now()
 
-	token, expires, err := issuer.MintAgentToken(userID)
+	token, expires, err := issuer.MintAgentToken(userID, nil)
 	if err != nil {
 		t.Fatalf("MintAgentToken: %v", err)
 	}
@@ -146,6 +146,36 @@ func TestAFullSessionCarriesNoScopeClaim(t *testing.T) {
 	legacy := signWithScope(t, userID, "")
 	if _, scope, err := issuer.VerifyToken(legacy); err != nil || scope != ScopeFull {
 		t.Errorf("VerifyToken on a scope-less token = %q, %v; want full", scope, err)
+	}
+}
+
+// rv5-TREEB-05: an agent token may carry a root node; nothing else may.
+func TestAnAgentTokenCarriesItsRootAndOnlyAnAgentTokenMay(t *testing.T) {
+	issuer := NewTokenIssuer(testSecret, time.Minute)
+	userID, root := uuid.New(), uuid.New()
+	token, _, err := issuer.MintAgentToken(userID, &root)
+	if err != nil {
+		t.Fatalf("MintAgentToken: %v", err)
+	}
+	v, err := issuer.Verify(token)
+	if err != nil || v.UserID != userID || v.Scope != ScopeAgent || v.Root == nil || *v.Root != root {
+		t.Fatalf("Verify = %+v, %v; want the user, agent scope and the root", v, err)
+	}
+	sign := func(claims jwt.MapClaims) string {
+		claims["sub"], claims["exp"] = userID.String(), time.Now().Add(time.Minute).Unix()
+		s, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(testSecret))
+		if err != nil {
+			t.Fatalf("sign: %v", err)
+		}
+		return s
+	}
+	for name, raw := range map[string]string{
+		"full token with a root": sign(jwt.MapClaims{"root": root.String()}),
+		"agent token, bad root":  sign(jwt.MapClaims{"scope": "agent", "root": "not-a-node"}),
+	} {
+		if _, err := issuer.Verify(raw); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
 	}
 }
 

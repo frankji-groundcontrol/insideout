@@ -123,6 +123,23 @@ func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (
 	return n, nil
 }
 
+// NodeInSubtree reports whether nodeID is rootID or lies below it, as the
+// actor sees the tree (an invisible node is in no subtree). It is the check
+// behind a root-scoped agent token (rv5-TREEB-05).
+func (s *Store) NodeInSubtree(ctx context.Context, actorID, rootID, nodeID uuid.UUID) (bool, error) {
+	var in bool
+	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		return tx.QueryRow(ctx, `
+			WITH RECURSIVE up AS (
+				SELECT id, parent_id FROM insideout.roadmap_nodes WHERE id = $2
+				UNION
+				SELECT n.id, n.parent_id FROM insideout.roadmap_nodes n JOIN up ON n.id = up.parent_id
+			)
+			SELECT EXISTS (SELECT 1 FROM up WHERE id = $1)`, rootID, nodeID).Scan(&in)
+	})
+	return in, err
+}
+
 // RoadmapNodeRef names a node in a path.
 type RoadmapNodeRef struct {
 	ID    uuid.UUID
