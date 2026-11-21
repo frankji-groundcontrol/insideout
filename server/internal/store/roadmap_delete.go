@@ -49,7 +49,7 @@ func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 			return nil
 		}
 		_, err := addProjectUpdateTx(ctx, tx, actorID, projectID, "note",
-			fmt.Sprintf("Deleted %q (%d nodes), discarding %s", title, c.LiveCount, discardedHistory(&c)))
+			fmt.Sprintf("Deleted %q (%d nodes), discarding %s", title, c.LiveCount, discardedHistory(&c)), nil)
 		return err
 	})
 	if err != nil {

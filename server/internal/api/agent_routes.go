@@ -163,6 +163,8 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		Kind      string `json:"kind"`
 		Summary   string `json:"summary"`
 		Detail    string `json:"detail"`
+		// NodeID (optional) is the node the proposal is about.
+		NodeID string `json:"nodeId"`
 		// Items are structured actions a human may apply on acceptance
 		// (proposal→structure application). Optional, max 10.
 		Items []struct {
@@ -221,12 +223,25 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "at most 10 items per proposal", "", nil)
 		return
 	}
+	// A proposal about a node is open to anyone who may write that node (owner
+	// decision 7); a root-scoped agent token must name one inside its root.
+	var nid *uuid.UUID
+	if req.NodeID != "" {
+		id, ok := parseUUIDParam(w, "nodeId", req.NodeID)
+		if !ok {
+			return
+		}
+		nid = &id
+	}
+	if s.agentRootRefuses(w, r, nid) {
+		return
+	}
 	// The proposal and its items are one transaction: both land or neither.
-	u, err := s.store.AddProposal(r.Context(), userID, pid, content, items)
+	u, err := s.store.AddProposal(r.Context(), userID, pid, nid, content, items)
 	if err != nil {
 		s.writeStoreError(w, "agent propose", err, errMsgs{
-			store.ErrNotFound:  "project not found",
-			store.ErrForbidden: "only the project owner or a workspace admin can propose a change",
+			store.ErrNotFound:  "project or node not found",
+			store.ErrForbidden: "only the project owner or a workspace admin can propose a change to the whole plan; anyone who may write a node can propose a change to that node or below it",
 		})
 		return
 	}

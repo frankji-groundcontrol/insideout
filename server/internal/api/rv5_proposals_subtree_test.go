@@ -82,6 +82,8 @@ func TestAProposalNodeMustBeInTheProject(t *testing.T) {
 	expect(t, "node of another project", status, body, http.StatusNotFound)
 	status, body = w.proposeOn(w.owner, uuid.New())
 	expect(t, "no such node", status, body, http.StatusNotFound)
+	status, body = w.proposeOn(w.outsider, w.card.ID)
+	expect(t, "a node the caller cannot see", status, body, http.StatusNotFound)
 	status, body = w.call(w.owner, http.MethodPost, "/api/v1/agent/propose",
 		`{"projectId":"`+w.project.ID.String()+`","kind":"scope","summary":"x","nodeId":"nope"}`)
 	expect(t, "malformed node id", status, body, http.StatusBadRequest)

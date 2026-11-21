@@ -217,7 +217,7 @@ func TestAddProposal_AnItemTheDatabaseRefusesLeavesNoProposal(t *testing.T) {
 	}
 	items := []ProposalItem{{Action: "add_node", Title: "Intake"}, {Action: "add_node", Title: poison}}
 
-	if _, err := st.AddProposal(ctx, f.owner.ID, f.proj.ID, "[agent proposal/structure] refused", items); err == nil {
+	if _, err := st.AddProposal(ctx, f.owner.ID, f.proj.ID, nil, "[agent proposal/structure] refused", items); err == nil {
 		t.Fatalf("AddProposal returned no error although the database refuses item 2")
 	}
 	if n := proposals(); n != 1 {
@@ -225,7 +225,7 @@ func TestAddProposal_AnItemTheDatabaseRefusesLeavesNoProposal(t *testing.T) {
 	}
 
 	lift()
-	u, err := st.AddProposal(ctx, f.owner.ID, f.proj.ID, "[agent proposal/structure] fine", items)
+	u, err := st.AddProposal(ctx, f.owner.ID, f.proj.ID, nil, "[agent proposal/structure] fine", items)
 	if err != nil {
 		t.Fatalf("AddProposal once the cause is gone: %v", err)
 	}

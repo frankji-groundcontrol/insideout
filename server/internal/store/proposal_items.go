@@ -40,15 +40,30 @@ func addProposalItemsTx(ctx context.Context, tx pgx.Tx, updateID uuid.UUID, item
 	return nil
 }
 
-// AddProposal files an agent proposal (the project_updates row, plan writers
-// only) together with its structured items in one transaction, so a failure
-// part-way cannot leave a proposal without its items for a human to accept.
-// The items' UpdateID is ignored: they belong to the update this call creates.
-func (s *Store) AddProposal(ctx context.Context, actorID, projectID uuid.UUID, content string, items []ProposalItem) (*ProjectUpdate, error) {
+// AddProposal files an agent proposal together with its structured items in
+// one transaction, so a failure part-way cannot leave a proposal without its
+// items for a human to accept. Without a node only a plan writer may file it;
+// with one, anyone who may write that node may (owner decision 7), and the
+// node must be in the project. The items' UpdateID is ignored: they belong to
+// the update this call creates.
+func (s *Store) AddProposal(ctx context.Context, actorID, projectID uuid.UUID, nodeID *uuid.UUID, content string, items []ProposalItem) (*ProjectUpdate, error) {
 	var u *ProjectUpdate
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
+		if nodeID != nil {
+			var nodeProject uuid.UUID
+			err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, *nodeID).Scan(&nodeProject)
+			if errors.Is(err, pgx.ErrNoRows) || (err == nil && nodeProject != projectID) {
+				return ErrNotFound
+			}
+			if err != nil {
+				return err
+			}
+			if err := requireNodeWriter(ctx, tx, *nodeID, actorID); err != nil {
+				return err
+			}
+		}
 		var err error
-		if u, err = addProjectUpdateTx(ctx, tx, actorID, projectID, "agent_proposal", content); err != nil {
+		if u, err = addProjectUpdateTx(ctx, tx, actorID, projectID, "agent_proposal", content, nodeID); err != nil {
 			return err
 		}
 		return addProposalItemsTx(ctx, tx, u.ID, items)
