@@ -76,13 +76,13 @@ def backend_tree_matches_layout(failures):
         fail(failures, "backend.md's cmd/insideout line omits the cli*.go CLI/setup layer")
 
 
-def main_comment_defers_to_cli_go(failures):
-    """ARCH-04: main.go's doc comment points at cli.go's dispatch instead of
+def main_comment_defers_to_cli_dispatch(failures):
+    """ARCH-04: main.go's doc comment points at cli_dispatch.go's dispatch instead of
     enumerating product CLI verbs that go stale."""
     src = read("server/cmd/insideout/main.go")
     comment = src[: src.index("package main")]
-    if "cli.go" not in comment:
-        fail(failures, "cmd/insideout/main.go's doc comment does not point at cli.go's dispatch")
+    if "cli_dispatch.go" not in comment:
+        fail(failures, "cmd/insideout/main.go's doc comment does not point at cli_dispatch.go's dispatch")
     for match in re.finditer(r"//\s*insideout (login|whoami|workspaces|projects|prd)\b", comment):
         fail(failures, f"main.go still enumerates CLI verb '{match.group(1)}' in its doc comment")
 
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     client_readme_matches_handoff(failures)
     board_row_matches_ci(failures)
     backend_tree_matches_layout(failures)
-    main_comment_defers_to_cli_go(failures)
+    main_comment_defers_to_cli_dispatch(failures)
     mcp_tool_counts(facts, failures)
     readme_quickstart_works_today(failures)
     product_baseline_scopes_sections(failures)

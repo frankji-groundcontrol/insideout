@@ -3,7 +3,7 @@ package main
 // cliVerb is one row of the verb inventory; cliVerbs is that inventory, in
 // `insideout help` print order. help.go prints it and answers "unknown
 // command" against it, and TestVerbTableMatchesDispatch fails when it and
-// the dispatch switches (runClientCommand below, main, runFrontDoor) drift
+// the dispatch switches (runClientCommand in cli_dispatch.go, main, runFrontDoor) drift
 // apart — hand-written verb lists went stale (review-3 ARCH-04).
 type cliVerb struct{ group, name, summary string }
 

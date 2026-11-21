@@ -263,7 +263,8 @@ def cli_and_docs_name_the_two_codes(failures):
             "server/internal/setup/local/env.go"):
         fail(failures, "server/cmd/insideout/cli_setup.go hosted blurb tells the reader to run "
                        "`insideout setup --local`, which exits 2 when there is no repository checkout")
-    surfaces = ("server/cmd/insideout/cli.go", "server/cmd/insideout/cli_verbs.go", "server/cmd/insideout/cli_auth.go",
+    surfaces = ("server/cmd/insideout/cli.go", "server/cmd/insideout/cli_dispatch.go", "server/cmd/insideout/cli_verbs.go",
+                "server/cmd/insideout/cli_auth.go",
                 "server/cmd/insideout/cli_setup.go", "docs/usage/cli-mcp-and-guidance.md",
                 "docs/architecture/database-and-rls.md", "README.md", "docs/usage/installation.md")
     for where in surfaces:

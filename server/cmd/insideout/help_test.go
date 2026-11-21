@@ -88,7 +88,7 @@ func TestHelpListsEveryDispatchedVerb(t *testing.T) {
 	if res.code != 0 {
 		t.Fatalf("insideout help: exit %d\n%s", res.code, res.output())
 	}
-	for _, verb := range dispatchedVerbs(t, "cli.go:runClientCommand", "main.go:main") {
+	for _, verb := range dispatchedVerbs(t, "cli_dispatch.go:runClientCommand", "main.go:main") {
 		if !strings.Contains(res.stdout, "\n  "+verb+" ") {
 			t.Errorf("insideout help does not list the verb %q", verb)
 		}
@@ -146,7 +146,7 @@ func dispatchedVerbs(t *testing.T, sources ...string) []string {
 // and a table row nothing dispatches is a lie in the help text.
 func TestVerbTableMatchesDispatch(t *testing.T) {
 	dispatched := map[string]bool{}
-	for _, v := range dispatchedVerbs(t, "cli.go:runClientCommand", "main.go:main", "help.go:runFrontDoor") {
+	for _, v := range dispatchedVerbs(t, "cli_dispatch.go:runClientCommand", "main.go:main", "help.go:runFrontDoor") {
 		dispatched[v] = true
 	}
 	listed := map[string]bool{}

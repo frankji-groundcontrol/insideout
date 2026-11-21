@@ -14,7 +14,7 @@ for the token an MCP process runs under see [agent token scope](agent-token-scop
 | Surface | Code (under `server/`) | Role |
 |---|---|---|
 | `insideout`, operator verbs | `cmd/insideout/main.go`, `seed.go`, `promote_admin.go` | No argument runs the API server; `migrate`, `seed` and `promote-admin` run beside it. These are the only verbs that load `config.Load()` (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`) and open a pool. |
-| `insideout`, client verbs | `cmd/insideout/cli*.go` | The product CLI, one verb per row of `cliVerbs` in `cli.go`. `runClientCommand` dispatches them before any server environment or database is touched; `help`, `version` and a mistyped verb are answered by `runFrontDoor` for the same reason. |
+| `insideout`, client verbs | `cmd/insideout/cli*.go` | The product CLI, one verb per row of `cliVerbs` in `cli_verbs.go`, each file named for the verbs it holds. `runClientCommand` (`cli_dispatch.go`) dispatches them before any server environment or database is touched; `help`, `version` and a mistyped verb are answered by `runFrontDoor` for the same reason. |
 | `insideout setup` | `cmd/insideout/cli_setup*.go` (flags and `--check`), `internal/setup/` | The first-run front door: a catalog of the variables InsideOut knows, the `.env` writer, a pure flow state machine, native probes and the huh form. Its hosted branch signs in and saves the session through `clientconfig.Save`; its local branch is the `internal/setup/local` engine (role provisioning, `.env` through the `envwrite` package, bundled Postgres, migrations, boot offer). `scripts/setup.sh` only forwards its flags here. |
 | `insideout-mcp` | `cmd/insideout-mcp/`, `internal/mcpserver/` | The stdio MCP server: one tool per CLI verb over the same contract, an agent profile, and fenced results. `main` only wires stdio; the server is built (and tested) in `mcpserver.Build`. |
 | shared client | `internal/apiclient/` | The HTTP client both binaries speak through: typed calls, the 401 renewal, the agent-token exchange, the hosted default. |
@@ -26,7 +26,7 @@ contract. The plan that shaped the CLI and MCP projections is
 
 ## One contract, three projections
 
-`cliVerbs` in `cmd/insideout/cli.go` is the verb inventory: `insideout help`
+`cliVerbs` in `cmd/insideout/cli_verbs.go` is the verb inventory: `insideout help`
 prints it, and `TestVerbTableMatchesDispatch` fails when it and the dispatch
 switches drift apart. The MCP server registers one tool per verb, each
 resource from its own `server/internal/mcpserver/tools_*.go` file through one
@@ -39,7 +39,7 @@ review 4 records it as rv4-ARCH-07 in
 [the architect review](../review/2026-10-18-multirole-4/10-architect.md). Ask
 `tools/list` for the MCP tool set; a count written in prose drifted twice.
 
-A client verb runs under one context (`runInterruptible` in `cli.go`): the
+A client verb runs under one context (`runInterruptible` in `cli_interrupt.go`): the
 first Ctrl-C or SIGTERM cancels it, the request in flight aborts, and the
 command ends with status 130 and `insideout: interrupted` on stderr. A command
 that is still running 400 ms later, or a second signal, ends the process at once.

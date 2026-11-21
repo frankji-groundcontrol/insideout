@@ -9,8 +9,8 @@
 //	insideout version     print the build version (also --version)
 //
 // The product CLI verbs (login, ideas, prd, roadmap, setup, …) dispatch
-// from runClientCommand in cli.go before any server env or DB is touched;
-// the cliVerbs table there is the verb inventory `help` prints — verbs
+// from runClientCommand in cli_dispatch.go before any server env or DB is touched;
+// the cliVerbs table (cli_verbs.go) is the verb inventory `help` prints — verbs
 // enumerated here went stale (review-3 ARCH-04), so this comment
 // deliberately does not list them. An unknown verb exits 2 (help.go).
 package main
