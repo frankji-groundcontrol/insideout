@@ -60,7 +60,8 @@ read time. A node reaching done writes a `node_done` feed row. Moving an
 ownerless leaf to `in_progress` makes the acting human its owner (the feed row
 keeps the kind `node_delegated` but reads "Took on", since the actor assigned
 it to themself), and a build
-seeds its first in-progress leaf owned by the builder, so work in progress has
+seeds its first in-progress leaf owned by the builder (one `delegate`
+assignment row by the builder, no feed row), so work in progress has
 one owner (`claimStartedLeaf`, `server/internal/store/roadmap_completion.go`).
 A member who leaves or is removed from a workspace stops owning its nodes in the
 same transaction, each recorded as a `cleared` row and a `node_handed_back`

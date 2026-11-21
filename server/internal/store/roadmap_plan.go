@@ -129,16 +129,23 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 		// Seed the first leaf in_progress with a deadline, so a freshly
 		// built tree shows on Progress instead of filtering out entirely
 		// (every new node would otherwise be pending + undeadlined). The
-		// builder owns it: work in progress has one human owner (rv5-FEAT-05).
+		// builder owns it: work in progress has one human owner (rv5-FEAT-05),
+		// on the record as a delegate row by the builder (no feed row), so
+		// hand-back and history agree.
 		if _, err := tx.Exec(ctx, `
-			UPDATE insideout.roadmap_nodes leaf
-			SET status = 'in_progress', deadline = now() + interval '7 days', owner_user_id = $2
-			WHERE leaf.id = (
-				SELECT n.id FROM insideout.roadmap_nodes n
-				WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
-				ORDER BY n.created_at, n.position
-				LIMIT 1
-			)`, projectID, actorID); err != nil {
+			WITH leaf AS (
+				UPDATE insideout.roadmap_nodes leaf
+				SET status = 'in_progress', deadline = now() + interval '7 days', owner_user_id = $2
+				WHERE leaf.id = (
+					SELECT n.id FROM insideout.roadmap_nodes n
+					WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
+					ORDER BY n.created_at, n.position
+					LIMIT 1
+				)
+				RETURNING leaf.id
+			)
+			INSERT INTO insideout.roadmap_node_assignments (node_id, to_user_id, assigned_by, kind)
+			SELECT id, $2, $2, 'delegate' FROM leaf`, projectID, actorID); err != nil {
 			return err
 		}
 		return nil
