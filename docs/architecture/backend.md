@@ -193,7 +193,10 @@ Domain handlers live in `internal/api`, grouped by resource:
   `agent_root.go` the token mint and the root-scoped token's subtree check)
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
   `project_updates.go`, `ideas.go`, `guide.go`
-- PRDs: `prd*.go` (PRDs, audience views, readiness, Commit), `conversations.go`
+- PRDs: `prd*.go` (PRDs, audience views, readiness, Commit; `prd_list.go`
+  the workspace's PRD list, `GET /workspaces/{id}/prds`, member-visible and
+  agent-allowed; a project view's `prdId` names the PRD it was built from),
+  `conversations.go`
   (the coach's SSE turns, the stage confirm and the human-only `stage/decline`
   route, and the conversation view with `criticSkipped` and `criticRounds`),
   `conversations_trust.go` (the parked finding resolutions the view lists as

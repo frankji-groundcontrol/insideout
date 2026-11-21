@@ -17,6 +17,7 @@ func (s *Server) registerPrdRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/prds/{id}/commits", s.requireAuth(s.handleListPrdCommits))
 	mux.HandleFunc("GET /api/v1/prds/{id}/readiness", s.requireAuth(s.handlePrdReadiness))
 	mux.HandleFunc("GET /api/v1/prds/{id}/view", s.requireAuth(s.handlePrdView))
+	mux.HandleFunc("GET /api/v1/workspaces/{id}/prds", s.requireAuth(s.handleListWorkspacePrds))
 	mux.HandleFunc("GET /api/v1/prds/{id}", s.requireAuth(s.handleGetPrd))
 	mux.HandleFunc("PATCH /api/v1/prds/{id}", s.requireAuth(s.handleUpdatePrd))
 	mux.HandleFunc("GET /api/v1/prds/{id}/revisions", s.requireAuth(s.handleListRevisions))

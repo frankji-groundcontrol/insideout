@@ -26,6 +26,9 @@ type Project struct {
 	// (insideout._is_plan_writer: its owner while a member, or a workspace
 	// admin), the right a root node or a rebuild needs. Reads compute it.
 	CanWritePlan bool
+	// PrdID is the PRD the project was built from, nil for a project made
+	// by hand (rv5-PARB-03). Reads compute it.
+	PrdID *uuid.UUID
 }
 
 // ProjectWithLatest is a project annotated with its most recent update (if
@@ -48,10 +51,16 @@ func scanProject(row pgx.Row) (*Project, error) {
 	return &p, err
 }
 
-// markPlanWriter computes p.CanWritePlan for the actor inside the caller's
-// transaction, from the same SQL rule the roadmap policies use.
-func markPlanWriter(ctx context.Context, tx pgx.Tx, p *Project, actorID uuid.UUID) error {
-	return tx.QueryRow(ctx, `SELECT insideout._is_plan_writer($1, $2)`, p.ID, actorID).Scan(&p.CanWritePlan)
+// prdOfProject is the PRD a project was built from, as a column expression
+// over the project alias p (PrdIDForProject's rule).
+const prdOfProject = `(SELECT id FROM insideout.prds WHERE project_id = p.id ORDER BY created_at DESC LIMIT 1)`
+
+// markViewerFields computes the read-only fields of p inside the caller's
+// transaction: CanWritePlan, from the same SQL rule the roadmap policies use,
+// and PrdID.
+func markViewerFields(ctx context.Context, tx pgx.Tx, p *Project, actorID uuid.UUID) error {
+	return tx.QueryRow(ctx, `SELECT insideout._is_plan_writer(p.id, $2), `+prdOfProject+`
+		FROM (SELECT $1::uuid AS id) p`, p.ID, actorID).Scan(&p.CanWritePlan, &p.PrdID)
 }
 
 // CreateProject requires actorID to currently be a workspace member,
@@ -73,7 +82,7 @@ func (s *Store) CreateProject(ctx context.Context, actorID, workspaceID uuid.UUI
 		if p, scanErr = scanProject(row); scanErr != nil {
 			return scanErr
 		}
-		return markPlanWriter(ctx, tx, p, actorID)
+		return markViewerFields(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err
@@ -94,7 +103,7 @@ func (s *Store) ListProjectsForWorkspace(ctx context.Context, actorID, workspace
 
 		rows, err := tx.Query(ctx, `
 			SELECT `+qualifyColumns("p", projectColumns)+`,
-			       lu.kind, lu.content, lu.created_at, insideout._is_plan_writer(p.id, $2)
+			       lu.kind, lu.content, lu.created_at, insideout._is_plan_writer(p.id, $2), `+prdOfProject+`
 			FROM insideout.projects p
 			LEFT JOIN LATERAL (
 				SELECT kind, content, created_at
@@ -115,7 +124,7 @@ func (s *Store) ListProjectsForWorkspace(ctx context.Context, actorID, workspace
 		for rows.Next() {
 			var pw ProjectWithLatest
 			if err := rows.Scan(&pw.ID, &pw.WorkspaceID, &pw.Title, &pw.Description, &pw.OwnerID, &pw.CreatedBy, &pw.Status, &pw.RepoURL, &pw.CreatedAt, &pw.UpdatedAt,
-				&pw.LatestUpdateKind, &pw.LatestUpdateContent, &pw.LatestUpdateAt, &pw.CanWritePlan); err != nil {
+				&pw.LatestUpdateKind, &pw.LatestUpdateContent, &pw.LatestUpdateAt, &pw.CanWritePlan, &pw.PrdID); err != nil {
 				return err
 			}
 			out = append(out, pw)
@@ -144,7 +153,7 @@ func (s *Store) GetProjectForMember(ctx context.Context, projectID, viewerID uui
 		if p, scanErr = scanProject(row); scanErr != nil {
 			return scanErr
 		}
-		return markPlanWriter(ctx, tx, p, viewerID)
+		return markViewerFields(ctx, tx, p, viewerID)
 	})
 	if err != nil {
 		return nil, err
@@ -244,7 +253,7 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 		if p, upErr = updateProjectRow(ctx, tx, projectID, write); upErr != nil {
 			return upErr
 		}
-		return markPlanWriter(ctx, tx, p, actorID)
+		return markViewerFields(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err

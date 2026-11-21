@@ -109,6 +109,21 @@ ends the request in flight and the command with status 130 and
 `insideout: interrupted`; a command still running 400 ms later, or a second
 signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
 
+### REST routes without a verb yet
+
+- `GET /api/v1/workspaces/{id}/prds` lists every PRD of a workspace to its
+  members, newest first: `id`, `title`, `status`, `authorId`, `authorName`,
+  `projectId` (null until built) and `updatedAt`. An agent token may read it.
+  Every project view carries `prdId`, the PRD it was built from, or null.
+
+### Errors
+
+Every error body is `{"error": "<message>", "code": "<code>"}`. The code is
+lowercase snake_case: a specific one where a client acts on it
+(`agent_scope_denied`, `app_throttle`, `github_repo_not_visible`), otherwise
+the status's name (`not_found`, `bad_request`). Extra keys are camelCase
+(`retryAfterSeconds`, `liveCount`).
+
 ## MCP server
 
 `server/cmd/insideout-mcp` is a stdio MCP server exposing the same

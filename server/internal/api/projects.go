@@ -39,6 +39,9 @@ type projectView struct {
 	// CanWritePlan: the caller may change the plan itself (add a root node,
 	// rebuild), so the web offers root-level "New item" only then.
 	CanWritePlan bool `json:"canWritePlan"`
+	// PrdID is the PRD the project was built from, null for a project made
+	// by hand (rv5-PARB-03).
+	PrdID *string `json:"prdId"`
 }
 
 // quietAfter is the board's quiet-project threshold (FEAT-01): an active
@@ -91,6 +94,7 @@ func projectResponse(p store.ProjectWithLatest, now time.Time) projectView {
 		LatestUpdateKind:    p.LatestUpdateKind,
 		LatestUpdateContent: previewRunes(p.LatestUpdateContent),
 		CanWritePlan:        p.CanWritePlan,
+		PrdID:               uuidString(p.PrdID),
 	}
 	if p.OwnerID != nil {
 		id := p.OwnerID.String()

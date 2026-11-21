@@ -45,7 +45,7 @@ func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID
 		if p, scanErr = scanProject(row); scanErr != nil {
 			return scanErr
 		}
-		return markPlanWriter(ctx, tx, p, actorID)
+		return markViewerFields(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err
