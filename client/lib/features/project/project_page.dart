@@ -210,6 +210,16 @@ class _ProjectPageState extends State<ProjectPage> {
                               onPressed: () =>
                                   context.go('/projects/${widget.id}/roadmap'),
                             ),
+                            if (snap.data!['prdId'] case final String prdId)
+                              BlockButton(
+                                label: l10n.t('project.openPrd'),
+                                icon: Icons.description_outlined,
+                                variant: BlockButtonVariant.secondary,
+                                onPressed: () {
+                                  _focus.rememberPrd(prdId);
+                                  context.go('/prd/$prdId');
+                                },
+                              ),
                             BlockButton(
                               label: l10n.t('project.edit'),
                               icon: Icons.edit_outlined,

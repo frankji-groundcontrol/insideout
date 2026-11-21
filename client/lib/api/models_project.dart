@@ -11,6 +11,9 @@ class Project {
     this.latestUpdateKind,
     this.latestUpdateContent,
     this.latestUpdateAt,
+    this.ownerId,
+    this.prdId,
+    this.canWritePlan = false,
   });
 
   final String id;
@@ -25,6 +28,15 @@ class Project {
   final String? latestUpdateContent;
   final String? latestUpdateAt;
 
+  /// The project owner: with workspace admins, the one who writes its plan.
+  final String? ownerId;
+
+  /// The PRD the project was built from; null for one made by hand.
+  final String? prdId;
+
+  /// Whether the caller may change the plan (owner or workspace admin).
+  final bool canWritePlan;
+
   factory Project.fromJson(Map<String, dynamic> j) => Project(
     id: j['id'] as String,
     workspaceId: j['workspaceId'] as String,
@@ -37,6 +49,38 @@ class Project {
     latestUpdateKind: j['latestUpdateKind'] as String?,
     latestUpdateContent: j['latestUpdateContent'] as String?,
     latestUpdateAt: j['latestUpdateAt'] as String?,
+    ownerId: j['ownerId'] as String?,
+    prdId: j['prdId'] as String?,
+    canWritePlan: (j['canWritePlan'] as bool?) ?? false,
+  );
+}
+
+/// One row of GET /workspaces/{id}/prds: every PRD of the workspace, so a
+/// teammate or the approving admin can find one they did not write.
+class WorkspacePrd {
+  WorkspacePrd({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.authorName,
+    required this.updatedAt,
+    this.projectId,
+  });
+
+  final String id;
+  final String title;
+  final String status;
+  final String authorName;
+  final String updatedAt;
+  final String? projectId;
+
+  factory WorkspacePrd.fromJson(Map<String, dynamic> j) => WorkspacePrd(
+    id: j['id'] as String,
+    title: j['title'] as String,
+    status: j['status'] as String,
+    authorName: (j['authorName'] as String?) ?? '',
+    updatedAt: j['updatedAt'] as String,
+    projectId: j['projectId'] as String?,
   );
 }
 

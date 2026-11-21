@@ -30,6 +30,13 @@ const enWorkspace = <String, String>{
   'workspace.deleteWorkspace': 'Delete this workspace',
   'workspace.deleteWorkspaceConfirm':
       'Delete this workspace? This cannot be undone.',
+  'workspace.prds': 'PRDs',
+  'workspace.prdsEmpty':
+      'No PRDs yet. Turn an idea into a PRD from the ideas wall.',
+  'workspace.prdBy': 'by {name}',
+  'workspace.prdProject': 'Project: {title}',
+  'workspace.prdLinked': 'Linked to a project',
+  'project.openPrd': 'Open PRD',
   'project.title': 'Projects',
   'project.newProject': 'New project',
   'project.namePlaceholder': 'Project name',

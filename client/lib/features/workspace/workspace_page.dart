@@ -22,6 +22,7 @@ import '../../widgets/guarded_action.dart';
 import 'block_refresh.dart';
 import 'board_project_card.dart';
 import 'quick_capture_fab.dart';
+import 'workspace_prd_list.dart';
 
 // N1: the square quick-capture FAB floats over the dock's top-right corner.
 // The body extends behind the dock (AppScaffold extendBody), so reserve the
@@ -269,6 +270,13 @@ class _WorkspacePageState extends State<WorkspacePage> {
                 const SizedBox(height: Cobalt.space3),
               ],
             ],
+            const SizedBox(height: Cobalt.space8),
+            // Keyed by the loaded list so a refresh re-reads the PRDs too.
+            WorkspacePrdList(
+              key: ObjectKey(data.projects),
+              workspaceId: widget.id,
+              projects: data.projects,
+            ),
           ],
         ),
       ),

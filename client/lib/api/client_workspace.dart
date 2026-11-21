@@ -42,6 +42,17 @@ mixin _WorkspaceVerbs on _ApiCore {
     );
   }
 
+  /// Every PRD of the workspace, newest first (rv5-FE-02).
+  Future<List<WorkspacePrd>> listWorkspacePrds(String workspaceId) async {
+    final res = await _dio.get('/workspaces/$workspaceId/prds');
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => WorkspacePrd.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
   Future<List<WorkspaceMember>> listMembers(String id) async {
     final res = await _dio.get('/workspaces/$id/members');
     return _parse(
