@@ -1,5 +1,12 @@
 # Historical records over the line budget (annotated-only growth)
 
+> **Closed 2026-11-21 as not applicable.** The [2026-11-21 responsibility
+> rule](../../CLAUDE.md) (review 5, COMP-05) replaced the ~350-line rule: source
+> code has one responsibility per file and shared file and function thresholds
+> ([config/code-budget.json](../../config/code-budget.json)); workflows, YAML
+> and prose have no line rule. These dated records are prose; the bounded fix
+> prompt below no longer applies.
+
 **Date:** 2026-10-11
 **Kind:** structural debt (line budget, policy-bound)
 **Files:**

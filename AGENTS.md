@@ -68,8 +68,12 @@ launching). The non-negotiables:
   [learning](docs/learning/README.md) for reusable lessons,
   [practices](docs/practices/README.md) for repeatable methods — plus the
   nearest README index for every added, moved, or retired record.
-- Keep implementation modular: files under ~350 lines, single
-  responsibility, no chunky monolithic scripts. A chunky or
+- Keep source code modular: one responsibility per file, split by
+  responsibility rather than trimmed to fit; functions under about 80
+  lines and files under one shared threshold, both in
+  [config/code-budget.json](config/code-budget.json) and guarded by
+  `server/internal/linebudget` and `client/test/line_budget_test.dart`.
+  No line rule for workflows, YAML or prose. A chunky or
   mixed-responsibility file that can't be split now gets a dated
   modularity issue in [docs/issues/](docs/issues/README.md) with the
   target structure and a bounded fix prompt.

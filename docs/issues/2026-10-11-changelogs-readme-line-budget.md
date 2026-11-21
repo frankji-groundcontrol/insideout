@@ -1,5 +1,12 @@
 # Changelogs README exceeds the line budget
 
+> **Closed 2026-11-21 as not applicable.** The [2026-11-21 responsibility
+> rule](../../CLAUDE.md) (review 5, COMP-05) replaced the ~350-line rule: source
+> code has one responsibility per file and shared file and function thresholds
+> ([config/code-budget.json](../../config/code-budget.json)); workflows, YAML
+> and prose have no line rule. A README index is prose, so its length is no
+> longer debt; split it only if it stops serving one purpose.
+
 **Date:** 2026-10-11
 **Kind:** structural debt (line-budget split)
 **File:** [`docs/changelogs/README.md`](README.md) — 473 lines against the

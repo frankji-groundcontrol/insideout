@@ -1,5 +1,15 @@
 # ci.yml is at its line budget, and two CI additions are waiting on it
 
+> **Closed 2026-11-21 as not applicable.** The [2026-11-21 responsibility
+> rule](../../CLAUDE.md) (review 5, COMP-05) replaced the ~350-line rule: source
+> code has one responsibility per file and shared file and function thresholds
+> ([config/code-budget.json](../../config/code-budget.json)); workflows, YAML
+> and prose have no line rule. `ci.yml` is a workflow, so the two additions
+> below are no longer blocked by a line count and can land in it directly (they
+> stay open as R1-01 in the [review-4
+> register](2026-10-18-review-4-open-findings.md)); split the file only if a
+> job's responsibility calls for it.
+
 **Date:** 2026-10-18
 **Kind:** structural debt (line-budget split), blocking two review-4 CI items
 **File:** [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) — 349

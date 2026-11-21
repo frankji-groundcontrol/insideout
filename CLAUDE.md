@@ -52,8 +52,12 @@ Environment reference: [docs/SETENV.md](docs/SETENV.md) (hands-on key setup), [d
 - **English-only `docs/` prose** (the 2026-07-20 plan folder stays bilingual
   as a historical record; quote non-English sources only when quoting is
   required).
-- **Modular files**: keep files under ~350 lines and single-responsibility;
-  no chunky monolithic scripts. When a chunky or mixed-responsibility file
+- **Modular source code**: one responsibility per file; split by
+  responsibility, never trim to fit. Functions stay under about 80 lines
+  and source files under one shared threshold, both set in
+  [config/code-budget.json](config/code-budget.json) and guarded by
+  `server/internal/linebudget` and `client/test/line_budget_test.dart`.
+  No line rule for workflows, YAML or prose. When a chunky or mixed-responsibility file
   can't be split in the current task, record a dated modularity issue in
   [docs/issues/](docs/issues/README.md) with the target structure and a
   bounded fix prompt.

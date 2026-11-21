@@ -33,8 +33,8 @@ server/
     github/            linked-repo commit fetch feeding project progress
     guide/             the repo-side matching guide (insideout.yaml) generator
     httpx/             JSON request/response helpers, the error contract
-    linebudget/        the file-budget guard the server tree runs: a Go file over 400 lines
-                       fails the build
+    linebudget/        the code-budget guard: a non-test Go file or function over the
+                       thresholds in config/code-budget.json fails the tests
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb, an agent profile that
                        withholds twelve tools, and the result fence (fence.go)
