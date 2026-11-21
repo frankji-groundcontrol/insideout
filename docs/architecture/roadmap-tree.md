@@ -72,9 +72,9 @@ copied. The web hands a node on through the node menu's "Delegate to…" and
 "Hand back" items, and the Edit form's owner picker shows only to a caller who
 may change that node's owner
 (`client/lib/features/project/roadmap_node_delegate.dart`,
-`roadmap_node_edit.dart`); the Go client's `RoadmapUpdate` carries no owner
-(`server/internal/apiclient/roadmap.go`), so neither the CLI nor MCP delegates
-yet.
+`roadmap_node_edit.dart`); the CLI delegates with `roadmap delegate`/`handback` and `update --owner`; the
+MCP has no delegation tool, since every MCP tool acts through an agent-scope
+token (see the MCP paragraph below).
 
 ### One write rule
 

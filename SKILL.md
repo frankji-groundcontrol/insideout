@@ -106,7 +106,8 @@ yourself. Join an existing workspace with `workspace_join` / `insideout join
 
 ## Surface parity
 
-Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (ask
+Almost every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (the
+human-only delegation verbs and `members` are CLI-only; ask
 `tools/list` for the current set — a count frozen here has already
 drifted: the registry stood at 52 while this page said 50, and it now
 depends on the login (the whole registry before any sign-in, forty-three
