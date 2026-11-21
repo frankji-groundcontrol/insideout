@@ -49,6 +49,7 @@ final productRouteBuilders = <String, GoRouterWidgetBuilder>{
     key: ValueKey(s.pathParameters['nodeId']),
     projectId: s.pathParameters['id']!,
     rootId: s.pathParameters['nodeId']!,
+    view: s.uri.queryParameters['view'],
   ),
   '/prd/:id': (c, s) => PrdPage(id: s.pathParameters['id']!),
   '/prd/:id/revisions': (c, s) => RevisionsPage(prdId: s.pathParameters['id']!),

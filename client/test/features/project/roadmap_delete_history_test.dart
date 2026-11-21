@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:insideout/features/project/roadmap_node_card.dart';
+import 'package:insideout/features/project/roadmap_graph_node.dart';
 
 import '_roadmap_tree_helpers.dart';
 
@@ -11,7 +11,7 @@ import '_roadmap_tree_helpers.dart';
 Future<void> _deleteFromMenu(WidgetTester tester, String title) async {
   await tester.tap(find.text('Canvas'));
   await tester.pumpAndSettle();
-  final card = find.widgetWithText(RoadmapNodeCard, title).first;
+  final card = find.widgetWithText(RoadmapGraphNode, title).first;
   await tester.tap(
     find.descendant(of: card, matching: find.byType(PopupMenuButton<String>)),
   );

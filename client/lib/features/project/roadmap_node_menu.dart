@@ -1,7 +1,23 @@
 part of 'roadmap_node_card.dart';
 
+/// The node menu on its own, for the Canvas graph's node boxes.
+class RoadmapNodeMenu extends _NodeMenu {
+  const RoadmapNodeMenu({
+    super.key,
+    required super.projectId,
+    required super.node,
+    required super.onReload,
+    required super.descendants,
+    required super.planWriter,
+    required super.parentWritable,
+    required super.inheritedOwner,
+    required super.openedRoot,
+  });
+}
+
 class _NodeMenu extends StatelessWidget {
   const _NodeMenu({
+    super.key,
     required this.projectId,
     required this.node,
     required this.onReload,
@@ -45,6 +61,7 @@ class _NodeMenu extends StatelessWidget {
             item('down', 'roadmap.moveDown'),
           ],
           item('expand', 'roadmap.expandAI'),
+          item('depends', 'roadmap.dependsOn'),
           // The validation leg lives on leaves: observations name one
           // piece of shipped work, and only a done leaf has an outcome to
           // confirm — a plan writer's call.
@@ -118,6 +135,13 @@ class _NodeMenu extends StatelessWidget {
         ),
       );
       if (done && context.mounted) await onReload();
+    } else if (value == 'depends') {
+      await editRoadmapDependencies(
+        context,
+        projectId: projectId,
+        node: node,
+        onReload: onReload,
+      );
     } else if (value == 'expand') {
       await _expandWithAI(context, node, onReload);
     } else if (value == 'observe') {

@@ -5,9 +5,9 @@ import 'package:insideout/api/models.dart';
 import '_roadmap_tree_helpers.dart';
 
 // rv5-TREEX-03: the roadmap page's Mine view shows the caller's topmost owned
-// nodes and their subtrees, nothing else. rv5-TREEX-09: the canvas folds a
-// branch and keeps it folded for the page session. rv5-TREEX-10, FE-11: a
-// card's bar and count come from the server roll-up, validated included.
+// nodes and their subtrees, nothing else, on the same graph as the Canvas.
+// rv5-TREEX-10, FE-11: a card's bar and count come from the server roll-up,
+// validated included. The Canvas folds nothing since the 2026-11-22 graph.
 
 Future<void> _view(WidgetTester tester, String label) async {
   await tester.tap(find.text(label));
@@ -43,37 +43,26 @@ void main() {
     expect(find.text('Nothing in this tree is yours yet.'), findsOneWidget);
   });
 
-  testWidgets('collapsing a branch hides its descendants for the session', (
+  testWidgets('Mine draws the caller\'s topmost node as a graph root', (
     tester,
   ) async {
-    final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
+    final api = TreeApi();
+    final router = await pumpTreeRouter(
+      tester,
+      treeSession(api, userId: 'u-dana'),
+    );
     router.go('/projects/p1/roadmap');
     await tester.pumpAndSettle();
-    await _view(tester, 'Canvas');
-    expect(find.text('Refunds'), findsOneWidget);
+    await _view(tester, 'Mine');
 
-    await tester.tap(find.byKey(const Key('roadmap-collapse-a')));
-    await tester.pumpAndSettle();
-    expect(find.text('Refunds'), findsNothing);
-    expect(find.text('Payments'), findsWidgets);
-    expect(find.text('+1'), findsOneWidget);
-
-    // Folding the root hides the whole branch, its own children included.
-    await tester.tap(find.byKey(const Key('roadmap-collapse-r')));
-    await tester.pumpAndSettle();
-    expect(find.text('Payments'), findsNothing);
-    expect(find.text('+3'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('roadmap-collapse-r')));
-    await tester.pumpAndSettle();
-
-    // Another view and back: the fold is remembered.
-    await _view(tester, 'Bands');
-    await _view(tester, 'Canvas');
-    expect(find.text('Refunds'), findsNothing);
-
-    await tester.tap(find.byKey(const Key('roadmap-collapse-a')));
-    await tester.pumpAndSettle();
-    expect(find.text('Refunds'), findsOneWidget);
+    final payments = tester.getRect(
+      find.byKey(const Key('roadmap-graph-node-a')),
+    );
+    final refunds = tester.getRect(
+      find.byKey(const Key('roadmap-graph-node-a1')),
+    );
+    expect(refunds.top, greaterThan(payments.bottom));
+    expect(find.byKey(const Key('roadmap-collapse-a')), findsNothing);
   });
 
   testWidgets('a parent with one validated and one done leaf shows 2 of 2', (

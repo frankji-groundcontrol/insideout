@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/models.dart';
-import 'package:insideout/theme/block_icon_button.dart';
 
 import '_roadmap_tree_helpers.dart';
 
 // Wave 2 verifier follow-ups on the web. rv5-TREEX-03: Mine in an opened
 // tree counts an owned ancestor. rv5-TREEX-08: an unowned node names the
-// owner it inherits. rv5-TREEX-09: the fold chevron is the house button.
-// rv5-TREEX-10: the bar reads its numbers, and My work shows no roll-up for
+// owner it inherits. rv5-TREEX-10: the bar reads its numbers, and My work shows no roll-up for
 // a delegated leaf.
 
 Future<void> _view(WidgetTester tester, String label) async {
@@ -79,7 +77,14 @@ void main() {
     expect(find.text('Owner: dana'), findsOneWidget);
 
     // The leaf's detail says the same.
-    await tester.tap(find.text('Refunds'));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('roadmap-graph-node-a1')),
+        matching: find.byType(PopupMenuButton<String>),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Details'));
     await tester.pumpAndSettle();
     expect(find.text('dana (via Payments)'), findsOneWidget);
   });
@@ -93,19 +98,6 @@ void main() {
     await _view(tester, 'Canvas');
 
     expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
-  });
-
-  testWidgets('the fold chevron is a BlockIconButton', (tester) async {
-    final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
-    router.go('/projects/p1/roadmap');
-    await tester.pumpAndSettle();
-    await _view(tester, 'Canvas');
-
-    expect(
-      tester.widget(find.byKey(const Key('roadmap-collapse-a'))),
-      isA<BlockIconButton>(),
-    );
-    expect(find.widgetWithIcon(IconButton, Icons.expand_more), findsNothing);
   });
 
   testWidgets('the roll-up bar reads its numbers', (tester) async {

@@ -11,7 +11,6 @@ import '../../theme/block_form.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
-import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
 import 'roadmap_breadcrumb.dart';
@@ -25,13 +24,22 @@ import 'roadmap_tree.dart';
 part 'roadmap_page_views.dart';
 
 class RoadmapPage extends StatefulWidget {
-  const RoadmapPage({super.key, required this.projectId, this.rootId});
+  const RoadmapPage({
+    super.key,
+    required this.projectId,
+    this.rootId,
+    this.view,
+  });
 
   final String projectId;
 
   /// The node opened as its own tree (/projects/:id/roadmap/:nodeId): the
   /// page shows it and the nodes below it. Null for the whole project.
   final String? rootId;
+
+  /// The view to open on (`?view=canvas`): a node opened from the Canvas
+  /// stays on the Canvas. Progress when absent or unknown.
+  final String? view;
 
   @override
   State<RoadmapPage> createState() => _RoadmapPageState();
@@ -45,14 +53,10 @@ class _RoadmapPageState extends State<RoadmapPage> {
   /// The nodes, progress, presence and cursors; this State keeps the layout
   /// and local UI state only.
   late final RoadmapController _c;
-  _RoadmapView _view = _RoadmapView.progress;
-  final _canvasController = ScrollController();
-
-  /// Branches folded on the canvas, kept for this page session.
-  final _collapsed = <String>{};
-
-  void _toggleFold(String nodeId) =>
-      setState(() => _collapsed.remove(nodeId) || _collapsed.add(nodeId));
+  late _RoadmapView _view = _RoadmapView.values.firstWhere(
+    (v) => v.name == widget.view,
+    orElse: () => _RoadmapView.progress,
+  );
 
   @override
   void initState() {
@@ -70,25 +74,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
   @override
   void dispose() {
     _c.dispose();
-    _canvasController.dispose();
     super.dispose();
-  }
-
-  void _scrollToBand(int i) {
-    if (!_canvasController.hasClients) return;
-    final target =
-        (i * (RoadmapCanvas.bandWidth + RoadmapCanvas.bandSpacing) - 24)
-            .clamp(0.0, _canvasController.position.maxScrollExtent)
-            .toDouble();
-    if (inkReduceMotion(context)) {
-      _canvasController.jumpTo(target);
-      return;
-    }
-    _canvasController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-    );
   }
 
   /// "New item": a top-level goal for a plan writer, or in an opened node a

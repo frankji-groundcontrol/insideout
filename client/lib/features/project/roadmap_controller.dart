@@ -59,6 +59,10 @@ class RoadmapController extends ChangeNotifier {
   /// tree has an owner (the ancestor refs carry the id alone).
   Map<String, String> names = const {};
 
+  /// Titles of nodes outside the loaded list that a loaded node waits on,
+  /// read once from the whole project so the Canvas can name them.
+  Map<String, String> outsideTitles = const {};
+
   /// The newest reading the progress stream pushed; null until it does and
   /// after a reload, so the fetched reading shows.
   RoadmapProgress? liveProgress;
@@ -88,6 +92,7 @@ class RoadmapController extends ChangeNotifier {
         ? _api.roadmapProgress(projectId)
         : _api.roadmapSubtreeProgress(projectId, root);
     read = root == null ? null : _api.readRoadmapNode(root);
+    nodes.then(_nameOutside, onError: (_) {});
     read
         ?.then((r) {
           if (!_live) return;
@@ -98,6 +103,21 @@ class RoadmapController extends ChangeNotifier {
             _loadNames();
           }
         })
+        .catchError((_) {});
+  }
+
+  void _nameOutside(List<RoadmapNode> loaded) {
+    final ids = {for (final n in loaded) n.id};
+    bool unnamed(String id) =>
+        !ids.contains(id) && !outsideTitles.containsKey(id);
+    if (!loaded.any((n) => n.dependsOn.any(unnamed))) return;
+    _api
+        .listRoadmap(projectId)
+        .then((all) {
+          outsideTitles = {for (final n in all) n.id: n.title};
+          _changed();
+        })
+        // Unnamed, the line reads "another item".
         .catchError((_) {});
   }
 

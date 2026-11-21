@@ -9,6 +9,9 @@ import '../../theme/block_modal.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 
+// The node menu's library (roadmap_node_card.dart) reaches the picker here.
+export 'roadmap_dependency_picker.dart';
+
 /// The read-only node detail: what the node is, who holds it, how far its
 /// leaves are, its evidence and who handed it to whom. Every member may read
 /// it; nothing here writes.

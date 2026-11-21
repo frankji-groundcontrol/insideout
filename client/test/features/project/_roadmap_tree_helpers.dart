@@ -37,6 +37,11 @@ class TreeApi extends ApiClient {
   /// Every delete asked for, and whether the branch has history: then a
   /// delete without force answers 409 roadmap_delete_has_history.
   final deletes = <({String nodeId, bool force})>[];
+
+  /// Every dependency link asked for or dropped; [dependencyError] refuses
+  /// the next link as the server would.
+  final dependencyCalls = <({String nodeId, String on, bool remove})>[];
+  ApiException? dependencyError;
   bool history = false;
   final _gone = <String>{};
 
@@ -83,6 +88,24 @@ class TreeApi extends ApiClient {
       if (doomed.contains(n.parentId)) doomed.add(n.id);
     }
     _gone.addAll(doomed);
+  }
+
+  @override
+  Future<RoadmapNode> addRoadmapDependency(
+    String nodeId,
+    String dependsOnId,
+  ) async {
+    dependencyCalls.add((nodeId: nodeId, on: dependsOnId, remove: false));
+    if (dependencyError != null) throw dependencyError!;
+    return all.firstWhere((n) => n.id == nodeId);
+  }
+
+  @override
+  Future<void> removeRoadmapDependency(
+    String nodeId,
+    String dependsOnId,
+  ) async {
+    dependencyCalls.add((nodeId: nodeId, on: dependsOnId, remove: true));
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
 import 'package:insideout/chrome/loop_focus.dart';
+import 'package:insideout/features/project/roadmap_graph_node.dart';
 import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
@@ -104,7 +105,15 @@ Future<void> _pumpPage(WidgetTester tester) async {
 
 /// Opens [title]'s menu and picks Delete, leaving the confirm dialog up.
 Future<void> _askToDelete(WidgetTester tester, String title) async {
-  final card = find.widgetWithText(RoadmapNodeCard, title);
+  // A Bands card, or a Canvas graph node: both carry the node menu.
+  final card = find
+      .ancestor(
+        of: find.text(title),
+        matching: find.byWidgetPredicate(
+          (w) => w is RoadmapNodeCard || w is RoadmapGraphNode,
+        ),
+      )
+      .first;
   await tester.tap(
     find.descendant(of: card, matching: find.byType(PopupMenuButton<String>)),
   );
