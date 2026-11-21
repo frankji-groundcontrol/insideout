@@ -17,6 +17,15 @@ const (
 	Overdue  = "overdue"
 )
 
+// NodePressure is a node's deadline pressure: finished work has none, since
+// time no longer presses on it.
+func NodePressure(status string, deadline, now time.Time) string {
+	if Finished(status) {
+		return ""
+	}
+	return Pressure(deadline, now)
+}
+
 // Pressure classifies a deadline against now.
 func Pressure(deadline, now time.Time) string {
 	if deadline.IsZero() {
@@ -115,7 +124,7 @@ func Finished(status string) bool { return status == "done" || status == "valida
 func item(n Node, now time.Time) ProgressItem {
 	it := ProgressItem{ID: n.ID, Title: n.Title, Status: n.Status, Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName}
 	if n.Deadline != nil {
-		it.Pressure = Pressure(*n.Deadline, now)
+		it.Pressure = NodePressure(n.Status, *n.Deadline, now)
 	}
 	return it
 }

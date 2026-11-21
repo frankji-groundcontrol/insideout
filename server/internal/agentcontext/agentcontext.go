@@ -191,7 +191,7 @@ func putDeadline(ctx map[string]any, n *NodeIn, in Inputs) {
 		now = time.Now()
 	}
 	ctx["deadline"] = n.Deadline.UTC().Format(time.RFC3339)
-	ctx["pressure"] = roadmaptime.Pressure(*n.Deadline, now)
+	ctx["pressure"] = roadmaptime.NodePressure(n.Status, *n.Deadline, now)
 }
 
 func leafNodes(nodes []NodeIn) []NodeIn {

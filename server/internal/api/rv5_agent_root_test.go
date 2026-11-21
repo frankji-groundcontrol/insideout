@@ -42,6 +42,9 @@ func TestARootScopedAgentTokenWritesOnlyInsideItsSubtree(t *testing.T) {
 	refused("move a node in from outside", "POST", nodePath(w.shipping.ID)+"/move", `{"parentId":"`+w.payments.ID.String()+`","position":0}`)
 	refused("break down outside the root", "POST", nodePath(w.shipping.ID)+"/expand", ``)
 	refused("confirm a break-down outside the root", "POST", nodePath(w.shipping.ID)+"/expand/confirm", `{"children":[{"title":"x"}]}`)
+	// A checkpoint naming a node is held to the root, as a proposal is.
+	refused("checkpoint a node outside the root", "POST", "/api/v1/agent/checkpoint", `{"projectId":"`+w.project.ID.String()+`","nodeId":"`+w.shipping.ID.String()+`","summary":"x"}`)
+	w.must(t, agent, "POST", "/api/v1/agent/checkpoint", `{"projectId":"`+w.project.ID.String()+`","nodeId":"`+w.card.ID.String()+`","summary":"cards done"}`, http.StatusCreated)
 	refused("rebuild the whole tree", "POST", "/api/v1/prds/"+uuid.NewString()+"/build/confirm", `{"tree":{"title":"x"}}`)
 
 	// The briefing defaults to the root: only its leaves.

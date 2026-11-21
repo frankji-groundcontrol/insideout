@@ -175,3 +175,50 @@ func TestReplaceRoadmapTree_FirstLeafSeeded(t *testing.T) {
 		t.Fatalf("seeded in_progress leaves with deadline = %d, want exactly 1", seeded)
 	}
 }
+
+// Spark demo 2026-11-21: one build inserts every node in a single
+// transaction, so created_at ties and the seed fell on an arbitrary node — a
+// branch deep in someone else's subtree. It must be the first leaf in tree
+// order (depth first, by position).
+func TestReplaceRoadmapTree_SeedsFirstLeafInTreeOrder(t *testing.T) {
+	st := newTestStore(t)
+	ctx := context.Background()
+
+	admin := mkUser(t, st)
+	ws, err := st.CreateWorkspace(ctx, admin.ID, "Gap WS 5", "")
+	if err != nil {
+		t.Fatalf("create workspace: %v", err)
+	}
+	proj, err := st.CreateProject(ctx, admin.ID, ws.ID, "Gap project 5", "")
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+	branch := func(title string, kids ...string) RoadmapPlanNode {
+		n := RoadmapPlanNode{Title: title}
+		for _, k := range kids {
+			n.Children = append(n.Children, RoadmapPlanNode{Title: k})
+		}
+		return n
+	}
+	_, err = st.ReplaceRoadmapTree(ctx, admin.ID, proj.ID, ReplaceOptions{}, RoadmapPlanNode{Title: "MVP", Children: []RoadmapPlanNode{
+		branch("Onboarding", "Sign-up", "Profile"),
+		branch("Matching", "Scoring", "Daily drop"),
+		branch("Safety", "Report", "Block"),
+	}})
+	if err != nil {
+		t.Fatalf("replace tree: %v", err)
+	}
+	nodes, err := st.ListRoadmap(ctx, admin.ID, proj.ID)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	var seeded []string
+	for _, n := range nodes {
+		if n.Status == "in_progress" {
+			seeded = append(seeded, n.Title)
+		}
+	}
+	if len(seeded) != 1 || seeded[0] != "Sign-up" {
+		t.Fatalf("seeded = %v, want [Sign-up]", seeded)
+	}
+}

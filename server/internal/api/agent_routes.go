@@ -164,6 +164,10 @@ func (s *Server) handleAgentCheckpoint(w http.ResponseWriter, r *http.Request) {
 			s.writeStoreError(w, "agent checkpoint node", err, errMsgs{store.ErrNotFound: "node not found in this project"})
 			return
 		}
+		// A root-scoped token names only nodes in its subtree, as propose does.
+		if s.agentRootRefuses(w, r, &nid) {
+			return
+		}
 		content += " (node " + nid.String() + ")"
 	}
 	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, "agent_checkpoint", content)

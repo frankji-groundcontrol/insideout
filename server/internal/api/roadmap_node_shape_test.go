@@ -29,6 +29,9 @@ func TestRoadmapNodeWithEveryFieldKeepsItsCapturedShape(t *testing.T) {
 	patch(add("First team", pilot), `{`+roadmapDeadlineJSON()+`}`)
 	patch(pilot, `{"status":"in_progress"}`)
 	patch(pilot, `{"status":"done","completionReason":"Shipped by hand."}`)
+	// Reopened: the reason stays as history, and unfinished work has pressure
+	// again, so every optional field is set at once.
+	patch(pilot, `{"status":"in_progress"}`)
 
 	var got any
 	for _, n := range decodeAs[[]map[string]any](t, w.must(t, w.owner, http.MethodGet, w.proj()+"/roadmap", "", http.StatusOK)) {

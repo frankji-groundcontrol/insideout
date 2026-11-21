@@ -88,7 +88,7 @@ func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	if n.Deadline != nil {
 		dl := n.Deadline.Format(time.RFC3339)
 		v.Deadline = &dl
-		v.Pressure = roadmaptime.Pressure(*n.Deadline, now)
+		v.Pressure = roadmaptime.NodePressure(n.Status, *n.Deadline, now)
 	}
 	v.CreatorName = n.CreatorName
 	v.EditorName = n.EditorName
