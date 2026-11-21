@@ -156,7 +156,9 @@ PRD sections are the exception: `prd update --section key=` and
   <nextCursor>] [--limit 1..100] <proj>` (MCP `project_updates` with `before`
   and `limit`, `GET /api/v1/projects/{pid}/updates`) answers
   `{"updates": [...], "nextCursor": ...}` with the next page; without
-  `before` it starts from the newest, and `limit` defaults to 50.
+  `before` it starts from the newest, and `limit` defaults to 50. A `before`
+  that is not a UUID answers 400; a cursor whose update was deleted between
+  pages (or that is no update of this project) answers 404, not an empty page.
 - `project update`, `workspace update`, `profile update` and their MCP
   tools read the row first, because the server rewrites title, description,
   status, username and bio on every PATCH; what you leave out is sent as read.

@@ -106,9 +106,10 @@ everything in it: its ideas, projects, PRDs, coach conversations and run
 records. A single PRD can be exported as Markdown from its export page. There
 is no export of a whole account, and this notice does not require one.
 
-You can delete your account yourself. While signed in with your own session,
-not with an agent token, send your current password to `DELETE /api/v1/me`.
-That deletes your conversations and messages, run records, ideas of every
+You can delete your account yourself, with your current password and your own
+session, not an agent token: on the web, the Delete my account section at the
+end of your profile page; in a terminal, `insideout account delete`; or the
+request `DELETE /api/v1/me` that both send. That deletes your conversations and messages, run records, ideas of every
 status, sessions, one-time tokens and memberships, and overwrites the account
 fields described above. It does not delete other members' PRDs, revisions,
 commits or projects. A workspace you created that still has another member
