@@ -162,8 +162,27 @@ func TestErase_Account(t *testing.T) {
 		t.Fatalf("profile: %v", err)
 	}
 
+	sharedProj, err := st.CreateProject(ctx, other.ID, shared.ID, "Shared project", "")
+	if err != nil {
+		t.Fatalf("shared project: %v", err)
+	}
+	ownedNode, err := st.CreateRoadmapNode(ctx, other.ID, sharedProj.ID, nil, "Owned by the erased user", "")
+	if err != nil {
+		t.Fatalf("owned node: %v", err)
+	}
+	if _, err := audit.Pool.Exec(ctx, `UPDATE insideout.roadmap_nodes SET owner_user_id = $2 WHERE id = $1`, ownedNode.ID, erased.ID); err != nil {
+		t.Fatalf("assign node to the erased user: %v", err)
+	}
+
 	if err := st.EraseUser(ctx, erased.ID); err != nil {
 		t.Fatalf("erase: %v", err)
+	}
+	var stillOwner bool
+	if err := audit.Pool.QueryRow(ctx, `SELECT owner_user_id IS NOT NULL FROM insideout.roadmap_nodes WHERE id = $1`, ownedNode.ID).Scan(&stillOwner); err != nil {
+		t.Fatalf("read node owner: %v", err)
+	}
+	if stillOwner {
+		t.Error("an erased user still owns a roadmap node")
 	}
 
 	if hits := textsNaming(t, audit, address); len(hits) != 0 {

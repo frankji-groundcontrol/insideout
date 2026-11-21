@@ -82,6 +82,17 @@ func TestStartingAnOwnerlessLeafMakesYouItsOwner(t *testing.T) {
 	if o := ownerOf(t, st, w.owner.ID, w.refunds.ID); o == nil || *o != w.other.ID {
 		t.Errorf("Refunds owner = %v, want the one already assigned", o)
 	}
+	// Starting a leaf and clearing its owner in one write still leaves one
+	// human owner: the actor.
+	if _, err := st.UpdateRoadmapNode(ctx, w.owner.ID, w.shipLeaf.ID, RoadmapNodeFields{OwnerID: &w.other.ID}); err != nil {
+		t.Fatalf("assign Ship leaf: %v", err)
+	}
+	if _, err := st.UpdateRoadmapNode(ctx, w.owner.ID, w.shipLeaf.ID, RoadmapNodeFields{Status: sptr("in_progress"), ClearOwner: true}); err != nil {
+		t.Fatalf("start Ship leaf and clear its owner: %v", err)
+	}
+	if o := ownerOf(t, st, w.owner.ID, w.shipLeaf.ID); o == nil || *o != w.owner.ID {
+		t.Errorf("Ship leaf owner = %v, want the actor who started it", o)
+	}
 	// A branch is not an execution item: starting it assigns nobody.
 	if _, err := st.UpdateRoadmapNode(ctx, w.owner.ID, w.shipping.ID, start); err != nil {
 		t.Fatalf("owner starts Shipping: %v", err)

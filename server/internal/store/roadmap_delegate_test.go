@@ -211,3 +211,33 @@ func TestRLSKeepsADelegateInsideTheirSubtree(t *testing.T) {
 		t.Errorf("move a node into another project as a root: want 42501, got %v", err)
 	}
 }
+
+// A project owner who has left the workspace keeps projects.owner_id, but
+// row-level security must not treat them as a plan writer any more.
+func TestRLSRefusesAProjectOwnerWhoLeftTheWorkspace(t *testing.T) {
+	w := newDelegateWorld(t)
+	st, ctx := w.st, context.Background()
+	writeWalkStore(t)
+	proj, err := st.CreateProject(ctx, w.other.ID, w.project.WorkspaceID, "Other's project", "")
+	if err != nil {
+		t.Fatalf("member creates a project: %v", err)
+	}
+	node, err := st.CreateRoadmapNode(ctx, w.other.ID, proj.ID, nil, "Other's root", "")
+	if err != nil {
+		t.Fatalf("project owner adds a root: %v", err)
+	}
+	if err := st.RemoveMember(ctx, w.owner.ID, w.project.WorkspaceID, w.other.ID); err != nil {
+		t.Fatalf("remove the project owner from the workspace: %v", err)
+	}
+	const insert = `INSERT INTO insideout.roadmap_nodes (project_id, parent_id, title, created_by) VALUES ($1, $2, 'x', $3)`
+	if _, err := asApp(t, st, w.other.ID, "", insert, proj.ID, nil, w.other.ID); !denied(err) {
+		t.Errorf("former owner inserts a root: want 42501, got %v", err)
+	}
+	if _, err := asApp(t, st, w.other.ID, "", insert, proj.ID, node.ID, w.other.ID); !denied(err) {
+		t.Errorf("former owner inserts a child: want 42501, got %v", err)
+	}
+	tag, err := asApp(t, st, w.other.ID, "", `UPDATE insideout.roadmap_nodes SET title = 'x' WHERE id = $1`, node.ID)
+	if err != nil || tag.RowsAffected() != 0 {
+		t.Errorf("former owner updates a node: rows %d err %v, want 0 rows", tag.RowsAffected(), err)
+	}
+}
