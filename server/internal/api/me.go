@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -50,10 +51,11 @@ func (s *Server) handleGetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 type updateMeRequest struct {
-	Username  string   `json:"username"`
-	Bio       string   `json:"bio"`
-	Keywords  []string `json:"keywords"`
-	AvatarURL *string  `json:"avatarUrl"`
+	Username string   `json:"username"`
+	Bio      string   `json:"bio"`
+	Keywords []string `json:"keywords"`
+	// AvatarURL: absent keeps the stored avatar; null or "" clears it.
+	AvatarURL json.RawMessage `json:"avatarUrl"`
 }
 
 func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
@@ -69,15 +71,15 @@ func (s *Server) handleUpdateMe(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "username is required (max 60 characters)", "", nil)
 		return
 	}
-	if req.AvatarURL != nil && !validStoredURL(*req.AvatarURL) {
-		httpx.WriteError(w, http.StatusBadRequest, "avatarUrl must be an https URL (max 2048 characters)", "", nil)
+	avatar, ok := storedURLPatch(w, "avatarUrl", req.AvatarURL)
+	if !ok {
 		return
 	}
 	if req.Keywords == nil {
 		req.Keywords = []string{}
 	}
 
-	user, err := s.store.UpdateProfile(r.Context(), userID, req.Username, req.Bio, req.Keywords, req.AvatarURL)
+	user, err := s.store.UpdateProfile(r.Context(), userID, req.Username, req.Bio, req.Keywords, avatar)
 	if err != nil {
 		s.log.Error("update profile", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)

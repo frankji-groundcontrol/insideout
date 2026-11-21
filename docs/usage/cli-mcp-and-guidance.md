@@ -125,6 +125,9 @@ signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
   for a node that does not exist or that you cannot see. `createdAt` is a
   timestamp like every other, and a validation observation's `observedAt`
   is the date as entered (`YYYY-MM-DD`).
+- `PATCH /api/v1/me` and `PATCH /api/v1/workspaces/{id}`: leaving out
+  `avatarUrl` or `coverUrl` keeps the stored picture; `null` or `""` clears
+  it.
 
 ### Errors
 

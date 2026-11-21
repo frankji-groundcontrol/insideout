@@ -100,9 +100,9 @@ func TestWorkspaceEditsAreForAdminsAndDeletionForItsCreatorAlone(t *testing.T) {
 	if got.Title != "Renamed" || got.Description != "d" || got.CoverURL == nil || *got.CoverURL != "https://example.com/c.png" {
 		t.Fatalf("edited workspace = %+v, want the new title, description and cover", got)
 	}
-	edit(w.owner, `{"title":"Renamed"}`, http.StatusOK) // a null cover clears it
+	edit(w.owner, `{"title":"Renamed","coverUrl":null}`, http.StatusOK) // a null cover clears it (an absent one keeps it, rv5-PARA-09)
 	if got := decodeAs[workspaceView](t, w.must(t, w.member, "GET", w.ws(), "", http.StatusOK)); got.CoverURL != nil {
-		t.Fatalf("cover after an edit without one = %v, want it cleared", *got.CoverURL)
+		t.Fatalf("cover after an edit with a null one = %v, want it cleared", *got.CoverURL)
 	}
 
 	// An admin made by promotion may edit but not delete: deleting is the creator's.
