@@ -2,14 +2,11 @@ package agent
 
 import (
 	"fmt"
-	"regexp"
-	"slices"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/readiness"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
-	"github.com/google/uuid"
 )
 
 // Stage names and legal forward transitions, per
@@ -155,57 +152,6 @@ func formatGapsForPrompt(sections map[string]string) string {
 		}
 	}
 	return strings.TrimRight(b.String(), "\n")
-}
-
-// rankedCritiqueLine matches one item of the critique-stage overview:
-// "1. [major] goals — 问题。建议：建议" — the suggestion is optional.
-var rankedCritiqueLine = regexp.MustCompile(
-	`^\s*\d+\.\s*\[(blocking|major|minor)\]\s*([A-Za-z]+)\s*[—–-]\s*(.+?)\s*$`,
-)
-
-// isPrdSection reports whether key is one of the 8 canonical PRD section
-// keys — a finding against anything else points the round-2 critic and
-// the panel at a section that doesn't exist, so both parsers drop it
-// (the same drop-don't-fail policy used for bad severity/kind).
-func isPrdSection(key string) bool {
-	return slices.Contains(store.PrdSectionKeys, key)
-}
-
-// parseRankedCritique turns the coach's severity-ranked overview into the
-// findings the panel renders. Items stay in the order written (most severe
-// first); a line that doesn't match the ranked format, or names a section
-// outside the canonical eight, is skipped.
-func parseRankedCritique(reply string) []CriticFinding {
-	var out []CriticFinding
-	for _, line := range strings.Split(reply, "\n") {
-		m := rankedCritiqueLine.FindStringSubmatch(strings.TrimSpace(line))
-		if m == nil {
-			continue
-		}
-		if !isPrdSection(m[2]) {
-			continue // unknown section key — drop, don't fail the batch
-		}
-		issue, suggestion := m[3], ""
-		// Both markers are accepted: the zh prompt's 「建议：」 and the en
-		// prompt's "Suggestion:" (prompts_en.go) — the parser is locale-blind.
-		for _, marker := range []string{"建议：", "Suggestion:"} {
-			if i := strings.Index(issue, marker); i >= 0 {
-				suggestion = strings.TrimSpace(issue[i+len(marker):])
-				issue = strings.TrimSpace(issue[:i])
-				break
-			}
-		}
-		out = append(out, CriticFinding{
-			ID:         "c" + uuid.NewString()[:8],
-			Section:    m[2],
-			Severity:   m[1],
-			Kind:       "omission",
-			Issue:      issue,
-			Suggestion: suggestion,
-			Status:     FindingOpen,
-		})
-	}
-	return out
 }
 
 // maxPromptSectionRunes is the most characters of one PRD section a prompt

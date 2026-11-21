@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// The numbers in trust_facts.go are tunables I chose, not measured limits.
+// The numbers in fact_evidence.go are tunables I chose, not measured limits.
 // These tests pin them and the pairs they were calibrated on, so moving either
 // is a decision made in a diff rather than by accident.
 

@@ -119,7 +119,7 @@ Responses parser) run the first tool call they find and drop later ones — the
 coach's own prompting discipline never asks for more than one anyway.
 
 `record_fact` attests a fact only on the person's own words (rv4-AIDEV-07,
-`trust_facts.go`): the quote must appear verbatim in what they said, must hold
+`fact_evidence.go`): the quote must appear verbatim in what they said, must hold
 at least 12 characters of content once spaces and punctuation are dropped (a
 Han, kana or hangul character counts twice), and the fact's text must share at
 least 0.2 of its character n-grams with the quote. Both numbers are tunables

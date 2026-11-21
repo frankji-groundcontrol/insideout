@@ -6,7 +6,7 @@ import "fmt"
 // PRODUCT.md makes English and Simplified Chinese first-class product
 // languages, so an 'en' conversation must be coached and critiqued in
 // English. Each literal mirrors its Chinese counterpart in prompts.go /
-// critic.go line for line — same stage discipline, same tool contracts;
+// critic_prompt.go line for line — same stage discipline, same tool contracts;
 // only the fence clause (prompt_fence.go) stays language-independent by
 // design, and the shared data formatters (sections, gaps, ledger) keep
 // their labels because they wrap human-written text, not instructions.
