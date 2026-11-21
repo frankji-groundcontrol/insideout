@@ -2,6 +2,8 @@ package surfaceparity
 
 import (
 	"go/ast"
+	"go/importer"
+	"go/types"
 	"testing"
 )
 
@@ -11,20 +13,51 @@ import (
 
 type surface struct {
 	name  string
-	calls map[string][][]ast.Expr    // client method name to each call's arguments
+	calls map[string][][]ast.Expr    // "Type.Method" of an apiclient method to each call's arguments
 	sets  map[string]map[string]bool // apiclient struct type to the fields this surface sets
 }
 
 func loadSurface(t *testing.T, name, rel string) surface {
 	s := scanSurface(t, name, parseDir(t, rel))
 	if len(s.calls) < 20 {
-		t.Fatalf("%s: found only %d call names in %s; the scan is broken", name, len(s.calls), rel)
+		t.Fatalf("%s: found only %d client methods called in %s; the scan is broken", name, len(s.calls), rel)
 	}
 	return s
 }
 
+// srcImporter type-checks imports from source (no golang.org/x/tools in go.mod),
+// shared so each package is checked once.
+var srcImporter = importer.ForCompiler(fset, "source", nil)
+
+// clientCall names the apiclient method a call runs ("Client.RoadmapMove"),
+// resolved through the receiver's type, or "" for any other call: a
+// same-named method on another type is not a client call.
+func clientCall(info *types.Info, call *ast.CallExpr) string {
+	sel, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok || info.Selections[sel] == nil {
+		return ""
+	}
+	fn, ok := info.Selections[sel].Obj().(*types.Func)
+	if !ok || fn.Pkg() == nil || fn.Pkg().Path() != clientType.Elem().PkgPath() {
+		return ""
+	}
+	recv := fn.Signature().Recv().Type()
+	if p, ok := recv.(*types.Pointer); ok {
+		recv = p.Elem()
+	}
+	if n, ok := recv.(*types.Named); ok {
+		return n.Obj().Name() + "." + fn.Name()
+	}
+	return ""
+}
+
 // scanSurface collects the client calls and struct field sets in one package's files.
 func scanSurface(t *testing.T, name string, files []*ast.File) surface {
+	t.Helper()
+	info := &types.Info{Selections: map[*ast.SelectorExpr]*types.Selection{}}
+	if _, err := (&types.Config{Importer: srcImporter}).Check(name, fset, files, info); err != nil {
+		t.Fatalf("type-check %s: %v", name, err)
+	}
 	s := surface{name: name, calls: map[string][][]ast.Expr{}, sets: map[string]map[string]bool{}}
 	for _, f := range files {
 		mentioned := map[string]bool{} // apiclient types this file names
@@ -39,8 +72,8 @@ func scanSurface(t *testing.T, name string, files []*ast.File) surface {
 		ast.Inspect(f, func(n ast.Node) bool {
 			switch n := n.(type) {
 			case *ast.CallExpr:
-				if sel, ok := n.Fun.(*ast.SelectorExpr); ok {
-					s.calls[sel.Sel.Name] = append(s.calls[sel.Sel.Name], n.Args)
+				if m := clientCall(info, n); m != "" {
+					s.calls[m] = append(s.calls[m], n.Args)
 				}
 			case *ast.CompositeLit:
 				if sel, ok := n.Type.(*ast.SelectorExpr); ok {

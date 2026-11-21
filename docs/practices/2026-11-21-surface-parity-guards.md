@@ -30,10 +30,13 @@ instead of waiting for a review (review 5, `PARC-03` and `COMP-02`).
    on `ProposeItem.Title`, not on the `items` argument. A key below a
    `json.RawMessage` the client forwards (the drafted `tree` and `children`)
    depends on that argument: the caller writes everything inside it.
-3. It parses `cmd/insideout` (CLI) and `internal/mcpserver` (MCP). A surface
-   reaches a key when it calls the client method that sends it and passes a
-   non-zero argument there, or sets the struct field in an `apiclient.T{...}`
-   literal or an assignment.
+3. It parses and type-checks `cmd/insideout` (CLI) and `internal/mcpserver`
+   (MCP) with `go/types` and the source importer. A call counts only when its
+   receiver resolves to the apiclient type that declares the method
+   (`*apiclient.Client`, or the patch struct of an `Apply`): a same-named
+   method on another type does not. A surface reaches a key when it calls the
+   client method that sends it and passes a non-zero argument there, or sets
+   the struct field in an `apiclient.T{...}` literal or an assignment.
 4. Every key not reached on a surface must be in `omissions`
    ([`omissions_test.go`](../../server/internal/surfaceparity/omissions_test.go))
    with a one-line reason. An entry marked `humanOnly` must match a `humanOnly`
@@ -45,6 +48,22 @@ When it fails: wire the field on the surface (the usual fix), or add an
 omission whose reason a reviewer would accept. If wiring is too large for the
 change at hand, record a dated issue under [`docs/issues/`](../issues/README.md)
 and list the field as an omission that names the issue.
+
+### Limits
+
+What the walk still does not prove (the nested walk and the receiver match
+closed the two earlier limits, `PARC-03`):
+
+- A type nested inside itself is walked once: `tree.children` is checked,
+  the keys under each child are not (they are the same struct's keys).
+- Keys below a forwarded `json.RawMessage` are reached when the argument is:
+  the walk does not check the shape the caller writes inside it.
+- A field set counts when an `apiclient.T{...}` literal names it, or when a
+  file that names `apiclient.T` assigns `x.Field`; the assignment's receiver
+  type is not resolved.
+- A call through a method value or an interface is not counted; the surfaces
+  call the client directly today.
+- The type check adds about 8 seconds to the package's test run.
 
 ## Guard 2: every response key is read
 

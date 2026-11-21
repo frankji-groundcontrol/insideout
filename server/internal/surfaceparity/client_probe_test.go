@@ -81,7 +81,7 @@ func flatten(prefix string, raw []byte, out map[string]string) {
 // method of a struct a Client method takes that runs on a *Client (the
 // read-then-write Apply of a patch). clientAt is the *Client's place in ft.In.
 type probe struct {
-	name     string
+	name     string // "Type.Method", as surface.calls keys it
 	fn       reflect.Value
 	ft       reflect.Type
 	clientAt int
@@ -94,7 +94,7 @@ func probes() []probe {
 	structs := map[reflect.Type]bool{}
 	for i := range clientType.NumMethod() {
 		m := clientType.Method(i)
-		out = append(out, probe{m.Name, m.Func, m.Type, 0})
+		out = append(out, probe{"Client." + m.Name, m.Func, m.Type, 0})
 		for a := 1; a < m.Type.NumIn(); a++ {
 			if m.Type.In(a).Kind() == reflect.Struct {
 				structs[m.Type.In(a)] = true
@@ -106,7 +106,7 @@ func probes() []probe {
 			m := st.Method(i)
 			for a := 1; a < m.Type.NumIn(); a++ {
 				if m.Type.In(a) == clientType {
-					out = append(out, probe{m.Name, m.Func, m.Type, a})
+					out = append(out, probe{st.Name() + "." + m.Name, m.Func, m.Type, a})
 				}
 			}
 		}
@@ -139,7 +139,7 @@ func clientSends(t *testing.T, patterns map[string]string) map[string]map[string
 
 	out := map[string]map[string][]dep{}
 	for _, p := range probes() {
-		if p.name == "SetContext" || p.name == "SetRenewal" {
+		if p.name == "Client.SetContext" || p.name == "Client.SetRenewal" {
 			continue
 		}
 		in, ok := fullArgs(p.ft, p.clientAt)
