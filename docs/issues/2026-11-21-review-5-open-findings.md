@@ -12,10 +12,13 @@ Delete a row here when its fix lands, and name the commit in the changelog.
 ## The task tree for roles is one quarter built
 
 The owner's requirement (each person has their own work tree; a node can be
-delegated and opens as that person's view; a manager can open any node) is
+delegated and opens as that person's view; a manager can open any node) was
 written in no product or architecture record and is mostly absent from the
-code. Target design and four decisions:
+code. Wave 0 of the remediation wrote it into PRODUCT.md and
+[roadmap-tree.md](../architecture/roadmap-tree.md). Target design and four decisions:
 [41-task-tree-target-design.md](../review/2026-11-21-focused-review-5/41-task-tree-target-design.md).
+Current state and the decided target:
+[architecture/roadmap-tree.md](../architecture/roadmap-tree.md).
 
 | ID | Finding | Where | Plan row | Priority | Owner |
 | --- | --- | --- | --- | --- | --- |

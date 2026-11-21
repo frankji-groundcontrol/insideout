@@ -251,6 +251,21 @@ GitHub or an Agent may advance leaf-level delivery evidence when acceptance is
 explicit; the Driver confirms milestones, and the Decision Owner confirms
 product results and Product Branch Merges.
 
+### Personal work trees and delegation
+
+Every person has their own work tree, derived from the Roadmap nodes they own;
+the roles above govern what a person may do, not which tree they see. A node
+is delegated to the next person, who becomes its owner, gains authority over
+its subtree, and opens it as their own tree. A delegate may re-delegate
+descendants but not the node they were handed, which stays with the people who
+hold authority above it. A node's owner is the one human responsible owner
+named above, so delegating hands that responsibility on rather than adding a
+second owner. A personal tree is a default view, not a wall: everyone in the
+Workspace can still read the whole project, and managers can open any node to
+check its details and progress. An Agent token cannot change a node's owner;
+it files a proposal that a human decides. Current state and target:
+[roadmap tree](docs/architecture/roadmap-tree.md).
+
 Early users and advisers can receive a scoped feedback invitation without
 joining the Workspace. Feedback retains author, time, and context and becomes
 a suggestion or proposed branch rather than a silent mainline edit. External

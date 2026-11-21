@@ -20,6 +20,9 @@ and the bug records it links to.
   version control (Commit + readiness + audience views), the agent
   vocabulary (with proposal application), the time-first roadmap,
   real-time presence/cursors, and the GitHub evidence loop.
+- [Roadmap tree](roadmap-tree.md) — the roadmap node table, the single
+  write rule and its looser row-level-security policies, the routes that read
+  and write the tree, and the target per-person work tree with delegation.
 - [CLI, MCP and client configuration](cli-mcp-and-client-config.md) — the
   non-web clients: `clientconfig.Resolve` (which server, which identity), the
   saved 0600 session and its renewal, the MCP process and its agent profile,
