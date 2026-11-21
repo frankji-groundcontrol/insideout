@@ -124,10 +124,10 @@ func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (
 }
 
 // NodeInSubtree reports whether nodeID is rootID or lies below it, as the
-// actor sees the tree (an invisible node is in no subtree). It is the check
-// behind a root-scoped agent token (rv5-TREEB-05).
+// actor sees the tree. A node the actor cannot see answers ErrNotFound. It is
+// the check behind a root-scoped agent token (rv5-TREEB-05).
 func (s *Store) NodeInSubtree(ctx context.Context, actorID, rootID, nodeID uuid.UUID) (bool, error) {
-	var in bool
+	var seen, in bool
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		return tx.QueryRow(ctx, `
 			WITH RECURSIVE up AS (
@@ -135,8 +135,12 @@ func (s *Store) NodeInSubtree(ctx context.Context, actorID, rootID, nodeID uuid.
 				UNION
 				SELECT n.id, n.parent_id FROM insideout.roadmap_nodes n JOIN up ON n.id = up.parent_id
 			)
-			SELECT EXISTS (SELECT 1 FROM up WHERE id = $1)`, rootID, nodeID).Scan(&in)
+			SELECT EXISTS (SELECT 1 FROM up WHERE id = $2), EXISTS (SELECT 1 FROM up WHERE id = $1)`,
+			rootID, nodeID).Scan(&seen, &in)
 	})
+	if err == nil && !seen {
+		return false, ErrNotFound
+	}
 	return in, err
 }
 

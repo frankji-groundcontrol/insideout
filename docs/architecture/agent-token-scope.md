@@ -110,10 +110,12 @@ its node writes stay inside the root and the nodes below it: `PATCH
 /roadmap/{nid}`, `POST /roadmap/{nid}/move` (the node and its new parent),
 `POST /projects/{pid}/roadmap` (the parent; a new root is outside),
 `POST /roadmap/{nid}/expand` and `/expand/confirm` answer 403
-`agent_scope_denied` for a node outside, and `POST /prds/{pid}/build/confirm`
+`agent_scope_denied` for a node outside (404 for a node the caller cannot see,
+as without a root), and `POST /prds/{pid}/build/confirm`
 refuses a root-scoped token outright, since a rebuild replaces the whole tree.
 The check is `agentRootRefuses` (`server/internal/api/agent_root.go`) over
-`Store.NodeInSubtree`. `GET /agent/context` with no `focus` defaults its focus
+`Store.NodeInSubtree`; it runs in its own transaction before the write's, so a
+concurrent move can slip a node out between the two (a recorded shortcut). `GET /agent/context` with no `focus` defaults its focus
 to the root when the root is a node of the requested project. The MCP binary
 asks for a root when `INSIDEOUT_AGENT_ROOT` names one
 (`apiclient.AgentScopedTo`, called from `server/internal/mcpserver/server.go`);

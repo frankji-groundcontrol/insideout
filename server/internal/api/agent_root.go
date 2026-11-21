@@ -19,7 +19,12 @@ import (
 
 // agentRootRefuses answers 403 agent_scope_denied, and reports true, when the
 // request rides a root-scoped agent token and a node it writes lies outside
-// the root's subtree. A nil node is a new root of the tree: outside.
+// the root's subtree. A nil node is a new root of the tree: outside. A node
+// the caller cannot see answers 404, as it would without a root.
+//
+// shortcut: the subtree check runs in its own transaction before the write's,
+// so a concurrent move can slip a node out between them; upgrade to checking
+// inside the write's transaction if agents ever move nodes while others write.
 func (s *Server) agentRootRefuses(w http.ResponseWriter, r *http.Request, nodes ...*uuid.UUID) bool {
 	root := RootOf(r.Context())
 	if root == nil {
@@ -32,6 +37,10 @@ func (s *Server) agentRootRefuses(w http.ResponseWriter, r *http.Request, nodes 
 			return true
 		}
 		in, err := s.store.NodeInSubtree(r.Context(), userID, *root, *n)
+		if errors.Is(err, store.ErrNotFound) {
+			httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
+			return true
+		}
 		if err != nil {
 			s.log.Error("agent root check", "error", err)
 			httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
