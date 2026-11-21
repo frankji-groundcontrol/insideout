@@ -162,6 +162,11 @@ var sweep = []sweepCase{
 		return drop(c.UpdateWorkspace(h, WorkspacePatch{Title: &h, Description: &h, CoverURL: &h}))
 	}},
 	{"Prds", "GET", "/workspaces/{h}/prds", func(c *Client, h string) error { return drop(c.Prds(h)) }},
+	{"DeleteMe", "DELETE", "/me", func(c *Client, h string) error { return c.DeleteMe(h) }},
+	{"AddObservation", "POST", "/roadmap/{h}/evidence", func(c *Client, h string) error {
+		return drop(c.AddObservation(h, Observation{Detail: h, SourceURL: h, ObservedAt: h}))
+	}},
+	{"ValidateNode", "POST", "/roadmap/{h}/validate", func(c *Client, h string) error { return drop(c.ValidateNode(h, h)) }},
 }
 
 // recorder starts a server that answers every request with a token-bearing

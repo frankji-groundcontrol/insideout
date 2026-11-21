@@ -90,10 +90,30 @@ func TestCLIAndMCPProjectVerbsOnTheRealAPI(t *testing.T) {
 		t.Fatalf("project_updates before the cursor = %+v, want the oldest note", page)
 	}
 
+	// rv5-PARC-04: the human records what was observed, then confirms the node.
+	leaf := cliJSON[doc](t, "roadmap", "add", "--title", "Leaf "+sfx, pr.ID)
+	cliOut(t, "evidence", "add", "--detail", "Five users asked for it", "--observed", "2026-11-20", leaf.ID)
+	if ev := cliOut(t, "evidence", leaf.ID); !strings.Contains(ev, "Five users asked for it") {
+		t.Fatalf("evidence after evidence add = %s, want the observation", ev)
+	}
+	cliOut(t, "roadmap", "update", "--status", "in_progress", leaf.ID)
+	cliOut(t, "roadmap", "update", "--status", "done", leaf.ID)
+	if got := cliJSON[doc](t, "roadmap", "validate", "--reason", "Users kept it", leaf.ID); got.Status != "validated" {
+		t.Fatalf("roadmap validate = %+v, want the node validated", got)
+	}
+
 	if out := strings.TrimSpace(cliOut(t, "project", "delete", pr.ID)); out != "deleted" {
 		t.Fatalf("project delete printed %q, want deleted", out)
 	}
 	if res := runCLI(t, cliEnv(), "", "project", pr.ID); res.code == 0 {
 		t.Fatalf("project after delete: exit 0\n%s\nwant the API's not-found error", res.output())
+	}
+
+	// rv5-PARA-03: the password comes through the prompt, and the login goes with the account.
+	if res := runCLI(t, cliEnv(), w.password+"\n", "account", "delete"); res.code != 0 || strings.TrimSpace(res.stdout) != "account deleted" {
+		t.Fatalf("account delete: exit %d\n%s\nwant account deleted", res.code, res.output())
+	}
+	if res := runCLI(t, cliEnv(), "", "whoami"); res.code == 0 {
+		t.Fatalf("whoami after account delete: exit 0\n%s\nwant no session", res.output())
 	}
 }

@@ -16,11 +16,11 @@ import (
 )
 
 // runRoadmapCommand handles `insideout roadmap
-// <list|show|mine|add|update|move|delete|delegate|handback|assignments|progress|presence> …`.
+// <list|show|mine|add|update|move|delete|delegate|handback|assignments|validate|progress|presence> …`.
 // Returns (handled, exitCode).
 func runRoadmapCommand(args []string) (bool, int) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|show|mine|add|update|move|delete|delegate|handback|assignments|progress|presence> …")
+		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|show|mine|add|update|move|delete|delegate|handback|assignments|validate|progress|presence> …")
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]
