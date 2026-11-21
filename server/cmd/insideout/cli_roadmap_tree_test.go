@@ -37,11 +37,14 @@ func treeAPI(t *testing.T) func() []sent {
 		mu.Lock()
 		got = append(got, sent{target, body})
 		mu.Unlock()
-		if r.URL.Path == "/me" {
+		switch {
+		case r.URL.Path == "/me":
 			w.Write([]byte(`{"id":"u-me"}`))
-			return
+		case r.Method == http.MethodGet && (r.URL.Path == "/projects/p1" || r.URL.Path == "/workspaces/ws1"):
+			w.Write([]byte(`{"id":"x","title":"Old","description":"Old text","status":"active"}`))
+		default:
+			w.Write([]byte(`{"ok":true}`))
 		}
-		w.Write([]byte(`{"ok":true}`))
 	}))
 	t.Cleanup(srv.Close)
 	t.Setenv("INSIDEOUT_API", srv.URL)
