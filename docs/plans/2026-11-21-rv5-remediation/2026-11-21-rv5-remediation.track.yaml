@@ -5,7 +5,7 @@ main:
   outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
   owner: claude
   status: in_progress
-  next_evidence: "Waves 0 and 1 closed and pushed on rv5/remediation (wave 1: 19 cluster commits from three accepted clusters plus 7bcb71e go1.26.11, 8a7e8e5 dart format, 85e6da2 test pins); integrated gates green: Go with and without a private PostgreSQL 18 database, 591 Flutter tests, analyzer 8 of 8, dart format, every check script, redaction, govulncheck. No CI (owner). Wave 2 next: four stacked stages (tree-core, tree-delegation, then tree-surfaces with tree-web-open, then tree-web-mine)."
+  next_evidence: "Waves 0 and 1 closed. Wave 2 stage 1 (tree-core) landed at 14a0c50 after three verifier rounds plus coordinator fixes for the last blocker (departed project owner passed RLS) and two nits, every gate green; stages tree-delegation, tree-surfaces with tree-web-open, and tree-web-mine running as one workflow. Open owner question: proposals stay plan-writer only (BUG-020), so a delegate agent cannot propose."
 side_tracks: []
 updated_at: "2026-11-21T00:00:00Z"
 plan:

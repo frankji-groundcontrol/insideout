@@ -13,3 +13,7 @@ results and anything left open:
   finished and committed, the task-tree concept written; all seven rows closed.
 - [Wave 1](./wave-1.md) — the idea body, the build path, the coach transcript and
   the drafted-tree preview; Go toolchain go1.26.11; TREEB-10 partly closed.
+- Wave 2 — in progress. Stage 1 (tree-core: one write rule in SQL for the
+  store and row-level security, canWrite, subtree and single-node reads,
+  focus-scoped agent context) is on the branch at `14a0c50`; its record is
+  written when the wave closes.

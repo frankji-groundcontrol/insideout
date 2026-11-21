@@ -76,3 +76,14 @@ started; execution plan:
    on every surface.
 6. No: only a human may mark a node done with a reason instead of evidence;
    an agent may still mark done when evidence exists.
+
+## Open owner question (raised 2026-11-21 during wave 2)
+
+Decision 4 says an agent token that may not change a node's owner files a
+proposal instead. Proposals are still limited to plan writers (the project
+owner and workspace admins), a rule recorded in BUG-020. So the agent of a
+plain delegate cannot file a proposal at all, and has no way to ask for an
+owner change inside the delegate's subtree. Wave 2 keeps BUG-020 as it is.
+The owner decides whether a node writer (and their agent) may file proposals
+inside their own subtree.
+
