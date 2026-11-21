@@ -43,7 +43,7 @@ var cliVerbs = []cliVerb{
 	{groupWork, "updates", "page through a project's updates (--before the nextCursor)"},
 	{groupWork, "update", "post a progress, blocker or note update to a project (update add)"},
 	{groupWork, "ideas", "list a workspace's ideas"},
-	{groupWork, "idea", "create, update, delete or convert an idea; decide a proposal"},
+	{groupWork, "idea", "create, update, delete or convert an idea"},
 	{groupWork, "evidence", "show the evidence behind a roadmap node (evidence add records an observation)"},
 	{groupWork, "repo", "link a GitHub repository to a project (repo set <project-id> <url>)"},
 	{groupWork, "sync", "pull a project's GitHub activity into its roadmap"},
@@ -69,6 +69,7 @@ var cliVerbs = []cliVerb{
 	{groupRoadmap, "agent-context", "fetch the agent briefing for a project (--mode, --focus)"},
 	{groupRoadmap, "checkpoint", "record an agent progress checkpoint (--node)"},
 	{groupRoadmap, "propose", "propose a roadmap change for review (--kind, --item)"},
+	{groupRoadmap, "proposal", "proposal decide: accept (applying its items unless --no-apply) or reject a proposal"},
 
 	{groupAdmin, "invite", "invite one email address (invite revoke <id> cancels)"},
 	{groupAdmin, "invites", "list invitations"},

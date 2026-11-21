@@ -173,9 +173,9 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		}
 
 		// A human decides, on the CLI: the agent scope the tools run on cannot.
-		decided := cliJSON[doc](t, "idea", "proposal-decide", "--accept", "--apply", prop.ID)
+		decided := cliJSON[doc](t, "proposal", "decide", "--accept", prop.ID) // applies by default (rv5-PARB-05)
 		if decided.Decision != "accepted" || len(decided.AppliedNodes) != 1 {
-			t.Fatalf("proposal-decide = %+v, want it accepted, with the one proposed node applied", decided)
+			t.Fatalf("proposal decide = %+v, want it accepted, with the one proposed node applied", decided)
 		}
 		wantListed(t, "roadmap list", cliOut(t, "roadmap", "list", r.project), decided.AppliedNodes[0])
 	})

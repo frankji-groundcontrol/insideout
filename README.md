@@ -200,11 +200,11 @@ insideout roadmap list <proj-id>       # 路线图 / the roadmap tree
 insideout commit --name "v0.1" --audience decision <prd-id>   # 人类专属 / humans only
 ```
 
-代理词汇——代理汇报、人类决策：`agent-context`（简报）、`checkpoint`（记录工作）、`propose`（提议变更）、`proposal-decide`（人类批准或驳回）。完整动词表见 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md)。
+代理词汇——代理汇报、人类决策：`agent-context`（简报）、`checkpoint`（记录工作）、`propose`（提议变更）、`proposal decide`（人类批准或驳回）。完整动词表见 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md)。
 
 The agent vocabulary — agents report, humans decide: `agent-context`
 (the briefing), `checkpoint` (record work), `propose` (propose changes),
-`proposal-decide` (a human accepts or rejects). Full verb table:
+`proposal decide` (a human accepts or rejects). Full verb table:
 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
 
 > 注册默认「仅限邀请」：全新数据库播种 `signup_mode = invitation_only`，无邀请码注册返回 403。本地首跑先用 `insideout promote-admin <your-email>` 提升管理员（该邮箱还没有账号时会先创建账号，密码从标准输入读取）、再生成邀请码（本地开发可 `insideout signup-mode open`）。

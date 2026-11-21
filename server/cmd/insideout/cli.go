@@ -96,6 +96,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 			return runProjectCommand(cmd+" "+rest[0], rest[1:])
 		case "account delete", "evidence add", "roadmap validate":
 			return runHumanCommand(cmd+" "+rest[0], rest[1:])
+		case "proposal decide":
+			return runProposalDecide(rest[1:])
 		}
 	}
 	switch cmd {
@@ -103,6 +105,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runProjectCommand(cmd, rest)
 	case "account":
 		return runHumanCommand(cmd, rest)
+	case "proposal": // anything but `proposal decide` prints its usage
+		return runProposalDecide(nil)
 	case "export":
 		return runExportCommand(rest)
 	case "setup":
