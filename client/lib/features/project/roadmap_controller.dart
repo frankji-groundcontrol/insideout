@@ -1,0 +1,203 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+
+import '../../api/client.dart';
+import '../../api/errors.dart';
+import '../../api/models.dart';
+import 'roadmap_canvas.dart';
+import 'roadmap_tree.dart';
+
+/// The roadmap page's data between its State and the API client (STRC-05):
+/// the nodes, the progress reading, the opened node's read, the project
+/// view, and the live half — the progress and presence streams with their
+/// retry back-off, and the shared cursors. One controller serves the whole
+/// tree ([rootId] null), an opened subtree, and the Mine view over either.
+/// The page keeps only layout and local UI state; it listens and rebuilds.
+class RoadmapController extends ChangeNotifier {
+  RoadmapController(this._api, {required this.projectId, this.rootId}) {
+    project = _api.getProject(projectId);
+    _fetch();
+    project
+        .then((p) {
+          if (_stop.isCompleted) return;
+          planWriter = p.project.canWritePlan;
+          notifyListeners();
+        })
+        // A failed read leaves the plan-writer items hidden; the server
+        // refuses them anyway.
+        .catchError((_) {});
+    // The live progress reading is project-wide: a subtree keeps its own.
+    if (rootId == null) _progressLoop();
+    _presenceLoop();
+  }
+
+  final ApiClient _api;
+  final String projectId;
+
+  /// The node opened as its own tree; null for the whole project.
+  final String? rootId;
+
+  late Future<List<RoadmapNode>> nodes;
+  late Future<RoadmapProgress> progress;
+
+  /// The opened node's read (ancestors and project); null for the whole tree.
+  Future<RoadmapNodeRead>? read;
+  late final Future<ProjectDetail> project;
+
+  /// The caller writes the whole plan (GET /projects/{pid} canWritePlan).
+  bool planWriter = false;
+
+  /// The opened node's canWrite: "New item" adds under it.
+  bool rootWritable = false;
+
+  /// The opened node's read once it landed: its ancestors carry the owners
+  /// its tree inherits, for Mine and the inherited owner label.
+  RoadmapNodeRead? opened;
+
+  /// Member names by user id, read only when an ancestor above the opened
+  /// tree has an owner (the ancestor refs carry the id alone).
+  Map<String, String> names = const {};
+
+  /// The newest reading the progress stream pushed; null until it does and
+  /// after a reload, so the fetched reading shows.
+  RoadmapProgress? liveProgress;
+  List<PresenceEntry> presence = [];
+  final Map<String, CursorDot> cursors = {};
+
+  DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
+  final _retryTimers = <Timer>{};
+
+  /// Completed on dispose: the live streams close their connections with it.
+  final _stop = Completer<void>();
+  late final String _clientId = DateTime.now().microsecondsSinceEpoch
+      .toRadixString(36);
+
+  bool get _live => !_stop.isCompleted;
+
+  void _changed() {
+    if (_live) notifyListeners();
+  }
+
+  void _fetch() {
+    final root = rootId;
+    nodes = root == null
+        ? _api.listRoadmap(projectId)
+        : _api.listRoadmapSubtree(projectId, root);
+    progress = root == null
+        ? _api.roadmapProgress(projectId)
+        : _api.roadmapSubtreeProgress(projectId, root);
+    read = root == null ? null : _api.readRoadmapNode(root);
+    read
+        ?.then((r) {
+          if (!_live) return;
+          rootWritable = r.node.canWrite;
+          opened = r;
+          _changed();
+          if (names.isEmpty && r.ancestors.any((a) => a.ownerId != null)) {
+            _loadNames();
+          }
+        })
+        .catchError((_) {});
+  }
+
+  void _loadNames() => project
+      .then((p) => _api.listMembers(p.project.workspaceId))
+      .then((members) {
+        names = {for (final m in members) m.userId: m.username};
+        _changed();
+      })
+      // Unnamed, the label reads "someone".
+      .catchError((_) {});
+
+  /// Reads the nodes, the progress and the opened node again.
+  Future<void> reload() async {
+    _fetch();
+    liveProgress = null;
+    _changed();
+    await Future.wait([nodes, progress, ?read]);
+  }
+
+  /// Mine over [all]: the caller's branches, or the whole opened tree when
+  /// an ancestor above it is theirs.
+  List<RoadmapNode> mine(List<RoadmapNode> all, String userId) =>
+      opened?.ancestors.any((a) => a.ownerId == userId) == true
+      ? all
+      : roadmapMine(all, userId);
+
+  /// Shares the pointer at most every 200ms.
+  void sendCursor(double x, double y) {
+    final now = DateTime.now();
+    if (now.difference(_lastCursorSent).inMilliseconds < 200) return;
+    _lastCursorSent = now;
+    _api.cursor(projectId, x, y, clientId: _clientId).catchError((_) {});
+  }
+
+  Future<void> _backoff(Duration d) {
+    final done = Completer<void>();
+    late final Timer t;
+    t = Timer(d, () {
+      _retryTimers.remove(t);
+      done.complete();
+    });
+    _retryTimers.add(t);
+    return done.future;
+  }
+
+  /// Runs [session] again each time it ends, until dispose: wait 500ms,
+  /// doubling to 5s, between runs; 401/403/404 are final.
+  Future<void> _retrying(Future<void> Function() session) async {
+    var backoff = const Duration(milliseconds: 500);
+    while (_live) {
+      try {
+        await session();
+      } on ApiException catch (e) {
+        if (e.status == 401 || e.status == 403 || e.status == 404) return;
+      } catch (_) {}
+      if (!_live) return;
+      await _backoff(backoff);
+      backoff = backoff * 2 > const Duration(seconds: 5)
+          ? const Duration(seconds: 5)
+          : backoff * 2;
+    }
+  }
+
+  Future<void> _progressLoop() => _retrying(
+    () => _api.progressStream(projectId, (p) {
+      liveProgress = p;
+      _changed();
+    }, stop: _stop.future),
+  );
+
+  Future<void> _presenceLoop() => _retrying(
+    () => _api.presenceStream(
+      projectId,
+      _clientId,
+      (entries) {
+        final live = entries.map((e) => e.sessionId).toSet();
+        cursors.removeWhere((id, _) => !live.contains(id));
+        presence = entries;
+        _changed();
+      },
+      onCursor: (sessionId, name, x, y) {
+        cursors[sessionId] = CursorDot(
+          sessionId: sessionId,
+          name: name,
+          x: x,
+          y: y,
+        );
+        _changed();
+      },
+      stop: _stop.future,
+    ),
+  );
+
+  @override
+  void dispose() {
+    _stop.complete();
+    for (final t in _retryTimers) {
+      t.cancel();
+    }
+    super.dispose();
+  }
+}

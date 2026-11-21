@@ -5,16 +5,16 @@ part of 'roadmap_page.dart';
 extension _RoadmapViews on _RoadmapPageState {
   Widget _progressBody(Appearance l10n) {
     return FutureBuilder(
-      future: _progressFuture,
+      future: _c.progress,
       builder: (context, snap) {
-        final progress = _liveProgress ?? snap.data;
+        final progress = _c.liveProgress ?? snap.data;
         if (progress == null) {
-          return readGate(snap, _reload);
+          return readGate(snap, _c.reload);
         }
         // Progress lists only dated work, so an empty one does
         // not mean there are no goals.
         return FutureBuilder(
-          future: _future,
+          future: _c.nodes,
           builder: (context, nodes) => RoadmapProgressView(
             progress: progress,
             // Blank until the goals are known, so the wrong
@@ -34,10 +34,10 @@ extension _RoadmapViews on _RoadmapPageState {
 
   Widget _treeBody(Appearance l10n) {
     return FutureBuilder(
-      future: _future,
+      future: _c.nodes,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return readGate(snap, _reload);
+          return readGate(snap, _c.reload);
         }
         if (snap.data!.isEmpty) {
           return BlockEmpty(
@@ -49,18 +49,18 @@ extension _RoadmapViews on _RoadmapPageState {
           // The reading the Progress tab shows, so a reload or
           // a quiet stream cannot make the two disagree.
           return FutureBuilder(
-            future: _progressFuture,
+            future: _c.progress,
             builder: (context, ps) {
-              final progress = _liveProgress ?? ps.data;
+              final progress = _c.liveProgress ?? ps.data;
               if (progress == null && !ps.hasError) {
                 return const BlockLoading();
               }
               return RoadmapBands(
                 projectId: widget.projectId,
                 nodes: snap.data!,
-                onReload: _reload,
+                onReload: _c.reload,
                 progress: progress,
-                planWriter: _planWriter,
+                planWriter: _c.planWriter,
                 card: (n) => _card(n, snap.data!, compact: true),
               );
             },
@@ -71,10 +71,7 @@ extension _RoadmapViews on _RoadmapPageState {
         // a band; the cards still read the whole list for parent and count.
         // Under an ancestor the caller owns, the whole opened tree is theirs.
         final uid = context.read<Session>().user?.id ?? '';
-        final heldAbove = _opened?.ancestors.any((a) => a.ownerId == uid);
-        final shown = _view == _RoadmapView.mine && heldAbove != true
-            ? roadmapMine(all, uid)
-            : all;
+        final shown = _view == _RoadmapView.mine ? _c.mine(all, uid) : all;
         if (shown.isEmpty) {
           return BlockEmpty(
             icon: Icons.person_outline,
@@ -92,8 +89,8 @@ extension _RoadmapViews on _RoadmapPageState {
                 controller: _canvasController,
                 // Shared cursors live in the whole canvas's layout; Mine
                 // lays out other bands, so it neither sends nor shows them.
-                onCursor: shown == all ? _sendCursor : null,
-                cursors: shown == all ? _cursors.values.toList() : const [],
+                onCursor: shown == all ? _c.sendCursor : null,
+                cursors: shown == all ? _c.cursors.values.toList() : const [],
                 collapsed: _collapsed,
                 onToggle: _toggleFold,
               ),
@@ -113,16 +110,16 @@ extension _RoadmapViews on _RoadmapPageState {
   }) => RoadmapNodeCard(
     projectId: widget.projectId,
     node: node,
-    onReload: _reload,
+    onReload: _c.reload,
     compact: compact,
     descendants: roadmapDescendantCount(all, node),
-    planWriter: _planWriter,
+    planWriter: _c.planWriter,
     parentWritable: roadmapParentWritable(all, node),
     inheritedOwner: roadmapInheritedOwner(
       all,
       node,
-      above: _opened?.ancestors ?? const [],
-      names: _names,
+      above: _c.opened?.ancestors ?? const [],
+      names: _c.names,
     ),
     openedRoot: node.id == widget.rootId,
   );
