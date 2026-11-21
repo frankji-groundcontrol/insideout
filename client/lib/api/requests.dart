@@ -198,8 +198,11 @@ ApiCall postPrdBuildConfirm(
 String _root(String? rootId) =>
     rootId == null ? '' : '?root=${Uri.encodeQueryComponent(rootId)}';
 
-ApiCall getRoadmap(String projectId, {String? rootId}) =>
-    ApiCall('GET', '/projects/$projectId/roadmap${_root(rootId)}');
+ApiCall getRoadmap(String projectId, {String? rootId}) => ApiCall(
+  'GET',
+  '/projects/$projectId/roadmap'
+      '${_root(rootId)}',
+);
 
 ApiCall getRoadmapNode(String nodeId) => ApiCall('GET', '/roadmap/$nodeId');
 
@@ -209,8 +212,11 @@ ApiCall getNodeAssignments(String nodeId) =>
 ApiCall getNodeEvidence(String nodeId) =>
     ApiCall('GET', '/roadmap/$nodeId/evidence');
 
-ApiCall getRoadmapProgress(String projectId, {String? rootId}) =>
-    ApiCall('GET', '/projects/$projectId/roadmap/progress${_root(rootId)}');
+ApiCall getRoadmapProgress(String projectId, {String? rootId}) => ApiCall(
+  'GET',
+  '/projects/$projectId/roadmap/progress'
+      '${_root(rootId)}',
+);
 
 /// One human-entered validation observation; [observedAt] is sent as its date.
 ApiCall postNodeEvidence(
