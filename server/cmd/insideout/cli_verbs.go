@@ -34,7 +34,7 @@ var cliVerbs = []cliVerb{
 	{groupAccount, "reset-password", "finish a reset: paste the link, then the new password"},
 	{groupAccount, "whoami", "show the signed-in user"},
 	{groupAccount, "account", "account delete: delete your account (asks for the current password)"},
-	{groupAccount, "profile", "profile update: edit your username, bio or avatar"},
+	{groupAccount, "profile", "profile update: edit your username, bio, keywords or avatar"},
 
 	{groupWork, "workspaces", "list workspaces (workspaces create --title T)"},
 	{groupWork, "workspace", "show a workspace (workspace update edits it, workspace delete --yes removes it)"},

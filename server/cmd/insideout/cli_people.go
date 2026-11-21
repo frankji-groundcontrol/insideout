@@ -3,13 +3,14 @@ package main
 // The deletes, member roles and the profile (rv5-PARA-06). The server keeps
 // them for a human's session, so MCP has no tool for them; deleting a project
 // or a workspace takes everything under it and asks for --yes. A profile edit reads the user first, so a flag
-// left out keeps its value; the word clear clears the bio or the avatar
+// left out keeps its value; the word clear clears the bio, the keywords or the avatar
 // (docs/usage/cli-mcp-and-guidance.md, "Absent, empty and clear").
 
 import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
@@ -21,7 +22,7 @@ var peopleUsage = map[string]string{
 	"member remove":    "insideout member remove <workspace-id> <user-id>",
 	"update edit":      "insideout update edit --content C <update-id>",
 	"update delete":    "insideout update delete <update-id>",
-	"profile update":   "insideout profile update [--username U] [--bio B|clear] [--avatar URL|clear]",
+	"profile update":   "insideout profile update [--username U] [--bio B|clear] [--keywords a,b|clear] [--avatar URL|clear]",
 }
 
 // runPeopleCommand runs one of the peopleUsage verbs; a bare `member` or
@@ -37,7 +38,7 @@ func runPeopleCommand(verb string, args []string) (bool, int) {
 	fs := flag.NewFlagSet(verb, flag.ContinueOnError)
 	api := apiFlag(fs)
 	var yes *bool
-	var role, content, username, bio, avatar *string
+	var role, content, username, bio, keywords, avatar *string
 	wantIDs := 1
 	switch verb {
 	case "project delete", "workspace delete":
@@ -52,6 +53,7 @@ func runPeopleCommand(verb string, args []string) (bool, int) {
 	case "profile update":
 		username = fs.String("username", "", "new display name")
 		bio = fs.String("bio", "", "new bio, or clear")
+		keywords = fs.String("keywords", "", "comma-separated keywords, or clear")
 		avatar = fs.String("avatar", "", "avatar image URL, or clear")
 		wantIDs = 0
 	}
@@ -60,8 +62,8 @@ func runPeopleCommand(verb string, args []string) (bool, int) {
 	var patch apiclient.MePatch
 	if username != nil {
 		patch = apiclient.MePatch{Username: apiclient.NonEmpty(*username), Bio: apiclient.PatchText(*bio),
-			AvatarURL: apiclient.PatchText(*avatar)}
-		bad = bad || (patch.Username == nil && patch.Bio == nil && patch.AvatarURL == nil)
+			Keywords: keywordList(*keywords), AvatarURL: apiclient.PatchText(*avatar)}
+		bad = bad || (patch.Username == nil && patch.Bio == nil && patch.Keywords == nil && patch.AvatarURL == nil)
 	}
 	if bad {
 		fmt.Fprintln(os.Stderr, "usage: "+usage)
@@ -94,4 +96,21 @@ func runPeopleCommand(verb string, args []string) (bool, int) {
 	}
 	fmt.Println(done)
 	return true, 0
+}
+
+// keywordList reads --keywords: absent leaves them (nil), clear empties them
+// (an empty list, sent as absent, which PATCH /me stores as none), else the
+// comma-separated words.
+func keywordList(v string) []string {
+	switch v {
+	case "":
+		return nil
+	case apiclient.ClearWord:
+		return []string{}
+	}
+	out := strings.Split(v, ",")
+	for i := range out {
+		out[i] = strings.TrimSpace(out[i])
+	}
+	return out
 }
