@@ -11,7 +11,8 @@ void main() {
     );
     expect(patch.method, 'PATCH');
     expect(patch.path, '/workspaces/ws1');
-    expect(patch.body, {'title': 'T', 'description': 'D', 'coverUrl': null});
+    // rv5-PARA-09: an absent coverUrl keeps the stored cover; null clears it.
+    expect(patch.body, {'title': 'T', 'description': 'D'});
     final del = deleteWorkspace('ws1');
     expect(del.method, 'DELETE');
     expect(del.path, '/workspaces/ws1');
