@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -70,6 +72,16 @@ func TestCLIAndMCPProjectVerbsOnTheRealAPI(t *testing.T) {
 	idea := cliJSON[doc](t, "idea", "create", "--title", "Idea "+sfx, ws.ID)
 	made := cliJSON[doc](t, "idea", "convert", idea.ID)
 	wantListed(t, "prds", cliOut(t, "prds", ws.ID), made.PrdID)
+
+	// rv5-PARB-06: the whole PRD, as markdown on stdout or print HTML in a file.
+	if md := cliOut(t, "export", made.PrdID); !strings.Contains(md, "Idea "+sfx) {
+		t.Fatalf("export printed %q, want the PRD's markdown with its title", md)
+	}
+	page := filepath.Join(t.TempDir(), "prd.html")
+	cliOut(t, "export", "--format", "print", "--out", page, made.PrdID)
+	if html, err := os.ReadFile(page); err != nil || !strings.HasPrefix(string(html), "<!DOCTYPE html>") {
+		t.Fatalf("export --format print --out wrote %.80q (%v), want the print HTML", html, err)
+	}
 
 	t.Cleanup(apiclient.ForgetAgentToken)
 	s := mcpserver.Build(w.base)
