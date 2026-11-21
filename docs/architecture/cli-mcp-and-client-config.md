@@ -28,8 +28,10 @@ contract. The plan that shaped the CLI and MCP projections is
 
 `cliVerbs` in `cmd/insideout/cli.go` is the verb inventory: `insideout help`
 prints it, and `TestVerbTableMatchesDispatch` fails when it and the dispatch
-switches drift apart. The MCP server registers one tool per verb
-(`addProductTools`, `addAdminTools`, `addAuthTools`), and a read tool returns
+switches drift apart. The MCP server registers one tool per verb, each
+resource from its own `server/internal/mcpserver/tools_*.go` file through one
+helper (`registerTool` in `register.go`, which holds the tool-call lock), and
+`testdata/tools_*.golden.json` pins the registry; a read tool returns
 the API's own JSON rather than a reshaping of it, so a surface cannot invent a
 field. What no test checks is that the three lists (CLI verbs, MCP tools,
 `apiclient` methods) agree with each other: that parity is by convention, and

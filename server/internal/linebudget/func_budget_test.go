@@ -25,8 +25,6 @@ var longFunctions = map[string]int{
 	"internal/api/agent_routes.go:Server.handleAgentContext":      89,
 	"internal/api/presence_routes.go:Server.handlePresenceStream": 85,
 	"internal/api/roadmap.go:Server.handleUpdateRoadmapNode":      97,
-	"internal/mcpserver/auth_tools.go:addAuthTools":               156,
-	"internal/mcpserver/product_tools.go:addProductTools":         294,
 	"internal/setup/ui/register.go:runRegister":                   84,
 	"internal/store/migrate.go:Store.Migrate":                     100,
 	"internal/store/roadmap_move.go:Store.MoveRoadmapNode":        94,

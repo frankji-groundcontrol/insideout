@@ -56,10 +56,10 @@ func TestToolCallsEndWhenTheirContextIsCancelled(t *testing.T) {
 	cases := []struct{ file, tool, args string }{
 		{"product_tools.go", "whoami", `{}`},
 		{"product_tools.go", "signup_mode", `{}`},
-		{"auth_tools.go", "auth_login_code_request", `{"email":"a@example.com"}`},
-		{"draft_tools.go", "build", `{"prd_id":"p1"}`},
+		{"tools_auth.go", "auth_login_code_request", `{"email":"a@example.com"}`},
+		{"tools_draft.go", "build", `{"prd_id":"p1"}`},
 		// The sign-in itself is quick; the /me that confirms it is the slow call.
-		{"auth_tools.go (signedIn)", "auth_login", `{"email":"a@example.com","password":"correct horse battery"}`},
+		{"tools_auth.go (signedIn)", "auth_login", `{"email":"a@example.com","password":"correct horse battery"}`},
 	}
 	for i, c := range cases {
 		ctx, cancel := context.WithCancel(context.Background())

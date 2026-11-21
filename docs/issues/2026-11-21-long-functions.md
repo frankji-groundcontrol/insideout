@@ -16,10 +16,10 @@ Length is counted from the `func` line to the closing brace, at `87c95f5`:
 
 | Function | File (under `server/`) | Lines |
 |---|---|---|
-| `addProductTools` | `internal/mcpserver/product_tools.go` | 294 |
+| ~~`addProductTools`~~ | `internal/mcpserver/product_tools.go` | 294: split into per-resource `tools_*.go` in wave 4 |
 | ~~`Coach.HandleMessage`~~ | `internal/agent/coach.go` | 219: split in wave 4 |
 | ~~`runLocalSetup`~~ | `cmd/insideout/cli_setup_local.go` | 160: split in wave 4 |
-| `addAuthTools` | `internal/mcpserver/auth_tools.go` | 152 |
+| ~~`addAuthTools`~~ | `internal/mcpserver/auth_tools.go` | 152: split in `tools_auth.go` in wave 4 |
 | ~~`parseAnthropicStream`~~ | `internal/agent/anthropic_parse.go` | 136: split in wave 4 |
 | `runVersionCommands` | `cmd/insideout/cli_version.go` | 117 |
 | `runCrudCommand` | `cmd/insideout/cli_crud.go` | 103 |

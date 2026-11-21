@@ -11,16 +11,13 @@ import (
 
 // addDraftTools registers the roadmap draft and confirm verbs. A draft call
 // returns the plan and writes nothing; the matching confirm call persists it.
-func addDraftTools(
-	addTextTool func(name, desc string, opts []mcp.ToolOption, call func(c *apiclient.Client, req mcp.CallToolRequest) (string, error)),
-	strReq func(name, desc string) mcp.ToolOption,
-) {
-	addTextTool("build", "Agent: draft a branched roadmap from an approved PRD. Writes nothing, not even the project, until build_confirm.",
+func addDraftTools(ts toolSet) {
+	ts.add("build", "Agent: draft a branched roadmap from an approved PRD. Writes nothing, not even the project, until build_confirm.",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.BuildFromPrd(reqStr(req, "prd_id")))
 		})
-	addTextTool("build_confirm", "Agent: write a previously drafted roadmap tree",
+	ts.add("build_confirm", "Agent: write a previously drafted roadmap tree",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strReq("tree", "the drafted tree JSON from build"),
 			mcp.WithNumber("expected_count", mcp.Description("live node count; required to confirm a replace_conflict 409 retry")),
 			mcp.WithBoolean("force", mcp.Description("discard nodes with evidence or done or validated (answers a roadmap_replace_has_history 409); an agent token may only build onto an empty roadmap, so this is the human's"))},
@@ -36,12 +33,12 @@ func addDraftTools(
 			}
 			return call(c.ConfirmBuildFromPrd(reqStr(req, "prd_id"), tree, count, force))
 		})
-	addTextTool("expand", "Agent: draft subtasks for one node. Writes nothing until expand_confirm.",
+	ts.add("expand", "Agent: draft subtasks for one node. Writes nothing until expand_confirm.",
 		[]mcp.ToolOption{strReq("node_id", "node id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.ExpandNode(reqStr(req, "node_id")))
 		})
-	addTextTool("expand_confirm", "Agent: write previously drafted subtasks",
+	ts.add("expand_confirm", "Agent: write previously drafted subtasks",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strReq("children", "the drafted children JSON from expand")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			children := json.RawMessage(reqStr(req, "children"))
