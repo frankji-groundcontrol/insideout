@@ -1,11 +1,11 @@
-package main
+package local
 
 import (
 	"strings"
 	"testing"
 )
 
-// The database-readiness row of the decision table (cli_setup_roles.go). With
+// The database-readiness row of the decision table (roles.go). With
 // both roles present, setup stops only when the migration would certainly die
 // on this database: the insideout schema is missing and insideout_owner cannot
 // create it. Ownership alone is not the test — a database somebody else owns

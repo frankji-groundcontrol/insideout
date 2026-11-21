@@ -1,4 +1,4 @@
-package main
+package local
 
 // The own-URL precondition (docs/issues/2026-10-07-own-url-fresh-db-bootstrap.md):
 // migrations need the two NOSUPERUSER roles that
@@ -24,6 +24,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/catalog"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/envwrite"
+	"github.com/frankji-groundcontrol/insideout/server/internal/setup/ui"
 )
 
 const (
@@ -113,14 +114,14 @@ func decideRoles(p rolesProbe, terminal, create bool) rolesAction {
 // .env already had) and false when setup must stop; every stop precedes any
 // migration and any write of the supplied DSN as DATABASE_URL, which happens
 // here: the supplied DSN when the roles exist, the app URL when provisioned.
-func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL string, create bool) (string, bool) {
+func ensureRoles(ctx context.Context, pool *pgxpool.Pool, dsn, envPath, ownerURL string, create bool, prompt func(string) string) (string, bool) {
 	p, err := probeRoles(ctx, pool, ownerRole, appRole)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "setup: probe roles: %v\n", err)
 		return "", false
 	}
-	act := decideRoles(p, isTerminal(os.Stdin), create)
-	if act == rolesAsk && !confirmCreateRoles(p.database) {
+	act := decideRoles(p, ui.IsTerminal(os.Stdin), create)
+	if act == rolesAsk && !confirmCreateRoles(p.database, prompt) {
 		act = rolesStop
 	}
 	switch act {
@@ -167,7 +168,7 @@ func explainRoleMisconfigured(p rolesProbe) {
 
 // confirmCreateRoles asks at a terminal, saying what will change: on a shared
 // database the owner switch and the schema-public revoke are not invisible.
-func confirmCreateRoles(database string) bool {
+func confirmCreateRoles(database string, prompt func(string) string) bool {
 	fmt.Fprintf(os.Stderr, "setup: roles %s and %s do not exist on this server. Creating them:\n", ownerRole, appRole)
 	fmt.Fprintf(os.Stderr, "  %s: NOSUPERUSER, BYPASSRLS, becomes the owner of database %q\n", ownerRole, database)
 	fmt.Fprintf(os.Stderr, "  %s: NOSUPERUSER, CONNECT only; CREATE on schema public is revoked from PUBLIC\n", appRole)

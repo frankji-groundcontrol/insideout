@@ -15,10 +15,10 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/flow"
+	"github.com/frankji-groundcontrol/insideout/server/internal/setup/local"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/probe"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/ui"
 	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -214,6 +214,15 @@ Guide: docs/usage/installation.md
 	}
 }
 
+// runLocalSetup runs the local engine (internal/setup/local) with the CLI's
+// prompts, which share one stdin reader with every other prompt of the command.
+func runLocalSetup(postgres string, noStart, createRoles bool, ownDSN string, askBoot bool) (bool, int) {
+	return true, local.Run(local.Options{
+		Postgres: postgres, NoStart: noStart, CreateRoles: createRoles, OwnDSN: ownDSN, AskBoot: askBoot,
+		Prompt: prompt, ReadSecret: readSecret,
+	})
+}
+
 func runInteractiveSetup() (bool, int) {
 	sc := &setupClient{}
 	deps := flow.Deps{
@@ -226,24 +235,20 @@ func runInteractiveSetup() (bool, int) {
 			switch code {
 			case 0:
 				return nil
-			case setupBack:
+			case local.ExitBack:
 				return ui.ErrBack
-			case setupExit:
+			case local.ExitExit:
 				return ui.ErrExit
 			default:
 				return fmt.Errorf("local setup exited with code %d", code)
 			}
 		},
 		StartServer: func(start bool) error {
-			root, err := findRepoRoot()
+			root, err := local.FindRepoRoot()
 			if err != nil {
 				return err
 			}
-			envPath := filepath.Join(root, ".env")
-			if v := os.Getenv("INSIDEOUT_ENV_FILE"); v != "" {
-				envPath = v
-			}
-			_, code := offerBootChoice(root, envPath, start)
+			code := local.OfferBootChoice(root, local.EnvPath(root), start)
 			if code != 0 {
 				return fmt.Errorf("setup: server exited with code %d", code)
 			}

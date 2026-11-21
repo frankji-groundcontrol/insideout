@@ -1,4 +1,4 @@
-package main
+package local
 
 import (
 	"context"
@@ -24,4 +24,11 @@ func TestProbeRolesReadsTheCatalog(t *testing.T) {
 	}
 	t.Cleanup(pool.Close)
 	checkProbeRoles(t, pool)
+}
+
+// rv4-FR-F65: the catalog probe dials DATABASE_URL itself, so strict mode must
+// refuse it before it reaches a database on another machine (moved here with
+// the test from cmd/insideout's guard list).
+func TestRvGuardsStrictModeRefusesARemoteDatabase(t *testing.T) {
+	testlock.AssertRefuses(t, "TestProbeRolesReadsTheCatalog")
 }

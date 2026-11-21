@@ -1,10 +1,10 @@
 //go:build roleless
 
-package main
+package local
 
 // End-to-end scenarios for the own-URL role precondition
 // (docs/issues/2026-10-07-own-url-fresh-db-bootstrap.md), driven through
-// runSetupCommand against a real PostgreSQL cluster that has NOT been
+// Run against a real PostgreSQL cluster that has NOT been
 // provisioned. They create and drop their own throwaway databases and
 // login roles — and insideout_owner / insideout_app themselves, which are
 // cluster-global names — so they cannot share a cluster with other work.
@@ -12,7 +12,7 @@ package main
 // once selected they refuse to run (Fatal) against anything but a
 // superuser connection to a cluster that has neither insideout role.
 //
-//	go test -tags roleless ./cmd/insideout/ -run Roleless -count=1 -v
+//	go test -tags roleless ./internal/setup/local/ -run Roleless -count=1 -v
 //
 // INSIDEOUT_ROLELESS_URL names the superuser DSN of a throwaway cluster.
 // It defaults to the private scratch cluster of the practice runbook
@@ -64,7 +64,7 @@ func TestRolelessProvisionsPerInitScriptAndMigrates(t *testing.T) {
 		t.Errorf("database owner=%q app CONNECT=%v CREATE=%v, want insideout_owner/true/false", dbOwner, appConnect, appCreate)
 	}
 
-	vals := readEnvValues(r.env)
+	vals := ReadEnvValues(r.env)
 	ownerPW, appPW := vals["POSTGRES_OWNER_PASSWORD"], vals["POSTGRES_APP_PASSWORD"]
 	if len(ownerPW) < 32 || len(appPW) < 32 || ownerPW == appPW {
 		t.Fatalf("generated passwords not stored as distinct strong values (%d, %d chars)", len(ownerPW), len(appPW))
@@ -122,7 +122,7 @@ func TestRolelessPipedWithoutConsentStopsWithSQL(t *testing.T) {
 	if c.schemaExists(t, db) {
 		t.Error("migrations ran although the roles were missing")
 	}
-	if vals := readEnvValues(r.env); vals["POSTGRES_OWNER_PASSWORD"] != "" || vals["DATABASE_OWNER_URL"] != "" {
+	if vals := ReadEnvValues(r.env); vals["POSTGRES_OWNER_PASSWORD"] != "" || vals["DATABASE_OWNER_URL"] != "" {
 		t.Error("credentials were written although nothing was provisioned")
 	}
 }
@@ -175,7 +175,7 @@ func TestRolelessRolesPresentIsUnchanged(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("setup exit = %d, want 0\n%s", code, out)
 		}
-		if vals := readEnvValues(r.env); vals["POSTGRES_OWNER_PASSWORD"] != "" || vals["DATABASE_OWNER_URL"] != "" {
+		if vals := ReadEnvValues(r.env); vals["POSTGRES_OWNER_PASSWORD"] != "" || vals["DATABASE_OWNER_URL"] != "" {
 			t.Error("setup wrote generated credentials although the roles were already present")
 		}
 	})
@@ -186,7 +186,7 @@ func TestRolelessRolesPresentIsUnchanged(t *testing.T) {
 		if code != 0 {
 			t.Fatalf("setup exit = %d, want 0\n%s", code, out)
 		}
-		if vals := readEnvValues(r.env); vals["POSTGRES_OWNER_PASSWORD"] != "" || vals["DATABASE_OWNER_URL"] != "" {
+		if vals := ReadEnvValues(r.env); vals["POSTGRES_OWNER_PASSWORD"] != "" || vals["DATABASE_OWNER_URL"] != "" {
 			t.Error("setup rewrote credentials although the roles were already present")
 		}
 	})

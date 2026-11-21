@@ -127,7 +127,7 @@ jobs:
       - name: Setup scenarios on a cluster with no roles
         env:
           INSIDEOUT_ROLELESS_URL: postgres://postgres:postgres@localhost:5433/postgres?sslmode=disable
-        run: go test -tags roleless ./cmd/insideout/ -run Roleless -count=1 -v -timeout 10m
+        run: go test -tags roleless ./internal/setup/local/ -run Roleless -count=1 -v -timeout 10m
 
   # TEST-01 (review-3): every other lane migrates a fresh empty database, so
   # the post-2026-10-08 migrations (RLS policy rewrites, the short invite-code

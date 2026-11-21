@@ -1,8 +1,9 @@
-package main
+package local
 
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,10 +13,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// The own-URL role gate (cli_setup_roles.go). The policy and the SQL are pure
+// The own-URL role gate (roles.go). The policy and the SQL are pure
 // and tested here; the probe is held to a real catalog by checkProbeRoles; the
 // composed paths run against a roleless cluster in
-// cli_setup_roles_roleless_test.go (build tag roleless).
+// roles_roleless_test.go (build tag roleless).
 
 func TestDecideRoles(t *testing.T) {
 	absent := rolesProbe{canTry: true}
@@ -51,7 +52,7 @@ func TestDecideRoles(t *testing.T) {
 // revoke, this fails until the Go statements follow.
 func TestRoleStatementsMatchInitScript(t *testing.T) {
 	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", "")
-	root, err := findRepoRoot()
+	root, err := FindRepoRoot()
 	if err != nil {
 		t.Fatalf("locate the checkout holding the init script: %v", err)
 	}
@@ -241,17 +242,21 @@ func TestMisconfiguredRoleMessage(t *testing.T) {
 // The terminal offer: only an explicit yes consents (EOF, enter and anything
 // else decline), and the text names what will change before it asks.
 func TestConfirmCreateRoles(t *testing.T) {
-	old := stdin
-	t.Cleanup(func() { stdin = old })
 	for _, tt := range []struct {
 		in   string
 		want bool
 	}{
 		{"y\n", true}, {"Yes\n", true}, {"n\n", false}, {"\n", false}, {"", false}, {"maybe\n", false},
 	} {
-		stdin = bufio.NewReader(strings.NewReader(tt.in))
+		// The CLI's prompt: label on stderr, one trimmed line from stdin.
+		stdin := bufio.NewReader(strings.NewReader(tt.in))
+		prompt := func(label string) string {
+			fmt.Fprint(os.Stderr, label)
+			line, _ := stdin.ReadString('\n')
+			return strings.TrimSpace(line)
+		}
 		var got bool
-		out := captureStderr(t, func() { got = confirmCreateRoles("appdb") })
+		out := captureStderr(t, func() { got = confirmCreateRoles("appdb", prompt) })
 		if got != tt.want {
 			t.Errorf("answer %q: confirmCreateRoles = %v, want %v", tt.in, got, tt.want)
 		}
@@ -260,35 +265,6 @@ func TestConfirmCreateRoles(t *testing.T) {
 				t.Errorf("answer %q: the offer does not mention %q:\n%s", tt.in, w, out)
 			}
 		}
-	}
-}
-
-// --create-roles belongs to --local --postgres own, and only there. The
-// checkout and .env are pinned away from the real ones: were the flag
-// accepted elsewhere, the run still could not touch anything.
-func TestCreateRolesFlagIsScopedToLocalOwn(t *testing.T) {
-	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", t.TempDir())
-	t.Setenv("INSIDEOUT_ENV_FILE", filepath.Join(t.TempDir(), "scratch.env"))
-	for _, tt := range []struct {
-		name string
-		args []string
-	}{
-		{"alone", []string{"--create-roles"}},
-		{"hosted", []string{"--hosted", "--create-roles"}},
-		{"check", []string{"--check", "--create-roles"}},
-		{"bundled", []string{"--local", "--postgres", "bundled", "--create-roles"}},
-		{"own without a database to touch", []string{"--local", "--postgres", "own", "--no-start", "--create-roles"}},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			var code int
-			out := captureStderr(t, func() { _, code = runSetupCommand(tt.args) })
-			if code != 2 {
-				t.Fatalf("setup %v exited %d, want 2", tt.args, code)
-			}
-			if !strings.Contains(out, "create-roles") || strings.Contains(out, "not defined") {
-				t.Fatalf("setup %v should reject the combination by name, got: %q", tt.args, out)
-			}
-		})
 	}
 }
 

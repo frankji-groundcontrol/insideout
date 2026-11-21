@@ -35,7 +35,7 @@ func (ErrNoTTY) Error() string {
 // start without a terminal. Back on the first question stays there.
 // Exit stops the wizard.
 func Run(ctx context.Context, deps flow.Deps) (Result, error) {
-	if !isCharDevice(os.Stdin) || !isCharDevice(os.Stdout) {
+	if !IsTerminal(os.Stdin) || !IsTerminal(os.Stdout) {
 		return Result{}, ErrNoTTY{}
 	}
 	p := &prompts{in: bufio.NewReader(os.Stdin), out: os.Stdout, tty: os.Stdin}
@@ -236,7 +236,8 @@ func firstErr(err, nav error) error {
 	return nav
 }
 
-func isCharDevice(f *os.File) bool {
+// IsTerminal reports whether f is a character device (a terminal).
+func IsTerminal(f *os.File) bool {
 	info, err := f.Stat()
 	if err != nil {
 		return false

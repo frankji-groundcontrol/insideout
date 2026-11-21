@@ -1,8 +1,8 @@
 //go:build roleless
 
-package main
+package local
 
-// The roleless suite's harness (scenarios: cli_setup_roles_roleless_test.go):
+// The roleless suite's harness (scenarios: roles_roleless_test.go):
 // a handle on a throwaway superuser-accessible cluster that has no insideout
 // roles, plus a driver that runs `setup --local --postgres own` against it
 // with a piped DSN.
@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -181,7 +182,7 @@ func newRlRun(t *testing.T) *rlRun {
 	return &rlRun{env: env}
 }
 
-// run drives `setup --local --postgres own <args>` with dsn piped on stdin
+// run drives the `setup --local --postgres own <args>` engine with dsn piped on stdin
 // (the agent path: stdin is not a terminal, so any prompt would hang) and
 // returns the exit code plus everything written to stdout and stderr.
 func (r *rlRun) run(t *testing.T, dsn string, args ...string) (int, string) {
@@ -197,7 +198,7 @@ func (r *rlRun) run(t *testing.T, dsn string, args ...string) (int, string) {
 	go func() { io.Copy(&buf, outR); close(copied) }()
 	done := make(chan int, 1)
 	go func() {
-		_, code := runSetupCommand(append([]string{"--local", "--postgres", "own"}, args...))
+		code := Run(Options{Postgres: "own", CreateRoles: slices.Contains(args, "--create-roles"), AskBoot: true})
 		done <- code
 	}()
 	code := -1

@@ -1,6 +1,6 @@
 //go:build roleless
 
-package main
+package local
 
 // Both roles exist on the cluster (a first database was provisioned earlier),
 // but the database under test is not that one. The migrations need exactly one

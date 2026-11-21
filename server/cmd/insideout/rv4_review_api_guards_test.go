@@ -24,7 +24,6 @@ func TestRvGuardsStrictModeRefusesARemoteDatabase(t *testing.T) {
 		"TestRvGuardsProbeAppURL",
 		"TestRvGuardsProbeOwnerURL",
 		"TestIdeaConvertStoresTheLocaleOverTheRealServer",
-		"TestProbeRolesReadsTheCatalog",
 		"TestCLIAndMCPAgainstTheRealAPI",
 		"TestRunPromoteAdmin_LogsTheFactNotTheAddress",
 		"TestRvGuardsProbePromoteAdminLogAppURL",

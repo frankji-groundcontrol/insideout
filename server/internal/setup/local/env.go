@@ -1,4 +1,7 @@
-package main
+// Package local is the engine behind `insideout setup --local`: repository
+// discovery, .env reading and writing, database role provisioning, bundled
+// Postgres, migrations and the boot offer. cmd/insideout parses the flags.
+package local
 
 import (
 	"crypto/rand"
@@ -9,11 +12,11 @@ import (
 	"strings"
 )
 
-// findRepoRoot walks up from the working directory to a checkout
+// FindRepoRoot walks up from the working directory to a checkout
 // (docker-compose.yml + .env.example + server/go.mod).
 // INSIDEOUT_SETUP_REPO_ROOT overrides — the test affordance — but the
 // override must still be a real checkout.
-func findRepoRoot() (string, error) {
+func FindRepoRoot() (string, error) {
 	if v := os.Getenv("INSIDEOUT_SETUP_REPO_ROOT"); v != "" {
 		if !repoMarker(v) {
 			return "", fmt.Errorf("INSIDEOUT_SETUP_REPO_ROOT=%s is not a repository checkout", v)
@@ -45,10 +48,11 @@ func repoMarker(dir string) bool {
 	return true
 }
 
-// readEnvValues reads KEY=VALUE lines (last wins, comments skipped).
-// Values feed machine-to-machine assembly (DSN construction, child
+// ReadEnvValues reads KEY=VALUE lines (last wins, comments skipped).
+// Unlike catalog's parser it trims quotes and keeps an inline comment as part
+// of the value. Values feed machine-to-machine assembly (DSN construction, child
 // env) and are never printed.
-func readEnvValues(path string) map[string]string {
+func ReadEnvValues(path string) map[string]string {
 	vals := map[string]string{}
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -71,6 +75,15 @@ func readEnvValues(path string) map[string]string {
 		}
 	}
 	return vals
+}
+
+// EnvPath is the .env setup reads and writes: INSIDEOUT_ENV_FILE when set
+// (the test affordance, the same override env.sh honors), else repoRoot/.env.
+func EnvPath(repoRoot string) string {
+	if v := os.Getenv("INSIDEOUT_ENV_FILE"); v != "" {
+		return v
+	}
+	return filepath.Join(repoRoot, ".env")
 }
 
 // jwtNeedsRotation mirrors scripts/setup.sh: placeholder, or shorter

@@ -140,7 +140,7 @@ def readme_does_not_mislead_prebuilt_users(failures):
     needs one; and `promote-admin` creates an absent account, which is what a
     first run without an invite relies on, so the README says that too."""
     readme = read("README.md")
-    if "no repository checkout found" in read("server/cmd/insideout/cli_setup_local_env.go"):
+    if "no repository checkout found" in read("server/internal/setup/local/env.go"):
         for line in readme.splitlines():
             if "setup --local" in line and not re.search(r"(?i)checkout|检出", line):
                 fail(failures, "README offers 'setup --local' without saying it needs a repository "

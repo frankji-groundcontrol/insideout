@@ -1,6 +1,6 @@
 //go:build roleless
 
-package main
+package local
 
 // What a stopped own-URL setup leaves in .env. The DSN setup is given becomes
 // the runtime DATABASE_URL only once the role gate has passed; a stop that
@@ -14,7 +14,7 @@ const rlSkeletonURL = "change_me_db"
 
 // databaseURL reads DATABASE_URL back from the run's .env without ever
 // printing it: a failure message must not carry a DSN.
-func (r *rlRun) databaseURL() string { return readEnvValues(r.env)["DATABASE_URL"] }
+func (r *rlRun) databaseURL() string { return ReadEnvValues(r.env)["DATABASE_URL"] }
 
 func TestRolelessStopLeavesDatabaseURLAlone(t *testing.T) {
 	t.Run("piped without consent", func(t *testing.T) {

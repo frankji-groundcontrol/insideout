@@ -263,7 +263,7 @@ def cli_and_docs_name_the_two_codes(failures):
     CLI help, the register usage line, `setup --hosted` and two docs still
     said "invite code" for both, and the hosted blurb did not teach whoami
     or the invitation. `insideout setup --local` in that blurb exits 2 with
-    no checkout (cli_setup_local_env.go); the script's blurb does not say it."""
+    no checkout (internal/setup/local/env.go); the script's blurb does not say it."""
     workspace, invitation = two_code_names()
     join = verb_summaries()["join"]
     if workspace not in join.lower():
@@ -283,7 +283,7 @@ def cli_and_docs_name_the_two_codes(failures):
                            f"`{line}`, which scripts/setup.sh does")
     name_invitation(failures, "server/cmd/insideout/cli_setup.go hosted blurb", hosted)
     if "insideout setup --local" in hosted and "no repository checkout found" in read(
-            "server/cmd/insideout/cli_setup_local_env.go"):
+            "server/internal/setup/local/env.go"):
         fail(failures, "server/cmd/insideout/cli_setup.go hosted blurb tells the reader to run "
                        "`insideout setup --local`, which exits 2 when there is no repository checkout")
     surfaces = ("server/cmd/insideout/cli.go", "server/cmd/insideout/cli_auth.go",

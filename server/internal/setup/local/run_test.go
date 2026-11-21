@@ -1,4 +1,4 @@
-package main
+package local
 
 import (
 	"os"
@@ -84,11 +84,11 @@ func TestReadEnvValues(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, ".env")
 	os.WriteFile(path, []byte("# comment\nA=1\nB = \"two words\"\nexport C=3\n\nB=override\n"), 0600)
-	vals := readEnvValues(path)
+	vals := ReadEnvValues(path)
 	if vals["A"] != "1" || vals["B"] != "override" || vals["C"] != "3" {
 		t.Fatalf("readEnvValues = %#v", vals)
 	}
-	if readEnvValues(filepath.Join(dir, "missing")) == nil {
+	if ReadEnvValues(filepath.Join(dir, "missing")) == nil {
 		t.Fatal("missing file should yield an empty, usable map")
 	}
 }
@@ -196,12 +196,12 @@ func TestLocalNoStartWritesEnvEndToEnd(t *testing.T) {
 	os.Stdin = r
 	t.Cleanup(func() { os.Stdin = oldStdin })
 
-	handled, code := runSetupCommand([]string{"--local", "--postgres", "own", "--no-start"})
-	if !handled || code != 0 {
-		t.Fatalf("setup --local --postgres own --no-start = (%v, %d), want (true, 0)", handled, code)
+	code := Run(Options{Postgres: "own", NoStart: true, AskBoot: true})
+	if code != 0 {
+		t.Fatalf("setup --local --postgres own --no-start = %d, want 0", code)
 	}
 
-	vals := readEnvValues(scratchEnv)
+	vals := ReadEnvValues(scratchEnv)
 	if vals["DATABASE_URL"] != "postgres://setup_test:pw@127.0.0.1:5599/insideout?sslmode=disable" {
 		t.Errorf("DATABASE_URL not stored: %q", vals["DATABASE_URL"])
 	}
@@ -237,11 +237,11 @@ func TestLocalBundledNoStartWritesTheOwnerDSN(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("XDG_CONFIG_HOME", "")
 
-	handled, code := runSetupCommand([]string{"--local", "--postgres", "bundled", "--no-start"})
-	if !handled || code != 0 {
-		t.Fatalf("setup --local --postgres bundled --no-start = (%v, %d), want (true, 0)", handled, code)
+	code := Run(Options{Postgres: "bundled", NoStart: true, AskBoot: true})
+	if code != 0 {
+		t.Fatalf("setup --local --postgres bundled --no-start = %d, want 0", code)
 	}
-	vals := readEnvValues(scratchEnv)
+	vals := ReadEnvValues(scratchEnv)
 	if want := "postgres://insideout_app:app-pw@127.0.0.1:5443/insideout?sslmode=disable"; vals["DATABASE_URL"] != want {
 		t.Errorf("DATABASE_URL = %q, want %q", vals["DATABASE_URL"], want)
 	}
@@ -266,8 +266,8 @@ func TestLocalBundledFullRunFailsCleanlyWithoutDocker(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("XDG_CONFIG_HOME", "")
 
-	handled, code := runSetupCommand([]string{"--local", "--postgres", "bundled"})
-	if !handled || code != 1 {
-		t.Fatalf("setup --local --postgres bundled (no docker) = (%v, %d), want (true, 1)", handled, code)
+	code := Run(Options{Postgres: "bundled", AskBoot: true})
+	if code != 1 {
+		t.Fatalf("setup --local --postgres bundled (no docker) = %d, want 1", code)
 	}
 }

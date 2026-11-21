@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
+	"github.com/frankji-groundcontrol/insideout/server/internal/setup/local"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/probe"
 )
 
@@ -256,18 +257,11 @@ func repoEnvValue(name string) string {
 	if v := os.Getenv(name); v != "" {
 		return v
 	}
-	repoRoot, err := findRepoRoot()
+	repoRoot, err := local.FindRepoRoot()
 	if err != nil {
 		return ""
 	}
-	return readEnvValues(envPathFor(repoRoot))[name]
-}
-
-func envPathFor(repoRoot string) string {
-	if v := os.Getenv("INSIDEOUT_ENV_FILE"); v != "" {
-		return v
-	}
-	return repoRoot + "/.env"
+	return local.ReadEnvValues(local.EnvPath(repoRoot))[name]
 }
 
 // redactBase shows the scheme+host without any path credentials.

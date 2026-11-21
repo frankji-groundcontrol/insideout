@@ -1,4 +1,4 @@
-package main
+package local
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/catalog"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/probe"
+	"github.com/frankji-groundcontrol/insideout/server/internal/setup/ui"
 )
 
 // offerBoot starts the API in the foreground when the user confirms
@@ -17,10 +18,10 @@ import (
 // .env without printing it). The child process must receive the
 // written values in its environment — the server reads only process
 // env (config.Load), not .env.
-// offerBootChoice starts the API when start is true, and otherwise
+// OfferBootChoice starts the API when start is true, and otherwise
 // prints the command. The wizard asks step 1.3.4 before calling it.
-func offerBootChoice(repoRoot, envPath string, start bool) (bool, int) {
-	vals := readEnvValues(envPath)
+func OfferBootChoice(repoRoot, envPath string, start bool) int {
+	vals := ReadEnvValues(envPath)
 	if start {
 		child := exec.Command(selfPath())
 		child.Dir = repoRoot
@@ -28,28 +29,28 @@ func offerBootChoice(repoRoot, envPath string, start bool) (bool, int) {
 		child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
 		if err := child.Run(); err != nil {
 			fmt.Fprintf(os.Stderr, "setup: server exited: %v\n", err)
-			return true, 1
+			return 1
 		}
-		return true, 0
+		return 0
 	}
 	fmt.Fprintln(os.Stderr, "Start the API:")
 	fmt.Fprintln(os.Stderr, "  ./scripts/dev.sh -C server go run ./cmd/insideout")
 	fmt.Fprintln(os.Stderr, "First admin on a shared server: promote an existing account with the owner DSN")
 	fmt.Fprintln(os.Stderr, "Disposable local database: run `insideout seed`, then promote demo@insideout.local")
-	return true, 0
+	return 0
 }
 
-func offerBoot(repoRoot, envPath string) (bool, int) {
-	vals := readEnvValues(envPath)
-	if isTerminal(os.Stdin) {
+func offerBoot(repoRoot, envPath string) int {
+	vals := ReadEnvValues(envPath)
+	if ui.IsTerminal(os.Stdin) {
 		fmt.Print("Start the API now? [y/N] (b back, q exit) ")
 		var answer string
 		fmt.Scanln(&answer)
 		switch {
 		case strings.HasPrefix(strings.ToLower(answer), "b"):
-			return true, setupBack
+			return ExitBack
 		case strings.HasPrefix(strings.ToLower(answer), "q"):
-			return true, setupExit
+			return ExitExit
 		}
 		if strings.HasPrefix(strings.ToLower(answer), "y") {
 			child := exec.Command(selfPath())
@@ -58,16 +59,16 @@ func offerBoot(repoRoot, envPath string) (bool, int) {
 			child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
 			if err := child.Run(); err != nil {
 				fmt.Fprintf(os.Stderr, "setup: server exited: %v\n", err)
-				return true, 1
+				return 1
 			}
-			return true, 0
+			return 0
 		}
 	}
 	fmt.Fprintln(os.Stderr, "Start the API:")
 	fmt.Fprintln(os.Stderr, "  ./scripts/dev.sh -C server go run ./cmd/insideout")
 	fmt.Fprintln(os.Stderr, "First admin on a shared server: promote an existing account with the owner DSN")
 	fmt.Fprintln(os.Stderr, "Disposable local database: run `insideout seed`, then promote demo@insideout.local")
-	return true, 0
+	return 0
 }
 
 func selfPath() string {
@@ -142,14 +143,6 @@ func printSummaryGate(envPath, examplePath string) error {
 		fmt.Fprintln(os.Stderr, "Required: all satisfied")
 	}
 	return nil
-}
-
-func isTerminal(f *os.File) bool {
-	info, err := f.Stat()
-	if err != nil {
-		return false
-	}
-	return info.Mode()&os.ModeCharDevice != 0
 }
 
 func lastLines(s string, n int) string {
