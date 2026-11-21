@@ -46,6 +46,7 @@ func printHelp(w io.Writer) {
 		}
 		fmt.Fprintf(w, "  %-16s %s\n", v.name, v.summary)
 	}
-	fmt.Fprint(w, "\nClient commands talk to INSIDEOUT_API (default: the hosted API) with INSIDEOUT_TOKEN;\n"+
+	fmt.Fprint(w, "\nClient commands talk to --api, INSIDEOUT_API, the saved `insideout login`'s server, or the hosted API,\n"+
+		"with INSIDEOUT_TOKEN or the saved login's token. Flags go before ids;\n"+
 		"a command given the wrong arguments prints its own usage.\n")
 }

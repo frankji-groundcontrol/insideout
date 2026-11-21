@@ -220,9 +220,9 @@ def two_code_names():
 
 
 def verb_summaries():
-    found = dict(re.findall(r'\{group\w+, "([a-z][a-z-]*)", "([^"]*)"\}', read("server/cmd/insideout/cli.go")))
+    found = dict(re.findall(r'\{group\w+, "([a-z][a-z-]*)", "([^"]*)"\}', read("server/cmd/insideout/cli_verbs.go")))
     if "join" not in found or "register" not in found:
-        print("cannot read join and register from the verb table in server/cmd/insideout/cli.go", file=sys.stderr)
+        print("cannot read join and register from the verb table in server/cmd/insideout/cli_verbs.go", file=sys.stderr)
         sys.exit(2)
     return found
 
@@ -248,7 +248,7 @@ def cli_and_docs_name_the_two_codes(failures):
     workspace, invitation = two_code_names()
     join = verb_summaries()["join"]
     if workspace not in join.lower():
-        fail(failures, f"server/cmd/insideout/cli.go: join summary {join!r} does not name the {workspace}")
+        fail(failures, f"server/cmd/insideout/cli_verbs.go: join summary {join!r} does not name the {workspace}")
     usage = next((line for line in read("server/cmd/insideout/cli_auth.go").splitlines()
                   if "usage: insideout register" in line), "")
     if not usage:
@@ -263,7 +263,7 @@ def cli_and_docs_name_the_two_codes(failures):
             "server/internal/setup/local/env.go"):
         fail(failures, "server/cmd/insideout/cli_setup.go hosted blurb tells the reader to run "
                        "`insideout setup --local`, which exits 2 when there is no repository checkout")
-    surfaces = ("server/cmd/insideout/cli.go", "server/cmd/insideout/cli_auth.go",
+    surfaces = ("server/cmd/insideout/cli.go", "server/cmd/insideout/cli_verbs.go", "server/cmd/insideout/cli_auth.go",
                 "server/cmd/insideout/cli_setup.go", "docs/usage/cli-mcp-and-guidance.md",
                 "docs/architecture/database-and-rls.md", "README.md", "docs/usage/installation.md")
     for where in surfaces:
@@ -282,9 +282,9 @@ def cli_and_docs_name_the_two_codes(failures):
 def quoted_commands_exist(failures):
     """Every `insideout <verb>` a script prints is a verb of the CLI, and the
     sign-up flag it quotes is one `register` documents."""
-    verbs = dict(re.findall(r'\{group\w+, "([a-z][a-z-]*)", "([^"]*)"\}', read("server/cmd/insideout/cli.go")))
+    verbs = dict(re.findall(r'\{group\w+, "([a-z][a-z-]*)", "([^"]*)"\}', read("server/cmd/insideout/cli_verbs.go")))
     if len(verbs) < 20 or "register" not in verbs:
-        print("cannot read the verb table in server/cmd/insideout/cli.go", file=sys.stderr)
+        print("cannot read the verb table in server/cmd/insideout/cli_verbs.go", file=sys.stderr)
         sys.exit(2)
     bootstrap = re.search(r"cat <<EOF\n(.*?)\nEOF(?:\n|\Z)", read("scripts/bootstrap.sh"), re.S)
     texts = {"insideout setup --hosted": hosted_case_text(), "scripts/install.sh": read("scripts/install.sh"),

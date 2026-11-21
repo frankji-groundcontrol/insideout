@@ -85,7 +85,12 @@ email status first: `accepted for delivery`, or `logged on the server, not
 delivered` when the server has no mail provider (ask its operator for the
 code or link).
 
-## Verbs (parity with web and MCP)
+## Verbs
+
+Every row runs on the CLI. MCP has a tool for each verb an agent token may
+call and none for a human-only route (see [Agent scope](#agent-scope)), and
+workspace deletion, member roles and removal, editing or deleting an update,
+and profile edits are web-only today.
 
 | Area | Verbs |
 | --- | --- |
@@ -102,6 +107,21 @@ code or link).
 | Server operator | `migrate`, `seed`, `promote-admin <email>` (creates the account, password on stdin, when absent); these need the server config (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`), and `promote-admin` also the owner DSN (`DATABASE_OWNER_URL`) |
 | Front door | `help` (also `-h`, `--help`) and `version` (also `--version`) answer before any server config, so they work with no database; an unknown verb exits 2 with a pointer to `help` |
 | Guidance | `guide [--out insideout.yaml] <proj>`, `repo set <proj> <repo-url>`, `sync <proj>`, `snapshot [--note] <prd>` |
+
+Where a CLI verb and its MCP tool are named differently:
+
+| CLI | MCP |
+| --- | --- |
+| `ideas`, `idea create`, `idea update`, `idea convert` | `idea_list`, `idea_create`, `idea_update`, `idea_convert` |
+| `evidence <node>` | `roadmap_evidence` |
+| `join <code>`, `workspaces create` | `workspace_join`, `workspace_create` |
+| `projects create` | `project_create` |
+| `prds <ws>`, `updates <proj>`, `export <prd>` | `prd_list`, `project_updates`, `prd_export` |
+| `roadmap list`, `roadmap show`, `roadmap mine`, `roadmap add`, `roadmap update`, `roadmap move`, `roadmap assignments` | `roadmap_list`, `roadmap_node`, `roadmap_mine`, `roadmap_add`, `roadmap_update`, `roadmap_move`, `roadmap_assignments` |
+| `roadmap progress`, `roadmap presence` | `progress`, `presence` |
+| `repo set <proj> <url>` | `repo_set` |
+| `agent-context`, `build-confirm`, `expand-confirm` | `agent_context`, `build_confirm`, `expand_confirm` |
+| `signup-mode` (no argument) | `signup_mode` |
 
 Flags precede positional ids (Go convention). Statuses are
 `locked|pending|in_progress|done`; audiences are
