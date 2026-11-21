@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
@@ -151,7 +150,7 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 
 	// An agent token may build onto an empty roadmap but never replace a live
 	// one, whatever it confirms (rv5-FEAT-02); the store checks under its lock.
-	opts := store.ReplaceOptions{ExpectedCount: req.ExpectedCount, Force: req.Force, EmptyOnly: ScopeOf(r.Context()) == auth.ScopeAgent}
+	opts := store.ReplaceOptions{ExpectedCount: req.ExpectedCount, Force: req.Force, EmptyOnly: isAgentToken(r)}
 	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, opts, planNodeFromView(req.Tree))
 	if errors.Is(err, store.ErrRoadmapNotEmpty) {
 		writeAgentScopeDenied(w)

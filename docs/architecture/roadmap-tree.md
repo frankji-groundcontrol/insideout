@@ -59,8 +59,8 @@ write; a plain member may read and leave notes. Every tree write calls it:
 | Edit a node, including status and owner | `server/internal/store/roadmap.go:261` |
 | Delete a node and its subtree | `server/internal/store/roadmap.go:324` |
 | Move a node | `server/internal/store/roadmap_move.go:25` |
-| Replace the whole tree (Build) | `server/internal/store/roadmap_plan.go:40` |
-| Add confirmed children (Break down) | `server/internal/store/roadmap_plan.go:133` |
+| Replace the whole tree (Build) | `server/internal/store/roadmap_plan.go:59` |
+| Add confirmed children (Break down) | `server/internal/store/roadmap_plan.go:155` |
 | Add a validation observation | `server/internal/store/roadmap_validation.go:44` |
 | Validate a node | `server/internal/store/roadmap_validation.go:74` |
 | File an agent proposal | `server/internal/store/project_updates.go:57` |
@@ -98,7 +98,7 @@ evidence insert policy does match the store: project owner or workspace admin
 | `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping | `server/internal/api/roadmap.go:23-24` |
 | `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap.go:25-26` |
 | `POST /api/v1/roadmap/{nid}/validate` | Human validation | `server/internal/api/roadmap.go:27` |
-| `POST /api/v1/prds/{pid}/build` and `/confirm` | Draft and replace the tree | `server/internal/api/roadmap_ai.go:68-69` |
+| `POST /api/v1/prds/{pid}/build` and `/confirm` | Draft (read-only, approved PRD only) and replace the tree; confirm creates the project and refuses to erase evidence or done or validated nodes without `force` | `server/internal/api/roadmap_ai.go:68-69` |
 | `POST /api/v1/roadmap/{nid}/expand` and `/confirm` | Break a node down | `server/internal/api/roadmap_ai.go:70-71` |
 | `GET /api/v1/agent/context` | Agent briefing | `server/internal/api/agent_routes.go:19` |
 

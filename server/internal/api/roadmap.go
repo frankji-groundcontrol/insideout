@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/roadmaptime"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
@@ -223,7 +222,7 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	if req.CompletionReason != nil {
 		trimmed := strings.TrimSpace(*req.CompletionReason)
 		// The override stands in for evidence: the human's word only (rv5-FEAT-02).
-		if trimmed != "" && ScopeOf(r.Context()) == auth.ScopeAgent {
+		if trimmed != "" && isAgentToken(r) {
 			writeAgentScopeDenied(w)
 			return
 		}

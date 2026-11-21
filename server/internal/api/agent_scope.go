@@ -159,6 +159,10 @@ func submitsForReview(r *http.Request) bool {
 	return req.Status == "draft" || req.Status == "reviewing"
 }
 
+// isAgentToken reports whether the request rides an agent-scope token, for the
+// handlers that refuse an agent part of an agent-allowed route (rv5-FEAT-02).
+func isAgentToken(r *http.Request) bool { return ScopeOf(r.Context()) == auth.ScopeAgent }
+
 // writeAgentScopeDenied answers an agent token on a route that needs the
 // human's own session.
 func writeAgentScopeDenied(w http.ResponseWriter) {
