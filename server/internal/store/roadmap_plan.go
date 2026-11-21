@@ -190,24 +190,6 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 	return out, nil
 }
 
-// GetRoadmapNode returns one node for a workspace member (used by AI expand).
-func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (*RoadmapNode, error) {
-	var n *RoadmapNode
-	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if _, err := nodeWorkspace(ctx, tx, nodeID); err != nil {
-			return err
-		}
-		row := tx.QueryRow(ctx, `SELECT `+roadmapNodeColumns+` FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
-	})
-	if err != nil {
-		return nil, err
-	}
-	return n, nil
-}
-
 // PrdIDForProject returns the PRD a project was built from (prds.project_id),
 // or ErrNotFound for a project with no PRD — the expand path's bridge back
 // to the coaching conversation whose locale governs the planner's language.

@@ -69,6 +69,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"POST /api/v1/prds/{id}/revisions":            agentOK,
 	"POST /api/v1/prds/{id}/status":               agentSubmit,
 	"GET /api/v1/projects/{pid}/roadmap":          agentOK,
+	"GET /api/v1/roadmap/{nid}":                   agentOK,
 	"POST /api/v1/projects/{pid}/roadmap":         agentOK,
 	"PATCH /api/v1/roadmap/{nid}":                 agentOK,
 	"POST /api/v1/roadmap/{nid}/move":             agentOK,

@@ -207,6 +207,12 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
+	// Refuse before the planner runs: a draft the caller could never confirm
+	// would only spend a model call (rv5-TREEX-07).
+	if !node.CanWrite {
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
+		return
+	}
 
 	project, err := s.store.GetProjectForMember(r.Context(), node.ProjectID, userID)
 	if err != nil {
@@ -306,7 +312,7 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
 		return
 	}
 	if err != nil {

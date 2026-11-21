@@ -62,7 +62,7 @@ func (s *Server) handleMoveRoadmapNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrConflict) {

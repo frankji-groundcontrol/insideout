@@ -50,6 +50,7 @@ var agentAllowedRoutes = []string{
 	"POST /api/v1/prds/{id}/revisions",
 	"POST /api/v1/prds/{id}/status", // only to draft or reviewing, see agent_scope_status_test.go
 	"GET /api/v1/projects/{pid}/roadmap",
+	"GET /api/v1/roadmap/{nid}",
 	"POST /api/v1/projects/{pid}/roadmap",
 	"PATCH /api/v1/roadmap/{nid}",
 	"POST /api/v1/roadmap/{nid}/move",

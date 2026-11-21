@@ -15,6 +15,7 @@ import (
 
 func (s *Server) registerRoadmapRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap", s.requireAuth(s.handleListRoadmap))
+	mux.HandleFunc("GET /api/v1/roadmap/{nid}", s.requireAuth(s.handleReadRoadmapNode))
 	mux.HandleFunc("POST /api/v1/projects/{pid}/roadmap", s.requireAuth(s.handleCreateRoadmapNode))
 	mux.HandleFunc("PATCH /api/v1/roadmap/{nid}", s.requireAuth(s.handleUpdateRoadmapNode))
 	mux.HandleFunc("POST /api/v1/roadmap/{nid}/move", s.requireAuth(s.handleMoveRoadmapNode))
@@ -55,6 +56,9 @@ type roadmapNodeView struct {
 	// unknown (pre-migration rows, or a removed author → ON DELETE SET NULL).
 	CreatorName *string `json:"creatorName,omitempty"`
 	EditorName  *string `json:"editorName,omitempty"`
+	// CanWrite: the caller may write this node (insideout._can_write_node),
+	// so a client shows write controls only where they would succeed.
+	CanWrite bool `json:"canWrite"`
 }
 
 // roadmapNodeResponse takes the instant a deadline is measured against;
@@ -84,41 +88,17 @@ func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	v.OwnerName = n.OwnerName
 	v.ValidationReason = n.ValidationReason
 	v.CompletionReason = n.CompletionReason
+	v.CanWrite = n.CanWrite
 	return v
 }
+
+// nodeWriteDenied answers a node write refused by the tree's write rule.
+const nodeWriteDenied = "only the project owner, a workspace admin, or the owner of this branch can change this node"
 
 // validRoadmapStatuses admits 'validated' so an already-validated node's
 // fields stay editable, but the store refuses every transition INTO it —
 // that move belongs to the confirm endpoint with its reason.
 var validRoadmapStatuses = map[string]bool{"locked": true, "pending": true, "in_progress": true, "done": true, "validated": true}
-
-func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserID(r.Context())
-	pid, ok := pathUUID(w, r, "pid")
-	if !ok {
-		return
-	}
-	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
-	if err != nil {
-		s.log.Error("list roadmap", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	now := s.now()
-	views := make([]roadmapNodeView, len(nodes))
-	for i, n := range nodes {
-		views[i] = roadmapNodeResponse(n, now)
-	}
-	httpx.WriteJSON(w, http.StatusOK, views)
-}
 
 type createRoadmapNodeRequest struct {
 	ParentID    *string `json:"parentId"`
@@ -153,7 +133,7 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrConflict) {
@@ -258,7 +238,7 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node, and an assigned owner must be a member", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied+", and an assigned owner must be a member", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrInvalidTransition) {
@@ -289,7 +269,7 @@ func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
 		return
 	}
 	if err != nil {

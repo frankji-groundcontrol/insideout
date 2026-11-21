@@ -50,6 +50,10 @@ type RoadmapNode struct {
 	// mutation, so it always sees the joined names.
 	CreatorName *string
 	EditorName  *string
+	// CanWrite: the reading actor may write this node under
+	// insideout._can_write_node. Reads compute it; a write's own result
+	// sets it, since the write just passed the rule.
+	CanWrite bool
 }
 
 // RoadmapNodeFields are the mutable fields of a node (status transitions and
@@ -79,8 +83,10 @@ type RoadmapNodeFields struct {
 
 const roadmapNodeColumns = `id, project_id, parent_id, title, description, status, position, deadline, created_at, updated_at, created_by, updated_by, acceptance, owner_user_id, validation_reason, validated_by, validated_at, completion_reason`
 
+// scanRoadmapNode reads the RETURNING row of a write. The actor has just
+// passed the write rule, so CanWrite is true; reads use nodeViewSelect.
 func scanRoadmapNode(row pgx.Row) (*RoadmapNode, error) {
-	var n RoadmapNode
+	n := RoadmapNode{CanWrite: true}
 	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound
@@ -175,54 +181,6 @@ func createRoadmapNodeTx(ctx context.Context, tx pgx.Tx, actorID, projectID uuid
 		RETURNING `+roadmapNodeColumns,
 		projectID, parentID, title, description, actorID,
 	))
-}
-
-// ListRoadmap returns every node of a project, roots first then grouped by
-// parent, ordered by position — the frontend assembles the tree from this
-// flat slice. Any workspace member may read.
-func (s *Store) ListRoadmap(ctx context.Context, actorID, projectID uuid.UUID) ([]RoadmapNode, error) {
-	var out []RoadmapNode
-	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		wsID, err := projectWorkspace(ctx, tx, projectID)
-		if err != nil {
-			return err
-		}
-		if _, err := requireMember(ctx, tx, wsID, actorID); err != nil {
-			return err
-		}
-
-		// LEFT JOIN (D6): a removed author (ON DELETE SET NULL → NULL ids) must
-		// not drop the node — an INNER JOIN would. NULL names flow to the UI as
-		// "unknown". qualifyColumns prefixes the node columns so the join's
-		// shared id/created_at don't go ambiguous.
-		rows, err := tx.Query(ctx, `
-			SELECT `+qualifyColumns("n", roadmapNodeColumns)+`,
-			       u_cr.username AS creator_name, u_ed.username AS editor_name,
-			       COALESCE(u_ow.username, '') AS owner_name
-			FROM insideout.roadmap_nodes n
-			LEFT JOIN insideout.users u_cr ON u_cr.id = n.created_by
-			LEFT JOIN insideout.users u_ed ON u_ed.id = n.updated_by
-			LEFT JOIN insideout.users u_ow ON u_ow.id = n.owner_user_id
-			WHERE n.project_id = $1
-			ORDER BY n.parent_id NULLS FIRST, n.position, n.created_at`, projectID)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var n RoadmapNode
-			if err := rows.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason, &n.CreatorName, &n.EditorName, &n.OwnerName); err != nil {
-				return err
-			}
-			out = append(out, n)
-		}
-		return rows.Err()
-	})
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 // legalStatusTransitions is the node status machine: the documented flow a

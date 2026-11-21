@@ -21,9 +21,9 @@ func rvExpandCount(t *testing.T, w *routeWorld) int {
 }
 
 // POST /roadmap/{nid}/expand/confirm writes nodes into the plan, so it takes the
-// rule every other roadmap write takes (BUG-020): the project owner or a
-// workspace admin. A plain member is refused with that rule in the message, and
-// nothing is written.
+// rule every other roadmap write takes (BUG-020, rv5-TREEB-02): the project
+// owner, a workspace admin, or the owner of the branch. A plain member who owns
+// nothing is refused with that rule in the message, and nothing is written.
 func TestRvExpandConfirmRefusesAPlainMember(t *testing.T) {
 	w := newRouteWorld(t)
 	parent := w.roadmapNode(t, "Parent")
@@ -36,7 +36,7 @@ func TestRvExpandConfirmRefusesAPlainMember(t *testing.T) {
 
 	code, out = w.call(w.member, http.MethodPost, confirm, body)
 	expect(t, "member confirms an expansion", code, out, http.StatusForbidden)
-	if !strings.Contains(out, "project owner or a workspace admin") {
+	if !strings.Contains(out, "project owner, a workspace admin, or the owner of this branch") {
 		t.Errorf("the refusal reads %s, want the plan-writer rule", out)
 	}
 	if got := rvExpandCount(t, w); got != 1 {

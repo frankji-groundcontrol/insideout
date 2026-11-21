@@ -47,12 +47,7 @@ func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, 
 			// or one of its descendants.
 			var bad bool
 			err := tx.QueryRow(ctx, `
-				WITH RECURSIVE descendants AS (
-					SELECT id, project_id FROM insideout.roadmap_nodes WHERE id = $1
-					UNION
-					SELECT n.id, n.project_id FROM insideout.roadmap_nodes n
-					JOIN descendants d ON n.parent_id = d.id
-				)
+				WITH RECURSIVE `+descendantsOf("$1")+`
 				SELECT NOT EXISTS (
 					SELECT 1 FROM insideout.roadmap_nodes target
 					WHERE target.id = $2 AND target.project_id = (SELECT project_id FROM descendants LIMIT 1)
