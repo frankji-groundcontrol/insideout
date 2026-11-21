@@ -5,7 +5,7 @@ main:
   outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
   owner: claude
   status: in_progress
-  next_evidence: "Waves 0 to 2 closed (wave 2 record: docs/changelogs/2026-11-21-rv5-remediation/wave-2.md), every gate green on the integrated tree (flutter test +618, no skipped DB tests). Wave 3 (surface parity) next: server-contract, then surfaces and web, then the parity test. Open owner question: proposals stay plan-writer only (BUG-020), so a delegate agent cannot propose."
+  next_evidence: "Waves 0 to 2 closed and pushed (8512714). Wave 3 server-contract accepted and on the branch (726a7d6); wave 3 surfaces and web running. Running in parallel, file-disjoint from wave 3: wave 4 setup-engine, rule-guards and agent-split (agent-split based on server-contract), and wave 5 doc-records. After wave 3 merges: mcp-split, names-cleanup, web-controllers and the parity test in parallel; doc-graph runs last. The coordinator reviews each report and diff and runs the full gates once per integration."
 side_tracks: []
 updated_at: "2026-11-21T00:00:00Z"
 plan:
@@ -26,9 +26,9 @@ plan:
   depends_on: "Wave 2"
 - step: "Wave 4: structure"
   owner: claude
-  status: pending
+  status: in_progress
   depends_on: "Wave 3"
 - step: "Wave 5: documentation index"
   owner: claude
-  status: pending
+  status: in_progress
   depends_on: "Wave 4"
