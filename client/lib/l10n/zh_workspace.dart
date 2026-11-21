@@ -170,4 +170,10 @@ const zhWorkspace = <String, String>{
   'roadmap.mineEmpty': '这棵树里还没有你负责的节点。',
   'roadmap.collapse': '折叠此分支',
   'roadmap.expand': '展开此分支',
+  'roadmap.rollupShort': '{leaves} 项中完成 {done} 项',
+  'roadmap.ownerVia': '{name}（经由 {via}）',
+  'roadmap.deleteHistoryTitle': '这个分支已有记录的工作',
+  'roadmap.deleteHistoryConfirm':
+      '删除将移除 {nodes}、{evidence}、{done} 个已完成和 {validated} 个已验证条目。此操作无法撤销。',
+  'roadmap.deleteHistoryAction': '仍然删除',
 };

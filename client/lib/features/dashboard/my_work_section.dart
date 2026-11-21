@@ -84,7 +84,11 @@ class _MyWorkSectionState extends State<MyWorkSection> {
                         ].join(' › '),
                         style: theme.textTheme.bodySmall,
                       ),
-                      if (e.node.rollup.leaves > 0)
+                      // A delegated leaf counts itself, so a roll-up says
+                      // nothing about it (the card hides it too).
+                      // shortcut: the mine read carries no child count, so a
+                      // branch over one leaf hides it too; add one if needed.
+                      if (e.node.rollup.leaves > 1)
                         Text(
                           l10n.t('roadmap.rollup', {
                             'done': e.node.rollup.done,

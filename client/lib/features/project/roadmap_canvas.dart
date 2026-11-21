@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
+import '../../theme/block_icon_button.dart';
 import '../../theme/cobalt.dart';
 import 'roadmap_tree.dart';
 
@@ -202,8 +203,9 @@ class _Band extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // The house icon button is 36 wide; the rest is the gutter.
                 SizedBox(
-                  width: 32,
+                  width: 40,
                   child: branch ? _fold(context, node) : null,
                 ),
                 Expanded(child: tileBuilder(node, 0)),
@@ -221,12 +223,11 @@ class _Band extends StatelessWidget {
     final t = context.watch<Appearance>().t;
     return Column(
       children: [
-        IconButton(
+        BlockIconButton(
           key: Key('roadmap-collapse-${node.id}'),
           tooltip: t(folded ? 'roadmap.expand' : 'roadmap.collapse'),
-          icon: Icon(folded ? Icons.chevron_right : Icons.expand_more),
-          iconSize: 20,
-          visualDensity: VisualDensity.compact,
+          semanticLabel: t(folded ? 'roadmap.expand' : 'roadmap.collapse'),
+          icon: folded ? Icons.chevron_right : Icons.expand_more,
           onPressed: () => onToggle!(node.id),
         ),
         if (folded)

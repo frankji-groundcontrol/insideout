@@ -180,4 +180,10 @@ const enWorkspace = <String, String>{
   'roadmap.mineEmpty': 'Nothing in this tree is yours yet.',
   'roadmap.collapse': 'Fold this branch',
   'roadmap.expand': 'Unfold this branch',
+  'roadmap.rollupShort': '{done} of {leaves} done',
+  'roadmap.ownerVia': '{name} (via {via})',
+  'roadmap.deleteHistoryTitle': 'This branch has recorded work',
+  'roadmap.deleteHistoryConfirm':
+      'Deleting it removes {nodes}, {evidence}, {done} done and {validated} validated items. This cannot be undone.',
+  'roadmap.deleteHistoryAction': 'Delete anyway',
 };

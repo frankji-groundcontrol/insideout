@@ -31,3 +31,24 @@ List<RoadmapNode> roadmapMine(List<RoadmapNode> all, String userId) {
 /// below a branch they hold, and they may move, delete or re-own it.
 bool roadmapParentWritable(List<RoadmapNode> all, RoadmapNode node) =>
     all.any((n) => n.id == node.parentId && n.canWrite);
+
+/// The owner [node] holds through an ancestor (ownership is inherited): the
+/// nearest owned node above it in [all], else, in an opened tree, the
+/// nearest owned entry of [above] (its ancestors, root first) named from
+/// [names]. Null when [node] has an owner of its own or nothing above does.
+({String name, String via})? roadmapInheritedOwner(
+  List<RoadmapNode> all,
+  RoadmapNode node, {
+  List<RoadmapNodeRef> above = const [],
+  Map<String, String> names = const {},
+}) {
+  if (node.ownerId != null) return null;
+  final byId = {for (final n in all) n.id: n};
+  for (var p = byId[node.parentId]; p != null; p = byId[p.parentId]) {
+    if (p.ownerId != null) return (name: p.ownerName, via: p.title);
+  }
+  for (final a in above.reversed) {
+    if (a.ownerId != null) return (name: names[a.ownerId] ?? '', via: a.title);
+  }
+  return null;
+}

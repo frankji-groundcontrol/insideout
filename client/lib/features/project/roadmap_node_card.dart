@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
@@ -33,6 +34,8 @@ class RoadmapNodeCard extends StatelessWidget {
     this.descendants = 0,
     this.planWriter = false,
     this.parentWritable = false,
+    this.inheritedOwner,
+    this.openedRoot = false,
   });
 
   final String projectId;
@@ -49,6 +52,14 @@ class RoadmapNodeCard extends StatelessWidget {
   final bool planWriter;
   final bool parentWritable;
 
+  /// The owner this node holds through an owned ancestor, when it has none
+  /// of its own (roadmapInheritedOwner).
+  final ({String name, String via})? inheritedOwner;
+
+  /// This node is the root of the opened tree: deleting it leaves for the
+  /// parent's tree, since this route no longer exists.
+  final bool openedRoot;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
@@ -57,6 +68,7 @@ class RoadmapNodeCard extends StatelessWidget {
     // a leaf shows no bar rather than an invented percentage.
     final rollup = node.rollup;
     final showRollup = descendants > 0 && rollup.leaves > 0;
+    final ownerLabel = roadmapOwnerLabel(l10n.t, node, inheritedOwner);
     return FieldCard(
       // A branch opens as its own tree; a leaf has nothing below it, so it
       // opens its read-only detail instead.
@@ -64,7 +76,11 @@ class RoadmapNodeCard extends StatelessWidget {
           ? () => GoRouter.maybeOf(
               context,
             )?.go('/projects/$projectId/roadmap/${node.id}')
-          : () => showRoadmapNodeDetail(context, node),
+          : () => showRoadmapNodeDetail(
+              context,
+              node,
+              inheritedOwner: inheritedOwner,
+            ),
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,6 +99,8 @@ class RoadmapNodeCard extends StatelessWidget {
                 descendants: descendants,
                 planWriter: planWriter,
                 parentWritable: parentWritable,
+                inheritedOwner: inheritedOwner,
+                openedRoot: openedRoot,
               ),
             ],
           ),
@@ -109,11 +127,11 @@ class RoadmapNodeCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ),
-          if (node.ownerName.isNotEmpty)
+          if (ownerLabel != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '${l10n.t('roadmap.owner')}: ${node.ownerName}',
+                '${l10n.t('roadmap.owner')}: $ownerLabel',
                 style: theme.textTheme.bodySmall,
               ),
             ),
@@ -135,6 +153,10 @@ class RoadmapNodeCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: rollup.done / rollup.leaves,
                 minHeight: 4,
+                semanticsLabel: l10n.t('roadmap.rollupShort', {
+                  'done': rollup.done,
+                  'leaves': rollup.leaves,
+                }),
               ),
             ),
             const SizedBox(height: 4),

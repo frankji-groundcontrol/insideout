@@ -105,7 +105,7 @@ void main() {
       tester.widget(find.byKey(const Key('roadmap-collapse-a'))),
       isA<BlockIconButton>(),
     );
-    expect(find.byType(IconButton), findsNothing);
+    expect(find.widgetWithIcon(IconButton, Icons.expand_more), findsNothing);
   });
 
   testWidgets('the roll-up bar reads its numbers', (tester) async {

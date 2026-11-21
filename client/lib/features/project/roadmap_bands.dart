@@ -18,6 +18,7 @@ class RoadmapBands extends StatelessWidget {
     required this.onReload,
     this.progress,
     this.planWriter = false,
+    this.card,
   });
 
   final String projectId;
@@ -31,6 +32,10 @@ class RoadmapBands extends StatelessWidget {
 
   /// The caller writes the whole plan (from the project view).
   final bool planWriter;
+
+  /// The page's card for a node, which knows the opened tree; without it
+  /// each band builds a plain card.
+  final Widget Function(RoadmapNode node)? card;
 
   List<RoadmapNode> _band(String Function(RoadmapNode n) bucket, String name) {
     return nodes.where((n) => bucket(n) == name).toList()
@@ -79,6 +84,7 @@ class RoadmapBands extends StatelessWidget {
           projectId: projectId,
           onReload: onReload,
           planWriter: planWriter,
+          card: card,
         ),
         const SizedBox(height: 16),
         _BandRow(
@@ -89,6 +95,7 @@ class RoadmapBands extends StatelessWidget {
           projectId: projectId,
           onReload: onReload,
           planWriter: planWriter,
+          card: card,
         ),
         const SizedBox(height: 16),
         _BandRow(
@@ -100,6 +107,7 @@ class RoadmapBands extends StatelessWidget {
           projectId: projectId,
           onReload: onReload,
           planWriter: planWriter,
+          card: card,
         ),
       ],
     );
@@ -115,6 +123,7 @@ class _BandRow extends StatelessWidget {
     required this.projectId,
     required this.onReload,
     required this.planWriter,
+    required this.card,
     this.labelColor,
   });
 
@@ -129,6 +138,7 @@ class _BandRow extends StatelessWidget {
   final String projectId;
   final Future<void> Function() onReload;
   final bool planWriter;
+  final Widget Function(RoadmapNode node)? card;
 
   @override
   Widget build(BuildContext context) {
@@ -140,15 +150,17 @@ class _BandRow extends StatelessWidget {
         for (final n in nodes)
           SizedBox(
             width: 240,
-            child: RoadmapNodeCard(
-              projectId: projectId,
-              node: n,
-              onReload: onReload,
-              compact: true,
-              descendants: roadmapDescendantCount(allNodes, n),
-              planWriter: planWriter,
-              parentWritable: roadmapParentWritable(allNodes, n),
-            ),
+            child:
+                card?.call(n) ??
+                RoadmapNodeCard(
+                  projectId: projectId,
+                  node: n,
+                  onReload: onReload,
+                  compact: true,
+                  descendants: roadmapDescendantCount(allNodes, n),
+                  planWriter: planWriter,
+                  parentWritable: roadmapParentWritable(allNodes, n),
+                ),
           ),
       ],
     );

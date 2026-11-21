@@ -74,10 +74,7 @@ void main() {
     expect(move.body, {'parentId': null, 'position': 2});
     expect(deleteRoadmapNode('n1').method, 'DELETE');
     expect(deleteRoadmapNode('n1').path, '/roadmap/n1');
-    expect(
-      deleteRoadmapNode('n1', force: true).path,
-      '/roadmap/n1?force=true',
-    );
+    expect(deleteRoadmapNode('n1', force: true).path, '/roadmap/n1?force=true');
     expect(expandRoadmapNode('n1').method, 'POST');
     expect(expandRoadmapNode('n1').path, '/roadmap/n1/expand');
     expect(expandRoadmapNode('n1').body, isNull);

@@ -255,11 +255,19 @@ everything below them (`roadmapMine` in
 `client/lib/features/project/roadmap_tree.dart`, from the node views'
 `ownerId` and the signed-in user); the signed-in landing's "My work" lists
 `mine` for each workspace, each item opening its tree
-(`client/lib/features/dashboard/my_work_section.dart`). The canvas folds a
+(`client/lib/features/dashboard/my_work_section.dart`). In an opened tree,
+Mine shows the whole tree when the caller owns the opened root or any
+ancestor above it (the ancestors' `ownerId`). A card and the node detail with
+no owner of their own name the owner they inherit, "Owner: dana (via
+Payments)", from the nearest owned node in the loaded list or, in an opened
+tree, the ancestors (`roadmapInheritedOwner`). The canvas folds a
 branch behind a chevron that shows how many nodes it hides, remembered for
 the page session; every card's bar and "n of m done" come from the server
 `rollup`, so validated counts as finished and every leaf below counts, not
-only direct children. Known limitation:
+only direct children. A delete over a branch with history shows the 409's
+counts in the build flow's words and resends with `force=true` only when the
+person confirms; deleting the opened root opens its parent's tree, or the
+project's whole tree for a top-level node. Known limitation:
 in an opened tree the root's parent is not loaded, so a delegate who holds a
 branch above it (but is not a plan writer) sees no Move, Delete or Delegate
 on the opened root's card; they do it from the parent's tree. The slice

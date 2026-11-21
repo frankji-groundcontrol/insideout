@@ -8,6 +8,8 @@ class _NodeMenu extends StatelessWidget {
     required this.descendants,
     required this.planWriter,
     required this.parentWritable,
+    required this.inheritedOwner,
+    required this.openedRoot,
   });
 
   final String projectId;
@@ -16,6 +18,8 @@ class _NodeMenu extends StatelessWidget {
   final int descendants;
   final bool planWriter;
   final bool parentWritable;
+  final ({String name, String via})? inheritedOwner;
+  final bool openedRoot;
 
   /// Move, delete and change the owner: a plan writer, or the owner of a
   /// branch above this node — a delegate keeps the root they were handed.
@@ -65,7 +69,11 @@ class _NodeMenu extends StatelessWidget {
     if (value == 'open') {
       GoRouter.maybeOf(context)?.go('/projects/$projectId/roadmap/${node.id}');
     } else if (value == 'details') {
-      await showRoadmapNodeDetail(context, node);
+      await showRoadmapNodeDetail(
+        context,
+        node,
+        inheritedOwner: inheritedOwner,
+      );
     } else if (value == 'delegate') {
       await _delegate(context, l10n);
     } else if (value == 'handback') {
@@ -117,21 +125,68 @@ class _NodeMenu extends StatelessWidget {
     } else if (value == 'validate') {
       await _validate(context, l10n);
     } else if (value == 'delete') {
-      final ok = await showBlockConfirm(
-        context: context,
-        title: l10n.t('roadmap.delete'),
-        message: descendants == 0
-            ? l10n.t('roadmap.deleteConfirm')
-            : l10n.t('roadmap.deleteConfirmMany', {'n': descendants + 1}),
-        confirmText: l10n.t('common.delete'),
-        danger: true,
-      );
-      if (!ok || !context.mounted) return;
-      final done = await guardWrite(
-        context,
-        () => api.deleteRoadmapNode(node.id),
-      );
-      if (done && context.mounted) await onReload();
+      await _delete(context, l10n);
+    }
+  }
+
+  /// Delete the node and its branch. A branch with history answers 409
+  /// roadmap_delete_has_history with what it would lose; that is shown in
+  /// the build flow's words, and force goes only after the person agrees.
+  Future<void> _delete(BuildContext context, Appearance l10n) async {
+    final api = context.read<Session>().api;
+    final t = l10n.t;
+    final ok = await showBlockConfirm(
+      context: context,
+      title: t('roadmap.delete'),
+      message: descendants == 0
+          ? t('roadmap.deleteConfirm')
+          : t('roadmap.deleteConfirmMany', {'n': descendants + 1}),
+      confirmText: t('common.delete'),
+      danger: true,
+    );
+    if (!ok || !context.mounted) return;
+    var deleted = false;
+    final done = await guardWrite(context, () async {
+      try {
+        await api.deleteRoadmapNode(node.id);
+      } on ApiException catch (e) {
+        if (e.code != 'roadmap_delete_has_history' || !context.mounted) {
+          rethrow;
+        }
+        String count(String many, String one, int n) =>
+            t(n == 1 ? one : many, {'n': n});
+        final lose = await showBlockConfirm(
+          context: context,
+          title: t('roadmap.deleteHistoryTitle'),
+          message: t('roadmap.deleteHistoryConfirm', {
+            'nodes': count(
+              'prd.nodeCount',
+              'prd.nodeCountOne',
+              e.liveCount ?? descendants + 1,
+            ),
+            'evidence': count(
+              'prd.evidenceCount',
+              'prd.evidenceCountOne',
+              e.evidenceCount ?? 0,
+            ),
+            'done': e.doneCount ?? 0,
+            'validated': e.validatedCount ?? 0,
+          }),
+          confirmText: t('roadmap.deleteHistoryAction'),
+          danger: true,
+        );
+        if (!lose || !context.mounted) return;
+        await api.deleteRoadmapNode(node.id, force: true);
+      }
+      deleted = true;
+    });
+    if (!done || !deleted || !context.mounted) return;
+    if (openedRoot) {
+      // This route's node is gone: open the parent's tree, or the whole one.
+      final parent = node.parentId == null ? '' : '/${node.parentId}';
+      GoRouter.maybeOf(context)?.go('/projects/$projectId/roadmap$parent');
+    } else {
+      await onReload();
     }
   }
 

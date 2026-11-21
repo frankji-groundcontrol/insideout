@@ -12,17 +12,36 @@ import '../../theme/cobalt.dart';
 /// The read-only node detail: what the node is, who holds it, how far its
 /// leaves are, its evidence and who handed it to whom. Every member may read
 /// it; nothing here writes.
-Future<void> showRoadmapNodeDetail(BuildContext context, RoadmapNode node) =>
-    showBlockModal<void>(
-      context: context,
-      title: node.title,
-      body: _NodeDetail(node: node),
-    );
+Future<void> showRoadmapNodeDetail(
+  BuildContext context,
+  RoadmapNode node, {
+  ({String name, String via})? inheritedOwner,
+}) => showBlockModal<void>(
+  context: context,
+  title: node.title,
+  body: _NodeDetail(node: node, inheritedOwner: inheritedOwner),
+);
+
+/// Who holds [node]: its own owner, else the one it inherits and the
+/// ancestor it comes through; null when nobody does.
+String? roadmapOwnerLabel(
+  String Function(String key, [Map<String, Object?>? args]) t,
+  RoadmapNode node,
+  ({String name, String via})? inherited,
+) {
+  if (node.ownerName.isNotEmpty) return node.ownerName;
+  if (inherited == null) return null;
+  return t('roadmap.ownerVia', {
+    'name': inherited.name.isEmpty ? t('roadmap.someone') : inherited.name,
+    'via': inherited.via,
+  });
+}
 
 class _NodeDetail extends StatefulWidget {
-  const _NodeDetail({required this.node});
+  const _NodeDetail({required this.node, this.inheritedOwner});
 
   final RoadmapNode node;
+  final ({String name, String via})? inheritedOwner;
 
   @override
   State<_NodeDetail> createState() => _NodeDetailState();
@@ -71,7 +90,10 @@ class _NodeDetailState extends State<_NodeDetail> {
           line(node.acceptance),
         ],
         heading('roadmap.owner'),
-        line(node.ownerName.isEmpty ? t('roadmap.ownerNone') : node.ownerName),
+        line(
+          roadmapOwnerLabel(t, node, widget.inheritedOwner) ??
+              t('roadmap.ownerNone'),
+        ),
         if (node.deadline != null) ...[
           heading('roadmap.deadline'),
           line(isoDate(node.deadline!)),

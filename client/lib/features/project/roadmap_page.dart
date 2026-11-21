@@ -49,6 +49,7 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   late Future<List<RoadmapNode>> _future;
   late Future<RoadmapProgress> _progressFuture;
   Future<RoadmapNodeRead>? _read;
+  late final Future<Map<String, dynamic>> _project;
   _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
 
@@ -72,9 +73,9 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
     super.initState();
     final api = context.read<Session>().api;
     context.read<LoopFocus>().rememberProject(widget.projectId);
+    _project = api.getProject(widget.projectId);
     _fetch(api);
-    api
-        .getProject(widget.projectId)
+    _project
         .then((p) {
           if (mounted) setState(() => _planWriter = p['canWritePlan'] == true);
         })
@@ -97,13 +98,39 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
     _read = root == null ? null : api.readRoadmapNode(root);
     _read
         ?.then((r) {
-          if (mounted) setState(() => _rootWritable = r.node.canWrite);
+          if (!mounted) return;
+          setState(() {
+            _rootWritable = r.node.canWrite;
+            _opened = r;
+          });
+          if (_names.isEmpty && r.ancestors.any((a) => a.ownerId != null)) {
+            _loadNames(api);
+          }
         })
         .catchError((_) {});
   }
 
   /// The opened node's canWrite: "New item" adds under it.
   bool _rootWritable = false;
+
+  /// The opened node's read: its ancestors carry the owners its tree
+  /// inherits, for Mine and the inherited owner label.
+  RoadmapNodeRead? _opened;
+
+  /// Member names by user id, read only when an ancestor above the opened
+  /// tree has an owner (the ancestor refs carry the id alone).
+  Map<String, String> _names = const {};
+
+  void _loadNames(ApiClient api) => _project
+      .then((p) => api.listMembers(p['workspaceId'] as String))
+      .then((members) {
+        if (!mounted) return;
+        setState(
+          () => _names = {for (final m in members) m.userId: m.username},
+        );
+      })
+      // Unnamed, the label reads "someone".
+      .catchError((_) {});
 
   void _scrollToBand(int i) {
     if (!_canvasController.hasClients) return;

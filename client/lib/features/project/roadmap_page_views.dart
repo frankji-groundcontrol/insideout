@@ -61,6 +61,7 @@ extension _RoadmapViews on _RoadmapPageState {
                 onReload: _reload,
                 progress: progress,
                 planWriter: _planWriter,
+                card: (n) => _card(n, snap.data!, compact: true),
               );
             },
           );
@@ -68,8 +69,11 @@ extension _RoadmapViews on _RoadmapPageState {
         final all = snap.data!;
         // Mine lays out only the caller's branches, each topmost owned node
         // a band; the cards still read the whole list for parent and count.
-        final shown = _view == _RoadmapView.mine
-            ? roadmapMine(all, context.read<Session>().user?.id ?? '')
+        // Under an ancestor the caller owns, the whole opened tree is theirs.
+        final uid = context.read<Session>().user?.id ?? '';
+        final heldAbove = _opened?.ancestors.any((a) => a.ownerId == uid);
+        final shown = _view == _RoadmapView.mine && heldAbove != true
+            ? roadmapMine(all, uid)
             : all;
         if (shown.isEmpty) {
           return BlockEmpty(
@@ -84,14 +88,7 @@ extension _RoadmapViews on _RoadmapPageState {
             Expanded(
               child: RoadmapCanvas(
                 nodes: shown,
-                tileBuilder: (node, _) => RoadmapNodeCard(
-                  projectId: widget.projectId,
-                  node: node,
-                  onReload: _reload,
-                  descendants: roadmapDescendantCount(all, node),
-                  planWriter: _planWriter,
-                  parentWritable: roadmapParentWritable(all, node),
-                ),
+                tileBuilder: (node, _) => _card(node, all),
                 controller: _canvasController,
                 // Shared cursors live in the whole canvas's layout; Mine
                 // lays out other bands, so it neither sends nor shows them.
@@ -106,4 +103,27 @@ extension _RoadmapViews on _RoadmapPageState {
       },
     );
   }
+
+  /// One node's card, read against every loaded node [all] and, in an
+  /// opened tree, the ancestors above it.
+  Widget _card(
+    RoadmapNode node,
+    List<RoadmapNode> all, {
+    bool compact = false,
+  }) => RoadmapNodeCard(
+    projectId: widget.projectId,
+    node: node,
+    onReload: _reload,
+    compact: compact,
+    descendants: roadmapDescendantCount(all, node),
+    planWriter: _planWriter,
+    parentWritable: roadmapParentWritable(all, node),
+    inheritedOwner: roadmapInheritedOwner(
+      all,
+      node,
+      above: _opened?.ancestors ?? const [],
+      names: _names,
+    ),
+    openedRoot: node.id == widget.rootId,
+  );
 }
