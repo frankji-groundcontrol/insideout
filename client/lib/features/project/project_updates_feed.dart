@@ -28,8 +28,7 @@ class ProjectUpdatesFeed extends StatefulWidget {
     this.nextCursor,
   });
 
-  /// Unread since the server began applying accepted proposals (rv4-FEAT-02);
-  /// kept so the page and the tests that build this widget still compile.
+  /// The project whose older pages "Load older updates" reads.
   final String projectId;
   final List<ProjectUpdate> updates;
   final Future<void> Function() onChanged;
@@ -57,19 +56,31 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
   final _deciding = <String, bool>{};
   final _decided = <String>{};
 
-  /// Older pages read with "Load older updates" (rv5-PARB-07); a new first
-  /// page from the page's reload starts the history over.
+  /// Older pages read with "Load older updates" (rv5-PARB-07). The page
+  /// hands a new list on every rebuild, so the history starts over only when
+  /// the project or its newest update changes, or after this feed wrote to
+  /// an older row (the reload does not carry that row's new state).
   var _older = <ProjectUpdate>[];
   late String? _cursor = widget.nextCursor;
   var _loading = false;
+  var _olderStale = false;
 
   @override
   void didUpdateWidget(ProjectUpdatesFeed old) {
     super.didUpdateWidget(old);
-    if (!identical(old.updates, widget.updates)) {
+    if (_olderStale ||
+        old.projectId != widget.projectId ||
+        old.updates.firstOrNull?.id != widget.updates.firstOrNull?.id) {
       _older = [];
       _cursor = widget.nextCursor;
+      _olderStale = false;
     }
+  }
+
+  /// Called before a write's reload: a write to an older row resets the
+  /// history on the next update.
+  void _wrote(ProjectUpdate u) {
+    if (_older.any((o) => o.id == u.id)) _olderStale = true;
   }
 
   Future<void> _loadOlder() async {
@@ -120,7 +131,9 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
       _deciding.remove(id);
       if (done) _decided.add(id);
     });
-    if (done) await widget.onChanged();
+    if (!done) return;
+    _wrote(update);
+    await widget.onChanged();
   }
 
   Widget _decision(ProjectUpdate u, Appearance l10n) {
@@ -207,6 +220,7 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                                   () => widget.onEdit(u, values.first.trim()),
                                 );
                                 if (done && context.mounted) {
+                                  _wrote(u);
                                   await widget.onChanged();
                                 }
                               }
@@ -216,6 +230,7 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                                 () => widget.onRemove(u),
                               );
                               if (done && context.mounted) {
+                                _wrote(u);
                                 await widget.onChanged();
                               }
                             }
