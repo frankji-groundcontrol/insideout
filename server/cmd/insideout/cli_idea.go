@@ -54,7 +54,7 @@ func runIdeaCommand(args []string) (bool, int) {
 // runProposalDecide is `insideout proposal decide` (and the old
 // `idea proposal-decide`): a human accepts or rejects an agent proposal.
 // Acceptance applies the proposal's items unless --no-apply, the default the
-// web carries too (rv5-PARB-05); --apply stays accepted for old scripts.
+// web carries too (rv5-PARB-05); --apply=false, the old spelling, still holds.
 func runProposalDecide(args []string) (bool, int) {
 	fs := flag.NewFlagSet("proposal decide", flag.ContinueOnError)
 	api := apiFlag(fs)
@@ -62,7 +62,7 @@ func runProposalDecide(args []string) (bool, int) {
 	reject := fs.Bool("reject", false, "reject the proposal")
 	reason := fs.String("reason", "", "why")
 	noApply := fs.Bool("no-apply", false, "accept without applying the proposal's items")
-	fs.Bool("apply", true, "apply the proposal's items on acceptance (the default)")
+	apply := fs.Bool("apply", true, "apply the proposal's items on acceptance (the default)")
 	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 || *accept == *reject {
 		fmt.Fprintln(os.Stderr, "usage: insideout proposal decide --accept|--reject [--no-apply] [--reason R] <update-id>")
 		return true, 2
@@ -71,5 +71,5 @@ func runProposalDecide(args []string) (bool, int) {
 	if *accept {
 		decision = "accepted"
 	}
-	return printJSON(clientFromFlag(*api).DecideProposal(fs.Args()[0], decision, *reason, *accept && !*noApply))
+	return printJSON(clientFromFlag(*api).DecideProposal(fs.Args()[0], decision, *reason, *accept && *apply && !*noApply))
 }

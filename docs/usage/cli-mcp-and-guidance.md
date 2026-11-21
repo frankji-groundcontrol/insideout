@@ -89,8 +89,6 @@ code or link).
 
 Every row runs on the CLI. MCP has a tool for each verb an agent token may
 call and none for a human-only route (see [Agent scope](#agent-scope)).
-A delete of a project or a workspace takes everything under it, so the CLI
-asks for `--yes`.
 
 | Area | Verbs |
 | --- | --- |
@@ -98,7 +96,7 @@ asks for `--yes`.
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `evidence add --detail D [--source URL] [--observed YYYY-MM-DD] <node-id>` (a validation observation on a leaf; the day defaults to today), `workspaces create --title [--desc]`, `workspace update [--title] [--description D\|clear] [--cover URL\|clear] <ws>`, `join <code>`, `projects create --title [--desc] <ws-id>`, `project update [--title] [--description D\|clear] [--status planning\|active\|paused\|done\|archived] [--owner user-id\|me\|clear] <proj>`, `project delete --yes <proj>` (workspace admins), `workspace delete --yes <ws>` (its creator), `update add --kind progress\|blocker\|note --content C <proj>`, `update edit --content C <update>`, `update delete <update>` (author or admin), `member role --role admin\|member <ws> <user>`, `member remove <ws> <user>` (admins), `profile update [--username U] [--bio B\|clear] [--avatar URL\|clear]` |
 | Read surface | `whoami`, `workspaces`, `workspace <ws>`, `projects <ws>`, `project <proj>`, `updates [--before c] [--limit n] <proj>`, `prds <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>`, `export [--format markdown\|print] [--audience A] [--out FILE] <prd>` (the whole PRD on stdout or in a file, as MCP `prd_export` gives it) |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
-| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>` (without `--content` the body is kept), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
+| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content C\|clear] <id>` (an absent or empty `--content` keeps the body), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
 | Roadmap | `roadmap list [--root node] <proj>` (with `--root`, that node and the nodes below it), `roadmap add`, `roadmap update [--title] [--description D\|clear] [--status] [--deadline RFC3339\|clear] [--acceptance A\|clear] [--owner user-id\|me\|clear] [--completion-reason S\|clear] <node>`, `roadmap move [--parent id \| --root] [--position n] <node>` (no `--parent` keeps the parent; the MCP `roadmap_move` takes `parent_id` `"root"` for a root), `roadmap delete [--force] <node>` (a branch holding evidence or done or validated nodes is refused with the counts it would erase; `--force` deletes it anyway), `roadmap validate --reason R <node>` (confirm a done node as validated), `roadmap progress [--root node] <proj>`, `roadmap presence <proj>` |
 | Task tree | `roadmap show <node>` (the node, its ancestors root first, its project), `roadmap mine <ws>` (your topmost owned nodes), `members <ws>` (user ids for `--to` and `--owner`), `roadmap delegate --to <user-id> [--note N] <node>`, `roadmap handback [--note N] <node>`, `roadmap assignments <node>` (who held it, newest first). MCP: `roadmap_node`, `roadmap_mine`, `roadmap_assignments` (no MCP tool for `members`, delegate or hand-back: every MCP tool acts through an agent-scope token, which those routes refuse); `roadmap_update` takes `acceptance` and `owner_id` (`"clear"` clears either), `roadmap_list` and `progress` take `root`. Node views carry `canWrite` and `rollup` ([roadmap tree](../architecture/roadmap-tree.md)) |
 | Build | `build <prd>` drafts a roadmap from an approved PRD and writes nothing (409 `prd_not_approved` otherwise); `build-confirm [-expected-count N] [-force] -tree '<json>' <prd>` writes it, creating and linking the project on the first build (PRD author or workspace admin only); over a roadmap with evidence or done or validated nodes it answers 409 `roadmap_replace_has_history` with the counts until `-force`; `expand <node>`, `expand-confirm -children '<json>' <node>` |
@@ -139,10 +137,12 @@ signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
 
 Every edit verb follows one rule on the CLI and on MCP: a flag or argument you
 leave out, or pass empty (`--description ""`, `"description": ""`), leaves that
-field as it is; the literal word `clear` clears a field that can be empty
-(description, deadline, acceptance, owner, completion reason, cover). A title
-or status cannot be cleared. The CLI flags and the MCP arguments fill the same
-request struct in `server/internal/apiclient` (`apiclient.PatchText`).
+field as it is; the word `clear` clears a field that can be empty
+(description, deadline, acceptance, owner, completion reason, cover, an
+idea's body, bio, avatar); a title or status cannot be cleared. Both fill
+one request struct in `server/internal/apiclient` (`apiclient.PatchText`).
+PRD sections are the exception: `prd update --section key=` and
+`sections_json` write the text you pass, an empty one included.
 
 ### Lists, paging and the rest of the contract
 
@@ -157,16 +157,15 @@ request struct in `server/internal/apiclient` (`apiclient.PatchText`).
   and `limit`, `GET /api/v1/projects/{pid}/updates`) answers
   `{"updates": [...], "nextCursor": ...}` with the next page; without
   `before` it starts from the newest, and `limit` defaults to 50.
-- `project update` and `workspace update` read the row first, because the
-  server rewrites title, description and status on every PATCH; a flag left
-  out is sent as it was read.
+- `project update`, `workspace update`, `profile update` and their MCP
+  tools read the row first, because the server rewrites title, description,
+  status, username and bio on every PATCH; what you leave out is sent as read.
 - `GET /api/v1/roadmap/{nid}/evidence` (the `evidence` verb) answers 404
   for a node that does not exist or that you cannot see. `createdAt` is a
   timestamp like every other, and a validation observation's `observedAt`
   is the date as entered (`YYYY-MM-DD`).
-- `PATCH /api/v1/me` and `PATCH /api/v1/workspaces/{id}`: leaving out
-  `avatarUrl` or `coverUrl` keeps the stored picture; `null` or `""` clears
-  it.
+- `PATCH /api/v1/me` and `PATCH /api/v1/workspaces/{id}`: an absent
+  `avatarUrl` or `coverUrl` keeps the picture; `null` or `""` clears it.
 
 ### Errors
 

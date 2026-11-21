@@ -9,6 +9,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
 // stringList is a repeatable string flag (--section k=v --section k2=v2).
@@ -50,16 +52,11 @@ func runCrudCommand(cmd string, args []string) (bool, int) {
 		}
 		return printJSON(c.Ideas(positional[0]))
 	case "idea update":
-		if !need(1, "insideout idea update --title T [--content C] <id>") {
+		if !need(1, "insideout idea update --title T [--content C|clear] <id>") {
 			return true, 2
 		}
-		var body *string // only an explicit --content replaces the body (PARA-02)
-		fs.Visit(func(f *flag.Flag) {
-			if f.Name == "content" {
-				body = content
-			}
-		})
-		return printJSON(c.UpdateIdea(positional[0], *title, body))
+		// An absent or empty --content keeps the body (PARA-02); clear clears it.
+		return printJSON(c.UpdateIdea(positional[0], *title, apiclient.PatchText(*content)))
 	case "idea delete":
 		if !need(1, "insideout idea delete <id>") {
 			return true, 2

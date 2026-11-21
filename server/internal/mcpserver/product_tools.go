@@ -192,14 +192,10 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.Ideas(reqStr(req, "workspace_id")))
 		})
-	addTextTool("idea_update", "Rewrite an idea's title and, if given, its content (title required; omit content to keep the body)",
-		[]mcp.ToolOption{strReq("idea_id", "idea id"), strReq("title", "new title"), strOpt("content", "idea body (omit to keep it)")},
+	addTextTool("idea_update", "Rewrite an idea's title and, if given, its content (title required; omit content to keep the body, the word clear clears it)",
+		[]mcp.ToolOption{strReq("idea_id", "idea id"), strReq("title", "new title"), strOpt("content", "idea body (omit to keep it; clear clears it)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			var content *string
-			if v, ok := req.GetArguments()["content"].(string); ok {
-				content = &v
-			}
-			return call(c.UpdateIdea(reqStr(req, "idea_id"), reqStr(req, "title"), content))
+			return call(c.UpdateIdea(reqStr(req, "idea_id"), reqStr(req, "title"), apiclient.PatchText(optStr(req, "content"))))
 		})
 	addTextTool("prd_update", "Edit PRD sections/title directly (section keys: background, users, goals, nonGoals, stories, requirements, constraints, risks); optional status transition applies after edits",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id"), strOpt("title", "new title"),

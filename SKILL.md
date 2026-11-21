@@ -128,7 +128,8 @@ CLI verbs and MCP tools mostly share names; where they differ (`ideas` /
 `idea_list`, `evidence` / `roadmap_evidence`, `join` / `workspace_join`,
 `prds` / `prd_list`, `updates` / `project_updates`, `roadmap progress` /
 `progress`) the reference below maps them. Edits follow one rule on both:
-an absent or empty value leaves a field alone, the word `clear` clears it.
+an absent or empty value leaves a field alone, the word `clear` clears it
+(PRD sections excepted: `--section key=` writes an empty section).
 Prefer the narrowest tool; reads return raw JSON — trust it over your
 assumptions.
 
