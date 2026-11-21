@@ -96,7 +96,7 @@ const (
 )
 
 // The roadmap planner's prompts, English mirrors of plannerPlanMVPPromptZH
-// and plannerExpandPromptZH (roadmap_planner.go).
+// and plannerExpandPromptZH (roadmap_planner_llm.go).
 const (
 	plannerPlanMVPPromptEN = `You are InsideOut's product-delivery coach. From the PRD the user provides (title and sections), break the product down into an executable MVP roadmap tree.
 Rules: one root node (the overall goal of delivering the MVP); 3-5 workstreams under the root that can advance in parallel (for example: core functionality, polish and validation, release); 2-4 concrete tasks under each workstream. Each node's title is short (12 characters or fewer), its description one sentence. Do not invent major directions the PRD does not contain. Return only through the submit_roadmap tool.`

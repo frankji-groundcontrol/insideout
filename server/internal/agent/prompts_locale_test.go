@@ -227,7 +227,7 @@ func firstChars(s string, n int) string {
 }
 
 // The planner drafts in the conversation's language too: the en prompts
-// mirror the zh ones (roadmap_planner.go), fence clause included.
+// mirror the zh ones (roadmap_planner_llm.go), fence clause included.
 func TestPlannerPrompts_SelectTheConversationsLanguage(t *testing.T) {
 	const enMarker, zhMarker = "You are InsideOut's product-delivery coach", "你是 InsideOut 的产品落地教练"
 
