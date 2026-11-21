@@ -89,4 +89,23 @@ func TestStartingAnOwnerlessLeafMakesYouItsOwner(t *testing.T) {
 	if o := ownerOf(t, st, w.owner.ID, w.shipping.ID); o != nil {
 		t.Errorf("starting a branch assigned %s", o)
 	}
+
+	// A build seeds its first leaf in progress: the builder owns it.
+	proj, err := st.CreateProject(ctx, w.owner.ID, w.project.WorkspaceID, "Built", "")
+	if err != nil {
+		t.Fatalf("create project: %v", err)
+	}
+	if _, err := st.ReplaceRoadmapTree(ctx, w.owner.ID, proj.ID, ReplaceOptions{},
+		RoadmapPlanNode{Title: "MVP", Children: []RoadmapPlanNode{{Title: "First"}}}); err != nil {
+		t.Fatalf("build: %v", err)
+	}
+	nodes, err := st.ListRoadmap(ctx, w.owner.ID, proj.ID)
+	if err != nil {
+		t.Fatalf("list built roadmap: %v", err)
+	}
+	for _, n := range nodes {
+		if n.Status == "in_progress" && (n.OwnerID == nil || *n.OwnerID != w.owner.ID) {
+			t.Errorf("seeded leaf %q owner = %v, want the builder", n.Title, n.OwnerID)
+		}
+	}
 }

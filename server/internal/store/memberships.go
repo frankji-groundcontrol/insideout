@@ -144,6 +144,18 @@ func (s *Store) RemoveMember(ctx context.Context, actorID, workspaceID, targetUs
 		if err := requireAnotherAdmin(ctx, tx, workspaceID, targetUserID); err != nil {
 			return err
 		}
+		// Owning a node is write authority over its subtree, and authority needs
+		// membership: a member who leaves stops owning the workspace's nodes
+		// (rv5-TREEB-12). Before the delete, so a member leaving on their own
+		// still passes the roadmap_nodes update policy.
+		if _, err := tx.Exec(ctx, `
+			UPDATE insideout.roadmap_nodes SET owner_user_id = NULL
+			WHERE owner_user_id = $2
+			  AND project_id IN (SELECT id FROM insideout.projects WHERE workspace_id = $1)`,
+			workspaceID, targetUserID,
+		); err != nil {
+			return err
+		}
 
 		tag, err := tx.Exec(ctx, `
 			DELETE FROM insideout.workspace_memberships WHERE workspace_id = $1 AND user_id = $2`,

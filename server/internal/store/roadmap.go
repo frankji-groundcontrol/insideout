@@ -249,6 +249,9 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 		if err := requireDoneEvidenceOrReason(ctx, tx, nodeID, current, &f); err != nil {
 			return err
 		}
+		if err := claimStartedLeaf(ctx, tx, nodeID, actorID, current, owner, &f); err != nil {
+			return err
+		}
 
 		row := tx.QueryRow(ctx, `
 			UPDATE insideout.roadmap_nodes

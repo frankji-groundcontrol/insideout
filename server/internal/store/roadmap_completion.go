@@ -43,6 +43,23 @@ func requireDoneEvidenceOrReason(ctx context.Context, tx pgx.Tx, nodeID uuid.UUI
 	return nil
 }
 
+// claimStartedLeaf gives work in progress its one human owner (PRODUCT.md,
+// rv5-FEAT-05): when an ownerless leaf moves to in_progress and the write
+// names no owner, the actor becomes its owner. A "clear" of an owner that is
+// already empty (the web form sends one) names none.
+func claimStartedLeaf(ctx context.Context, tx pgx.Tx, nodeID, actorID uuid.UUID, from string, owner *uuid.UUID, f *RoadmapNodeFields) error {
+	if f.Status == nil || *f.Status != "in_progress" || from == "in_progress" || owner != nil || f.OwnerID != nil {
+		return nil
+	}
+	var leaf bool
+	if err := tx.QueryRow(ctx, `SELECT NOT EXISTS (SELECT 1 FROM insideout.roadmap_nodes WHERE parent_id = $1)`,
+		nodeID).Scan(&leaf); err != nil || !leaf {
+		return err
+	}
+	f.OwnerID, f.ClearOwner = &actorID, false
+	return nil
+}
+
 // oneSentence is one clause that ends in a single sentence terminator.
 // A Latin fragment ("Done.") is not enough; two sentences are not one.
 // A decimal point inside a token (v1.2) is not a second sentence.
