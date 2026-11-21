@@ -19,11 +19,7 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 	scanner := bufio.NewScanner(r)
 	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
 
-	var text strings.Builder
-	var calls respCalls
-	var usage Usage
-	var truncated, finished bool
-
+	st := &responsesStream{onDelta: onDelta}
 	for scanner.Scan() {
 		if tick != nil {
 			tick()
@@ -40,45 +36,8 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		if err := json.Unmarshal([]byte(payload), &ev); err != nil {
 			continue
 		}
-		typ, _ := ev["type"].(string)
-		switch typ {
-		case "response.output_text.delta":
-			if d, ok := ev["delta"].(string); ok && d != "" {
-				text.WriteString(d)
-				if onDelta != nil {
-					onDelta(d)
-				}
-			}
-		case "response.output_item.added":
-			if item, ok := ev["item"].(map[string]any); ok && item["type"] == "function_call" {
-				calls.add(item)
-			}
-		case "response.function_call_arguments.delta":
-			calls.delta(ev)
-		case "error":
-			msg, _ := ev["message"].(string)
-			code, _ := ev["code"].(string)
-			return Turn{}, classifyResponsesStreamError(code, msg)
-		case "response.failed":
-			return Turn{}, classifyResponsesStreamError(responseFailure(ev))
-		case "response.completed", "response.incomplete":
-			finished = true
-			// response.incomplete is the cap being hit; some providers report the
-			// same thing as response.completed with status "incomplete".
-			truncated = typ == "response.incomplete"
-			if resp, ok := ev["response"].(map[string]any); ok {
-				if u, ok := resp["usage"].(map[string]any); ok {
-					if v, ok := u["input_tokens"].(float64); ok {
-						usage.InputTokens = int(v)
-					}
-					if v, ok := u["output_tokens"].(float64); ok {
-						usage.OutputTokens = int(v)
-					}
-				}
-				if status, ok := resp["status"].(string); ok && status == "incomplete" {
-					truncated = true
-				}
-			}
+		if err := st.handle(ev); err != nil {
+			return Turn{}, err
 		}
 	}
 	if err := scanner.Err(); err != nil {
@@ -93,25 +52,94 @@ func parseResponsesStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 		}
 		return Turn{}, fmt.Errorf("%w: read %s stream: %s", ErrProviderTransient, responsesProvider, err.Error())
 	}
-	if !finished {
+	return st.turn()
+}
+
+// responsesStream accumulates one Responses API turn across its events.
+type responsesStream struct {
+	onDelta             func(string)
+	text                strings.Builder
+	calls               respCalls
+	usage               Usage
+	truncated, finished bool
+}
+
+// handle applies one stream event; an "error" or response.failed event ends
+// the turn.
+func (st *responsesStream) handle(ev map[string]any) error {
+	typ, _ := ev["type"].(string)
+	switch typ {
+	case "response.output_text.delta":
+		if d, ok := ev["delta"].(string); ok && d != "" {
+			st.text.WriteString(d)
+			if st.onDelta != nil {
+				st.onDelta(d)
+			}
+		}
+	case "response.output_item.added":
+		if item, ok := ev["item"].(map[string]any); ok && item["type"] == "function_call" {
+			st.calls.add(item)
+		}
+	case "response.function_call_arguments.delta":
+		st.calls.delta(ev)
+	case "error":
+		msg, _ := ev["message"].(string)
+		code, _ := ev["code"].(string)
+		return classifyResponsesStreamError(code, msg)
+	case "response.failed":
+		return classifyResponsesStreamError(responseFailure(ev))
+	case "response.completed", "response.incomplete":
+		st.finish(typ, ev)
+	}
+	return nil
+}
+
+// finish records the end of the response: its usage, and whether the
+// max_output_tokens cap cut it short.
+func (st *responsesStream) finish(typ string, ev map[string]any) {
+	st.finished = true
+	// response.incomplete is the cap being hit; some providers report the
+	// same thing as response.completed with status "incomplete".
+	st.truncated = typ == "response.incomplete"
+	resp, ok := ev["response"].(map[string]any)
+	if !ok {
+		return
+	}
+	if u, ok := resp["usage"].(map[string]any); ok {
+		if v, ok := u["input_tokens"].(float64); ok {
+			st.usage.InputTokens = int(v)
+		}
+		if v, ok := u["output_tokens"].(float64); ok {
+			st.usage.OutputTokens = int(v)
+		}
+	}
+	if status, ok := resp["status"].(string); ok && status == "incomplete" {
+		st.truncated = true
+	}
+}
+
+// turn is the finished stream as one Turn: a tool call or text, or an error
+// for a stream that never finished or said nothing.
+func (st *responsesStream) turn() (Turn, error) {
+	if !st.finished {
 		return Turn{}, fmt.Errorf("%w: %s stream ended before response.completed", ErrProviderTransient, responsesProvider)
 	}
-	if call := calls.first(); call != nil {
-		if truncated {
+	if call := st.calls.first(); call != nil {
+		if st.truncated {
 			// The cap cut the call's JSON short: it never runs, and the person
 			// is told the answer was cut off instead.
-			return Turn{Text: text.String(), Usage: usage, Truncated: true}, nil
+			return Turn{Text: st.text.String(), Usage: st.usage, Truncated: true}, nil
 		}
 		args := call.args.String()
 		if args == "" {
 			args = "{}"
 		}
-		return Turn{ToolCall: &ToolCallRequest{ID: call.id, Name: call.name, Arguments: args}, Usage: usage}, nil
+		return Turn{ToolCall: &ToolCallRequest{ID: call.id, Name: call.name, Arguments: args}, Usage: st.usage}, nil
 	}
-	if text.Len() == 0 {
+	if st.text.Len() == 0 {
 		return Turn{}, fmt.Errorf("%w: empty text response", ErrContentRefusal)
 	}
-	return Turn{Text: text.String(), Usage: usage, Truncated: truncated}, nil
+	return Turn{Text: st.text.String(), Usage: st.usage, Truncated: st.truncated}, nil
 }
 
 // responseFailure reads the error code and message out of a response.failed

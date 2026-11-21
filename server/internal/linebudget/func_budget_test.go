@@ -17,14 +17,9 @@ import (
 // grow, and an entry for a function that is gone or back under the limit
 // fails too, so the list only shrinks.
 var longFunctions = map[string]int{
-	"internal/llm/responses_parse.go:parseResponsesStream":        98,
 	"internal/api/agent_routes.go:Server.handleAgentContext":      89,
 	"internal/api/presence_routes.go:Server.handlePresenceStream": 85,
 	"internal/api/roadmap.go:Server.handleUpdateRoadmapNode":      97,
-	"internal/setup/ui/register.go:runRegister":                   84,
-	"internal/store/migrate.go:Store.Migrate":                     100,
-	"internal/store/roadmap_move.go:Store.MoveRoadmapNode":        94,
-	"internal/store/roadmap_plan.go:Store.ReplaceRoadmapTree":     99,
 }
 
 // funcName is "Func" for a function and "Type.Method" for a method.

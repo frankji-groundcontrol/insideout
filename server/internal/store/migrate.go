@@ -21,6 +21,35 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 	}
 	defer unlock()
 
+	if err := s.bootstrapMigrations(ctx); err != nil {
+		return nil, err
+	}
+	filenames, err := embeddedMigrations()
+	if err != nil {
+		return nil, err
+	}
+	applied, err := s.appliedMigrations(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var justApplied []string
+	for _, name := range filenames {
+		if applied[name] {
+			continue
+		}
+		if err := s.applyMigration(ctx, name); err != nil {
+			return nil, err
+		}
+		justApplied = append(justApplied, name)
+	}
+
+	return justApplied, nil
+}
+
+// bootstrapMigrations creates the insideout schema when it is missing and the
+// schema_migrations tracking table when that is.
+func (s *Store) bootstrapMigrations(ctx context.Context) error {
 	// CREATE SCHEMA requires CREATE privilege on the *database*, not just
 	// on the schema itself — even a redundant IF NOT EXISTS attempt fails
 	// with "permission denied for database" for a role that's merely the
@@ -34,11 +63,11 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 	if err := s.migrateBootstrapQueryRow(ctx,
 		`SELECT EXISTS (SELECT 1 FROM information_schema.schemata WHERE schema_name = 'insideout')`,
 	).Scan(&schemaExists); err != nil {
-		return nil, fmt.Errorf("migrate: check schema: %w", err)
+		return fmt.Errorf("migrate: check schema: %w", err)
 	}
 	if !schemaExists {
 		if err := s.migrateExec(ctx, `CREATE SCHEMA insideout AUTHORIZATION insideout_owner`); err != nil {
-			return nil, fmt.Errorf("migrate: create schema: %w", err)
+			return fmt.Errorf("migrate: create schema: %w", err)
 		}
 	}
 	if err := s.migrateExec(ctx, `
@@ -47,9 +76,13 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 			applied_at timestamptz NOT NULL DEFAULT now()
 		)
 	`); err != nil {
-		return nil, fmt.Errorf("migrate: bootstrap: %w", err)
+		return fmt.Errorf("migrate: bootstrap: %w", err)
 	}
+	return nil
+}
 
+// embeddedMigrations lists the embedded .sql files in filename order.
+func embeddedMigrations() ([]string, error) {
 	entries, err := db.Migrations.ReadDir("migrations")
 	if err != nil {
 		return nil, fmt.Errorf("migrate: read embedded migrations: %w", err)
@@ -63,7 +96,11 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 		filenames = append(filenames, e.Name())
 	}
 	sort.Strings(filenames)
+	return filenames, nil
+}
 
+// appliedMigrations is the set of filenames schema_migrations has recorded.
+func (s *Store) appliedMigrations(ctx context.Context) (map[string]bool, error) {
 	applied := map[string]bool{}
 	rows, err := s.migratePoolOrMain().Query(ctx, "SELECT filename FROM insideout.schema_migrations")
 	if err != nil {
@@ -81,34 +118,31 @@ func (s *Store) Migrate(ctx context.Context) ([]string, error) {
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("migrate: rows: %w", err)
 	}
+	return applied, nil
+}
 
-	var justApplied []string
-	for _, name := range filenames {
-		if applied[name] {
-			continue
-		}
-		contents, err := db.Migrations.ReadFile("migrations/" + name)
-		if err != nil {
-			return nil, fmt.Errorf("migrate: read %s: %w", name, err)
-		}
-
-		tx, err := s.beginMigrateTx(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("migrate: begin %s: %w", name, err)
-		}
-		if _, err := tx.Exec(ctx, string(contents)); err != nil {
-			tx.Rollback(ctx)
-			return nil, fmt.Errorf("migrate: apply %s: %w", name, err)
-		}
-		if _, err := tx.Exec(ctx, "INSERT INTO insideout.schema_migrations (filename) VALUES ($1)", name); err != nil {
-			tx.Rollback(ctx)
-			return nil, fmt.Errorf("migrate: record %s: %w", name, err)
-		}
-		if err := tx.Commit(ctx); err != nil {
-			return nil, fmt.Errorf("migrate: commit %s: %w", name, err)
-		}
-		justApplied = append(justApplied, name)
+// applyMigration runs one embedded migration and records it, in one
+// transaction of its own.
+func (s *Store) applyMigration(ctx context.Context, name string) error {
+	contents, err := db.Migrations.ReadFile("migrations/" + name)
+	if err != nil {
+		return fmt.Errorf("migrate: read %s: %w", name, err)
 	}
 
-	return justApplied, nil
+	tx, err := s.beginMigrateTx(ctx)
+	if err != nil {
+		return fmt.Errorf("migrate: begin %s: %w", name, err)
+	}
+	if _, err := tx.Exec(ctx, string(contents)); err != nil {
+		tx.Rollback(ctx)
+		return fmt.Errorf("migrate: apply %s: %w", name, err)
+	}
+	if _, err := tx.Exec(ctx, "INSERT INTO insideout.schema_migrations (filename) VALUES ($1)", name); err != nil {
+		tx.Rollback(ctx)
+		return fmt.Errorf("migrate: record %s: %w", name, err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("migrate: commit %s: %w", name, err)
+	}
+	return nil
 }

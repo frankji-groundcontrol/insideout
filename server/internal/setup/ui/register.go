@@ -60,24 +60,14 @@ func runRegister(ctx context.Context, p *prompts, deps flow.Deps, base string) (
 				continue
 			}
 			username = got
-			deps.PromptSecret = func(string) (string, error) {
-				secret, mv, err := p.at("1.1.6.4").password("Password")
-				if err != nil {
-					return "", err
-				}
-				if mv != moveOK {
-					return "", moveErr(mv)
-				}
-				return secret, nil
-			}
-			res, err := flow.Run(ctx, flow.Inputs{
+			res, err := submitRegistration(ctx, p, deps, flow.Inputs{
 				Mode:       flow.ModeRemote,
 				BaseURL:    base,
 				AuthMethod: flow.AuthRegister,
 				Email:      email,
 				Username:   username,
 				InviteCode: invite,
-			}, deps)
+			})
 			if errors.Is(err, ErrBack) {
 				continue
 			}
@@ -91,4 +81,20 @@ func runRegister(ctx context.Context, p *prompts, deps flow.Deps, base string) (
 			return finishMCP(p, res)
 		}
 	}
+}
+
+// submitRegistration asks for the password when the flow needs it and runs
+// the registration against the server.
+func submitRegistration(ctx context.Context, p *prompts, deps flow.Deps, in flow.Inputs) (flow.Result, error) {
+	deps.PromptSecret = func(string) (string, error) {
+		secret, mv, err := p.at("1.1.6.4").password("Password")
+		if err != nil {
+			return "", err
+		}
+		if mv != moveOK {
+			return "", moveErr(mv)
+		}
+		return secret, nil
+	}
+	return flow.Run(ctx, in, deps)
 }

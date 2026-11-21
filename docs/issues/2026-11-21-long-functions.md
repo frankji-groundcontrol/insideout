@@ -25,15 +25,15 @@ Length is counted from the `func` line to the closing brace, at `87c95f5`:
 | ~~`parseAnthropicStream`~~ | `internal/agent/anthropic_parse.go` | 136: split in wave 4 |
 | ~~`runVersionCommands`~~ | `cmd/insideout/cli_version.go` | 117: split per verb in wave 4 (`cli_prd.go`, `cli_prd_versions.go`, `cli_agent.go`) |
 | ~~`runCrudCommand`~~ | `cmd/insideout/cli_crud.go` | 103: split per verb in wave 4 (`cli_idea.go`, `cli_workspace.go`, `cli_prd.go`) |
-| `Store.Migrate` | `internal/store/migrate.go` | 100 |
-| `Store.ReplaceRoadmapTree` | `internal/store/roadmap_plan.go` | 99 |
-| `parseResponsesStream` | `internal/llm/responses_parse.go` (moved by wave 4) | 98 |
+| ~~`Store.Migrate`~~ | `internal/store/migrate.go` | 100: split into bootstrap, list and apply steps in the closing-gaps round |
+| ~~`Store.ReplaceRoadmapTree`~~ | `internal/store/roadmap_plan.go` | 99: split into guard, insert and seed steps in the closing-gaps round |
+| ~~`parseResponsesStream`~~ | `internal/llm/responses_parse.go` (moved by wave 4) | 98: split into a per-event handler in the closing-gaps round |
 | `Server.handleUpdateRoadmapNode` | `internal/api/roadmap.go` | 97 |
-| `Store.MoveRoadmapNode` | `internal/store/roadmap_move.go` | 94 |
+| ~~`Store.MoveRoadmapNode`~~ | `internal/store/roadmap_move.go` | 94: split into authorize, cycle-check and sibling-shift steps in the closing-gaps round |
 | `Server.handleAgentContext` | `internal/api/agent_routes.go` | 89 |
 | ~~`runServe`~~ | `cmd/insideout/main.go` | 87: split in wave 4 (`newModel`) |
 | `Server.handlePresenceStream` | `internal/api/presence_routes.go` | 85 |
-| `runRegister` | `internal/setup/ui/register.go` | 84 |
+| ~~`runRegister`~~ | `internal/setup/ui/register.go` | 84: submit step split out in the closing-gaps round |
 
 Each is listed in `longFunctions` with its current length. A listed function
 may not grow; an entry whose function is gone or back under the limit fails,
