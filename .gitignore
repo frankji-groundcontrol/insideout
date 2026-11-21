@@ -145,6 +145,9 @@ vite.config.ts.timestamp-*
 .claude/
 # JuanLeMe-era coding-tool scratch (untracked + purged from history 2026-07-27)
 .sisyphus/
+# Local coding-tool scratch folders
+.grok/
+.zcode/
 
 # Python (scripts/ tooling)
 __pycache__/
