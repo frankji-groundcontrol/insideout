@@ -21,6 +21,13 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-21 — Roadmap views: impeccable critique](./2026-11-21-roadmap-critique.md)
+  — "use impeccable to review": 18/40, three P1s (Now not emphasised, a
+  Later dump, a one-column Canvas), waiting on the owner's choice.
+- [2026-11-21 — Roadmap bands: ragged card rows](./2026-11-21-roadmap-band-rows.md)
+  — "so messed up": each band row now takes its tallest card's height, and
+  compact cards drop a duplicate name line.
+
 - [2026-11-21 — Roadmap canvas band](./2026-11-21-roadmap-canvas-band.md)
   — "the visual is problematic": a lone card sat offset in an over-tall band;
   the fold gutter, the inherited dock padding and a one-column minimap fixed.

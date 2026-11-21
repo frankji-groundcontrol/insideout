@@ -26,7 +26,8 @@ API only. How to run it and the logins: [demo-data.md](../usage/demo-data.md).
   branch later delegated to someone else. The
   [roadmap tree](../architecture/roadmap-tree.md) says a build seeds its first
   in-progress *leaf*. The script now reports this as a finding when it
-  happens; product code is unchanged.
+  happens. Fixed the same day: see
+  [Spark walk fixes](./2026-11-21-spark-walk-fixes.md).
 
 ## Operator notes
 
