@@ -155,8 +155,10 @@ concern inside a family:
 - teams: `workspaces.go`, `memberships.go`
 - work: `ideas.go`, `project*.go` (projects, updates, the linked repo), `prd*.go`
   (PRDs, revisions, Commit)
-- the coach: `agent_*.go` (conversations, messages, the context queries, the
-  retention purge), `conversation_retention.go` (the idle-conversation purge)
+- the coach: `agent_*.go` (conversations, messages, the context queries),
+  `ai_runs.go` (the run lifecycle, the stale-run reaper, run events),
+  `ai_ops.go` (the rate limiter and circuit breaker), `retention.go` (the
+  reaper's retention purge and the idle-conversation purge)
 - proposals: `proposal_*.go` (the human decision, the structured items)
 - roadmap: `roadmap*.go` (nodes, reads, evidence, moves, plans, validation;
   `roadmap_views.go` the node views with roll-ups, `roadmap_assignments.go`
