@@ -49,6 +49,10 @@ of 350 lines, which blocks two CI additions) and the
 `security` workflow on `4d186da9` flags two Go stdlib vulnerabilities; the
 fix is a `server/go.mod` toolchain bump to go1.26.11.
 
+**Update 2026-11-21:** [focused review 5](../review/2026-11-21-focused-review-5/README.md) opened
+[fifteen High defects and six owner decisions](./2026-11-21-review-5-open-findings.md);
+none is fixed yet.
+
 ## Open product slices (2026-10-11)
 
 PRODUCT.md promises with no end-to-end implementation, one dated record per
@@ -276,6 +280,7 @@ resolved, superseded or closed on 2026-10-10 unless a date says otherwise.
 
 ### Reviews
 
+- [2026-11-21 — Review 5 open findings](./2026-11-21-review-5-open-findings.md) — open: the fifteen distinct High defects of [focused review 5](../review/2026-11-21-focused-review-5/README.md) (the task tree for roles is one quarter built; the build path writes before it checks; the pushed tip is red in three CI jobs), the uncommitted slice's closing checklist, and six decisions only the owner can make.
 - [2026-10-18 — Review 4 open findings](2026-10-18-review-4-open-findings.md) — the ten Highs, the red `TestProjectQuietFlagged` on `main` (fixed on `rv4/integration`), the open residue (R1-01 to R1-17, R2-01 to R2-15 and R3-01 to R3-50), the gate notes of waves 0 to 3 and the owner decisions from [multirole review 4](../review/2026-10-18-multirole-4/README.md), each linked to a register ID and a plan row; the closed rows moved to the dispositions record below. Open; no `BUG-NNN` number consumed.
 - [2026-10-19 — Review 4 dispositions](2026-10-18-review-4-dispositions.md) — the closed rows of waves 1 to 3, one per finding with its red and fix commits (wave 1: 30 `FIXED`, 4 `PARTIAL` of 34; wave 2: 21 `FIXED`, 2 `PARTIAL` of 23; wave 3: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` of 64), kept beside the open-findings record so that both stay inside the line budget. A record, not an open issue; no `BUG-NNN` number consumed.
 - [2026-10-19 — Retention and erasure: the policy only the owner can set](2026-10-18-rv4-retention-erasure.md) — rv4-DATA-06 (`DEFERRED_OWNER`): coach conversations are kept for ever and no route erases a user, because the owner decisions hold no retention window and no erasure rule; the options, what each costs, a recommended default and five questions. `PRIVACY.md` states today's behaviour as built. Open; no `BUG-NNN` number consumed.

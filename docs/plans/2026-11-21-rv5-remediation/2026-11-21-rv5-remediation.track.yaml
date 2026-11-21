@@ -1,0 +1,34 @@
+version: 2
+task: "Review 5 remediation: six waves on rv5/remediation"
+coordinator: claude
+main:
+  outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
+  owner: claude
+  status: in_progress
+  next_evidence: "Wave 0 started: branch rv5/remediation cut from c2900fd with the in-flight slice and the review 5 records carried over (backup of the uncommitted state kept outside the repository)."
+side_tracks: []
+updated_at: "2026-11-21T00:00:00Z"
+plan:
+- step: "Wave 0: green tip, slice finished, concept written"
+  owner: claude
+  status: in_progress
+- step: "Wave 1: data loss and misplaced writes"
+  owner: claude
+  status: pending
+  depends_on: "Wave 0"
+- step: "Wave 2: the task tree"
+  owner: claude
+  status: pending
+  depends_on: "Wave 1"
+- step: "Wave 3: surface parity"
+  owner: claude
+  status: pending
+  depends_on: "Wave 2"
+- step: "Wave 4: structure"
+  owner: claude
+  status: pending
+  depends_on: "Wave 3"
+- step: "Wave 5: documentation index"
+  owner: claude
+  status: pending
+  depends_on: "Wave 4"

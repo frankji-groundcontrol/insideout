@@ -19,6 +19,18 @@ remediation plan.
 
 ## Records
 
+- [2026-11-21 — Focused review 5 (five questions)](./2026-11-21-focused-review-5/README.md)
+  — main @ 4d186da plus its uncommitted files; 10 reviewers + 5 skeptic
+  clusters + critic; 127 findings (0 Critical, 21 High — 20 skeptic-confirmed,
+  9 more downgraded, 0 refuted, 1 added by the critic; 15 distinct defects).
+  Verdict: the single-author loop works; the task tree for roles is one
+  quarter built (a node's assigned owner is refused on every write inside it,
+  no node opens as a tree, delegation is web-only), about half of PRODUCT.md
+  runs, the build path writes before it checks, and the pushed tip is red in
+  CI. Six waves in
+  [40-remediation-plan.md](./2026-11-21-focused-review-5/40-remediation-plan.md);
+  the task-tree target design is
+  [41](./2026-11-21-focused-review-5/41-task-tree-target-design.md).
 - [2026-10-18 — Multirole review 4 (whole tree)](2026-10-18-multirole-4/README.md)
   — main @ 9f0b1c7, after the public release; 13 reviewers + 8 skeptic
   clusters + critic; 145 findings (0 Critical, 10 High — 9 skeptic-confirmed,
