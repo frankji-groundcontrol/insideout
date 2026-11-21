@@ -142,5 +142,13 @@ void main() {
     expect(first.body, {'tree': tree});
     final replace = postPrdBuildConfirm('prd1', tree, expectedCount: 4);
     expect(replace.body, {'tree': tree, 'expectedCount': 4});
+    // rv5 row 1.5: force only rides when the person accepted the loss.
+    final forced = postPrdBuildConfirm(
+      'prd1',
+      tree,
+      expectedCount: 4,
+      force: true,
+    );
+    expect(forced.body, {'tree': tree, 'expectedCount': 4, 'force': true});
   });
 }
