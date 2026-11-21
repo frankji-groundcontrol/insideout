@@ -145,11 +145,14 @@ generator, hand-scanned SQL. Files are grouped by resource family, one file per
 concern inside a family:
 
 - accounts: `users.go`, `sessions.go`, `auth_tokens.go` (magic links, resets,
-  sign-in codes), `invitations.go`
+  sign-in codes), `invitations.go`, `reset_watch.go` (the password-reset watch
+  the CLI polls; outside RLS, purged by the reaper's retention purge),
+  `erasure.go` (the account tombstone behind `DELETE /me`)
 - teams: `workspaces.go`, `memberships.go`
 - work: `ideas.go`, `project*.go` (projects, updates, the linked repo), `prd*.go`
   (PRDs, revisions, Commit)
-- the coach: `agent_*.go` (conversations, messages, the context queries)
+- the coach: `agent_*.go` (conversations, messages, the context queries, the
+  retention purge), `conversation_retention.go` (the idle-conversation purge)
 - proposals: `proposal_*.go` (the human decision, the structured items)
 - roadmap: `roadmap*.go` (nodes, evidence, moves, plans, validation)
 - GitHub: `github_webhook.go` (the system-run webhook path)
@@ -176,7 +179,9 @@ Domain handlers live in `internal/api`, grouped by resource:
   SSE per-user/per-project caps and the heartbeat membership recheck),
   `request_deadline.go` (the per-request deadline on non-stream routes)
 - accounts: `auth*.go` (sign-in, the emailed one-time flows and their
-  templates, the throttle and resend cooldown), `me.go`, `admin.go`
+  templates, the throttle and resend cooldown; `auth_reset_watch.go` answers
+  forgot-password with a watch id and serves `GET /auth/reset-watch/{id}`),
+  `me.go`, `me_delete.go` (the human-only account erasure), `admin.go`
   (invitations and the signup-mode switch)
 - agents: `agent_*.go` (the agent vocabulary routes and `agentRoutePolicy`)
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
