@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-11-21 | [Map files before fanning out, and judge between steps](./2026-11-21-map-files-before-fanning-out-and-judge-between-steps.md) | [review 5 remediation](../changelogs/2026-11-21-rv5-remediation/index.md) |
 | 2026-10-20 | [A stored completion reason does not cover the next close](./2026-10-20-a-stored-reason-does-not-cover-the-next-close.md) | [completion evidence or sentence](../changelogs/2026-10-20-completion-evidence-or-reason.md) |
 | 2026-10-20 | [Pinned columns and a creator pin block the app role from erasing an account](./2026-10-20-pinned-columns-block-erasure.md) | [retention and erasure](../changelogs/2026-10-20-retention-and-erasure.md) |
 | 2026-10-19 | [One owner per shared resource, and a brief checked against file ownership](./2026-10-19-one-owner-per-shared-resource-in-a-multi-worker-wave.md) | [review-4 remediation](../changelogs/2026-10-18-rv4-remediation/index.md) |

@@ -2,10 +2,10 @@ version: 2
 task: "Review 5 remediation: six waves on rv5/remediation"
 coordinator: claude
 main:
-  outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
+  outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and verified locally (no CI, by the owner's request); the task tree for roles works on web, REST, MCP and CLI."
   owner: claude
-  status: in_progress
-  next_evidence: "Waves 0 to 4 closed. Wave 5: doc-records in; doc-graph (rows 5.1, 5.2, 5.4, 5.5) running as one directly dispatched agent: Marksman to 0 diagnostics, check_doc_graph.py, fragment checks, docs/index.md additions."
+  status: completed
+  next_evidence: "All six waves complete on rv5/remediation; final gates green (flutter +667, 0 DB skips, check_doc_graph and Marksman at 0). Next is the owner's: merge to main, and the open question on proposals by a delegate's agent."
 side_tracks: []
 updated_at: "2026-11-21T00:00:00Z"
 plan:
@@ -30,5 +30,5 @@ plan:
   depends_on: "Wave 3"
 - step: "Wave 5: documentation index"
   owner: claude
-  status: in_progress
+  status: completed
   depends_on: "Wave 4"

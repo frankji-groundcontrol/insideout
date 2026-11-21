@@ -10,18 +10,18 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-11-21: the review 5 remediation is running on branch `rv5/remediation`.**
-Waves 0 to 4 are done: the build path checks before it writes, the task tree for roles
-is built on every surface, the CLI, MCP and web reach the same routes under
-one error style and one patch rule, and the code follows a responsibility
-rule with a function-length guard; a parity test fails on any request field a
-surface cannot reach. Next: the documentation graph (wave 5 rows 5.1, 5.2,
-5.4, 5.5). Progress per wave:
-[changelog folder](./changelogs/2026-11-21-rv5-remediation/index.md); plan:
-[rv5 remediation](./plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
-The branch is pushed after each wave; the owner asked that CI not be run
-for this work, so there is no pull request and verification is local.
-`main` is not pushed.
+**2026-11-21: the review 5 remediation is complete on branch `rv5/remediation`.**
+All six waves are in, with every gate green on the integrated tree
+([final state](changelogs/2026-11-21-rv5-remediation/index.md#final-state)):
+the build path checks before it writes; the task tree for roles works on
+web, REST, CLI and MCP; the four surfaces reach the same routes under one
+error style, with a parity test to keep them there; the code follows a
+responsibility rule with a function-length guard; and the documentation
+graph is checked, with Marksman at 0. Next is the owner's: merge the branch
+to `main`, and decide whether a delegate's agent may file proposals
+([open findings](issues/2026-11-21-review-5-open-findings.md)). Plan:
+[rv5 remediation](plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
+No CI was run for this work (owner's request); `main` is not pushed.
 
 **2026-11-21: focused review 5 is delivered.**
 [The report](./review/2026-11-21-focused-review-5/README.md) (127 findings,

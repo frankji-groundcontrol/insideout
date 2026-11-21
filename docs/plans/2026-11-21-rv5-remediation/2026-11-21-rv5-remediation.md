@@ -59,12 +59,15 @@ PRD, no completion override by an agent.
       [record](../../changelogs/2026-11-21-rv5-remediation/wave-3.md)
 - [x] Wave 4 · structure (rows 4.1 to 4.7) —
       [record](../../changelogs/2026-11-21-rv5-remediation/wave-4.md)
-- [ ] Wave 5 · documentation index (rows 5.1 to 5.6)
+- [x] Wave 5 · documentation index (rows 5.1 to 5.6) —
+      [record](../../changelogs/2026-11-21-rv5-remediation/wave-5.md)
 
 Per-row dispositions are recorded wave by wave in the
 [changelog folder](../../changelogs/2026-11-21-rv5-remediation/index.md).
 
 ## Status
 
-Started 2026-11-21. Tracker:
+Started 2026-11-21; complete on `rv5/remediation` the same day, every gate
+green ([final state](../../changelogs/2026-11-21-rv5-remediation/index.md#final-state)).
+Not merged to `main`: that is the owner's call. Tracker:
 [2026-11-21-rv5-remediation.track.yaml](./2026-11-21-rv5-remediation.track.yaml).

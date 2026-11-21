@@ -1,5 +1,7 @@
 # Review 5 open findings
 
+*2026-11-21: every High finding is fixed on `rv5/remediation` (waves 0 to 5, [changelog](../changelogs/2026-11-21-rv5-remediation/index.md)). What stays open is the owner question at the end of this record; the branch is not merged to `main`.*
+
 Open, recorded 2026-11-21. Source:
 [focused review 5](../review/2026-11-21-focused-review-5/README.md) over
 `main` @ `4d186da` plus its uncommitted files. This record lists the High
@@ -37,8 +39,8 @@ project update.*
 | IDX-02, COMP-01 | Fixed in wave 0 (`50b7437`): the docs truth gate, the expand response-shape test and the analyzer baseline | `docs/architecture/backend.md`, `server/internal/api/testdata/roadmap_expand_confirm.json` | 0.1 | done | claude |
 | PARA-02 | Fixed in wave 1 (`a695b8f`): a title-only idea update keeps the body | `server/internal/apiclient/crud.go` | 1.1 | done | claude |
 | FE-01 | Fixed in wave 1 (`7941126`, `458ff76`): the coach transcript keeps every turn | `client/lib/features/prd/coach_panel.dart` | 1.7 | done | claude |
-| FE-02, PARB-03 | Nobody can find a PRD they did not create | `server/internal/api/projects.go:26` | 3.3 | P1 | unassigned |
-| PARB-04 | `SKILL.md:107` and `README.md:35` promise every verb on every surface; projects beyond list and create are web-only | `SKILL.md:107` | 3.4, 3.5 | P1 | unassigned |
+| FE-02, PARB-03 | Fixed in wave 3 (`5cd05c87`, `bd028b73`): `GET /workspaces/{id}/prds` and a PRD list on the workspace page, a project links to its PRD; on the CLI and MCP too | `server/internal/api/prd_list.go` | 3.3 | done | claude |
+| PARB-04 | Fixed in wave 3 (`f612ca26`, `4279225a`, `96ea5a53`): project show, update and delete on the CLI, project and workspace tools on MCP; SKILL.md and README state the parity that exists; the parity test (`server/internal/surfaceparity`) keeps it | `SKILL.md` | 3.4, 3.5 | done | claude |
 
 ## The uncommitted slice
 
