@@ -29,7 +29,7 @@ class ApiException implements Exception {
 ApiException toApiError(int? status, Map<String, dynamic> body) {
   final code = body['code'] as String?;
   final message = (body['error'] as String?) ?? 'Request failed';
-  final retry = body['retry_after_seconds'];
+  final retry = body['retryAfterSeconds'];
   int? retryAfter;
   if (retry is num) retryAfter = retry.toInt();
   int? count(String key) {
@@ -51,17 +51,17 @@ ApiException toApiError(int? status, Map<String, dynamic> body) {
 
 /// Codes that put a Coach send on backoff (countdown, composer locked).
 bool isCoachBackoff(ApiException e) {
-  return e.code == 'APP_THROTTLE' ||
-      e.code == 'CIRCUIT_OPEN' ||
-      e.code == 'ANTHROPIC_RATE_LIMIT';
+  return e.code == 'app_throttle' ||
+      e.code == 'circuit_open' ||
+      e.code == 'anthropic_rate_limit';
 }
 
 /// A Coach backoff because the AI service is down or saturated (circuit open,
 /// queue busy), not because the caller was rate limited. Read from the code,
 /// never from the English message.
-bool isCoachUnavailable(ApiException e) => e.code == 'CIRCUIT_OPEN';
+bool isCoachUnavailable(ApiException e) => e.code == 'circuit_open';
 
 int coachRetrySeconds(ApiException e) {
   if (e.retryAfterSeconds != null) return e.retryAfterSeconds!;
-  return e.code == 'APP_THROTTLE' ? 60 : 30;
+  return e.code == 'app_throttle' ? 60 : 30;
 }

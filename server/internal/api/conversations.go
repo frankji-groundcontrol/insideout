@@ -203,7 +203,7 @@ func (s *Server) handleSendConversationMessage(w http.ResponseWriter, r *http.Re
 		return
 	}
 	if tooLong(req.Content, 10_000) {
-		httpx.WriteError(w, http.StatusBadRequest, "message too long", "", map[string]interface{}{"max_length": 10000})
+		httpx.WriteError(w, http.StatusBadRequest, "message too long", "", map[string]interface{}{"maxLength": 10000})
 		return
 	}
 

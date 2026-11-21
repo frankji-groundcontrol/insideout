@@ -70,7 +70,7 @@ patterns (the two passive streams, the coach message POST, `build`, and
 database under a 2 s deadline and answers 503 when it cannot (rv4-REL-02).
 The two passive streams (presence, roadmap progress) are capped at 20 per user
 and 100 per project, with
-429 `APP_STREAM_LIMIT` past the cap, cursor posts are limited to 25 a second per
+429 `app_stream_limit` past the cap, cursor posts are limited to 25 a second per
 user, and each 10 s heartbeat re-verifies the stream's own access token and the
 caller's project membership, so a stream ends when its session or membership
 does (rv4-REL-01, REL-03, SEC-08).
@@ -205,12 +205,17 @@ Domain handlers live in `internal/api`, grouped by resource:
 
 The single-replica contract and its guard are in
 [CLI, MCP and client configuration](cli-mcp-and-client-config.md#the-single-replica-contract).
-The error contract is `{"error": string, "code"?: string, ...extra}` (see
-`internal/httpx/json.go`); AI-specific throttling responses preserve the
-`APP_THROTTLE` (429) and `CIRCUIT_OPEN` (503) JSON shapes the original
-frontend countdown logic expects; a provider-side rate limit hits after the
+The error contract is `{"error": string, "code": string, ...extra}` (see
+`internal/httpx/json.go`). Every code is lowercase snake_case; an error with
+no specific code carries its status's name (`not_found`, `bad_request`,
+`internal_server_error`), and extra keys are camelCase (`retryAfterSeconds`,
+`liveCount`). `internal/httpx/error_style_test.go` reads every `WriteError`
+and SSE `errorEvent` call and fails on another style (rv5-PARC-08).
+AI-specific throttling responses keep the
+`app_throttle` (429) and `circuit_open` (503) shapes with `retryAfterSeconds`
+that the frontend countdown reads; a provider-side rate limit hits after the
 SSE stream is already open, so it surfaces as an SSE `error` event with code
-`ANTHROPIC_RATE_LIMIT` rather than an HTTP status.
+`anthropic_rate_limit` rather than an HTTP status.
 
 Response builders take the instant as a parameter instead of reading the wall
 clock: `Server` owns a `clock` behind `s.now()` (nil means the wall clock;

@@ -32,7 +32,7 @@ func newDispatcher(maxConcurrent int, queueWait time.Duration) *dispatcher {
 
 // tryLockConversation returns (unlock, true) if no other turn is in
 // flight for this conversation, or (nil, false) if one already is — the
-// caller should respond 409 CONVERSATION_BUSY immediately, no queuing.
+// caller should respond 409 conversation_busy immediately, no queuing.
 func (d *dispatcher) tryLockConversation(conversationID uuid.UUID) (unlock func(), ok bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()

@@ -64,7 +64,7 @@ func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
 	}
 	if !s.cursors.allow(userID, s.now()) {
 		w.Header().Set("Retry-After", "1")
-		httpx.WriteError(w, http.StatusTooManyRequests, "too many cursor updates", "APP_THROTTLE", nil)
+		httpx.WriteError(w, http.StatusTooManyRequests, "too many cursor updates", "app_throttle", nil)
 		return
 	}
 	if _, err := s.store.GetProjectForMember(r.Context(), pid, userID); err != nil {

@@ -223,9 +223,9 @@ Connecting a repository so pushes and PRs feed your roadmap:
    `owner/repo` or a github.com URL (the host must be exactly `github.com`);
    the server stores `https://github.com/<owner>/<repo>`. A repository belongs
    to one project: a second project linking it, in any letter case, gets 409
-   `GITHUB_REPO_ALREADY_LINKED`. When the GitHub App is configured, the
+   `github_repo_already_linked`. When the GitHub App is configured, the
    repository must be public or covered by an installation of the App, else the
-   answer is 400 `GITHUB_REPO_NOT_VISIBLE` (rv4-COMP-05).
+   answer is 400 `github_repo_not_visible` (rv4-COMP-05).
 2. **Scaffold the guide**: `insideout guide --out insideout.yaml
    <project-id>` — generated from your roadmap: every leaf node with
    editable matchers, branch nodes documented as comments.

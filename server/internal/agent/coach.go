@@ -115,7 +115,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 
 	unlock, ok := c.dispatch.tryLockConversation(conversationID)
 	if !ok {
-		httpx.WriteError(w, http.StatusConflict, "a message is already being processed for this conversation", "CONVERSATION_BUSY", nil)
+		httpx.WriteError(w, http.StatusConflict, "a message is already being processed for this conversation", "conversation_busy", nil)
 		return
 	}
 	defer unlock()

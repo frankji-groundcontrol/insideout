@@ -105,9 +105,9 @@ views (PRODUCT.md principle 3).
   commit sync as that project's owner.
 - One repo, one project (rv4-COMP-05): linking canonicalises the URL, and a
   second project linking the same repo, in any letter case, gets 409
-  `GITHUB_REPO_ALREADY_LINKED`. With the App configured the repo must also be
+  `github_repo_already_linked`. With the App configured the repo must also be
   visible to the server (an installation covers it, or it is public), else
-  400 `GITHUB_REPO_NOT_VISIBLE`. `_projects_by_repo` therefore names at most
+  400 `github_repo_not_visible`. `_projects_by_repo` therefore names at most
   one project, the earliest-created one with an owner; the bind check,
   webhook delivery and the token gate all ask it. Migration
   `20261018180000_github_repo_binding.sql` rewrites the URLs already stored to

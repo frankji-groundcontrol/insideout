@@ -19,9 +19,9 @@ typedef TFn = String Function(String key, [Map<String, Object?>? args]);
 /// project holds is not fixed by a refresh, and a stored link that is no
 /// GitHub address must be linked again. Checked before the status.
 const _codeKeys = <String, String>{
-  'GITHUB_REPO_NOT_VISIBLE': 'error.githubRepoNotVisible',
-  'GITHUB_REPO_URL_INVALID': 'error.githubRepoUrlInvalid',
-  'GITHUB_REPO_ALREADY_LINKED': 'error.githubRepoAlreadyLinked',
+  'github_repo_not_visible': 'error.githubRepoNotVisible',
+  'github_repo_url_invalid': 'error.githubRepoUrlInvalid',
+  'github_repo_already_linked': 'error.githubRepoAlreadyLinked',
   // A 409 that a refresh cannot fix: the PRD needs an admin's approval.
   'prd_not_approved': 'error.prdNotApproved',
 };

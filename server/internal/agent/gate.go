@@ -23,8 +23,8 @@ func (c *Coach) preflight(w http.ResponseWriter, r *http.Request, userID uuid.UU
 		return false
 	}
 	if !rl.Allowed {
-		httpx.WriteError(w, http.StatusTooManyRequests, "Rate limit exceeded", "APP_THROTTLE", map[string]interface{}{
-			"retry_after_seconds": rl.RetryAfterSeconds, "current_count": rl.CurrentCount, "max_requests": rl.MaxRequests,
+		httpx.WriteError(w, http.StatusTooManyRequests, "Rate limit exceeded", "app_throttle", map[string]interface{}{
+			"retryAfterSeconds": rl.RetryAfterSeconds, "currentCount": rl.CurrentCount, "maxRequests": rl.MaxRequests,
 		})
 		return false
 	}
@@ -36,8 +36,8 @@ func (c *Coach) preflight(w http.ResponseWriter, r *http.Request, userID uuid.UU
 		return false
 	}
 	if !circuit.Allowed {
-		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service temporarily unavailable", "CIRCUIT_OPEN", map[string]interface{}{
-			"retry_after_seconds": circuit.RetryAfterSeconds, "circuit_state": circuit.State,
+		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service temporarily unavailable", "circuit_open", map[string]interface{}{
+			"retryAfterSeconds": circuit.RetryAfterSeconds, "circuitState": circuit.State,
 		})
 		return false
 	}
@@ -49,8 +49,8 @@ func (c *Coach) preflight(w http.ResponseWriter, r *http.Request, userID uuid.UU
 func (c *Coach) acquire(w http.ResponseWriter) (release func(), waited, ok bool) {
 	release, waited, ok = c.dispatch.acquirePermit()
 	if !ok {
-		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service is busy, try again shortly", "CIRCUIT_OPEN", map[string]interface{}{
-			"retry_after_seconds": int(c.queueWait.Seconds()),
+		httpx.WriteError(w, http.StatusServiceUnavailable, "AI service is busy, try again shortly", "circuit_open", map[string]interface{}{
+			"retryAfterSeconds": int(c.queueWait.Seconds()),
 		})
 	}
 	return release, waited, ok

@@ -71,7 +71,7 @@ func drop(counts map[uuid.UUID]int, id uuid.UUID) {
 func (s *Server) takeStreamSlot(w http.ResponseWriter, userID, projectID uuid.UUID) (release func(), ok bool) {
 	release, ok = s.streams.take(userID, projectID)
 	if !ok {
-		httpx.WriteError(w, http.StatusTooManyRequests, "too many open streams, close a tab and retry", "APP_STREAM_LIMIT", nil)
+		httpx.WriteError(w, http.StatusTooManyRequests, "too many open streams, close a tab and retry", "app_stream_limit", nil)
 	}
 	return release, ok
 }

@@ -161,8 +161,8 @@ Bounds the server enforces on its own, whatever the proxy does:
 - `GET /healthz` pings the database for at most **2 s** and answers 503
   `database unreachable` instead of hanging.
 - At most **20** open SSE streams per user and **100** per project; the next
-  one is refused with 429 `APP_STREAM_LIMIT` before any header is sent. Cursor
-  posts are held to **25 a second** per user (429 `APP_THROTTLE`, `Retry-After: 1`).
+  one is refused with 429 `app_stream_limit` before any header is sent. Cursor
+  posts are held to **25 a second** per user (429 `app_throttle`, `Retry-After: 1`).
   A stream re-checks its token and the viewer's membership on every 10 s
   heartbeat and ends when either has gone, so a stream also ends when its
   access token expires (15 minutes by default) and the web client reconnects.

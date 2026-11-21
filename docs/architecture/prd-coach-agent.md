@@ -55,7 +55,7 @@ a cancel). A tool call cut by the token cap
 (`max_tokens` / `incomplete`) is never run: the turn is marked truncated and
 the stored answer ends with the truncation marker. `response.failed` and
 `error` frames are read as provider errors: a server error is retried, an
-`invalid_prompt`-class one is `PROVIDER_CONFIG`, and neither is a content
+`invalid_prompt`-class one is `provider_config`, and neither is a content
 refusal. Responses requests that carry tools send `parallel_tool_calls: false`.
 A gateway that rejects that field is retried once without it and then remembered,
 so later requests leave it out. Each call's arguments are filed under the
@@ -71,7 +71,7 @@ with a `tool_result` content block — Anthropic has no separate "tool" role.
 A non-2xx HTTP response surfaces the provider's actual error message (e.g.
 `model_not_found: Model "..." is not supported...`); a 429 maps to
 `ErrProviderRateLimited`, which the coach emits as an SSE `error` event with
-code `ANTHROPIC_RATE_LIMIT` (the stream is already open by then — see
+code `anthropic_rate_limit` (the stream is already open by then — see
 [backend](backend.md)).
 
 ## Stage state machine
