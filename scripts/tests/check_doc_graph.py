@@ -1,22 +1,16 @@
 #!/usr/bin/env python3
-"""Fail when the markdown link graph lets a record get lost.
+"""Fail when the markdown link graph lets a record get lost (review 5, IDX-03).
 
 Usage: python3 -I scripts/tests/check_doc_graph.py
 
-IDX-03 (review 5): the reachability scan that proved "zero orphans" in the
-2026-10-11 pass was run from a temporary directory and never committed, and an
-orphan plan reappeared. This is that scan. Over every tracked or
-untracked-but-not-ignored markdown file it fails on:
-
-1. a file no link path reaches from the four routers (README.md, CLAUDE.md,
+Over every tracked or untracked-but-not-ignored markdown file, fail on:
+1. a file no link path reaches from the routers (README.md, CLAUDE.md,
    AGENTS.md, docs/index.md);
 2. an index (README.md or index.md under docs/ or hosts/) that does not link
-   every direct child file and folder of its directory. A link into a child
-   folder covers the folder; a link from the folder's index/ month files
-   counts as a link from the index (the board and changelog pattern);
-3. a bare link (no ./, ../ or /) that matches more than one markdown file by
-   path suffix, which is how Marksman resolves it (IDX-05): write ./name.md.
-
+   each direct child file and folder; a link into a folder covers it, and the
+   folder's index/ month files count as the index (board, changelogs);
+3. a bare link (no ./, ../ or /) matching more than one markdown file by path
+   suffix, which is how Marksman resolves it (IDX-05): write ./name.md.
 Fenced and inline code are not links.
 """
 import collections
@@ -31,7 +25,18 @@ ROUTERS = ("README.md", "CLAUDE.md", "AGENTS.md", "docs/index.md")
 INDEX_ROOTS = ("docs/", "hosts/")
 
 # Children an index may leave out, each with its reason: {index: {child glob: reason}}.
-INDEX_EXCEPTIONS = {}
+INDEX_EXCEPTIONS = {
+    "docs/plans/README.md": {
+        "*.track.yaml": "machine-written tracker state beside its plan; the plan is the indexed record",
+        "*.track.history.jsonl": "machine-written tracker history beside its plan",
+    },
+    "docs/review/2026-10-10-multirole-3/README.md": {
+        "checks": "dated record keeps its words; the report files cite these check scripts by path",
+    },
+    "docs/issues/README.md": {
+        "2026-11-21-store-error-ladders.md": "open, reached from backend.md; delete once the Open table lists it",
+    },
+}
 
 INLINE = re.compile(r"\]\(\s*<?([^)\s>]+)>?(?:\s+\"[^\"]*\")?\s*\)")
 REFDEF = re.compile(r"^\s{0,3}\[[^\]]+\]:\s*<?(\S+?)>?\s*$")
