@@ -169,7 +169,7 @@ has one roadmap route per project (`client/lib/router.dart`). MCP exposes
 `roadmap_add`, `roadmap_move` and `roadmap_evidence` (no `roadmap_delete`: delete is human-only)
 (`server/internal/mcpserver/tools_roadmap.go`), and the tree tools
 `roadmap_list` and `progress` (both take `root`), `roadmap_node`,
-`roadmap_mine`, `roadmap_update` (with `acceptance` and `owner_id`) and
+`roadmap_mine`, `roadmap_update` (with `acceptance`; no owner or completion reason, which an agent token is refused) and
 `roadmap_assignments` (`server/internal/mcpserver/tools_roadmap_tree.go`); it
 has no delegate, hand-back or member-list tool, since every MCP tool acts
 through an agent-scope token and those routes are human-only. The CLI has the

@@ -8,7 +8,7 @@ import (
 
 // addRoadmapTreeTools registers the task tree (docs/architecture/roadmap-tree.md):
 // the tree or one subtree, one node, the caller's own nodes, node edits with
-// owner and acceptance, and the owner history. Delegation, hand-back and the
+// acceptance (no owner or completion reason), and the owner history. Delegation, hand-back and the
 // member list run on routes the server keeps for a human, and every tool acts
 // through an agent-scoped token, so the MCP has no tool for them (the CLI and
 // the web do).
@@ -34,19 +34,18 @@ func addRoadmapTreeTools(ts toolSet) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.RoadmapMine(reqStr(req, "workspace_id")))
 		})
-	ts.add("roadmap_update", "Partially update a node: title, description, status, deadline, acceptance, owner, completion reason",
+	// No owner or completion reason: the server refuses both to the agent-scope
+	// token every MCP call carries.
+	ts.add("roadmap_update", "Partially update a node: title, description, status, deadline, acceptance. An owner change or a completion reason is a human's: file a proposal (propose) for an owner, and move a node to done on evidence",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("title", "new title"),
 			strOpt("description", `new description, or "clear"`), strOpt("status", "locked|pending|in_progress|done"),
 			strOpt("deadline", `RFC3339 deadline, or "clear"`),
-			strOpt("acceptance", `what done means for this node, or "clear"`),
-			strOpt("owner_id", `a workspace member's user id, or "clear" for no owner. Human tokens only: an agent token is refused an owner change, so file a proposal (propose) for the human instead`),
-			strOpt("completion_reason", `one sentence when marking done with no evidence, or "clear"; human tokens only, an agent token is refused (move to done on evidence instead)`)},
+			strOpt("acceptance", `what done means for this node, or "clear"`)},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			// An omitted or empty argument leaves its field alone (apiclient.PatchText).
 			patch := apiclient.RoadmapPatch{Title: apiclient.NonEmpty(optStr(req, "title")),
 				Description: apiclient.PatchText(optStr(req, "description")), Status: apiclient.NonEmpty(optStr(req, "status")),
-				Deadline: apiclient.PatchText(optStr(req, "deadline")), Acceptance: apiclient.PatchText(optStr(req, "acceptance")),
-				OwnerID: apiclient.PatchText(optStr(req, "owner_id")), CompletionReason: apiclient.PatchText(optStr(req, "completion_reason"))}
+				Deadline: apiclient.PatchText(optStr(req, "deadline")), Acceptance: apiclient.PatchText(optStr(req, "acceptance"))}
 			return call(c.RoadmapUpdate(reqStr(req, "node_id"), patch))
 		})
 	ts.add("roadmap_assignments", "Who held a node: delegations, hand-backs and cleared owners, newest first",

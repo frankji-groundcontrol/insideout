@@ -118,7 +118,7 @@ is held). The deliberate exceptions:
   deletion, validation (`evidence add`, `roadmap validate`), every delete,
   delegation, hand-back, the member list, and the admin writes
   (invitations, setting the signup mode). Changing a node's or a
-  project's owner is also refused to an agent token (`owner_id`); file a
+  project's owner is also refused to an agent token, so `roadmap_update` and `project_update` take no owner; file a
   `propose` instead. Ask the human to run these from the CLI or web.
   `project_update`, `workspace_update`, `update_add` and `update_edit`
   cover the rest of a project and workspace.

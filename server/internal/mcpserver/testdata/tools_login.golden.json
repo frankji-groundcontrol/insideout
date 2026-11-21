@@ -950,15 +950,11 @@
       "openWorldHint": true,
       "readOnlyHint": false
     },
-    "description": "Partially update a node: title, description, status, deadline, acceptance, owner, completion reason",
+    "description": "Partially update a node: title, description, status, deadline, acceptance. An owner change or a completion reason is a human's: file a proposal (propose) for an owner, and move a node to done on evidence",
     "inputSchema": {
       "properties": {
         "acceptance": {
           "description": "what done means for this node, or \"clear\"",
-          "type": "string"
-        },
-        "completion_reason": {
-          "description": "one sentence when marking done with no evidence, or \"clear\"; human tokens only, an agent token is refused (move to done on evidence instead)",
           "type": "string"
         },
         "deadline": {
@@ -971,10 +967,6 @@
         },
         "node_id": {
           "description": "node id",
-          "type": "string"
-        },
-        "owner_id": {
-          "description": "a workspace member's user id, or \"clear\" for no owner. Human tokens only: an agent token is refused an owner change, so file a proposal (propose) for the human instead",
           "type": "string"
         },
         "status": {
