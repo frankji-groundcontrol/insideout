@@ -8,6 +8,7 @@ import 'package:insideout/features/project/project_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // Pins the Evidence page's write flows (edit / delete project, post / edit /
 // remove an update, repo save + sync) end to end against a recording fake, so
@@ -32,9 +33,9 @@ class _Api extends ApiClient {
   ];
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async {
+  Future<ProjectDetail> getProject(String id) async {
     loads++;
-    return {
+    return projectDetail({
       'id': id,
       'workspaceId': 'ws1',
       'title': 'Flows',
@@ -52,7 +53,7 @@ class _Api extends ApiClient {
           'authorId': 'u1',
         },
       ],
-    };
+    });
   }
 
   @override

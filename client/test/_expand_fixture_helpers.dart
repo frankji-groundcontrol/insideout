@@ -5,7 +5,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:insideout/api/client.dart';
 
-// rv4-FULL-01 test support. The two JSON files under
+// rv4-FULL-01 test support. Two of the JSON files under
 // server/internal/api/testdata/ are real responses of a running server (the
 // draft is the 200 body of POST /roadmap/{id}/expand, the confirm is the 201
 // body of POST /roadmap/{id}/expand/confirm). The Go test next to them,

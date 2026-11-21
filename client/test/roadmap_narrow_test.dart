@@ -13,6 +13,7 @@ import 'package:insideout/session/session.dart';
 import 'package:insideout/theme/block_button.dart';
 import 'package:insideout/theme/block_chrome.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 /// The 390px walk of the web build found the roadmap crowded: the three view
 /// toggles rode in the top-right utility cluster, which then ran off the left
@@ -32,10 +33,8 @@ class _FakeApi extends ApiClient {
 
   // A plan writer sees "New item".
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
-    'id': id,
-    'canWritePlan': true,
-  };
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id, 'canWritePlan': true});
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];

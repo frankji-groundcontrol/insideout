@@ -12,7 +12,7 @@ Future<void> pickRoadmapDoneStatus({
   required RoadmapNode node,
   required String current,
   required String? picked,
-  required Future<List<Map<String, dynamic>>> Function() loadEvidence,
+  required Future<List<NodeEvidence>> Function() loadEvidence,
   required void Function(String status, String? reason) apply,
   required String Function(String key) t,
 }) async {
@@ -23,7 +23,7 @@ Future<void> pickRoadmapDoneStatus({
     apply(next, null);
     return;
   }
-  List<Map<String, dynamic>> rows;
+  List<NodeEvidence> rows;
   try {
     rows = await loadEvidence();
   } on Exception {

@@ -10,6 +10,7 @@ import 'package:insideout/features/workspace/workspace_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // rv5-FE-05: outside the roadmap, write controls show only to the people the
 // server lets write: workspace admins delete the workspace and manage members
@@ -61,7 +62,7 @@ class _Api extends ApiClient {
   ];
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws1',
     'title': 'Alpha',
@@ -81,7 +82,7 @@ class _Api extends ApiClient {
         'authorId': 'agent',
       },
     ],
-  };
+  });
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];

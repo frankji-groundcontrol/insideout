@@ -34,7 +34,7 @@ class ProjectPage extends StatefulWidget {
 }
 
 class _ProjectPageState extends State<ProjectPage> {
-  late Future<Map<String, dynamic>> _future;
+  late Future<ProjectDetail> _future;
   late Future<LeafEvidence> _leafEvidence;
   final repo = TextEditingController();
   final _scroll = ScrollController();
@@ -93,18 +93,16 @@ class _ProjectPageState extends State<ProjectPage> {
     }
   }
 
-  Future<Map<String, dynamic>> _load() async {
+  Future<ProjectDetail> _load() async {
     final api = context.read<Session>().api;
     final data = await api.getProject(widget.id);
     if (!mounted) return data;
-    final ws = data['workspaceId'] as String?;
+    final ws = data.project.workspaceId;
     _focus.rememberProject(widget.id, workspaceId: ws);
-    repo.text = (data['repoUrl'] as String?) ?? '';
-    if (ws != null) {
-      // The page still works without names; the owner line just stays empty.
-      final members = await api.listMembers(ws).catchError((_) => _members);
-      if (mounted) _members = members;
-    }
+    repo.text = data.project.repoUrl;
+    // The page still works without names; the owner line just stays empty.
+    final members = await api.listMembers(ws).catchError((_) => _members);
+    if (mounted) _members = members;
     return data;
   }
 
@@ -151,11 +149,8 @@ class _ProjectPageState extends State<ProjectPage> {
       future: _future,
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
-        final title =
-            snap.data?['title'] as String? ?? l10n.t('evidence.title');
-        final updates = ((snap.data?['updates'] as List?) ?? const [])
-            .map((e) => ProjectUpdate.fromJson(e as Map<String, dynamic>))
-            .toList();
+        final project = snap.data?.project;
+        final title = project?.title ?? l10n.t('evidence.title');
         return AppScaffold(
           body: !snap.hasData
               ? readGate(snap, _reload)
@@ -176,7 +171,7 @@ class _ProjectPageState extends State<ProjectPage> {
                         ProjectHeader(
                           title: title,
                           ownerName: projectOwnerName(
-                            snap.data!['ownerId'] as String?,
+                            project!.ownerId,
                             _members,
                           ),
                           flash: _flash,
@@ -192,7 +187,7 @@ class _ProjectPageState extends State<ProjectPage> {
                               onPressed: () =>
                                   context.go('/projects/${widget.id}/roadmap'),
                             ),
-                            if (snap.data!['prdId'] case final String prdId)
+                            if (project.prdId case final String prdId)
                               BlockButton(
                                 label: l10n.t('project.openPrd'),
                                 icon: Icons.description_outlined,
@@ -202,12 +197,12 @@ class _ProjectPageState extends State<ProjectPage> {
                                   context.go('/prd/$prdId');
                                 },
                               ),
-                            if (snap.data!['canWritePlan'] == true)
+                            if (project.canWritePlan)
                               BlockButton(
                                 label: l10n.t('project.edit'),
                                 icon: Icons.edit_outlined,
                                 variant: BlockButtonVariant.secondary,
-                                onPressed: () => _edit(snap.data!),
+                                onPressed: () => _edit(project),
                               ),
                             // Deleting a project is an admin's alone.
                             if (_isAdmin)
@@ -215,7 +210,7 @@ class _ProjectPageState extends State<ProjectPage> {
                                 label: l10n.t('project.delete'),
                                 icon: Icons.delete_outline,
                                 variant: BlockButtonVariant.danger,
-                                onPressed: () => _delete(snap.data!),
+                                onPressed: () => _delete(project),
                               ),
                           ],
                         ),
@@ -229,9 +224,9 @@ class _ProjectPageState extends State<ProjectPage> {
                         const SizedBox(height: 20),
                         ProjectUpdatesFeed(
                           projectId: widget.id,
-                          updates: updates,
-                          nextCursor: snap.data!['nextCursor'] as String?,
-                          canDecide: snap.data!['canWritePlan'] == true,
+                          updates: snap.data!.updates,
+                          nextCursor: snap.data!.nextCursor,
+                          canDecide: project.canWritePlan,
                           onChanged: _reload,
                           onEdit: (u, content) => context
                               .read<Session>()
@@ -255,7 +250,7 @@ class _ProjectPageState extends State<ProjectPage> {
     );
   }
 
-  Future<void> _edit(Map<String, dynamic> data) async {
+  Future<void> _edit(Project data) async {
     final saved = await showProjectEdit(
       context,
       data,
@@ -270,17 +265,15 @@ class _ProjectPageState extends State<ProjectPage> {
         description: saved.description,
         status: saved.status,
         // Sent only when changed (PARB-08); '' hands the project to no one.
-        ownerId: saved.ownerId == (data['ownerId'] ?? '')
-            ? null
-            : saved.ownerId,
+        ownerId: saved.ownerId == (data.ownerId ?? '') ? null : saved.ownerId,
       ),
     );
     if (done && mounted) await _reload();
   }
 
-  Future<void> _delete(Map<String, dynamic> data) async {
+  Future<void> _delete(Project data) async {
     if (!await showProjectDelete(context) || !mounted) return;
-    final wsId = data['workspaceId'] as String;
+    final wsId = data.workspaceId;
     final done = await guardWrite(
       context,
       () => context.read<Session>().api.deleteProject(widget.id),

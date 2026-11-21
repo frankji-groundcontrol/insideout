@@ -10,6 +10,7 @@ import 'package:insideout/features/workspace/workspace_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // rv5-FE-04, PARB-08: the project owner is shown on the project and its board
 // card, an admin hands the project over from the edit dialog, and ownerId is
@@ -40,11 +41,8 @@ class _Api extends ApiClient {
   };
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
-    ..._project,
-    'updates': const [],
-    'nextCursor': null,
-  };
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({..._project, 'updates': const [], 'nextCursor': null});
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];

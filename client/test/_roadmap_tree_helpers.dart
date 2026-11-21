@@ -12,6 +12,7 @@ import 'package:insideout/router.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 /// A scripted API over one project tree: Ship > {Payments > Refunds, Search}.
 /// Each test reads back what the page or menu sent.
@@ -127,12 +128,12 @@ class TreeApi extends ApiClient {
   ) => roadmapProgress(projectId);
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws-1',
     'title': 'Loop project',
     'canWritePlan': canWritePlan,
-  };
+  });
 
   @override
   Future<List<WorkspaceMember>> listMembers(String id) async => [
@@ -170,8 +171,8 @@ class TreeApi extends ApiClient {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async => [
-    {'kind': 'commit', 'detail': 'retry the charge once'},
+  Future<List<NodeEvidence>> listNodeEvidence(String nodeId) async => [
+    evidenceRow({'kind': 'commit', 'detail': 'retry the charge once'}),
   ];
 
   @override

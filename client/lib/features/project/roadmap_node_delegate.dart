@@ -10,8 +10,7 @@ extension _NodeDelegate on _NodeMenu {
     List<WorkspaceMember> members = const [];
     try {
       final project = await api.getProject(projectId);
-      final wsId = project['workspaceId'] as String?;
-      if (wsId != null) members = await api.listMembers(wsId);
+      members = await api.listMembers(project.project.workspaceId);
     } on Exception {
       // An empty picker: the dialog says nothing can be chosen.
     }

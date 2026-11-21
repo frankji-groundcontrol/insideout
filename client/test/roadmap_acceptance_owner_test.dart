@@ -7,6 +7,7 @@ import 'package:insideout/features/project/roadmap_progress_view.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 class _MembersApi extends ApiClient {
   _MembersApi()
@@ -21,10 +22,8 @@ class _MembersApi extends ApiClient {
   Map<String, dynamic>? saved;
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
-    'id': id,
-    'workspaceId': 'ws-1',
-  };
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id, 'workspaceId': 'ws-1'});
 
   @override
   Future<List<WorkspaceMember>> listMembers(String id) async => [

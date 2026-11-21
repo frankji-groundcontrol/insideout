@@ -48,7 +48,7 @@ class _NodeDetail extends StatefulWidget {
 }
 
 class _NodeDetailState extends State<_NodeDetail> {
-  late Future<List<Map<String, dynamic>>> _evidence;
+  late Future<List<NodeEvidence>> _evidence;
   late Future<List<NodeAssignment>> _history;
 
   @override
@@ -116,10 +116,7 @@ class _NodeDetailState extends State<_NodeDetail> {
             if (snap.data!.isEmpty) return line(t('roadmap.evidenceNone'));
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final e in snap.data!)
-                  line('${e['detail'] ?? e['sourceUrl'] ?? ''}'),
-              ],
+              children: [for (final e in snap.data!) line(e.detail)],
             );
           },
         ),

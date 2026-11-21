@@ -139,6 +139,28 @@ class ProjectUpdate {
 /// One page of a project's updates and the cursor of the next, older one.
 typedef UpdatesPage = ({List<ProjectUpdate> updates, String? nextCursor});
 
+/// GET /projects/{id}: the project, the newest page of its updates and the
+/// cursor of the next, older page (null when this page reaches the first).
+class ProjectDetail {
+  ProjectDetail({
+    required this.project,
+    this.updates = const [],
+    this.nextCursor,
+  });
+
+  final Project project;
+  final List<ProjectUpdate> updates;
+  final String? nextCursor;
+
+  factory ProjectDetail.fromJson(Map<String, dynamic> j) => ProjectDetail(
+    project: Project.fromJson(j),
+    updates: ((j['updates'] as List?) ?? const [])
+        .map((e) => ProjectUpdate.fromJson(e as Map<String, dynamic>))
+        .toList(),
+    nextCursor: j['nextCursor'] as String?,
+  );
+}
+
 class Idea {
   Idea({
     required this.id,

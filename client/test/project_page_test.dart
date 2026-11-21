@@ -8,6 +8,7 @@ import 'package:insideout/features/project/project_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // FEAT-03 behavioral coverage: agent proposals render a decision loop
 // (Accept/Reject against the existing decision endpoint) instead of the
@@ -32,7 +33,7 @@ class _FakeApi extends ApiClient {
   var roadmapReads = 0;
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws1',
     'title': 'Evidence Page Test',
@@ -42,7 +43,7 @@ class _FakeApi extends ApiClient {
     'ownerId': 'u1',
     'canWritePlan': true,
     'updates': updates,
-  };
+  });
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async {

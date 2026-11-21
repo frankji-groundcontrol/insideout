@@ -17,8 +17,7 @@ extension _NodeEdit on _NodeMenu {
     List<WorkspaceMember> members = const [];
     try {
       final project = await api.getProject(projectId);
-      final wsId = project['workspaceId'] as String?;
-      if (wsId != null) members = await api.listMembers(wsId);
+      members = await api.listMembers(project.project.workspaceId);
     } on Exception {
       // Owner picker stays empty; the rest of the edit still works.
     }

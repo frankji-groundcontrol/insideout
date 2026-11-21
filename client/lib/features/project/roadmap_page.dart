@@ -49,7 +49,7 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   late Future<List<RoadmapNode>> _future;
   late Future<RoadmapProgress> _progressFuture;
   Future<RoadmapNodeRead>? _read;
-  late final Future<Map<String, dynamic>> _project;
+  late final Future<ProjectDetail> _project;
   _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
 
@@ -77,7 +77,7 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
     _fetch(api);
     _project
         .then((p) {
-          if (mounted) setState(() => _planWriter = p['canWritePlan'] == true);
+          if (mounted) setState(() => _planWriter = p.project.canWritePlan);
         })
         // A failed read leaves the plan-writer items hidden; the server
         // refuses them anyway.
@@ -122,7 +122,7 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   Map<String, String> _names = const {};
 
   void _loadNames(ApiClient api) => _project
-      .then((p) => api.listMembers(p['workspaceId'] as String))
+      .then((p) => api.listMembers(p.project.workspaceId))
       .then((members) {
         if (!mounted) return;
         setState(

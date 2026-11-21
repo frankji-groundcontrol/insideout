@@ -10,6 +10,7 @@ import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // The two live streams (progress, presence) retry on their own clocks. When
 // the network drops both fail together, so both sit in a backoff at once.
@@ -32,7 +33,8 @@ class _ScriptedApi extends ApiClient {
 
   // No project read leaves a network timer behind the page.
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {'id': id};
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id});
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [];

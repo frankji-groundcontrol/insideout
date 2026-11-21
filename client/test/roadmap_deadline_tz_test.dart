@@ -7,6 +7,7 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:insideout/theme/block_button.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // rv4-COMP-02: the deadline picker sent the picked day's local midnight as a
 // UTC instant (`picked.toUtc()`), and every deadline label shows the first ten
@@ -35,7 +36,8 @@ class _Api extends ApiClient {
 
   // No workspaceId: the dialog skips the member lookup.
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {'id': id};
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id});
 
   @override
   Future<RoadmapNode> updateRoadmapNode(

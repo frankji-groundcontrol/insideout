@@ -6,6 +6,7 @@ import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // rv5-PARC-06: the node edit dialog sends only the fields the person changed.
 // The stored owner has left the workspace, so the picker shows none; a rename
@@ -24,10 +25,8 @@ class _Api extends ApiClient {
   var calls = 0;
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
-    'id': id,
-    'workspaceId': 'ws-1',
-  };
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id, 'workspaceId': 'ws-1'});
 
   @override
   Future<List<WorkspaceMember>> listMembers(String id) async => [

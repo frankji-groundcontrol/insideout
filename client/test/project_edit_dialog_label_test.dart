@@ -4,6 +4,8 @@ import 'package:insideout/features/project/project_dialogs.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:provider/provider.dart';
 
+import '_project_model_helpers.dart';
+
 // rv4-USER-11: the Edit project dialog labelled its description field with the
 // status-post prompt ("What's new?"), reused from the Post-an-update dialog.
 // The description field must read as a description in both locales, and the
@@ -43,11 +45,15 @@ void main() {
       await _open(
         tester,
         locale,
-        (context) => showProjectEdit(context, const {
-          'title': 'Flows',
-          'description': 'old desc',
-          'status': 'active',
-        }),
+        (context) => showProjectEdit(
+          context,
+          projectDetail({
+            'id': 'p1',
+            'title': 'Flows',
+            'description': 'old desc',
+            'status': 'active',
+          }).project,
+        ),
       );
 
       expect(

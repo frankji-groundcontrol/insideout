@@ -6,6 +6,7 @@ import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 class _DoneApi extends ApiClient {
   _DoneApi(this.evidence)
@@ -21,11 +22,12 @@ class _DoneApi extends ApiClient {
   Map<String, dynamic>? saved;
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {'id': id};
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id});
 
   @override
-  Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async =>
-      evidence;
+  Future<List<NodeEvidence>> listNodeEvidence(String nodeId) async =>
+      evidence.map(evidenceRow).toList();
 
   @override
   Future<RoadmapNode> updateRoadmapNode(

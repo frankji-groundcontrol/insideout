@@ -43,9 +43,10 @@ client/lib/
   router.dart         current product paths
   session/            Session, Appearance, auth redirect
   api/                client.dart is a library over per-resource part files
-                      (core, auth, workspace, project, prd, stream); models.dart
-                      is a barrel over models_{session,project,roadmap,prd};
-                      request builders, errors, SSE transport
+                      (core, auth, workspace, project, roadmap, prd, stream);
+                      models.dart is a barrel over
+                      models_{session,project,roadmap,prd}; request builders,
+                      errors, SSE transport
   features/           landing, auth (AuthDoor), dashboard (with My work),
                       workspace, profile;
                       project (project page and the roadmap: page, header,

@@ -272,3 +272,35 @@ class RoadmapProgress {
         .toList(),
   );
 }
+
+/// One row of GET /roadmap/{id}/evidence: a node's delivery evidence, newest
+/// first. [observedAt] is set on a human validation observation only.
+class NodeEvidence {
+  NodeEvidence({
+    required this.id,
+    required this.nodeId,
+    required this.kind,
+    required this.detail,
+    required this.sourceUrl,
+    required this.createdAt,
+    this.observedAt,
+  });
+
+  final String id;
+  final String nodeId;
+  final String kind;
+  final String detail;
+  final String sourceUrl;
+  final String createdAt;
+  final String? observedAt;
+
+  factory NodeEvidence.fromJson(Map<String, dynamic> j) => NodeEvidence(
+    id: j['id'] as String,
+    nodeId: j['nodeId'] as String,
+    kind: (j['kind'] as String?) ?? '',
+    detail: (j['detail'] as String?) ?? '',
+    sourceUrl: (j['sourceUrl'] as String?) ?? '',
+    createdAt: j['createdAt'] as String,
+    observedAt: j['observedAt'] as String?,
+  );
+}

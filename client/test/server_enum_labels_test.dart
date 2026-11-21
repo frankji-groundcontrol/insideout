@@ -5,6 +5,8 @@ import 'package:insideout/features/project/project_leaf_evidence.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:provider/provider.dart';
 
+import '_project_model_helpers.dart';
+
 // rv5-FE-10: the coach speaker and the evidence kind are server enums; a
 // Chinese reader sees them in Chinese, and an unknown value stays as sent.
 void main() {
@@ -30,8 +32,11 @@ void main() {
                   (
                     title: 'Ship v1',
                     rows: [
-                      {'kind': 'release', 'detail': 'deploy succeeded'},
-                      {'kind': 'webhook_x', 'detail': 'raw'},
+                      evidenceRow({
+                        'kind': 'release',
+                        'detail': 'deploy succeeded',
+                      }),
+                      evidenceRow({'kind': 'webhook_x', 'detail': 'raw'}),
                     ],
                   ),
                 ],

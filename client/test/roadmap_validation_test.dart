@@ -8,6 +8,7 @@ import 'package:insideout/features/project/roadmap_node_card.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // FEAT-04 (review 3), the client half: a leaf carries a small form that
 // records what real users did with the shipped work (a validation
@@ -53,7 +54,7 @@ class _ValidationApi extends ApiClient {
   }
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws-1',
     'title': 'Loop project',
@@ -62,7 +63,7 @@ class _ValidationApi extends ApiClient {
     'repoUrl': '',
     'ownerId': 'u1',
     'updates': const <Map<String, dynamic>>[],
-  };
+  });
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => [
@@ -89,8 +90,11 @@ class _ValidationApi extends ApiClient {
   ];
 
   @override
-  Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async => [
-    {'kind': 'validation', 'detail': '4 of 5 pilot users finished the tour'},
+  Future<List<NodeEvidence>> listNodeEvidence(String nodeId) async => [
+    evidenceRow({
+      'kind': 'validation',
+      'detail': '4 of 5 pilot users finished the tour',
+    }),
   ];
 
   static final _doneLeaf = RoadmapNode(

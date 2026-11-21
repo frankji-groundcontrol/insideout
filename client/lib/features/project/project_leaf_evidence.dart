@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/errors_l10n.dart';
+import '../../api/models.dart';
 import '../../session/appearance.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/field_card.dart';
@@ -9,7 +10,7 @@ import '../../theme/field_card.dart';
 /// The finished leaves the section has evidence for, and how many more
 /// finished leaves the page's cap left out.
 typedef LeafEvidence = ({
-  List<({String title, List<Map<String, dynamic>> rows})> leaves,
+  List<({String title, List<NodeEvidence> rows})> leaves,
   int more,
 });
 
@@ -23,8 +24,8 @@ const _kinds = {
 
 /// An evidence kind in the reader's language (FE-10); one the table does not
 /// know stays as the server sent it.
-String _kind(TFn t, Object? kind) =>
-    _kinds.contains(kind) ? t('evidence.kind.$kind') : '${kind ?? ''}';
+String _kind(TFn t, String kind) =>
+    _kinds.contains(kind) ? t('evidence.kind.$kind') : kind;
 
 /// "Done, with its evidence": the evidence rows of the finished leaves, so
 /// the Evidence screen shows what finished work actually produced. The page
@@ -74,7 +75,7 @@ class ProjectLeafEvidence extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
-                          '${_kind(l10n.t, row['kind'])}: ${row['detail'] ?? ''}',
+                          '${_kind(l10n.t, row.kind)}: ${row.detail}',
                           style: theme.textTheme.bodySmall,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,

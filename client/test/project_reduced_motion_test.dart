@@ -11,6 +11,7 @@ import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // Every animation under features/project honors the OS reduce-motion setting
 // (MediaQuery.disableAnimations): the Evidence header flash and the minimap's
@@ -30,7 +31,7 @@ class _Api extends ApiClient {
   final _parked = Completer<void>();
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws1',
     'title': 'Motion',
@@ -39,7 +40,7 @@ class _Api extends ApiClient {
     'repoUrl': '',
     'ownerId': 'u1',
     'updates': <Map<String, dynamic>>[],
-  };
+  });
 
   /// Three root bands: 3 x 300 + gaps outgrow an 800px viewport.
   @override

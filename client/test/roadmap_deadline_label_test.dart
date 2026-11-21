@@ -7,6 +7,7 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:insideout/theme/block_button.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // Clearing a deadline in the edit dialog must put the "Set deadline" label
 // back, not leave an empty button.
@@ -23,7 +24,8 @@ class _Api extends ApiClient {
 
   // No workspaceId: the dialog skips the member lookup.
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {'id': id};
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id});
 }
 
 void main() {

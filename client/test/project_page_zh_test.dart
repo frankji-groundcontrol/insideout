@@ -8,6 +8,7 @@ import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:insideout/theme/block_button.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // The shipped default locale is zh-CN, yet the project (evidence) page was
 // only ever widget-tested in en-US (project_page_test.dart). Pump it in
@@ -25,7 +26,7 @@ class _FakeApi extends ApiClient {
       );
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws1',
     'title': '证据页中文走查',
@@ -34,7 +35,7 @@ class _FakeApi extends ApiClient {
     'repoUrl': '',
     'ownerId': 'u1',
     'updates': [],
-  };
+  });
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => const [];

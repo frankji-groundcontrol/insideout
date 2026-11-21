@@ -10,6 +10,7 @@ import 'package:insideout/features/project/roadmap_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import '_project_model_helpers.dart';
 
 // The server deletes a node's whole branch (roadmap_nodes.parent_id is
 // ON DELETE CASCADE), so the confirm must say how many nodes go with it.
@@ -47,10 +48,8 @@ class _Api extends ApiClient {
 
   // Delete is a plan writer's item (a delegate keeps the root they hold).
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
-    'id': id,
-    'canWritePlan': true,
-  };
+  Future<ProjectDetail> getProject(String id) async =>
+      projectDetail({'id': id, 'canWritePlan': true});
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async => _tree;

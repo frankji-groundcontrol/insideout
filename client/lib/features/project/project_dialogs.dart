@@ -14,17 +14,15 @@ import '../../theme/cobalt.dart';
 Future<({String title, String description, String status, String ownerId})?>
 showProjectEdit(
   BuildContext context,
-  Map<String, dynamic> data, {
+  Project data, {
   List<WorkspaceMember>? members,
 }) async {
   final t = context.read<Appearance>().t;
   final navigator = Navigator.of(context);
-  final titleCtrl = TextEditingController(text: data['title'] as String? ?? '');
-  final descCtrl = TextEditingController(
-    text: data['description'] as String? ?? '',
-  );
-  var status = (data['status'] as String?) ?? 'planning';
-  var ownerId = (data['ownerId'] as String?) ?? '';
+  final titleCtrl = TextEditingController(text: data.title);
+  final descCtrl = TextEditingController(text: data.description);
+  var status = data.status;
+  var ownerId = data.ownerId ?? '';
   final ok = await showBlockModal<bool>(
     context: context,
     title: t('project.edit'),
