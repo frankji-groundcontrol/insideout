@@ -19,6 +19,8 @@ func TestPeopleVerbsSendTheirRequests(t *testing.T) {
 		}
 		return m
 	}
+	noKeywords := me() // an empty list is sent as absent, which the server stores as none
+	delete(noKeywords, "keywords")
 	for _, tc := range []struct {
 		args []string
 		want []sent
@@ -35,6 +37,10 @@ func TestPeopleVerbsSendTheirRequests(t *testing.T) {
 			[]sent{{"GET /me", nil}, {"PATCH /me", me("username", "Neo", "bio", "", "avatarUrl", "")}}},
 		{words("profile", "update", "--avatar", "https://img.example/b.png"),
 			[]sent{{"GET /me", nil}, {"PATCH /me", me("avatarUrl", "https://img.example/b.png")}}},
+		// rv5-PARC-03: the parity walk found keywords reachable from no CLI verb.
+		{words("profile", "update", "--keywords", "go, web"),
+			[]sent{{"GET /me", nil}, {"PATCH /me", me("keywords", []any{"go", "web"})}}},
+		{words("profile", "update", "--keywords", "clear"), []sent{{"GET /me", nil}, {"PATCH /me", noKeywords}}},
 	} {
 		var handled bool
 		var code int
