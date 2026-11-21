@@ -89,7 +89,8 @@ insideout reset-password                            # paste link/token + new pas
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>` (without `--content` the body is kept), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
-| Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap move [--parent id \| --root] [--position n] <node>` (no `--parent` keeps the parent; the MCP `roadmap_move` takes `parent_id` `"root"` for a root), `roadmap progress <proj>`, `roadmap presence <proj>` |
+| Roadmap | `roadmap list [--root node] <proj>` (with `--root`, that node and the nodes below it), `roadmap add`, `roadmap update [--title] [--description] [--status] [--deadline RFC3339\|clear] [--acceptance A] [--owner user-id\|me\|none] [--completion-reason] <node>` (`--acceptance ""` clears it), `roadmap move [--parent id \| --root] [--position n] <node>` (no `--parent` keeps the parent; the MCP `roadmap_move` takes `parent_id` `"root"` for a root), `roadmap delete <node>`, `roadmap progress [--root node] <proj>`, `roadmap presence <proj>` |
+| Task tree | `roadmap show <node>` (the node, its ancestors root first, its project), `roadmap mine <ws>` (your topmost owned nodes), `members <ws>` (user ids for `--to` and `--owner`), `roadmap delegate --to <user-id> [--note N] <node>`, `roadmap handback [--note N] <node>`, `roadmap assignments <node>` (who held it, newest first). MCP: `roadmap_node`, `roadmap_mine`, `members`, `roadmap_delegate`, `roadmap_handback`, `roadmap_assignments`; `roadmap_update` takes `acceptance` and `owner_id` (`"none"` clears), `roadmap_list` and `progress` take `root`. Node views carry `canWrite` and `rollup` ([roadmap tree](../architecture/roadmap-tree.md)) |
 | Build | `build <prd>` drafts a roadmap from an approved PRD and writes nothing (409 `prd_not_approved` otherwise); `build-confirm [-expected-count N] [-force] -tree '<json>' <prd>` writes it, creating and linking the project on the first build (PRD author or workspace admin only); over a roadmap with evidence or done or validated nodes it answers 409 `roadmap_replace_has_history` with the counts until `-force`; `expand <node>`, `expand-confirm -children '<json>' <node>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
 | Admin | `invite [--ttl hours] <email>`, `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
@@ -145,18 +146,24 @@ short-lived **agent-scope token** (`POST /agent/token`, one access-token
 life, cached and minted again before it expires) and sends every tool call
 with that token alone. The server refuses an agent token on the human-only
 routes with 403 `agent_scope_denied` (the proposal decision, Commit, the
-admin routes and every delete), so the limit holds for any client, not just
+admin routes, every delete, delegate, hand-back and the member list), so the limit holds for any client, not just
 this binary ([design](../architecture/agent-token-scope.md)). It also refuses
-an agent's `build_confirm` over a roadmap that is not empty and an agent's
-`completion_reason` on `roadmap_update`. The registry
-follows the login: twelve tools are not offered while the process holds a JWT
+an agent's `build_confirm` over a roadmap that is not empty, and an agent's
+`completion_reason` or `owner_id` on `roadmap_update` (an agent suggests an
+owner through `propose`, which only a plan writer's agent may file). The registry
+follows the login: fifteen tools are not offered while the process holds a JWT
 login — `commit`, `proposal_decide`, `signup_mode`, `invite_create`,
-`invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete` and the four
+`invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete`,
+`roadmap_delegate`, `roadmap_handback`, `members` and the four
 password tools (`auth_register`, `auth_login`, `auth_forgot_password`,
 `auth_reset_password`, so a password never enters the conversation). Run
 those from the CLI or the web. Before any sign-in the whole registry is
 listed, so a process can still sign in; the first sign-in narrows it.
 
+- `"env": { "INSIDEOUT_AGENT_ROOT": "<node-id>" }` confines the agent token to
+  one node's subtree: node writes outside it answer 403 `agent_scope_denied`,
+  reads stay workspace-wide, and `agent_context` focuses on that node by
+  default.
 - A failed exchange is a tool error and never falls back to the full token.
   An `INSIDEOUT_TOKEN` that already carries a scope is sent as it is (the
   server decides); one that is not a JWT is passed through and the registry

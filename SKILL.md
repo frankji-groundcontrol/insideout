@@ -76,6 +76,8 @@ yourself. Join an existing workspace with `workspace_join` / `insideout join
 4. **Grow the roadmap**: `roadmap_add/update/move/delete`,
    `roadmap update --deadline` for time pressure, `progress <project>`
    for the time-first view. `expand` grows a node via the planner.
+   `roadmap mine <ws-id>` lists the nodes you own (your tree);
+   `roadmap show <node-id>` reads one with its ancestors.
 5. **Track the repo**: `repo_set <project> <repo-url>` → commit the
    generated `guide` (`insideout.yaml`) at the repo root → `sync` on
    demand → **`evidence <node-id>`** to read what actually attached.
@@ -107,21 +109,29 @@ yourself. Join an existing workspace with `workspace_join` / `insideout join
 Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (ask
 `tools/list` for the current set — a count frozen here has already
 drifted: the registry stood at 52 while this page said 50, and it now
-depends on the login (the whole registry before any sign-in, forty
-tools once the MCP holds a JWT login; twelve are withheld, see
+depends on the login (the whole registry before any sign-in, forty-three
+tools once the MCP holds a JWT login; fifteen are withheld, see
 Guardrails):
 auth, admin, ideas/PRD/roadmap/evidence/workspace/project CRUD,
 versions, agent vocabulary, GitHub tracking, planner). Prefer the
 narrowest tool; reads return raw JSON — trust it over your assumptions.
+The roadmap rows hold on all three: a node's owner and acceptance
+(`roadmap update --owner/--acceptance`, `roadmap_update owner_id/acceptance`),
+the subtree root (`--root`, `root`), and the task tree (`roadmap show`/
+`roadmap_node`, `roadmap mine`/`roadmap_mine`, `roadmap delegate`/
+`roadmap_delegate`, `roadmap handback`/`roadmap_handback`, `roadmap
+assignments`/`roadmap_assignments`, `members`/`members`). Changing an owner
+is the human's: an agent token is refused `owner_id`, delegate and hand-back.
 
 ## Guardrails
 
 - No API deletes a PRD, and deleting a project, workspace, member or
   update is a human decision (web, or the CLI with your login): the
   server refuses an agent token on every DELETE route. An MCP holding a
-  JWT login is not offered twelve tools — `commit`, `proposal_decide`,
+  JWT login is not offered fifteen tools — `commit`, `proposal_decide`,
   `signup_mode`, `invite_create`, `invite_list`, `invite_revoke`,
-  `idea_delete`, `roadmap_delete` and the password tools
+  `idea_delete`, `roadmap_delete`, `roadmap_delegate`, `roadmap_handback`,
+  `members` and the password tools
   (`auth_register`, `auth_login`, `auth_forgot_password`,
   `auth_reset_password`) — so `idea_delete`/`roadmap_delete` are
   CLI-only there. Ask the human to run them.

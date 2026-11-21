@@ -115,7 +115,9 @@ refuses a root-scoped token outright, since a rebuild replaces the whole tree.
 The check is `agentRootRefuses` (`server/internal/api/agent_root.go`) over
 `Store.NodeInSubtree`. `GET /agent/context` with no `focus` defaults its focus
 to the root when the root is a node of the requested project. The MCP binary
-does not pass a root yet.
+asks for a root when `INSIDEOUT_AGENT_ROOT` names one
+(`apiclient.AgentScopedTo`, called from `server/internal/mcpserver/server.go`);
+the held token is keyed by server, user and root.
 
 ## A proposal's author cannot decide it
 
@@ -142,7 +144,8 @@ process as `INSIDEOUT_TOKEN`) is sent as it is, and the server decides.
 The registry follows the credential. When the credential in use is a JWT (at
 startup, or right after an in-process sign-in), the profile removes `commit`,
 `proposal_decide`, `signup_mode`, `invite_create`, `invite_list`, `invite_revoke`,
-`idea_delete`, `roadmap_delete` and the password tools (`auth_register`,
+`idea_delete`, `roadmap_delete`, `roadmap_delegate`, `roadmap_handback`,
+`members` and the password tools (`auth_register`,
 `auth_login`, `auth_forgot_password`, `auth_reset_password`). The passwordless
 sign-in tools stay so an unauthenticated process can still be signed in. A token
 that is not a JWT cannot carry a scope and no InsideOut server accepts it, so it is

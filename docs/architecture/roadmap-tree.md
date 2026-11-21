@@ -160,9 +160,17 @@ minted with a `rootNodeId` writes only inside that subtree
 ([agent token scope](agent-token-scope.md)). The only change signal is an in-memory callback
 (`server/internal/store/pool.go`) that pings open progress streams. The web
 has one roadmap route per project (`client/lib/router.dart`). MCP exposes
-`roadmap_list`, `roadmap_add`, `roadmap_update`, `roadmap_move`,
-`roadmap_delete` and `roadmap_evidence`
-(`server/internal/mcpserver/product_tools.go`); none of them takes a root yet.
+`roadmap_add`, `roadmap_move`, `roadmap_delete` and `roadmap_evidence`
+(`server/internal/mcpserver/product_tools.go`), and the tree tools
+`roadmap_list` and `progress` (both take `root`), `roadmap_node`,
+`roadmap_mine`, `roadmap_update` (with `acceptance` and `owner_id`),
+`roadmap_delegate`, `roadmap_handback`, `roadmap_assignments` and `members`
+(`server/internal/mcpserver/roadmap_tree_tools.go`); delegate, hand-back and
+`members` are withheld once the MCP holds a login, since their routes are
+human-only. The CLI has the same verbs (`roadmap show`, `mine`, `delegate`,
+`handback`, `assignments`, `--root`, `update --owner/--acceptance`, and
+`members`; `server/cmd/insideout/cli_roadmap_tree.go`) over the Go client
+(`server/internal/apiclient/roadmap.go`, `roadmap_tree.go`).
 
 ### Agent context focus
 
@@ -230,8 +238,10 @@ focus-scoped agent context, the agent-token refusal on owner changes, owner
 clearing on member removal, the owner of started work, the assignment
 history, delegate and hand-back routes, node rows in the project feed, the
 per-person `mine` read, roll-ups and subtree Progress, agent tokens carrying a
-root node, and the history guard on a subtree delete. Still to land: the web,
-MCP and CLI surfaces
+root node, and the history guard on a subtree delete; on the Go client, the
+CLI and MCP, owner and acceptance edits, the subtree root, the node and `mine`
+reads, delegation, its history and the member list. Still to land: the web
+surface
 ([execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
 [row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
 Update this page as each slice lands.

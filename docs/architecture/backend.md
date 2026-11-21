@@ -37,7 +37,7 @@ server/
                        fails the build
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb, an agent profile that
-                       withholds twelve tools, and the result fence (fence.go)
+                       withholds fifteen tools, and the result fence (fence.go)
     modtidy/           the module tidiness guard: `go mod tidy -diff` must print nothing
     presence/          in-memory who-is-here registry behind live canvas presence
     progresshub/       in-memory fan-out for the live roadmap progress view
