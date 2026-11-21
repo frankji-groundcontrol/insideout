@@ -76,3 +76,33 @@ func TestACheckpointNodeMustBeANodeOfItsProject(t *testing.T) {
 		expect(t, "checkpoint on node "+node, status, body, want)
 	}
 }
+
+func TestTheUnresolvedItemsRevisionNoteAndProjectDescriptionAreBounded(t *testing.T) {
+	w := newCoverageWorld(t)
+	prd := w.prd(t)
+	commit := func(item string) (int, string) {
+		return w.send(t, w.owner, "POST", "/api/v1/prds/"+prd+"/commit",
+			map[string]any{"name": "v1", "primaryAudience": "decision", "unresolved": []string{"short", item}})
+	}
+	status, body := commit(cjk(2001))
+	expectTooLong(t, "commit unresolved item", status, body)
+	status, body = commit(cjk(2000))
+	expect(t, "commit unresolved item at the bound", status, body, http.StatusCreated)
+
+	status, body = w.send(t, w.owner, "POST", "/api/v1/prds/"+prd+"/revisions", map[string]any{"note": cjk(2001)})
+	expectTooLong(t, "revision note", status, body)
+	status, body = w.send(t, w.owner, "POST", "/api/v1/prds/"+prd+"/revisions", map[string]any{"note": cjk(2000)})
+	expect(t, "revision note at the bound", status, body, http.StatusCreated)
+
+	status, body = w.send(t, w.owner, "POST", w.ws()+"/projects", map[string]any{"title": "P", "description": cjk(2001)})
+	expectTooLong(t, "project create description", status, body)
+	status, body = w.send(t, w.owner, "POST", w.ws()+"/projects", map[string]any{"title": "P", "description": cjk(2000)})
+	expect(t, "project create description at the bound", status, body, http.StatusCreated)
+	edit := func(desc string) (int, string) {
+		return w.send(t, w.owner, "PATCH", w.proj(), map[string]any{"title": "P", "status": "active", "description": desc})
+	}
+	status, body = edit(cjk(2001))
+	expectTooLong(t, "project update description", status, body)
+	status, body = edit(cjk(2000))
+	expect(t, "project update description at the bound", status, body, http.StatusOK)
+}
