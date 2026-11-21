@@ -71,8 +71,10 @@ func (s *Server) registerRoadmapAIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/roadmap/{nid}/expand/confirm", s.requireAuth(s.handleConfirmExpandNode))
 }
 
-// handleBuildFromPrd drafts a branched roadmap from a refined PRD. It does
-// not write the tree; the caller confirms with handleConfirmBuildFromPrd.
+// handleBuildFromPrd drafts a branched roadmap from an approved PRD. It writes
+// nothing, not even the project (rv5-FEAT-01): projectId is in the answer only
+// when the PRD is already linked. The caller confirms with
+// handleConfirmBuildFromPrd.
 func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	prdID, ok := pathUUID(w, r, "pid")
@@ -84,12 +86,12 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	built, ok := s.loadBuildablePrd(w, r, userID, prdID)
+	prd, ok := s.loadBuildablePrd(w, r, userID, prdID)
 	if !ok {
 		return
 	}
 
-	done, ok := s.admitAI(w, r, built.project.WorkspaceID, userID, "roadmap:plan-mvp")
+	done, ok := s.admitAI(w, r, prd.WorkspaceID, userID, "roadmap:plan-mvp")
 	if !ok {
 		return
 	}
@@ -98,7 +100,7 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	// errPlannerUnwound instead of staying "running".
 	planErr := errPlannerUnwound
 	defer func() { done(planErr) }()
-	tree, err := s.planner.PlanMVP(r.Context(), s.conversationLocale(r.Context(), userID, prdID), built.prd.Title, built.prd.Sections)
+	tree, err := s.planner.PlanMVP(r.Context(), s.conversationLocale(r.Context(), userID, prdID), prd.Title, prd.Sections)
 	planErr = err
 	if err != nil {
 		s.log.Error("plan mvp", "error", err)
@@ -106,10 +108,11 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"projectId": built.project.ID.String(),
-		"tree":      planNodeResponse(*tree),
-	})
+	out := map[string]any{"tree": planNodeResponse(*tree)}
+	if prd.ProjectID != nil {
+		out["projectId"] = prd.ProjectID.String()
+	}
+	httpx.WriteJSON(w, http.StatusOK, out)
 }
 
 type confirmBuildRequest struct {
@@ -135,12 +138,15 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	built, ok := s.loadBuildablePrd(w, r, userID, prdID)
+	if _, ok := s.loadBuildablePrd(w, r, userID, prdID); !ok {
+		return
+	}
+	project, ok := s.ensureBuildProject(w, r, userID, prdID)
 	if !ok {
 		return
 	}
 
-	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, built.project.ID, req.ExpectedCount, planNodeFromView(req.Tree))
+	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, req.ExpectedCount, planNodeFromView(req.Tree))
 	var rc *store.ReplaceConflictError
 	if errors.As(err, &rc) {
 		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount})
@@ -156,7 +162,7 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"projectId": built.project.ID.String(), "nodeCount": count})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"projectId": project.ID.String(), "nodeCount": count})
 }
 
 type expandDraftView struct {

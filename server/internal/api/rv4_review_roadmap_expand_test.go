@@ -94,7 +94,7 @@ func TestRvExpandConfirmCapsWhatItWrites(t *testing.T) {
 // staleness guard, not an authorisation, so the member sends the right one.
 func TestRvExpandBuildConfirmRefusesAPlainMember(t *testing.T) {
 	w := newRouteWorld(t)
-	confirm := "/api/v1/prds/" + w.prd(t) + "/build/confirm"
+	confirm := "/api/v1/prds/" + w.ownerPrd(t, true).String() + "/build/confirm"
 
 	code, out := w.call(w.owner, http.MethodPost, confirm, `{"tree":{"title":"MVP","children":[{"title":"Core"},{"title":"Polish"}]}}`)
 	expect(t, "owner builds", code, out, http.StatusCreated)

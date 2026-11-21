@@ -15,7 +15,7 @@ func addDraftTools(
 	addTextTool func(name, desc string, opts []mcp.ToolOption, call func(c *apiclient.Client, req mcp.CallToolRequest) (string, error)),
 	strReq func(name, desc string) mcp.ToolOption,
 ) {
-	addTextTool("build", "Agent: draft a branched roadmap from a PRD. Writes nothing until build_confirm.",
+	addTextTool("build", "Agent: draft a branched roadmap from an approved PRD. Writes nothing, not even the project, until build_confirm.",
 		[]mcp.ToolOption{strReq("prd_id", "PRD id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.BuildFromPrd(reqStr(req, "prd_id")))

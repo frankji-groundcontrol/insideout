@@ -39,37 +39,40 @@ func planNodeFromView(v planNodeView) store.RoadmapPlanNode {
 	return n
 }
 
-// buildablePrd is the PRD being built and the project it builds into.
-// ok is false when the handler has already written the error.
-type buildablePrd struct {
-	prd     *store.Prd
-	project *store.Project
-}
-
-// loadBuildablePrd loads the PRD and ensures its project, the same lookups
-// HEAD's handleBuildFromPrd did before drafting. It does not gate on PRD
-// status or a commit: that check was not part of the draft/confirm split.
-func (s *Server) loadBuildablePrd(w http.ResponseWriter, r *http.Request, userID, prdID uuid.UUID) (buildablePrd, bool) {
+// loadBuildablePrd loads the PRD a build reads and refuses one that is not
+// approved (rv5-PARB-01): REST, CLI, MCP and web all meet the admin's review
+// gate here. It writes nothing; only the confirm creates a project.
+func (s *Server) loadBuildablePrd(w http.ResponseWriter, r *http.Request, userID, prdID uuid.UUID) (*store.Prd, bool) {
 	prd, err := s.store.GetPrdForMember(r.Context(), prdID, userID)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "prd not found", "", nil)
-		return buildablePrd{}, false
+		return nil, false
 	}
 	if err != nil {
 		s.log.Error("get prd", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return buildablePrd{}, false
+		return nil, false
 	}
+	if prd.Status != "approved" {
+		httpx.WriteError(w, http.StatusConflict, "only an approved PRD can be built into a roadmap", "prd_not_approved", nil)
+		return nil, false
+	}
+	return prd, true
+}
 
+// ensureBuildProject returns the project a confirmed build writes into,
+// creating and linking it on the first build, which only the PRD's author or
+// a workspace admin may do (rv5-FEAT-01).
+func (s *Server) ensureBuildProject(w http.ResponseWriter, r *http.Request, userID, prdID uuid.UUID) (*store.Project, bool) {
 	project, err := s.store.EnsureProjectForPrd(r.Context(), userID, prdID)
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return buildablePrd{}, false
+		httpx.WriteError(w, http.StatusForbidden, "only the PRD's author or a workspace admin can build it", "", nil)
+		return nil, false
 	}
 	if err != nil {
 		s.log.Error("ensure project for prd", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return buildablePrd{}, false
+		return nil, false
 	}
-	return buildablePrd{prd: prd, project: project}, true
+	return project, true
 }

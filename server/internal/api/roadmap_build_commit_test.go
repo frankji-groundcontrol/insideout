@@ -17,7 +17,7 @@ import (
 )
 
 // TestBuildFromPrdDraftsWithoutCommit covers the draft/confirm split on a PRD
-// that has no commit and is still a draft — the same PRD HEAD's
+// that is approved but has no commit — a PRD HEAD's
 // handleBuildFromPrd would plan. POST /prds/{id}/build returns the drafted
 // tree and writes nothing; the stored roadmap stays empty until confirm.
 //
@@ -58,8 +58,11 @@ func TestBuildFromPrdDraftsWithoutCommit(t *testing.T) {
 	if len(commits) != 0 {
 		t.Fatalf("fresh PRD already has %d commits", len(commits))
 	}
-	if prd.Status != "draft" {
-		t.Fatalf("fresh PRD status = %q, want draft", prd.Status)
+	// Approved (the build gate, rv5-PARB-01) but never committed.
+	for _, s := range []string{"reviewing", "approved"} {
+		if _, err := st.UpdatePrdStatus(ctx, admin.ID, prd.ID, s); err != nil {
+			t.Fatalf("status %s: %v", s, err)
+		}
 	}
 
 	tokens := auth.NewTokenIssuer("a-32-byte-or-longer-test-secret!", time.Hour)

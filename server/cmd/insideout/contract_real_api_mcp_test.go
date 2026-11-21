@@ -177,6 +177,12 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 				t.Fatalf("%s = %+v, want the API's planner-not-configured answer", name, out)
 			}
 		}
+		// Only an approved PRD is built, and approving is the human's (rv5-PARB-01).
+		for _, s := range []string{"reviewing", "approved"} {
+			if got := cliJSON[doc](t, "prd", "update", "--status", s, r.prd); got.Status != s {
+				t.Fatalf("prd update --status %s = %+v", s, got)
+			}
+		}
 		built := toolJSON[doc](t, s, "build_confirm", kv{"prd_id": r.prd, "tree": `{"title":"Plan","children":[{"title":"One"},{"title":"Two"}]}`})
 		if built.ProjectID == "" || built.NodeCount != 3 {
 			t.Fatalf("build_confirm = %+v, want a project holding the 3 drafted nodes", built)

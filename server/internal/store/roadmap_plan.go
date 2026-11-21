@@ -193,7 +193,10 @@ func (s *Store) PrdIDForProject(ctx context.Context, actorID, projectID uuid.UUI
 
 // EnsureProjectForPrd returns the project a PRD builds into, creating and
 // linking one (titled from the PRD) on first use. This is the PRD → reality
-// bridge: an approved/refined PRD becomes a project with a buildable roadmap.
+// bridge: an approved PRD becomes a project with a buildable roadmap. Only the
+// build confirm calls it. Creating the project takes the CreatePrdCommit rule,
+// the PRD's author or a workspace admin (rv5-FEAT-01); an existing link is
+// returned to any member, and the roadmap write that follows checks its own rule.
 func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*Project, error) {
 	var p *Project
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -210,15 +213,17 @@ func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUI
 		var workspaceID uuid.UUID
 		var linkedProject *uuid.UUID
 		var title string
-		err := tx.QueryRow(ctx, `SELECT workspace_id, project_id, title FROM insideout.prds WHERE id = $1`, prdID).
-			Scan(&workspaceID, &linkedProject, &title)
+		var authorID uuid.UUID
+		err := tx.QueryRow(ctx, `SELECT workspace_id, project_id, title, author_id FROM insideout.prds WHERE id = $1`, prdID).
+			Scan(&workspaceID, &linkedProject, &title, &authorID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNotFound
 		}
 		if err != nil {
 			return err
 		}
-		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
+		role, err := requireMember(ctx, tx, workspaceID, actorID)
+		if err != nil {
 			return err
 		}
 
@@ -227,6 +232,9 @@ func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUI
 			var scanErr error
 			p, scanErr = scanProject(row)
 			return scanErr
+		}
+		if authorID != actorID && role != "admin" {
+			return ErrForbidden
 		}
 
 		row := tx.QueryRow(ctx, `
@@ -239,8 +247,14 @@ func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUI
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `UPDATE insideout.prds SET project_id = $2 WHERE id = $1`, prdID, proj.ID); err != nil {
+		tag, err := tx.Exec(ctx, `UPDATE insideout.prds SET project_id = $2 WHERE id = $1`, prdID, proj.ID)
+		if err != nil {
 			return err
+		}
+		// Row-level security answers a refused UPDATE with zero rows: roll the
+		// project back rather than leave it unlinked.
+		if tag.RowsAffected() != 1 {
+			return ErrForbidden
 		}
 		p = proj
 		return nil

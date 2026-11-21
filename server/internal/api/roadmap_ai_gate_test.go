@@ -71,6 +71,12 @@ func newGateFixture(t *testing.T) gateFixture {
 	if err != nil {
 		t.Fatalf("convert idea: %v", err)
 	}
+	// Only an approved PRD is built (rv5-PARB-01).
+	for _, s := range []string{"reviewing", "approved"} {
+		if _, err := st.UpdatePrdStatus(ctx, user.ID, prd.ID, s); err != nil {
+			t.Fatalf("status %s: %v", s, err)
+		}
+	}
 	project, err := st.EnsureProjectForPrd(ctx, user.ID, prd.ID)
 	if err != nil {
 		t.Fatalf("ensure project: %v", err)
