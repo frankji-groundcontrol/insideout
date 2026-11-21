@@ -105,15 +105,11 @@ class TestStoreInvariants(unittest.TestCase):
         self.assertGreater(seen, 0, "no hosts found")
 
     # rv5-STRC-04: the manifests are a second catalogue of the variables in
-    # .env.example. Each listed difference is known drift, recorded in
-    # docs/issues/2026-11-21-key-manifests-one-set.md; a new one fails here.
-    SKELETON_ONLY = {
-        "INSIDEOUT_AI_TURN_DEADLINE": "added to the skeleton after the manifests were copied",
-        "INSIDEOUT_TRUSTED_PROXY_HOPS": "added to the skeleton after the manifests were copied",
-    }
-    MANIFEST_ONLY = {
-        "INSIDEOUT_GH_CLIENT_SECRET": "github/app.yaml: no server reader yet",
-    }
+    # .env.example. The drift recorded in
+    # docs/issues/2026-11-21-key-manifests-one-set.md is settled; list a
+    # name here only with a reason, and any unlisted difference fails.
+    SKELETON_ONLY: dict = {}
+    MANIFEST_ONLY: dict = {}
 
     def test_manifest_variables_match_the_skeleton(self):
         import env_catalog
