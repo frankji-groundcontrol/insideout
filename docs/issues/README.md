@@ -19,6 +19,7 @@ records, open and closed, follows under the later headings.
 | Record | Kind | Since | What is open |
 | --- | --- | --- | --- |
 | [Per-Project roles](2026-11-21-per-project-roles.md) | product slice | 2026-11-21 | Decision Owner, Driver, Contributor, Reviewer and Viewer have no storage or check |
+| [Key manifests: one shared set](2026-11-21-key-manifests-one-set.md) | structural debt | 2026-11-21 | each host folder copies the key manifests; a test now holds them to `.env.example`, the move to one set is open |
 | [Long functions over the function budget](2026-11-21-long-functions.md) | structural debt | 2026-11-21 | sixteen functions over 80 lines, listed in the function guard; the list only shrinks |
 | [Review 5 open findings](./2026-11-21-review-5-open-findings.md) | review ledger | 2026-11-21 | the review 5 High defects not yet remediated, and the open owner question on proposals |
 | [Review 4 open findings](2026-10-18-review-4-open-findings.md) | review ledger | 2026-10-18 | review 4's open residue, gate notes and owner rows |
