@@ -41,7 +41,9 @@ class RoadmapPage extends StatefulWidget {
   State<RoadmapPage> createState() => _RoadmapPageState();
 }
 
-enum _RoadmapView { progress, bands, canvas }
+/// Mine is the canvas over the caller's own branches (owner decision 2: a
+/// default view, not a wall).
+enum _RoadmapView { progress, bands, canvas, mine }
 
 class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   late Future<List<RoadmapNode>> _future;
@@ -49,6 +51,12 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
   Future<RoadmapNodeRead>? _read;
   _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
+
+  /// Branches folded on the canvas, kept for this page session.
+  final _collapsed = <String>{};
+
+  void _toggleFold(String nodeId) =>
+      setState(() => _collapsed.remove(nodeId) || _collapsed.add(nodeId));
 
   /// The caller writes the whole plan (GET /projects/{pid} canWritePlan).
   bool _planWriter = false;
@@ -158,12 +166,13 @@ class _RoadmapPageState extends State<RoadmapPage> with _RoadmapLive {
             _RoadmapView.progress => 'roadmap.viewProgress',
             _RoadmapView.bands => 'roadmap.viewBands',
             _RoadmapView.canvas => 'roadmap.viewCanvas',
+            _RoadmapView.mine => 'roadmap.viewMine',
           }),
           selected: _view == view,
           onTap: () => setState(() => _view = view),
         ),
     ];
-    // Three toggles plus four utility icons run off a phone's left edge, so
+    // Four toggles plus four utility icons run off a phone's left edge, so
     // there the toggles move into the header.
     final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
     return AppScaffold(

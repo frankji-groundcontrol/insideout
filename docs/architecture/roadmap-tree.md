@@ -249,11 +249,21 @@ opens a branch as its tree (a leaf opens its read-only detail), the "Open as
 tree", "Details", "Delegate to…" and "Hand back" menu items, and write items
 shown only where `canWrite` (and, for move, delete, delegate and validate, the
 plan-writer or parent rule) says they succeed
-(`client/lib/features/project/roadmap_node_menu.dart`). Known limitation:
+(`client/lib/features/project/roadmap_node_menu.dart`). The roadmap page's
+"Mine" view lays out, as canvas bands, the caller's topmost owned nodes and
+everything below them (`roadmapMine` in
+`client/lib/features/project/roadmap_tree.dart`, from the node views'
+`ownerId` and the signed-in user); the signed-in landing's "My work" lists
+`mine` for each workspace, each item opening its tree
+(`client/lib/features/dashboard/my_work_section.dart`). The canvas folds a
+branch behind a chevron that shows how many nodes it hides, remembered for
+the page session; every card's bar and "n of m done" come from the server
+`rollup`, so validated counts as finished and every leaf below counts, not
+only direct children. Known limitation:
 in an opened tree the root's parent is not loaded, so a delegate who holds a
 branch above it (but is not a plan writer) sees no Move, Delete or Delegate
-on the opened root's card; they do it from the parent's tree. Still to land: the
-web "Mine" toggle and landing list, canvas collapse and the roll-up bar
+on the opened root's card; they do it from the parent's tree. Still to land:
+the MCP and CLI surfaces
 ([execution plan](../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md),
 [row detail](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
 Update this page as each slice lands.

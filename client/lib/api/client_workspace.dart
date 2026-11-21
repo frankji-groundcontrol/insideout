@@ -30,6 +30,18 @@ mixin _WorkspaceVerbs on _ApiCore {
     return _parse(res, (d) => Workspace.fromJson(d as Map<String, dynamic>));
   }
 
+  /// GET /workspaces/{id}/roadmap/mine: the caller's topmost owned nodes in
+  /// the workspace, each with its project and path.
+  Future<List<RoadmapNodeRead>> listMyRoadmap(String workspaceId) async {
+    final res = await _dio.get('/workspaces/$workspaceId/roadmap/mine');
+    return _parse(
+      res,
+      (d) => (d as List)
+          .map((e) => RoadmapNodeRead.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
   Future<List<WorkspaceMember>> listMembers(String id) async {
     final res = await _dio.get('/workspaces/$id/members');
     return _parse(

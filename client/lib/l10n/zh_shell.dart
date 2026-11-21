@@ -40,6 +40,7 @@ const zhShell = <String, String>{
   'home.chapterBody': '每个版本保住自己的编号。一个人读完、核对证据、写下名字。只有这个签名，才能把版本推进路线图。',
   'home.loopTrail': '想法 · 版本 · 提交 · 路线图 · 证据',
   'home.captureIdea': '记下想法',
+  'home.myWork': '我的工作',
   'time.justNow': '刚刚',
   'time.minutesAgo': '{n} 分钟前',
   'time.hoursAgo': '{n} 小时前',

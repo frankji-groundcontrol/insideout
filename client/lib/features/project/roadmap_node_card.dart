@@ -30,7 +30,6 @@ class RoadmapNodeCard extends StatelessWidget {
     required this.node,
     required this.onReload,
     this.compact = false,
-    this.childProgress,
     this.descendants = 0,
     this.planWriter = false,
     this.parentWritable = false,
@@ -50,23 +49,14 @@ class RoadmapNodeCard extends StatelessWidget {
   final bool planWriter;
   final bool parentWritable;
 
-  /// Share of this node's children that are done (0..1), or null for a
-  /// leaf — leaves show no bar rather than an invented percentage. Only a
-  /// caller holding the whole tree can compute it.
-  final double? childProgress;
-
-  /// done-children share of [n] within [all], or null when [n] is a leaf.
-  static double? childDoneShare(List<RoadmapNode> all, RoadmapNode n) {
-    final children = all.where((o) => o.parentId == n.id).toList();
-    if (children.isEmpty) return null;
-    final done = children.where((c) => c.status == 'done').length;
-    return done / children.length;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
+    // The server's roll-up over every leaf below (validated counts as done);
+    // a leaf shows no bar rather than an invented percentage.
+    final rollup = node.rollup;
+    final showRollup = descendants > 0 && rollup.leaves > 0;
     return FieldCard(
       // A branch opens as its own tree; a leaf has nothing below it, so it
       // opens its read-only detail instead.
@@ -138,14 +128,23 @@ class RoadmapNodeCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ),
-          if (childProgress != null) ...[
+          if (showRollup) ...[
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(Cobalt.radiusPill),
               child: LinearProgressIndicator(
-                value: childProgress,
+                value: rollup.done / rollup.leaves,
                 minHeight: 4,
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.t('roadmap.rollup', {
+                'done': rollup.done,
+                'leaves': rollup.leaves,
+                'validated': rollup.validated,
+              }),
+              style: theme.textTheme.bodySmall,
             ),
           ],
         ],

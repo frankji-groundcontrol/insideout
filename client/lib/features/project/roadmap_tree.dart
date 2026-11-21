@@ -18,6 +18,15 @@ List<RoadmapNode> roadmapRoots(List<RoadmapNode> all) {
     ..sort((a, b) => a.position.compareTo(b.position));
 }
 
+/// The caller's work tree within [all]: every node [userId] owns or that
+/// sits below one they own. Its roots are their topmost owned nodes.
+List<RoadmapNode> roadmapMine(List<RoadmapNode> all, String userId) {
+  final byId = {for (final n in all) n.id: n};
+  bool mine(RoadmapNode? n) =>
+      n != null && (n.ownerId == userId || mine(byId[n.parentId]));
+  return all.where(mine).toList();
+}
+
 /// Whether the caller may write [node]'s parent: then [node] lies strictly
 /// below a branch they hold, and they may move, delete or re-own it.
 bool roadmapParentWritable(List<RoadmapNode> all, RoadmapNode node) =>

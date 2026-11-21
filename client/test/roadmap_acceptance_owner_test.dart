@@ -101,9 +101,9 @@ Future<void> _pumpCard(
             projectId: 'p1',
             node: node,
             onReload: () async {},
-            childProgress: all == null
-                ? null
-                : RoadmapNodeCard.childDoneShare(all, node),
+            descendants: all == null
+                ? 0
+                : all.where((n) => n.parentId == node.id).length,
           ),
         ),
       ),
@@ -154,6 +154,7 @@ void main() {
       description: '',
       status: 'in_progress',
       position: 0,
+      rollup: const RoadmapRollup(leaves: 2, done: 1),
     );
     final childA = RoadmapNode(
       canWrite: true,

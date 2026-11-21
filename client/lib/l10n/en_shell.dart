@@ -42,6 +42,7 @@ const enShell = <String, String>{
       'Every version keeps its number. A person reads it, checks the evidence, and puts their name on it. That signature is the only thing that moves a version onto the roadmap.',
   'home.loopTrail': 'Idea · Version · Commit · Roadmap · Evidence',
   'home.captureIdea': 'Capture an idea',
+  'home.myWork': 'My work',
   'time.justNow': 'just now',
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',

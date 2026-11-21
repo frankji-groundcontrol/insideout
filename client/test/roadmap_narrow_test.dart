@@ -150,7 +150,8 @@ void main() {
       (tester) async {
         await _pump(tester, locale: locale, size: _phone);
 
-        expect(find.byType(BlockChoice), findsNWidgets(3));
+        // Progress, Bands, Canvas and Mine (rv5-TREEX-03).
+        expect(find.byType(BlockChoice), findsNWidgets(4));
         expect(find.byType(BlockIconButton), findsNWidgets(4));
         for (final finder in [
           find.byType(BlockChoice),
@@ -201,5 +202,20 @@ void main() {
     final language = tester.getRect(find.byIcon(Icons.translate));
     expect(toggle.center.dy, closeTo(language.center.dy, 1));
     expect(toggle.right, lessThan(language.left));
+  });
+
+  testWidgets('at the first wide width all four toggles stay on screen', (
+    tester,
+  ) async {
+    await _pump(tester, locale: 'en-US', size: const Size(600, 844));
+
+    for (final finder in [
+      find.byType(BlockChoice),
+      find.byType(BlockIconButton),
+    ]) {
+      for (var i = 0; i < finder.evaluate().length; i++) {
+        expect(tester.getRect(finder.at(i)).left, greaterThanOrEqualTo(0));
+      }
+    }
   });
 }

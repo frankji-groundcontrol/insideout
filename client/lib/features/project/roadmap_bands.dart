@@ -123,8 +123,8 @@ class _BandRow extends StatelessWidget {
   final Color? labelColor;
   final List<RoadmapNode> nodes;
 
-  /// Every node of the project — child progress needs siblings, not just
-  /// this band's members.
+  /// Every node of the project — a card's descendants and parent sit
+  /// outside this band's members.
   final List<RoadmapNode> allNodes;
   final String projectId;
   final Future<void> Function() onReload;
@@ -145,7 +145,6 @@ class _BandRow extends StatelessWidget {
               node: n,
               onReload: onReload,
               compact: true,
-              childProgress: RoadmapNodeCard.childDoneShare(allNodes, n),
               descendants: roadmapDescendantCount(allNodes, n),
               planWriter: planWriter,
               parentWritable: roadmapParentWritable(allNodes, n),

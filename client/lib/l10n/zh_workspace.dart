@@ -166,4 +166,8 @@ const zhWorkspace = <String, String>{
   'roadmap.history.handback': '{from} 交回给 {to}',
   'roadmap.history.cleared': '{from} 已离开工作区，负责人已清除',
   'roadmap.someone': '某人',
+  'roadmap.viewMine': '我的',
+  'roadmap.mineEmpty': '这棵树里还没有你负责的节点。',
+  'roadmap.collapse': '折叠此分支',
+  'roadmap.expand': '展开此分支',
 };

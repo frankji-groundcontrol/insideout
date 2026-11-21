@@ -176,4 +176,8 @@ const enWorkspace = <String, String>{
   'roadmap.history.handback': '{from} handed back to {to}',
   'roadmap.history.cleared': '{from} left the workspace; ownership cleared',
   'roadmap.someone': 'someone',
+  'roadmap.viewMine': 'Mine',
+  'roadmap.mineEmpty': 'Nothing in this tree is yours yet.',
+  'roadmap.collapse': 'Fold this branch',
+  'roadmap.expand': 'Unfold this branch',
 };

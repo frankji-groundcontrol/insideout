@@ -29,8 +29,11 @@ class HomeField extends StatelessWidget {
     required this.onJoin,
     required this.onOpen,
     required this.onCapture,
+    this.myWork,
   });
 
+  /// The caller's own roadmap nodes, above the index block when present.
+  final Widget? myWork;
   final List<Workspace> workspaces;
   final VoidCallback onCreate;
   final VoidCallback onJoin;
@@ -97,6 +100,7 @@ class HomeField extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: Cobalt.space8),
+            ?myWork,
             if (wide)
               IntrinsicHeight(
                 child: Row(

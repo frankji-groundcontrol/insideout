@@ -46,7 +46,8 @@ client/lib/
                       (core, auth, workspace, project, prd, stream); models.dart
                       is a barrel over models_{session,project,roadmap,prd};
                       request builders, errors, SSE transport
-  features/           landing, auth (AuthDoor), dashboard, workspace, profile;
+  features/           landing, auth (AuthDoor), dashboard (with My work),
+                      workspace, profile;
                       project (project page and the roadmap: page, header,
                       breadcrumb, bands, canvas, minimap, progress view, node
                       menu, edit, delegate and detail); prd (desk, coach,
