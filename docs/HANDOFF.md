@@ -17,8 +17,9 @@ the build path checks before it writes; the task tree for roles works on web,
 REST, CLI and MCP; the four surfaces reach the same routes under one error
 style, with a parity test; the code follows a responsibility rule with a
 function-length guard; and the documentation graph is checked, with Marksman
-at 0. Owner decision 7 (a node writer may file proposals inside their
-subtree) follows in its own PR. CI is disabled in the repository at the owner's
+at 0. Owner decision 7 is built: a node writer, and their agent, may file
+proposals inside their subtree
+([changelog](changelogs/2026-11-21-proposals-inside-a-delegates-subtree.md)). CI is disabled in the repository at the owner's
 request: the `ci`, `security`, `smoke` and `ubuntu install skill` workflows
 are off ([how to re-enable](usage/local-development.md)); verification is
 local.
