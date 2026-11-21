@@ -10,7 +10,7 @@ when the line rule was replaced by a responsibility rule with a function-length 
 
 ## What is over
 
-*2026-11-21, wave 4: `Coach.HandleMessage`, `runLocalSetup` and `parseAnthropicStream` are split and out of the guard's list; `parseResponsesStream` moved to `internal/llm`. Thirteen remain.*
+*2026-11-21, wave 4: `Coach.HandleMessage`, `runLocalSetup` and `parseAnthropicStream` are split and out of the guard's list; `parseResponsesStream` moved to `internal/llm`. Thirteen remain. Wave 3, built beside the guard, grew `addAuthTools` to 156 lines and `runClientCommand` (`cmd/insideout/cli.go`) to 92: both are listed at those lengths and assigned to the wave 4 MCP and CLI splits.*
 
 Length is counted from the `func` line to the closing brace, at `87c95f5`:
 
