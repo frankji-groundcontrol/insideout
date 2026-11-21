@@ -50,6 +50,8 @@ func recordOwnerChangeTx(ctx context.Context, tx pgx.Tx, actorID, nodeID uuid.UU
 	}
 	content := fmt.Sprintf("Delegated %q", title)
 	switch {
+	case kind == "delegate" && to != nil && *to == actorID: // the actor took it on (starting an ownerless leaf)
+		content = fmt.Sprintf("Took on %q", title)
 	case kind == "handback":
 		content = fmt.Sprintf("Handed back %q", title)
 	case kind == "cleared":

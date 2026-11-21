@@ -57,7 +57,9 @@ either route or `PATCH`, appends an assignment row and a `node_delegated` or
 owner is no change. The feed text names the node, not the people: who-to-whom is
 read from `GET /roadmap/{nid}/assignments`, newest first with names resolved at
 read time. A node reaching done writes a `node_done` feed row. Moving an
-ownerless leaf to `in_progress` makes the acting human its owner, and a build
+ownerless leaf to `in_progress` makes the acting human its owner (the feed row
+keeps the kind `node_delegated` but reads "Took on", since the actor assigned
+it to themself), and a build
 seeds its first in-progress leaf owned by the builder, so work in progress has
 one owner (`claimStartedLeaf`, `server/internal/store/roadmap_completion.go`).
 A member who leaves or is removed from a workspace stops owning its nodes in the
