@@ -38,6 +38,10 @@ func treeRecorder(t *testing.T) (*httptest.Server, func() []treeRequest) {
 		mu.Lock()
 		got = append(got, treeRequest{target, body})
 		mu.Unlock()
+		if r.Method == http.MethodGet && (r.URL.Path == "/projects/p1" || r.URL.Path == "/workspaces/ws1") {
+			w.Write([]byte(`{"id":"x","title":"Old","description":"Old text","status":"active"}`))
+			return
+		}
 		w.Write([]byte(`{"ok":true}`))
 	}))
 	t.Cleanup(srv.Close)

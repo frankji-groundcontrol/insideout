@@ -89,6 +89,23 @@ func TestCLIAndMCPProjectVerbsOnTheRealAPI(t *testing.T) {
 	if page := toolJSON[updatesPage](t, s, "project_updates", kv{"project_id": pr.ID, "before": *first.NextCursor}); len(page.Updates) != 1 {
 		t.Fatalf("project_updates before the cursor = %+v, want the oldest note", page)
 	}
+	// rv5-PARB-04, PARA-06: the project and workspace reads and edits run on the agent token.
+	if got := toolJSON[updatesPage](t, s, "project", kv{"project_id": pr.ID}); got.ID != pr.ID || got.Status != "paused" {
+		t.Fatalf("project tool = %+v, want the paused project", got)
+	}
+	if got := toolJSON[updatesPage](t, s, "project_update", kv{"project_id": pr.ID, "status": "active"}); got.Status != "active" || got.Title != "Board "+sfx {
+		t.Fatalf("project_update = %+v, want active with its title kept", got)
+	}
+	if got := toolJSON[updatesPage](t, s, "workspace_update", kv{"workspace_id": ws.ID, "description": "by the agent"}); got.Description != "by the agent" || got.Title != "Renamed "+sfx {
+		t.Fatalf("workspace_update = %+v, want the new description and the title kept", got)
+	}
+	if got := toolJSON[updatesPage](t, s, "workspace", kv{"workspace_id": ws.ID}); got.Description != "by the agent" {
+		t.Fatalf("workspace tool = %+v, want the agent's description", got)
+	}
+	note := toolJSON[doc](t, s, "update_add", kv{"project_id": pr.ID, "kind": "progress", "content": "agent note"})
+	if got := toolJSON[doc](t, s, "update_edit", kv{"update_id": note.ID, "content": "agent note, corrected"}); got.Content != "agent note, corrected" {
+		t.Fatalf("update_edit = %+v, want the corrected note", got)
+	}
 
 	// rv5-PARC-04: the human records what was observed, then confirms the node.
 	leaf := cliJSON[doc](t, "roadmap", "add", "--title", "Leaf "+sfx, pr.ID)
