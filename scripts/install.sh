@@ -70,9 +70,8 @@ else
 fi
 
 echo
-api_base=$("$repo_root/scripts/default-api.sh")
-echo "Done. The CLI and MCP server call the hosted API with no environment variables:"
-echo "  $api_base"
+echo "Done. The CLI and MCP server call the default hosted API."
+echo "No environment variables are required."
 echo
 echo "Sign in (password is read from the terminal; the login is saved for the CLI and the MCP server):"
 echo "  insideout login you@example.com"

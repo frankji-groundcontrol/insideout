@@ -18,6 +18,19 @@ func codeEmailHTML(code string, ttlMinutes int) string {
 </body></html>`, code, ttlMinutes)
 }
 
+// resetEmailHTML renders the password-reset email: the web link and the
+// same token as a reset code to paste into `insideout reset-password`.
+func resetEmailHTML(link, code, expires string) string {
+	return fmt.Sprintf(`<!doctype html>
+<html><body style="font-family:system-ui,-apple-system,sans-serif;line-height:1.6;color:#1a1a1a;">
+<h2 style="margin-bottom:4px;">Reset your InsideOut password</h2>
+<p>Open the link to reset on the web, or copy the code and paste it into <code>insideout reset-password</code>.</p>
+<p><a href="%s" style="display:inline-block;padding:12px 24px;background:#3B5BFF;color:#ffffff;text-decoration:none;">Reset on the web</a></p>
+<p style="font-size:14px;font-weight:700;word-break:break-all;margin:16px 0;">%s</p>
+<p style="color:#666666;font-size:13px;">This code works once and expires in %s. If you didn't request it, you can ignore this email.</p>
+</body></html>`, link, code, expires)
+}
+
 // simpleEmailHTML renders the minimal inline template both auth emails
 // share — no template files, same inline-string approach as docmind.
 // expires is the pre-rendered lifetime phrase (e.g. "15 minutes",

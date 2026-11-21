@@ -10,9 +10,19 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
-// The flow's LoginClient is consumer-defined; the real client must keep
-// satisfying it (compile-time proof).
-var _ LoginClient = (*apiclient.Client)(nil)
+// mailClient adapts the product client to LoginClient. The emailed
+// requests return the mail word the wizard prints.
+type mailClient struct{ *apiclient.Client }
+
+func (m mailClient) RequestLoginCode(email string) (string, error) {
+	return m.RequestLoginCodeStatus(email)
+}
+
+func (m mailClient) RequestMagicLink(email string) (string, error) {
+	return m.RequestMagicLinkStatus(email)
+}
+
+var _ LoginClient = mailClient{}
 
 type fakeProber struct {
 	got string
@@ -49,9 +59,24 @@ func (f *fakeClient) Login(email, password string) error {
 	return f.loginErr
 }
 
-func (f *fakeClient) RequestLoginCode(email string) error {
+func (f *fakeClient) Register(email, password, username, inviteCode string) error {
+	f.record("register:" + email + ":" + password + ":" + username + ":" + inviteCode)
+	return f.loginErr
+}
+
+func (f *fakeClient) ForgotPassword(email string) error {
+	f.record("forgot:" + email)
+	return f.loginErr
+}
+
+func (f *fakeClient) ResetPassword(token, password string) error {
+	f.record("reset:" + token + ":" + password)
+	return f.loginErr
+}
+
+func (f *fakeClient) RequestLoginCode(email string) (string, error) {
 	f.record("requestCode:" + email)
-	return f.requestErr
+	return "accepted", f.requestErr
 }
 
 func (f *fakeClient) VerifyLoginCode(email, code string) error {
@@ -59,9 +84,9 @@ func (f *fakeClient) VerifyLoginCode(email, code string) error {
 	return f.verifyErr
 }
 
-func (f *fakeClient) RequestMagicLink(email string) error {
+func (f *fakeClient) RequestMagicLink(email string) (string, error) {
 	f.record("requestMagic:" + email)
-	return f.requestErr
+	return "accepted", f.requestErr
 }
 
 func (f *fakeClient) ConsumeMagicLink(token string) error {
@@ -131,6 +156,28 @@ func TestRunPasswordHappyPath(t *testing.T) {
 	want := clientconfig.Config{APIBase: testBase, Token: "tok-123"}
 	if pers.saved[0] != want {
 		t.Fatalf("saved = %+v, want %+v", pers.saved[0], want)
+	}
+}
+
+func TestRunRegisterUsesTheEmailNameAndSavesTheSession(t *testing.T) {
+	client := &fakeClient{token: "tok-reg", refresh: "ref-reg"}
+	pers := &fakePersister{}
+	res, err := runRemote(t, func(i *Inputs, d *Deps) {
+		i.AuthMethod = AuthRegister
+		i.Secret = "longenough"
+		i.InviteCode = "invite-1"
+		d.Client = client
+		d.Persister = pers
+	})
+	if err != nil || !res.SignedIn {
+		t.Fatalf("Run = %+v, %v", res, err)
+	}
+	want := "register:user@example.test:longenough:user:invite-1"
+	if strings.Join(client.calls, ",") != want {
+		t.Fatalf("calls = %v, want %s", client.calls, want)
+	}
+	if pers.saved[0].Token != "tok-reg" || pers.saved[0].RefreshToken != "ref-reg" {
+		t.Fatalf("saved = %+v", pers.saved[0])
 	}
 }
 

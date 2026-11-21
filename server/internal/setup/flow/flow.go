@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
@@ -21,6 +22,7 @@ const (
 	AuthPassword = "password"
 	AuthCode     = "code"
 	AuthMagic    = "magic"
+	AuthRegister = "register"
 )
 
 // Inputs are the answers the setup flow runs on (collected by the UI
@@ -28,8 +30,10 @@ const (
 type Inputs struct {
 	Mode       string // ModeRemote or ModeLocal
 	BaseURL    string // empty means the hosted default
-	AuthMethod string // AuthPassword, AuthCode or AuthMagic
+	AuthMethod string // AuthPassword, AuthCode, AuthMagic, or AuthRegister
 	Email      string
+	Username   string // register only; empty uses the part of the email before @
+	InviteCode string // register only; required when signup is invitation-only
 	Secret     string // password, emailed code, or pasted magic link
 }
 
@@ -49,9 +53,12 @@ type Prober interface {
 // *apiclient.Client satisfies it (asserted in flow_test.go).
 type LoginClient interface {
 	Login(email, password string) error
-	RequestLoginCode(email string) error
+	Register(email, password, username, inviteCode string) error
+	ForgotPassword(email string) error
+	ResetPassword(token, password string) error
+	RequestLoginCode(email string) (mail string, err error)
 	VerifyLoginCode(email, code string) error
-	RequestMagicLink(email string) error
+	RequestMagicLink(email string) (mail string, err error)
 	ConsumeMagicLink(token string) error
 	AuthConfig() (string, error)
 	Token() string
@@ -75,11 +82,14 @@ type Deps struct {
 	Persister      Persister
 	PromptSecret   SecretPrompt
 	DefaultBaseURL string // used when Inputs.BaseURL is empty
-	// LocalSetup is the join hook for the interactive UI's local
-	// branch: ui.Run calls it with "bundled"|"own" instead of Run
-	// (Run stays pure and refuses local mode). Nil means the caller
-	// has no local assembly wired.
-	LocalSetup func(ctx context.Context, postgres string) error
+	// LocalSetup prepares a server on this machine. ownDSN is the hidden
+	// URL from step 1.3.2, empty for bundled Postgres. It does not ask
+	// whether to start the API.
+	LocalSetup func(ctx context.Context, postgres, ownDSN string) error
+	// StartServer runs after step 1.3.4. start false prints the command.
+	StartServer func(start bool) error
+	// OnMail reports the mail word after an emailed sign-in request.
+	OnMail func(status string)
 }
 
 // ErrLocalNotImplemented: local mode is slice 2's work; the remote
@@ -119,7 +129,7 @@ type ProbeError struct {
 }
 
 func (e *ProbeError) Error() string {
-	return fmt.Sprintf("insideout setup: %s is not reachable: %v", e.BaseURL, e.Err)
+	return fmt.Sprintf("insideout setup: %s is not reachable: %s", apiclient.PublicBase(e.BaseURL), apiclient.RedactDefault(e.Err.Error()))
 }
 
 func (e *ProbeError) Unwrap() error { return e.Err }
@@ -148,7 +158,7 @@ func Run(ctx context.Context, inputs Inputs, deps Deps) (Result, error) {
 	if err := deps.Prober.ProbeAPI(ctx, base); err != nil {
 		return Result{}, &ProbeError{BaseURL: base, Err: err}
 	}
-	if err := signIn(inputs, deps.Client, deps.PromptSecret); err != nil {
+	if err := signIn(inputs, deps.Client, deps.PromptSecret, deps.OnMail); err != nil {
 		return Result{}, err
 	}
 	if err := deps.Persister.Save(clientconfig.Config{APIBase: base, Token: deps.Client.Token(), RefreshToken: deps.Client.RefreshToken()}); err != nil {
@@ -165,8 +175,21 @@ func validateBaseURL(base string) error {
 	return nil
 }
 
-func signIn(inputs Inputs, client LoginClient, prompt SecretPrompt) error {
+func signIn(inputs Inputs, client LoginClient, prompt SecretPrompt, onMail func(string)) error {
 	switch inputs.AuthMethod {
+	case AuthRegister:
+		secret, err := secretFor(inputs, prompt)
+		if err != nil {
+			return err
+		}
+		username := inputs.Username
+		if username == "" {
+			username = inputs.Email
+			if at := strings.IndexByte(username, '@'); at > 0 {
+				username = username[:at]
+			}
+		}
+		return client.Register(inputs.Email, secret, username, inputs.InviteCode)
 	case AuthPassword:
 		secret, err := secretFor(inputs, prompt)
 		if err != nil {
@@ -174,8 +197,12 @@ func signIn(inputs Inputs, client LoginClient, prompt SecretPrompt) error {
 		}
 		return client.Login(inputs.Email, secret)
 	case AuthCode:
-		if err := client.RequestLoginCode(inputs.Email); err != nil {
+		mail, err := client.RequestLoginCode(inputs.Email)
+		if err != nil {
 			return err
+		}
+		if onMail != nil {
+			onMail(mail)
 		}
 		secret, err := secretFor(inputs, prompt)
 		if err != nil {
@@ -183,8 +210,12 @@ func signIn(inputs Inputs, client LoginClient, prompt SecretPrompt) error {
 		}
 		return client.VerifyLoginCode(inputs.Email, secret)
 	case AuthMagic:
-		if err := client.RequestMagicLink(inputs.Email); err != nil {
+		mail, err := client.RequestMagicLink(inputs.Email)
+		if err != nil {
 			return err
+		}
+		if onMail != nil {
+			onMail(mail)
 		}
 		secret, err := secretFor(inputs, prompt)
 		if err != nil {

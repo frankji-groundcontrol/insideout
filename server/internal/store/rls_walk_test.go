@@ -245,3 +245,30 @@ func TestRLSWalk(t *testing.T) {
 		t.Fatalf("scan policies: %v", err)
 	}
 }
+
+// noRLSTables are the tables left outside RLS on purpose, the list in
+// docs/architecture/database-and-rls.md. A new table is red until it is
+// either an RLS table in rlsTables or named here (COMP-04).
+var noRLSTables = []string{
+	"ai_circuit_breaker", "ai_run_events", "auth_tokens", "invitations",
+	"reset_watches", "schema_migrations", "sessions", "settings",
+}
+
+func TestEveryTableWithoutRLSIsListed(t *testing.T) {
+	st := newTestStore(t)
+	rows, err := st.Pool.Query(context.Background(), `
+		SELECT c.relname
+		FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+		WHERE n.nspname = 'insideout' AND c.relkind IN ('r', 'p') AND NOT c.relrowsecurity
+		ORDER BY c.relname`)
+	if err != nil {
+		t.Fatalf("list tables without RLS: %v", err)
+	}
+	got, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		t.Fatalf("scan tables without RLS: %v", err)
+	}
+	if fmt.Sprint(got) != fmt.Sprint(noRLSTables) {
+		t.Errorf("tables without RLS = %v, want %v: enable RLS on a new table or list it here and in database-and-rls.md", got, noRLSTables)
+	}
+}

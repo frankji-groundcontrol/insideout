@@ -4,10 +4,13 @@ How to run InsideOut — as a developer or an operator.
 
 | Doc | Audience | Covers |
 |-----|----------|--------|
-| [installation.md](installation.md) | Users + agents | The prebuilt one-liner (https-only, checksum and build-provenance checks), the hosted install with no environment variables, and the guided PostgreSQL setup (`insideout setup`) for a server on this machine |
-| [key-setup-tutorial.md](key-setup-tutorial.md) | Operators + first-timers | Guided setup for all 31 mapped keys, with links to each key reference |
-| [key-testing-tutorial.md](key-testing-tutorial.md) | Operators + maintainers | Shape, reachability, provider, delivery, and capability checks for every key |
-| [../../skills/insideout-setup/](../../skills/insideout-setup/SKILL.md) | Agents | The installation skill: bare macOS/Ubuntu machine → verified install, module-by-module steps, key store, host record |
+| [user-guide.md](user-guide.md) | Users | Prebuilt binaries, `insideout setup`, sign-in, MCP. No server variables |
+| [setup-paths.md](setup-paths.md) | Users + agents | The maintained map of every `insideout setup` path |
+| [installation.md](installation.md) | Users + agents | The full install reference: the one-liner, the hosted path, and a server on this machine |
+| [../../skills/insideout-setup/](../../skills/insideout-setup/SKILL.md) | Agents | Hosted install: binaries, numbered `insideout setup`, MCP |
+| [../../skills/insideout-server/](../../skills/insideout-server/SKILL.md) | Agents | Own server and client development, only when someone asked to run the server |
+| [key-setup-tutorial.md](key-setup-tutorial.md) | Developers of this repository | Guided setup for the mapped keys, with links to each key reference |
+| [key-testing-tutorial.md](key-testing-tutorial.md) | Developers of this repository | Shape, reachability, provider, delivery, and capability checks for every key |
 | [local-development.md](local-development.md) | Developers | Prerequisites, env setup, database setup, running server + frontend, tests |
 | [account-deletion.md](account-deletion.md) | Operators | How a signed-in person deletes their own account, what is removed, and what other members keep |
 | [../client/README.md](../../client/README.md) | Developers | Flutter client (`client/`): web / iOS / Android against the Go API |

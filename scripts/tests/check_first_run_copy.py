@@ -187,14 +187,15 @@ def closing_messages_teach_the_sign_up_route(failures):
     """LEAD-SETUP-BLURB: the installers' closing messages end where a stranger
     needs an account; they give the same route as the blurb."""
     install = read("scripts/install.sh")
-    if "api_base=" not in install:
-        print("no api_base= closing block in scripts/install.sh", file=sys.stderr)
+    closing = 'echo "Done.'  # the closing block opens with the Done line
+    if closing not in install:
+        print("no `echo \"Done.` closing block in scripts/install.sh", file=sys.stderr)
         sys.exit(2)
     bootstrap = re.search(r"cat <<EOF\n(.*?)\nEOF(?:\n|\Z)", read("scripts/bootstrap.sh"), re.S)
     if not bootstrap:
         print("no closing `cat <<EOF` message in scripts/bootstrap.sh", file=sys.stderr)
         sys.exit(2)
-    for where, text in (("scripts/install.sh", install.split("api_base=", 1)[1]),
+    for where, text in (("scripts/install.sh", install.split(closing, 1)[1]),
                         ("scripts/bootstrap.sh", bootstrap.group(1))):
         if "insideout register --invite <invitation-code> you@example.com" not in text:
             fail(failures, f"{where}: the closing message does not give the sign-up route "

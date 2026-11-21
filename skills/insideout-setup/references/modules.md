@@ -1,8 +1,8 @@
 # Modules — install steps per platform
 
 One section per required module: what it is for, which destinations
-need it (A hosted · B own server · C full development — see
-[SKILL.md](../SKILL.md#step-0--platform-and-destination)), exact
+need it (A hosted, see [SKILL.md](../SKILL.md) · B own server · C full
+development, see [insideout-server](../../insideout-server/SKILL.md#server)), exact
 macOS and Ubuntu steps, and the verify command that ends the module.
 **Check first**: run the verify command; skip the module when it
 already passes. Every module must end green before the next one.
@@ -225,7 +225,8 @@ lists Chrome.
 
 Not system packages — these are the repo's scripts, run from the repo
 root after the modules above are green. Full commands and the
-path-specific decisions are [SKILL.md steps 2–5](../SKILL.md#step-2--get-the-repository);
+path-specific decisions are in [insideout-server](../../insideout-server/SKILL.md#server)
+and [its client section](../../insideout-server/SKILL.md#client);
 the module view:
 
 | Component | Installed by | Result |

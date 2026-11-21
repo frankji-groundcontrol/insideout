@@ -29,10 +29,15 @@ carry the one-line descriptions:
 
 ### 2026-11
 
+- [2026-11-21-rv5-remediation/](./2026-11-21-rv5-remediation/index.md)
+- [2026-11-21-focused-review-5.md](./2026-11-21-focused-review-5.md)
 - [2026-11-21-wave-4b-sync-and-push.md](2026-11-21-wave-4b-sync-and-push.md)
 
 ### 2026-10
 
+- [2026-10-22-reset-code-on-the-page.md](2026-10-22-reset-code-on-the-page.md)
+- [2026-10-21-reset-watch.md](2026-10-21-reset-watch.md)
+- [2026-10-20-install-front-door.md](2026-10-20-install-front-door.md)
 - [2026-10-20-omitted-project-owner.md](2026-10-20-omitted-project-owner.md)
 - [2026-10-20-completion-evidence-or-reason.md](2026-10-20-completion-evidence-or-reason.md)
 - [2026-10-20-rv4-decisions.md](2026-10-20-rv4-decisions.md)

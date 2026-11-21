@@ -109,14 +109,14 @@ Manual fallback without the script: `cd server && go build -o
 
 ### 装好之后：向导与 MCP / After installing: the wizard and MCP
 
-装好后，一条命令就是安装向导：交互式表单选择远程（托管/自建，密码、邮箱验证码或
-magic link 登录，密钥隐藏输入）或本地（PostgreSQL 引导配置、迁移、健康探测），
-结果存入 0600 配置文件；代理用标志驱动同一入口：
+装好后，一条命令就是安装向导。在终端里它用编号提问：连接托管服务（回车即接受；
+密码、邮箱验证码或 magic link，输入时隐藏）或在本机跑服务器。登录保存在
+0600 文件里。代理用标志驱动同一入口：
 
-Once installed, one command is the wizard: an interactive form picks
-remote (hosted/self-hosted; password, emailed code, or magic-link
-sign-in, secrets hidden) or local (guided PostgreSQL, migrations,
-health probes), saving the result to a 0600 config file — agents
+Once installed, one command is the wizard. On a terminal it asks
+numbered questions: connect to the hosted service (Enter accepts it;
+password, emailed code, or magic link, hidden as you type) or run a
+server on this machine. The login is saved in a 0600 file. Agents
 drive the same door with flags:
 
 ```bash
@@ -125,13 +125,16 @@ insideout setup --local --postgres bundled   # 本地服务，需仓库检出和
 insideout setup --check               # 健康探测 / re-run health probes
 ```
 
-从零开始的新机器（macOS / Ubuntu）？让你的编码代理加载安装技能，按模块装齐
-工具链、配置环境并留下安装记录：
+用托管服务的话，短路径是 [用户指南](docs/usage/user-guide.md)，代理加载
+[`skills/insideout-setup/SKILL.md`](skills/insideout-setup/SKILL.md)。
+在本机跑服务器才用
+[`skills/insideout-server/SKILL.md`](skills/insideout-server/SKILL.md)。
 
-Starting from a bare machine (macOS / Ubuntu)? Have your coding agent
-load the installation skill — module-by-module toolchain install,
-environment setup, and a written installation record:
+Using the hosted service? The short path is
+[the user guide](docs/usage/user-guide.md). An agent loads
 [`skills/insideout-setup/SKILL.md`](skills/insideout-setup/SKILL.md).
+Running the server on this machine is
+[`skills/insideout-server/SKILL.md`](skills/insideout-server/SKILL.md).
 
 把 MCP 服务器注册进你的代理（同一段 JSON 适用于 Claude Code、Cursor 等标准 `mcpServers` 配置）。不需要 `env`：`insideout-mcp` 自己读取 `insideout login` 保存的服务器与令牌。Claude Code 也可以用 `claude mcp add insideout -- insideout-mcp`：
 

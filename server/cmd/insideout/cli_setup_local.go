@@ -23,13 +23,21 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
+// setupBack and setupExit are returned only from a terminal prompt, so
+// the interactive wizard can leave a step. The flag-driven path does
+// not use them.
+const (
+	setupBack = 3
+	setupExit = 4
+)
+
 // runLocalSetup executes the local branch. postgres is "bundled" or
 // "own"; noStart mirrors scripts/setup.sh's --no-start (write .env
 // only); createRoles lets the own-URL path create missing database
 // roles without asking (the agent path, where stdin is the DSN). It
 // speaks only through the returned exit code and stderr/stdout lines
 // that carry no secret values.
-func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
+func runLocalSetup(postgres string, noStart, createRoles bool, ownDSN string, askBoot bool) (bool, int) {
 	repoRoot, err := findRepoRoot()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "setup: %v (local mode needs the checkout: docker-compose.yml, .env.example, migrations)\n", err)
@@ -69,7 +77,9 @@ func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 	ownerURL := vals["DATABASE_OWNER_URL"]
 	switch postgres {
 	case "own":
-		if len(os.Args) > 0 && !isTerminal(os.Stdin) {
+		if ownDSN != "" {
+			dsn = ownDSN
+		} else if len(os.Args) > 0 && !isTerminal(os.Stdin) {
 			// Agent/piped path: the URL arrives on stdin (setup.sh parity).
 			line, err := bufio.NewReader(os.Stdin).ReadString('\n')
 			if err != nil && line == "" {
@@ -78,10 +88,16 @@ func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 			}
 			dsn = strings.TrimSpace(line)
 		} else {
-			secret, err := readSecret("DATABASE_URL (input hidden): ")
+			secret, err := readSecret("DATABASE_URL (input hidden, b = back, q = exit): ")
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "setup:", err)
 				return true, 2
+			}
+			switch strings.ToLower(strings.TrimSpace(secret)) {
+			case "b", "back":
+				return true, setupBack
+			case "q", "exit":
+				return true, setupExit
 			}
 			dsn = secret
 		}
@@ -130,11 +146,16 @@ func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 			return true, 1
 		}
 	}
+	if isTerminal(os.Stdin) {
+		fmt.Fprintln(os.Stderr, "\n\033[1m1.3.3\033[2m · \033[0mChecking the database …")
+	} else {
+		fmt.Fprintln(os.Stderr, "Checking the database …")
+	}
 	if err := waitForDatabase(ctx, dsn, 30*time.Second); err != nil {
-		fmt.Fprintf(os.Stderr, "setup: database not reachable: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Not reachable: %v\nFix the database settings before continuing.\n", err)
 		return true, 1
 	}
-	fmt.Fprintln(os.Stderr, "setup: database accepts connections")
+	fmt.Fprintln(os.Stderr, "Reachable.")
 
 	st, err := store.Open(ctx, dsn)
 	if err != nil {
@@ -171,6 +192,9 @@ func runLocalSetup(postgres string, noStart, createRoles bool) (bool, int) {
 	fmt.Fprintln(os.Stderr, "\nThe installed CLI keeps calling the hosted API until you opt into this server:")
 	fmt.Fprintln(os.Stderr, "  export INSIDEOUT_API=http://127.0.0.1:8080/api/v1")
 
+	if !askBoot {
+		return true, 0
+	}
 	return offerBoot(repoRoot, envPath)
 }
 

@@ -130,6 +130,9 @@ void main() {
 
     router.go('/reset-password?token=T0KEN');
     await tester.pumpAndSettle();
+    // The emailed link opens on a choice between this page and the CLI.
+    await tester.tap(find.text('Reset on this page'));
+    await tester.pumpAndSettle();
     await tester.enterText(_field('New password'), 'newpass123');
     await tester.enterText(_field('Confirm new password'), 'newpass123');
     await tester.tap(find.text('Reset password'));

@@ -132,6 +132,9 @@ func startRebindServer(t *testing.T, marker string) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case "/healthz":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"status":"ok"}`)
 		case "/api/v1/me":
 			w.WriteHeader(http.StatusUnauthorized)
 		case "/api/v1/auth/config":

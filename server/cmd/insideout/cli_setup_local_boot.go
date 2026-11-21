@@ -17,12 +17,40 @@ import (
 // .env without printing it). The child process must receive the
 // written values in its environment — the server reads only process
 // env (config.Load), not .env.
+// offerBootChoice starts the API when start is true, and otherwise
+// prints the command. The wizard asks step 1.3.4 before calling it.
+func offerBootChoice(repoRoot, envPath string, start bool) (bool, int) {
+	vals := readEnvValues(envPath)
+	if start {
+		child := exec.Command(selfPath())
+		child.Dir = repoRoot
+		child.Env = childEnv(os.Environ(), vals)
+		child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
+		if err := child.Run(); err != nil {
+			fmt.Fprintf(os.Stderr, "setup: server exited: %v\n", err)
+			return true, 1
+		}
+		return true, 0
+	}
+	fmt.Fprintln(os.Stderr, "Start the API:")
+	fmt.Fprintln(os.Stderr, "  ./scripts/dev.sh -C server go run ./cmd/insideout")
+	fmt.Fprintln(os.Stderr, "First admin on a shared server: promote an existing account with the owner DSN")
+	fmt.Fprintln(os.Stderr, "Disposable local database: run `insideout seed`, then promote demo@insideout.local")
+	return true, 0
+}
+
 func offerBoot(repoRoot, envPath string) (bool, int) {
 	vals := readEnvValues(envPath)
 	if isTerminal(os.Stdin) {
-		fmt.Print("Start the API now? [y/N] ")
+		fmt.Print("Start the API now? [y/N] (b back, q exit) ")
 		var answer string
 		fmt.Scanln(&answer)
+		switch {
+		case strings.HasPrefix(strings.ToLower(answer), "b"):
+			return true, setupBack
+		case strings.HasPrefix(strings.ToLower(answer), "q"):
+			return true, setupExit
+		}
 		if strings.HasPrefix(strings.ToLower(answer), "y") {
 			child := exec.Command(selfPath())
 			child.Dir = repoRoot

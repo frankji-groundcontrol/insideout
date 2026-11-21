@@ -14,15 +14,15 @@ CLI/MCP surface. This skill is the contract for the second mode.
 
 ## Setup
 
-From a checkout of this repository (needs Go 1.26+, see
-`server/go.mod`). Setting up a machine from scratch — installing the
-toolchains, choosing hosted vs own server, the key store, and the
-installation record — is its own skill:
-[skills/insideout-setup/SKILL.md](skills/insideout-setup/SKILL.md).
+Using the hosted service is
+[skills/insideout-setup/SKILL.md](skills/insideout-setup/SKILL.md)
+and [the user guide](docs/usage/user-guide.md). Running the server on
+this machine is
+[skills/insideout-server/SKILL.md](skills/insideout-server/SKILL.md).
 
 ```bash
 ./scripts/install.sh          # binaries into ~/.local/bin; hosted API, no env vars
-insideout setup               # the front door: interactive remote/local, or flags —
+insideout setup               # numbered questions on a terminal, or flags —
                               #   --hosted | --local --postgres bundled|own [--no-start] | --check
 insideout whoami              # "not signed in" until you sign in
 ```

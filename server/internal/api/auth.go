@@ -29,6 +29,7 @@ func (s *Server) registerAuthRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/magic-link/consume", s.handleMagicLinkConsume)
 	mux.HandleFunc("POST /api/v1/auth/forgot-password", s.handleForgotPassword)
 	mux.HandleFunc("POST /api/v1/auth/reset-password", s.handleResetPassword)
+	mux.HandleFunc("GET /api/v1/auth/reset-watch/{id}", s.handleResetWatch)
 	mux.HandleFunc("POST /api/v1/auth/login-code", s.handleLoginCodeRequest)
 	mux.HandleFunc("POST /api/v1/auth/login-code/verify", s.handleLoginCodeVerify)
 	mux.HandleFunc("GET /api/v1/auth/config", s.handleAuthConfig)

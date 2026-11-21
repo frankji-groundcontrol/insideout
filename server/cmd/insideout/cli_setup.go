@@ -18,6 +18,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/probe"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/ui"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -67,16 +68,32 @@ func (s *setupClient) Login(email, password string) error {
 	return s.client().Login(email, password)
 }
 
-func (s *setupClient) RequestLoginCode(email string) error {
-	return s.client().RequestLoginCode(email)
+func (s *setupClient) Register(email, password, username, inviteCode string) error {
+	return s.client().Register(email, password, username, inviteCode)
+}
+
+func (s *setupClient) ForgotPassword(email string) error {
+	return s.client().ForgotPassword(email)
+}
+
+func (s *setupClient) ForgotPasswordStatus(email string) (string, string, error) {
+	return s.client().ForgotPasswordWatch(email)
+}
+
+func (s *setupClient) ResetPassword(token, password string) error {
+	return s.client().ResetPassword(token, password)
+}
+
+func (s *setupClient) RequestLoginCode(email string) (string, error) {
+	return s.client().RequestLoginCodeStatus(email)
 }
 
 func (s *setupClient) VerifyLoginCode(email, code string) error {
 	return s.client().VerifyLoginCode(email, code)
 }
 
-func (s *setupClient) RequestMagicLink(email string) error {
-	return s.client().RequestMagicLink(email)
+func (s *setupClient) RequestMagicLink(email string) (string, error) {
+	return s.client().RequestMagicLinkStatus(email)
 }
 
 func (s *setupClient) ConsumeMagicLink(token string) error {
@@ -94,11 +111,18 @@ func (s *setupClient) RefreshToken() string { return s.client().RefreshToken() }
 type setupProber struct{ sc *setupClient }
 
 func (p setupProber) ProbeAPI(ctx context.Context, baseURL string) error {
-	_, err := probe.APIProbe(ctx, nil, baseURL)
+	_, err := p.CheckService(ctx, baseURL)
+	return err
+}
+
+// CheckService runs the health check and, when it passes, points the
+// login client at this service.
+func (p setupProber) CheckService(ctx context.Context, baseURL string) ([]probe.Check, error) {
+	checks, err := probe.ServiceHealth(ctx, nil, baseURL)
 	if err == nil {
 		p.sc.rebind(baseURL)
 	}
-	return err
+	return checks, err
 }
 
 // setupPersister adapts clientconfig.Save to flow.Persister.
@@ -108,11 +132,10 @@ func (p setupPersister) Save(cfg clientconfig.Config) error {
 	return clientconfig.Save(p.path, cfg)
 }
 
-// runSetupCommand is the setup subcommand. Flags mirror
-// scripts/setup.sh's agent contract: --hosted confirms the hosted
-// path; --local --postgres bundled|own is the local-server path
-// (assembled in slice 2 — until then it points at the script); no
-// flags runs the interactive form, which refuses without a terminal.
+// runSetupCommand is the setup subcommand. No flags runs the numbered
+// wizard in docs/usage/setup-paths.md and refuses without a terminal.
+// --hosted confirms the hosted path. --local --postgres bundled|own
+// assembles a server on this machine.
 func runSetupCommand(rest []string) (bool, int) {
 	fs := flag.NewFlagSet("setup", flag.ContinueOnError)
 	hosted := fs.Bool("hosted", false, "confirm the hosted path (no environment variables)")
@@ -150,7 +173,7 @@ func runSetupCommand(rest []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start/--create-roles belong to --local")
 			return true, 2
 		}
-		fmt.Printf("Hosted path. No environment variables are required.\n\n  %s\n\n", apiclient.DefaultBase)
+		fmt.Printf("Hosted path. No environment variables are required.\nThe CLI uses the default service.\n\n")
 		fmt.Print(`Sign in (the password is read from the terminal; the login is saved for the
 CLI and the MCP server):
 
@@ -181,7 +204,7 @@ Guide: docs/usage/installation.md
 		}
 		// Slice 2: the full local assembly (env write, Postgres,
 		// pgx probe, in-process migrate, boot offer, summary gate).
-		return runLocalSetup(*postgres, *noStart, *createRoles)
+		return runLocalSetup(*postgres, *noStart, *createRoles, "", true)
 	default:
 		if *postgres != "" || *noStart || *createRoles {
 			fmt.Fprintln(os.Stderr, "setup: --postgres/--no-start/--create-roles belong to --local")
@@ -198,12 +221,33 @@ func runInteractiveSetup() (bool, int) {
 		Client:         sc,
 		Persister:      setupPersister{path: mustConfigPath()},
 		DefaultBaseURL: apiclient.DefaultBase,
-		LocalSetup: func(ctx context.Context, postgres string) error {
-			_, code := runLocalSetup(postgres, false, false)
-			if code == 0 {
+		LocalSetup: func(ctx context.Context, postgres, ownDSN string) error {
+			_, code := runLocalSetup(postgres, false, false, ownDSN, false)
+			switch code {
+			case 0:
 				return nil
+			case setupBack:
+				return ui.ErrBack
+			case setupExit:
+				return ui.ErrExit
+			default:
+				return fmt.Errorf("local setup exited with code %d", code)
 			}
-			return fmt.Errorf("local setup exited with code %d", code)
+		},
+		StartServer: func(start bool) error {
+			root, err := findRepoRoot()
+			if err != nil {
+				return err
+			}
+			envPath := filepath.Join(root, ".env")
+			if v := os.Getenv("INSIDEOUT_ENV_FILE"); v != "" {
+				envPath = v
+			}
+			_, code := offerBootChoice(root, envPath, start)
+			if code != 0 {
+				return fmt.Errorf("setup: server exited with code %d", code)
+			}
+			return nil
 		},
 	}
 	res, err := ui.Run(cliCtx, deps)
@@ -212,14 +256,18 @@ func runInteractiveSetup() (bool, int) {
 		fmt.Fprintln(os.Stderr, err)
 		return true, 2
 	}
+	if errors.Is(err, ui.ErrExit) {
+		fmt.Fprintln(os.Stderr, "setup: exited")
+		return true, 0
+	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(os.Stderr, apiclient.RedactDefault(err.Error()))
 		return true, 1
 	}
 	// The local branch's own assembly already printed its summary and
 	// boot offer; only the remote branch signs in and saves the token.
 	if res.SignedIn {
-		fmt.Fprintf(os.Stderr, "setup: signed in and saved the config (token not printed) — API base %s\n", res.APIBase)
+		fmt.Fprintf(os.Stderr, "setup: signed in and saved the config (token not printed) — %s\n", apiclient.PublicBase(res.APIBase))
 		if res.RegisterMCP {
 			fmt.Println(`Merge the MCP registration: {"mcpServers":{"insideout":{"command":"insideout-mcp"}}} (docs/usage/cli-mcp-and-guidance.md)`)
 		}

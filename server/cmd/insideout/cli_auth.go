@@ -52,12 +52,22 @@ func runAuthCommand(cmd string, args []string) (bool, int) {
 			fmt.Fprintln(os.Stderr, "usage: insideout forgot-password <email>")
 			return true, 2
 		}
-		if err := c.ForgotPassword(email); err != nil {
+		if term.IsTerminal(int(os.Stdin.Fd())) && !confirmMailSend(email) {
+			fmt.Fprintln(os.Stderr, "Email not sent.")
+			return true, 0
+		}
+		watch, mail, err := c.ForgotPasswordWatch(email)
+		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return true, 1
 		}
-		fmt.Fprintln(os.Stderr, "if that account exists, a reset link is on its way; finish with `insideout reset-password` (paste the link) or in the browser")
-		return true, 0
+		fmt.Fprintln(os.Stderr, apiclient.MailStatusLine(mail))
+		fmt.Fprintln(os.Stderr, "if that account exists, a reset link is on its way")
+		if watch == "" {
+			fmt.Fprintln(os.Stderr, "finish with `insideout reset-password` (paste the link) or in the browser")
+			return true, 0
+		}
+		return watchReset(cliCtx, c, creds.Base, watch)
 	case "reset-password":
 		link, lerr := readSecret("reset link or token: ")
 		if lerr != nil {
@@ -226,7 +236,7 @@ func saveLogin(base string, c *apiclient.Client) {
 		fmt.Fprintf(os.Stderr, "insideout: signed in, but could not save the login (%v); set INSIDEOUT_TOKEN to the printed token to use it\n", err)
 		return
 	}
-	fmt.Fprintf(os.Stderr, "insideout: signed in to %s; login saved to %s\n", base, path)
+	fmt.Fprintf(os.Stderr, "insideout: signed in to %s; login saved to %s\n", apiclient.PublicBase(base), path)
 }
 
 // stdin is shared by every prompt in one command run: a per-call

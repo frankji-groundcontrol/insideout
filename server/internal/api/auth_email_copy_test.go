@@ -94,10 +94,12 @@ func TestPasswordResetEmailCopy(t *testing.T) {
 	if !strings.Contains(mail.Text, "valid for 60 minutes") {
 		t.Errorf("text intro lost the 60-minute lifetime:\n%s", mail.Text)
 	}
-	wantLinkToken(t, mail, "http://app.test/reset-password?token=")
+	token := wantLinkToken(t, mail, "http://app.test/reset-password?token=")
+	if !strings.Contains(mail.Text, "Reset code:\n"+token+"\n") {
+		t.Errorf("text lost the reset code on its own line:\n%s", mail.Text)
+	}
 	wantExpiryAgreement(t, "password reset", mail.Text,
-		simpleEmailHTML("Reset your InsideOut password", "Set a new InsideOut password with this link (valid for 60 minutes):",
-			"http://app.test/reset-password?token=x", linkExpiryPhrase(passwordResetTTL)))
+		resetEmailHTML("http://app.test/reset-password?token=x", "x", linkExpiryPhrase(passwordResetTTL)))
 }
 
 func TestLoginCodeEmailCopy(t *testing.T) {

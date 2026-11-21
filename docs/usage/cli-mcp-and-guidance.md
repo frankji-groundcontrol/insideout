@@ -23,10 +23,10 @@ The full guide is [installation.md](installation.md).
 ./scripts/install.sh
 ```
 
-Then `insideout setup` is the front door — an interactive form on a
-terminal (remote sign-in or a local PostgreSQL server, secrets
-hidden as you type, the result saved to a 0600 config file the CLI
-reads), or flags for agents:
+Then `insideout setup` is the front door — numbered questions on a
+terminal (connect to the hosted service, or a PostgreSQL server on
+this machine; secrets hidden as you type; the login saved to a 0600
+file the CLI reads), or flags for agents:
 
 ```bash
 insideout setup                       # interactive (needs a terminal)

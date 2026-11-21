@@ -52,6 +52,13 @@ var sweep = []sweepCase{
 	{"VerifyLoginCode", "POST", "/auth/login-code/verify", func(c *Client, h string) error { return c.VerifyLoginCode(h, h) }},
 	{"ForgotPassword", "POST", "/auth/forgot-password", func(c *Client, h string) error { return c.ForgotPassword(h) }},
 	{"ResetPassword", "POST", "/auth/reset-password", func(c *Client, h string) error { return c.ResetPassword(h, h) }},
+	{"ForgotPasswordWatch", "POST", "/auth/forgot-password", func(c *Client, h string) error {
+		_, _, err := c.ForgotPasswordWatch(h)
+		return err
+	}},
+	{"RequestLoginCodeStatus", "POST", "/auth/login-code", func(c *Client, h string) error { return drop(c.RequestLoginCodeStatus(h)) }},
+	{"RequestMagicLinkStatus", "POST", "/auth/magic-link", func(c *Client, h string) error { return drop(c.RequestMagicLinkStatus(h)) }},
+	{"ResetWatchStatus", "GET", "/auth/reset-watch/{h}", func(c *Client, h string) error { return drop(c.ResetWatchStatus(h)) }},
 	{"AuthConfig", "GET", "/auth/config", func(c *Client, h string) error { return drop(c.AuthConfig()) }},
 	{"CreateInvitation", "POST", "/admin/invitations", func(c *Client, h string) error { return drop(c.CreateInvitation(h, 24)) }},
 	{"ListInvitations", "GET", "/admin/invitations", func(c *Client, h string) error { return drop(c.ListInvitations()) }},

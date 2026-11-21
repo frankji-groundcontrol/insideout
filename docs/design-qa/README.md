@@ -21,6 +21,8 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-10-22 — Reset link choices](2026-10-22-reset-link-choices.md)
+  — the reset page offers reset-here or a code for `insideout reset-password`.
 - [2026-10-07 — Block craft against the reference app](2026-10-07-block-craft.md)
   — "optimize the frontend against the design language of the reference
   reimbursement app, keeping the cobalt blue hue family"; component layer

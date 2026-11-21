@@ -44,7 +44,7 @@ var cliVerbs = []cliVerb{
 	{groupServer, "seed", "create demo data for local development"},
 	{groupServer, "promote-admin", "make an account admin, creating it (password on stdin) if absent"},
 
-	{groupSetup, "setup", "first-run front door: hosted sign-in or a local server (--check re-probes)"},
+	{groupSetup, "setup", "numbered setup: managed service, a service you host, or a server on this machine"},
 	{groupSetup, "health", "probe /healthz over loopback (the container HEALTHCHECK)"},
 	{groupSetup, "help", "print this list (also -h, --help)"},
 	{groupSetup, "version", "print the build version (also --version)"},

@@ -56,7 +56,15 @@ const enAccount = <String, String>{
       'If that email has an account, a reset link is on its way. It works once, expires in 60 minutes, and signs out every device once used.',
   'forgot.error': 'Could not request the reset. Please try again.',
   'forgot.back': 'Back to login',
-  'reset.title': 'Choose a new password',
+  'reset.title': 'Reset your password',
+  'reset.chooseWeb': 'Reset on this page',
+  'reset.chooseCli': 'Get a code for the CLI',
+  'reset.cliHint':
+      'Copy this code, then run insideout reset-password and paste it. The code works once. Resetting here or in the CLI uses it up.',
+  'reset.cliCommand': 'insideout reset-password',
+  'reset.cliCopy': 'Copy code',
+  'reset.cliCopied': 'Copied.',
+  'reset.cliBack': 'Back',
   'reset.password': 'New password',
   'reset.passwordHint': 'At least 8 characters',
   'reset.confirm': 'Confirm new password',
@@ -66,6 +74,11 @@ const enAccount = <String, String>{
   'reset.doneLogin': 'Go to login',
   'reset.error':
       'This reset link is invalid or has expired. Request a new one.',
+  'reset.tooShort': 'Use at least 8 characters.',
+  'reset.throttled':
+      'Too many attempts. Wait a minute, then try again. The link still works.',
+  'reset.network':
+      'Could not reach the server. Check your connection and try again. The link still works.',
   'reset.back': 'Back to login',
   'magic.title': 'Sign-in link',
   'magic.working': 'Signing you in…',

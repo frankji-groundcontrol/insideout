@@ -158,12 +158,22 @@ func TestPasswordResetRoundTrip(t *testing.T) {
 		t.Fatalf("create user: %v", err)
 	}
 
-	if w := postJSON(m.Server, "/api/v1/auth/forgot-password", `{"email":"`+email+`"}`); w.Code != http.StatusOK {
+	w := postJSON(m.Server, "/api/v1/auth/forgot-password", `{"email":"`+email+`"}`)
+	if w.Code != http.StatusOK {
 		t.Fatalf("forgot-password request: status %d, body %s", w.Code, w.Body.String())
+	}
+	var opened struct {
+		Watch string `json:"watch"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &opened); err != nil || opened.Watch == "" {
+		t.Fatalf("forgot-password watch: %v, body %s", err, w.Body.String())
+	}
+	if pending := getJSON(m.Server, "/api/v1/auth/reset-watch/"+opened.Watch); pending.Code != http.StatusOK || !strings.Contains(pending.Body.String(), `"pending"`) {
+		t.Fatalf("watch before use: status %d, body %s", pending.Code, pending.Body.String())
 	}
 	token := tokenFrom(t, m.lastMail(t), "http://app.test/reset-password?token=")
 
-	w := postJSON(m.Server, "/api/v1/auth/reset-password", `{"token":"`+token+`","password":"new-password-1"}`)
+	w = postJSON(m.Server, "/api/v1/auth/reset-password", `{"token":"`+token+`","password":"new-password-1"}`)
 	if w.Code != http.StatusOK {
 		t.Fatalf("reset-password: status %d, body %s", w.Code, w.Body.String())
 	}
@@ -175,6 +185,9 @@ func TestPasswordResetRoundTrip(t *testing.T) {
 		t.Fatalf("login with the new password: status %d, body %s", w.Code, w.Body.String())
 	}
 	assertSessionCookies(t, "login after reset", w)
+	if done := getJSON(m.Server, "/api/v1/auth/reset-watch/"+opened.Watch); !strings.Contains(done.Body.String(), `"completed"`) {
+		t.Fatalf("watch after use: status %d, body %s", done.Code, done.Body.String())
+	}
 }
 
 // TestInvitationRoundTrip mints an invitation as the admin, registers

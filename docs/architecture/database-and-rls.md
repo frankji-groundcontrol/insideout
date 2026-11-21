@@ -73,8 +73,9 @@ since the 2026-08-19 role split): `agent_conversations`, `agent_messages`,
 `ai_runs`, `ideas`, `prd_commits`, `prd_revisions`, `prds`, `project_updates`,
 `projects`, `proposal_decisions`, `proposal_items`, `roadmap_evidence`,
 `roadmap_nodes`, `users`, `workspace_memberships` and `workspaces`.
-`sessions`, `auth_tokens`, `invitations`, `settings`, `ai_run_events`,
-`ai_circuit_breaker` and the migration ledger `schema_migrations` are
+`sessions`, `auth_tokens`, `invitations`, `reset_watches`, `settings`,
+`ai_run_events`, `ai_circuit_breaker` and the migration ledger
+`schema_migrations` are
 intentionally left without RLS: backend-only auth plumbing, deployment
 settings, system telemetry and bookkeeping with no per-end-user access story.
 

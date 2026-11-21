@@ -219,8 +219,9 @@ func (s *Store) TouchAIRun(ctx context.Context, actorID, runID uuid.UUID) error 
 // retentionWindow is how long rows stay queryable before the reaper's
 // purge deletes them: ai_runs (carrying raw prompt/response text, and
 // cascading their ai_run_events telemetry) created before the window, and
-// sessions, auth_tokens and invitations that expired before it. Coach
-// conversations use conversationRetention (conversation_retention.go).
+// sessions, auth_tokens, invitations and reset_watches that expired before
+// it. Coach conversations use conversationRetention
+// (conversation_retention.go).
 // Operator note: the purge is permanent and archives nothing first; raise
 // this constant to keep data longer.
 const retentionWindow = 30 * 24 * time.Hour
@@ -235,7 +236,7 @@ const retentionWindow = 30 * 24 * time.Hour
 // system context, same pattern as the users table (see
 // 20260721160000_ai_runs_reaper_system_context.sql). Conversations use the
 // same unset-actor branch (20261020140000). Sessions,
-// auth_tokens and invitations sit outside RLS entirely.
+// auth_tokens, invitations and reset_watches sit outside RLS entirely.
 // Returns the number of runs reaped.
 func (s *Store) ReapStaleAIRuns(ctx context.Context, staleAfter time.Duration) (int, error) {
 	tag, err := s.Pool.Exec(ctx, `
@@ -259,13 +260,14 @@ func (s *Store) ReapStaleAIRuns(ctx context.Context, staleAfter time.Duration) (
 // purgePastRetention deletes what the stale flip leaves behind: old
 // ai_runs (their ON DELETE CASCADE clears ai_run_events) and auth rows
 // that expired long ago — the live counterparts (recent runs, unexpired
-// sessions/tokens/invitations) never match the predicates.
+// sessions/tokens/invitations/reset watches) never match the predicates.
 func (s *Store) purgePastRetention(ctx context.Context) error {
 	purges := []string{
 		`DELETE FROM insideout.ai_runs WHERE created_at < now() - make_interval(secs => $1)`,
 		`DELETE FROM insideout.sessions WHERE expires_at < now() - make_interval(secs => $1)`,
 		`DELETE FROM insideout.auth_tokens WHERE expires_at < now() - make_interval(secs => $1)`,
 		`DELETE FROM insideout.invitations WHERE expires_at < now() - make_interval(secs => $1)`,
+		`DELETE FROM insideout.reset_watches WHERE expires_at < now() - make_interval(secs => $1)`,
 	}
 	for _, q := range purges {
 		if _, err := s.Pool.Exec(ctx, q, retentionWindow.Seconds()); err != nil {
