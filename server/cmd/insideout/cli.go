@@ -74,7 +74,8 @@ var cliVerbs = []cliVerb{
 	{groupPRD, "revisions", "list a PRD's revisions"},
 	{groupPRD, "snapshot", "snapshot a PRD's current revision (--note)"},
 
-	{groupRoadmap, "roadmap", "list, add, update, move or delete nodes; progress; presence"},
+	{groupRoadmap, "roadmap", "list, show, add, update, move or delete nodes; mine; delegate, handback; progress"},
+	{groupRoadmap, "members", "list a workspace's members and their user ids (for delegate and --owner)"},
 	{groupRoadmap, "presence", "show who is active on a project's roadmap"},
 	{groupRoadmap, "build", "draft a roadmap from an approved PRD (apply it with build-confirm)"},
 	{groupRoadmap, "build-confirm", "apply a drafted roadmap (-force to erase evidence and done nodes)"},
@@ -181,6 +182,8 @@ func runClientCommand(args []string) (handled bool, exitCode int) {
 		return runVersionCommands(cmd, rest)
 	case "presence":
 		return runRoadmapCommand(append([]string{"presence"}, rest...))
+	case "members":
+		return runMembersCommand(rest)
 	case "idea":
 		return runIdeaCommand(rest)
 	case "login", "register", "forgot-password", "reset-password", "logout":

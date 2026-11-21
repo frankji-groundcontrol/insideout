@@ -49,10 +49,6 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.Prd(reqStr(req, "prd_id")))
 		})
-	addTextTool("roadmap_list", "List a project's roadmap nodes", []mcp.ToolOption{strReq("project_id", "project id")},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.RoadmapList(reqStr(req, "project_id")))
-		})
 	addTextTool("roadmap_add", "Create a roadmap node (branch or leaf)",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strReq("title", "node title"),
 			strOpt("description", "node description"), strOpt("parent_id", "parent node id; empty = root")},
@@ -63,25 +59,6 @@ func addProductTools(s *server.MCPServer, api string) {
 			}
 			desc, _ := req.GetArguments()["description"].(string)
 			return call(c.RoadmapAdd(reqStr(req, "project_id"), reqStr(req, "title"), desc, parent))
-		})
-	addTextTool("roadmap_update", "Partially update a node (title/description/status)",
-		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("title", "new title"),
-			strOpt("description", "new description"), strOpt("status", "locked|pending|in_progress|done"),
-			strOpt("deadline", "RFC3339 deadline, or empty string to clear"),
-			strOpt("completion_reason", "one sentence when marking done with no evidence; human tokens only, an agent token is refused (move to done on evidence instead)")},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			arg := func(k string) *string {
-				if v, ok := req.GetArguments()[k].(string); ok && v != "" {
-					return &v
-				}
-				return nil
-			}
-			deadline, hasDeadline := req.GetArguments()["deadline"].(string)
-			var dl *string
-			if hasDeadline {
-				dl = &deadline
-			}
-			return call(c.RoadmapUpdate(reqStr(req, "node_id"), arg("title"), arg("description"), arg("status"), dl, arg("completion_reason")))
 		})
 	addTextTool("roadmap_move", "Re-parent / reposition a node; omit parent_id to keep the parent (a position-only move)",
 		[]mcp.ToolOption{strReq("node_id", "node id"), strOpt("parent_id", `new parent id, or "root" to make the node a root; omit to keep the parent`),
@@ -109,6 +86,7 @@ func addProductTools(s *server.MCPServer, api string) {
 			return "deleted", nil
 		})
 	addDraftTools(addTextTool, strReq)
+	addRoadmapTreeTools(addTextTool, strReq, strOpt)
 	addTextTool("guide", "Scaffold the repo-side insideout.yaml matching guide for a project's roadmap; the file content to commit at the repo root is the text between the <prd_data> tags",
 		[]mcp.ToolOption{strReq("project_id", "project id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
@@ -158,11 +136,6 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			note, _ := req.GetArguments()["note"].(string)
 			return call(c.SnapshotPrd(reqStr(req, "prd_id"), note))
-		})
-	addTextTool("progress", "Time-first Progress view: Now (deadlined work only), at most three Next, Done count, plus in-progress items missing a deadline",
-		[]mcp.ToolOption{strReq("project_id", "project id")},
-		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.RoadmapProgress(reqStr(req, "project_id")))
 		})
 	addTextTool("presence", "Who is currently viewing a project (canvas presence snapshot)",
 		[]mcp.ToolOption{strReq("project_id", "project id")},

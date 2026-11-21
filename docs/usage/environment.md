@@ -189,6 +189,7 @@ Read by the `insideout` CLI and the `insideout-mcp` stdio server through
 |----------|----------|---------|---------|
 | `INSIDEOUT_API` | no | the saved login's server, else the hosted default | API base the client talks to, `/api/v1` included. Order: `--api`, this variable, the saved login, the hosted default. A saved token is only sent to the server it was saved for. |
 | `INSIDEOUT_TOKEN` | no | — | Bearer token for whichever base is in effect; wins over the saved login. Nothing renews it: the saved session's refresh token is never used with it. |
+| `INSIDEOUT_AGENT_ROOT` | no | — | `insideout-mcp` only: a roadmap node id. The agent-scope token the MCP mints carries it as its root, so the tools' node writes outside that node's subtree answer 403 `agent_scope_denied` and `agent_context` focuses on it by default. |
 
 ### Setup and test overrides
 

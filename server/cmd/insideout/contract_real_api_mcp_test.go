@@ -98,6 +98,8 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 			"readiness": {"prd_id": r.prd}, "versions": {"prd_id": r.prd}, "view": {"prd_id": r.prd},
 			"prd_export": {"prd_id": r.prd}, "progress": {"project_id": r.project},
 			"presence": {"project_id": r.project}, "guide": {"project_id": r.project}, "roadmap_evidence": {"node_id": r.node},
+			"roadmap_node": {"node_id": r.node}, "roadmap_mine": {"workspace_id": r.workspace},
+			"roadmap_assignments": {"node_id": r.node},
 		} {
 			t.Run(name, func(t *testing.T) { toolData(t, s, name, args) })
 		}
@@ -130,6 +132,11 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		wantListed(t, "roadmap_list", toolData(t, s, "roadmap_list", kv{"project_id": r.project}), child.ID)
 		if renamed := toolJSON[doc](t, s, "roadmap_update", kv{"node_id": child.ID, "title": "Renamed " + r.sfx}); renamed.Title != "Renamed "+r.sfx {
 			t.Fatalf("roadmap_update = %+v, want the new title", renamed)
+		}
+		// An agent token may say what done means, never who owns the node (rv5-PARC-01).
+		toolData(t, s, "roadmap_update", kv{"node_id": child.ID, "acceptance": "Ships"})
+		if out := callTool(t, s, "roadmap_update", kv{"node_id": child.ID, "owner_id": "none"}); !out.isError || !strings.Contains(out.text, "agent token") {
+			t.Fatalf("roadmap_update owner_id = %+v, want the agent-scope refusal", out)
 		}
 		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "root", "position": 0}) // to the root
 		nodes := map[string]doc{}

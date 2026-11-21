@@ -57,14 +57,23 @@ func (c *Client) ConfirmExpandNode(nodeID string, children json.RawMessage) (jso
 }
 
 // RoadmapProgress returns the Progress view
-// (GET /projects/{id}/roadmap/progress).
-func (c *Client) RoadmapProgress(projectID string) (json.RawMessage, error) {
-	return c.get(apiPath("projects", projectID, "roadmap", "progress"))
+// (GET /projects/{id}/roadmap/progress); a root other than "" limits it to
+// that node's subtree (?root=).
+func (c *Client) RoadmapProgress(projectID, root string) (json.RawMessage, error) {
+	return c.get(withRoot(apiPath("projects", projectID, "roadmap", "progress"), root))
 }
 
-// RoadmapList returns GET /projects/{id}/roadmap.
-func (c *Client) RoadmapList(projectID string) (json.RawMessage, error) {
-	return c.get(apiPath("projects", projectID, "roadmap"))
+// RoadmapList returns GET /projects/{id}/roadmap; a root other than "" lists
+// that node and the nodes below it (?root=).
+func (c *Client) RoadmapList(projectID, root string) (json.RawMessage, error) {
+	return c.get(withRoot(apiPath("projects", projectID, "roadmap"), root))
+}
+
+func withRoot(path, root string) string {
+	if root == "" {
+		return path
+	}
+	return withQuery(path, "root", root)
 }
 
 // RoadmapAdd creates a node (POST /projects/{id}/roadmap); parentID may
@@ -81,25 +90,37 @@ func (c *Client) RoadmapAdd(projectID, title, description string, parentID *stri
 	return out, nil
 }
 
-// RoadmapUpdate partially updates a node (PATCH /roadmap/{id}); nil
-// fields are left untouched server-side. deadline: non-nil sets
-// (RFC3339) or clears (empty string).
-func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadline, completionReason *string) (json.RawMessage, error) {
+// RoadmapPatch is a partial node update (PATCH /roadmap/{id}). A nil pointer
+// leaves its field alone; a pointer to "" sends "", which clears description
+// and acceptance. Deadline is RFC3339 ("" leaves it) and ClearDeadline
+// removes it; OwnerID is a member's user id ("" leaves it) and ClearOwner
+// removes the owner. The server refuses an owner change to an agent token.
+type RoadmapPatch struct {
+	Title, Description, Status, Acceptance, CompletionReason *string
+	Deadline                                                 string
+	ClearDeadline                                            bool
+	OwnerID                                                  string
+	ClearOwner                                               bool
+}
+
+// RoadmapUpdate sends patch to PATCH /roadmap/{id}.
+func (c *Client) RoadmapUpdate(nodeID string, patch RoadmapPatch) (json.RawMessage, error) {
 	body := map[string]any{}
-	if title != nil {
-		body["title"] = *title
+	for key, v := range map[string]*string{"title": patch.Title, "description": patch.Description,
+		"status": patch.Status, "acceptance": patch.Acceptance, "completionReason": patch.CompletionReason} {
+		if v != nil {
+			body[key] = *v
+		}
 	}
-	if description != nil {
-		body["description"] = *description
+	if patch.ClearDeadline {
+		body["deadline"] = ""
+	} else if patch.Deadline != "" {
+		body["deadline"] = patch.Deadline
 	}
-	if status != nil {
-		body["status"] = *status
-	}
-	if deadline != nil {
-		body["deadline"] = *deadline
-	}
-	if completionReason != nil {
-		body["completionReason"] = *completionReason
+	if patch.ClearOwner {
+		body["ownerId"] = ""
+	} else if patch.OwnerID != "" {
+		body["ownerId"] = patch.OwnerID
 	}
 	var out json.RawMessage
 	if err := c.do(http.MethodPatch, apiPath("roadmap", nodeID), body, &out); err != nil {

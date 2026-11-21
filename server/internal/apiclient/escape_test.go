@@ -119,12 +119,20 @@ var sweep = []sweepCase{
 	{"ConfirmExpandNode", "POST", "/roadmap/{h}/expand/confirm", func(c *Client, h string) error {
 		return drop(c.ConfirmExpandNode(h, emptyJSON))
 	}},
-	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress", func(c *Client, h string) error { return drop(c.RoadmapProgress(h)) }},
-	{"RoadmapList", "GET", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapList(h)) }},
+	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress", func(c *Client, h string) error { return drop(c.RoadmapProgress(h, "")) }},
+	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress?root={h}", func(c *Client, h string) error { return drop(c.RoadmapProgress(h, h)) }},
+	{"RoadmapList", "GET", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapList(h, "")) }},
+	{"RoadmapList", "GET", "/projects/{h}/roadmap?root={h}", func(c *Client, h string) error { return drop(c.RoadmapList(h, h)) }},
 	{"RoadmapAdd", "POST", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapAdd(h, h, h, &h)) }},
 	{"RoadmapUpdate", "PATCH", "/roadmap/{h}", func(c *Client, h string) error {
-		return drop(c.RoadmapUpdate(h, &h, &h, &h, &h, &h))
+		return drop(c.RoadmapUpdate(h, RoadmapPatch{Title: &h, Description: &h, Status: &h, Acceptance: &h, CompletionReason: &h, Deadline: h, OwnerID: h}))
 	}},
+	{"RoadmapNode", "GET", "/roadmap/{h}", func(c *Client, h string) error { return drop(c.RoadmapNode(h)) }},
+	{"RoadmapMine", "GET", "/workspaces/{h}/roadmap/mine", func(c *Client, h string) error { return drop(c.RoadmapMine(h)) }},
+	{"RoadmapDelegate", "POST", "/roadmap/{h}/delegate", func(c *Client, h string) error { return drop(c.RoadmapDelegate(h, h, h)) }},
+	{"RoadmapHandBack", "POST", "/roadmap/{h}/handback", func(c *Client, h string) error { return drop(c.RoadmapHandBack(h, h)) }},
+	{"RoadmapAssignments", "GET", "/roadmap/{h}/assignments", func(c *Client, h string) error { return drop(c.RoadmapAssignments(h)) }},
+	{"Members", "GET", "/workspaces/{h}/members", func(c *Client, h string) error { return drop(c.Members(h)) }},
 	{"RoadmapMove", "POST", "/roadmap/{h}/move", func(c *Client, h string) error { return drop(c.RoadmapMove(h, &h, nil)) }},
 	{"RoadmapDelete", "DELETE", "/roadmap/{h}", func(c *Client, h string) error { return c.RoadmapDelete(h) }},
 	{"SetRepo", "PUT", "/projects/{h}/repo", func(c *Client, h string) error { return drop(c.SetRepo(h, h)) }},

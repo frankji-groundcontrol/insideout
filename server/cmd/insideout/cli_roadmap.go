@@ -10,28 +10,22 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"time"
 )
 
 // runRoadmapCommand handles `insideout roadmap
-// <list|add|update|move|delete|progress|presence> …`.
+// <list|show|mine|add|update|move|delete|delegate|handback|assignments|progress|presence> …`.
 // Returns (handled, exitCode).
 func runRoadmapCommand(args []string) (bool, int) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|add|update|move|delete|progress|presence> …")
+		fmt.Fprintln(os.Stderr, "usage: insideout roadmap <list|show|mine|add|update|move|delete|delegate|handback|assignments|progress|presence> …")
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]
+	if handled, code := runRoadmapTreeCommand(sub, rest); handled {
+		return handled, code
+	}
 
 	switch sub {
-	case "progress":
-		fs := flag.NewFlagSet("roadmap progress", flag.ContinueOnError)
-		api := apiFlag(fs)
-		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap progress <project-id>")
-			return true, 2
-		}
-		return printJSON(clientFromFlag(*api).RoadmapProgress(fs.Args()[0]))
 	case "presence":
 		fs := flag.NewFlagSet("presence", flag.ContinueOnError)
 		api := apiFlag(fs)
@@ -40,14 +34,6 @@ func runRoadmapCommand(args []string) (bool, int) {
 			return true, 2
 		}
 		return printJSON(clientFromFlag(*api).ProjectPresence(fs.Args()[0]))
-	case "list":
-		fs := flag.NewFlagSet("roadmap list", flag.ContinueOnError)
-		api := apiFlag(fs)
-		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap list <project-id>")
-			return true, 2
-		}
-		return printJSON(clientFromFlag(*api).RoadmapList(fs.Args()[0]))
 	case "add":
 		fs := flag.NewFlagSet("roadmap add", flag.ContinueOnError)
 		api := apiFlag(fs)
@@ -63,31 +49,6 @@ func runRoadmapCommand(args []string) (bool, int) {
 			parentID = parent
 		}
 		return printJSON(clientFromFlag(*api).RoadmapAdd(fs.Args()[0], *title, *description, parentID))
-	case "update":
-		fs := flag.NewFlagSet("roadmap update", flag.ContinueOnError)
-		api := apiFlag(fs)
-		title := fs.String("title", "", "new title")
-		description := fs.String("description", "", "new description")
-		status := fs.String("status", "", "locked|pending|in_progress|done")
-		deadline := fs.String("deadline", "", "RFC3339 deadline, or clear")
-		reason := fs.String("completion-reason", "", "one sentence when marking done with no evidence")
-		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 ||
-			(*title == "" && *description == "" && *status == "" && *deadline == "" && *reason == "") {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap update [--title T] [--description D] [--status S] [--deadline RFC3339|clear] [--completion-reason SENTENCE] <node-id>")
-			return true, 2
-		}
-		var dl *string
-		if *deadline == "clear" {
-			empty := ""
-			dl = &empty
-		} else if *deadline != "" {
-			if _, err := time.Parse(time.RFC3339, *deadline); err != nil {
-				fmt.Fprintln(os.Stderr, "deadline must be RFC3339 or clear")
-				return true, 2
-			}
-			dl = deadline
-		}
-		return printJSON(clientFromFlag(*api).RoadmapUpdate(fs.Args()[0], strPtrIfSet(*title), strPtrIfSet(*description), strPtrIfSet(*status), dl, strPtrIfSet(*reason)))
 	case "move":
 		fs := flag.NewFlagSet("roadmap move", flag.ContinueOnError)
 		api := apiFlag(fs)
@@ -145,7 +106,7 @@ func runAgentCommand(cmd string, args []string) (bool, int) {
 		"build":          " <prd-id>",
 		"expand":         " <node-id>",
 		"build-confirm":  " [-expected-count N] [-force] -tree '<json>' <prd-id>",
-		"expand-confirm": " <node-id> -children '<json>'",
+		"expand-confirm": " -children '<json>' <node-id>",
 	}
 	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 {
 		fmt.Fprintf(os.Stderr, "usage: insideout %s%s\n", cmd, usage[cmd])
