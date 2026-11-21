@@ -80,7 +80,7 @@ func addProductTools(s *server.MCPServer, api string) {
 		})
 	addTextTool("roadmap_delete", "Delete a node", []mcp.ToolOption{strReq("node_id", "node id")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			if err := c.RoadmapDelete(reqStr(req, "node_id")); err != nil {
+			if err := c.RoadmapDelete(reqStr(req, "node_id"), false); err != nil {
 				return "", err
 			}
 			return "deleted", nil

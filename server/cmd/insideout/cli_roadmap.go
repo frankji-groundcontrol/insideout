@@ -7,9 +7,12 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 )
 
 // runRoadmapCommand handles `insideout roadmap
@@ -71,11 +74,19 @@ func runRoadmapCommand(args []string) (bool, int) {
 	case "delete":
 		fs := flag.NewFlagSet("roadmap delete", flag.ContinueOnError)
 		api := apiFlag(fs)
+		force := fs.Bool("force", false, "delete even when the branch holds evidence or done or validated nodes")
 		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 {
-			fmt.Fprintln(os.Stderr, "usage: insideout roadmap delete <node-id>")
+			fmt.Fprintln(os.Stderr, "usage: insideout roadmap delete [--force] <node-id>")
 			return true, 2
 		}
-		if err := clientFromFlag(*api).RoadmapDelete(fs.Args()[0]); err != nil {
+		err := clientFromFlag(*api).RoadmapDelete(fs.Args()[0], *force)
+		var h *apiclient.DeleteHistoryError
+		if errors.As(err, &h) {
+			fmt.Fprintf(os.Stderr, "not deleted: deleting this branch would erase %d node(s) holding %d evidence row(s), %d done and %d validated.\nRe-run with --force to delete it anyway: insideout roadmap delete --force %s\n",
+				h.LiveCount, h.EvidenceCount, h.DoneCount, h.ValidatedCount, fs.Args()[0])
+			return true, 1
+		}
+		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			return true, 1
 		}

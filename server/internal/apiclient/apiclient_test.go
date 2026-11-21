@@ -134,7 +134,7 @@ func TestDeleteDiscardsJSONBody(t *testing.T) {
 		w.Write([]byte(`{"deleted":true}`))
 	})
 	c.SetToken("tok-1")
-	if err := c.RoadmapDelete("n1"); err != nil {
+	if err := c.RoadmapDelete("n1", false); err != nil {
 		t.Fatalf("RoadmapDelete: %v", err)
 	}
 }

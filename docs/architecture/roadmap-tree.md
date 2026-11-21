@@ -135,7 +135,7 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | `POST /api/v1/projects/{pid}/roadmap` | Create a node | `server/internal/api/roadmap.go` |
 | `PATCH /api/v1/roadmap/{nid}` | Edit fields, status and owner | `server/internal/api/roadmap.go` |
 | `POST /api/v1/roadmap/{nid}/move` | Re-parent or reorder | `server/internal/api/roadmap_move.go` |
-| `DELETE /api/v1/roadmap/{nid}` | Delete with subtree; 409 `roadmap_delete_has_history` with the counts unless `?force=true` | `server/internal/api/roadmap.go`, `server/internal/store/roadmap_delete.go` |
+| `DELETE /api/v1/roadmap/{nid}` | Delete with subtree; 409 `roadmap_delete_has_history` with the counts unless `?force=true` (the CLI: `roadmap delete --force`) | `server/internal/api/roadmap.go`, `server/internal/store/roadmap_delete.go` |
 | `POST /api/v1/roadmap/{nid}/delegate`, `/handback` | Hand a node to a member (400 for a non-member), hand it back | `server/internal/api/roadmap_delegation.go` |
 | `GET /api/v1/roadmap/{nid}/assignments` | The node's owner history, newest first | `server/internal/api/roadmap_delegation.go` |
 | `GET /api/v1/workspaces/{id}/roadmap/mine` | The caller's topmost owned nodes in the workspace, each `{node, projectId, projectName, ancestors}`, by project then position | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_mine.go` |

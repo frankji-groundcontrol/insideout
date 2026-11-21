@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -149,12 +150,36 @@ func (c *Client) RoadmapMove(nodeID string, parentID *string, position *int) (js
 	return out, nil
 }
 
-// RoadmapDelete removes a node (DELETE /roadmap/{id}); any response
-// body is discarded.
-func (c *Client) RoadmapDelete(nodeID string) error {
+// RoadmapDelete removes a node and its subtree (DELETE /roadmap/{id}); any
+// response body is discarded. A subtree holding evidence or done or validated
+// nodes is refused with a *DeleteHistoryError unless force is set.
+func (c *Client) RoadmapDelete(nodeID string, force bool) error {
+	path := apiPath("roadmap", nodeID)
+	if force {
+		path += "?force=true"
+	}
 	var discard json.RawMessage
-	return c.do(http.MethodDelete, apiPath("roadmap", nodeID), nil, &discard)
+	err := c.do(http.MethodDelete, path, nil, &discard)
+	var se *StatusError
+	if errors.As(err, &se) && se.Code == http.StatusConflict {
+		h := &DeleteHistoryError{err: err}
+		if json.Unmarshal(se.Body, h) == nil && h.Code == "roadmap_delete_has_history" {
+			return h
+		}
+	}
+	return err
 }
+
+// DeleteHistoryError is the 409 roadmap_delete_has_history: what a delete
+// would erase. Re-sending with force deletes anyway.
+type DeleteHistoryError struct {
+	Code                                                string
+	LiveCount, EvidenceCount, DoneCount, ValidatedCount int
+	err                                                 error
+}
+
+func (e *DeleteHistoryError) Error() string { return e.err.Error() }
+func (e *DeleteHistoryError) Unwrap() error { return e.err }
 
 // SetRepo binds a GitHub repository to a project (PUT /projects/{id}/repo).
 func (c *Client) SetRepo(projectID, repoURL string) (json.RawMessage, error) {
