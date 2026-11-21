@@ -18,6 +18,7 @@ class RoadmapHeader extends StatelessWidget {
     required this.viewChoices,
     required this.onAdd,
     this.breadcrumb,
+    this.title,
   });
 
   final bool compact;
@@ -29,16 +30,20 @@ class RoadmapHeader extends StatelessWidget {
   /// The path back to the whole tree, when a node is open as its own tree.
   final Widget? breadcrumb;
 
+  /// The opened node's title, which names the page in place of "ROADMAP".
+  final String? title;
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
-    final title = Column(
+    final heading = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ?breadcrumb,
         Text(
-          l10n.t('roadmap.title').toUpperCase(),
+          title ?? l10n.t('roadmap.title').toUpperCase(),
+          key: const Key('roadmap-title'),
           style: theme.textTheme.displaySmall,
         ),
         const SizedBox(height: 8),
@@ -58,7 +63,7 @@ class RoadmapHeader extends StatelessWidget {
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                title,
+                heading,
                 const SizedBox(height: Cobalt.space3),
                 Wrap(
                   spacing: Cobalt.space2,
@@ -70,7 +75,7 @@ class RoadmapHeader extends StatelessWidget {
             )
           : Row(
               children: [
-                Expanded(child: title),
+                Expanded(child: heading),
                 ?add,
               ],
             ),

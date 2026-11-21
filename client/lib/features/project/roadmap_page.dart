@@ -136,47 +136,68 @@ class _RoadmapPageState extends State<RoadmapPage> {
     // Four toggles plus four utility icons run off a phone's left edge, so
     // there the toggles move into the header.
     final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
+    final header = _header(choices, narrow);
+    final body = _view == _RoadmapView.progress
+        ? _progressBody(l10n)
+        : _treeBody(l10n);
+    // Progress and Bands scroll the header away with their content (roadmap
+    // critique 2026-11-21); the canvas pans under a pinned one.
+    final scrolls =
+        _view == _RoadmapView.progress || _view == _RoadmapView.bands;
     return AppScaffold(
       actions: narrow ? null : choices,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RoadmapHeader(
-            compact: narrow,
-            viewChoices: choices,
-            onAdd: (widget.rootId == null ? _c.planWriter : _c.rootWritable)
-                ? _addRoot
-                : null,
-            breadcrumb: _c.read == null
-                ? null
-                : RoadmapBreadcrumb(
-                    projectId: widget.projectId,
-                    read: _c.read!,
-                  ),
-          ),
-          if (_c.presence.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
-              child: Wrap(
-                spacing: Cobalt.space2,
-                children: [
-                  Icon(
-                    Icons.groups_2_outlined,
-                    size: 16,
-                    color: Cobalt.of(context).brand,
-                  ),
-                  for (final e in _c.presence)
-                    ShadeChip(label: e.name, tone: ShadeTone.neutral),
-                ],
-              ),
+      body: scrolls
+          ? NestedScrollView(
+              headerSliverBuilder: (context, _) => [
+                SliverToBoxAdapter(child: header),
+              ],
+              body: body,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                header,
+                Expanded(child: body),
+              ],
             ),
-          Expanded(
-            child: _view == _RoadmapView.progress
-                ? _progressBody(l10n)
-                : _treeBody(l10n),
+    );
+  }
+
+  /// The title block, then who else is here: one chip per user, however
+  /// many sessions they hold open.
+  Widget _header(List<Widget> choices, bool narrow) {
+    final people = {for (final e in _c.presence) e.userId: e.name};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RoadmapHeader(
+          compact: narrow,
+          viewChoices: choices,
+          onAdd: (widget.rootId == null ? _c.planWriter : _c.rootWritable)
+              ? _addRoot
+              : null,
+          breadcrumb: _c.read == null
+              ? null
+              : RoadmapBreadcrumb(projectId: widget.projectId, read: _c.read!),
+          title: widget.rootId == null ? null : _c.opened?.node.title,
+        ),
+        if (people.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
+            child: Wrap(
+              spacing: Cobalt.space2,
+              children: [
+                Icon(
+                  Icons.groups_2_outlined,
+                  size: 16,
+                  color: Cobalt.of(context).brand,
+                ),
+                for (final name in people.values)
+                  ShadeChip(label: name, tone: ShadeTone.neutral),
+              ],
+            ),
           ),
-        ],
-      ),
+      ],
     );
   }
 }
