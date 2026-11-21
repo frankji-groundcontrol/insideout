@@ -6,7 +6,7 @@ import (
 )
 
 // The numbers below are tunables I chose, not measured limits: change them
-// together with the pinning test (trust_facts_bounds_test.go).
+// together with the pinning test (fact_evidence_bounds_test.go).
 const (
 	// minAttestedQuoteRunes is the shortest quote that may attest a fact
 	// (rv4-AIDEV-07). It counts the normalized quote (spaces and punctuation
@@ -20,7 +20,7 @@ const (
 	// text about something else shared at most 0.16 and honest restatements 0.27 or
 	// more, bar one heavy paraphrase at 0.14, so 0.2 sits in the gap (the figures
 	// and the trade-off: the 2026-10-18 rv4 w3-coach-trust changelog; a subset of
-	// the pairs: trust_facts_bounds_test.go).
+	// the pairs: fact_evidence_bounds_test.go).
 	minTextSupport = 0.2
 
 	// minLongTextSupport is the least share of a text, as the same n-grams, that its

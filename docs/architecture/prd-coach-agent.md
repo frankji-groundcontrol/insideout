@@ -124,7 +124,7 @@ at least 12 characters of content once spaces and punctuation are dropped (a
 Han, kana or hangul character counts twice), and the fact's text must share at
 least 0.2 of its character n-grams with the quote. Both numbers are tunables
 chosen on a hand-written calibration set and pinned by
-`trust_facts_bounds_test.go`; support is lexical, so it catches text about
+`fact_evidence_bounds_test.go`; support is lexical, so it catches text about
 something else, not a restatement that merely sounds like the quote. The stored
 status stays `attested`; the interface and the gate copy say "recorded fact".
 

@@ -13,7 +13,7 @@ import (
 
 func TestCheckFactEvidence_TunablesArePinned(t *testing.T) {
 	if minAttestedQuoteRunes != 12 || minTextSupport != 0.2 || minLongTextSupport != 0.6 || longTextRatio != 2 || minWholeAnswerRunes != 4 {
-		t.Fatalf("minAttestedQuoteRunes = %d, minTextSupport = %v, minLongTextSupport = %v, longTextRatio = %v, minWholeAnswerRunes = %d: re-run the calibration pairs below (and the long-text and whole-answer pairs in rv4_review_agent_*_test.go) and update the changelog before moving them",
+		t.Fatalf("minAttestedQuoteRunes = %d, minTextSupport = %v, minLongTextSupport = %v, longTextRatio = %v, minWholeAnswerRunes = %d: re-run the calibration pairs below (and the long-text and whole-answer pairs in fact_evidence_*_test.go) and update the changelog before moving them",
 			minAttestedQuoteRunes, minTextSupport, minLongTextSupport, longTextRatio, minWholeAnswerRunes)
 	}
 }

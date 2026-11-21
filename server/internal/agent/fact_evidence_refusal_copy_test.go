@@ -11,7 +11,7 @@ import (
 // go on, so the refusal has to say how to recover: ask for a full sentence, and
 // write the fact in the quote's own language. (The server side of letting a
 // whole short message stand as its own quote is tested in
-// rv4_review_agent_whole_test.go.)
+// fact_evidence_whole_answer_test.go.)
 
 func TestRvAgentCheckFactEvidence_ATerseQuoteRefusalSaysHowToRecover(t *testing.T) {
 	for _, quote := range []string{"Students.", "现在就要", "ASAP"} {
