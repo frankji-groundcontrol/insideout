@@ -16,6 +16,10 @@ remediation plan.
 - Every finding carries `file:line`, a verbatim quote, and a fix or a
   direction with a first check. Deployment identifiers and personal emails
   are redacted (`<railway-host>`, `<prod-domain>`, `<email>`).
+- A link to a sibling or child file starts with `./`
+  (`./01-findings-register.md`), never a bare name: every review folder
+  reuses the same file names, and a bare one is ambiguous
+  ([practice](../practices/2026-11-21-markdown-links-and-the-doc-graph.md)).
 
 ## Records
 
