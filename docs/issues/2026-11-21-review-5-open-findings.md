@@ -1,6 +1,6 @@
 # Review 5 open findings
 
-*2026-11-21: every High finding is fixed on `rv5/remediation` (waves 0 to 5, [changelog](../changelogs/2026-11-21-rv5-remediation/index.md)). The owner's last two decisions are at the end of this record; decision 7 is built as a follow-up.*
+*2026-11-21: every High finding is fixed on `rv5/remediation` (waves 0 to 5, [changelog](../changelogs/2026-11-21-rv5-remediation/index.md)). The owner's last two decisions are at the end of this record; both are in effect.*
 
 Open, recorded 2026-11-21. Source:
 [focused review 5](../review/2026-11-21-focused-review-5/README.md) over
@@ -77,8 +77,8 @@ started; execution plan:
 
 7. **Proposals inside a delegate's subtree: yes.** Anyone who may write a node
    (the delegate, and their agent) may file a proposal about that node or its
-   descendants. Only a plan writer decides it, as before. This narrows BUG-020
-   and is built as a follow-up to the remediation.
+   descendants. Only a plan writer decides it, as before. This narrows BUG-020;
+   built 2026-11-21 ([changelog](../changelogs/2026-11-21-proposals-inside-a-delegates-subtree.md)).
 8. **Agent edits of projects and workspaces: keep both.** Agent tokens keep
    `PATCH /projects/{pid}` and `PATCH /workspaces/{id}` as wave 3 built them.
    An owner change stays human-only.

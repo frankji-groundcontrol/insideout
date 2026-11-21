@@ -1,6 +1,6 @@
 # 2026-11-21 — Review 5 remediation
 
-**Status: complete on the branch** (2026-11-21); not merged to `main`. Plan:
+**Status: complete; merged to `main`** in #24 (`a945784`, 2026-11-21, CI skipped at the owner's request). Plan:
 [2026-11-21-rv5-remediation](../../plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
 Source: [focused review 5](../../review/2026-11-21-focused-review-5/README.md).
 Branch: `rv5/remediation`, pushed after each wave; `main` is not pushed. At

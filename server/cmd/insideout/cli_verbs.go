@@ -70,7 +70,7 @@ var cliVerbs = []cliVerb{
 	{groupRoadmap, "expand-confirm", "apply drafted children"},
 	{groupRoadmap, "agent-context", "fetch the agent briefing for a project (--mode, --focus)"},
 	{groupRoadmap, "checkpoint", "record an agent progress checkpoint (--node)"},
-	{groupRoadmap, "propose", "propose a roadmap change for review (--kind, --item)"},
+	{groupRoadmap, "propose", "propose a roadmap change for review (--kind, --node, --item)"},
 	{groupRoadmap, "proposal", "proposal decide: accept (applying its items unless --no-apply) or reject a proposal"},
 
 	{groupAdmin, "invite", "invite one email address (invite revoke <id> cancels)"},

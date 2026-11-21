@@ -99,7 +99,9 @@ store's predicates live in `server/internal/store/authz.go`:
 | Add a validation observation | `requireNodeWriter` on the node |
 | Validate a node | `requirePlanWriter` |
 | Replace the whole tree (Build) | `requirePlanWriter` |
-| File an agent proposal, apply proposal items | `requirePlanWriter` (project-level writes) |
+| File an agent proposal about no node | `requirePlanWriter` (project-level writes) |
+| File an agent proposal about a node (`nodeId`) | `requireNodeWriter` on that node, which must be in the project (owner decision 7); a root-scoped agent token must name a node inside its root |
+| Decide a proposal, apply proposal items | `requirePlanWriter` |
 
 `requireNodeManager` is what keeps a delegate inside the subtree they were
 handed: they may edit their root R and everything under it, add and break

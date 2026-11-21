@@ -1,5 +1,12 @@
 # BUG-020 — a workspace member can write the plan
 
+> **2026-11-21: narrowed by owner decision 7**
+> ([review 5 open findings](./2026-11-21-review-5-open-findings.md)). A
+> proposal that names a `nodeId` may be filed by anyone who may write that
+> node (a delegate, or their agent, inside their subtree). A proposal about
+> no node stays plan-writer only, and only a plan writer decides any
+> proposal ([changelog](../changelogs/2026-11-21-proposals-inside-a-delegates-subtree.md)).
+
 ## Symptom
 
 A stakeholder joined a workspace as `member` and, without any further

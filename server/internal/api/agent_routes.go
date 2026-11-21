@@ -163,13 +163,11 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		Kind      string `json:"kind"`
 		Summary   string `json:"summary"`
 		Detail    string `json:"detail"`
+		// NodeID (optional) is the node the proposal is about.
+		NodeID string `json:"nodeId"`
 		// Items are structured actions a human may apply on acceptance
 		// (proposal→structure application). Optional, max 10.
-		Items []struct {
-			Action     string `json:"action"`
-			Title      string `json:"title"`
-			ParentHint string `json:"parentHint"`
-		} `json:"items"`
+		Items []proposeItemRequest `json:"items"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
@@ -197,15 +195,52 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	if d := strings.TrimSpace(req.Detail); d != "" {
 		content += "\n" + d
 	}
-	// Every item is validated before the first write: a refused propose must
-	// leave nothing behind (a 400 once left an orphan proposal a human could
-	// still accept).
-	items := make([]store.ProposalItem, 0, len(req.Items))
-	for _, it := range req.Items {
+	items, ok := proposalItems(w, req.Items)
+	if !ok {
+		return
+	}
+	// A proposal about a node is open to anyone who may write that node (owner
+	// decision 7); a root-scoped agent token must name one inside its root.
+	var nid *uuid.UUID
+	if req.NodeID != "" {
+		id, ok := parseUUIDParam(w, "nodeId", req.NodeID)
+		if !ok {
+			return
+		}
+		nid = &id
+	}
+	if s.agentRootRefuses(w, r, nid) {
+		return
+	}
+	// The proposal and its items are one transaction: both land or neither.
+	u, err := s.store.AddProposal(r.Context(), userID, pid, nid, content, items)
+	if err != nil {
+		s.writeStoreError(w, "agent propose", err, errMsgs{
+			store.ErrNotFound:  "project or node not found",
+			store.ErrForbidden: "only the project owner or a workspace admin can propose a change to the whole plan; anyone who may write a node can propose a change to that node or below it",
+		})
+		return
+	}
+	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
+}
+
+// proposeItemRequest is one structured action of a propose body.
+type proposeItemRequest struct {
+	Action     string `json:"action"`
+	Title      string `json:"title"`
+	ParentHint string `json:"parentHint"`
+}
+
+// proposalItems validates every item before the first write: a refused
+// propose must leave nothing behind (a 400 once left an orphan proposal a
+// human could still accept). It answers 400 itself and reports false.
+func proposalItems(w http.ResponseWriter, in []proposeItemRequest) ([]store.ProposalItem, bool) {
+	items := make([]store.ProposalItem, 0, len(in))
+	for _, it := range in {
 		title := strings.TrimSpace(it.Title)
 		if title == "" || tooLong(title, 200) {
 			httpx.WriteError(w, http.StatusBadRequest, "item title is required (max 200 characters)", "", nil)
-			return
+			return nil, false
 		}
 		action := it.Action
 		if action == "" {
@@ -213,24 +248,15 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		}
 		if action != "add_node" {
 			httpx.WriteError(w, http.StatusBadRequest, "item action must be add_node", "", nil)
-			return
+			return nil, false
 		}
 		items = append(items, store.ProposalItem{Action: action, Title: title, ParentHint: strings.TrimSpace(it.ParentHint)})
 	}
 	if len(items) > 10 {
 		httpx.WriteError(w, http.StatusBadRequest, "at most 10 items per proposal", "", nil)
-		return
+		return nil, false
 	}
-	// The proposal and its items are one transaction: both land or neither.
-	u, err := s.store.AddProposal(r.Context(), userID, pid, content, items)
-	if err != nil {
-		s.writeStoreError(w, "agent propose", err, errMsgs{
-			store.ErrNotFound:  "project not found",
-			store.ErrForbidden: "only the project owner or a workspace admin can propose a change",
-		})
-		return
-	}
-	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
+	return items, true
 }
 
 // handleProposalDecision is the human accept/reject of an agent

@@ -100,10 +100,11 @@ func runAgentPropose(args []string) (bool, int) {
 	api := apiFlag(fs)
 	kind := fs.String("kind", "structure", "structure|scope|priority")
 	detail := fs.String("detail", "", "extra detail")
+	node := fs.String("node", "", "roadmap node id the proposal is about (optional)")
 	var items multiFlag
 	fs.Var(&items, "item", "structured item Title[@ParentTitle], appliable on acceptance (repeatable)")
 	if err := fs.Parse(args); err != nil || len(fs.Args()) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: insideout propose --kind K [--detail D] [--item Title[@Parent]]... <project-id> <summary>")
+		fmt.Fprintln(os.Stderr, "usage: insideout propose --kind K [--node id] [--detail D] [--item Title[@Parent]]... <project-id> <summary>")
 		return true, 2
 	}
 	proposed := make([]apiclient.ProposeItem, len(items))
@@ -111,7 +112,7 @@ func runAgentPropose(args []string) (bool, int) {
 		title, hint, _ := strings.Cut(it, "@")
 		proposed[i] = apiclient.ProposeItem{Title: title, ParentHint: hint}
 	}
-	return printJSON(clientFromFlag(*api).AgentPropose(fs.Args()[0], *kind, fs.Args()[1], *detail, proposed))
+	return printJSON(clientFromFlag(*api).AgentPropose(fs.Args()[0], *node, *kind, fs.Args()[1], *detail, proposed))
 }
 
 // runProposalDecide is `insideout proposal decide` (and the old

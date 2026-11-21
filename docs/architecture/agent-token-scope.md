@@ -81,10 +81,12 @@ any `ownerId` (owner decision 4, 2026-11-21: owning a node grants write rights
 over its subtree, so an agent files a proposal instead), and `PATCH /projects/{pid}`
 refuses any `ownerId`, null included (rv5-PARB-04: an owner change is a human
 decision). An agent still moves a
-node to done when it has evidence. Filing a proposal stays a plan-writer right
-(BUG-020), so an agent acting for a delegate (who owns a subtree but is not a
-plan writer) has no route to propose an owner change; whether a node writer may
-file a proposal scoped to their subtree is an open owner question.
+node to done when it has evidence. A proposal about no node stays a plan-writer
+right (BUG-020); a proposal that names a `nodeId` may be filed by anyone who may
+write that node (owner decision 7), so an agent acting for a delegate proposes
+an owner change inside the delegate's subtree. A root-scoped token must name a
+node inside its root, and refuses a proposal with no node. Deciding stays a
+plan writer's, on the human-only route.
 
 Human-only (the other 34): delegating a node and handing it back
 (`POST /roadmap/{nid}/delegate`, `POST /roadmap/{nid}/handback`, owner

@@ -69,5 +69,6 @@ Per-row dispositions are recorded wave by wave in the
 
 Started 2026-11-21; complete on `rv5/remediation` the same day, every gate
 green ([final state](../../changelogs/2026-11-21-rv5-remediation/index.md#final-state)).
-Not merged to `main`: that is the owner's call. Tracker:
+Merged to `main` in #24 (`a945784`) with CI skipped at the owner's request.
+Tracker:
 [2026-11-21-rv5-remediation.track.yaml](./2026-11-21-rv5-remediation.track.yaml).

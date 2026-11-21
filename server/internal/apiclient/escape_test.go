@@ -105,7 +105,7 @@ var sweep = []sweepCase{
 	}},
 	{"AgentCheckpoint", "POST", "/agent/checkpoint", func(c *Client, h string) error { return drop(c.AgentCheckpoint(h, h, h)) }},
 	{"AgentPropose", "POST", "/agent/propose", func(c *Client, h string) error {
-		return drop(c.AgentPropose(h, h, h, h, []ProposeItem{{Title: h, ParentHint: h}}))
+		return drop(c.AgentPropose(h, h, h, h, h, []ProposeItem{{Title: h, ParentHint: h}}))
 	}},
 	{"DecideProposal", "POST", "/agent/proposals/{h}/decision", func(c *Client, h string) error {
 		return drop(c.DecideProposal(h, "accept", h, true))

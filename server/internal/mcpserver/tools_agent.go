@@ -23,6 +23,7 @@ func addAgentTools(ts toolSet) {
 	ts.add("propose", "Propose a structure/scope/priority change; a human decides",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strReq("kind", "structure|scope|priority"),
 			strReq("summary", "the proposal"), strOpt("detail", "extra detail"),
+			strOpt("node_id", "roadmap node the proposal is about; required to propose inside a subtree you were handed"),
 			mcp.WithArray("items", mcp.Description("structured roadmap nodes a human can apply on acceptance (optional, at most 10)"),
 				mcp.Items(map[string]any{
 					"type": "object",
@@ -33,7 +34,7 @@ func addAgentTools(ts toolSet) {
 					"required": []string{"title"},
 				}))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.AgentPropose(reqStr(req, "project_id"), reqStr(req, "kind"), reqStr(req, "summary"), optStr(req, "detail"), proposeItems(req)))
+			return call(c.AgentPropose(reqStr(req, "project_id"), optStr(req, "node_id"), reqStr(req, "kind"), reqStr(req, "summary"), optStr(req, "detail"), proposeItems(req)))
 		})
 }
 
