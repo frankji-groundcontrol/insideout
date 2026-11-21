@@ -1,6 +1,6 @@
 # Review 5 open findings
 
-*2026-11-21: every High finding is fixed on `rv5/remediation` (waves 0 to 5, [changelog](../changelogs/2026-11-21-rv5-remediation/index.md)). What stays open is the owner question at the end of this record; the branch is not merged to `main`.*
+*2026-11-21: every High finding is fixed on `rv5/remediation` (waves 0 to 5, [changelog](../changelogs/2026-11-21-rv5-remediation/index.md)). The owner's last two decisions are at the end of this record; decision 7 is built as a follow-up.*
 
 Open, recorded 2026-11-21. Source:
 [focused review 5](../review/2026-11-21-focused-review-5/README.md) over
@@ -73,13 +73,12 @@ started; execution plan:
 6. No: only a human may mark a node done with a reason instead of evidence;
    an agent may still mark done when evidence exists.
 
-## Open owner question (raised 2026-11-21 during wave 2)
+## Owner decisions after the remediation (2026-11-21)
 
-Decision 4 says an agent token that may not change a node's owner files a
-proposal instead. Proposals are still limited to plan writers (the project
-owner and workspace admins), a rule recorded in BUG-020. So the agent of a
-plain delegate cannot file a proposal at all, and has no way to ask for an
-owner change inside the delegate's subtree. Wave 2 keeps BUG-020 as it is.
-The owner decides whether a node writer (and their agent) may file proposals
-inside their own subtree.
-
+7. **Proposals inside a delegate's subtree: yes.** Anyone who may write a node
+   (the delegate, and their agent) may file a proposal about that node or its
+   descendants. Only a plan writer decides it, as before. This narrows BUG-020
+   and is built as a follow-up to the remediation.
+8. **Agent edits of projects and workspaces: keep both.** Agent tokens keep
+   `PATCH /projects/{pid}` and `PATCH /workspaces/{id}` as wave 3 built them.
+   An owner change stays human-only.
