@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/models.dart';
@@ -8,12 +6,14 @@ import 'package:insideout/features/project/roadmap_bands.dart';
 import 'package:insideout/features/project/roadmap_progress_view.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/theme/cobalt.dart';
+import 'package:insideout/theme/cobalt_chip.dart';
 import 'package:insideout/theme/field_card.dart';
 import 'package:provider/provider.dart';
 
 // DESIGN.md reserves cobalt-950 for status-chip backgrounds, so no band slab
 // may paint it; and the Progress view's item cards use the same card grammar
-// (2px border, cast) as the Bands view's.
+// (2px border, cast) as the Bands view's. Roadmap critique 2026-11-21: every
+// slab is the neutral lane and Now alone is emphasised.
 
 ProgressItem _item(String id, String title) =>
     ProgressItem(id: id, title: title, status: 'in_progress');
@@ -48,18 +48,25 @@ Future<void> _pump(WidgetTester tester, Widget body, Brightness mode) async {
   await tester.pumpAndSettle();
 }
 
-void _expectNoCobalt950Slab(WidgetTester tester) {
+void _expectNeutralSlabs(WidgetTester tester, Cobalt palette) {
+  final slabs = find.byKey(const Key('roadmap-band-slab'));
+  expect(slabs, findsWidgets);
+  for (final slab in tester.widgetList<Container>(slabs)) {
+    final color = (slab.decoration! as BoxDecoration).color;
+    expect(color, isNot(Cobalt.hue950));
+    expect(color, palette.surfaceSunken);
+  }
   final bands = tester.widgetList<RoadmapBandScaffold>(
     find.byType(RoadmapBandScaffold),
   );
-  expect(bands, isNotEmpty);
-  for (final band in bands) {
-    expect(
-      band.color,
-      isNot(Cobalt.hue950),
-      reason: 'the ${band.label} band paints cobalt-950',
-    );
-  }
+  expect(
+    [
+      for (final b in bands)
+        if (b.now) b.label,
+    ],
+    ['Now'],
+    reason: 'Now is the only emphasised band',
+  );
 }
 
 void main() {
@@ -80,7 +87,7 @@ void main() {
       Brightness.dark,
     );
 
-    _expectNoCobalt950Slab(tester);
+    _expectNeutralSlabs(tester, Cobalt.dark);
   });
 
   testWidgets('Progress view: no band slab is cobalt-950 in dark mode', (
@@ -92,7 +99,7 @@ void main() {
       Brightness.dark,
     );
 
-    _expectNoCobalt950Slab(tester);
+    _expectNeutralSlabs(tester, Cobalt.dark);
   });
 
   testWidgets('Progress view items are field cards, not bare containers', (
@@ -118,23 +125,28 @@ void main() {
     }
   });
 
-  // The 'normal'/'near' pressure label is 12px bold — normal text, so it owes
-  // 4.5:1 on the raised card. hue500 measures 3.53:1 in dark; the dark
-  // brand-text token (fgBrand, cobalt-200) is the one that clears the bar.
-  testWidgets('Progress view: pressure label clears 4.5:1 on the dark card', (
+  // Pressure is a shade chip: danger for overdue and high risk, neutral for
+  // near, and "normal" is not printed (the Bands cards already hide it).
+  testWidgets('Progress view: pressure is a chip and normal is hidden', (
     tester,
   ) async {
-    final near = ProgressItem(
-      id: 'a',
-      title: 'Wire the flow',
+    ProgressItem dated(String id, String pressure) => ProgressItem(
+      id: id,
+      title: id,
       status: 'in_progress',
-      pressure: 'near',
+      deadline: '2026-12-01T00:00:00Z',
+      pressure: pressure,
     );
     await _pump(
       tester,
       RoadmapProgressView(
         progress: RoadmapProgress(
-          now: [near],
+          now: [
+            dated('a', 'near'),
+            dated('b', 'overdue'),
+            dated('c', 'high_risk'),
+            dated('d', 'normal'),
+          ],
           needsDeadline: [],
           next: [],
           doneCount: 0,
@@ -144,28 +156,36 @@ void main() {
       Brightness.dark,
     );
 
-    final label = tester.widget<Text>(find.text('near'));
-    final ink = label.style!.color!;
-    expect(
-      _contrast(ink, Cobalt.dark.surfaceRaised),
-      greaterThanOrEqualTo(4.5),
-      reason:
-          'pressure ink ${ink.toARGB32()} on raised '
-          '${Cobalt.dark.surfaceRaised.toARGB32()}',
-    );
+    ShadeTone tone(String label) => tester
+        .widget<ShadeChip>(
+          find.ancestor(of: find.text(label), matching: find.byType(ShadeChip)),
+        )
+        .tone;
+    expect(tone('near'), ShadeTone.neutral);
+    expect(tone('overdue'), ShadeTone.danger);
+    expect(tone('high risk'), ShadeTone.danger);
+    expect(find.text('normal'), findsNothing);
   });
-}
 
-double _channel(double v) =>
-    v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+  testWidgets('Progress view hides an empty Needs deadline band', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      RoadmapProgressView(
+        progress: RoadmapProgress(
+          now: [_item('a', 'Wire the flow')],
+          needsDeadline: [],
+          next: [],
+          doneCount: 0,
+        ),
+        emptyLabel: 'empty',
+      ),
+      Brightness.light,
+    );
 
-double _luminance(Color c) =>
-    0.2126 * _channel(c.r) + 0.7152 * _channel(c.g) + 0.0722 * _channel(c.b);
-
-double _contrast(Color a, Color b) {
-  final la = _luminance(a);
-  final lb = _luminance(b);
-  final hi = math.max(la, lb);
-  final lo = math.min(la, lb);
-  return (hi + 0.05) / (lo + 0.05);
+    expect(find.text('NEEDS DEADLINE'), findsNothing);
+    expect(find.text('NOW'), findsOneWidget);
+    expect(find.text('NEXT'), findsOneWidget);
+  });
 }

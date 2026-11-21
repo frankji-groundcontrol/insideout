@@ -6,6 +6,7 @@ import '../../chrome/product_dock.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
+import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import 'roadmap_band_scaffold.dart';
 
@@ -40,61 +41,61 @@ class RoadmapProgressView extends StatelessWidget {
         if (empty)
           Center(child: Text(emptyLabel, style: theme.textTheme.bodyLarge))
         else ...[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: Cobalt.space3,
-                vertical: Cobalt.space2,
-              ),
-              decoration: BoxDecoration(
-                color: palette.surfaceRaised,
-                border: Border.all(
-                  color: palette.strokeSubtle,
-                  width: Cobalt.borderContainer,
+          RoadmapBandScaffold.capped(
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Cobalt.space3,
+                  vertical: Cobalt.space2,
                 ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle_outline,
-                    size: 16,
-                    color: palette.brand,
+                decoration: BoxDecoration(
+                  color: palette.surfaceRaised,
+                  border: Border.all(
+                    color: palette.strokeSubtle,
+                    width: Cobalt.borderContainer,
                   ),
-                  const SizedBox(width: Cobalt.space2),
-                  Text(
-                    l10n.t('roadmap.doneCount', {'n': progress.doneCount}),
-                    style: theme.textTheme.labelMedium,
-                  ),
-                ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      size: 16,
+                      color: palette.brand,
+                    ),
+                    const SizedBox(width: Cobalt.space2),
+                    Text(
+                      l10n.t('roadmap.doneCount', {'n': progress.doneCount}),
+                      style: theme.textTheme.labelMedium,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
           const SizedBox(height: 4),
           _ProgressBand(
             label: l10n.t('roadmap.bandNow'),
-            color: palette.surfaceSunken,
+            now: true,
             items: progress.now,
           ),
-          const SizedBox(height: 16),
-          _ProgressBand(
-            label: l10n.t('roadmap.needsDeadline'),
-            color: palette.surfaceSunken,
-            items: progress.needsDeadline,
-          ),
+          if (progress.needsDeadline.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            _ProgressBand(
+              label: l10n.t('roadmap.needsDeadline'),
+              items: progress.needsDeadline,
+            ),
+          ],
           const SizedBox(height: 16),
           _ProgressBand(
             label: l10n.t('roadmap.bandNext'),
-            color: palette.brand,
-            labelColor: palette.btnFg,
             items: progress.next,
           ),
           if (progress.doneItems.isNotEmpty) ...[
             const SizedBox(height: 16),
             _ProgressBand(
               label: l10n.t('roadmap.bandDone'),
-              color: palette.surfaceSunken,
               items: progress.doneItems,
             ),
           ],
@@ -107,88 +108,85 @@ class RoadmapProgressView extends StatelessWidget {
 class _ProgressBand extends StatelessWidget {
   const _ProgressBand({
     required this.label,
-    required this.color,
     required this.items,
-    this.labelColor,
+    this.now = false,
   });
 
   final String label;
-  final Color color;
-  final Color? labelColor;
+  final bool now;
   final List<ProgressItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return RoadmapBandScaffold(
+      label: label,
+      now: now,
+      itemCards: [for (final item in items) _ProgressCard(item)],
+    );
+  }
+}
+
+class _ProgressCard extends StatelessWidget {
+  const _ProgressCard(this.item);
+
+  final ProgressItem item;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
-    final palette = Cobalt.of(context);
-    return RoadmapBandScaffold(
-      label: label,
-      color: color,
-      labelColor: labelColor,
-      itemCards: [
-        for (final item in items)
-          SizedBox(
-            width: 240,
-            child: FieldCard(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style: theme.textTheme.titleSmall,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (item.ownerName.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        '${l10n.t('roadmap.owner')}: ${item.ownerName}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                  if (item.acceptance.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '${l10n.t('roadmap.acceptance')}: ${item.acceptance}',
-                        style: theme.textTheme.bodySmall,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      if (item.deadline != null)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Text(
-                            isoDate(item.deadline!),
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ),
-                      if (item.pressure != null && item.pressure!.isNotEmpty)
-                        Text(
-                          l10n.t('roadmap.pressure.${item.pressure}'),
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color:
-                                item.pressure == 'overdue' ||
-                                    item.pressure == 'high_risk'
-                                ? palette.fgDanger
-                                : palette.fgBrand,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
+    final pressure = item.pressure;
+    return FieldCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.title,
+            style: theme.textTheme.titleSmall,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (item.ownerName.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${l10n.t('roadmap.owner')}: ${item.ownerName}',
+                style: theme.textTheme.bodySmall,
               ),
             ),
+          if (item.acceptance.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                '${l10n.t('roadmap.acceptance')}: ${item.acceptance}',
+                style: theme.textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: Cobalt.space2,
+            runSpacing: Cobalt.space1,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              if (item.deadline != null)
+                Text(isoDate(item.deadline!), style: theme.textTheme.bodySmall),
+              // "normal" is the quiet default; the Bands cards hide it too.
+              if (pressure != null &&
+                  pressure.isNotEmpty &&
+                  pressure != 'normal')
+                ShadeChip(
+                  label: l10n.t('roadmap.pressure.$pressure'),
+                  tone: pressure == 'overdue' || pressure == 'high_risk'
+                      ? ShadeTone.danger
+                      : ShadeTone.neutral,
+                ),
+            ],
           ),
-      ],
+        ],
+      ),
     );
   }
 }

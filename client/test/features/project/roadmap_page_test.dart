@@ -132,7 +132,8 @@ void main() {
       expect(find.text('Payment retry'), findsOneWidget);
       expect(find.text('2026-10-06'), findsOneWidget);
       expect(find.text('near'), findsOneWidget);
-      expect(find.text('normal'), findsOneWidget);
+      // "normal" is the quiet default and is not printed (critique 2026-11-21).
+      expect(find.text('normal'), findsNothing);
       expect(find.text('roadmap.pressure.normal'), findsNothing);
       expect(find.text('overdue'), findsOneWidget);
       expect(find.text('Docs pass'), findsOneWidget);

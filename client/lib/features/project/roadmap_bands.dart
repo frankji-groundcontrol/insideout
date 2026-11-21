@@ -4,12 +4,12 @@ import 'package:provider/provider.dart';
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
-import '../../theme/cobalt.dart';
 import 'roadmap_band_scaffold.dart';
 import 'roadmap_node_card.dart';
 import 'roadmap_tree.dart';
 
-/// Lock B — Now / Next / Later shade bands that still hold item cards.
+/// Lock B — Now / Next / Later bands that still hold item cards, and Done
+/// for finished work.
 class RoadmapBands extends StatelessWidget {
   const RoadmapBands({
     super.key,
@@ -52,63 +52,79 @@ class RoadmapBands extends StatelessWidget {
     return switch (n.status) {
       'in_progress' => 'now',
       'pending' => 'next',
+      'done' || 'validated' => 'done',
       _ => 'later',
     };
+  }
+
+  static bool _finished(RoadmapNode n) =>
+      n.status == 'done' || n.status == 'validated';
+
+  /// Later's cards under each top-level branch: the roots, or the children
+  /// of a lone root (a built project has one). A node above that level (the
+  /// lone root itself) leads, unheaded.
+  List<(String?, List<RoadmapNode>)> _laterGroups(List<RoadmapNode> later) {
+    final roots = roadmapRoots(nodes);
+    final top = roots.length == 1
+        ? (nodes.where((n) => n.parentId == roots.single.id).toList()
+            ..sort((a, b) => a.position.compareTo(b.position)))
+        : roots;
+    final byId = {for (final n in nodes) n.id: n};
+    final topIds = {for (final t in top) t.id};
+    String? branchOf(RoadmapNode n) {
+      for (RoadmapNode? p = n; p != null; p = byId[p.parentId]) {
+        if (topIds.contains(p.id)) return p.id;
+      }
+      return null;
+    }
+
+    return [
+      (null, later.where((n) => branchOf(n) == null).toList()),
+      for (final t in top)
+        (t.title, later.where((n) => branchOf(n) == t.id).toList()),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    final palette = Cobalt.of(context);
-    final placed = progress == null
-        ? const <String>{}
-        : {...progress!.now, ...progress!.next}.map((i) => i.id).toSet();
     final now = progress == null
         ? _band(bucket, 'now')
         : _matching(progress!.now);
     final next = progress == null
         ? _band(bucket, 'next')
         : _matching(progress!.next);
-    final later = progress == null
-        ? _band(bucket, 'later')
-        : (nodes.where((n) => !placed.contains(n.id)).toList()
-            ..sort((a, b) => a.position.compareTo(b.position)));
+    final placed = {...now, ...next}.map((n) => n.id).toSet();
+    final rest = nodes.where((n) => !placed.contains(n.id)).toList()
+      ..sort((a, b) => a.position.compareTo(b.position));
+    final done = rest.where(_finished).toList();
+    final later = rest.where((n) => !_finished(n)).toList();
+    Widget band(
+      String key,
+      List<(String?, List<RoadmapNode>)> groups, {
+      bool now = false,
+    }) => _BandRow(
+      label: l10n.t(key),
+      now: now,
+      groups: groups,
+      allNodes: nodes,
+      projectId: projectId,
+      onReload: onReload,
+      planWriter: planWriter,
+      card: card,
+    );
     return ListView(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, ProductDock.clearance),
       children: [
-        _BandRow(
-          label: l10n.t('roadmap.bandNow'),
-          color: palette.surfaceSunken,
-          nodes: now,
-          allNodes: nodes,
-          projectId: projectId,
-          onReload: onReload,
-          planWriter: planWriter,
-          card: card,
-        ),
+        band('roadmap.bandNow', [(null, now)], now: true),
         const SizedBox(height: 16),
-        _BandRow(
-          label: l10n.t('roadmap.bandNext'),
-          color: palette.surfaceSunken,
-          nodes: next,
-          allNodes: nodes,
-          projectId: projectId,
-          onReload: onReload,
-          planWriter: planWriter,
-          card: card,
-        ),
+        band('roadmap.bandNext', [(null, next)]),
         const SizedBox(height: 16),
-        _BandRow(
-          label: l10n.t('roadmap.bandLater'),
-          color: palette.brand,
-          labelColor: palette.btnFg,
-          nodes: later,
-          allNodes: nodes,
-          projectId: projectId,
-          onReload: onReload,
-          planWriter: planWriter,
-          card: card,
-        ),
+        band('roadmap.bandLater', _laterGroups(later)),
+        if (done.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          band('roadmap.bandDone', [(null, done)]),
+        ],
       ],
     );
   }
@@ -117,20 +133,18 @@ class RoadmapBands extends StatelessWidget {
 class _BandRow extends StatelessWidget {
   const _BandRow({
     required this.label,
-    required this.color,
-    required this.nodes,
+    required this.now,
+    required this.groups,
     required this.allNodes,
     required this.projectId,
     required this.onReload,
     required this.planWriter,
     required this.card,
-    this.labelColor,
   });
 
   final String label;
-  final Color color;
-  final Color? labelColor;
-  final List<RoadmapNode> nodes;
+  final bool now;
+  final List<(String?, List<RoadmapNode>)> groups;
 
   /// Every node of the project — a card's descendants and parent sit
   /// outside this band's members.
@@ -140,28 +154,26 @@ class _BandRow extends StatelessWidget {
   final bool planWriter;
   final Widget Function(RoadmapNode node)? card;
 
+  Widget _card(RoadmapNode n) =>
+      card?.call(n) ??
+      RoadmapNodeCard(
+        projectId: projectId,
+        node: n,
+        onReload: onReload,
+        compact: true,
+        descendants: roadmapDescendantCount(allNodes, n),
+        planWriter: planWriter,
+        parentWritable: roadmapParentWritable(allNodes, n),
+      );
+
   @override
   Widget build(BuildContext context) {
-    return RoadmapBandScaffold(
+    return RoadmapBandScaffold.grouped(
       label: label,
-      color: color,
-      labelColor: labelColor,
-      itemCards: [
-        for (final n in nodes)
-          SizedBox(
-            width: 240,
-            child:
-                card?.call(n) ??
-                RoadmapNodeCard(
-                  projectId: projectId,
-                  node: n,
-                  onReload: onReload,
-                  compact: true,
-                  descendants: roadmapDescendantCount(allNodes, n),
-                  planWriter: planWriter,
-                  parentWritable: roadmapParentWritable(allNodes, n),
-                ),
-          ),
+      now: now,
+      groups: [
+        for (final (heading, nodes) in groups)
+          RoadmapBandGroup(heading, [for (final n in nodes) _card(n)]),
       ],
     );
   }
