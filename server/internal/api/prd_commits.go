@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -45,33 +44,21 @@ func (s *Server) handleCommitPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.store.GetPrdForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("prd commit readiness", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "prd commit readiness", err, errMsgs{
+			store.ErrNotFound:  "PRD not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
 	unresolved := mustJSONStringArray(mergeCarriedGaps(req.Unresolved, p.Sections, req.Audience))
 
 	c, err := s.store.CreatePrdCommit(r.Context(), userID, pid, req.Name, req.Audience, req.Summary, unresolved, req.DecisionNote)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the PRD author (Driver) or a workspace admin can commit", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("prd commit", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "prd commit", err, errMsgs{
+			store.ErrForbidden: "only the PRD author (Driver) or a workspace admin can commit",
+			store.ErrNotFound:  "PRD not found",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, c)
@@ -85,17 +72,11 @@ func (s *Server) handleListPrdCommits(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := s.store.ListPrdCommits(r.Context(), userID, pid)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("prd commits list", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "prd commits list", err, errMsgs{
+			store.ErrForbidden: "you must be a member of this workspace",
+			store.ErrNotFound:  "PRD not found",
+		})
 		return
 	}
 	if rows == nil {

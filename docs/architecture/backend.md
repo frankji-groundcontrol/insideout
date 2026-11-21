@@ -211,6 +211,12 @@ no specific code carries its status's name (`not_found`, `bad_request`,
 `internal_server_error`), and extra keys are camelCase (`retryAfterSeconds`,
 `liveCount`). `internal/httpx/error_style_test.go` reads every `WriteError`
 and SSE `errorEvent` call and fails on another style (rv5-PARC-08).
+Handlers report a store error through `writeStoreError` in
+`internal/api/store_error.go`. It maps each store error (`ErrNotFound`,
+`ErrForbidden`, `ErrConflict`, `ErrValidation` and the errors that wrap them)
+to one status and code, and the handler supplies only its own wording. The
+handlers not yet converted are listed in
+[the ladders issue](../issues/2026-11-21-store-error-ladders.md) (rv5-STRS-11).
 AI-specific throttling responses keep the
 `app_throttle` (429) and `circuit_open` (503) shapes with `retryAfterSeconds`
 that the frontend countdown reads; a provider-side rate limit hits after the

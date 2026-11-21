@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
@@ -16,13 +15,8 @@ func (s *Server) handleListEvidence(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rows, err := s.store.ListRoadmapEvidence(r.Context(), userID, nid)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("evidence list", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "evidence list", err, errMsgs{store.ErrForbidden: "you must be a member of this workspace"})
 		return
 	}
 	if rows == nil {

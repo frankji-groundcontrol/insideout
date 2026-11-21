@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 	"unicode/utf8"
@@ -82,17 +81,11 @@ func (s *Server) handleAddProjectUpdate(w http.ResponseWriter, r *http.Request) 
 	}
 
 	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, req.Kind, content)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("add project update", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "add project update", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, projectUpdateResponse(*u))
@@ -120,17 +113,11 @@ func (s *Server) handleEditProjectUpdate(w http.ResponseWriter, r *http.Request)
 	}
 
 	u, err := s.store.UpdateProjectUpdate(r.Context(), userID, uid, content)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "update not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author or a workspace admin can edit this", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("edit project update", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "edit project update", err, errMsgs{
+			store.ErrNotFound:  "update not found",
+			store.ErrForbidden: "only the author or a workspace admin can edit this",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, projectUpdateResponse(*u))
@@ -143,17 +130,11 @@ func (s *Server) handleDeleteProjectUpdate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	err := s.store.DeleteProjectUpdate(r.Context(), userID, uid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "update not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author or a workspace admin can delete this", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("delete project update", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete project update", err, errMsgs{
+			store.ErrNotFound:  "update not found",
+			store.ErrForbidden: "only the author or a workspace admin can delete this",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

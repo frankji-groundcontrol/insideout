@@ -95,13 +95,8 @@ func (s *Server) handleCreateIdea(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idea, err := s.store.CreateIdea(r.Context(), userID, wsID, req.Title, req.Content)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("create idea", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create idea", err, errMsgs{store.ErrForbidden: "you must be a member of this workspace"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, ideaResponse(*idea))
@@ -114,13 +109,8 @@ func (s *Server) handleGetIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idea, err := s.store.GetIdeaForMember(r.Context(), iid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "idea not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get idea", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get idea", err, errMsgs{store.ErrNotFound: "idea not found"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, ideaResponse(*idea))
@@ -149,17 +139,11 @@ func (s *Server) handleUpdateIdea(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idea, err := s.store.UpdateIdea(r.Context(), userID, iid, req.Title, req.Content)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "idea not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author can edit this idea", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update idea", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update idea", err, errMsgs{
+			store.ErrNotFound:  "idea not found",
+			store.ErrForbidden: "only the author can edit this idea",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, ideaResponse(*idea))
@@ -172,17 +156,11 @@ func (s *Server) handleDropIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := s.store.DropIdea(r.Context(), userID, iid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "idea not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author or a workspace admin can drop this idea", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("drop idea", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "drop idea", err, errMsgs{
+			store.ErrNotFound:  "idea not found",
+			store.ErrForbidden: "only the author or a workspace admin can drop this idea",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
@@ -207,21 +185,12 @@ func (s *Server) handleConvertIdea(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	prd, conv, err := s.store.ConvertIdeaWithLocale(r.Context(), userID, iid, req.Locale)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "idea not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author can convert this idea", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "this idea was already converted", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("convert idea", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "convert idea", err, errMsgs{
+			store.ErrNotFound:  "idea not found",
+			store.ErrForbidden: "only the author can convert this idea",
+			store.ErrConflict:  "this idea was already converted",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]string{

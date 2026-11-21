@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
@@ -21,17 +20,11 @@ func (s *Server) handlePrdReadiness(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.store.GetPrdForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("prd readiness", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "prd readiness", err, errMsgs{
+			store.ErrNotFound:  "PRD not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{

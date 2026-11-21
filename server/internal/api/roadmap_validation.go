@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -52,21 +51,12 @@ func (s *Server) handleAddObservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = s.store.AddValidationObservation(r.Context(), userID, nid, req.Detail, req.SourceURL, observedAt)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can record evidence here", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "observations attach to leaf nodes", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("add observation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "add observation", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: "only the project owner, a workspace admin, or the owner of this branch can record evidence here",
+			store.ErrConflict:  "observations attach to leaf nodes",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]bool{"ok": true})
@@ -97,21 +87,11 @@ func (s *Server) handleValidateNode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	n, err := s.store.ValidateRoadmapNode(r.Context(), userID, nid, req.Reason)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can validate", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrInvalidTransition) {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error(), "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("validate node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "validate node", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: "only the project owner or a workspace admin can validate",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))

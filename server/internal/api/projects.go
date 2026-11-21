@@ -157,13 +157,8 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p, err := s.store.CreateProject(r.Context(), userID, wsID, req.Title, req.Description)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("create project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create project", err, errMsgs{store.ErrForbidden: "you must be a member of this workspace"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
@@ -176,13 +171,8 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.store.GetProjectForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get project", err, errMsgs{store.ErrNotFound: "project not found"})
 		return
 	}
 
@@ -251,25 +241,13 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 	p, err := s.store.UpdateProject(r.Context(), userID, pid, store.ProjectUpdateFields{
 		Title: req.Title, Description: req.Description, Status: req.Status, OwnerID: ownerID, ClearOwner: clearOwner,
 	})
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrValidation) {
-		httpx.WriteError(w, http.StatusBadRequest, "ownerId must be a member of this workspace", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrHandoverNeedsAdmin) {
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can give the project to someone else or leave it without an owner", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can do this", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update project", err, errMsgs{
+			store.ErrNotFound:           "project not found",
+			store.ErrValidation:         "ownerId must be a member of this workspace",
+			store.ErrHandoverNeedsAdmin: "only a workspace admin can give the project to someone else or leave it without an owner",
+			store.ErrForbidden:          "only the project owner or a workspace admin can do this",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
@@ -282,17 +260,11 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := s.store.DeleteProject(r.Context(), userID, pid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can delete projects", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("delete project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete project", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "only a workspace admin can delete projects",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

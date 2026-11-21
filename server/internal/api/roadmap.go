@@ -148,21 +148,12 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	}
 
 	n, err := s.store.CreateRoadmapNode(r.Context(), userID, pid, parentID, req.Title, req.Description)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project or parent node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "parent node belongs to a different project", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("create roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create roadmap node", err, errMsgs{
+			store.ErrNotFound:  "project or parent node not found",
+			store.ErrForbidden: nodeWriteDenied,
+			store.ErrConflict:  "parent node belongs to a different project",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, roadmapNodeResponse(*n, s.now()))
@@ -259,25 +250,12 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	n, err := s.store.UpdateRoadmapNode(r.Context(), userID, nid, fields)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied+", and an assigned owner must be a member", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrInvalidTransition) {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error(), "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrValidation) {
-		httpx.WriteError(w, http.StatusBadRequest, "moving in_progress to done needs linked evidence or a one-sentence completion reason", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update roadmap node", err, errMsgs{
+			store.ErrNotFound:   "node not found",
+			store.ErrForbidden:  nodeWriteDenied + ", and an assigned owner must be a member",
+			store.ErrValidation: "moving in_progress to done needs linked evidence or a one-sentence completion reason",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
@@ -297,17 +275,11 @@ func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request)
 			"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount, "doneCount": rc.DoneCount, "validatedCount": rc.ValidatedCount})
 		return
 	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("delete roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete roadmap node", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: nodeWriteDenied,
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

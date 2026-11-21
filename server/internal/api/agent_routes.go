@@ -47,13 +47,8 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 	}
 
 	project, err := s.store.GetProjectForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("agent context: project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent context: project", err, errMsgs{store.ErrNotFound: "project not found"})
 		return
 	}
 	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
@@ -138,17 +133,11 @@ func (s *Server) handleAgentCheckpoint(w http.ResponseWriter, r *http.Request) {
 		content += " (node " + req.NodeID + ")"
 	}
 	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, "agent_checkpoint", content)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("agent checkpoint", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent checkpoint", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "recorded": true})
@@ -218,17 +207,11 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	}
 	// The proposal and its items are one transaction: both land or neither.
 	u, err := s.store.AddProposal(r.Context(), userID, pid, content, items)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can propose a change", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("agent propose", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent propose", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "only the project owner or a workspace admin can propose a change",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
@@ -270,17 +253,11 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 	// records no decision, so the proposal stays open to accept again; items
 	// already applied by an earlier accept are skipped, never created twice.
 	d, nodeIDs, err := s.store.DecideAndApplyProposal(r.Context(), userID, uid, req.Decision, strings.TrimSpace(req.Reason), req.Apply)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "proposal not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only agent_proposal records can be decided, by the project owner or a workspace admin", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("proposal decision", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "proposal decision", err, errMsgs{
+			store.ErrNotFound:  "proposal not found",
+			store.ErrForbidden: "only agent_proposal records can be decided, by the project owner or a workspace admin",
+		})
 		return
 	}
 	applied := make([]string, 0, len(nodeIDs))

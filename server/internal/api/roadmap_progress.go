@@ -150,14 +150,8 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *u
 }
 
 func (s *Server) writeRoadmapProgressError(w http.ResponseWriter, err error) {
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project or root node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
-	s.log.Error("roadmap progress", "error", err)
-	httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+	s.writeStoreError(w, "roadmap progress", err, errMsgs{
+		store.ErrNotFound:  "project or root node not found",
+		store.ErrForbidden: "you must be a member of this workspace",
+	})
 }

@@ -96,20 +96,14 @@ func (s *Server) handleHandBackNode(w http.ResponseWriter, r *http.Request) {
 
 // writeOwnerChange answers a delegate or hand-back.
 func (s *Server) writeOwnerChange(w http.ResponseWriter, n *store.RoadmapNode, err error, what string) {
-	switch {
-	case errors.Is(err, store.ErrNotFound):
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-	case errors.Is(err, store.ErrOwnerNotMember):
-		httpx.WriteError(w, http.StatusBadRequest, "the new owner must be a member of this workspace", "", nil)
-	case errors.Is(err, store.ErrForbidden):
-		httpx.WriteError(w, http.StatusForbidden,
-			"only the project owner, a workspace admin, or the owner of the branch above can change this node's owner", "", nil)
-	case err != nil:
-		s.log.Error(what, "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-	default:
-		httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
+	if err != nil {
+		s.writeStoreError(w, what, err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: "only the project owner, a workspace admin, or the owner of the branch above can change this node's owner",
+		})
+		return
 	}
+	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
 }
 
 type nodeAssignmentView struct {

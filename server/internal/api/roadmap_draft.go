@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
@@ -44,13 +43,8 @@ func planNodeFromView(v planNodeView) store.RoadmapPlanNode {
 // gate here. It writes nothing; only the confirm creates a project.
 func (s *Server) loadBuildablePrd(w http.ResponseWriter, r *http.Request, userID, prdID uuid.UUID) (*store.Prd, bool) {
 	prd, err := s.store.GetPrdForMember(r.Context(), prdID, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "prd not found", "", nil)
-		return nil, false
-	}
 	if err != nil {
-		s.log.Error("get prd", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get prd", err, errMsgs{store.ErrNotFound: "prd not found"})
 		return nil, false
 	}
 	if prd.Status != "approved" {
@@ -65,13 +59,8 @@ func (s *Server) loadBuildablePrd(w http.ResponseWriter, r *http.Request, userID
 // a workspace admin may do (rv5-FEAT-01).
 func (s *Server) ensureBuildProject(w http.ResponseWriter, r *http.Request, userID, prdID uuid.UUID) (*store.Project, bool) {
 	project, err := s.store.EnsureProjectForPrd(r.Context(), userID, prdID)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the PRD's author or a workspace admin can build it", "", nil)
-		return nil, false
-	}
 	if err != nil {
-		s.log.Error("ensure project for prd", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "ensure project for prd", err, errMsgs{store.ErrForbidden: "only the PRD's author or a workspace admin can build it"})
 		return nil, false
 	}
 	return project, true

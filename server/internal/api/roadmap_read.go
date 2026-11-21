@@ -27,17 +27,11 @@ func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
 	} else {
 		nodes, err = s.store.ListRoadmap(r.Context(), userID, pid)
 	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project or root node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("list roadmap", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list roadmap", err, errMsgs{
+			store.ErrNotFound:  "project or root node not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
 	now := s.now()

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -60,21 +59,12 @@ func (s *Server) handleMoveRoadmapNode(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		n, err = s.store.MoveRoadmapNode(r.Context(), userID, nid, parentID, position)
 	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "cannot move a node under itself or a descendant", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("move roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "move roadmap node", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: nodeWriteDenied,
+			store.ErrConflict:  "cannot move a node under itself or a descendant",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))

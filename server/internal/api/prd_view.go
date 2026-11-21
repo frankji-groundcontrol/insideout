@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/audienceview"
@@ -26,13 +25,8 @@ func (s *Server) handlePrdView(w http.ResponseWriter, r *http.Request) {
 	}
 	proj, _ := audienceview.Get(audience)
 	p, err := s.store.GetPrdForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("prd view", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "prd view", err, errMsgs{store.ErrNotFound: "PRD not found"})
 		return
 	}
 	commits, err := s.store.ListPrdCommits(r.Context(), userID, pid)

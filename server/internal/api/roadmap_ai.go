@@ -171,13 +171,10 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount})
 		return
 	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("replace roadmap tree", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "replace roadmap tree", err, errMsgs{
+			store.ErrForbidden: "only the project owner or a workspace admin can change the roadmap",
+		})
 		return
 	}
 
@@ -203,13 +200,8 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	node, err := s.store.GetRoadmapNode(r.Context(), userID, nid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get roadmap node", err, errMsgs{store.ErrNotFound: "node not found"})
 		return
 	}
 	// Refuse before the planner runs: a draft the caller could never confirm
@@ -312,17 +304,11 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 	}
 
 	created, err := s.store.ExpandRoadmapNode(r.Context(), userID, nid, children)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("expand roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "expand roadmap node", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: nodeWriteDenied,
+		})
 		return
 	}
 	now := s.now()
