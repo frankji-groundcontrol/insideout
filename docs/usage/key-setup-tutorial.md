@@ -37,7 +37,7 @@ without showing its value.
 
 ## 2. Configure the database and authentication foundation
 
-Choose one database route in [Step 1 of SETENV](../SETENV.md#step-1-database_url-required):
+Choose one database route in [Step 1 of SETENV](../SETENV.md#step-1--database_url-required):
 
 - [Runtime database DSN](./keys/database/database-app-dsn.md) and
   [migration-owner DSN](./keys/database/database-owner-dsn.md) for an existing
