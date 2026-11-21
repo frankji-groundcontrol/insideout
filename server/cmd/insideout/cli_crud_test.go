@@ -73,7 +73,9 @@ func TestIdeaUpdateWithoutContentSendsNoContentKey(t *testing.T) {
 		want string
 	}{
 		{[]string{"idea", "update", "--title", "X", "i1"}, `{"title":"X"}`},
-		{[]string{"idea", "update", "--title", "X", "--content", "", "i1"}, `{"content":"","title":"X"}`},
+		// One rule (rv5-STRS-06): an empty value leaves the body, the word clear clears it.
+		{[]string{"idea", "update", "--title", "X", "--content", "", "i1"}, `{"title":"X"}`},
+		{[]string{"idea", "update", "--title", "X", "--content", "clear", "i1"}, `{"content":"","title":"X"}`},
 	} {
 		var handled bool
 		var code int

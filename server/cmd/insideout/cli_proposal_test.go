@@ -23,6 +23,7 @@ func TestProposalDecideAppliesByDefault(t *testing.T) {
 		{words("proposal", "decide", "--reject", "--reason", "not now", "u1"), decision("rejected", false, "not now")},
 		{words("idea", "proposal-decide", "--accept", "u1"), decision("accepted", true, "")},
 		{words("idea", "proposal-decide", "--accept", "--apply", "u1"), decision("accepted", true, "")},
+		{words("idea", "proposal-decide", "--accept", "--apply=false", "u1"), decision("accepted", false, "")},
 	} {
 		var handled bool
 		var code int

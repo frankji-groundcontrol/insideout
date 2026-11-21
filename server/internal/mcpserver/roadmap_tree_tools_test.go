@@ -74,6 +74,8 @@ func TestRoadmapTreeToolsSendTheirRequests(t *testing.T) {
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
 		{"roadmap_update", `{"node_id":"n1","title":"T"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
+		{"idea_update", `{"idea_id":"i1","title":"T","content":""}`, treeRequest{"PATCH /ideas/i1", map[string]any{"title": "T"}}},
+		{"idea_update", `{"idea_id":"i1","title":"T","content":"clear"}`, treeRequest{"PATCH /ideas/i1", map[string]any{"title": "T", "content": ""}}},
 		{"roadmap_node", `{"node_id":"n1"}`, treeRequest{"GET /roadmap/n1", nil}},
 		{"roadmap_mine", `{"workspace_id":"ws1"}`, treeRequest{"GET /workspaces/ws1/roadmap/mine", nil}},
 		{"roadmap_assignments", `{"node_id":"n1"}`, treeRequest{"GET /roadmap/n1/assignments", nil}},
