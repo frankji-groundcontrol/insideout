@@ -37,13 +37,22 @@ func TestCLIPeopleVerbsOnTheRealAPI(t *testing.T) {
 		t.Fatalf("updates after update delete = %+v, want the note gone", page)
 	}
 
-	type profile struct{ Username, Bio string }
+	type profile struct {
+		Username, Bio string
+		Keywords      []string
+	}
 	cliOut(t, "profile", "update", "--bio", "Builds boards")
 	if got := cliJSON[profile](t, "profile", "update", "--username", "Renamed "+sfx); got.Username != "Renamed "+sfx || got.Bio != "Builds boards" {
 		t.Fatalf("profile update --username = %+v, want the new name with the bio kept", got)
 	}
 	if got := cliJSON[profile](t, "profile", "update", "--bio", "clear"); got.Bio != "" || got.Username != "Renamed "+sfx {
 		t.Fatalf("profile update --bio clear = %+v, want no bio and the name kept", got)
+	}
+	if got := cliJSON[profile](t, "profile", "update", "--keywords", "go, web"); !slices.Equal(got.Keywords, []string{"go", "web"}) || got.Username != "Renamed "+sfx {
+		t.Fatalf("profile update --keywords = %+v, want the two keywords and the name kept", got)
+	}
+	if got := cliJSON[profile](t, "profile", "update", "--keywords", "clear"); len(got.Keywords) != 0 || got.Username != "Renamed "+sfx {
+		t.Fatalf("profile update --keywords clear = %+v, want no keywords and the name kept", got)
 	}
 
 	// A second person joins with the workspace code.
