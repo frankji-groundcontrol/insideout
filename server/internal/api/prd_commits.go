@@ -39,6 +39,9 @@ func (s *Server) handleCommitPrd(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "name is required (max 200 characters)", "", nil)
 		return
 	}
+	if refuseTooLong(w, "changeSummary", req.Summary) || refuseTooLong(w, "decisionNote", req.DecisionNote) {
+		return
+	}
 	if !validAudiences[req.Audience] {
 		httpx.WriteError(w, http.StatusBadRequest, "primaryAudience must be one of decision, management, delivery, validation", "", nil)
 		return

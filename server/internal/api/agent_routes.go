@@ -130,7 +130,20 @@ func (s *Server) handleAgentCheckpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	content := "[agent checkpoint] " + req.Summary
 	if req.NodeID != "" {
-		content += " (node " + req.NodeID + ")"
+		// The node a checkpoint names is a node of its project (rv5-PARB-10).
+		nid, ok := parseUUIDParam(w, "nodeId", req.NodeID)
+		if !ok {
+			return
+		}
+		n, err := s.store.GetRoadmapNode(r.Context(), userID, nid)
+		if err == nil && n.ProjectID != pid {
+			err = store.ErrNotFound
+		}
+		if err != nil {
+			s.writeStoreError(w, "agent checkpoint node", err, errMsgs{store.ErrNotFound: "node not found in this project"})
+			return
+		}
+		content += " (node " + nid.String() + ")"
 	}
 	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, "agent_checkpoint", content)
 	if err != nil {
@@ -171,6 +184,9 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	req.Summary = strings.TrimSpace(req.Summary)
 	if req.Summary == "" || tooLong(req.Summary, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "summary is required (max 2000 characters)", "", nil)
+		return
+	}
+	if refuseTooLong(w, "detail", strings.TrimSpace(req.Detail)) {
 		return
 	}
 	pid, ok := parseUUIDParam(w, "projectId", req.ProjectID)
@@ -247,6 +263,9 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 	}
 	if req.Decision != "accepted" && req.Decision != "rejected" {
 		httpx.WriteError(w, http.StatusBadRequest, "decision must be \"accepted\" or \"rejected\"", "", nil)
+		return
+	}
+	if refuseTooLong(w, "reason", strings.TrimSpace(req.Reason)) {
 		return
 	}
 	// Decide and apply are one transaction: an apply that fails answers 500 and
