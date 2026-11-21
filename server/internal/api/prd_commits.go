@@ -42,6 +42,11 @@ func (s *Server) handleCommitPrd(w http.ResponseWriter, r *http.Request) {
 	if refuseTooLong(w, "changeSummary", req.Summary) || refuseTooLong(w, "decisionNote", req.DecisionNote) {
 		return
 	}
+	for _, item := range req.Unresolved {
+		if refuseTooLong(w, "unresolved", item) {
+			return
+		}
+	}
 	if !validAudiences[req.Audience] {
 		httpx.WriteError(w, http.StatusBadRequest, "primaryAudience must be one of decision, management, delivery, validation", "", nil)
 		return

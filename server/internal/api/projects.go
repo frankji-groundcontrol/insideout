@@ -160,6 +160,9 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}
+	if refuseTooLong(w, "description", req.Description) {
+		return
+	}
 
 	p, err := s.store.CreateProject(r.Context(), userID, wsID, req.Title, req.Description)
 	if err != nil {
@@ -225,6 +228,9 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 	req.Title = strings.TrimSpace(req.Title)
 	if req.Title == "" || tooLong(req.Title, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
+		return
+	}
+	if refuseTooLong(w, "description", req.Description) {
 		return
 	}
 	if !validProjectStatuses[req.Status] {

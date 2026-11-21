@@ -175,8 +175,9 @@ lowercase snake_case: a specific one where a client acts on it
 the status's name (`not_found`, `bad_request`). Extra keys are camelCase
 (`retryAfterSeconds`, `liveCount`).
 
-A proposal's `detail`, a decision's `reason`, and a commit's `changeSummary`
-and `decisionNote` hold at most 2000 characters; a longer one answers 400
+A proposal's `detail`, a decision's `reason`, a commit's `changeSummary`,
+`decisionNote` and each `unresolved` item, a revision's `note` and a project's
+`description` hold at most 2000 characters; a longer one answers 400
 `field_too_long`. A checkpoint's `nodeId` must be the id of a node of that
 project: 400 for a value that is no id, 404 for a node it cannot find there.
 

@@ -192,6 +192,9 @@ func (s *Server) handleCreateRevision(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
+	if req.Note != nil && refuseTooLong(w, "note", *req.Note) {
+		return
+	}
 
 	rev, err := s.store.CreateRevision(r.Context(), userID, pid, req.Note)
 	if err != nil {
