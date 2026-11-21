@@ -1,29 +1,24 @@
 #!/usr/bin/env python3
 """Fail when the record-system docs contradict the tree (review-4 wave 3).
 
-Usage: python3 -I scripts/tests/check_docs_truth_rv4.py
+Usage: python3 -I scripts/tests/check_record_docs_truth.py
 
-Companion to check_docs_truth.py, split out to keep both under the line
-budget. Same method: derive the premise from the tree first, then assert the
-doc agrees, so the prose cannot silently re-drift. Exits 1 naming every
+Companion to check_docs_truth.py for the record-system docs. Same method:
+derive the premise from the tree first, then assert the doc agrees, so the
+prose cannot silently re-drift. Exits 1 naming every
 offending claim (rv4-FULL-09, rv4-USER-08, rv4-FEAT-08, rv4-PM-08,
 rv4-USER-09 README half, rv4-ARCH-06, rv4-PM-03, rv4-PM-09).
 """
 import fnmatch
-import pathlib
+import os
 import re
 import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-
-
-def read(name):
-    return (ROOT / name).read_text(encoding="utf-8")
-
-
-def fail(failures, message):
-    failures.append(message)
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+from _gate import ROOT, fail, read  # noqa: E402
 
 
 def mentions(text, name):
@@ -282,4 +277,4 @@ if __name__ == "__main__":
         print(message, file=sys.stderr)
     if failures:
         sys.exit(1)
-    print(f"docs truth (rv4) ok: {facts['env variables']} INSIDEOUT_* variables documented")
+    print(f"record docs truth ok: {facts['env variables']} INSIDEOUT_* variables documented")

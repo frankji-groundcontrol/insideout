@@ -2,7 +2,7 @@
 """Fail when the two halves of the shipped compose stack's client-address chain
 disagree (rv4-FR-F61, F106, F51, F57, F99, F107, D02).
 
-Usage: python3 -I scripts/tests/check_proxy_hops_rv4.py
+Usage: python3 -I scripts/tests/check_deploy_proxy_hops.py
 
 The auth throttle and the resend cooldown key on clientIP: the TCP peer at
 INSIDEOUT_TRUSTED_PROXY_HOPS=0, otherwise the Nth entry from the right of
@@ -24,11 +24,14 @@ disappears with its premise; exit 1 names each offence, exit 2 means a premise
 could not be derived (the style of check_ops_hardening.py). The nginx side runs
 on a real nginx in scripts/check_nginx_reresolve.py.
 """
-import pathlib
+import os
 import re
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+from _gate import ROOT, cannot_derive, compose_service, read  # noqa: E402
 HOSTED_DEFAULT = "$http_x_forwarded_for"  # the edge appended the client; nginx must not touch the chain
 ENDS_IN_PEER = ("$proxy_add_x_forwarded_for", "$remote_addr")  # the rightmost entry is the address nginx saw
 SERVER_DEFAULT = 0  # config.go: an unset INSIDEOUT_TRUSTED_PROXY_HOPS trusts no header
@@ -40,27 +43,10 @@ UNESCAPED_DOCKER = re.compile(r"(?<!\\)\$")
 UNESCAPED_COMPOSE = re.compile(r"(?<!\$)\$(?!\$)")
 
 
-def read(name):
-    return (ROOT / name).read_text(encoding="utf-8")
-
-
-def cannot_derive(message):
-    print(message, file=sys.stderr)
-    sys.exit(2)
-
-
 def flat(name):
     """A file's text with comment markers and line breaks folded away, so a
     sentence wrapped across lines reads as one."""
     return " ".join(re.sub(r"(?m)^\s*#+ ?", "", read(name)).split())
-
-
-def compose_service(name):
-    """Text of one service of docker-compose.yml (a flat services map, so a cut
-    at the next two-space key needs no YAML parser), or None."""
-    match = re.search(rf"^  {re.escape(name)}:\n(.*?)(?=^  [A-Za-z_][\w-]*:|\Z)",
-                      read("docker-compose.yml"), re.M | re.S)
-    return match.group(1) if match else None
 
 
 def compose_env(service, name):

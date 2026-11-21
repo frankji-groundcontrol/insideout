@@ -2,7 +2,7 @@
 """Pin the whole-change review repairs of the redaction and ledger guards
 (rv4-FR-F45, F46, F53, F55).
 
-Usage: python3 -I scripts/tests/check_rv4_review_redaction.py
+Usage: python3 -I scripts/tests/check_review_redaction.py
 
 Stdlib only. Each class reproduces a finding of the review of
 d53035a..rv4/integration against the real guard in a throwaway repository, so
@@ -22,7 +22,10 @@ import tempfile
 import unittest
 from collections import Counter
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+from _gate import ROOT  # noqa: E402
 AT = "@"  # addresses are built around AT so this file never spells one itself
 
 

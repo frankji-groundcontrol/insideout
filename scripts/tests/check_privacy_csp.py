@@ -24,14 +24,18 @@ CLIENT_LOAD, so a claim written with none of them passes, and the processor
 list is not compared with the server's environment variables.
 
 Stdlib only.
-Usage: python3 -I scripts/tests/check_privacy_csp_rv4.py [PRIVACY.md [nginx.conf]]
+Usage: python3 -I scripts/tests/check_privacy_csp.py [PRIVACY.md [nginx.conf]]
 """
 
+import os
 import pathlib
 import re
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+from _gate import ROOT  # noqa: E402
 
 # Hosts PRIVACY.md may name without the CSP allowing them: the server's GitHub
 # recipient and the repository links. A new host in the notice fails until the
@@ -161,7 +165,7 @@ def main(argv):
     hosts, wide = csp_sources(nginx)
     allowed = ", ".join(sorted(hosts | wide)) or "'self' only"
     cases = len(regressions(privacy, nginx))
-    print(f"privacy vs CSP (rv4) ok: the CSP allows {allowed}; the notice agrees; {cases} regressions still go red")
+    print(f"privacy vs CSP ok: the CSP allows {allowed}; the notice agrees; {cases} regressions still go red")
     return 0
 
 

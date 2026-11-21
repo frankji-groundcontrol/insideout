@@ -1,20 +1,24 @@
 #!/usr/bin/env python3
 """Fail when env-facing text says more than the code does (review-4 wave 4).
 
-Usage: python3 -I scripts/tests/check_env_truth_rv4.py
+Usage: python3 -I scripts/tests/check_compose_env_truth.py
 
-Same method as check_docs_truth_rv4.py: derive each premise from the tree
+Same method as check_record_docs_truth.py: derive each premise from the tree
 (which code reads GITHUB_TOKEN, which variables the server process reads,
 which variables docker-compose.yml interpolates), then assert the text agrees,
 so a sentence cannot outlive the code it describes. A demand disappears with
 its premise. Exits 1 naming every offending claim and 2 when a premise cannot
 be derived (rv4-FEAT-04 residue R3-27, rv4-FULL-09 residue R3-35).
 """
-import pathlib
+import os
 import re
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+import _gate  # noqa: E402
+from _gate import ROOT, cannot_derive, fail, read  # noqa: E402
 # Host-side verbs: they run on the operator's machine, never in the server container.
 SETUP_VERBS = re.compile(r"^cli_setup\w*\.go$")
 NAME = r"\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b"  # an environment variable name
@@ -30,21 +34,8 @@ LIVING_FILES = ("README.md", "PRODUCT.md", "docs/SETENV.md", ".env.example")
 LIVING_TREES = ("docs/usage", "docs/architecture")
 
 
-def read(name):
-    return (ROOT / name).read_text(encoding="utf-8")
-
-
 def rel(path):
     return path.relative_to(ROOT).as_posix()
-
-
-def fail(failures, message):
-    failures.append(message)
-
-
-def cannot_derive(message):
-    print(message, file=sys.stderr)
-    sys.exit(2)
 
 
 def go_sources(*trees):
@@ -58,13 +49,11 @@ def numbered_lines(path):
 
 
 def compose_service(name):
-    """Text of one service of docker-compose.yml. The file is a flat services
-    map, so a cut at the next two-space key needs no YAML parser."""
-    match = re.search(rf"^  {re.escape(name)}:\n(.*?)(?=^  [A-Za-z_][\w-]*:|\Z)",
-                      read("docker-compose.yml"), re.M | re.S)
-    if not match:
+    """Text of one service of docker-compose.yml; exit 2 when it is missing."""
+    text = _gate.compose_service(name)
+    if text is None:
         cannot_derive(f"no `{name}` service in docker-compose.yml")
-    return match.group(1)
+    return text
 
 
 def server_env_names():
@@ -136,7 +125,7 @@ def token_not_oversold(failures):
 def compose_carries_what_the_server_reads(facts, failures):
     """rv4-FULL-09 (R3-35): every INSIDEOUT_* variable the server process reads
     (server/internal/config and server/internal/agent, the definition
-    check_docs_truth_rv4.py uses) is passed by the compose server service;
+    check_record_docs_truth.py uses) is passed by the compose server service;
     otherwise setting it in .env does nothing under compose."""
     read_at = {}
     for path in go_sources("server/internal/config", "server/internal/agent"):
@@ -211,5 +200,5 @@ if __name__ == "__main__":
         print(message, file=sys.stderr)
     if failures:
         sys.exit(1)
-    print(f"env truth (rv4) ok: compose carries all {facts['server-read variables']} server-read "
+    print(f"compose env truth ok: compose carries all {facts['server-read variables']} server-read "
           f"INSIDEOUT_* variables; {facts['interpolated variables']} interpolated variables checked against the docs")
