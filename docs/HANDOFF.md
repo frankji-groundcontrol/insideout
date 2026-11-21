@@ -16,7 +16,8 @@ committed there, the pushed-tip CI failures are fixed, the task tree is
 written into PRODUCT.md). Progress per wave:
 [changelog folder](changelogs/2026-11-21-rv5-remediation/index.md); plan:
 [rv5 remediation](plans/2026-11-21-rv5-remediation/2026-11-21-rv5-remediation.md).
-The branch is pushed after each wave with a draft pull request for CI;
+The branch is pushed after each wave; the owner asked that CI not be run
+for this work, so there is no pull request and verification is local.
 `main` is not pushed.
 
 **2026-11-21: focused review 5 is delivered.**

@@ -14,10 +14,12 @@ PRD, no completion override by an agent.
 - Branch `rv5/remediation`, cut from `main` @ `c2900fd` (`origin/main`). The
   in-flight install and password-reset slice that sat uncommitted on the MBP
   checkout is finished in wave 0 (row 0.4) and committed on this branch.
-- After each wave passes its gates the branch is pushed. CI runs on pull
-  requests only (`.github/workflows/ci.yml` triggers), so one draft pull
-  request from the branch to `main` carries the CI runs. `main` is never
-  pushed from this plan.
+- After each wave passes its gates the branch is pushed. No workflow
+  triggers on a push to a branch other than `main`, so a push runs no CI.
+  **The owner asked on 2026-11-21 that CI not be run for this work**: the
+  draft pull request opened for wave 0 (#23) was closed and no pull request
+  is opened; verification is local only. `main` is never pushed from this
+  plan.
 - Code clusters run as dynamic workflows: a worker in its own git worktree,
   failing test first, then an adversarial verifier, then the coordinator
   cherry-picks onto the branch and re-runs every gate.
@@ -36,7 +38,8 @@ PRD, no completion override by an agent.
    analyzer info count at or under the CI baseline.
 4. Every `scripts/tests/check_*.py` exits 0; `scripts/check-redaction.sh`
    exits 0.
-5. The CI run on the draft pull request is green.
+5. `(cd client && dart format --output=none --set-exit-if-changed lib test)`
+   reports no change (CI's format step, run locally).
 
 ## Checklist
 

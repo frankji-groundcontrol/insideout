@@ -36,9 +36,14 @@ coordinator after the last edits:
 
 ## Left open
 
-- `INFO_BASELINE` 8 was measured with the local Flutter 3.47; CI pins 3.44.
-  The first CI run on the pull request settles it.
-- CI's `dart format` step may reformat `client/lib/l10n/en_workspace.dart`
-  with the pinned SDK; the file is unchanged by this wave.
+- One CI run happened, on draft pull request #23 before the owner asked
+  that CI not be run; the pull request was then closed. On that run the
+  Flutter job stopped at `dart format`, which reformats
+  `client/lib/l10n/en_workspace.dart` (unchanged by this wave, so the step
+  was already red on `main`), and `govulncheck` reported the two standard
+  library fixes recorded in
+  [the govulncheck record](../../issues/2026-11-21-govulncheck-go-toolchain.md).
+  Both are fixed in wave 1's integration. `INFO_BASELINE` 8 was measured with
+  the local Flutter 3.47; CI pins 3.44 and never reached the analyzer step.
 - `PRODUCT.md` grew by 15 lines and stays over its line budget (tracked in
   [the line-budget record](../../issues/2026-10-18-product-and-setenv-over-line-budget.md)).
