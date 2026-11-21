@@ -130,26 +130,7 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret, cfg.AccessTTL)
 
-	var streamer llm.ChatStreamer
-	var planner agent.RoadmapPlanner
-	if cfg.AIAuthToken == "" {
-		log.Info("INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach")
-		streamer = agent.NewTemplateStreamer()
-		planner = agent.NewTemplateRoadmapPlanner()
-	} else {
-		s, err := llm.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
-		if err != nil {
-			log.Error("create llm streamer", "error", err)
-			os.Exit(1)
-		}
-		streamer = s
-		planner = agent.NewAnthropicRoadmapPlanner(s)
-		if checker, ok := s.(interface {
-			CheckModel(context.Context) (bool, []string, error)
-		}); ok {
-			checkModelAtStartup(ctx, log, checker, cfg.AIModel)
-		}
-	}
+	streamer, planner := newModel(ctx, log, cfg)
 	coach := agent.New(st, streamer, log)
 
 	srv := api.NewServer(st, tokens, cfg, log, coach, planner)
@@ -201,6 +182,27 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Error("shutdown", "error", err)
 	}
+}
+
+// newModel is the coach's streamer and the roadmap planner: the offline
+// templates when no model key is set, else the configured model, checked once
+// at boot.
+func newModel(ctx context.Context, log *slog.Logger, cfg *config.Config) (llm.ChatStreamer, agent.RoadmapPlanner) {
+	if cfg.AIAuthToken == "" {
+		log.Info("INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach")
+		return agent.NewTemplateStreamer(), agent.NewTemplateRoadmapPlanner()
+	}
+	s, err := llm.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
+	if err != nil {
+		log.Error("create llm streamer", "error", err)
+		os.Exit(1)
+	}
+	if checker, ok := s.(interface {
+		CheckModel(context.Context) (bool, []string, error)
+	}); ok {
+		checkModelAtStartup(ctx, log, checker, cfg.AIModel)
+	}
+	return s, agent.NewAnthropicRoadmapPlanner(s)
 }
 
 // checkModelAtStartup turns BUG-009's silent model_not_found (surfaced

@@ -12,6 +12,8 @@ when the line rule was replaced by a responsibility rule with a function-length 
 
 *2026-11-21, wave 4: `Coach.HandleMessage`, `runLocalSetup` and `parseAnthropicStream` are split and out of the guard's list; `parseResponsesStream` moved to `internal/llm`. Thirteen remain. Wave 3, built beside the guard, grew `addAuthTools` to 156 lines and `runClientCommand` (`cmd/insideout/cli.go`) to 92: both are listed at those lengths and assigned to the wave 4 MCP and CLI splits.*
 
+*Wave 4 CLI split: `runClientCommand` (now `cmd/insideout/cli_dispatch.go`), `runCrudCommand`, `runVersionCommands` and `runServe` are split and out of the guard's list.*
+
 Length is counted from the `func` line to the closing brace, at `87c95f5`:
 
 | Function | File (under `server/`) | Lines |
@@ -21,15 +23,15 @@ Length is counted from the `func` line to the closing brace, at `87c95f5`:
 | ~~`runLocalSetup`~~ | `cmd/insideout/cli_setup_local.go` | 160: split in wave 4 |
 | ~~`addAuthTools`~~ | `internal/mcpserver/auth_tools.go` | 152: split in `tools_auth.go` in wave 4 |
 | ~~`parseAnthropicStream`~~ | `internal/agent/anthropic_parse.go` | 136: split in wave 4 |
-| `runVersionCommands` | `cmd/insideout/cli_version.go` | 117 |
-| `runCrudCommand` | `cmd/insideout/cli_crud.go` | 103 |
+| ~~`runVersionCommands`~~ | `cmd/insideout/cli_version.go` | 117: split per verb in wave 4 (`cli_prd.go`, `cli_prd_versions.go`, `cli_agent.go`) |
+| ~~`runCrudCommand`~~ | `cmd/insideout/cli_crud.go` | 103: split per verb in wave 4 (`cli_idea.go`, `cli_workspace.go`, `cli_prd.go`) |
 | `Store.Migrate` | `internal/store/migrate.go` | 100 |
 | `Store.ReplaceRoadmapTree` | `internal/store/roadmap_plan.go` | 99 |
 | `parseResponsesStream` | `internal/llm/responses_parse.go` (moved by wave 4) | 98 |
 | `Server.handleUpdateRoadmapNode` | `internal/api/roadmap.go` | 97 |
 | `Store.MoveRoadmapNode` | `internal/store/roadmap_move.go` | 94 |
 | `Server.handleAgentContext` | `internal/api/agent_routes.go` | 89 |
-| `runServe` | `cmd/insideout/main.go` | 87 |
+| ~~`runServe`~~ | `cmd/insideout/main.go` | 87: split in wave 4 (`newModel`) |
 | `Server.handlePresenceStream` | `internal/api/presence_routes.go` | 85 |
 | `runRegister` | `internal/setup/ui/register.go` | 84 |
 

@@ -17,7 +17,6 @@ import (
 // grow, and an entry for a function that is gone or back under the limit
 // fails too, so the list only shrinks.
 var longFunctions = map[string]int{
-	"cmd/insideout/main.go:runServe":                              87,
 	"internal/llm/responses_parse.go:parseResponsesStream":        98,
 	"internal/api/agent_routes.go:Server.handleAgentContext":      89,
 	"internal/api/presence_routes.go:Server.handlePresenceStream": 85,
