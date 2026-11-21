@@ -25,4 +25,4 @@ integrated branch `rv5/close-gaps`. That branch goes to `main` in one PR with
       client calls by receiver type
       ([practice](../../practices/2026-11-21-surface-parity-guards.md)).
 - [x] Integrated gates green; records closed ([changelog](../../changelogs/2026-11-21-close-review-5-gaps.md)).
-- [ ] PR merged.
+- [x] PR merged: #26 (`45f52e5`).
