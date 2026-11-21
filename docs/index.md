@@ -14,8 +14,6 @@ keeps its original bilingual text as a historical record).
   [design-system/cobalt/](./design-system/cobalt/README.md).
 - [INIT.md](./INIT.md) — compatibility pointer from the former product
   definition to PRODUCT.md and the current architecture.
-- [PLAN.md](./PLAN.md) — high-level development overview: architecture table,
-  repo layout, information architecture, conventions.
 - [TODO.md](./TODO.md) — slim shipped-system baseline (known limitations and
   debt live in [issues/](./issues/README.md)).
 - [plans/README.md](./plans/README.md) — authoritative concurrent task board:
@@ -27,10 +25,25 @@ keeps its original bilingual text as a historical record).
 
 - [CLAUDE.md](../CLAUDE.md) — Claude Code router.
 - [AGENTS.md](../AGENTS.md) — Codex and general coding-agent contract.
+- [SKILL.md](../SKILL.md) — the product skill: drive InsideOut through its
+  CLI, MCP server or `/api/v1`.
 - [skills/insideout-setup/](../skills/insideout-setup/SKILL.md) — the
   installation skill: any agent follows it to take a bare macOS or
   Ubuntu machine to a verified install, module by module, and write
   the host record.
+- [skills/insideout-server/](../skills/insideout-server/SKILL.md) — run the
+  server on this machine or develop the Flutter client.
+- [hosts/](../hosts/README.md) — per-host metadata and the key manifests for
+  the machines that run this repository.
+
+## Repository policy
+
+- [CONTRIBUTING.md](../CONTRIBUTING.md) — how to contribute; the working
+  contract is AGENTS.md.
+- [SECURITY.md](../SECURITY.md) — how to report a vulnerability.
+- [PRIVACY.md](../PRIVACY.md) — what the hosted service keeps and for how long.
+- [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) — licenses of the
+  bundled third-party components.
 
 ## Records
 

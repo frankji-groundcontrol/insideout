@@ -184,7 +184,7 @@ def backup_doc_states_reality(failures):
 
 # Living docs checked for a PostgreSQL floor claim (rv4-COMP-08).
 PG_LIVING = ("README.md", "PRODUCT.md", "CONTRIBUTING.md", "SKILL.md", ".env.example",
-             "docs/SETENV.md", "docs/usage/", "docs/architecture/", "docs/PLAN.md", "skills/")
+             "docs/SETENV.md", "docs/usage/", "docs/architecture/", "skills/")
 PG_CLAIM = re.compile(r"(?i)postgres(?:ql)?\W{0,6}(\d+)\+")
 
 
