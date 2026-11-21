@@ -18,8 +18,10 @@ REST, CLI and MCP; the four surfaces reach the same routes under one error
 style, with a parity test; the code follows a responsibility rule with a
 function-length guard; and the documentation graph is checked, with Marksman
 at 0. Owner decision 7 (a node writer may file proposals inside their
-subtree) follows in its own PR. CI is skipped on PRs and merges at the owner's
-request (`[skip ci]`); verification is local.
+subtree) follows in its own PR. CI is disabled in the repository at the owner's
+request: the `ci`, `security`, `smoke` and `ubuntu install skill` workflows
+are off ([how to re-enable](usage/local-development.md)); verification is
+local.
 
 **2026-11-21: focused review 5 is delivered.**
 [The report](./review/2026-11-21-focused-review-5/README.md) (127 findings,

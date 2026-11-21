@@ -5,6 +5,13 @@ Flutter client (`client/`, web + iOS + Android), backed by PostgreSQL.
 
 This doc supersedes the old `docs/INSTALL.md` (removed 2026-07-21; see git history).
 
+> **CI is disabled (2026-11-21, owner's request).** The `ci`, `security`,
+> `smoke` and `ubuntu install skill` workflows are disabled in the repository's
+> Actions settings, so no push, pull request or schedule runs them. `release`
+> and Dependabot stay enabled. Run the gates locally (the checks below, against
+> a real PostgreSQL). Re-enable one with `gh workflow enable <name>`. Where this
+> page says "CI runs" something, read it as what the workflow file defines.
+
 ## Prerequisites
 
 - **Go 1.26+** (see `server/go.mod`). The same file names a newer `toolchain`
