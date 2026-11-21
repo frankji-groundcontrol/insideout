@@ -127,7 +127,7 @@ func TestRoadmap_TreeLifecycle(t *testing.T) {
 	}
 
 	// Delete branchA — its whole subtree (leaf + the moved branchB) cascades.
-	if err := st.DeleteRoadmapNode(ctx, admin.ID, branchA.ID); err != nil {
+	if err := st.DeleteRoadmapNode(ctx, admin.ID, branchA.ID, false); err != nil {
 		t.Fatalf("delete branchA: %v", err)
 	}
 	nodes, err = st.ListRoadmap(ctx, admin.ID, pid)

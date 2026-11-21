@@ -289,7 +289,14 @@ func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	err := s.store.DeleteRoadmapNode(r.Context(), userID, nid)
+	// The subtree cascades: evidence and finished work go only with force.
+	err := s.store.DeleteRoadmapNode(r.Context(), userID, nid, r.URL.Query().Get("force") == "true")
+	var rc *store.ReplaceConflictError
+	if errors.As(err, &rc) {
+		httpx.WriteError(w, http.StatusConflict, "this branch has evidence or finished nodes a delete would erase; confirm with force", "roadmap_delete_has_history", map[string]interface{}{
+			"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount, "doneCount": rc.DoneCount, "validatedCount": rc.ValidatedCount})
+		return
+	}
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
 		return

@@ -290,28 +290,3 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 	s.noteRoadmapChange(n.ProjectID)
 	return n, nil
 }
-
-// DeleteRoadmapNode removes a node; its subtree cascades via the parent_id
-// FK's ON DELETE CASCADE. It takes a manager of the node (requireNodeManager):
-// a delegate deletes below the node they were handed, never that node.
-func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) error {
-	var projectID uuid.UUID
-	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return ErrNotFound
-			}
-			return err
-		}
-		if err := requireNodeManager(ctx, tx, nodeID, actorID); err != nil {
-			return err
-		}
-		_, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)
-		return err
-	})
-	if err != nil {
-		return err
-	}
-	s.noteRoadmapChange(projectID)
-	return nil
-}

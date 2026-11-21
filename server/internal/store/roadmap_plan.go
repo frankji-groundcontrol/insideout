@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -91,6 +92,13 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 
 		if _, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID); err != nil {
 			return err
+		}
+		// A forced rebuild discards history: the feed keeps a note of it.
+		if c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
+			if _, err := addProjectUpdateTx(ctx, tx, actorID, projectID, "note",
+				fmt.Sprintf("Rebuilt the roadmap (%d nodes), discarding %s", c.LiveCount, discardedHistory(&c))); err != nil {
+				return err
+			}
 		}
 
 		var insert func(parentID *uuid.UUID, n RoadmapPlanNode) error

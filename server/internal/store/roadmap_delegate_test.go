@@ -91,7 +91,7 @@ func TestADelegateWritesInsideTheirSubtree(t *testing.T) {
 	if _, err := st.UpdateRoadmapNode(ctx, m, child.ID, RoadmapNodeFields{OwnerID: &w.other.ID}); err != nil {
 		t.Errorf("re-delegate a descendant: %v", err)
 	}
-	if err := st.DeleteRoadmapNode(ctx, m, child.ID); err != nil {
+	if err := st.DeleteRoadmapNode(ctx, m, child.ID, true); err != nil {
 		t.Errorf("delete a node below the delegated root: %v", err)
 	}
 }
@@ -108,7 +108,7 @@ func TestADelegateIsRefusedOutsideTheirSubtree(t *testing.T) {
 
 	_, err := st.MoveRoadmapNode(ctx, m, w.payments.ID, &w.shipping.ID, 0)
 	refused("move the delegated root", err)
-	refused("delete the delegated root", st.DeleteRoadmapNode(ctx, m, w.payments.ID))
+	refused("delete the delegated root", st.DeleteRoadmapNode(ctx, m, w.payments.ID, true))
 	_, err = st.UpdateRoadmapNode(ctx, m, w.payments.ID, RoadmapNodeFields{OwnerID: &w.other.ID})
 	refused("reassign the delegated root", err)
 	_, err = st.UpdateRoadmapNode(ctx, m, w.payments.ID, RoadmapNodeFields{ClearOwner: true})
