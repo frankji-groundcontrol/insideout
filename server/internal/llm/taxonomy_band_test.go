@@ -1,4 +1,4 @@
-package agent
+package llm
 
 import (
 	"errors"
@@ -12,6 +12,10 @@ import (
 // every call) opened the one global breaker for all users. These statuses
 // are billing/payload problems, not provider load: they must classify as
 // ErrProviderConfig and stay off the breaker, like 401/403/404 already do.
+//
+// The sentinel-to-breaker half (ErrProviderConfig stays off, ErrProviderTransient
+// and ErrProviderRateLimited count) is pinned by agent's TestCountsAgainstCircuit;
+// this package pins the status-and-code-to-sentinel half.
 func TestProviderHTTPError_Residual4xxBandIsConfigNotLoad(t *testing.T) {
 	for _, status := range []int{
 		http.StatusPaymentRequired,       // 402: quota/billing exhausted
@@ -23,9 +27,6 @@ func TestProviderHTTPError_Residual4xxBandIsConfigNotLoad(t *testing.T) {
 		if !errors.Is(err, ErrProviderConfig) {
 			t.Errorf("%d classified as %v, want wrapping ErrProviderConfig", status, err)
 			continue
-		}
-		if countsAgainstCircuit(err) {
-			t.Errorf("a %d turn would count against the circuit breaker: %v", status, err)
 		}
 	}
 }
@@ -39,13 +40,10 @@ func TestClassifyResponsesStreamError_UnknownCodeIsNotCircuitLoad(t *testing.T) 
 	if !errors.Is(err, ErrProviderConfig) {
 		t.Fatalf("err = %v, want wrapping ErrProviderConfig", err)
 	}
-	if countsAgainstCircuit(err) {
-		t.Fatalf("an unknown in-stream code would count against the breaker: %v", err)
-	}
-	if err := classifyResponsesStreamError("server_error", "boom"); !countsAgainstCircuit(err) {
+	if err := classifyResponsesStreamError("server_error", "boom"); !errors.Is(err, ErrProviderTransient) {
 		t.Fatalf("server_error stopped counting as load: %v", err)
 	}
-	if err := classifyResponsesStreamError("rate_limit_exceeded", "slow down"); !countsAgainstCircuit(err) {
+	if err := classifyResponsesStreamError("rate_limit_exceeded", "slow down"); !errors.Is(err, ErrProviderRateLimited) {
 		t.Fatalf("rate_limit_exceeded stopped counting as load: %v", err)
 	}
 }

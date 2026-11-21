@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/google/uuid"
 )
 
@@ -93,7 +94,7 @@ func (c *Coach) Admit(w http.ResponseWriter, r *http.Request, workspaceID, userI
 			logErr(c.log, "MarkAIRunFailed", c.store.MarkAIRunFailed(ctx, userID, run.ID, callErr.Error()), "run_id", run.ID)
 			// Only a provider-health signal feeds the breaker; a plan the model
 			// botched, or a client that went away, is not provider load.
-			if errors.Is(callErr, ErrProviderRateLimited) || errors.Is(callErr, ErrProviderTransient) || errors.Is(callErr, ErrUpstreamStall) {
+			if errors.Is(callErr, llm.ErrProviderRateLimited) || errors.Is(callErr, llm.ErrProviderTransient) || errors.Is(callErr, llm.ErrUpstreamStall) {
 				logErr(c.log, "RecordCircuitResult", c.store.RecordCircuitResult(ctx, false), "run_id", run.ID)
 			}
 		})

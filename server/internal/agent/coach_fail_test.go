@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
 )
@@ -23,13 +24,13 @@ func TestCountsAgainstCircuit(t *testing.T) {
 		err  error
 		want bool
 	}{
-		{"rate limited", fmt.Errorf("%w: anthropic returned 429", ErrProviderRateLimited), true},
-		{"transient", fmt.Errorf("%w: anthropic returned 503", ErrProviderTransient), true},
-		{"upstream stall", ErrUpstreamStall, true},
+		{"rate limited", fmt.Errorf("%w: anthropic returned 429", llm.ErrProviderRateLimited), true},
+		{"transient", fmt.Errorf("%w: anthropic returned 503", llm.ErrProviderTransient), true},
+		{"upstream stall", llm.ErrUpstreamStall, true},
 		{"unclassified provider error", errors.New("agent: anthropic returned 422 Unprocessable Entity: bad field"), true},
-		{"context length", fmt.Errorf("%w: prompt is too long", ErrContextLength), false},
-		{"provider config", fmt.Errorf("%w: anthropic returned 401", ErrProviderConfig), false},
-		{"content refusal", fmt.Errorf("%w: model declined", ErrContentRefusal), false},
+		{"context length", fmt.Errorf("%w: prompt is too long", llm.ErrContextLength), false},
+		{"provider config", fmt.Errorf("%w: anthropic returned 401", llm.ErrProviderConfig), false},
+		{"content refusal", fmt.Errorf("%w: model declined", llm.ErrContentRefusal), false},
 		{"client disconnect", fmt.Errorf("client write failed: %w", context.Canceled), false},
 		{"iteration cap", fmt.Errorf("%w: exceeded max tool iterations (12)", ErrLoopInternal), false},
 		{"store failure mid-loop", fmt.Errorf("%w: %w", ErrLoopInternal, errors.New("conversation lookup failed")), false},
@@ -58,8 +59,8 @@ func TestRunLoop_OwnFailuresAreLoopInternal(t *testing.T) {
 	}
 
 	t.Run("iteration cap", func(t *testing.T) {
-		streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
-			return Turn{ToolCall: &ToolCallRequest{ID: "call", Name: "get_prd", Arguments: "{}"}}, nil
+		streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
+			return llm.Turn{ToolCall: &llm.ToolCallRequest{ID: "call", Name: "get_prd", Arguments: "{}"}}, nil
 		}}
 		c := New(st, streamer, discardLog())
 		_, err := c.runLoop(context.Background(), ex.actorID, run.ID, StageDraft, prd.Title, prd.Sections, nil, ex, nil)
@@ -74,9 +75,9 @@ func TestRunLoop_OwnFailuresAreLoopInternal(t *testing.T) {
 	t.Run("conversation read fails", func(t *testing.T) {
 		gone := *ex
 		gone.conversationID = uuid.New() // no such conversation: the loop's own read fails
-		streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
+		streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
 			t.Fatal("the provider must not be called when the loop cannot read its conversation")
-			return Turn{}, nil
+			return llm.Turn{}, nil
 		}}
 		c := New(st, streamer, discardLog())
 		_, err := c.runLoop(context.Background(), ex.actorID, run.ID, StageDraft, prd.Title, prd.Sections, nil, &gone, nil)
@@ -120,8 +121,8 @@ func TestHandleMessage_IterationCapEndsInAGenericInternalError(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get conversation: %v", err)
 	}
-	streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
-		return Turn{ToolCall: &ToolCallRequest{ID: "call", Name: "get_prd", Arguments: "{}"}}, nil
+	streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
+		return llm.Turn{ToolCall: &llm.ToolCallRequest{ID: "call", Name: "get_prd", Arguments: "{}"}}, nil
 	}}
 	var logs bytes.Buffer
 	c := New(st, streamer, slog.New(slog.NewTextHandler(&logs, nil)))

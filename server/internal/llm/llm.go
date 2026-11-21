@@ -1,8 +1,8 @@
-// Package agent implements the PRD Coach: a four-stage coaching
-// conversation that guides a user from a raw idea to a structured PRD,
-// writing sections via tool calls and streaming replies over SSE. See
-// docs/plans/2026-07-20-go-rewrite/03-agents.md.
-package agent
+// Package llm holds the model provider clients the coach talks to: the
+// provider-agnostic ChatStreamer contract, the Anthropic Messages and
+// OpenAI-compatible Responses streamers, their stream parsers, and the
+// retry and error taxonomy. It imports nothing from internal/agent.
+package llm
 
 import (
 	"context"
@@ -21,7 +21,7 @@ const (
 // call per assistant turn is supported — see §5 of 03-agents.md: the
 // coach prompts for exactly one tool call per turn anyway (see
 // prompts.go), so the stream parsers (anthropic_parse.go,
-// trust_responses.go) only ever surface the first tool call in a response.
+// responses_parse.go) only ever surface the first tool call in a response.
 type ToolCallRequest struct {
 	ID        string
 	Name      string
@@ -67,7 +67,7 @@ type Usage struct {
 }
 
 // Sentinel errors a ChatStreamer implementation classifies its failures
-// into, so coach.go can decide retry/circuit/user-message policy without
+// into, so the coach (agent/coach.go) can decide retry/circuit/user-message policy without
 // knowing provider-specific status codes (docs/plans/2026-07-21-prd-agent-harness/plan.md §5.2).
 // A ChatStreamer is expected to retry transient conditions (rate limit,
 // 5xx) internally once before returning; these sentinels represent the
@@ -78,7 +78,7 @@ var (
 	// ErrProviderTransient: 5xx/connect refusal, retries exhausted. Circuit failure.
 	ErrProviderTransient = errors.New("agent: provider transient error")
 	// ErrContextLength: 400 context-length-exceeded. Not retried by the
-	// streamer; coach.go gets one auto-tighten attempt. Not a circuit failure.
+	// streamer; the coach gets one auto-tighten attempt. Not a circuit failure.
 	ErrContextLength = errors.New("agent: context length exceeded")
 	// ErrProviderConfig: 400 other/401/403/model_not_found — a
 	// configuration problem, not provider load. Not a circuit failure
@@ -104,7 +104,7 @@ type ChatStreamer interface {
 	StreamChat(ctx context.Context, system string, msgs []Message, tools []Tool, onDelta func(string)) (Turn, error)
 
 	// StreamChatForcingTool is like StreamChat but forces the model to
-	// call exactly the given tool — used by the critic (critic.go) to
+	// call exactly the given tool — used by the critic (agent/critic.go) to
 	// get schema-validated structured output instead of scraping JSON
 	// out of freeform text (plan §4.4).
 	StreamChatForcingTool(ctx context.Context, system string, msgs []Message, tool Tool, onDelta func(string)) (Turn, error)

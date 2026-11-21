@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
 
@@ -127,7 +128,7 @@ func TestAdmitDone_ReportsTheBreakerVerdicts(t *testing.T) {
 
 	t.Run("a success clears the failure count", func(t *testing.T) {
 		resetBreaker(t, c)
-		admitDone(t, fmt.Errorf("%w: anthropic returned 429", ErrProviderRateLimited))
+		admitDone(t, fmt.Errorf("%w: anthropic returned 429", llm.ErrProviderRateLimited))
 		admitDone(t, nil)
 		if failures, _ := breakerState(t, c); failures != 0 {
 			t.Fatalf("failure_count = %d after a successful call, want the reset to 0", failures)
@@ -138,9 +139,9 @@ func TestAdmitDone_ReportsTheBreakerVerdicts(t *testing.T) {
 		name string
 		err  error
 	}{
-		{"rate limited records a failure", fmt.Errorf("%w: anthropic returned 429", ErrProviderRateLimited)},
-		{"transient records a failure", fmt.Errorf("%w: anthropic returned 503", ErrProviderTransient)},
-		{"an upstream stall records a failure", ErrUpstreamStall},
+		{"rate limited records a failure", fmt.Errorf("%w: anthropic returned 429", llm.ErrProviderRateLimited)},
+		{"transient records a failure", fmt.Errorf("%w: anthropic returned 503", llm.ErrProviderTransient)},
+		{"an upstream stall records a failure", llm.ErrUpstreamStall},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			resetBreaker(t, c)

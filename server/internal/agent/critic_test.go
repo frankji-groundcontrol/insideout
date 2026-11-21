@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 func sectionsFixture() map[string]string {
@@ -118,21 +120,21 @@ func TestCriticState_RoundTrip(t *testing.T) {
 // forcingStub records what runCritic hands the streamer and answers with one
 // valid report_findings call.
 type forcingStub struct {
-	sawMsgs   []Message
+	sawMsgs   []llm.Message
 	sawSystem string
 }
 
-func (f *forcingStub) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (f *forcingStub) StreamChat(context.Context, string, []llm.Message, []llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
-func (f *forcingStub) StreamChatForcingTool(_ context.Context, system string, msgs []Message, tool Tool, _ func(string)) (Turn, error) {
+func (f *forcingStub) StreamChatForcingTool(_ context.Context, system string, msgs []llm.Message, tool llm.Tool, _ func(string)) (llm.Turn, error) {
 	f.sawSystem = system
 	f.sawMsgs = msgs
 	args, _ := json.Marshal(map[string]any{"findings": []any{
 		map[string]any{"section": "goals", "severity": "minor", "kind": "omission", "issue": "goal is not measurable"},
 	}})
-	return Turn{ToolCall: &ToolCallRequest{Name: tool.Name, Arguments: string(args)}}, nil
+	return llm.Turn{ToolCall: &llm.ToolCallRequest{Name: tool.Name, Arguments: string(args)}}, nil
 }
 
 func (f *forcingStub) Model() string { return "stub" }
@@ -154,7 +156,7 @@ func TestRunCritic_SendsNonEmptyUserMessage(t *testing.T) {
 	if len(stub.sawMsgs) == 0 {
 		t.Fatal("critic sent no messages — the real Messages API 400s on \"messages\": [] (AIDEV-09)")
 	}
-	if stub.sawMsgs[0].Role != RoleUser || stub.sawMsgs[0].Content == "" {
+	if stub.sawMsgs[0].Role != llm.RoleUser || stub.sawMsgs[0].Content == "" {
 		t.Fatalf("critic payload should be one non-empty user message, got %+v", stub.sawMsgs)
 	}
 }

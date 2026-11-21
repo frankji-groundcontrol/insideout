@@ -30,6 +30,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/api"
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -129,14 +130,14 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret, cfg.AccessTTL)
 
-	var streamer agent.ChatStreamer
+	var streamer llm.ChatStreamer
 	var planner agent.RoadmapPlanner
 	if cfg.AIAuthToken == "" {
 		log.Info("INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach")
 		streamer = agent.NewTemplateStreamer()
 		planner = agent.NewTemplateRoadmapPlanner()
 	} else {
-		s, err := agent.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
+		s, err := llm.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
 		if err != nil {
 			log.Error("create llm streamer", "error", err)
 			os.Exit(1)

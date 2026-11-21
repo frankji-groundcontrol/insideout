@@ -1,4 +1,4 @@
-package agent
+package llm
 
 import (
 	"context"
@@ -181,35 +181,9 @@ func providerHTTPError(provider string, resp *http.Response) error {
 	}
 }
 
-// telemetryErrorClass gives a short, stable label for InsertAIRunEvent —
-// metadata only, never the error's own text (which could embed prompt
-// content echoed back by the provider).
-func telemetryErrorClass(err error) string {
-	switch {
-	case err == nil:
-		return ""
-	case errors.Is(err, ErrProviderRateLimited):
-		return "rate_limited"
-	case errors.Is(err, ErrProviderTransient):
-		return "transient"
-	case errors.Is(err, ErrContextLength):
-		return "context_length"
-	case errors.Is(err, ErrProviderConfig):
-		return "config"
-	case errors.Is(err, ErrContentRefusal):
-		return "refusal"
-	case errors.Is(err, ErrUpstreamStall):
-		return "upstream_stall"
-	case errors.Is(err, context.Canceled), errors.Is(err, context.DeadlineExceeded):
-		return "canceled"
-	default:
-		return "unknown"
-	}
-}
-
 // classifyStreamReadErr distinguishes a caller-initiated cancellation
 // (client disconnect or the idle watchdog) from a genuine transient read
-// failure, since coach.go's error taxonomy treats them very differently
+// failure, since the coach's error taxonomy treats them very differently
 // (no circuit failure vs. one).
 func classifyStreamReadErr(err error) error {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {

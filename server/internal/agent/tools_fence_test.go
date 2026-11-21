@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/agentcontext"
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // AIDEV-01: the coach's tool results carry the same author-written text the
@@ -73,7 +74,7 @@ func TestGetPrd_FencesTheTitleAndEverySection(t *testing.T) {
 		t.Fatalf("write the PRD: %v", err)
 	}
 
-	out, err := ex.Execute(ctx, ToolCallRequest{Name: "get_prd", Arguments: "{}"})
+	out, err := ex.Execute(ctx, llm.ToolCallRequest{Name: "get_prd", Arguments: "{}"})
 	if err != nil {
 		t.Fatalf("get_prd: %v", err)
 	}
@@ -114,7 +115,7 @@ func TestGetPrd_LeavesAnEmptySectionEmpty(t *testing.T) {
 	if _, err := st.UpdateSections(ctx, ex.actorID, ex.prdID, &title, map[string]string{"goals": "g"}, nil); err != nil {
 		t.Fatalf("write the PRD: %v", err)
 	}
-	out, err := ex.Execute(ctx, ToolCallRequest{Name: "get_prd", Arguments: "{}"})
+	out, err := ex.Execute(ctx, llm.ToolCallRequest{Name: "get_prd", Arguments: "{}"})
 	if err != nil {
 		t.Fatalf("get_prd: %v", err)
 	}

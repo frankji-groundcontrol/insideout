@@ -1,4 +1,4 @@
-package agent
+package llm
 
 import (
 	"bufio"
@@ -164,7 +164,7 @@ func parseAnthropicStream(r io.Reader, tick func(), onDelta func(string)) (Turn,
 }
 
 // classifyInStreamError maps an SSE "error" event's error.type onto the same
-// sentinels providerHTTPError uses for non-200 responses, so coach.go's
+// sentinels providerHTTPError uses for non-200 responses, so the coach's
 // taxonomy (retry / circuit / user-message policy) treats a mid-stream
 // provider error identically to an HTTP-level one — instead of collapsing
 // every in-stream error into a single opaque message that loses the type

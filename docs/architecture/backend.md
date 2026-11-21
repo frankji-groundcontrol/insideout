@@ -15,7 +15,8 @@ server/
   cmd/insideout-mcp/   the stdio MCP server binary — same /api/v1 contract
   db/                  embed.go (go:embed migrations), migrations/*.sql
   internal/
-    agent/             PRD Coach: prompts, tools, SSE, the Anthropic client
+    agent/             PRD Coach: prompts, tools, SSE, the critic, the fact ledger,
+                       the roadmap planner
     agentcontext/      the compact, focus-scoped context agent-context briefs from,
                        with an `untrusted` block and the one fence rule (FenceData)
     api/               HTTP routes, middleware, per-domain handlers
@@ -35,6 +36,9 @@ server/
     httpx/             JSON request/response helpers, the error contract
     linebudget/        the code-budget guard: a non-test Go file or function over the
                        thresholds in config/code-budget.json fails the tests
+    llm/               the model provider clients (a leaf: imports nothing internal):
+                       ChatStreamer, the Anthropic Messages and Responses streamers,
+                       their stream parsers, the retry and error taxonomy
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb, an agent profile that
                        withholds twelve tools, and the result fence (fence.go)

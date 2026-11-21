@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
 )
@@ -133,9 +134,9 @@ func TestHandleMessage_IsThrottledByThePerUserRateLimit(t *testing.T) {
 			t.Fatalf("create run %d: %v", i+1, err)
 		}
 	}
-	streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
+	streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
 		t.Error("the provider was called for a throttled user")
-		return Turn{}, nil
+		return llm.Turn{}, nil
 	}}
 	c := New(st, streamer, discardLog())
 

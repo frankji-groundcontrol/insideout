@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -18,12 +19,12 @@ import (
 // did not call report_findings" on both of its attempts.
 type silentStub struct{}
 
-func (silentStub) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (silentStub) StreamChat(context.Context, string, []llm.Message, []llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
-func (silentStub) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (silentStub) StreamChatForcingTool(context.Context, string, []llm.Message, llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
 func (silentStub) Model() string { return "stub" }

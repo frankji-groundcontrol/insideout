@@ -1,4 +1,4 @@
-package agent
+package llm
 
 import (
 	"bytes"
@@ -110,7 +110,7 @@ type anthropicErrorBody struct {
 // client has already seen). Every other classified error (context length,
 // config, refusal, context.Canceled) is never retried here. tool_choice
 // forces the model to call exactly that tool when set (used by the critic
-// — see critic.go).
+// — see agent/critic.go).
 func (a *AnthropicStreamer) StreamChat(ctx context.Context, system string, msgs []Message, tools []Tool, onDelta func(string)) (Turn, error) {
 	return a.streamChat(ctx, system, msgs, tools, "", onDelta)
 }
@@ -186,7 +186,7 @@ func (a *AnthropicStreamer) doStreamChat(ctx context.Context, system string, msg
 		// alive, the idle watchdog fired on a healthy connection — a hung
 		// upstream (ErrUpstreamStall, a provider-health signal). If the
 		// parent is done too, the client really disconnected — a routine
-		// context.Canceled that coach.go treats as no-one's fault.
+		// context.Canceled that the coach treats as no-one's fault.
 		if parent.Err() == nil {
 			return Turn{}, ErrUpstreamStall
 		}

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
 )
@@ -197,8 +198,8 @@ func hasOpenBlockingFindings(findings []CriticFinding) bool {
 	return false
 }
 
-func reportFindingsTool() Tool {
-	return Tool{
+func reportFindingsTool() llm.Tool {
+	return llm.Tool{
 		Name:        "report_findings",
 		Description: "Report your critique findings against the PRD.",
 		Parameters: map[string]any{
@@ -253,7 +254,7 @@ const criticSystemPromptTemplate = `你是一位严格的 PRD 评审员，正在
 // get one re-prompt retry with the error appended; a second failure
 // returns ok=false so the caller can degrade to single-context critique
 // rather than fail the turn.
-func runCritic(ctx context.Context, streamer ChatStreamer, locale, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage Usage, ok bool) {
+func runCritic(ctx context.Context, streamer llm.ChatStreamer, locale, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage llm.Usage, ok bool) {
 	tmpl, focusPrefix, userDirective, retryFormat := criticSystemPromptTemplate,
 		"本轮只需重新评审以下此前被标记过的章节：",
 		"请按系统提示中的标准独立评审这份 PRD，并通过 report_findings 工具报告全部发现。",
@@ -282,7 +283,7 @@ func runCritic(ctx context.Context, streamer ChatStreamer, locale, prdTitle stri
 		// a 400 on every call — the PRD itself rides in the system prompt,
 		// so this turn only needs to direct the forced tool call.
 		user := userDirective
-		turn, err := streamer.StreamChatForcingTool(ctx, sys, []Message{{Role: RoleUser, Content: user}}, tool, nil)
+		turn, err := streamer.StreamChatForcingTool(ctx, sys, []llm.Message{{Role: llm.RoleUser, Content: user}}, tool, nil)
 		usage = turn.Usage
 		if err != nil {
 			lastErr = err

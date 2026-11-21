@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -34,7 +35,7 @@ type flatNode struct {
 	Description string  `json:"description"`
 }
 
-var submitRoadmapTool = Tool{
+var submitRoadmapTool = llm.Tool{
 	Name:        "submit_roadmap",
 	Description: "Return the MVP roadmap as a flat list of nodes: one root, branches under it (parallel workstreams), tasks under each branch.",
 	Parameters: map[string]any{
@@ -58,7 +59,7 @@ var submitRoadmapTool = Tool{
 	},
 }
 
-var submitSubtasksTool = Tool{
+var submitSubtasksTool = llm.Tool{
 	Name:        "submit_subtasks",
 	Description: "Return the subtasks that break the given roadmap node down into executable steps.",
 	Parameters: map[string]any{
@@ -182,11 +183,11 @@ const (
 )
 
 type anthropicRoadmapPlanner struct {
-	streamer ChatStreamer
+	streamer llm.ChatStreamer
 	fallback RoadmapPlanner
 }
 
-func NewAnthropicRoadmapPlanner(streamer ChatStreamer) RoadmapPlanner {
+func NewAnthropicRoadmapPlanner(streamer llm.ChatStreamer) RoadmapPlanner {
 	return &anthropicRoadmapPlanner{streamer: streamer, fallback: NewTemplateRoadmapPlanner()}
 }
 
@@ -198,7 +199,7 @@ func (p *anthropicRoadmapPlanner) PlanMVP(ctx context.Context, locale, prdTitle 
 		user = "PRD title: " + fenceData(prdTitle) + "\n\nSection contents:\n" + fenceData(formatSectionsForPrompt(sections))
 	}
 
-	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitRoadmapTool, nil)
+	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []llm.Message{{Role: llm.RoleUser, Content: user}}, submitRoadmapTool, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +223,7 @@ func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, locale, projec
 		user = fmt.Sprintf("Project: %s\nNode to break down: %s\nNode description: %s", fenceData(projectTitle), fenceData(nodeTitle), fenceData(nodeDesc))
 	}
 
-	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []Message{{Role: RoleUser, Content: user}}, submitSubtasksTool, nil)
+	turn, err := p.streamer.StreamChatForcingTool(ctx, system, []llm.Message{{Role: llm.RoleUser, Content: user}}, submitSubtasksTool, nil)
 	if err != nil {
 		// Serve the template, but carry the provider error back: a fallback
 		// that reports success would keep the caller's circuit breaker

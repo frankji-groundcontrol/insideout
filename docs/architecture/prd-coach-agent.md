@@ -6,13 +6,14 @@ calls and streaming replies over Server-Sent Events.
 
 ## Provider
 
-`internal/agent/anthropic.go` talks directly to the Anthropic Messages API
+`internal/llm/anthropic.go` talks directly to the Anthropic Messages API
 over stdlib `net/http`, with a hand-rolled SSE parser in `anthropic_parse.go` —
 no LLM framework dependency. This replaced an earlier `langchaingo`-based implementation; see
 [BUG-009](../issues/2026-07-21-bug-009-langchaingo-removed.md) for why (the library is
 unmaintained, and it silently dropped real answers behind extended-thinking
 content blocks). The provider is hidden behind one interface,
-`ChatStreamer` (`internal/agent/llm.go`):
+`ChatStreamer` (`internal/llm/llm.go`; the `llm` package is a leaf the coach
+imports, holding every provider client):
 
 ```go
 type ChatStreamer interface {
@@ -41,13 +42,13 @@ streaming response event-by-event: `message_start` → `content_block_start` (`t
 index**, not assumed to be one-per-response: an extended-thinking model
 returns a `thinking` block before the real `text`/`tool_use` block, and the
 first content block that carries a tool call wins; otherwise all `text`
-blocks are concatenated. `internal/agent/anthropic_test.go` uses real SSE
+blocks are concatenated. `internal/llm/anthropic_test.go` uses real SSE
 payloads captured from a live endpoint as test fixtures for exactly this
 case.
 
 A turn is whole only when its stream ends the way the provider says it does
 (rv4-AIDEV-05). An Anthropic stream must reach `message_stop`; a Responses
-stream (parsed in `trust_responses.go`) must reach `response.completed` or
+stream (parsed in `responses_parse.go`) must reach `response.completed` or
 `response.incomplete`. One that ends earlier is `ErrProviderTransient`, retried
 once when nothing had been streamed yet. A Responses stream cut mid-read is a
 transient failure too, retried once while nothing has been sent (a cancel stays

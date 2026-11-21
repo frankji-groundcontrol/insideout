@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -14,18 +15,18 @@ import (
 // context ends, like a provider that is mid-answer when the server shuts down.
 type holdingStreamer struct{ streaming chan struct{} }
 
-func (h holdingStreamer) StreamChat(ctx context.Context, _ string, _ []Message, _ []Tool, onDelta func(string)) (Turn, error) {
+func (h holdingStreamer) StreamChat(ctx context.Context, _ string, _ []llm.Message, _ []llm.Tool, onDelta func(string)) (llm.Turn, error) {
 	onDelta("partial answer")
 	select {
 	case h.streaming <- struct{}{}:
 	default:
 	}
 	<-ctx.Done()
-	return Turn{}, ctx.Err()
+	return llm.Turn{}, ctx.Err()
 }
 
-func (holdingStreamer) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (holdingStreamer) StreamChatForcingTool(context.Context, string, []llm.Message, llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
 func (holdingStreamer) Model() string { return "holding" }
@@ -82,7 +83,7 @@ func TestHandleMessage_CutMidTurnEndsFailedWithTheStreamedText(t *testing.T) {
 	}
 	var assistant *store.AgentMessage
 	for i := range msgs {
-		if msgs[i].Role == string(RoleAssistant) {
+		if msgs[i].Role == string(llm.RoleAssistant) {
 			assistant = &msgs[i]
 		}
 	}

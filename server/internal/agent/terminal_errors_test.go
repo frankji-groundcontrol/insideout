@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -75,7 +76,7 @@ type drivenTurn struct {
 
 // driveTurn runs one coach turn on a real store whose provider is chat. chat is
 // handed the store, so that it can lose the database while it "answers".
-func driveTurn(t *testing.T, chat func(st *store.Store, onDelta func(string)) (Turn, error)) drivenTurn {
+func driveTurn(t *testing.T, chat func(st *store.Store, onDelta func(string)) (llm.Turn, error)) drivenTurn {
 	t.Helper()
 	st := newTestStore(t)
 	userID, ex := seedConversation(t, st)
@@ -84,7 +85,7 @@ func driveTurn(t *testing.T, chat func(st *store.Store, onDelta func(string)) (T
 		t.Fatalf("get conversation: %v", err)
 	}
 	logs, log := capturingLog()
-	c := New(st, fakeStreamer{chat: func(_ string, onDelta func(string)) (Turn, error) { return chat(st, onDelta) }}, log)
+	c := New(st, fakeStreamer{chat: func(_ string, onDelta func(string)) (llm.Turn, error) { return chat(st, onDelta) }}, log)
 
 	out := drivenTurn{logs: logs}
 	rec := httptest.NewRecorder()
@@ -141,7 +142,7 @@ func TestTerminalStateWritesThatFailAreLogged(t *testing.T) {
 		st, logs, done := plannerCall(t)
 		cause := lostDBError(t, st)
 
-		done(fmt.Errorf("%w: anthropic returned 503", ErrProviderTransient))
+		done(fmt.Errorf("%w: anthropic returned 503", llm.ErrProviderTransient))
 
 		wantLost(t, logs, cause, "MarkAIRunFailed", "RecordCircuitResult")
 	})
@@ -156,9 +157,9 @@ func TestTerminalStateWritesThatFailAreLogged(t *testing.T) {
 			t.Fatalf("get prd: %v", err)
 		}
 		logs, log := capturingLog()
-		c := New(st, fakeStreamer{chat: func(string, func(string)) (Turn, error) {
+		c := New(st, fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
 			t.Fatal("the provider must not be called when the loop cannot read its conversation")
-			return Turn{}, nil
+			return llm.Turn{}, nil
 		}}, log)
 		cause := lostDBError(t, st)
 
@@ -173,11 +174,11 @@ func TestTerminalStateWritesThatFailAreLogged(t *testing.T) {
 
 	t.Run("a turn that ends well", func(t *testing.T) {
 		var lost *store.Store
-		out := driveTurn(t, func(st *store.Store, onDelta func(string)) (Turn, error) {
+		out := driveTurn(t, func(st *store.Store, onDelta func(string)) (llm.Turn, error) {
 			lost = st
 			onDelta("an answer")
 			st.Close() // the database goes away just as the provider finishes
-			return Turn{Text: "an answer"}, nil
+			return llm.Turn{Text: "an answer"}, nil
 		})
 		if out.panicked != nil {
 			t.Fatalf("a lost database panicked the turn: %v", out.panicked)
@@ -190,7 +191,7 @@ func TestTerminalStateWritesThatFailAreLogged(t *testing.T) {
 
 	t.Run("a turn that panics", func(t *testing.T) {
 		var lost *store.Store
-		out := driveTurn(t, func(st *store.Store, onDelta func(string)) (Turn, error) {
+		out := driveTurn(t, func(st *store.Store, onDelta func(string)) (llm.Turn, error) {
 			lost = st
 			onDelta("part of an answer")
 			st.Close()
@@ -207,9 +208,9 @@ func TestTerminalStateWritesThatFailAreLogged(t *testing.T) {
 // The converse: a bookkeeping write that works says nothing, so the new lines
 // stay a signal.
 func TestTerminalStateWritesThatWorkAreNotLogged(t *testing.T) {
-	out := driveTurn(t, func(_ *store.Store, onDelta func(string)) (Turn, error) {
+	out := driveTurn(t, func(_ *store.Store, onDelta func(string)) (llm.Turn, error) {
 		onDelta("an answer")
-		return Turn{Text: "an answer"}, nil
+		return llm.Turn{Text: "an answer"}, nil
 	})
 	if out.panicked != nil || !strings.Contains(out.body, "message_end") {
 		t.Fatalf("the turn did not finish (panic %v); stream:\n%s", out.panicked, out.body)

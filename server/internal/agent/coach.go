@@ -1,3 +1,7 @@
+// Package agent implements the PRD Coach: a four-stage coaching
+// conversation that guides a user from a raw idea to a structured PRD,
+// writing sections via tool calls and streaming replies over SSE. See
+// docs/plans/2026-07-20-go-rewrite/03-agents.md.
 package agent
 
 import (
@@ -12,6 +16,7 @@ import (
 	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
 )
@@ -80,14 +85,14 @@ func detachedContext(ctx context.Context) (context.Context, context.CancelFunc) 
 
 type Coach struct {
 	store        *store.Store
-	streamer     ChatStreamer
+	streamer     llm.ChatStreamer
 	log          *slog.Logger
 	dispatch     *dispatcher
 	queueWait    time.Duration // permit queue timeout, surfaced as the 503 retry hint
 	turnDeadline time.Duration // total wall-clock bound on one turn (see defaultTurnDeadline)
 }
 
-func New(st *store.Store, streamer ChatStreamer, log *slog.Logger) *Coach {
+func New(st *store.Store, streamer llm.ChatStreamer, log *slog.Logger) *Coach {
 	maxConcurrent, queueWait := aiConcurrencyLimits()
 	return &Coach{store: st, streamer: streamer, log: log, dispatch: newDispatcher(maxConcurrent, queueWait), queueWait: queueWait, turnDeadline: turnDeadlineFromEnv()}
 }
@@ -146,12 +151,12 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 		return
 	}
 
-	if _, err := c.store.InsertAgentMessage(ctx, userID, conversationID, string(RoleUser), content, nil, nil, nil); err != nil {
+	if _, err := c.store.InsertAgentMessage(ctx, userID, conversationID, string(llm.RoleUser), content, nil, nil, nil); err != nil {
 		c.log.Error("persist user message", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	assistantMsg, err := c.store.InsertAgentMessage(ctx, userID, conversationID, string(RoleAssistant), "", nil, nil, nil)
+	assistantMsg, err := c.store.InsertAgentMessage(ctx, userID, conversationID, string(llm.RoleAssistant), "", nil, nil, nil)
 	if err != nil {
 		c.log.Error("create placeholder assistant message", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
@@ -264,7 +269,7 @@ func (c *Coach) HandleMessage(w http.ResponseWriter, r *http.Request, conversati
 	// exactly what gets persisted (F16). A context-length error almost always
 	// arrives as a pre-stream 400 (empty bubble), so the retry still fires for
 	// the common case.
-	if errors.Is(loopErr, ErrContextLength) && streamed.Len() == 0 {
+	if errors.Is(loopErr, llm.ErrContextLength) && streamed.Len() == 0 {
 		tightHistory, herr := c.loadHistory(ctx, userID, conversationID, tightenedHistoryLimit)
 		if herr == nil {
 			finalText, loopErr = c.runLoop(turnCtx, userID, run.ID, conv.Stage, prd.Title, prd.Sections, tightHistory, executor, onDelta)

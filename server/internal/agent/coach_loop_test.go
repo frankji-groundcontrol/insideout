@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
 )
@@ -16,15 +17,15 @@ import (
 // fakeStreamer answers StreamChat from a script the test supplies; the
 // critic's forced-tool path is never reached from the coach loop.
 type fakeStreamer struct {
-	chat func(system string, onDelta func(string)) (Turn, error)
+	chat func(system string, onDelta func(string)) (llm.Turn, error)
 }
 
-func (f fakeStreamer) StreamChat(_ context.Context, system string, _ []Message, _ []Tool, onDelta func(string)) (Turn, error) {
+func (f fakeStreamer) StreamChat(_ context.Context, system string, _ []llm.Message, _ []llm.Tool, onDelta func(string)) (llm.Turn, error) {
 	return f.chat(system, onDelta)
 }
 
-func (fakeStreamer) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (fakeStreamer) StreamChatForcingTool(context.Context, string, []llm.Message, llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
 func (fakeStreamer) Model() string { return "fake" }
@@ -61,12 +62,12 @@ func TestRunLoop_PromptShowsSectionWrittenEarlierInTheTurn(t *testing.T) {
 	written := "BACKGROUND-" + uuid.NewString()
 	args, _ := json.Marshal(map[string]string{"section": "background", "markdown": written})
 	var systems []string
-	streamer := fakeStreamer{chat: func(system string, _ func(string)) (Turn, error) {
+	streamer := fakeStreamer{chat: func(system string, _ func(string)) (llm.Turn, error) {
 		systems = append(systems, system)
 		if len(systems) == 1 {
-			return Turn{ToolCall: &ToolCallRequest{ID: "call-1", Name: "update_prd_section", Arguments: string(args)}}, nil
+			return llm.Turn{ToolCall: &llm.ToolCallRequest{ID: "call-1", Name: "update_prd_section", Arguments: string(args)}}, nil
 		}
-		return Turn{Text: "done"}, nil
+		return llm.Turn{Text: "done"}, nil
 	}}
 
 	c := New(st, streamer, discardLog())
@@ -96,12 +97,12 @@ func TestRunLoop_KeepsSnapshotWhenPrdRefreshFails(t *testing.T) {
 
 	snapshot := map[string]string{"background": "SNAPSHOT-" + uuid.NewString()}
 	var systems []string
-	streamer := fakeStreamer{chat: func(system string, _ func(string)) (Turn, error) {
+	streamer := fakeStreamer{chat: func(system string, _ func(string)) (llm.Turn, error) {
 		systems = append(systems, system)
 		if len(systems) == 1 {
-			return Turn{ToolCall: &ToolCallRequest{ID: "call-1", Name: "get_prd", Arguments: "{}"}}, nil
+			return llm.Turn{ToolCall: &llm.ToolCallRequest{ID: "call-1", Name: "get_prd", Arguments: "{}"}}, nil
 		}
-		return Turn{Text: "done"}, nil
+		return llm.Turn{Text: "done"}, nil
 	}}
 
 	c := New(st, streamer, discardLog())

@@ -7,6 +7,7 @@ import (
 	"testing"
 	"unicode/utf8"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -23,7 +24,7 @@ func rvPrdCapWrite(t *testing.T, ex *toolExecutor, section string, n int) (strin
 	if err != nil {
 		t.Fatal(err)
 	}
-	return ex.Execute(context.Background(), ToolCallRequest{Name: "update_prd_section", Arguments: string(raw)})
+	return ex.Execute(context.Background(), llm.ToolCallRequest{Name: "update_prd_section", Arguments: string(raw)})
 }
 
 // The tool result is the only channel the model reads, so a write over the cap
@@ -143,7 +144,7 @@ func TestRvPrdCapCoachCanShortenAnOversizeStoredSection(t *testing.T) {
 	long := strings.Repeat("字", 15_000)
 	rvPrdCapPlant(t, st, ex, "background", long)
 
-	out, err := ex.Execute(ctx, ToolCallRequest{Name: "get_prd", Arguments: "{}"})
+	out, err := ex.Execute(ctx, llm.ToolCallRequest{Name: "get_prd", Arguments: "{}"})
 	if err != nil {
 		t.Fatalf("get_prd: %v", err)
 	}
