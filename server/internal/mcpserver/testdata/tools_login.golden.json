@@ -675,6 +675,10 @@
           "description": "structure|scope|priority",
           "type": "string"
         },
+        "node_id": {
+          "description": "roadmap node the proposal is about; required to propose inside a subtree you were handed",
+          "type": "string"
+        },
         "project_id": {
           "description": "project id",
           "type": "string"

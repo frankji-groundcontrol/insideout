@@ -167,11 +167,7 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		NodeID string `json:"nodeId"`
 		// Items are structured actions a human may apply on acceptance
 		// (proposal→structure application). Optional, max 10.
-		Items []struct {
-			Action     string `json:"action"`
-			Title      string `json:"title"`
-			ParentHint string `json:"parentHint"`
-		} `json:"items"`
+		Items []proposeItemRequest `json:"items"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
@@ -199,28 +195,8 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	if d := strings.TrimSpace(req.Detail); d != "" {
 		content += "\n" + d
 	}
-	// Every item is validated before the first write: a refused propose must
-	// leave nothing behind (a 400 once left an orphan proposal a human could
-	// still accept).
-	items := make([]store.ProposalItem, 0, len(req.Items))
-	for _, it := range req.Items {
-		title := strings.TrimSpace(it.Title)
-		if title == "" || tooLong(title, 200) {
-			httpx.WriteError(w, http.StatusBadRequest, "item title is required (max 200 characters)", "", nil)
-			return
-		}
-		action := it.Action
-		if action == "" {
-			action = "add_node"
-		}
-		if action != "add_node" {
-			httpx.WriteError(w, http.StatusBadRequest, "item action must be add_node", "", nil)
-			return
-		}
-		items = append(items, store.ProposalItem{Action: action, Title: title, ParentHint: strings.TrimSpace(it.ParentHint)})
-	}
-	if len(items) > 10 {
-		httpx.WriteError(w, http.StatusBadRequest, "at most 10 items per proposal", "", nil)
+	items, ok := proposalItems(w, req.Items)
+	if !ok {
 		return
 	}
 	// A proposal about a node is open to anyone who may write that node (owner
@@ -246,6 +222,41 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
+}
+
+// proposeItemRequest is one structured action of a propose body.
+type proposeItemRequest struct {
+	Action     string `json:"action"`
+	Title      string `json:"title"`
+	ParentHint string `json:"parentHint"`
+}
+
+// proposalItems validates every item before the first write: a refused
+// propose must leave nothing behind (a 400 once left an orphan proposal a
+// human could still accept). It answers 400 itself and reports false.
+func proposalItems(w http.ResponseWriter, in []proposeItemRequest) ([]store.ProposalItem, bool) {
+	items := make([]store.ProposalItem, 0, len(in))
+	for _, it := range in {
+		title := strings.TrimSpace(it.Title)
+		if title == "" || tooLong(title, 200) {
+			httpx.WriteError(w, http.StatusBadRequest, "item title is required (max 200 characters)", "", nil)
+			return nil, false
+		}
+		action := it.Action
+		if action == "" {
+			action = "add_node"
+		}
+		if action != "add_node" {
+			httpx.WriteError(w, http.StatusBadRequest, "item action must be add_node", "", nil)
+			return nil, false
+		}
+		items = append(items, store.ProposalItem{Action: action, Title: title, ParentHint: strings.TrimSpace(it.ParentHint)})
+	}
+	if len(items) > 10 {
+		httpx.WriteError(w, http.StatusBadRequest, "at most 10 items per proposal", "", nil)
+		return nil, false
+	}
+	return items, true
 }
 
 // handleProposalDecision is the human accept/reject of an agent

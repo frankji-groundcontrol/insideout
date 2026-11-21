@@ -179,10 +179,14 @@ func (c *Client) AgentCheckpoint(projectID, nodeID, summary string) (json.RawMes
 // string, so a title may contain "@".
 type ProposeItem struct{ Title, ParentHint string }
 
-// AgentPropose records an agent proposal (POST /agent/propose).
+// AgentPropose records an agent proposal (POST /agent/propose). nodeID
+// (optional) is the node it is about.
 // items: optional structured entries a human can apply on acceptance.
-func (c *Client) AgentPropose(projectID, kind, summary, detail string, items []ProposeItem) (json.RawMessage, error) {
+func (c *Client) AgentPropose(projectID, nodeID, kind, summary, detail string, items []ProposeItem) (json.RawMessage, error) {
 	body := map[string]any{"projectId": projectID, "kind": kind, "summary": summary, "detail": detail}
+	if nodeID != "" {
+		body["nodeId"] = nodeID
+	}
 	if len(items) > 0 {
 		arr := make([]map[string]string, 0, len(items))
 		for _, it := range items {
