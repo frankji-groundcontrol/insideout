@@ -55,7 +55,7 @@ func TestToolCallsEndWhenTheirContextIsCancelled(t *testing.T) {
 
 	cases := []struct{ file, tool, args string }{
 		{"product_tools.go", "whoami", `{}`},
-		{"admin_tools.go", "signup_mode", `{}`},
+		{"product_tools.go", "signup_mode", `{}`},
 		{"auth_tools.go", "auth_login_code_request", `{"email":"a@example.com"}`},
 		{"draft_tools.go", "build", `{"prd_id":"p1"}`},
 		// The sign-in itself is quick; the /me that confirms it is the slow call.

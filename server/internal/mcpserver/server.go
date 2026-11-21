@@ -54,7 +54,6 @@ func Build(api string) *server.MCPServer {
 
 	addAuthTools(s, api)
 	addProductTools(s, api)
-	addAdminTools(s, api)
 	applyAgentProfile(s, api)
 	warnIgnoredAgentRoot()
 	return s
@@ -72,14 +71,11 @@ func warnIgnoredAgentRoot() {
 	}
 }
 
-// withheldFromAgents are the tools an agent-scope token cannot use, because the
-// server refuses their routes (Commit, the proposal decision, the instance
-// switches, every delete), and the password tools, which would put a password
-// in the conversation.
-var withheldFromAgents = []string{
-	"commit", "proposal_decide", "signup_mode", "invite_create", "invite_list", "invite_revoke",
-	"idea_delete", "roadmap_delete", "auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
-}
+// withheldFromAgents are the password tools, which would put a password in the
+// conversation once a login is held. Tools on routes the server keeps for a
+// human (Commit, the proposal decision, the admin routes, every delete) are not
+// registered at all: no token this process sends can reach them (rv5-PARA-07).
+var withheldFromAgents = []string{"auth_register", "auth_login", "auth_forgot_password", "auth_reset_password"}
 
 // profileNarrowed remembers that the human-only tools were removed, so a
 // sign-out that leaves no JWT can register them again. One process, one registry.
@@ -102,7 +98,6 @@ func applyAgentProfile(s *server.MCPServer, api string) {
 	}
 	addAuthTools(s, api)
 	addProductTools(s, api)
-	addAdminTools(s, api)
 	profileNarrowed = false
 }
 

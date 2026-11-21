@@ -190,9 +190,6 @@ func TestIdeaToolDescriptionsMatchAuthorPrivateIdeas(t *testing.T) {
 	if d := desc["idea_list"]; strings.Contains(d, "workspace's idea inbox") || !strings.Contains(d, "your own") {
 		t.Errorf("idea_list = %q, want it to say it lists the caller's own ideas, not a workspace-wide inbox", d)
 	}
-	if d := desc["idea_delete"]; d == "" || strings.Contains(d, "stays in idea_list") {
-		t.Errorf("idea_delete = %q, but a dropped idea is no longer returned by idea_list", d)
-	}
 }
 
 // AIDEV-17: propose flattened each structured item to "title@hint" and the API

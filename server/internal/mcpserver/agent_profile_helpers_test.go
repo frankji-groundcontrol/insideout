@@ -18,11 +18,10 @@ import (
 
 // Shared vocabulary and fakes for the agent profile tests (agent_profile_test.go).
 
-// humanOnlyTools are the tools an agent-scope token cannot use on the server, or
-// that put a password in the conversation.
+// humanOnlyTools are the password tools a process holding a login withdraws, so
+// a password never enters the conversation (rv5-PARA-07: no other tool is withheld).
 var humanOnlyTools = []string{
-	"commit", "proposal_decide", "signup_mode", "invite_create", "invite_list", "invite_revoke",
-	"idea_delete", "roadmap_delete", "auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
+	"auth_register", "auth_login", "auth_forgot_password", "auth_reset_password",
 }
 
 // agentTools must survive the profile: the agent's own vocabulary, the edits it

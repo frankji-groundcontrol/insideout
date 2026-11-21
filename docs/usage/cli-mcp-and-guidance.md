@@ -196,17 +196,23 @@ admin routes, every delete, delegate, hand-back and the member list), so the lim
 this binary ([design](../architecture/agent-token-scope.md)). It also refuses
 an agent's `build_confirm` over a roadmap that is not empty, and an agent's
 `completion_reason` or `owner_id` on `roadmap_update` (an agent suggests an
-owner through `propose`, which only a plan writer's agent may file). The registry
-follows the login: twelve tools are not offered while the process holds a JWT
-login — `commit`, `proposal_decide`, `signup_mode`, `invite_create`,
-`invite_list`, `invite_revoke`, `idea_delete`, `roadmap_delete` and the four
-password tools (`auth_register`, `auth_login`, `auth_forgot_password`,
-`auth_reset_password`, so a password never enters the conversation). Run
-those from the CLI or the web. Before any sign-in the whole registry is
-listed, so a process can still sign in; the first sign-in narrows it.
-Delegation, hand-back and the member list have no MCP tool at all: every tool
-acts through an agent-scope token, which the server always refuses there, so
-use `roadmap delegate`, `roadmap handback` and `members` in the CLI.
+owner through `propose`, which only a plan writer's agent may file).
+
+MCP registers no tool for a human-only route, since no token the process
+sends can reach one. These are CLI and web only, on purpose: Commit
+(`commit`), the proposal decision (`proposal decide`), account deletion
+(`account delete`), validation (`evidence add`, `roadmap validate`), every
+delete (`idea delete`, `roadmap delete`, `project delete`), project, update
+and workspace edits (`project`, `project update`, `update add`,
+`workspace update`), delegation, hand-back and the member list
+(`roadmap delegate`, `roadmap handback`, `members`), and the admin verbs
+(`invite`, `invites`, `invite revoke`, `signup-mode <mode>`). The project
+list (`projects`), the paged feed (`project_updates`) and the PRD list
+(`prd_list`) are the agent's reads. The registry also follows the login:
+the four password tools (`auth_register`, `auth_login`,
+`auth_forgot_password`, `auth_reset_password`) are not offered while the
+process holds a JWT login, so a password never enters the conversation.
+Before any sign-in they are listed, so a process can still sign in.
 
 - `"env": { "INSIDEOUT_AGENT_ROOT": "<node-id>" }` confines the agent token to
   one node's subtree: node writes outside it answer 403 `agent_scope_denied`,
@@ -230,13 +236,11 @@ use `roadmap delegate`, `roadmap handback` and `members` in the CLI.
   which holds the full credential.
 
 Signup policy: registration is invitation-only by default
-(`GET /auth/config`); admins mint per-email invitations (`invite` /
-`invite_create`, revoke with `invite revoke` / `invite_revoke`) and
-switch the mode (`signup-mode` / `signup_mode`, the web admin panel
-on the profile page). The four MCP admin tools (`invite_create`,
-`invite_list`, `invite_revoke`, `signup_mode`) are CLI and web only once
-the MCP holds a JWT login (see "Agent scope"): the server refuses an agent
-token on `/admin/*`. `invite` and `invite_create` print the whole
+(`GET /auth/config`, MCP `signup_mode` reads it); admins mint per-email
+invitations (`invite`, revoke with `invite revoke`) and switch the mode
+(`signup-mode <mode>`, the web admin panel on the profile page). These are
+CLI and web only (see "Agent scope"): the server refuses an agent token on
+`/admin/*`. `invite` prints the whole
 response, including `mailSent`: true only when the provider accepted the
 e-mail, so when it is false (dev mode, or a provider refusal) nothing was
 e-mailed and you send the `signupUrl` to the invitee yourself. The first

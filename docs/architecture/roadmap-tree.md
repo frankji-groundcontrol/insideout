@@ -166,7 +166,7 @@ minted with a `rootNodeId` writes only inside that subtree
 ([agent token scope](agent-token-scope.md)). The only change signal is an in-memory callback
 (`server/internal/store/pool.go`) that pings open progress streams. The web
 has one roadmap route per project (`client/lib/router.dart`). MCP exposes
-`roadmap_add`, `roadmap_move`, `roadmap_delete` and `roadmap_evidence`
+`roadmap_add`, `roadmap_move` and `roadmap_evidence` (no `roadmap_delete`: delete is human-only)
 (`server/internal/mcpserver/product_tools.go`), and the tree tools
 `roadmap_list` and `progress` (both take `root`), `roadmap_node`,
 `roadmap_mine`, `roadmap_update` (with `acceptance` and `owner_id`) and

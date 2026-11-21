@@ -146,16 +146,17 @@ MCP binary. A token that already carries a scope (an agent token handed to the
 process as `INSIDEOUT_TOKEN`) is sent as it is, and the server decides.
 
 The registry follows the credential. When the credential in use is a JWT (at
-startup, or right after an in-process sign-in), the profile removes `commit`,
-`proposal_decide`, `signup_mode`, `invite_create`, `invite_list`, `invite_revoke`,
-`idea_delete`, `roadmap_delete` and the password tools (`auth_register`,
-`auth_login`, `auth_forgot_password`, `auth_reset_password`). The passwordless
-sign-in tools stay so an unauthenticated process can still be signed in. A token
-that is not a JWT cannot carry a scope and no InsideOut server accepts it, so it is
-passed through unchanged and the registry stays whole. Removal is advice to the
-model; the 403 above is the guarantee. Delegation, hand-back and the member list
-are not registered at all (rv5-COMP-03): every tool acts through an agent-scope
-token, so they could never succeed.
+startup, or right after an in-process sign-in), the profile removes the password
+tools (`auth_register`, `auth_login`, `auth_forgot_password`,
+`auth_reset_password`). The passwordless sign-in tools stay so an unauthenticated
+process can still be signed in. A token that is not a JWT cannot carry a scope and
+no InsideOut server accepts it, so it is passed through unchanged and the registry
+stays whole. No tool is registered for a human-only route (rv5-COMP-03,
+rv5-PARA-07): every tool acts through an agent-scope token, and before a login it
+answers 401, so Commit, the proposal decision, the admin writes, every delete,
+delegation, hand-back, the member list, account deletion, validation and the
+project and workspace edits could never succeed there. They are CLI and web verbs.
+`signup_mode` stays as the public read of `GET /auth/config`.
 
 ## Fencing and labelling
 
