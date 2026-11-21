@@ -163,6 +163,18 @@ void main() {
     );
   });
 
+  // Roadmap critique 2026-11-21: band labels and empty dashes are fgMuted on
+  // the tinted lane (surfaceSunken); light #6B7280 on #EEF2FF was 4.32:1.
+  test('muted text clears 4.5:1 on the tinted lane in both themes', () {
+    for (final c in [Cobalt.light, Cobalt.dark]) {
+      expect(
+        _contrast(c.fgMuted, c.surfaceSunken),
+        greaterThanOrEqualTo(4.5),
+        reason: 'fgMuted ${c.fgMuted.toARGB32()} on lane',
+      );
+    }
+  });
+
   // The chip label is 12px w600, i.e. normal text: every tone owes 4.5:1. The
   // light danger chip (cobalt-700 on cobalt-200) measured 4.49 and nothing
   // pinned it, because the test above only reads the neutral pair.
