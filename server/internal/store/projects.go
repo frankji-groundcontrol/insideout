@@ -22,6 +22,10 @@ type Project struct {
 	RepoURL     string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+	// CanWritePlan: the reading actor is a plan writer of the project
+	// (insideout._is_plan_writer: its owner while a member, or a workspace
+	// admin), the right a root node or a rebuild needs. Reads compute it.
+	CanWritePlan bool
 }
 
 // ProjectWithLatest is a project annotated with its most recent update (if
@@ -44,6 +48,12 @@ func scanProject(row pgx.Row) (*Project, error) {
 	return &p, err
 }
 
+// markPlanWriter computes p.CanWritePlan for the actor inside the caller's
+// transaction, from the same SQL rule the roadmap policies use.
+func markPlanWriter(ctx context.Context, tx pgx.Tx, p *Project, actorID uuid.UUID) error {
+	return tx.QueryRow(ctx, `SELECT insideout._is_plan_writer($1, $2)`, p.ID, actorID).Scan(&p.CanWritePlan)
+}
+
 // CreateProject requires actorID to currently be a workspace member,
 // re-checked in the same transaction as the insert. Owner defaults to the
 // creator.
@@ -60,8 +70,10 @@ func (s *Store) CreateProject(ctx context.Context, actorID, workspaceID uuid.UUI
 			workspaceID, title, description, actorID,
 		)
 		var scanErr error
-		p, scanErr = scanProject(row)
-		return scanErr
+		if p, scanErr = scanProject(row); scanErr != nil {
+			return scanErr
+		}
+		return markPlanWriter(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err
@@ -82,7 +94,7 @@ func (s *Store) ListProjectsForWorkspace(ctx context.Context, actorID, workspace
 
 		rows, err := tx.Query(ctx, `
 			SELECT `+qualifyColumns("p", projectColumns)+`,
-			       lu.kind, lu.content, lu.created_at
+			       lu.kind, lu.content, lu.created_at, insideout._is_plan_writer(p.id, $2)
 			FROM insideout.projects p
 			LEFT JOIN LATERAL (
 				SELECT kind, content, created_at
@@ -93,7 +105,7 @@ func (s *Store) ListProjectsForWorkspace(ctx context.Context, actorID, workspace
 			) lu ON true
 			WHERE p.workspace_id = $1
 			ORDER BY COALESCE(lu.created_at, p.created_at) DESC`,
-			workspaceID,
+			workspaceID, actorID,
 		)
 		if err != nil {
 			return err
@@ -103,7 +115,7 @@ func (s *Store) ListProjectsForWorkspace(ctx context.Context, actorID, workspace
 		for rows.Next() {
 			var pw ProjectWithLatest
 			if err := rows.Scan(&pw.ID, &pw.WorkspaceID, &pw.Title, &pw.Description, &pw.OwnerID, &pw.CreatedBy, &pw.Status, &pw.RepoURL, &pw.CreatedAt, &pw.UpdatedAt,
-				&pw.LatestUpdateKind, &pw.LatestUpdateContent, &pw.LatestUpdateAt); err != nil {
+				&pw.LatestUpdateKind, &pw.LatestUpdateContent, &pw.LatestUpdateAt, &pw.CanWritePlan); err != nil {
 				return err
 			}
 			out = append(out, pw)
@@ -129,8 +141,10 @@ func (s *Store) GetProjectForMember(ctx context.Context, projectID, viewerID uui
 			projectID, viewerID,
 		)
 		var scanErr error
-		p, scanErr = scanProject(row)
-		return scanErr
+		if p, scanErr = scanProject(row); scanErr != nil {
+			return scanErr
+		}
+		return markPlanWriter(ctx, tx, p, viewerID)
 	})
 	if err != nil {
 		return nil, err
@@ -227,8 +241,10 @@ func (s *Store) UpdateProject(ctx context.Context, actorID, projectID uuid.UUID,
 			write.OwnerID = ownerID
 		}
 		var upErr error
-		p, upErr = updateProjectRow(ctx, tx, projectID, write)
-		return upErr
+		if p, upErr = updateProjectRow(ctx, tx, projectID, write); upErr != nil {
+			return upErr
+		}
+		return markPlanWriter(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err

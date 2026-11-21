@@ -36,6 +36,9 @@ type projectView struct {
 	LatestUpdateKind    *string `json:"latestUpdateKind,omitempty"`
 	LatestUpdateContent *string `json:"latestUpdateContent,omitempty"`
 	LatestUpdateAt      *string `json:"latestUpdateAt,omitempty"`
+	// CanWritePlan: the caller may change the plan itself (add a root node,
+	// rebuild), so the web offers root-level "New item" only then.
+	CanWritePlan bool `json:"canWritePlan"`
 }
 
 // quietAfter is the board's quiet-project threshold (FEAT-01): an active
@@ -87,6 +90,7 @@ func projectResponse(p store.ProjectWithLatest, now time.Time) projectView {
 		Flagged:             projectQuietFlagged(p, now),
 		LatestUpdateKind:    p.LatestUpdateKind,
 		LatestUpdateContent: previewRunes(p.LatestUpdateContent),
+		CanWritePlan:        p.CanWritePlan,
 	}
 	if p.OwnerID != nil {
 		id := p.OwnerID.String()
