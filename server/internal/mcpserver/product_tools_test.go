@@ -92,6 +92,39 @@ func TestRoadmapMovePassesPosition(t *testing.T) {
 	}
 }
 
+// rv5-PARC-05: roadmap_move with no parent_id leaves the parent alone (no
+// parentId key), and parent_id "root" sends an explicit null.
+func TestRoadmapMoveKeepsOrClearsTheParent(t *testing.T) {
+	var bodies []map[string]any
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		raw, _ := io.ReadAll(r.Body)
+		if err := json.Unmarshal(raw, &body); err != nil {
+			t.Errorf("body %q: %v", raw, err)
+		}
+		bodies = append(bodies, body)
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	t.Cleanup(api.Close)
+
+	res := drive(t, api.URL, []string{
+		toolCall(1, "roadmap_move", `{"node_id":"n1","position":0}`),
+		toolCall(2, "roadmap_move", `{"node_id":"n1","parent_id":"root"}`),
+	})
+	if res[1].Result.IsError || res[2].Result.IsError {
+		t.Fatalf("roadmap_move failed: %+v %+v", res[1], res[2])
+	}
+	if len(bodies) != 2 {
+		t.Fatalf("the API saw %d moves, want 2", len(bodies))
+	}
+	if _, has := bodies[0]["parentId"]; has {
+		t.Errorf("a position-only move sent parentId: %v", bodies[0])
+	}
+	if v, has := bodies[1]["parentId"]; !has || v != nil {
+		t.Errorf("parent_id root sent %v, want an explicit null parentId", bodies[1])
+	}
+}
+
 // build_confirm must carry expected_count so an agent can confirm a
 // replace_conflict 409 retry. build itself writes nothing.
 func TestBuildPassesExpectedCount(t *testing.T) {

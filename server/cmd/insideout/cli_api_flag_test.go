@@ -110,6 +110,7 @@ var apiVerbs = []apiVerb{
 	{head: words("roadmap", "add"), tail: words("--title", "T", "p1")},
 	{head: words("roadmap", "update"), tail: words("--title", "T", "n1")},
 	{head: words("roadmap", "move"), tail: words("--position", "1", "n1")},
+	{head: words("roadmap", "move"), tail: words("--root", "n1")},
 	{head: words("roadmap", "delete"), tail: words("n1")},
 	{head: words("presence"), tail: words("p1")},
 	{head: words("build"), tail: words("p1")},
