@@ -144,6 +144,14 @@ func (s *Store) RemoveMember(ctx context.Context, actorID, workspaceID, targetUs
 		if err := requireAnotherAdmin(ctx, tx, workspaceID, targetUserID); err != nil {
 			return err
 		}
+		// Owning a node is write authority over its subtree, and authority needs
+		// membership: a member who leaves stops owning the workspace's nodes
+		// (rv5-TREEB-12). Before the delete, so a member leaving on their own
+		// still passes the roadmap_nodes update policy. Each node gets a
+		// 'cleared' history row and a node_handed_back feed row by the remover.
+		if err := clearOwnershipTx(ctx, tx, actorID, workspaceID, targetUserID); err != nil {
+			return err
+		}
 
 		tag, err := tx.Exec(ctx, `
 			DELETE FROM insideout.workspace_memberships WHERE workspace_id = $1 AND user_id = $2`,
@@ -188,72 +196,6 @@ func requireAnotherAdmin(ctx context.Context, tx pgx.Tx, workspaceID, targetUser
 	}
 	if targetIsAdmin && others == 0 {
 		return ErrLastAdmin
-	}
-	return nil
-}
-
-func requireAdminMember(ctx context.Context, tx pgx.Tx, workspaceID, actorID uuid.UUID) error {
-	var role string
-	err := tx.QueryRow(ctx, `
-		SELECT role FROM insideout.workspace_memberships
-		WHERE workspace_id = $1 AND user_id = $2`,
-		workspaceID, actorID,
-	).Scan(&role)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrForbidden
-	}
-	if err != nil {
-		return err
-	}
-	if role != "admin" {
-		return ErrForbidden
-	}
-	return nil
-}
-
-// requireMember is used by domain packages (projects, ideas, prds) that
-// need "must currently be a member" re-checked inside their own write
-// transactions.
-func requireMember(ctx context.Context, tx pgx.Tx, workspaceID, userID uuid.UUID) (role string, err error) {
-	// No FOR KEY SHARE: with FORCE RLS on a table whose policy calls
-	// _is_member, row locks silently return zero rows (BUG-007). The
-	// check and the write still share this transaction.
-	err = tx.QueryRow(ctx, `
-		SELECT role FROM insideout.workspace_memberships
-		WHERE workspace_id = $1 AND user_id = $2`,
-		workspaceID, userID,
-	).Scan(&role)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return "", ErrForbidden
-	}
-	return role, err
-}
-
-// requirePlanWriter allows the project owner or a workspace admin to
-// change the plan. A plain member can read it and leave notes, but
-// not add, edit, move, or delete roadmap nodes, and not file a
-// proposal (BUG-020).
-func requirePlanWriter(ctx context.Context, tx pgx.Tx, projectID, userID uuid.UUID) error {
-	var workspaceID uuid.UUID
-	var ownerID *uuid.UUID
-	err := tx.QueryRow(ctx,
-		`SELECT workspace_id, owner_id FROM insideout.projects WHERE id = $1`, projectID,
-	).Scan(&workspaceID, &ownerID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNotFound
-	}
-	if err != nil {
-		return err
-	}
-	if ownerID != nil && *ownerID == userID {
-		return nil
-	}
-	role, err := requireMember(ctx, tx, workspaceID, userID)
-	if err != nil {
-		return err
-	}
-	if role != "admin" {
-		return ErrForbidden
 	}
 	return nil
 }

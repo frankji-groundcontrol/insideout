@@ -23,7 +23,7 @@ the web font gate).
   `MaterialApp(home: BootLoadingPage())` mounts — the router MaterialApp
   only mounts after boot settles, so **no product surface builds before
   the web fonts are ready** and the first-frame tofu fix
-  ([2026-08-23](2026-08-23-web-font-flash.md)) is preserved.
+  ([2026-08-23](./2026-08-23-web-font-flash.md)) is preserved.
 
 ## Verification
 

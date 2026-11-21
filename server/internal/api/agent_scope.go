@@ -49,16 +49,26 @@ var agentRoutePolicy = map[string]agentAccess{
 	"POST /api/v1/agent/token":                    humanOnly, // an agent token never mints another
 
 	// Reads and edits behind the MCP tools.
-	"GET /api/v1/me":                              agentOK,
-	"GET /api/v1/workspaces":                      agentOK,
-	"POST /api/v1/workspaces":                     agentOK,
-	"POST /api/v1/workspaces/join":                agentOK,
-	"GET /api/v1/workspaces/{id}/projects":        agentOK,
-	"POST /api/v1/workspaces/{id}/projects":       agentOK,
-	"GET /api/v1/workspaces/{id}/ideas":           agentOK,
-	"POST /api/v1/workspaces/{id}/ideas":          agentOK,
-	"PATCH /api/v1/ideas/{iid}":                   agentOK,
-	"POST /api/v1/ideas/{iid}/convert":            agentOK,
+	"GET /api/v1/me":                        agentOK,
+	"GET /api/v1/workspaces":                agentOK,
+	"POST /api/v1/workspaces":               agentOK,
+	"POST /api/v1/workspaces/join":          agentOK,
+	"GET /api/v1/workspaces/{id}/projects":  agentOK,
+	"POST /api/v1/workspaces/{id}/projects": agentOK,
+	"GET /api/v1/workspaces/{id}/ideas":     agentOK,
+	"POST /api/v1/workspaces/{id}/ideas":    agentOK,
+	"PATCH /api/v1/ideas/{iid}":             agentOK,
+	"POST /api/v1/ideas/{iid}/convert":      agentOK,
+	"GET /api/v1/workspaces/{id}/prds":      agentOK,
+	"GET /api/v1/projects/{pid}/updates":    agentOK,
+	// One project or workspace, read and edited, and the updates feed written
+	// (rv5-PARB-04); handleUpdateProject refuses an agent an ownerId.
+	"GET /api/v1/projects/{pid}":                  agentOK,
+	"PATCH /api/v1/projects/{pid}":                agentOK,
+	"POST /api/v1/projects/{pid}/updates":         agentOK,
+	"PATCH /api/v1/updates/{uid}":                 agentOK,
+	"GET /api/v1/workspaces/{id}":                 agentOK,
+	"PATCH /api/v1/workspaces/{id}":               agentOK,
 	"GET /api/v1/prds/{id}":                       agentOK,
 	"PATCH /api/v1/prds/{id}":                     agentOK,
 	"GET /api/v1/prds/{id}/view":                  agentOK,
@@ -69,12 +79,15 @@ var agentRoutePolicy = map[string]agentAccess{
 	"POST /api/v1/prds/{id}/revisions":            agentOK,
 	"POST /api/v1/prds/{id}/status":               agentSubmit,
 	"GET /api/v1/projects/{pid}/roadmap":          agentOK,
+	"GET /api/v1/roadmap/{nid}":                   agentOK,
 	"POST /api/v1/projects/{pid}/roadmap":         agentOK,
 	"PATCH /api/v1/roadmap/{nid}":                 agentOK,
 	"POST /api/v1/roadmap/{nid}/move":             agentOK,
 	"GET /api/v1/projects/{pid}/guide":            agentOK,
 	"GET /api/v1/projects/{pid}/roadmap/progress": agentOK,
 	"GET /api/v1/roadmap/{nid}/evidence":          agentOK,
+	"GET /api/v1/roadmap/{nid}/assignments":       agentOK,
+	"GET /api/v1/workspaces/{id}/roadmap/mine":    agentOK,
 	"POST /api/v1/prds/{pid}/build":               agentOK,
 	"POST /api/v1/prds/{pid}/build/confirm":       agentOK,
 	"POST /api/v1/roadmap/{nid}/expand":           agentOK,
@@ -101,7 +114,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"DELETE /api/v1/me":                               humanOnly,
 
 	// No agent tool calls these: the coach conversation (the web client's),
-	// edits to people, workspaces and projects, live streams, evidence entry.
+	// edits to people and members, live streams, evidence entry.
 	"GET /api/v1/conversations/{id}":                     humanOnly,
 	"GET /api/v1/conversations/{id}/messages":            humanOnly,
 	"POST /api/v1/conversations/{id}/messages":           humanOnly,
@@ -111,19 +124,16 @@ var agentRoutePolicy = map[string]agentAccess{
 	"POST /api/v1/prds/{id}/conversation":                humanOnly,
 	"GET /api/v1/ideas/{iid}":                            humanOnly,
 	"PATCH /api/v1/me":                                   humanOnly,
-	"PATCH /api/v1/projects/{pid}":                       humanOnly,
-	"PATCH /api/v1/updates/{uid}":                        humanOnly,
-	"PATCH /api/v1/workspaces/{id}":                      humanOnly,
 	"PATCH /api/v1/workspaces/{id}/members/{userId}":     humanOnly,
-	"GET /api/v1/projects/{pid}":                         humanOnly,
 	"GET /api/v1/projects/{pid}/presence/stream":         humanOnly,
 	"GET /api/v1/projects/{pid}/roadmap/progress/stream": humanOnly,
-	"GET /api/v1/workspaces/{id}":                        humanOnly,
 	"GET /api/v1/workspaces/{id}/members":                humanOnly,
 	"POST /api/v1/projects/{pid}/cursor":                 humanOnly,
-	"POST /api/v1/projects/{pid}/updates":                humanOnly,
 	"POST /api/v1/roadmap/{nid}/evidence":                humanOnly,
 	"POST /api/v1/roadmap/{nid}/validate":                humanOnly,
+	// Ownership is write authority: a human decision (owner decision 4).
+	"POST /api/v1/roadmap/{nid}/delegate": humanOnly,
+	"POST /api/v1/roadmap/{nid}/handback": humanOnly,
 }
 
 // agentMayCall reports whether an agent-scope token may call the route the mux
@@ -159,28 +169,13 @@ func submitsForReview(r *http.Request) bool {
 	return req.Status == "draft" || req.Status == "reviewing"
 }
 
+// isAgentToken reports whether the request rides an agent-scope token, for the
+// handlers that refuse an agent part of an agent-allowed route (rv5-FEAT-02).
+func isAgentToken(r *http.Request) bool { return ScopeOf(r.Context()) == auth.ScopeAgent }
+
 // writeAgentScopeDenied answers an agent token on a route that needs the
 // human's own session.
 func writeAgentScopeDenied(w http.ResponseWriter) {
 	httpx.WriteError(w, http.StatusForbidden,
 		"this needs your own signed-in session; an agent token cannot do it", "agent_scope_denied", nil)
-}
-
-// handleAgentToken trades the caller's full session for an agent-scope access
-// token: same user, same lifetime as an access token, no cookie and no refresh
-// token. insideout-mcp calls it so the tools run on a token that cannot decide,
-// commit or administer. The route is human-only (agentRoutePolicy), so an agent
-// token can never mint another one.
-func (s *Server) handleAgentToken(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserID(r.Context())
-	token, expires, err := s.tokens.MintAgentToken(userID)
-	if err != nil {
-		s.log.Error("mint agent token", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	w.Header().Set("Cache-Control", "no-store")
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"accessToken": token, "expiresAt": expires, "scope": string(auth.ScopeAgent),
-	})
 }

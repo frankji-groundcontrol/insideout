@@ -16,11 +16,11 @@ endpoint returning `200` is an anti-enumeration contract response; it is not
 delivery evidence. The dev-body switch is local-only and must never be enabled
 on a shared deployment.
 
-- [mail-api-key.md](mail-api-key.md) — `INSIDEOUT_MAIL_API_KEY`
+- [mail-api-key.md](./mail-api-key.md) — `INSIDEOUT_MAIL_API_KEY`
   (manifest `mail/resend.yaml`)
-- [mail-from.md](mail-from.md) — `INSIDEOUT_MAIL_FROM`
+- [mail-from.md](./mail-from.md) — `INSIDEOUT_MAIL_FROM`
   (`mail/resend.yaml`)
-- [public-url.md](public-url.md) — `INSIDEOUT_PUBLIC_URL`
+- [public-url.md](./public-url.md) — `INSIDEOUT_PUBLIC_URL`
   (`mail/resend.yaml`)
-- [mail-dev-body.md](mail-dev-body.md) — `INSIDEOUT_MAIL_DEV_BODY`
+- [mail-dev-body.md](./mail-dev-body.md) — `INSIDEOUT_MAIL_DEV_BODY`
   (`mail/dev.yaml`)

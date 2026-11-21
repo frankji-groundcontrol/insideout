@@ -42,6 +42,7 @@ const enShell = <String, String>{
       'Every version keeps its number. A person reads it, checks the evidence, and puts their name on it. That signature is the only thing that moves a version onto the roadmap.',
   'home.loopTrail': 'Idea · Version · Commit · Roadmap · Evidence',
   'home.captureIdea': 'Capture an idea',
+  'home.myWork': 'My work',
   'time.justNow': 'just now',
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',
@@ -58,6 +59,8 @@ const enShell = <String, String>{
       'That is not a GitHub repository address — check it, then link the repository again',
   'error.githubRepoAlreadyLinked':
       'That repository is already linked to another project',
+  'error.prdNotApproved':
+      'This PRD must be approved before its roadmap is built',
   'error.throttled': 'Too many attempts — take a breath and retry shortly',
   'error.server': 'Server hiccup — try again',
   'error.network': 'Network problem — check the connection',

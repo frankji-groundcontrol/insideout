@@ -2,7 +2,7 @@
 
 `INSIDEOUT_GH_PRIVATE_KEY_FILE` points at the canonical raw PEM for the
 GitHub App. It is the config companion of
-[gh-app-private-key](gh-app-private-key.md), not a second private key.
+[gh-app-private-key](./gh-app-private-key.md), not a second private key.
 
 ## 1. Where the `.key` file is
 
@@ -19,7 +19,7 @@ inline `INSIDEOUT_GH_PRIVATE_KEY` value.
 ## 3. How to set it
 
 1. Complete the raw PEM setup in
-   [gh-app-private-key](gh-app-private-key.md).
+   [gh-app-private-key](./gh-app-private-key.md).
 2. Run `./scripts/env.sh edit` and set
    `INSIDEOUT_GH_PRIVATE_KEY_FILE` to that PEM's absolute path. Leave the
    inline PEM variable empty.
@@ -37,7 +37,7 @@ PEM lane is active or the GitHub App integration is disabled.
 ## 4. How to test it
 
 Run the per-key pointer test and then redeliver a signed private-repository
-GitHub App event as described in [gh-app-id](gh-app-id.md).
+GitHub App event as described in [gh-app-id](./gh-app-id.md).
 For an inline or disabled lane, the same test accepts an empty optional
 pointer; confirm that state with
 `INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py audit`.

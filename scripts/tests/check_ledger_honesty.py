@@ -47,6 +47,7 @@ COUNTS = re.compile(r"^Counts[^:\n]*: (\d+) rows = (.+)\.$", re.M)
 # code" and "73 closed by code" are the claim shapes.
 RESTATING = (
     "docs/plans/README.md",
+    "docs/plans/index/2026-10.md",  # the finished rv3 board row moved here (rv5-IDX-01)
     "docs/plans/2026-10-10-rv3-remediation.md",
     "docs/review/2026-10-10-multirole-3/README.md",
 )

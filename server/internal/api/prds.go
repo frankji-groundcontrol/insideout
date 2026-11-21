@@ -17,6 +17,7 @@ func (s *Server) registerPrdRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/prds/{id}/commits", s.requireAuth(s.handleListPrdCommits))
 	mux.HandleFunc("GET /api/v1/prds/{id}/readiness", s.requireAuth(s.handlePrdReadiness))
 	mux.HandleFunc("GET /api/v1/prds/{id}/view", s.requireAuth(s.handlePrdView))
+	mux.HandleFunc("GET /api/v1/workspaces/{id}/prds", s.requireAuth(s.handleListWorkspacePrds))
 	mux.HandleFunc("GET /api/v1/prds/{id}", s.requireAuth(s.handleGetPrd))
 	mux.HandleFunc("PATCH /api/v1/prds/{id}", s.requireAuth(s.handleUpdatePrd))
 	mux.HandleFunc("GET /api/v1/prds/{id}/revisions", s.requireAuth(s.handleListRevisions))
@@ -63,13 +64,8 @@ func (s *Server) handleGetPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	prd, err := s.store.GetPrdForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get prd", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get prd", err, errMsgs{store.ErrNotFound: "PRD not found"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, prdResponse(*prd))
@@ -125,17 +121,11 @@ func (s *Server) handleUpdatePrd(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, capErr.Error(), "", nil)
 		return
 	}
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author or a workspace admin can edit this PRD", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update prd sections", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update prd sections", err, errMsgs{
+			store.ErrNotFound:  "PRD not found",
+			store.ErrForbidden: "only the author or a workspace admin can edit this PRD",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, prdResponse(*prd))
@@ -202,25 +192,20 @@ func (s *Server) handleCreateRevision(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
+	if req.Note != nil && refuseTooLong(w, "note", *req.Note) {
+		return
+	}
 
 	rev, err := s.store.CreateRevision(r.Context(), userID, pid, req.Note)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the author can snapshot a revision", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		// MAX+1 race: a concurrent snapshot already took this revision number
-		// (F14). The winner's row stands; tell the loser to refresh + retry.
-		httpx.WriteError(w, http.StatusConflict, "a revision was just created — refresh and try again", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("create revision", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		// ErrConflict is the MAX+1 race: a concurrent snapshot already took
+		// this revision number (F14). The winner's row stands; the loser
+		// refreshes and retries.
+		s.writeStoreError(w, "create revision", err, errMsgs{
+			store.ErrNotFound:  "PRD not found",
+			store.ErrForbidden: "only the author can snapshot a revision",
+			store.ErrConflict:  "a revision was just created — refresh and try again",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, revisionResponse(*rev))
@@ -249,21 +234,12 @@ func (s *Server) handleUpdatePrdStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	prd, err := s.store.UpdatePrdStatus(r.Context(), userID, pid, req.Status)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you don't have permission for this transition", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrValidation) {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid status transition", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update prd status", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update prd status", err, errMsgs{
+			store.ErrNotFound:   "PRD not found",
+			store.ErrForbidden:  "you don't have permission for this transition",
+			store.ErrValidation: "invalid status transition",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, prdResponse(*prd))
@@ -282,13 +258,8 @@ func (s *Server) handleExportPrd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	prd, err := s.store.GetPrdForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "PRD not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get prd for export", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get prd for export", err, errMsgs{store.ErrNotFound: "PRD not found"})
 		return
 	}
 
@@ -336,13 +307,8 @@ func (s *Server) handleGetPrdConversation(w http.ResponseWriter, r *http.Request
 	}
 
 	conv, err := s.store.GetLatestConversationForPrd(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "no coach conversation for this PRD", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get prd conversation", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get prd conversation", err, errMsgs{store.ErrNotFound: "no coach conversation for this PRD"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, conversationResponse(*conv))

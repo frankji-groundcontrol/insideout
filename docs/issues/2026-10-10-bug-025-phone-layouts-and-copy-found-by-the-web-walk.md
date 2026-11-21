@@ -63,11 +63,11 @@ Each fix is a test commit that fails, then the fix.
 roadmap and PRD pages hold their controls and headings, the first-goal
 Progress view says what is true, the zh commit card is in Chinese, and the
 singular reads right. The dock tap matrix at 390x844 held no console error,
-which closes [W3-N2](2026-10-06-wave3-minified-console.md). Recorded in the
+which closes [W3-N2](./2026-10-06-wave3-minified-console.md). Recorded in the
 [web walk changelog](../changelogs/2026-10-10-close-open-gaps/web-walk-and-phone-layouts.md).
 
 Not changed, on purpose: the stacked PRD layout's coach block is a fixed 640px
 box, which does not block use. The English text the server stores for a commit's
 carried items is translated where the commit card shows it, which also turned up
 a worse problem: the card showed no carried items at all
-([BUG-026](2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md)).
+([BUG-026](./2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md)).

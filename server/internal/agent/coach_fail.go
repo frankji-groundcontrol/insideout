@@ -5,6 +5,8 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // ErrLoopInternal marks a failure of our own coach loop (the tool-iteration cap,
@@ -19,8 +21,8 @@ var ErrLoopInternal = errors.New("agent: internal loop failure")
 // unclassified (a transport error, an unexpected status) still counts.
 func countsAgainstCircuit(err error) bool {
 	switch {
-	case errors.Is(err, ErrLoopInternal), errors.Is(err, ErrContextLength),
-		errors.Is(err, ErrProviderConfig), errors.Is(err, ErrContentRefusal),
+	case errors.Is(err, ErrLoopInternal), errors.Is(err, llm.ErrContextLength),
+		errors.Is(err, llm.ErrProviderConfig), errors.Is(err, llm.ErrContentRefusal),
 		errors.Is(err, context.Canceled):
 		return false
 	}
@@ -41,28 +43,28 @@ func (c *Coach) failTurn(ctx context.Context, userID uuid.UUID, runID uuid.UUID,
 	}
 
 	switch {
-	case errors.Is(loopErr, ErrProviderRateLimited):
-		sse.errorEvent("AI provider is rate limited", "ANTHROPIC_RATE_LIMIT")
-	case errors.Is(loopErr, ErrProviderTransient):
+	case errors.Is(loopErr, llm.ErrProviderRateLimited):
+		sse.errorEvent("AI provider is rate limited", "anthropic_rate_limit")
+	case errors.Is(loopErr, llm.ErrProviderTransient):
 		c.log.Error("agent loop: provider transient error", "error", loopErr)
 		sse.errorEvent("internal error", "")
-	case errors.Is(loopErr, ErrContextLength):
-		sse.errorEvent("conversation too long — snapshot and start a fresh session", "CONTEXT_LENGTH")
-	case errors.Is(loopErr, ErrProviderConfig):
+	case errors.Is(loopErr, llm.ErrContextLength):
+		sse.errorEvent("conversation too long — snapshot and start a fresh session", "context_length")
+	case errors.Is(loopErr, llm.ErrProviderConfig):
 		// The provider's own text (up to 4 KiB of its response body) stays in
 		// the log and ai_runs; the wire carries a fixed message like every
 		// other failure class.
 		c.log.Error("agent loop: provider configuration error", "error", loopErr)
-		sse.errorEvent("AI provider is misconfigured - contact the operator", "PROVIDER_CONFIG")
-	case errors.Is(loopErr, ErrContentRefusal):
-		sse.errorEvent("the model declined to respond", "CONTENT_REFUSAL")
-	case errors.Is(loopErr, ErrUpstreamStall):
+		sse.errorEvent("AI provider is misconfigured - contact the operator", "provider_config")
+	case errors.Is(loopErr, llm.ErrContentRefusal):
+		sse.errorEvent("the model declined to respond", "content_refusal")
+	case errors.Is(loopErr, llm.ErrUpstreamStall):
 		// The provider went silent and the idle watchdog killed the stream
 		// while the client was still connected — a hung upstream, not a
 		// disconnect. Counts against the circuit breaker, and the still-there
 		// user gets an honest error instead of a silently dead bubble.
 		c.log.Error("agent loop: upstream stream stalled (idle watchdog)", "error", loopErr)
-		sse.errorEvent("AI provider stopped responding — try again", "UPSTREAM_STALL")
+		sse.errorEvent("AI provider stopped responding — try again", "upstream_stall")
 	case errors.Is(loopErr, context.Canceled):
 		// Client disconnected. No circuit result — routine, not provider health.
 	default:

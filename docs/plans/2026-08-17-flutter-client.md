@@ -14,7 +14,7 @@ switches off `app/`. Keep the Go API and the `insideout` schema.
 **Correction 2026-08-19:** the original lock "Use **Material 3**, not
 Ink & Seal" is reversed. Flutter is the client kit; the visual world is
 still Ink & Seal. See
-[`docs/plans/2026-08-19-restore-ink-seal.md`](2026-08-19-restore-ink-seal.md).
+[`docs/plans/2026-08-19-restore-ink-seal.md`](./2026-08-19-restore-ink-seal.md).
 
 ## Locked decisions
 
@@ -156,5 +156,5 @@ Ink & Seal, PRODUCT.md version-first slice.
 - PRODUCT.md version-first Coach slice (stays on the board as P2).
 - App Store / Play Store listing.
 - Deleting `app/` — now a sibling plan:
-      [`2026-08-18-delete-nuxt-app.md`](2026-08-18-delete-nuxt-app.md).
+      [`2026-08-18-delete-nuxt-app.md`](./2026-08-18-delete-nuxt-app.md).
 - Re-implementing Ink & Seal.

@@ -1,6 +1,6 @@
 # 02 — Go Backend / Go 后端
 
-> Part of the [InsideOut rewrite plan](README.md). / [InsideOut 重写计划](README.md)的一部分。
+> Part of the [InsideOut rewrite plan](./README.md). / [InsideOut 重写计划](./README.md)的一部分。
 
 ## 1. Stack & Layout / 技术栈与目录
 
@@ -27,8 +27,8 @@ The 350-line-per-file rule applies to Go files; the per-domain split above is si
 **Config (env)** / **配置（环境变量）**: `INSIDEOUT_ADDR`, `DATABASE_URL` (as `insideout_app` — any PostgreSQL 14+ instance: a user-provided remote one during development, or the compose `postgres:17` in production), `INSIDEOUT_JWT_SECRET`, `INSIDEOUT_ACCESS_TTL` (default 15m), `INSIDEOUT_REFRESH_TTL` (default 720h), `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, `AI_MODEL`. This replaces Supabase Vault's `get_ai_config()`. We keep its graceful degradation: **missing AI config → canned template reply, not an error** (it doubles as offline dev mode).
 取代 Supabase Vault 的 `get_ai_config()`。保留其优雅降级：**AI 配置缺失 → 固定模板回复而非报错**（兼作离线开发模式）。
 
-**Embedded migration runner / 内嵌迁移执行器**: no external migration tool and no MCP dependency — `internal/store/migrate.go` reads `db/migrations/*.sql` (embedded via `//go:embed`), tracks applied filenames in a `insideout.schema_migrations(filename text primary key, applied_at timestamptz)` table (bootstrapped with `CREATE SCHEMA IF NOT EXISTS insideout` + `CREATE TABLE IF NOT EXISTS ... schema_migrations` before anything else), and applies unapplied files in filename order inside a transaction each. Invoked via `go run ./cmd/insideout migrate` (a CLI subcommand, not an HTTP route) against whatever `DATABASE_URL` is configured. This is what "single role, `insideout_app`" in [01 §2](01-database.md) actually runs as.
-无外部迁移工具、也不依赖任何 MCP——`internal/store/migrate.go` 通过 `//go:embed` 读取 `db/migrations/*.sql`，用 `insideout.schema_migrations(filename text primary key, applied_at timestamptz)` 表记录已应用的文件名（首次运行前自举 `CREATE SCHEMA IF NOT EXISTS insideout` + 该表），按文件名顺序在各自事务中应用未应用的文件。通过 `go run ./cmd/insideout migrate` 命令（CLI 子命令，非 HTTP 路由）对配置的 `DATABASE_URL` 执行。这正是 [01 §2](01-database.md) 中「单一角色 `insideout_app`」实际运行迁移的方式。
+**Embedded migration runner / 内嵌迁移执行器**: no external migration tool and no MCP dependency — `internal/store/migrate.go` reads `db/migrations/*.sql` (embedded via `//go:embed`), tracks applied filenames in a `insideout.schema_migrations(filename text primary key, applied_at timestamptz)` table (bootstrapped with `CREATE SCHEMA IF NOT EXISTS insideout` + `CREATE TABLE IF NOT EXISTS ... schema_migrations` before anything else), and applies unapplied files in filename order inside a transaction each. Invoked via `go run ./cmd/insideout migrate` (a CLI subcommand, not an HTTP route) against whatever `DATABASE_URL` is configured. This is what "single role, `insideout_app`" in [01 §2](./01-database.md) actually runs as.
+无外部迁移工具、也不依赖任何 MCP——`internal/store/migrate.go` 通过 `//go:embed` 读取 `db/migrations/*.sql`，用 `insideout.schema_migrations(filename text primary key, applied_at timestamptz)` 表记录已应用的文件名（首次运行前自举 `CREATE SCHEMA IF NOT EXISTS insideout` + 该表），按文件名顺序在各自事务中应用未应用的文件。通过 `go run ./cmd/insideout migrate` 命令（CLI 子命令，非 HTTP 路由）对配置的 `DATABASE_URL` 执行。这正是 [01 §2](./01-database.md) 中「单一角色 `insideout_app`」实际运行迁移的方式。
 
 ## 2. Auth / 认证
 
@@ -39,8 +39,8 @@ Current "auth" is half-fake (OTP call with no verify step + fabricated localStor
   **注册/登录**：邮箱+密码；argon2id（64 MiB，t=1，p=4）。可选：首次登录校验导入的 GoTrue bcrypt 哈希并重哈希为 argon2id（仅当存在真实用户时有意义）。
 - **Sessions**: access = 15-min JWT (HS256, claims: `sub`, `exp`, `iat`) in an httpOnly `SameSite=Lax` `Secure` cookie; refresh = opaque random token, sha256-stored in `insideout.sessions`, 30-day TTL, **rotated on every refresh** (old row gets `revoked_at`). No token-family reuse detection for v1. `// ponytail: rotation only; add family reuse-detection if this ever guards real money`
   **会话**：access 为 15 分钟 JWT（HS256），放 httpOnly `SameSite=Lax` `Secure` cookie；refresh 为不透明随机令牌，sha256 存入 `insideout.sessions`，30 天有效，**每次刷新轮换**（旧行写入 `revoked_at`）。v1 不做令牌家族重用检测。
-- Cookies unlock **SSR auth** — the Nuxt middleware finally works on the server ([04 §2](04-frontend.md)). The API also accepts `Authorization: Bearer` for tests and CLI use.
-  Cookie 顺带解锁 **SSR 认证**——Nuxt 中间件终于能在服务端生效（[04 §2](04-frontend.md)）。API 同时接受 `Authorization: Bearer`，便于测试与命令行。
+- Cookies unlock **SSR auth** — the Nuxt middleware finally works on the server ([04 §2](./04-frontend.md)). The API also accepts `Authorization: Bearer` for tests and CLI use.
+  Cookie 顺带解锁 **SSR 认证**——Nuxt 中间件终于能在服务端生效（[04 §2](./04-frontend.md)）。API 同时接受 `Authorization: Bearer`，便于测试与命令行。
 - Middleware resolves the user once per request and injects it into `context`; handlers never parse tokens themselves.
   中间件每请求解析一次用户并注入 `context`；handler 绝不自行解析令牌。
 
@@ -69,7 +69,7 @@ All under `/api/v1`. JSON bodies are **camelCase** (matches the frontend boundar
 | GET `/prds/{id}/export?format=markdown|print` | On-demand render, direct download (D8: no object storage, no job table) / 按需渲染直接下载（D8：无对象存储、无任务表） | 👤 |
 | GET `/prds/{id}/conversation` | Latest coach conversation for this PRD — lets the PRD workspace resume coaching on revisit, not just right after conversion / 该 PRD 最新的教练对话——让 PRD 工作台在再次访问时能续接教练对话，而不仅限于转化后那一次 | 👤 |
 | GET `/conversations/{id}` · GET `/conversations/{id}/messages` | Coach conversation + history (server-side now) / 教练对话与历史（改为服务端存储） | owner |
-| POST `/conversations/{id}/messages` | Send message → **SSE stream** reply ([03 §4](03-agents.md)) / 发消息 → **SSE 流式**回复 | owner |
+| POST `/conversations/{id}/messages` | Send message → **SSE stream** reply ([03 §4](./03-agents.md)) / 发消息 → **SSE 流式**回复 | owner |
 | GET `/healthz` | Liveness + DB ping / 存活与数据库探测 | 🔓 |
 
 **Error contract / 错误契约**: `{ "error": string, "code"?: string, ... }`. The AI throttling shapes are preserved **verbatim** so the existing frontend countdown logic keeps working: 429 `code:"APP_THROTTLE"` with `retry_after_seconds`/`current_count`/`max_requests`; 503 `code:"CIRCUIT_OPEN"` with `retry_after_seconds`/`circuit_state`; 503 `code:"ANTHROPIC_RATE_LIMIT"` with `retry_after_seconds`. (Yes, these extras are snake_case while bodies are camelCase — inherited; unifying is optional cleanup **after** cutover, never during.)
@@ -80,8 +80,8 @@ AI 限流响应**逐字保留**，确保前端倒计时逻辑不改即用：429 
 
 ## 4. Cross-Cutting / 横切关注点
 
-- **DB access**: one `pgxpool` per process; every multi-step write is a transaction; membership re-check inside the transaction per [01 §5](01-database.md). Store functions take `context.Context` first, return domain structs.
-  **数据库访问**：每进程一个 `pgxpool`；所有多步写入走事务；事务内复查成员资格（见 [01 §5](01-database.md)）。store 函数首参 `context.Context`，返回领域结构体。
+- **DB access**: one `pgxpool` per process; every multi-step write is a transaction; membership re-check inside the transaction per [01 §5](./01-database.md). Store functions take `context.Context` first, return domain structs.
+  **数据库访问**：每进程一个 `pgxpool`；所有多步写入走事务；事务内复查成员资格（见 [01 §5](./01-database.md)）。store 函数首参 `context.Context`，返回领域结构体。
 - **Timeouts**: `ReadHeaderTimeout` 5s; default per-request context timeout 10s; agent/SSE routes 120s. Graceful shutdown drains in-flight SSE streams.
   **超时**：`ReadHeaderTimeout` 5 秒；默认请求上下文 10 秒；Agent/SSE 路由 120 秒。优雅退出时排空进行中的 SSE 流。
 - **Transport (no CORS)**: the Nuxt app proxies `/api/v1/**` to the Go server via a Nitro route rule, so browser and SSR calls are **same-origin** and the httpOnly cookies just work — cross-origin CORS-with-credentials (and its SameSite pitfalls) is avoided entirely. The old `Access-Control-Allow-Origin: *` dies with the edge functions. A permissive-CORS dev flag exists only for hitting the API directly with curl/tests.

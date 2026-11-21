@@ -70,9 +70,8 @@ else
 fi
 
 echo
-api_base=$("$repo_root/scripts/default-api.sh")
-echo "Done. The CLI and MCP server call the hosted API with no environment variables:"
-echo "  $api_base"
+echo "Done. The CLI and MCP server call the default hosted API."
+echo "No environment variables are required."
 echo
 echo "Sign in (password is read from the terminal; the login is saved for the CLI and the MCP server):"
 echo "  insideout login you@example.com"
@@ -82,13 +81,14 @@ echo "No account yet? Signing up on the hosted service takes an invitation code:
 echo "ask the server's administrator for one, then"
 echo "  insideout register --invite <invitation-code> you@example.com"
 echo
-echo "Own server, including PostgreSQL: ./scripts/setup.sh"
+echo "Own server, including PostgreSQL, from this checkout: insideout setup --local --postgres bundled|own"
 echo "Full guide: docs/usage/installation.md"
 echo "MCP registration: add {\"command\": \"insideout-mcp\"} under mcpServers (docs/usage/cli-mcp-and-guidance.md)"
 if [ -t 0 ]; then
   printf 'Set up your own server on this machine now? [y/N] '
   read -r answer
   case "$answer" in
-    y|Y|yes|YES) exec "$repo_root/scripts/setup.sh" --local ;;
+    # The wizard, from the checkout: its local path asks bundled or own.
+    y|Y|yes|YES) cd "$repo_root" && exec "$install_dir/insideout" setup ;;
   esac
 fi

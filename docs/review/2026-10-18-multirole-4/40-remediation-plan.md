@@ -2,7 +2,7 @@
 
 Tree: `main` @ `9f0b1c7`. Ordered by impact over effort: start at row 1.1 and
 work down. Each wave ends with a runnable check; do not start the next wave
-until the check passes. IDs point at [01-findings-register.md](01-findings-register.md);
+until the check passes. IDs point at [01-findings-register.md](./01-findings-register.md);
 the evidence, quote and skeptic verdict for each live in the role files.
 
 Rules for every row: red test first when the row names one, real PostgreSQL
@@ -14,7 +14,7 @@ Diff sizes are the reviewers' estimates, checked by the skeptics where a High
 was involved. `dir` means the reviewer gave a direction and a first check, not
 a patch, so size the row with a short spike first.
 
-The completeness critic ([30](30-completeness-critic.md)) added `COMP-01` to
+The completeness critic ([30](./30-completeness-critic.md)) added `COMP-01` to
 `COMP-08`; they sit in rows 1.16 to 1.18, 3.2, 3.6, 3.10 and 3.11. It also
 recommends restoring `DATA-01`, `USER-02` and `AIDEV-01` to High. The skeptic
 verdicts stand in the register, but the order here already treats them as

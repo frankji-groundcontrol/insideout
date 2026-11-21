@@ -6,7 +6,7 @@ Every item below came from a deferred-findings record
 [coach line budget](../../issues/2026-10-04-coach-go-line-budget.md)). Each fix
 was written test-first on real PostgreSQL 18: the new test failed on the old
 code for the stated reason, then passed. The file splits that made room for
-them are in [backend-splits.md](backend-splits.md).
+them are in [backend-splits.md](./backend-splits.md).
 
 ## Coach
 

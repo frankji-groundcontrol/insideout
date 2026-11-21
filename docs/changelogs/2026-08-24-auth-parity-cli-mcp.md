@@ -3,7 +3,7 @@
 The user required surface agreement: **web, CLI, API, and MCP must all
 allow login/register in the different ways**. The API and web already had
 all five flows from the
-[email-auth slice](2026-08-24-email-auth.md); the CLI had password login
+[email-auth slice](./2026-08-24-email-auth.md); the CLI had password login
 only, and the MCP server had none (a deliberate no-login-tool stance).
 This slice completes the matrix and reverses that stance by the user's
 product call — an MCP login tool's token is process state, never

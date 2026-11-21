@@ -1,8 +1,8 @@
 # Review-4 remediation, wave 1: the front door, the gates and correctness
 
-The wave-1 section of the [folder index](index.md), moved here unchanged so
+The wave-1 section of the [folder index](./index.md), moved here unchanged so
 each wave record stays under the line budget. Three edits were made in the
-move: R1-03 and R1-09 are marked closed in wave 2 (see [wave 2](wave-2.md)),
+move: R1-03 and R1-09 are marked closed in wave 2 (see [wave 2](./wave-2.md)),
 and the `cli_setup.go` line citation was refreshed after wave 2 moved the line.
 
 ## Wave 1
@@ -28,15 +28,15 @@ viewer-zone timestamps), recorded as R1-05, R1-16 and R1-15.
 
 | Cluster | Rows | What landed | Verifier | Fragment |
 | --- | --- | --- | --- | --- |
-| `w1-cli-front-door` | 1.1, 1.2, 1.5 | `promote-admin` creates the first admin (password from stdin); `help`, `-h`, `--help`, `version`, `--version` and unknown verbs answer before `config.Load()` (exit 0, 0, 2); `release.yml` runs `go test ./... -race` first and stamps the tag into `main.version` | round 1 | [w1-cli-front-door.md](w1-cli-front-door.md) |
-| `w1-ci-gates` | 1.4, 1.6, 1.11, CI half of 1.15 | weekly shuffled scheduled run; in-progress cancel for pull requests only; every `scripts/tests/check_*.py` guard in the `env-suites` job (`python3 -I`, `fetch-tags: true`); Ubuntu install lane accepts Go 1.26 and newer; analyzer baseline 14; a `go mod tidy -diff` step | round 1 | [w1-ci-gates.md](w1-ci-gates.md) |
-| `w1-clock-and-runes` | 1.3, 1.17 | `Server.now()` in the project, roadmap node and progress views plus a guard against raw `time.Now()` there; one `tooLong` helper counting characters on the 18 capped fields | round 1 | [w1-clock-and-runes.md](w1-clock-and-runes.md) |
-| `w1-auth-atomic` | 1.9, 1.10, cooldown half of 1.13 | a login-code guess is charged and compared in one atomic `UPDATE`; create-invitation returns `mailSent` and the dialog says when nothing was e-mailed; the resend cooldown keys on `clientIP` | round 1 | [w1-auth-atomic.md](w1-auth-atomic.md) |
-| `w1-apiclient-escape` | apiclient half of 1.13 | every apiclient path segment and query value is escaped (39 rows under a completeness test) | round 1 | [w1-apiclient-escape.md](w1-apiclient-escape.md) |
-| `w1-github-repo` | 1.14 | dot-only repo segments and foreign hosts refused; the canonical repo URL is stored | round 1 | [w1-github-repo.md](w1-github-repo.md) |
-| `w1-client-polish` | 1.16, dialog half of 1.12 | the Edit-project description field is labelled as a description; the picked deadline is sent as noon UTC of its calendar day | round 1 | [w1-client-polish.md](w1-client-polish.md) |
-| `w1-ops-docs` | 1.7, 1.8, 1.18, bootstrap half of 1.12 | the README `prd update` example parses; compose `stop_grace_period: 35s`; the prebuilt installer stops offering `setup --local`; the backup dump is written 0600 and documented | round 1 | [w1-ops-docs.md](w1-ops-docs.md) |
-| `w1-misc-correctness` | 1.15 without its CI step | `charmbracelet/huh` marked direct and `go.sum` tidied; `items` declared in the propose tool schema; a stable `openQuestions` order; an empty owner DSN fails `env.sh check` on the bundled PostgreSQL; the timeline cursor survives a deleted row | repair, then round 2 | [w1-misc-correctness.md](w1-misc-correctness.md) |
+| `w1-cli-front-door` | 1.1, 1.2, 1.5 | `promote-admin` creates the first admin (password from stdin); `help`, `-h`, `--help`, `version`, `--version` and unknown verbs answer before `config.Load()` (exit 0, 0, 2); `release.yml` runs `go test ./... -race` first and stamps the tag into `main.version` | round 1 | [w1-cli-front-door.md](./w1-cli-front-door.md) |
+| `w1-ci-gates` | 1.4, 1.6, 1.11, CI half of 1.15 | weekly shuffled scheduled run; in-progress cancel for pull requests only; every `scripts/tests/check_*.py` guard in the `env-suites` job (`python3 -I`, `fetch-tags: true`); Ubuntu install lane accepts Go 1.26 and newer; analyzer baseline 14; a `go mod tidy -diff` step | round 1 | [w1-ci-gates.md](./w1-ci-gates.md) |
+| `w1-clock-and-runes` | 1.3, 1.17 | `Server.now()` in the project, roadmap node and progress views plus a guard against raw `time.Now()` there; one `tooLong` helper counting characters on the 18 capped fields | round 1 | [w1-clock-and-runes.md](./w1-clock-and-runes.md) |
+| `w1-auth-atomic` | 1.9, 1.10, cooldown half of 1.13 | a login-code guess is charged and compared in one atomic `UPDATE`; create-invitation returns `mailSent` and the dialog says when nothing was e-mailed; the resend cooldown keys on `clientIP` | round 1 | [w1-auth-atomic.md](./w1-auth-atomic.md) |
+| `w1-apiclient-escape` | apiclient half of 1.13 | every apiclient path segment and query value is escaped (39 rows under a completeness test) | round 1 | [w1-apiclient-escape.md](./w1-apiclient-escape.md) |
+| `w1-github-repo` | 1.14 | dot-only repo segments and foreign hosts refused; the canonical repo URL is stored | round 1 | [w1-github-repo.md](./w1-github-repo.md) |
+| `w1-client-polish` | 1.16, dialog half of 1.12 | the Edit-project description field is labelled as a description; the picked deadline is sent as noon UTC of its calendar day | round 1 | [w1-client-polish.md](./w1-client-polish.md) |
+| `w1-ops-docs` | 1.7, 1.8, 1.18, bootstrap half of 1.12 | the README `prd update` example parses; compose `stop_grace_period: 35s`; the prebuilt installer stops offering `setup --local`; the backup dump is written 0600 and documented | round 1 | [w1-ops-docs.md](./w1-ops-docs.md) |
+| `w1-misc-correctness` | 1.15 without its CI step | `charmbracelet/huh` marked direct and `go.sum` tidied; `items` declared in the propose tool schema; a stable `openQuestions` order; an empty owner DSN fails `env.sh check` on the bundled PostgreSQL; the timeline cursor survives a deleted row | repair, then round 2 | [w1-misc-correctness.md](./w1-misc-correctness.md) |
 
 ### Dispositions
 

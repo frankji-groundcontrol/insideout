@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // trickleStreamer is the slow-trickle failure mode: a provider that never
@@ -19,17 +21,17 @@ type trickleStreamer struct {
 	safety time.Duration
 }
 
-func (s trickleStreamer) StreamChat(ctx context.Context, _ string, _ []Message, _ []Tool, _ func(string)) (Turn, error) {
+func (s trickleStreamer) StreamChat(ctx context.Context, _ string, _ []llm.Message, _ []llm.Tool, _ func(string)) (llm.Turn, error) {
 	select {
 	case <-ctx.Done():
-		return Turn{}, ctx.Err()
+		return llm.Turn{}, ctx.Err()
 	case <-time.After(s.safety):
-		return Turn{}, errors.New("the coach turn outlived the test's safety bound: no total-turn deadline cut it")
+		return llm.Turn{}, errors.New("the coach turn outlived the test's safety bound: no total-turn deadline cut it")
 	}
 }
 
-func (trickleStreamer) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (trickleStreamer) StreamChatForcingTool(context.Context, string, []llm.Message, llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 func (trickleStreamer) Model() string { return "trickle" }
 

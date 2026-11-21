@@ -100,8 +100,9 @@ func invitationResponse(i *store.Invitation) invitationView {
 // over signupUrl themselves; the CLI and MCP pass the field through.
 func (s *Server) handleCreateInvitation(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Email    string `json:"email"`
-		TTLHours int    `json:"ttlHours"`
+		Email string `json:"email"`
+		// TTLHours: absent takes defaultInviteTTL; any value must be 1 to 720.
+		TTLHours *int `json:"ttlHours"`
 	}
 	if err := httpx.DecodeJSON(r, &req); err != nil {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
@@ -112,9 +113,13 @@ func (s *Server) handleCreateInvitation(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusBadRequest, "invalid email", "", nil)
 		return
 	}
-	ttl := time.Duration(req.TTLHours) * time.Hour
-	if ttl <= 0 || ttl > 30*24*time.Hour {
-		ttl = defaultInviteTTL
+	ttl := defaultInviteTTL
+	if req.TTLHours != nil {
+		if *req.TTLHours < 1 || *req.TTLHours > 720 {
+			httpx.WriteError(w, http.StatusBadRequest, "ttlHours must be 1 to 720", "", nil)
+			return
+		}
+		ttl = time.Duration(*req.TTLHours) * time.Hour
 	}
 
 	code, hash, err := auth.GenerateOneTimeToken()

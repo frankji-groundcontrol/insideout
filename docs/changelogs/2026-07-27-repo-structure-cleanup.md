@@ -2,7 +2,7 @@
 
 Housekeeping that clears scattered scratch out of the working tree and the
 legacy coding-tool directories out of git. Follows the
-[2026-07-23 scratch-cleanup precedent](2026-07-23-woff2-fonts-and-scratch-cleanup.md)
+[2026-07-23 scratch-cleanup precedent](./2026-07-23-woff2-fonts-and-scratch-cleanup.md)
 and closes the
 [tracked-tool-scratch-dirs issue](../issues/2026-07-21-tracked-tool-scratch-dirs.md).
 

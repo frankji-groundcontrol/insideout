@@ -49,4 +49,4 @@ wave 4 `b056e30..4464330`. Register rows each change closes are named.
 
 `flutter test` — 456 tests passing (up from 421 at the review base);
 `flutter analyze` at the 14-info baseline; `dart format` clean
-([verification.md](verification.md)).
+([verification.md](./verification.md)).

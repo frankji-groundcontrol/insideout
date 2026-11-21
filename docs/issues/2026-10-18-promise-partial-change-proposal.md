@@ -3,7 +3,7 @@
 Open, recorded 2026-10-18 (review-4 wave 3, finding COMP-08; row 116 of the
 [promise register](../review/2026-10-10-multirole-3/50-promise-register.md),
 a gap no earlier review list carried). Context in the
-[promise-gap enumeration](2026-10-11-product-promise-gaps.md).
+[promise-gap enumeration](./2026-10-11-product-promise-gaps.md).
 
 ## What PRODUCT.md promises
 

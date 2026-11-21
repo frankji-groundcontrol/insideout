@@ -9,6 +9,7 @@ import '../../theme/block_chrome.dart';
 import '../../theme/block_field.dart';
 import '../../theme/cobalt.dart';
 import 'auth_door.dart';
+import 'auth_divider.dart';
 import 'auth_form_errors.dart';
 import 'auth_sent_panels.dart';
 import 'mail_off_notice.dart';
@@ -49,6 +50,7 @@ class _AuthFormState extends State<AuthForm> {
   bool inviteRequired = false;
   String? signupMode; // from /auth/config; null until it answers
   bool mailOff = false;
+  String? mailWord; // the last send's mail word (PARA-05)
   _LoginMode _mode = _LoginMode.password;
 
   @override
@@ -111,11 +113,21 @@ class _AuthFormState extends State<AuthForm> {
     try {
       final session = context.read<Session>();
       if (_magic) {
-        await session.api.requestMagicLink(email.text.trim());
-        if (mounted) setState(() => linkSent = true);
+        final word = await session.api.requestMagicLink(email.text.trim());
+        if (mounted) {
+          setState(() {
+            linkSent = true;
+            mailWord = word;
+          });
+        }
       } else if (_code && !codeSent) {
-        await session.api.requestLoginCode(email.text.trim());
-        if (mounted) setState(() => codeSent = true);
+        final word = await session.api.requestLoginCode(email.text.trim());
+        if (mounted) {
+          setState(() {
+            codeSent = true;
+            mailWord = word;
+          });
+        }
       } else if (_code) {
         await session.loginWithCode(email.text.trim(), code.text.trim());
         if (mounted) context.go('/dashboard');
@@ -150,7 +162,9 @@ class _AuthFormState extends State<AuthForm> {
     });
     final l10n = context.read<Appearance>();
     try {
-      await context.read<Session>().api.requestLoginCode(email.text.trim());
+      final api = context.read<Session>().api;
+      final word = await api.requestLoginCode(email.text.trim());
+      if (mounted) setState(() => mailWord = word);
     } catch (e) {
       if (mounted) setState(() => error = l10n.t('login.codeSendError'));
     } finally {
@@ -167,9 +181,11 @@ class _AuthFormState extends State<AuthForm> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    final notice = mailWord == 'logged' ? l10n.t('auth.mailLogged') : null;
     if (_magic && linkSent) {
       return MagicSentPanel(
         message: l10n.t('login.magicSent'),
+        notice: notice,
         backLabel: l10n.t('login.magicBack'),
         onBack: _backToPassword,
       );
@@ -177,6 +193,7 @@ class _AuthFormState extends State<AuthForm> {
     if (_code && codeSent) {
       return CodeEntryPanel(
         message: l10n.t('login.codeSent'),
+        notice: notice,
         controller: code,
         codeLabel: l10n.t('login.codeField'),
         error: error,
@@ -244,7 +261,7 @@ class _AuthFormState extends State<AuthForm> {
             const MailOffNotice(),
             const SizedBox(height: Cobalt.space3),
           ],
-          _otherWaysDivider(l10n.t('login.otherWays')),
+          OtherWaysDivider(label: l10n.t('login.otherWays')),
           const SizedBox(height: Cobalt.space3),
           Row(
             children: [
@@ -298,38 +315,6 @@ class _AuthFormState extends State<AuthForm> {
             expand: true,
             onPressed: widget.onSwitch,
           ),
-      ],
-    );
-  }
-
-  // A hairline "— More ways to sign in —" divider separating the primary
-  // password path from the alternate sign-in buttons.
-  Widget _otherWaysDivider(String label) {
-    final palette = Cobalt.of(context);
-    final hairline = Expanded(
-      child: Divider(
-        thickness: Cobalt.borderDivider,
-        height: Cobalt.borderDivider,
-        color: palette.strokeSubtle,
-      ),
-    );
-    return Row(
-      children: [
-        hairline,
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Cobalt.space3),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: Cobalt.sans,
-              fontFamilyFallback: Cobalt.sansFallback,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: palette.fgMuted,
-            ),
-          ),
-        ),
-        hairline,
       ],
     );
   }

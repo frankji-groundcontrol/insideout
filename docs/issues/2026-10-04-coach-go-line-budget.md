@@ -39,7 +39,7 @@ structural touch.
 `aiConcurrencyLimits`, `detachedContext`) from
 `server/internal/agent/coach.go` into a new `coach_loop.go` in the same
 package — no signature changes, per
-[docs/issues/2026-10-04-coach-go-line-budget.md](2026-10-04-coach-go-line-budget.md).
+[docs/issues/2026-10-04-coach-go-line-budget.md](./2026-10-04-coach-go-line-budget.md).
 Gate: `go build ./... && go vet ./... && go test ./...` green (the SSE
 and retry tests in `internal/api` + `internal/agent` are the behavioral
 pins). Both files end under ~350 lines. Record the split in a changelog

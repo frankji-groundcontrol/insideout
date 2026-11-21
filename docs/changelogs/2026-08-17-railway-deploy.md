@@ -5,7 +5,7 @@
 InsideOut now has a public Railway instance so the product can be walked
 through without a local stack. The hosted topology is the compose graph
 on Railway private DNS: dedicated Postgres, a private Go `server`, and a
-public Nuxt `app` at `https://app-production-591e.up.railway.app`.
+public Nuxt `app` at `https://<app-host>`.
 
 Two small code/config changes were required to make that topology boot:
 

@@ -24,6 +24,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   String? error;
   bool busy = false;
   bool sent = false;
+
+  /// The server's mail word for the sent reset link (PARA-05).
+  String? mailWord;
   bool mailOff = false;
 
   @override
@@ -47,8 +50,15 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     });
     final l10n = context.read<Appearance>();
     try {
-      await context.read<Session>().api.forgotPassword(email.text.trim());
-      if (mounted) setState(() => sent = true);
+      final word = await context.read<Session>().api.forgotPassword(
+        email.text.trim(),
+      );
+      if (mounted) {
+        setState(() {
+          sent = true;
+          mailWord = word;
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => error = l10n.t('forgot.error'));
     } finally {
@@ -72,6 +82,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     l10n.t('forgot.sent'),
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
+                  if (mailWord == 'logged') ...[
+                    const SizedBox(height: Cobalt.space3),
+                    BlockBanner(
+                      message: l10n.t('auth.mailLogged'),
+                      tone: BlockTone.info,
+                    ),
+                  ],
                   const SizedBox(height: Cobalt.space6),
                   BlockButton(
                     label: l10n.t('forgot.back'),

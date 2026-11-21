@@ -22,7 +22,7 @@ import (
 // subtasks (201, a JSON list of roadmap nodes). The Flutter client once read
 // the draft as the node list and applied it itself, so this test pins what the
 // server really sends against the two captured responses in testdata/, which
-// client/test/roadmap_expand_contract_test.dart parses with the real client.
+// client/test/features/project/roadmap_expand_contract_test.dart parses with the real client.
 // Real PostgreSQL through the whole handler chain, the planner is the built-in
 // template one (no network).
 

@@ -71,7 +71,7 @@ for PG18 is reverted and never committed).
       BUG-016 was fixed during bootstrap.
 - [x] Practice record and changelog, indexes updated.
 - [x] Commit + push + MBP sync — on `main` as `f185e94`; MBP synced
-      2026-10-09 ([sync plan](2026-10-09-host-sync/2026-10-09-host-sync.md)).
+      2026-10-09 ([sync plan](./2026-10-09-host-sync/2026-10-09-host-sync.md)).
 
 ## Decisions
 

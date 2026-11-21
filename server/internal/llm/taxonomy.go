@@ -1,0 +1,193 @@
+package llm
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"math/rand/v2"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// This file is the provider error taxonomy: classifying a failed HTTP
+// response or stream read into the sentinels in llm.go, and the retry
+// policy that follows from each — see
+// docs/plans/2026-07-21-prd-agent-harness/plan.md §5.2.
+
+// idleStreamTimeout bounds how long the stream may go silent (no SSE
+// bytes at all) before it's canceled — extended-thinking responses have
+// long pauses, so this is generous, not a per-token deadline.
+const idleStreamTimeout = 90 * time.Second
+
+// streamChat retries transient failures once — 429 (honoring Retry-After,
+// capped) and 5xx/connect refusal (fixed short backoff) — with jitter,
+// but only while no delta has been emitted: retrying a turn that already
+// streamed would replay text the client has seen. Every other classified
+// error (context length, config, refusal, context.Canceled) is never
+// retried here.
+func (a *AnthropicStreamer) streamChat(ctx context.Context, system string, msgs []Message, tools []Tool, forceTool string, onDelta func(string)) (Turn, error) {
+	streamed := 0
+	countDelta := func(d string) {
+		if onDelta == nil {
+			return
+		}
+		streamed++
+		onDelta(d)
+	}
+	return retryStreamChat(ctx, func() bool { return streamed == 0 }, func(ctx context.Context) (Turn, error) {
+		return a.doStreamChat(ctx, system, msgs, tools, forceTool, countDelta)
+	})
+}
+
+// retryStreamChat runs do, and retries it once when do fails with a
+// retryable classification: 429 (honoring Retry-After, capped) or
+// 5xx/connect refusal (fixed short backoff), both with jitter. Between
+// attempts it consults canRetry — callers gate it on "no bytes emitted
+// yet", since a retry after output went out would replay it. Every other
+// classified error (context length, config, refusal, context.Canceled)
+// is never retried here.
+func retryStreamChat(ctx context.Context, canRetry func() bool, do func(context.Context) (Turn, error)) (Turn, error) {
+	var lastErr error
+	for attempt := 0; attempt < 2; attempt++ {
+		turn, err := do(ctx)
+		if err == nil {
+			return turn, nil
+		}
+		lastErr = err
+
+		var wait time.Duration
+		switch {
+		case errors.Is(err, ErrProviderRateLimited):
+			wait = retryAfterFrom(err)
+		case errors.Is(err, ErrProviderTransient):
+			wait = 2 * time.Second
+		default:
+			return Turn{}, err // not retryable
+		}
+		if attempt == 1 {
+			break
+		}
+		if !canRetry() {
+			return Turn{}, lastErr
+		}
+		wait += time.Duration(rand.Int64N(int64(500 * time.Millisecond)))
+		select {
+		case <-time.After(wait):
+		case <-ctx.Done():
+			return Turn{}, ctx.Err()
+		}
+	}
+	return Turn{}, lastErr
+}
+
+// idleWatchdog cancels the request if tick() isn't called for at least
+// timeout — used to bound how long an SSE stream may go silent (a hung
+// upstream would otherwise pin the connection, and the user's stream,
+// forever, since resp.Body.Read never returns on its own).
+func idleWatchdog(cancel context.CancelFunc, timeout time.Duration) (tick func(), stop func()) {
+	reset := make(chan struct{}, 1)
+	done := make(chan struct{})
+	go func() {
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+		for {
+			select {
+			case <-reset:
+				if !timer.Stop() {
+					<-timer.C
+				}
+				timer.Reset(timeout)
+			case <-timer.C:
+				cancel()
+				return
+			case <-done:
+				return
+			}
+		}
+	}()
+	tick = func() {
+		select {
+		case reset <- struct{}{}:
+		default:
+		}
+	}
+	stop = func() { close(done) }
+	return tick, stop
+}
+
+func retryAfterFrom(err error) time.Duration {
+	var withRetryAfter interface{ RetryAfter() time.Duration }
+	if errors.As(err, &withRetryAfter) {
+		if d := withRetryAfter.RetryAfter(); d > 0 && d <= 20*time.Second {
+			return d
+		}
+	}
+	return 20 * time.Second
+}
+
+// rateLimitError carries the provider's Retry-After so streamChat can
+// honor it without providerHTTPError needing to know about retries.
+type rateLimitError struct {
+	msg        string
+	retryAfter time.Duration
+}
+
+func (e *rateLimitError) Error() string             { return e.msg }
+func (e *rateLimitError) Unwrap() error             { return ErrProviderRateLimited }
+func (e *rateLimitError) RetryAfter() time.Duration { return e.retryAfter }
+
+// providerHTTPError classifies a non-200 response into one of the
+// sentinels in llm.go. This is the taxonomy's single decision point for
+// HTTP-level failures. provider names who answered ("anthropic",
+// "openai-compatible responses") so a log line or ai_runs.error_message
+// blames the right upstream; both speak the {"error":{"type","message"}} body.
+func providerHTTPError(provider string, resp *http.Response) error {
+	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	var parsed anthropicErrorBody
+	msg := string(raw)
+	if json.Unmarshal(raw, &parsed) == nil && parsed.Error.Message != "" {
+		msg = fmt.Sprintf("%s: %s", parsed.Error.Type, parsed.Error.Message)
+	}
+	full := fmt.Sprintf("agent: %s returned %s: %s", provider, resp.Status, msg)
+
+	switch {
+	case resp.StatusCode == http.StatusTooManyRequests:
+		var wait time.Duration
+		if secs, err := strconv.Atoi(resp.Header.Get("Retry-After")); err == nil && secs > 0 {
+			wait = time.Duration(secs) * time.Second
+		}
+		return &rateLimitError{msg: full, retryAfter: wait}
+	case resp.StatusCode == 529 || resp.StatusCode >= 500:
+		return fmt.Errorf("%w: %s", ErrProviderTransient, full)
+	case resp.StatusCode == http.StatusBadRequest && strings.Contains(strings.ToLower(msg), "context"):
+		return fmt.Errorf("%w: %s", ErrContextLength, full)
+	case resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusUnauthorized ||
+		resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusNotFound:
+		return fmt.Errorf("%w: %s", ErrProviderConfig, full)
+	case resp.StatusCode == http.StatusPaymentRequired || resp.StatusCode == http.StatusRequestTimeout ||
+		resp.StatusCode == http.StatusRequestEntityTooLarge || resp.StatusCode == http.StatusUnprocessableEntity:
+		// AIDEV-03: the residual 4xx band is a billing/payload problem (402 =
+		// quota or credit exhausted), not provider load — classifying it keeps
+		// five of them from opening the global breaker for every user.
+		return fmt.Errorf("%w: %s", ErrProviderConfig, full)
+	default:
+		// Anything still unmapped is a truly-unknown transport-level reply:
+		// keep it unsentineled so it still counts against the breaker.
+		return errors.New(full)
+	}
+}
+
+// classifyStreamReadErr distinguishes a caller-initiated cancellation
+// (client disconnect or the idle watchdog) from a genuine transient read
+// failure, since the coach's error taxonomy treats them very differently
+// (no circuit failure vs. one).
+func classifyStreamReadErr(err error) error {
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	return fmt.Errorf("%w: read anthropic stream: %s", ErrProviderTransient, err.Error())
+}

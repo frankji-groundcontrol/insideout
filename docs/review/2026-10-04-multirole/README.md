@@ -19,7 +19,7 @@ skeptic; the top findings were reproduced by running the code.
 > handoff/board still order an already-merged PR merge followed by a
 > production deploy. Roughly one week of focused work closes the confirmed
 > gap; most of it is small, verified, and ordered in
-> [40-remediation-plan.md](40-remediation-plan.md).
+> [40-remediation-plan.md](./40-remediation-plan.md).
 
 ## Findings at a glance
 
@@ -29,19 +29,19 @@ refuted.**
 
 | File | Aspect | Score | Highlights |
 |---|---|---|---|
-| [10-architect.md](10-architect.md) | structure, packaging, run paths | 6.0 | server matches docs; compose front door broken; INIT.md describes deleted stack |
-| [11-ai-developer.md](11-ai-developer.md) | coach trust boundary, prompts, retries | 7.2 → 5.8* | retry duplicates streamed answers (confirmed High); quote grounding window; offline finalize gate |
-| [12-fullstack.md](12-fullstack.md) | UI/API/deploy wiring | 5.5 | invite link drops code; CORS quickstart failure; nginx DNS-at-boot fragility |
-| [13-project-manager.md](13-project-manager.md) | records, release gate | 5.0 | HANDOFF/board order merged-PR merge + deploy; no CI/tags; README sells superseded model |
-| [14-user.md](14-user.md) | happy path, strings | 5.5 | quick start dead-ends at step 1; 15-min token expiry breaks live app |
-| [20-feature-implementation.md](20-feature-implementation.md) | advertised vs implemented | 6.5 | quiet-project flag: zero code; board is title+status only |
-| [21-code-quality.md](21-code-quality.md) | size rule, dead code, tests | 7.2 | oversize files untracked; substring "wiring" tests; dead helpers |
-| [22-security.md](22-security.md) | auth, RLS, containers | 7.0 | no auth rate limiting (confirmed); mail send endpoints uncooled; root containers |
-| [23-testing.md](23-testing.md) | suites, gates, CI | 5.5 | env-catalog suite red ~6 weeks; 43 DB tests skip forever; no CI |
-| [24-reliability-ops.md](24-reliability-ops.md) | limits, timeouts, shutdown | 6.5 | AI concurrency limits hardcoded; SSE writes discard errors; compose forwards 7/~24 vars |
-| [30-completeness-critic.md](30-completeness-critic.md) | coverage, calibration | n/a | fonts claim false (CRIT-01); two 7.2 scores incompatible |
+| [10-architect.md](./10-architect.md) | structure, packaging, run paths | 6.0 | server matches docs; compose front door broken; INIT.md describes deleted stack |
+| [11-ai-developer.md](./11-ai-developer.md) | coach trust boundary, prompts, retries | 7.2 → 5.8* | retry duplicates streamed answers (confirmed High); quote grounding window; offline finalize gate |
+| [12-fullstack.md](./12-fullstack.md) | UI/API/deploy wiring | 5.5 | invite link drops code; CORS quickstart failure; nginx DNS-at-boot fragility |
+| [13-project-manager.md](./13-project-manager.md) | records, release gate | 5.0 | HANDOFF/board order merged-PR merge + deploy; no CI/tags; README sells superseded model |
+| [14-user.md](./14-user.md) | happy path, strings | 5.5 | quick start dead-ends at step 1; 15-min token expiry breaks live app |
+| [20-feature-implementation.md](./20-feature-implementation.md) | advertised vs implemented | 6.5 | quiet-project flag: zero code; board is title+status only |
+| [21-code-quality.md](./21-code-quality.md) | size rule, dead code, tests | 7.2 | oversize files untracked; substring "wiring" tests; dead helpers |
+| [22-security.md](./22-security.md) | auth, RLS, containers | 7.0 | no auth rate limiting (confirmed); mail send endpoints uncooled; root containers |
+| [23-testing.md](./23-testing.md) | suites, gates, CI | 5.5 | env-catalog suite red ~6 weeks; 43 DB tests skip forever; no CI |
+| [24-reliability-ops.md](./24-reliability-ops.md) | limits, timeouts, shutdown | 6.5 | AI concurrency limits hardcoded; SSE writes discard errors; compose forwards 7/~24 vars |
+| [30-completeness-critic.md](./30-completeness-critic.md) | coverage, calibration | n/a | fonts claim false (CRIT-01); two 7.2 scores incompatible |
 
-\* critic-adjusted; see [30-completeness-critic.md](30-completeness-critic.md)
+\* critic-adjusted; see [30-completeness-critic.md](./30-completeness-critic.md)
 §3. Cross-role mean (filed): **6.2 / 10**.
 
 ## The confirmed Highs
@@ -109,10 +109,10 @@ to the testing reviewer; L14 (deploy freshness) assessable from records only.
 
 ## Reading order for a fixer
 
-1. [40-remediation-plan.md](40-remediation-plan.md) — start at Wave 0, row one.
-2. [00-executive-summary.md](00-executive-summary.md) — top ten, effort, door quotes.
-3. [01-findings-register.md](01-findings-register.md) — every finding with evidence and verdict.
-4. Role files for depth; [30-completeness-critic.md](30-completeness-critic.md) for what this review could not cover.
+1. [40-remediation-plan.md](./40-remediation-plan.md) — start at Wave 0, row one.
+2. [00-executive-summary.md](./00-executive-summary.md) — top ten, effort, door quotes.
+3. [01-findings-register.md](./01-findings-register.md) — every finding with evidence and verdict.
+4. Role files for depth; [30-completeness-critic.md](./30-completeness-critic.md) for what this review could not cover.
 
 ## Related
 

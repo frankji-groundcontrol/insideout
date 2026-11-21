@@ -4,7 +4,7 @@
 ([plan](../plans/2026-10-07-setup-tui.md)) — the two remaining
 objective gates exercised, one real bug found and fixed, and the
 whole series committed in per-task local commits. Follow-up to
-[the interactive-local wiring](2026-10-07-setup-tui-interactive-local.md).
+[the interactive-local wiring](./2026-10-07-setup-tui-interactive-local.md).
 
 ## What was done
 

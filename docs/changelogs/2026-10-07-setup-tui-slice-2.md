@@ -50,7 +50,7 @@ and [an issue](../issues/2026-10-07-own-url-fresh-db-bootstrap.md).
 
 *Corrected 2026-10-11: the live run applied 31 migrations (the on-disk
 file count), not 23 — the figure above is amended per the
-[landed record](2026-10-07-setup-tui-landed.md), which corrected the count
+[landed record](./2026-10-07-setup-tui-landed.md), which corrected the count
 on its walk the same day.*
 
 ## Verification

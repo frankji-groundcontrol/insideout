@@ -6,39 +6,59 @@ class _NodeMenu extends StatelessWidget {
     required this.node,
     required this.onReload,
     required this.descendants,
+    required this.planWriter,
+    required this.parentWritable,
+    required this.inheritedOwner,
+    required this.openedRoot,
   });
 
   final String projectId;
   final RoadmapNode node;
   final Future<void> Function() onReload;
   final int descendants;
+  final bool planWriter;
+  final bool parentWritable;
+  final ({String name, String via})? inheritedOwner;
+  final bool openedRoot;
+
+  /// Move, delete and change the owner: a plan writer, or the owner of a
+  /// branch above this node — a delegate keeps the root they were handed.
+  bool get _restructure => node.canWrite && (planWriter || parentWritable);
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    PopupMenuItem<String> item(String value, String key) =>
+        PopupMenuItem(value: value, child: Text(l10n.t(key)));
     return PopupMenuButton<String>(
       onSelected: (value) => _act(context, value),
+      // Read items for everyone; write items only where the server's
+      // authority rule (canWrite) says they would succeed.
       itemBuilder: (_) => [
-        PopupMenuItem(value: 'edit', child: Text(l10n.t('roadmap.edit'))),
-        PopupMenuItem(value: 'child', child: Text(l10n.t('roadmap.addChild'))),
-        PopupMenuItem(value: 'up', child: Text(l10n.t('roadmap.moveUp'))),
-        PopupMenuItem(value: 'down', child: Text(l10n.t('roadmap.moveDown'))),
-        PopupMenuItem(value: 'expand', child: Text(l10n.t('roadmap.expandAI'))),
-        // The validation leg lives on leaves: observations name one
-        // piece of shipped work, and only a done leaf has an outcome to
-        // confirm.
-        if (descendants == 0) ...[
-          PopupMenuItem(
-            value: 'observe',
-            child: Text(l10n.t('roadmap.observe')),
-          ),
-          if (node.status == 'done')
-            PopupMenuItem(
-              value: 'validate',
-              child: Text(l10n.t('roadmap.validate')),
-            ),
+        item('open', 'roadmap.openTree'),
+        item('details', 'roadmap.details'),
+        if (node.canWrite) ...[
+          item('edit', 'roadmap.edit'),
+          item('child', 'roadmap.addChild'),
+          if (_restructure) ...[
+            item('up', 'roadmap.moveUp'),
+            item('down', 'roadmap.moveDown'),
+          ],
+          item('expand', 'roadmap.expandAI'),
+          // The validation leg lives on leaves: observations name one
+          // piece of shipped work, and only a done leaf has an outcome to
+          // confirm — a plan writer's call.
+          if (descendants == 0) ...[
+            item('observe', 'roadmap.observe'),
+            if (node.status == 'done' && planWriter)
+              item('validate', 'roadmap.validate'),
+          ],
+          if (_restructure) item('delegate', 'roadmap.delegate'),
         ],
-        PopupMenuItem(value: 'delete', child: Text(l10n.t('roadmap.delete'))),
+        if (node.ownerId != null &&
+            node.ownerId == context.read<Session>().user?.id)
+          item('handback', 'roadmap.handBack'),
+        if (_restructure) item('delete', 'roadmap.delete'),
       ],
     );
   }
@@ -46,7 +66,19 @@ class _NodeMenu extends StatelessWidget {
   Future<void> _act(BuildContext context, String value) async {
     final api = context.read<Session>().api;
     final l10n = context.read<Appearance>();
-    if (value == 'edit') {
+    if (value == 'open') {
+      GoRouter.maybeOf(context)?.go('/projects/$projectId/roadmap/${node.id}');
+    } else if (value == 'details') {
+      await showRoadmapNodeDetail(
+        context,
+        node,
+        inheritedOwner: inheritedOwner,
+      );
+    } else if (value == 'delegate') {
+      await _delegate(context, l10n);
+    } else if (value == 'handback') {
+      await _handBack(context, l10n);
+    } else if (value == 'edit') {
       await _edit(context, l10n);
     } else if (value == 'child') {
       final t = l10n.t;
@@ -93,184 +125,69 @@ class _NodeMenu extends StatelessWidget {
     } else if (value == 'validate') {
       await _validate(context, l10n);
     } else if (value == 'delete') {
-      final ok = await showBlockConfirm(
-        context: context,
-        title: l10n.t('roadmap.delete'),
-        message: descendants == 0
-            ? l10n.t('roadmap.deleteConfirm')
-            : l10n.t('roadmap.deleteConfirmMany', {'n': descendants + 1}),
-        confirmText: l10n.t('common.delete'),
-        danger: true,
-      );
-      if (!ok || !context.mounted) return;
-      final done = await guardWrite(
-        context,
-        () => api.deleteRoadmapNode(node.id),
-      );
-      if (done && context.mounted) await onReload();
+      await _delete(context, l10n);
     }
   }
 
-  Future<void> _edit(BuildContext context, Appearance l10n) async {
+  /// Delete the node and its branch. A branch with history answers 409
+  /// roadmap_delete_has_history with what it would lose; that is shown in
+  /// the build flow's words, and force goes only after the person agrees.
+  Future<void> _delete(BuildContext context, Appearance l10n) async {
     final api = context.read<Session>().api;
     final t = l10n.t;
-    final navigator = Navigator.of(context);
-    final title = TextEditingController(text: node.title);
-    final desc = TextEditingController(text: node.description);
-    final acceptance = TextEditingController(text: node.acceptance);
-    var status = node.status;
-    String? completionReason;
-    String? deadline = node.deadline;
-    String? ownerId = node.ownerId;
-    List<WorkspaceMember> members = const [];
-    try {
-      final project = await api.getProject(projectId);
-      final wsId = project['workspaceId'] as String?;
-      if (wsId != null) members = await api.listMembers(wsId);
-    } on Exception {
-      // Owner picker stays empty; the rest of the edit still works.
-    }
-    if (!context.mounted) return;
-    final ok = await showBlockModal<bool>(
+    final ok = await showBlockConfirm(
       context: context,
-      title: t('roadmap.edit'),
-      body: StatefulBuilder(
-        builder: (ctx, setLocal) => Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            BlockField(controller: title, label: t('roadmap.rootPlaceholder')),
-            const SizedBox(height: Cobalt.space4),
-            BlockField(controller: desc, label: t('roadmap.descPlaceholder')),
-            const SizedBox(height: Cobalt.space4),
-            BlockField(
-              key: const Key('acceptance-field'),
-              controller: acceptance,
-              label: t('roadmap.acceptanceHint'),
-            ),
-            const SizedBox(height: Cobalt.space4),
-            BlockSelect<String?>(
-              key: const Key('owner-picker'),
-              value: members.any((m) => m.userId == ownerId) ? ownerId : null,
-              placeholder: t('roadmap.ownerPick'),
-              options: [
-                (value: null, label: t('roadmap.ownerNone')),
-                for (final m in members) (value: m.userId, label: m.username),
-              ],
-              onChanged: (v) => setLocal(() => ownerId = v),
-            ),
-            const SizedBox(height: Cobalt.space4),
-            BlockSelect<String>(
-              key: const Key('status-picker'),
-              value: status,
-              options: [
-                for (final s in const [
-                  'locked',
-                  'pending',
-                  'in_progress',
-                  'done',
-                ])
-                  (value: s, label: t('roadmap.status.$s')),
-              ],
-              onChanged: (v) {
-                pickRoadmapDoneStatus(
-                  context: ctx,
-                  node: node,
-                  current: status,
-                  picked: v,
-                  loadEvidence: () => api.listNodeEvidence(node.id),
-                  t: t,
-                  apply: (next, reason) => setLocal(() {
-                    status = next;
-                    completionReason = reason;
-                  }),
-                );
-              },
-            ),
-            const SizedBox(height: Cobalt.space4),
-            Row(
-              children: [
-                BlockButton(
-                  // Cleared is '' (the API's remove value), not null.
-                  label: deadline == null || deadline!.isEmpty
-                      ? t('roadmap.setDeadline')
-                      : isoDate(deadline!),
-                  icon: Icons.event_outlined,
-                  size: BlockButtonSize.sm,
-                  variant: BlockButtonVariant.secondary,
-                  onPressed: () async {
-                    final picked = await showDatePicker(
-                      context: ctx,
-                      initialDate: DateTime.now().add(const Duration(days: 7)),
-                      firstDate: DateTime.now().subtract(
-                        const Duration(days: 1),
-                      ),
-                      lastDate: DateTime.now().add(
-                        const Duration(days: 365 * 3),
-                      ),
-                    );
-                    if (picked != null) {
-                      // A deadline is a calendar day. Noon UTC on that day
-                      // reads as the picked date wherever the instant is
-                      // formatted (isoDate shows the UTC date) and never
-                      // lands before the picked day's local midnight.
-                      setLocal(
-                        () => deadline = DateTime.utc(
-                          picked.year,
-                          picked.month,
-                          picked.day,
-                          12,
-                        ).toIso8601String(),
-                      );
-                    }
-                  },
-                ),
-                if (deadline != null) ...[
-                  const SizedBox(width: Cobalt.space2),
-                  BlockIconButton(
-                    icon: Icons.event_busy,
-                    tooltip: t('roadmap.clearDeadline'),
-                    onPressed: () => setLocal(() => deadline = ''),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
-      ),
-      footer: [
-        BlockButton(
-          label: t('common.cancel'),
-          variant: BlockButtonVariant.secondary,
-          onPressed: () => navigator.pop(false),
-        ),
-        BlockButton(
-          label: t('roadmap.save'),
-          onPressed: () => navigator.pop(true),
-        ),
-      ],
+      title: t('roadmap.delete'),
+      message: descendants == 0
+          ? t('roadmap.deleteConfirm')
+          : t('roadmap.deleteConfirmMany', {'n': descendants + 1}),
+      confirmText: t('common.delete'),
+      danger: true,
     );
-    if (ok == true && context.mounted) {
-      final done = await guardWrite(
-        context,
-        () => api.updateRoadmapNode(
-          node.id,
-          title: title.text.trim(),
-          description: desc.text,
-          status: status,
-          deadline: deadline == '' ? '' : deadline,
-          acceptance: acceptance.text.trim(),
-          ownerId: ownerId ?? '',
-          completionReason: status == 'done' && node.status == 'in_progress'
-              ? completionReason
-              : null,
-        ),
-      );
-      if (done && context.mounted) await onReload();
+    if (!ok || !context.mounted) return;
+    var deleted = false;
+    final done = await guardWrite(context, () async {
+      try {
+        await api.deleteRoadmapNode(node.id);
+      } on ApiException catch (e) {
+        if (e.code != 'roadmap_delete_has_history' || !context.mounted) {
+          rethrow;
+        }
+        String count(String many, String one, int n) =>
+            t(n == 1 ? one : many, {'n': n});
+        final lose = await showBlockConfirm(
+          context: context,
+          title: t('roadmap.deleteHistoryTitle'),
+          message: t('roadmap.deleteHistoryConfirm', {
+            'nodes': count(
+              'prd.nodeCount',
+              'prd.nodeCountOne',
+              e.liveCount ?? descendants + 1,
+            ),
+            'evidence': count(
+              'prd.evidenceCount',
+              'prd.evidenceCountOne',
+              e.evidenceCount ?? 0,
+            ),
+            'done': e.doneCount ?? 0,
+            'validated': e.validatedCount ?? 0,
+          }),
+          confirmText: t('roadmap.deleteHistoryAction'),
+          danger: true,
+        );
+        if (!lose || !context.mounted) return;
+        await api.deleteRoadmapNode(node.id, force: true);
+      }
+      deleted = true;
+    });
+    if (!done || !deleted || !context.mounted) return;
+    if (openedRoot) {
+      // This route's node is gone: open the parent's tree, or the whole one.
+      final parent = node.parentId == null ? '' : '/${node.parentId}';
+      GoRouter.maybeOf(context)?.go('/projects/$projectId/roadmap$parent');
+    } else {
+      await onReload();
     }
-    // Not disposed: the pop animation keeps the dialog's TextFields mounted
-    // past this await, and the guard's SnackBar rebuilds the overlay — a
-    // disposed controller would throw. GC'd once the dialog unmounts.
   }
 
   /// The validation observation form: what was observed, its source, and

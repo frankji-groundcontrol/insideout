@@ -11,6 +11,7 @@ import '../../theme/block_chrome.dart';
 import '../../theme/block_field.dart';
 import '../../theme/cobalt.dart';
 import 'admin_section.dart';
+import 'delete_account_section.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -138,6 +139,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               if (user?.isAdmin ?? false) const AdminSection(),
+              const DeleteAccountSection(),
             ],
           ),
         ),

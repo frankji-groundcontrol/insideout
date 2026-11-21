@@ -63,4 +63,4 @@ render an "unknown" initial once it lands.
 
 *Corrected 2026-10-11: B3 landed later the same day — the migration was
 applied and live-verified against the real database and the running app
-([attribution record](2026-07-26-roadmap-canvas-collab-attribution.md)).*
+([attribution record](./2026-07-26-roadmap-canvas-collab-attribution.md)).*

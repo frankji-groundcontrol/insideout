@@ -4,7 +4,7 @@ Open, recorded 2026-10-11 (review-3 wave 4, finding FULL-03; the full path
 parked from
 [AIDEV-09](../review/2026-10-10-multirole-3/01-findings-register.md);
 slice 5 of the
-[promise-gap set](2026-10-11-product-promise-gaps.md)).
+[promise-gap set](./2026-10-11-product-promise-gaps.md)).
 
 ## What PRODUCT.md promises
 

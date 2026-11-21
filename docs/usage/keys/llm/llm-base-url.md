@@ -1,7 +1,7 @@
 # llm-base-url
 
 `INSIDEOUT_LLM_BASE_URL` is the provider API root used by the coach. It is a
-config companion of [llm-api-key](llm-api-key.md).
+config companion of [llm-api-key](./llm-api-key.md).
 
 ## 1. Where the `.key` file is
 

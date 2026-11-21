@@ -80,7 +80,7 @@ func TestPlannerBuildOutlivesTheQuickDeadline(t *testing.T) {
 	if _, err := c.BuildFromPrd("p1"); err != nil {
 		t.Fatalf("build: %v", err)
 	}
-	if _, err := c.ConfirmBuildFromPrd("p1", json.RawMessage(`{}`), 0); err != nil {
+	if _, err := c.ConfirmBuildFromPrd("p1", json.RawMessage(`{}`), 0, false); err != nil {
 		t.Fatalf("confirm build: %v", err)
 	}
 

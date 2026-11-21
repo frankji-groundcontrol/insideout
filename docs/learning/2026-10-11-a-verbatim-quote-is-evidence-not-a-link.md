@@ -31,7 +31,7 @@ alongside the existing Nuxt `app/` citation policy.
 Any dated record that quotes another file's line verbatim — review
 findings, findings registers, skeptic verdicts, changelog citations —
 especially when the quoted line itself contains a relative link. It is
-the complement of [relative links are depth-sensitive](2026-10-06-relative-links-are-depth-sensitive.md):
+the complement of [relative links are depth-sensitive](./2026-10-06-relative-links-are-depth-sensitive.md):
 your own links must be resolved mechanically, but a quoted link belongs
 to the source document and its directory, not to yours.
 

@@ -16,9 +16,14 @@ ApiCall patchWorkspace(
   return ApiCall('PATCH', '/workspaces/$id', {
     'title': title,
     'description': description,
-    'coverUrl': coverUrl,
+    // Absent keeps the stored cover; the web has no cover control (PARA-09).
+    'coverUrl': ?coverUrl,
   });
 }
+
+/// Deletes the signed-in account; the server asks for the current password.
+ApiCall deleteMe(String password) =>
+    ApiCall('DELETE', '/me', {'password': password});
 
 ApiCall deleteWorkspace(String id) => ApiCall('DELETE', '/workspaces/$id');
 
@@ -68,7 +73,8 @@ ApiCall patchProject(
     'title': title,
     'description': description,
     'status': status,
-    'ownerId': ownerId,
+    // Absent keeps the owner; only an admin may change it (PARB-08).
+    'ownerId': ?ownerId,
   });
 }
 
@@ -92,13 +98,13 @@ ApiCall patchRoadmapNode(
   String? completionReason,
 }) {
   return ApiCall('PATCH', '/roadmap/$nodeId', {
-    if (title != null) 'title': title,
-    if (description != null) 'description': description,
-    if (status != null) 'status': status,
-    if (deadline != null) 'deadline': deadline,
-    if (acceptance != null) 'acceptance': acceptance,
-    if (ownerId != null) 'ownerId': ownerId,
-    if (completionReason != null) 'completionReason': completionReason,
+    'title': ?title,
+    'description': ?description,
+    'status': ?status,
+    'deadline': ?deadline,
+    'acceptance': ?acceptance,
+    'ownerId': ?ownerId,
+    'completionReason': ?completionReason,
   });
 }
 
@@ -113,8 +119,23 @@ ApiCall moveRoadmapNode(
   });
 }
 
-ApiCall deleteRoadmapNode(String nodeId) =>
-    ApiCall('DELETE', '/roadmap/$nodeId');
+/// Deletes a node and its subtree. A subtree with evidence or done or
+/// validated nodes answers 409 `roadmap_delete_has_history` with the counts;
+/// [force] accepts that loss.
+ApiCall deleteRoadmapNode(String nodeId, {bool force = false}) =>
+    ApiCall('DELETE', '/roadmap/$nodeId${force ? '?force=true' : ''}');
+
+/// Hands a node to a workspace member, on the record (an assignment row and
+/// a feed update); the server answers the node view.
+ApiCall delegateRoadmapNode(String nodeId, String toUserId, String note) =>
+    ApiCall('POST', '/roadmap/$nodeId/delegate', {
+      'toUserId': toUserId,
+      'note': note,
+    });
+
+/// The current owner returns the node to whoever delegated it.
+ApiCall handBackRoadmapNode(String nodeId, String note) =>
+    ApiCall('POST', '/roadmap/$nodeId/handback', {'note': note});
 
 /// Drafts sub-tasks for a node with the AI. Nothing is written: the response
 /// is `{children: [{title, description?}]}`, to be sent on through
@@ -150,19 +171,109 @@ ApiCall postConversationStage(String id, String stage) =>
     ApiCall('POST', '/conversations/$id/stage', {'stage': stage});
 
 /// Drafts a branched roadmap from the PRD. Nothing is written: the response
-/// is `{projectId, tree}`, to be sent on through [postPrdBuildConfirm].
+/// is `{tree}` (plus `projectId` only when the PRD is already linked), to be
+/// sent on through [postPrdBuildConfirm]. An unapproved PRD answers 409
+/// `prd_not_approved`.
 ApiCall postPrdBuild(String id) => ApiCall('POST', '/prds/$id/build');
 
 /// Writes a drafted [tree] (`/build` only drafts). When the project already
 /// has roadmap nodes the server answers 409 `replace_conflict` with
-/// `liveCount`; send that back as [expectedCount] to replace them.
+/// `liveCount` (and `evidenceCount`); send that back as [expectedCount] to
+/// replace them. A roadmap with evidence or done/validated nodes answers 409
+/// `roadmap_replace_has_history` with the counts; [force] accepts that loss.
 ApiCall postPrdBuildConfirm(
   String id,
   Map<String, dynamic> tree, {
   int? expectedCount,
+  bool force = false,
 }) {
   return ApiCall('POST', '/prds/$id/build/confirm', {
     'tree': tree,
     'expectedCount': ?expectedCount,
+    if (force) 'force': true,
   });
 }
+
+/// `?root=` when the read covers one subtree only (rv5-PARC-12).
+String _root(String? rootId) =>
+    rootId == null ? '' : '?root=${Uri.encodeQueryComponent(rootId)}';
+
+ApiCall getRoadmap(String projectId, {String? rootId}) => ApiCall(
+  'GET',
+  '/projects/$projectId/roadmap'
+      '${_root(rootId)}',
+);
+
+ApiCall getRoadmapNode(String nodeId) => ApiCall('GET', '/roadmap/$nodeId');
+
+ApiCall getNodeAssignments(String nodeId) =>
+    ApiCall('GET', '/roadmap/$nodeId/assignments');
+
+ApiCall getNodeEvidence(String nodeId) =>
+    ApiCall('GET', '/roadmap/$nodeId/evidence');
+
+ApiCall getRoadmapProgress(String projectId, {String? rootId}) => ApiCall(
+  'GET',
+  '/projects/$projectId/roadmap/progress'
+      '${_root(rootId)}',
+);
+
+/// One human-entered validation observation; [observedAt] is sent as its date.
+ApiCall postNodeEvidence(
+  String nodeId, {
+  required String detail,
+  required String source,
+  required DateTime observedAt,
+}) => ApiCall('POST', '/roadmap/$nodeId/evidence', {
+  'detail': detail,
+  'sourceUrl': source,
+  'observedAt': observedAt.toIso8601String().substring(0, 10),
+});
+
+ApiCall postValidate(String nodeId, String reason) =>
+    ApiCall('POST', '/roadmap/$nodeId/validate', {'reason': reason});
+
+ApiCall postCursor(
+  String projectId,
+  double x,
+  double y, {
+  required String clientId,
+}) => ApiCall(
+  'POST',
+  '/projects/$projectId/cursor?client=${Uri.encodeQueryComponent(clientId)}',
+  {'x': x, 'y': y},
+);
+
+ApiCall putProjectRepo(String projectId, String repoUrl) =>
+    ApiCall('PUT', '/projects/$projectId/repo', {'repoUrl': repoUrl});
+
+/// The page of updates older than [before] (a nextCursor), newest first.
+ApiCall getProjectUpdates(String projectId, {String? before}) => ApiCall(
+  'GET',
+  '/projects/$projectId/updates'
+      '${before == null ? '' : '?before=${Uri.encodeQueryComponent(before)}'}',
+);
+
+/// The scaffolded insideout.yaml matching guide, as text/yaml.
+ApiCall getProjectGuide(String projectId) =>
+    ApiCall('GET', '/projects/$projectId/guide');
+
+ApiCall postSyncGithub(String projectId) =>
+    ApiCall('POST', '/projects/$projectId/sync-github');
+
+ApiCall postProjectUpdate(String projectId, String kind, String content) =>
+    ApiCall('POST', '/projects/$projectId/updates', {
+      'kind': kind,
+      'content': content,
+    });
+
+ApiCall postProposalDecision(
+  String updateId, {
+  required bool accept,
+  required String reason,
+  required bool apply,
+}) => ApiCall('POST', '/agent/proposals/$updateId/decision', {
+  'decision': accept ? 'accepted' : 'rejected',
+  'reason': reason,
+  'apply': apply,
+});

@@ -18,13 +18,15 @@ func (c *Client) Ideas(workspaceID string) (json.RawMessage, error) {
 	return c.getRaw(apiPath("workspaces", workspaceID, "ideas"))
 }
 
-// UpdateIdea rewrites an idea's title and content (title is required by
-// the API on update).
-func (c *Client) UpdateIdea(id, title, content string) (json.RawMessage, error) {
-	return c.requestJSON(http.MethodPatch, apiPath("ideas", id), map[string]string{
-		"title":   title,
-		"content": content,
-	})
+// UpdateIdea rewrites an idea's title (required by the API on update) and,
+// when content is non-nil, its body; nil sends no content key so the body
+// is kept.
+func (c *Client) UpdateIdea(id, title string, content *string) (json.RawMessage, error) {
+	body := map[string]string{"title": title}
+	if content != nil {
+		body["content"] = *content
+	}
+	return c.requestJSON(http.MethodPatch, apiPath("ideas", id), body)
 }
 
 // DeleteIdea drops an idea — a soft delete: the row is kept for audit, but

@@ -3,6 +3,7 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -11,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/mark3labs/mcp-go/server"
+	"gopkg.in/yaml.v3"
 )
 
 // AIDEV-08: an MCP tool result is what a tool-enabled model reads next. The
@@ -57,7 +59,8 @@ type listedTool struct {
 	Description string `json:"description"`
 	InputSchema struct {
 		Properties map[string]struct {
-			Type string `json:"type"`
+			Type        string `json:"type"`
+			Description string `json:"description"`
 		} `json:"properties"`
 		Required []string `json:"required"`
 	} `json:"inputSchema"`
@@ -80,9 +83,13 @@ func listTools(t *testing.T, s *server.MCPServer) []listedTool {
 	return out.Result.Tools
 }
 
-// argsFor fills a tool's required arguments with values the fake API accepts.
+// argsFor fills a tool's required arguments with values the fake API accepts,
+// and a title for an edit tool, which refuses a call with nothing to change.
 func argsFor(tool listedTool) string {
 	args := map[string]any{}
+	if _, ok := tool.InputSchema.Properties["title"]; ok {
+		args["title"] = "x"
+	}
 	for _, name := range tool.InputSchema.Required {
 		switch typ := tool.InputSchema.Properties[name].Type; {
 		case name == "tree":
@@ -285,5 +292,53 @@ func TestNeutraliseJSONLeavesOtherTextAlone(t *testing.T) {
 		if got := neutraliseJSON(in); got != in {
 			t.Errorf("neutraliseJSON(%q) = %q, want it unchanged", in, got)
 		}
+	}
+}
+
+// fenceBody returns the text inside the one <prd_data> fence a tool result carries.
+func fenceBody(t *testing.T, text string) string {
+	t.Helper()
+	_, body, ok := strings.Cut(text, "\n")
+	if !ok || !strings.HasPrefix(body, "<prd_data>") || !strings.HasSuffix(body, "</prd_data>") {
+		t.Fatalf("result is not a label plus one fence: %.160q", text)
+	}
+	return strings.TrimSuffix(strings.TrimPrefix(body, "<prd_data>"), "</prd_data>")
+}
+
+// TestGuideFileIsTheTextBetweenTheTags is F184. The fence stays (it is the
+// injection defence). guide and prd_export have to say the file content is the
+// text between the tags, and that text has to be the YAML or the document.
+func TestGuideFileIsTheTextBetweenTheTags(t *testing.T) {
+	pinConfigHome(t)
+	t.Setenv("INSIDEOUT_TOKEN", "opaque-token") // not a JWT: guide stays offered and the token rides as is
+	const guideYAML = "version: 1\nproject: p\nmatch:\n  - roadmap: alpha\n"
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/guide") {
+			w.Write([]byte(guideYAML))
+			return
+		}
+		w.Write([]byte("# The PRD\n"))
+	}))
+	t.Cleanup(api.Close)
+	s := Build(api.URL)
+	for _, tool := range listTools(t, s) {
+		if tool.Name != "guide" && tool.Name != "prd_export" {
+			continue
+		}
+		if !strings.Contains(tool.Description, "between the <prd_data> tags") {
+			t.Errorf("%s description does not say the file content is the text between the <prd_data> tags: %q", tool.Name, tool.Description)
+		}
+	}
+	r := callTool(t, s, 1, "guide", `{"project_id":"p"}`)
+	if r.Result.IsError {
+		t.Fatalf("guide: %s", resultText(t, r))
+	}
+	var doc map[string]any
+	inner := fenceBody(t, resultText(t, r))
+	if err := yaml.Unmarshal([]byte(inner), &doc); err != nil {
+		t.Fatalf("guide YAML once the fence is stripped: %v\n%s", err, inner)
+	}
+	if doc["project"] != "p" || fmt.Sprint(doc["version"]) != "1" {
+		t.Fatalf("guide YAML = %#v, want version 1 and project p", doc)
 	}
 }

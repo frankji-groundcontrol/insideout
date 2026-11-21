@@ -15,7 +15,7 @@ import (
 )
 
 // EnsureFromExample creates envPath as a byte copy of examplePath with mode
-// 0600 when the env file is missing, mirroring setup.sh and `env.sh init`.
+// 0600 when the env file is missing, mirroring `env.sh init`.
 // An existing env file is never touched.
 func EnsureFromExample(envPath, examplePath string) error {
 	if _, err := os.Stat(envPath); err == nil {

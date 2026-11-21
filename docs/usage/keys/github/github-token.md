@@ -18,7 +18,7 @@ Whether to retire the key is residue R3-27 in the
 `dev.sh` exports it with the rest of `.env`, but `docker-compose.yml` does not
 pass it to the container and the server reads it nowhere, so a token in the
 server's environment changes nothing. The commit sync takes its credential from
-the GitHub App ([gh-app-id.md](gh-app-id.md)): a private repository needs the
+the GitHub App ([gh-app-id.md](./gh-app-id.md)): a private repository needs the
 App installed on it, a public one syncs anonymously. Only
 `insideout setup --check` reads the token, from the environment or the
 repository's env file, and calls the GitHub API to validate it. It is not used
@@ -46,7 +46,7 @@ insideout setup --check
 metadata and never prints the token. This proves the token only. For evidence
 that a private repository syncs, install the GitHub App on it, bind it to a
 project and run `insideout sync '<project-id>'`: that exercises the App
-credentials ([gh-app-id.md](gh-app-id.md)), not this token.
+credentials ([gh-app-id.md](./gh-app-id.md)), not this token.
 
 **If it fails:** HTTP 401/403 means the token is expired, revoked, or missing
 the repository permission. A sync rate-limit or not-found response is not about

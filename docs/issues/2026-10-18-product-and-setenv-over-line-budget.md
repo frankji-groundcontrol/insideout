@@ -1,5 +1,13 @@
 # PRODUCT.md and docs/SETENV.md are over the line budget, and wave 2 grew both
 
+> **Closed 2026-11-21 as not applicable.** The [2026-11-21 responsibility
+> rule](../../CLAUDE.md) (review 5, COMP-05) replaced the ~350-line rule: source
+> code has one responsibility per file and shared file and function thresholds
+> ([config/code-budget.json](../../config/code-budget.json)); workflows, YAML
+> and prose have no line rule. `PRODUCT.md` and `docs/SETENV.md` are prose;
+> split either only for a reason of responsibility, keeping what the guards
+> below read in place.
+
 **Date:** 2026-10-19
 **Kind:** structural debt (line-budget split), no behaviour change
 **Files:** [`PRODUCT.md`](../../PRODUCT.md) — 462 lines (460 before the

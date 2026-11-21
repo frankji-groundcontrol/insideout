@@ -14,15 +14,15 @@ CLI/MCP surface. This skill is the contract for the second mode.
 
 ## Setup
 
-From a checkout of this repository (needs Go 1.26+, see
-`server/go.mod`). Setting up a machine from scratch — installing the
-toolchains, choosing hosted vs own server, the key store, and the
-installation record — is its own skill:
-[skills/insideout-setup/SKILL.md](skills/insideout-setup/SKILL.md).
+Using the hosted service is
+[skills/insideout-setup/SKILL.md](./skills/insideout-setup/SKILL.md)
+and [the user guide](./docs/usage/user-guide.md). Running the server on
+this machine is
+[skills/insideout-server/SKILL.md](./skills/insideout-server/SKILL.md).
 
 ```bash
 ./scripts/install.sh          # binaries into ~/.local/bin; hosted API, no env vars
-insideout setup               # the front door: interactive remote/local, or flags —
+insideout setup               # numbered questions on a terminal, or flags —
                               #   --hosted | --local --postgres bundled|own [--no-start] | --check
 insideout whoami              # "not signed in" until you sign in
 ```
@@ -32,11 +32,11 @@ hidden input) and saves the token to a 0600 config file every client
 surface reads (env vars still win); `--local` writes `.env`, migrates,
 and can boot the server; `--check` re-runs the health probes.
 
-A server on this machine is `./scripts/setup.sh --local` (bundled
+A server on this machine is `insideout setup --local --postgres bundled|own` (bundled
 Docker Postgres, or your own URL on stdin). Then set
 `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI keeps calling
 the hosted API. Full steps, including the questions an agent should
-ask: [docs/usage/installation.md](docs/usage/installation.md).
+ask: [docs/usage/installation.md](./docs/usage/installation.md).
 
 To register the MCP server, merge this entry into the agent's MCP config
 (Claude Code: `claude mcp add insideout -- insideout-mcp`). It needs no
@@ -51,35 +51,39 @@ Manual fallback (no script): `cd server && go build -o /usr/local/bin/insideout
 ./cmd/insideout` and the same for `./cmd/insideout-mcp`.
 
 Signup is invitation-only by default: an admin mints a per-email code
-(`invite_create` / `insideout invite <email>`, revoke with
-`invite_revoke` / `insideout invite revoke <id>`) and registration
-consumes it (`register --invite`, `auth_register` with `invite_code`).
-The invite response carries `mailSent`: `false` means nothing was e-mailed
-(dev mode, or the provider refused), so send the `signupUrl` to the invitee
-yourself. Join an existing workspace with `workspace_join` / `insideout join
-<code>`.
+(`insideout invite <email>`, revoke with `insideout invite revoke <id>`;
+CLI and web only) and registration consumes it (`register --invite`,
+`auth_register` with `invite_code`; `signup_mode` tells you whether one is
+needed). The invite response carries `mailSent`: `false` means nothing was
+e-mailed (dev mode, or the provider refused), so send the `signupUrl` to the
+invitee yourself. Join an existing workspace with `workspace_join` /
+`insideout join <code>`.
 
 ## The working loop (in order)
 
 1. **Bootstrap** (only if nothing exists): `workspaces create --title T`
-   → `projects create <ws-id> --title T` → `roadmap_add` for the first
-   nodes. Otherwise start from `workspaces` → `projects <ws-id>`.
+   → `projects create --title T <ws-id>` → `roadmap_add` for the first
+   nodes. Otherwise start from `workspaces` → `projects <ws-id>`, and
+   `prds <ws-id>` (`prd_list`) for every PRD of the workspace.
 2. **Triage your inbox**: `ideas <ws-id>` (your own ideas; they are private
-   to their author) → `idea_update` to sharpen, `idea_delete` to drop (soft —
-   the row is kept for audit but `ideas` no longer lists it), `idea_convert`
-   to open a PRD from an idea.
+   to their author) → `idea_update` to sharpen, `idea delete <id>` (CLI) to
+   drop (soft — the row is kept for audit but `ideas` no longer lists it),
+   `idea_convert` to open a PRD from an idea.
 3. **Author the PRD directly**: `prd <id>` to read, `prd update
    --section goals=… <id>` to edit (flags before the id). Section keys:
    background, users, goals, nonGoals, stories, requirements, constraints,
-   risks. `snapshot` records a working revision; `prd_export` renders
-   markdown (optionally per audience).
-4. **Grow the roadmap**: `roadmap_add/update/move/delete`,
-   `roadmap update --deadline` for time pressure, `progress <project>`
-   for the time-first view. `expand` grows a node via the planner.
+   risks. `snapshot` records a working revision; `prd_export` (CLI
+   `export`) renders markdown, optionally per audience, or print HTML.
+4. **Grow the roadmap**: `roadmap_add/update/move` (delete is the
+   human's `roadmap delete`), `roadmap update --deadline` for time
+   pressure, `progress <project>` for the time-first view. `expand` grows
+   a node via the planner. `roadmap mine <ws-id>` lists the nodes you own
+   (your tree); `roadmap show <node-id>` reads one with its ancestors.
 5. **Track the repo**: `repo_set <project> <repo-url>` → commit the
    generated `guide` (`insideout.yaml`) at the repo root → `sync` on
    demand → **`evidence <node-id>`** to read what actually attached.
-   Evidence never auto-proves outcomes — you judge it.
+   Evidence never auto-proves outcomes — you judge it. `updates <project>`
+   (`project_updates`) pages the project's feed through `nextCursor`.
 6. **Report like an agent, decide like a human** (the vocabulary — see
    below).
 
@@ -87,14 +91,14 @@ yourself. Join an existing workspace with `workspace_join` / `insideout join
 
 - `checkpoint <project> "<what was done>"` — record agent work; never
   applies changes.
-- `propose <project> --kind structure|scope|priority "<summary>"` —
-  propose changes; a **human** accepts/rejects (`proposal_decide` is
-  theirs, owner/admin only: an MCP holding a JWT login is not offered
-  it, and the server answers an agent token on that route with 403
-  `agent_scope_denied`).
-- **Commits are human-only**: never call `commit` unless the human
-  explicitly asked for it in this conversation. Such an MCP is not
-  offered `commit` either, and the server refuses it for an agent token.
+- `propose --kind structure|scope|priority <project> "<summary>"` —
+  propose changes; a **human** accepts or rejects them (`proposal decide`
+  in the CLI or the web, owner/admin only; acceptance applies the items
+  unless `--no-apply`). MCP has no decision tool, and the server answers
+  an agent token on that route with 403 `agent_scope_denied`.
+- **Commits are human-only**: MCP has no `commit` tool and the server
+  refuses Commit for an agent token. In the CLI, never run `commit` unless
+  the human explicitly asked for it in this conversation.
   `readiness <prd-id>` tells you what a Commit would carry.
 - `agent_context <project>` is your compact briefing; re-read it when
   context runs thin.
@@ -104,28 +108,37 @@ yourself. Join an existing workspace with `workspace_join` / `insideout join
 
 ## Surface parity
 
-Every verb exists 1:1 as CLI command ↔ MCP tool ↔ API route (ask
-`tools/list` for the current set — a count frozen here has already
-drifted: the registry stood at 52 while this page said 50, and it now
-depends on the login (the whole registry before any sign-in, forty
-tools once the MCP holds a JWT login; twelve are withheld, see
-Guardrails):
-auth, admin, ideas/PRD/roadmap/evidence/workspace/project CRUD,
-versions, agent vocabulary, GitHub tracking, planner). Prefer the
-narrowest tool; reads return raw JSON — trust it over your assumptions.
+Each capability exists on the API, the CLI and the web; MCP has a tool for
+every route an agent token may call (ask `tools/list` for the current set,
+which depends on the login: the four password tools leave once a JWT login
+is held). The deliberate exceptions:
+
+- **MCP has no tool for a human-only route**, because every MCP tool acts
+  through an agent-scope token: Commit, the proposal decision, account
+  deletion, validation (`evidence add`, `roadmap validate`), every delete,
+  delegation, hand-back, the member list, and the admin writes
+  (invitations, setting the signup mode). Changing a node's or a
+  project's owner is also refused to an agent token, so `roadmap_update` and `project_update` take no owner; file a
+  `propose` instead. Ask the human to run these from the CLI or web.
+  `project_update`, `workspace_update`, `update_add` and `update_edit`
+  cover the rest of a project and workspace.
+- **The web** has no control that mints an agent token.
+
+CLI verbs and MCP tools mostly share names; where they differ (`ideas` /
+`idea_list`, `evidence` / `roadmap_evidence`, `join` / `workspace_join`,
+`prds` / `prd_list`, `updates` / `project_updates`, `roadmap progress` /
+`progress`) the reference below maps them. Edits follow one rule on both:
+an absent or empty value leaves a field alone, the word `clear` clears it
+(PRD sections excepted: `--section key=` writes an empty section).
+Prefer the narrowest tool; reads return raw JSON — trust it over your
+assumptions.
 
 ## Guardrails
 
-- No API deletes a PRD, and deleting a project, workspace, member or
-  update is a human decision (web, or the CLI with your login): the
-  server refuses an agent token on every DELETE route. An MCP holding a
-  JWT login is not offered twelve tools — `commit`, `proposal_decide`,
-  `signup_mode`, `invite_create`, `invite_list`, `invite_revoke`,
-  `idea_delete`, `roadmap_delete` and the password tools
-  (`auth_register`, `auth_login`, `auth_forgot_password`,
-  `auth_reset_password`) — so `idea_delete`/`roadmap_delete` are
-  CLI-only there. Ask the human to run them.
+- No API deletes a PRD, and every delete is a human decision (the web, or
+  the CLI with the human's login): the server refuses an agent token on
+  every DELETE route. Ask the human to run them.
 - The web coach's conversations are not exposed here; when a user wants
   the coached experience, point them to the web app.
 - Full command/tool reference:
-  [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
+  [docs/usage/cli-mcp-and-guidance.md](./docs/usage/cli-mcp-and-guidance.md).

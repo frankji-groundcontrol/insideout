@@ -22,33 +22,6 @@ var ErrRepoTaken = errors.New("store: repository is already linked to another pr
 // DEFINER and sees every workspace (rv4-FR-F199).
 var ErrRepoHeldOutOfReach = fmt.Errorf("%w (held by a project the caller cannot read)", ErrRepoTaken)
 
-// requireProjectOwnerOrAdmin allows the project owner or a workspace admin —
-// the level the projects_update RLS policy requires before the projects row
-// (repo link, sync cursor in meta) may change.
-func requireProjectOwnerOrAdmin(ctx context.Context, tx pgx.Tx, projectID, actorID uuid.UUID) error {
-	var workspaceID uuid.UUID
-	var ownerID *uuid.UUID
-	err := tx.QueryRow(ctx, `SELECT workspace_id, owner_id FROM insideout.projects WHERE id = $1`, projectID).
-		Scan(&workspaceID, &ownerID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNotFound
-	}
-	if err != nil {
-		return err
-	}
-	if ownerID != nil && *ownerID == actorID {
-		return nil
-	}
-	role, err := requireMember(ctx, tx, workspaceID, actorID)
-	if err != nil {
-		return err
-	}
-	if role != "admin" {
-		return ErrForbidden
-	}
-	return nil
-}
-
 // SetProjectRepo links (or clears) the GitHub repo a project syncs from.
 // repoURL is the canonical URL (github.CanonicalRepoURL) or "" to clear; a repo
 // another project already holds is refused with ErrRepoTaken. Clearing is
@@ -56,7 +29,7 @@ func requireProjectOwnerOrAdmin(ctx context.Context, tx pgx.Tx, projectID, actor
 func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID, repoURL string) (*Project, error) {
 	var p *Project
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if err := requireProjectOwnerOrAdmin(ctx, tx, projectID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 		if repoURL != "" {
@@ -69,8 +42,10 @@ func (s *Store) SetProjectRepo(ctx context.Context, actorID, projectID uuid.UUID
 			projectID, repoURL,
 		)
 		var scanErr error
-		p, scanErr = scanProject(row)
-		return scanErr
+		if p, scanErr = scanProject(row); scanErr != nil {
+			return scanErr
+		}
+		return markViewerFields(ctx, tx, p, actorID)
 	})
 	if err != nil {
 		return nil, err
@@ -121,7 +96,7 @@ func claimRepo(ctx context.Context, tx pgx.Tx, projectID uuid.UUID, repoURL stri
 // ProjectRepoSync reads the linked repo URL and the last-synced commit SHA.
 func (s *Store) ProjectRepoSync(ctx context.Context, actorID, projectID uuid.UUID) (repoURL, lastSHA string, err error) {
 	err = s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if err := requireProjectOwnerOrAdmin(ctx, tx, projectID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 		return tx.QueryRow(ctx, `
@@ -143,7 +118,7 @@ func (s *Store) ProjectRepoSync(ctx context.Context, actorID, projectID uuid.UUI
 // the cursor advance left commits written with the cursor still behind them —
 // and the next sync re-inserted the same commits. Now either the whole batch
 // plus the cursor land, or nothing does, so a re-sync after a failure retries
-// cleanly. The owner/admin check (requireProjectOwnerOrAdmin) matches what
+// cleanly. The owner/admin check (requirePlanWriter) matches what
 // ProjectRepoSync already enforced on the read side of the sync.
 func (s *Store) SyncRepoCommits(ctx context.Context, actorID, projectID uuid.UUID, contents []string, newestSHA string) (int, error) {
 	if len(contents) == 0 {
@@ -151,7 +126,7 @@ func (s *Store) SyncRepoCommits(ctx context.Context, actorID, projectID uuid.UUI
 	}
 	added := 0
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if err := requireProjectOwnerOrAdmin(ctx, tx, projectID, actorID); err != nil {
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
 			return err
 		}
 		for _, content := range contents {

@@ -16,7 +16,7 @@ func TestDispatcher_ConversationLock_RejectsConcurrent(t *testing.T) {
 		t.Fatal("first lock should succeed")
 	}
 	if _, ok := d.tryLockConversation(convID); ok {
-		t.Fatal("second concurrent lock should be rejected (409 CONVERSATION_BUSY)")
+		t.Fatal("second concurrent lock should be rejected (409 conversation_busy)")
 	}
 
 	unlock()

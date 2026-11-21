@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 	"github.com/google/uuid"
 )
@@ -149,9 +150,9 @@ func firstSystemPrompt(t *testing.T, st *store.Store, ex *toolExecutor) string {
 	t.Helper()
 	run := startRun(t, st, ex)
 	var systems []string
-	streamer := fakeStreamer{chat: func(system string, _ func(string)) (Turn, error) {
+	streamer := fakeStreamer{chat: func(system string, _ func(string)) (llm.Turn, error) {
 		systems = append(systems, system)
-		return Turn{Text: "ok"}, nil
+		return llm.Turn{Text: "ok"}, nil
 	}}
 	c := New(st, streamer, discardLog())
 	if _, err := c.runLoop(context.Background(), ex.actorID, run.ID, StageClarify, "T", map[string]string{}, nil, ex, nil); err != nil {
@@ -226,7 +227,7 @@ func firstChars(s string, n int) string {
 }
 
 // The planner drafts in the conversation's language too: the en prompts
-// mirror the zh ones (roadmap_planner.go), fence clause included.
+// mirror the zh ones (roadmap_planner_llm.go), fence clause included.
 func TestPlannerPrompts_SelectTheConversationsLanguage(t *testing.T) {
 	const enMarker, zhMarker = "You are InsideOut's product-delivery coach", "你是 InsideOut 的产品落地教练"
 

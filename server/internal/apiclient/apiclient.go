@@ -142,7 +142,8 @@ func (c *Client) do(method, path string, body any, out any) error {
 		return c.unauthorized(method + " " + path)
 	} // on /auth/* a 401 is the flow's verdict (wrong password), shown with the server's words below
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("apiclient: %s %s: %s: %s", method, path, resp.Status, strings.TrimSpace(string(raw)))
+		return &StatusError{Code: resp.StatusCode, Body: raw,
+			msg: fmt.Sprintf("apiclient: %s %s: %s: %s", method, path, resp.Status, strings.TrimSpace(string(raw)))}
 	}
 	if len(raw) == 0 {
 		return nil
@@ -152,6 +153,16 @@ func (c *Client) do(method, path string, body any, out any) error {
 	}
 	return nil
 }
+
+// StatusError is a non-2xx answer: its status code and body, for a caller that
+// reads the server's details (a 409's counts). Its text is unchanged.
+type StatusError struct {
+	Code int
+	Body []byte
+	msg  string
+}
+
+func (e *StatusError) Error() string { return e.msg }
 
 func errSuffix(msg string) string {
 	if msg == "" {

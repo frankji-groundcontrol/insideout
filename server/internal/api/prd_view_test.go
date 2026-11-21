@@ -20,7 +20,7 @@ import (
 )
 
 // TestPrdViewSendsSectionsAsOrderedPicks pins the wire shape the Flutter
-// audience page parses (client/test/audience_view_page_test.dart copies it):
+// audience page parses (client/test/features/prd/audience_view_page_test.dart copies it):
 // projection.sections is an ordered LIST of {section, why}, one entry per
 // section the audience reads. A map keyed by section would lose the reading
 // order the projection exists to carry. Skips without DATABASE_URL, same gate

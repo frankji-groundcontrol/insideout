@@ -1,0 +1,34 @@
+version: 2
+task: "Review 5 remediation: six waves on rv5/remediation"
+coordinator: claude
+main:
+  outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and verified locally (no CI, by the owner's request); the task tree for roles works on web, REST, MCP and CLI."
+  owner: claude
+  status: completed
+  next_evidence: "All six waves complete on rv5/remediation; final gates green (flutter +667, 0 DB skips, check_doc_graph and Marksman at 0). Next is the owner's: merge to main, and the open question on proposals by a delegate's agent."
+side_tracks: []
+updated_at: "2026-11-21T00:00:00Z"
+plan:
+- step: "Wave 0: green tip, slice finished, concept written"
+  owner: claude
+  status: completed
+- step: "Wave 1: data loss and misplaced writes"
+  owner: claude
+  status: completed
+  depends_on: "Wave 0"
+- step: "Wave 2: the task tree"
+  owner: claude
+  status: completed
+  depends_on: "Wave 1"
+- step: "Wave 3: surface parity"
+  owner: claude
+  status: completed
+  depends_on: "Wave 2"
+- step: "Wave 4: structure"
+  owner: claude
+  status: completed
+  depends_on: "Wave 3"
+- step: "Wave 5: documentation index"
+  owner: claude
+  status: completed
+  depends_on: "Wave 4"

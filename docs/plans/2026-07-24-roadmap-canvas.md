@@ -4,7 +4,7 @@ Status: implemented + hardened (single-player). An adversarial review landed
 eight fixes on 2026-07-25 — see the
 [changelog](../changelogs/2026-07-25-roadmap-canvas-hardening.md); the
 collaborative follow-up is
-[2026-07-24-roadmap-canvas-collab.md](2026-07-24-roadmap-canvas-collab.md).
+[2026-07-24-roadmap-canvas-collab.md](./2026-07-24-roadmap-canvas-collab.md).
 Owner directive: "roadmap is an important feature, it should be
 a tree in a canvas."
 

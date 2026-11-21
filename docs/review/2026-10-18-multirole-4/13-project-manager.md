@@ -4,7 +4,7 @@
 **Score:** **6 / 10**  
 **Bottom line:** Real engineering discipline (real-Postgres CI, honest product pitch, nine unimplemented promises enumerated), but the record system over-claims and several safety nets are not connected: four doc/contract guards run nowhere, CI has no schedule so the L1 red was invisible while HANDOFF says the head run is green, the binaries have no help or version, and the "zero broken doc links" claim is false (76 broken).
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

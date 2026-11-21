@@ -1,29 +1,29 @@
-// Package ui renders the setup flow's remote branch with huh: mode
-// select, API base with the hosted default prefilled, sign-in method,
-// email, a staged masked secret prompt, and the MCP-registration confirm. All
-// behavior (probe, sign-in, persistence) stays in the pure flow
-// package; rendering is thin by design so flow logic tests headless.
+// Package ui is the interactive face of `insideout setup`: numbered
+// questions on a terminal. Probe, sign-in, and saving the config stay in
+// the flow package.
 package ui
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
-	"github.com/charmbracelet/huh"
-
+	"github.com/frankji-groundcontrol/insideout/server/internal/apiclient"
 	"github.com/frankji-groundcontrol/insideout/server/internal/setup/flow"
+	"github.com/frankji-groundcontrol/insideout/server/internal/setup/probe"
 )
 
-// Result carries the flow outcome plus the answers the join phase
-// consumes beyond flow.Run's contract.
+// Result carries the flow outcome plus the answers the command prints
+// after a successful sign-in.
 type Result struct {
 	flow.Result
-	// RegisterMCP is the user's answer to the MCP-registration confirm.
+	// RegisterMCP is the person's answer to the MCP-registration question.
 	RegisterMCP bool
 }
 
-// ErrNoTTY is returned when setup cannot render an interactive form.
+// ErrNoTTY is returned when setup cannot ask questions.
 type ErrNoTTY struct{}
 
 func (ErrNoTTY) Error() string {
@@ -31,160 +31,213 @@ func (ErrNoTTY) Error() string {
 		"run instead: insideout setup --hosted | --local --postgres bundled|own"
 }
 
-// Run shows the remote-branch forms and drives flow.Run with the
-// collected answers. It refuses to start without a terminal.
+// Run asks the numbered questions and drives flow.Run. It refuses to
+// start without a terminal. Back on the first question stays there.
+// Exit stops the wizard.
 func Run(ctx context.Context, deps flow.Deps) (Result, error) {
-	// Checked on the real os.Stdin / os.Stdout: under `go test` stdout
-	// is a pipe, so the refusal branch stays reachable in tests.
-	if !isCharDevice(os.Stdin) || !isCharDevice(os.Stdout) {
+	if !IsTerminal(os.Stdin) || !IsTerminal(os.Stdout) {
 		return Result{}, ErrNoTTY{}
 	}
-
-	mode, err := askMode(ctx)
-	if err != nil {
-		return Result{}, err
-	}
-	if mode == flow.ModeLocal {
-		// The local branch is the join hook: ask bundled/own here,
-		// then hand off to the assembly (env write, Postgres, migrate,
-		// boot offer). The DSN paste for "own" happens inside the
-		// assembly's hidden read — one hidden-input path, not two.
-		if deps.LocalSetup == nil {
-			res, err := flow.Run(ctx, flow.Inputs{Mode: mode}, deps)
-			return Result{Result: res}, err
-		}
-		postgres, err := askPostgres(ctx)
+	p := &prompts{in: bufio.NewReader(os.Stdin), out: os.Stdout, tty: os.Stdin}
+	fmt.Fprintln(p.out, "InsideOut — interactive setup")
+	for {
+		mode, mv, err := p.at("1").choose("What are you setting up?", []string{
+			"Remote default: the managed service",
+			"Connect to a service you host",
+			"Run a server on this machine",
+		}, 0)
 		if err != nil {
 			return Result{}, err
 		}
-		if err := deps.LocalSetup(ctx, postgres); err != nil {
-			return Result{}, fmt.Errorf("insideout setup: %w", err)
+		if mv == moveBack {
+			fmt.Fprintln(p.out, "This is the first step.")
+			continue
+		}
+		if mv == moveExit {
+			return Result{}, ErrExit
+		}
+		var res Result
+		switch mode {
+		case 0:
+			res, err = runConnect(ctx, p, deps, false)
+		case 1:
+			res, err = runConnect(ctx, p, deps, true)
+		default:
+			res, err = runLocal(ctx, p, deps)
+		}
+		if errors.Is(err, ErrBack) {
+			continue
+		}
+		return res, err
+	}
+}
+
+func runLocal(ctx context.Context, p *prompts, deps flow.Deps) (Result, error) {
+	for {
+		choice, mv, err := p.at("1.3.1").choose("PostgreSQL for this server", []string{
+			"Bundled Postgres in Docker (127.0.0.1:5442)",
+			"A Postgres URL I already have",
+		}, 0)
+		if err != nil {
+			return Result{}, err
+		}
+		if err = moveErr(mv); err != nil {
+			return Result{}, err
+		}
+		postgres := "bundled"
+		ownDSN := ""
+		if choice == 1 {
+			postgres = "own"
+			secret, mv, err := p.at("1.3.2").password("Database URL")
+			if err != nil {
+				return Result{}, err
+			}
+			if err = moveErr(mv); err != nil {
+				if errors.Is(err, ErrBack) {
+					continue
+				}
+				return Result{}, err
+			}
+			ownDSN = secret
+		}
+		if deps.LocalSetup == nil {
+			res, err := flow.Run(ctx, flow.Inputs{Mode: flow.ModeLocal}, deps)
+			return Result{Result: res}, err
+		}
+		if err := deps.LocalSetup(ctx, postgres, ownDSN); err != nil {
+			if errors.Is(err, ErrBack) {
+				continue
+			}
+			if errors.Is(err, ErrExit) {
+				return Result{}, err
+			}
+			fmt.Fprintf(p.out, "%v\nFix the settings before continuing.\n", err)
+			continue
+		}
+		if deps.StartServer == nil {
+			return Result{}, nil
+		}
+		start, mv, err := p.at("1.3.4").confirm("Start the API now?", false)
+		if err != nil {
+			return Result{}, err
+		}
+		if mv == moveBack {
+			continue
+		}
+		if mv == moveExit {
+			return Result{}, ErrExit
+		}
+		if err := deps.StartServer(start); err != nil {
+			return Result{}, err
 		}
 		return Result{}, nil
 	}
+}
 
-	inputs, registerMCP, err := askRemote(ctx, deps.DefaultBaseURL)
+func runConnect(ctx context.Context, p *prompts, deps flow.Deps, askURL bool) (Result, error) {
+	base := deps.DefaultBaseURL
+	for {
+		if askURL {
+			got, mv, err := p.at("1.2.1").line("API base URL", "default")
+			if err != nil {
+				return Result{}, err
+			}
+			if err = moveErr(mv); err != nil {
+				return Result{}, err
+			}
+			if got == "" || got == "default" {
+				base = deps.DefaultBaseURL
+			} else {
+				base = got
+			}
+		}
+		hideAddr := !askURL || base == deps.DefaultBaseURL
+		if askURL {
+			p.at("1.2.2")
+		} else {
+			p.at("1.1.1")
+		}
+		if !hostReachable(ctx, p, deps, base, hideAddr) {
+			if askURL {
+				continue
+			}
+			_, mv, err := p.at("1.1.1").choose("The service is not healthy.", []string{"Try again"}, 0)
+			if err != nil {
+				return Result{}, err
+			}
+			if err = moveErr(mv); err != nil {
+				return Result{}, err
+			}
+			continue
+		}
+		res, err := runAccount(ctx, p, deps, base)
+		if errors.Is(err, ErrBack) && askURL {
+			continue
+		}
+		return res, err
+	}
+}
+
+type serviceChecker interface {
+	CheckService(ctx context.Context, baseURL string) ([]probe.Check, error)
+}
+
+func hostReachable(ctx context.Context, p *prompts, deps flow.Deps, base string, hideAddr bool) bool {
+	target := base
+	if hideAddr {
+		target = "the default service"
+	}
+	fmt.Fprintf(p.out, "\n%sChecking %s\n", stepPrefix(p.step), target)
+	checker, ok := deps.Prober.(serviceChecker)
+	if !ok {
+		if deps.Prober == nil {
+			fmt.Fprintln(p.out, "Healthy.")
+			return true
+		}
+		if err := deps.Prober.ProbeAPI(ctx, base); err != nil {
+			fmt.Fprintf(p.out, "Not healthy: %s\nFix this before the next step.\n", apiclient.RedactDefault(err.Error()))
+			return false
+		}
+		fmt.Fprintln(p.out, "Healthy.")
+		return true
+	}
+	checks, err := checker.CheckService(ctx, base)
+	for _, c := range checks {
+		mark := "✓"
+		if c.Status != "ok" {
+			mark = "✗"
+		}
+		detail := c.Detail
+		if hideAddr {
+			detail = hideDefaultAddress(detail, base)
+		}
+		fmt.Fprintf(p.out, "  %s %-8s %s\n", mark, c.Name, detail)
+	}
 	if err != nil {
-		return Result{}, err
+		fmt.Fprintln(p.out, "Not healthy. Fix this before the next step.")
+		return false
 	}
-	deps.PromptSecret = func(method string) (string, error) {
-		return askSecret(ctx, method)
-	}
-	res, err := flow.Run(ctx, inputs, deps)
-	return Result{Result: res, RegisterMCP: registerMCP}, err
+	fmt.Fprintln(p.out, "Healthy.")
+	return true
 }
 
-func askMode(ctx context.Context) (string, error) {
-	var mode string
-	if err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().
-			Title("Where should this machine connect?").
-			Options(
-				huh.NewOption("Remote service (hosted, or self-hosted)", flow.ModeRemote),
-				huh.NewOption("Server on this machine (PostgreSQL)", flow.ModeLocal),
-			).
-			Value(&mode),
-	)).RunWithContext(ctx); err != nil {
-		return "", fmt.Errorf("insideout setup: %w", err)
+func finishMCP(p *prompts, res flow.Result) (Result, error) {
+	show, mv, err := p.at("1.1.7").confirm("Show the MCP registration snippet?", true)
+	if err != nil || mv != moveOK {
+		return Result{Result: res}, firstErr(err, moveErr(mv))
 	}
-	return mode, nil
+	return Result{Result: res, RegisterMCP: show}, nil
 }
 
-// askPostgres is the local branch's one question; the own-URL DSN is
-// collected inside the local assembly (hidden read), not here.
-func askPostgres(ctx context.Context) (string, error) {
-	var postgres string
-	if err := huh.NewForm(huh.NewGroup(
-		huh.NewSelect[string]().
-			Title("PostgreSQL for this server").
-			Options(
-				huh.NewOption("Bundled Postgres in Docker (localhost port 5442)", "bundled"),
-				huh.NewOption("A Postgres URL I already have", "own"),
-			).
-			Value(&postgres),
-	)).RunWithContext(ctx); err != nil {
-		return "", fmt.Errorf("insideout setup: %w", err)
+func firstErr(err, nav error) error {
+	if err != nil {
+		return err
 	}
-	return postgres, nil
+	return nav
 }
 
-func askRemote(ctx context.Context, defaultBase string) (flow.Inputs, bool, error) {
-	var (
-		baseURL = defaultBase // hosted default prefilled; enter accepts it
-		method  = flow.AuthPassword
-	)
-	if err := huh.NewForm(huh.NewGroup(
-		huh.NewInput().
-			Title("API base URL").
-			Description("Enter accepts the default. Self-hosted servers use their own /api/v1 URL.").
-			Value(&baseURL),
-		huh.NewSelect[string]().
-			Title("Sign in with").
-			Options(
-				huh.NewOption("Password", flow.AuthPassword),
-				huh.NewOption("Emailed login code", flow.AuthCode),
-				huh.NewOption("Magic link", flow.AuthMagic),
-			).
-			Value(&method),
-	)).RunWithContext(ctx); err != nil {
-		return flow.Inputs{}, false, fmt.Errorf("insideout setup: %w", err)
-	}
-
-	var (
-		email       string
-		registerMCP bool
-	)
-	if err := huh.NewForm(
-		huh.NewGroup(
-			huh.NewInput().Title("Email").Value(&email),
-		),
-		huh.NewGroup(
-			huh.NewConfirm().
-				Title("Merge the MCP registration into your MCP client config?").
-				Description("Adds the InsideOut MCP server entry the CLI can print later.").
-				Value(&registerMCP),
-		),
-	).RunWithContext(ctx); err != nil {
-		return flow.Inputs{}, false, fmt.Errorf("insideout setup: %w", err)
-	}
-
-	return flow.Inputs{
-		Mode:       flow.ModeRemote,
-		BaseURL:    baseURL,
-		AuthMethod: method,
-		Email:      email,
-	}, registerMCP, nil
-}
-
-func askSecret(ctx context.Context, method string) (string, error) {
-	var secret string
-	if err := huh.NewForm(huh.NewGroup(
-		huh.NewInput().
-			Title(secretTitle(method)).
-			Description("Check your email if requested; hidden as you type.").
-			EchoMode(huh.EchoModePassword).
-			Value(&secret),
-	)).RunWithContext(ctx); err != nil {
-		return "", fmt.Errorf("insideout setup: %w", err)
-	}
-	return secret, nil
-}
-
-func secretTitle(method string) string {
-	switch method {
-	case flow.AuthCode:
-		return "Login code (check your email)"
-	case flow.AuthMagic:
-		return "Magic link (paste the link from your email)"
-	default:
-		return "Password"
-	}
-}
-
-// isCharDevice reports whether f is attached to a terminal-like
-// character device. /dev/null also counts, which is why both ends are
-// checked and stdout is the decisive leg under `go test`.
-func isCharDevice(f *os.File) bool {
+// IsTerminal reports whether f is a character device (a terminal).
+func IsTerminal(f *os.File) bool {
 	info, err := f.Stat()
 	if err != nil {
 		return false

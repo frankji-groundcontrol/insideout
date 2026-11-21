@@ -4,7 +4,7 @@
 **Score:** **7 / 10**  
 **Bottom line:** The server core has clean layering and honest operational design, but the client edge (CLI, MCP, hosted-default) has four disagreeing base/credential resolvers that can send a stored token to the hosted deployment, plus wall-clock, single-replica and doc-drift debt.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

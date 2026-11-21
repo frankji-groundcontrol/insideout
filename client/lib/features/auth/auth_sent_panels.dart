@@ -12,9 +12,13 @@ class MagicSentPanel extends StatelessWidget {
     required this.message,
     required this.backLabel,
     required this.onBack,
+    this.notice,
   });
 
   final String message;
+
+  /// Shown when the server only logged the email (mail word `logged`).
+  final String? notice;
   final String backLabel;
   final VoidCallback onBack;
 
@@ -25,6 +29,10 @@ class MagicSentPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(message, style: Theme.of(context).textTheme.bodyMedium),
+        if (notice != null) ...[
+          const SizedBox(height: Cobalt.space3),
+          BlockBanner(message: notice!, tone: BlockTone.info),
+        ],
         const SizedBox(height: Cobalt.space6),
         BlockButton(
           label: backLabel,
@@ -52,9 +60,13 @@ class CodeEntryPanel extends StatelessWidget {
     required this.onVerify,
     required this.onResend,
     required this.onBack,
+    this.notice,
   });
 
   final String message;
+
+  /// Shown when the server only logged the email (mail word `logged`).
+  final String? notice;
   final TextEditingController controller;
   final String codeLabel;
   final String? error;
@@ -73,6 +85,10 @@ class CodeEntryPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(message, style: Theme.of(context).textTheme.bodyMedium),
+        if (notice != null) ...[
+          const SizedBox(height: Cobalt.space3),
+          BlockBanner(message: notice!, tone: BlockTone.info),
+        ],
         const SizedBox(height: Cobalt.space4),
         BlockField(
           controller: controller,

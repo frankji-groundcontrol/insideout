@@ -41,8 +41,8 @@ def doors_exist(failures):
 
 def readme_links_both(failures):
     """PM-05: the learn-more table must link both doors in one row."""
-    row = re.compile(r"\[`CONTRIBUTING\.md`\]\(CONTRIBUTING\.md\)"
-                     r".*\[`SECURITY\.md`\]\(SECURITY\.md\)")
+    row = re.compile(r"\[`CONTRIBUTING\.md`\]\((?:\./)?CONTRIBUTING\.md\)"
+                     r".*\[`SECURITY\.md`\]\((?:\./)?SECURITY\.md\)")
     if not any(row.search(line) for line in read("README.md").splitlines()):
         failures.append("README.md's learn-more table has no row linking "
                         "CONTRIBUTING.md and SECURITY.md")

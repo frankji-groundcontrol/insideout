@@ -47,7 +47,7 @@ slot. A provider error after admission is a separate key or endpoint issue.
 
 ## 5. How it is used
 
-Together with [ai-max-concurrent](ai-max-concurrent.md), this setting bounds
+Together with [ai-max-concurrent](./ai-max-concurrent.md), this setting bounds
 local backpressure before a provider call is attempted.
 
 ## 6. Installation guide

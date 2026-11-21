@@ -17,11 +17,17 @@ class RoadmapHeader extends StatelessWidget {
     required this.compact,
     required this.viewChoices,
     required this.onAdd,
+    this.breadcrumb,
   });
 
   final bool compact;
   final List<Widget> viewChoices;
-  final VoidCallback onAdd;
+
+  /// Null hides "New item": the caller may not write where it would add.
+  final VoidCallback? onAdd;
+
+  /// The path back to the whole tree, when a node is open as its own tree.
+  final Widget? breadcrumb;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +36,7 @@ class RoadmapHeader extends StatelessWidget {
     final title = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        ?breadcrumb,
         Text(
           l10n.t('roadmap.title').toUpperCase(),
           style: theme.textTheme.displaySmall,
@@ -38,11 +45,13 @@ class RoadmapHeader extends StatelessWidget {
         Text(l10n.t('roadmap.lead'), style: theme.textTheme.bodyLarge),
       ],
     );
-    final add = BlockButton(
-      label: l10n.t('roadmap.newItem'),
-      icon: Icons.add,
-      onPressed: onAdd,
-    );
+    final add = onAdd == null
+        ? null
+        : BlockButton(
+            label: l10n.t('roadmap.newItem'),
+            icon: Icons.add,
+            onPressed: onAdd,
+          );
     return Padding(
       padding: const EdgeInsets.fromLTRB(28, 64, 28, 8),
       child: compact
@@ -55,14 +64,14 @@ class RoadmapHeader extends StatelessWidget {
                   spacing: Cobalt.space2,
                   runSpacing: Cobalt.space2,
                   crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [...viewChoices, add],
+                  children: [...viewChoices, ?add],
                 ),
               ],
             )
           : Row(
               children: [
                 Expanded(child: title),
-                add,
+                ?add,
               ],
             ),
     );

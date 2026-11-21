@@ -9,7 +9,7 @@
 
 `roadmap.go` is 403 lines. It already mixed node CRUD, the status
 machine, and the move cycle guard; the sibling-shift added for
-[BUG-017](2026-10-06-bug-017-roadmap-move-collides-sibling-position.md)
+[BUG-017](./2026-10-06-bug-017-roadmap-move-collides-sibling-position.md)
 pushed it past the budget.
 
 ## Why not split now

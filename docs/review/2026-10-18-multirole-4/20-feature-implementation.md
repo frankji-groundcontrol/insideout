@@ -4,7 +4,7 @@
 **Score:** **6.9 / 10**  
 **Bottom line:** The advertised loop (idea, Coach, PRD, Commit, roadmap, GitHub evidence, presence) is built end to end and the gaps PRODUCT.md admits are tracked; the real defects are at the seams: the human-only Commit/decision boundary is a tool description, re-applying a proposal duplicates roadmap nodes (confirmed by running), and the new validation leg is web-only.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

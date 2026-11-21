@@ -43,9 +43,9 @@ change. Client-side only: no store/migration changes.
       note, prd_export, parity paragraph) and
       `docs/usage/cli-mcp-and-guidance.md` (verb table + MCP section).
 - [x] Backfilled stale checkboxes:
-      [2026-08-21-cli-mcp-parity](2026-08-21-cli-mcp-parity.md) Stage 3 +
+      [2026-08-21-cli-mcp-parity](./2026-08-21-cli-mcp-parity.md) Stage 3 +
       header status, and
-      [2026-08-21-roadmap-parity](2026-08-21-roadmap-parity-and-github.md)
+      [2026-08-21-roadmap-parity](./2026-08-21-roadmap-parity-and-github.md)
       Stage C.
 - [x] Changelog entry; board row; issues index updated.
 - [x] Live matrix on a local server (scratch Homebrew Postgres cluster,

@@ -43,13 +43,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 # go.mod modules that no shipped binary links, checked with `go list -deps`
 # for linux and darwin on amd64 and arm64 (the four release targets): a
-# dependency's tests import the first two, bubbletea links the others on
-# Windows only. Anything else in go.mod must appear in the notices.
+# dependency's tests import both. Anything else in go.mod must appear in the
+# notices.
 NOT_LINKED = {
     "github.com/davecgh/go-spew",
     "github.com/pmezard/go-difflib",
-    "github.com/erikgeiser/coninput",
-    "github.com/mattn/go-localereader",
 }
 
 

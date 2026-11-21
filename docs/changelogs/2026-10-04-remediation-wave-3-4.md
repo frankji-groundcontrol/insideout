@@ -5,8 +5,8 @@ Final two waves of the
 (register: [01-findings-register.md](../review/2026-10-04-multirole/01-findings-register.md));
 plan of record [docs/plans/2026-10-04-remediation-wave-3-4.md](../plans/2026-10-04-remediation-wave-3-4.md).
 Waves 0–1 landed in
-[2026-10-04-remediation-wave-0-1.md](2026-10-04-remediation-wave-0-1.md),
-Wave 2 in [2026-10-04-remediation-wave-2.md](2026-10-04-remediation-wave-2.md).
+[2026-10-04-remediation-wave-0-1.md](./2026-10-04-remediation-wave-0-1.md),
+Wave 2 in [2026-10-04-remediation-wave-2.md](./2026-10-04-remediation-wave-2.md).
 This closes the five-wave plan.
 
 ## What changed
@@ -50,7 +50,7 @@ workspace-shared inbox.
 *Corrected 2026-10-11: one ID, two findings — FEAT-03 here is the
 review-1 register's export-download finding; the same-day review-2 register
 uses FEAT-03 for the agent-proposals web decision loop
-([record](2026-10-04-remediation-review-2.md)).*
+([record](./2026-10-04-remediation-review-2.md)).*
 
 - New `client/lib/api/download_stub.dart` + `download_web.dart`
   (conditional import, the `sse_transport` pattern): markdown export
@@ -82,14 +82,14 @@ uses FEAT-03 for the agent-proposals web decision loop
 
     *Corrected 2026-10-11: the pin was 3.44.0 — the same-day review-2
     remediation pinned CI to the Dockerfile's Flutter 3.44.0
-    ([record](2026-10-04-remediation-review-2.md)), and the repo has stayed
+    ([record](./2026-10-04-remediation-review-2.md)), and the repo has stayed
     on 3.44.x.*
   - **env-suites** job: `python3 -m unittest test_env_catalog
     test_env_writes`.
 
     *Superseded 2026-10-11: CI has since been minimized to a single head
     pipeline (owner-directed, repo public — see the
-    [owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*
+    [owner-deploy record](./2026-10-11-owner-deploy-and-mail-truth.md)).*
 - `server/internal/api/conversations_test.go` (new, DB-gated): POST a
   conversation message through the real handler stack against a stubbed
   coach — asserts `text/event-stream`, and that frame 1

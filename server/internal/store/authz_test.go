@@ -165,10 +165,10 @@ func TestAuthz_ProjectsAndIdeasAndPrds(t *testing.T) {
 	// fellow member's probe is existence-hidden ("not found", like a
 	// stranger's), while the admin can see the row but is still refused
 	// the author-only edit ("forbidden").
-	if _, err := st.UpdateIdea(ctx, other.ID, idea.ID, "hijacked", "x"); !errors.Is(err, ErrNotFound) {
+	if _, err := st.UpdateIdea(ctx, other.ID, idea.ID, "hijacked", nil); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("non-author member UpdateIdea: want ErrNotFound (existence hidden), got %v", err)
 	}
-	if _, err := st.UpdateIdea(ctx, admin.ID, idea.ID, "hijacked", "x"); !errors.Is(err, ErrForbidden) {
+	if _, err := st.UpdateIdea(ctx, admin.ID, idea.ID, "hijacked", nil); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("admin UpdateIdea on another's idea: want ErrForbidden, got %v", err)
 	}
 	// Deny: a stranger can't even see the idea exists.

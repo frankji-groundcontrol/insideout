@@ -28,9 +28,19 @@ const enPrd = <String, String>{
   'prd.exportTitle': 'Export',
   'prd.buildMVP': 'Draft the roadmap',
   'prd.buildReplaceConfirm':
-      'This project already has a roadmap with {count} nodes. Replace it with a freshly drafted one? The current tree will be lost.',
-  'prd.buildReplaceConfirmOne':
-      'This project already has a roadmap with {count} node. Replace it with a freshly drafted one? The current tree will be lost.',
+      'This project already has a roadmap with {nodes} and {evidence}. Replace it with the reviewed draft? The current tree and its evidence will be lost.',
+  'prd.nodeCount': '{n} nodes',
+  'prd.nodeCountOne': '{n} node',
+  'prd.evidenceCount': '{n} evidence records',
+  'prd.evidenceCountOne': '{n} evidence record',
+  'prd.buildReviewTitle': 'Review the drafted roadmap',
+  'prd.buildReviewHint':
+      'Nothing is written until you apply. Applying creates these items.',
+  'prd.buildApply': 'Apply',
+  'prd.buildHistoryTitle': 'This roadmap has recorded work',
+  'prd.buildHistoryConfirm':
+      'Replacing it deletes {nodes}, {evidence}, {done} done and {validated} validated items. This cannot be undone.',
+  'prd.buildHistoryAction': 'Delete and replace',
   'prd.exportPrint': 'Print / Save as PDF',
   'prd.revisionsTitle': 'Version history',
   'prd.revisionN': 'Version {n}',
@@ -96,6 +106,8 @@ const enPrd = <String, String>{
   'coach.offline':
       'AI coaching is offline on this server. Replies are echoes, not AI answers.',
   'coach.stage.clarify': 'Clarifying',
+  'coach.role.user': 'You',
+  'coach.role.assistant': 'Coach',
   'coach.stage.draft': 'Drafting',
   'coach.stage.critique': 'Reviewing',
   'coach.stage.finalize': 'Finalizing',

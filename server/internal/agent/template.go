@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // templateModelID is what the offline streamer reports as its identity; the
@@ -16,12 +18,12 @@ const templateModelID = "template"
 type templateStreamer struct{}
 
 // NewTemplateStreamer returns the offline-dev-mode ChatStreamer.
-func NewTemplateStreamer() ChatStreamer { return templateStreamer{} }
+func NewTemplateStreamer() llm.ChatStreamer { return templateStreamer{} }
 
-func (templateStreamer) StreamChat(_ context.Context, _ string, msgs []Message, _ []Tool, onDelta func(string)) (Turn, error) {
+func (templateStreamer) StreamChat(_ context.Context, _ string, msgs []llm.Message, _ []llm.Tool, onDelta func(string)) (llm.Turn, error) {
 	var lastUser string
 	for i := len(msgs) - 1; i >= 0; i-- {
-		if msgs[i].Role == RoleUser {
+		if msgs[i].Role == llm.RoleUser {
 			lastUser = msgs[i].Content
 			break
 		}
@@ -32,14 +34,14 @@ func (templateStreamer) StreamChat(_ context.Context, _ string, msgs []Message, 
 	if onDelta != nil {
 		onDelta(lastUser)
 	}
-	return Turn{Text: lastUser}, nil
+	return llm.Turn{Text: lastUser}, nil
 }
 
 // StreamChatForcingTool returns an empty tool call with no arguments —
 // offline dev mode has no model to critique with, so the critic pass
 // degrades to "no findings" rather than erroring.
-func (templateStreamer) StreamChatForcingTool(_ context.Context, _ string, _ []Message, tool Tool, _ func(string)) (Turn, error) {
-	return Turn{ToolCall: &ToolCallRequest{ID: "template", Name: tool.Name, Arguments: "{}"}}, nil
+func (templateStreamer) StreamChatForcingTool(_ context.Context, _ string, _ []llm.Message, tool llm.Tool, _ func(string)) (llm.Turn, error) {
+	return llm.Turn{ToolCall: &llm.ToolCallRequest{ID: "template", Name: tool.Name, Arguments: "{}"}}, nil
 }
 
 func (templateStreamer) Model() string { return templateModelID }

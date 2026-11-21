@@ -2,8 +2,8 @@
 
 The owner directed a sync with the MBP clone (`MBP-local:~/Projects/insideout`)
 and a push to `main`. This record covers that operation only; the code it
-published is recorded in [wave 4b](2026-10-18-rv4-remediation/wave-4b.md) and
-the [2026-10-20 decision clusters](2026-10-20-rv4-decisions.md).
+published is recorded in [wave 4b](./2026-10-18-rv4-remediation/wave-4b.md) and
+the [2026-10-20 decision clusters](./2026-10-20-rv4-decisions.md).
 
 ## What was done
 
@@ -56,8 +56,8 @@ the [2026-10-20 decision clusters](2026-10-20-rv4-decisions.md).
   `DATABASE_URL` as the app role, `INSIDEOUT_TRUSTED_PROXY_HOPS=1`, the
   migration `20261018200000` read grant, server before MCP binary, and the
   two new migrations `20261020140000` / `20261020150000` (see
-  [retention and erasure](2026-10-20-retention-and-erasure.md) and
-  [completion evidence](2026-10-20-completion-evidence-or-reason.md)).
+  [retention and erasure](./2026-10-20-retention-and-erasure.md) and
+  [completion evidence](./2026-10-20-completion-evidence-or-reason.md)).
 - MBP holds the uncommitted install/reset slice described above. Whoever
   resumes there should commit and push it (its draft changelogs are
   untracked in that checkout); until then MBP's `main` stays at `4d186da9`

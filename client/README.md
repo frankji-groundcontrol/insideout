@@ -22,7 +22,7 @@ flutter run -d android
 ```
 
 The iOS launch-image asset directory ships with its own template README
-([ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md](ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md)).
+([ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md](./ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md)).
 
 Against the hosted API:
 

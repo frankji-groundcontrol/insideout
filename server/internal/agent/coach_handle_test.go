@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -28,9 +29,9 @@ func TestHandleMessage_FailedFinalWriteFallsBackToTheStreamedText(t *testing.T) 
 	}
 
 	var logs bytes.Buffer
-	streamer := fakeStreamer{chat: func(_ string, onDelta func(string)) (Turn, error) {
+	streamer := fakeStreamer{chat: func(_ string, onDelta func(string)) (llm.Turn, error) {
 		onDelta("hello")
-		return Turn{Text: "hello\x00"}, nil
+		return llm.Turn{Text: "hello\x00"}, nil
 	}}
 	c := New(st, streamer, slog.New(slog.NewTextHandler(&logs, nil)))
 
@@ -43,7 +44,7 @@ func TestHandleMessage_FailedFinalWriteFallsBackToTheStreamedText(t *testing.T) 
 	}
 	var assistant *store.AgentMessage
 	for i := range msgs {
-		if msgs[i].Role == string(RoleAssistant) {
+		if msgs[i].Role == string(llm.RoleAssistant) {
 			assistant = &msgs[i]
 		}
 	}
@@ -73,8 +74,8 @@ func TestHandleMessage_ProviderConfigErrorDoesNotLeakTheProviderBody(t *testing.
 
 	const secret = "SECRET-BODY-123"
 	var logs bytes.Buffer
-	streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
-		return Turn{}, fmt.Errorf("%w: agent: anthropic returned 401 Unauthorized: authentication_error: %s", ErrProviderConfig, secret)
+	streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
+		return llm.Turn{}, fmt.Errorf("%w: agent: anthropic returned 401 Unauthorized: authentication_error: %s", llm.ErrProviderConfig, secret)
 	}}
 	c := New(st, streamer, slog.New(slog.NewTextHandler(&logs, nil)))
 
@@ -83,8 +84,8 @@ func TestHandleMessage_ProviderConfigErrorDoesNotLeakTheProviderBody(t *testing.
 		ex.conversationID.String(), userID, conv.WorkspaceID.String(), "hi")
 
 	body := rec.Body.String()
-	if !strings.Contains(body, `"code":"PROVIDER_CONFIG"`) {
-		t.Fatalf("the stream has no PROVIDER_CONFIG error event:\n%s", body)
+	if !strings.Contains(body, `"code":"provider_config"`) {
+		t.Fatalf("the stream has no provider_config error event:\n%s", body)
 	}
 	if strings.Contains(body, secret) {
 		t.Fatalf("the SSE stream carried the provider's response body to the end user:\n%s", body)

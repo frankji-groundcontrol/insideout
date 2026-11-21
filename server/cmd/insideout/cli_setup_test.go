@@ -6,13 +6,14 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/clientconfig"
 )
 
-// The setup subcommand's flag surface mirrors scripts/setup.sh's
-// agent contract (docs/plans/2026-10-07-setup-tui.md, join phase).
+// The setup subcommand's flag surface is the agent contract scripts/setup.sh
+// forwards (docs/plans/2026-10-07-setup-tui.md, join phase).
 // HOME and XDG_CONFIG_HOME are pinned per test so the user's real
 // config never influences a result, on macOS or Linux. Credential
 // precedence itself is tested where it lives, in internal/clientconfig.
@@ -132,6 +133,9 @@ func startRebindServer(t *testing.T, marker string) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
+		case "/healthz":
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprint(w, `{"status":"ok"}`)
 		case "/api/v1/me":
 			w.WriteHeader(http.StatusUnauthorized)
 		case "/api/v1/auth/config":
@@ -146,4 +150,51 @@ func startRebindServer(t *testing.T, marker string) *httptest.Server {
 	}))
 	t.Cleanup(srv.Close)
 	return srv
+}
+
+// captureStderr swaps os.Stderr for a pipe around fn and returns what
+// was written.
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := os.Stderr
+	os.Stderr = w
+	defer func() { os.Stderr = old }()
+	fn()
+	w.Close()
+	buf := make([]byte, 8192)
+	n, _ := r.Read(buf)
+	return string(buf[:n])
+}
+
+// --create-roles belongs to --local --postgres own, and only there. The
+// checkout and .env are pinned away from the real ones: were the flag
+// accepted elsewhere, the run still could not touch anything.
+func TestCreateRolesFlagIsScopedToLocalOwn(t *testing.T) {
+	t.Setenv("INSIDEOUT_SETUP_REPO_ROOT", t.TempDir())
+	t.Setenv("INSIDEOUT_ENV_FILE", filepath.Join(t.TempDir(), "scratch.env"))
+	for _, tt := range []struct {
+		name string
+		args []string
+	}{
+		{"alone", []string{"--create-roles"}},
+		{"hosted", []string{"--hosted", "--create-roles"}},
+		{"check", []string{"--check", "--create-roles"}},
+		{"bundled", []string{"--local", "--postgres", "bundled", "--create-roles"}},
+		{"own without a database to touch", []string{"--local", "--postgres", "own", "--no-start", "--create-roles"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var code int
+			out := captureStderr(t, func() { _, code = runSetupCommand(tt.args) })
+			if code != 2 {
+				t.Fatalf("setup %v exited %d, want 2", tt.args, code)
+			}
+			if !strings.Contains(out, "create-roles") || strings.Contains(out, "not defined") {
+				t.Fatalf("setup %v should reject the combination by name, got: %q", tt.args, out)
+			}
+		})
+	}
 }

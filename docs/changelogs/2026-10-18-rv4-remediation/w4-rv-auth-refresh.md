@@ -5,7 +5,7 @@ commits `bd0d020` (red), `f32b6f7` (two guard tests, green on the base) and
 `7f0a641` (fix), then this fragment. Findings are cited as `rv4-<ID>` because
 review IDs restart per review. All four come from the whole-change review of
 `d53035a..rv4/integration`, and all four are one defect, the "Browser tabs are
-unchanged" ceiling that [w3-auth-network.md](w3-auth-network.md) recorded: the
+unchanged" ceiling that [w3-auth-network.md](./w3-auth-network.md) recorded: the
 10 s refresh-reuse grace (rv4-SEC-04) keeps the loser's session family alive on
 the server, but the request that loses a refresh race was still answered with
 deletions of both auth cookies, and a browser applies `Set-Cookie` in the order

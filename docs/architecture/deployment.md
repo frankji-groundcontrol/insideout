@@ -54,7 +54,7 @@ memory and degrade silently across replicas
 ## Database provisioning models
 
 The same migration files support two targets without modification (see
-[database and RLS](database-and-rls.md) for the ownership details):
+[database and RLS](./database-and-rls.md) for the ownership details):
 
 1. **Bundled dedicated instance** — the compose `postgres` service above.
    `DATABASE_URL` points at it with `sslmode=disable`.

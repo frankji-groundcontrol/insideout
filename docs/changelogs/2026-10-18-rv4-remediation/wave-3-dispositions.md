@@ -1,9 +1,9 @@
 # Review-4 remediation, wave 3: the per-ID dispositions
 
-The per-finding table of [wave 3](wave-3.md), kept in its own file so that both
+The per-finding table of [wave 3](./wave-3.md), kept in its own file so that both
 records stay inside the line budget. Each cluster's own account (what changed,
 the evidence, the ceilings) is its fragment, linked from the
-[folder index](index.md).
+[folder index](./index.md).
 
 ## How to read it
 
@@ -122,4 +122,4 @@ Judgement calls a reader should know about:
   not by a worker commit, because the files were unowned. `rv4-PM-08` is one
   disposition for two halves written by two clusters.
 - Six of the thirteen clusters needed a repair round before their verifier
-  accepted them (see the Verifier column of [wave 3](wave-3.md#clusters)).
+  accepted them (see the Verifier column of [wave 3](./wave-3.md#clusters)).

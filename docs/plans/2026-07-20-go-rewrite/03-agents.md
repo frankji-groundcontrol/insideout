@@ -1,6 +1,6 @@
 # 03 — PRD Coach Agent / PRD 教练智能体
 
-> Part of the [InsideOut rewrite plan](README.md). / [InsideOut 重写计划](README.md)的一部分。
+> Part of the [InsideOut rewrite plan](./README.md). / [InsideOut 重写计划](./README.md)的一部分。
 
 ## 1. Product Flow / 产品流程
 
@@ -65,8 +65,8 @@ event: message_end     data: {"id": "...", "tokens": 812}
 event: error           data: {"error": "...", "code": "..."}
 ```
 
-Rate-limit and circuit checks run **before** the stream opens, so throttling still returns plain JSON 429/503 with the preserved `APP_THROTTLE` / `CIRCUIT_OPEN` / `ANTHROPIC_RATE_LIMIT` shapes ([02 §3](02-backend-go.md)) — the frontend countdown logic is untouched. Each user message creates an `ai_runs` row (the limiter's counting source); provider 429 now marks the run `failed` (old pending-leak bug fixed).
-限流与熔断检查在流打开**之前**执行，被限流时仍返回普通 JSON 429/503（形状保持不变，见 [02 §3](02-backend-go.md)）——前端倒计时逻辑零改动。每条用户消息落一行 `ai_runs`（限流计数来源）；供应商 429 现在会将 run 置为 `failed`（修复旧的 pending 泄漏 bug）。
+Rate-limit and circuit checks run **before** the stream opens, so throttling still returns plain JSON 429/503 with the preserved `APP_THROTTLE` / `CIRCUIT_OPEN` / `ANTHROPIC_RATE_LIMIT` shapes ([02 §3](./02-backend-go.md)) — the frontend countdown logic is untouched. Each user message creates an `ai_runs` row (the limiter's counting source); provider 429 now marks the run `failed` (old pending-leak bug fixed).
+限流与熔断检查在流打开**之前**执行，被限流时仍返回普通 JSON 429/503（形状保持不变，见 [02 §3](./02-backend-go.md)）——前端倒计时逻辑零改动。每条用户消息落一行 `ai_runs`（限流计数来源）；供应商 429 现在会将 run 置为 `failed`（修复旧的 pending 泄漏 bug）。
 
 The agent loop: call LLM with tools → stream text deltas out as they arrive → on tool calls, execute, append tool results, call again → repeat until a plain text turn ends. Tool executions and the loop are **our** code; the LLM library only does one thing: "given messages + tools, stream one model response".
 Agent 循环：带工具调用 LLM → 文本增量即到即转发 → 遇到工具调用则执行、追加结果、再调用 → 直到纯文本轮结束。工具执行与循环是**我们自己的**代码；LLM 库只做一件事：「给定消息与工具，流式返回一次模型响应」。

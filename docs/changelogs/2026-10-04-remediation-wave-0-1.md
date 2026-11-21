@@ -93,6 +93,6 @@ Executes Waves 0 and 1 of the multirole review's
 
   *Superseded 2026-10-11: closed — the 2026-10-11 owner deploy shipped both
   services and the hosted probes pass, HANDOFF refreshed
-  ([owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*
+  ([owner-deploy record](./2026-10-11-owner-deploy-and-mail-truth.md)).*
 - Remaining waves (server hardening, truth-in-advertising, CI) are untouched
   — see the remediation plan, Waves 2–4.

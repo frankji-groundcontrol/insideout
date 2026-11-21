@@ -1,7 +1,7 @@
 # Scoped external feedback invitations are promised but not built
 
 Open, recorded 2026-10-11 (review-3 wave 4, findings CQ-02 and SEC-04;
-slice 2 of the [promise-gap set](2026-10-11-product-promise-gaps.md)).
+slice 2 of the [promise-gap set](./2026-10-11-product-promise-gaps.md)).
 
 ## What PRODUCT.md promises
 

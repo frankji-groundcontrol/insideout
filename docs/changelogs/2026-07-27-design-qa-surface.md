@@ -26,7 +26,7 @@ convention, a dated-records index) — one dated file per QA thread.
   its README index current.
 - **Seed record:** [design-qa/2026-07-27-auth-door.md](../design-qa/2026-07-27-auth-door.md)
   — the auth-door QA thread that this change shipped alongside; implementation
-  detail in [the auth-door changelog](2026-07-27-auth-door-modal.md).
+  detail in [the auth-door changelog](./2026-07-27-auth-door-modal.md).
 
 ## Verification
 

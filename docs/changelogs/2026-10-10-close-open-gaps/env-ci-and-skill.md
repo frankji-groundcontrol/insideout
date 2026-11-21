@@ -72,7 +72,7 @@ Deliberately not run on the VM: installing Docker (the runner already ships
 Docker CE and `docker.io` beside it would break the daemon), installing Flutter
 (a ~700 MB archive; the job checks the URL), and `setup --local`, which the
 roleless-cluster and bundled walks in
-[setup-roles-and-bundled-owner.md](setup-roles-and-bundled-owner.md) cover.
+[setup-roles-and-bundled-owner.md](./setup-roles-and-bundled-owner.md) cover.
 
 ## The backup runbook
 

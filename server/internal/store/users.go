@@ -116,13 +116,14 @@ func (s *Store) UpdatePasswordHash(ctx context.Context, id uuid.UUID, hash strin
 
 // UpdateProfile updates self-editable fields only. Callers must never
 // expose a path to change Role through this function — role changes are
-// admin-only and have no user-facing endpoint in v1.
+// admin-only and have no user-facing endpoint in v1. A nil avatarURL keeps
+// the stored one and "" clears it (rv5-PARA-09).
 func (s *Store) UpdateProfile(ctx context.Context, id uuid.UUID, username, bio string, keywords []string, avatarURL *string) (*User, error) {
 	var u *User
 	err := s.withUserContext(ctx, id, func(tx pgx.Tx) error {
 		row := tx.QueryRow(ctx, `
 			UPDATE insideout.users
-			SET username = $2, bio = $3, keywords = $4, avatar_url = $5
+			SET username = $2, bio = $3, keywords = $4, avatar_url = CASE WHEN $5::text IS NULL THEN avatar_url ELSE NULLIF($5, '') END
 			WHERE id = $1
 			RETURNING `+userColumns,
 			id, username, bio, keywords, avatarURL,

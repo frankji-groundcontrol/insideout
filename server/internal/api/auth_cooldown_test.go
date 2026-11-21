@@ -123,8 +123,9 @@ func TestSendCooldownEndpointsReturnUniform200(t *testing.T) {
 			if w.Code != http.StatusOK {
 				t.Fatalf("status = %d, want 200 (uniform response on cooldown)", w.Code)
 			}
-			if got := w.Body.String(); got != "{\"ok\":true}\n" {
-				t.Fatalf("body = %q, want uniform {\"ok\":true}", got)
+			got := w.Body.String()
+			if !strings.Contains(got, `"ok":true`) || !strings.Contains(got, `"mail"`) {
+				t.Fatalf("body = %q, want ok and a mail status", got)
 			}
 			if strings.Contains(mailLog.String(), "mail dev mode") {
 				t.Fatal("cooldown-blocked request must not reach the mail sender")
@@ -159,8 +160,9 @@ func assertUniformOK(t *testing.T, w *httptest.ResponseRecorder) {
 	if w.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 (uniform response on cooldown)", w.Code)
 	}
-	if got := w.Body.String(); got != "{\"ok\":true}\n" {
-		t.Fatalf("body = %q, want uniform {\"ok\":true}", got)
+	got := w.Body.String()
+	if !strings.Contains(got, `"ok":true`) || !strings.Contains(got, `"mail"`) {
+		t.Fatalf("body = %q, want ok and a mail status", got)
 	}
 }
 

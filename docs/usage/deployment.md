@@ -1,7 +1,7 @@
 # Deployment
 
 Operator guide for running InsideOut with the repo's docker-compose stack.
-For developer setup, see [local-development.md](local-development.md).
+For developer setup, see [local-development.md](./local-development.md).
 
 ## Topology
 
@@ -33,7 +33,7 @@ them and adjust.
 
 ## Environment (compose reads `.env`)
 
-The full variable reference is [environment.md](environment.md); the tables
+The full variable reference is [environment.md](./environment.md); the tables
 below cover only what the compose topology needs.
 
 Required — compose fails fast (`:?`) without them:
@@ -161,8 +161,8 @@ Bounds the server enforces on its own, whatever the proxy does:
 - `GET /healthz` pings the database for at most **2 s** and answers 503
   `database unreachable` instead of hanging.
 - At most **20** open SSE streams per user and **100** per project; the next
-  one is refused with 429 `APP_STREAM_LIMIT` before any header is sent. Cursor
-  posts are held to **25 a second** per user (429 `APP_THROTTLE`, `Retry-After: 1`).
+  one is refused with 429 `app_stream_limit` before any header is sent. Cursor
+  posts are held to **25 a second** per user (429 `app_throttle`, `Retry-After: 1`).
   A stream re-checks its token and the viewer's membership on every 10 s
   heartbeat and ends when either has gone, so a stream also ends when its
   access token expires (15 minutes by default) and the web client reconnects.
@@ -305,8 +305,8 @@ On `app`:
   violation, or the font mirror needs refreshing (the recipe is in
   `client/web/fonts/NOTICE.txt`), loosen only that directive in
   [`client/nginx.conf`](../../client/nginx.conf) and run
-  `python3 scripts/check_nginx_headers.py`
-  ([local-development.md](local-development.md#testing)). The headers reach
+  `python3 scripts/checks/check_nginx_headers.py`
+  ([local-development.md](./local-development.md#testing)). The headers reach
   the hosted app with the next `railway up --service app`.
 
 LLM vars are set on `server`. Empty `INSIDEOUT_LLM_API_KEY` still selects

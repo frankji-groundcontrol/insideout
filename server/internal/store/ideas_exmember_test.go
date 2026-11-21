@@ -153,7 +153,7 @@ func TestIdeasExMember_StoreAnswersNotFound(t *testing.T) {
 	}
 	_, err := st.GetIdeaForMember(ctx, f.edit.ID, f.gone.ID)
 	wantNotFound("removed member GetIdeaForMember", err)
-	_, err = st.UpdateIdea(ctx, f.gone.ID, f.edit.ID, "hijacked", "x")
+	_, err = st.UpdateIdea(ctx, f.gone.ID, f.edit.ID, "hijacked", nil)
 	wantNotFound("removed member UpdateIdea", err)
 	wantNotFound("removed member DropIdea", st.DropIdea(ctx, f.gone.ID, f.edit.ID))
 	_, _, err = st.ConvertIdea(ctx, f.gone.ID, f.conv.ID)
@@ -195,7 +195,7 @@ func TestIdeasExMember_GoLayerDenies(t *testing.T) {
 	if idea, err := owner.GetIdeaForMember(ctx, f.edit.ID, f.gone.ID); !errors.Is(err, ErrNotFound) {
 		t.Errorf("removed member GetIdeaForMember: want ErrNotFound, got err=%v (idea returned: %v)", err, idea != nil)
 	}
-	if _, err := owner.UpdateIdea(ctx, f.gone.ID, f.edit.ID, "hijacked", "x"); !errors.Is(err, ErrForbidden) {
+	if _, err := owner.UpdateIdea(ctx, f.gone.ID, f.edit.ID, "hijacked", nil); !errors.Is(err, ErrForbidden) {
 		t.Errorf("removed member UpdateIdea: want ErrForbidden, got %v", err)
 	}
 	if err := owner.DropIdea(ctx, f.gone.ID, f.edit.ID); !errors.Is(err, ErrForbidden) {

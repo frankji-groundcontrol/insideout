@@ -24,7 +24,7 @@ and a completeness critic. 108 unique findings; 7 confirmed High; 0 Critical.
 **108 unique findings: 0 Critical · 7 High · 53 Medium · 46 Low.**
 
 *Corrected 2026-10-11: recounted, the severity tables in
-[01-findings-register.md](01-findings-register.md) contain 106 rows (7 + 53 +
+[01-findings-register.md](./01-findings-register.md) contain 106 rows (7 + 53 +
 46), so the 108 headline does not match its own severity sum. The methodology
 below records a third count (105 unique from 105 filed), and 22-security.md's
 two Info findings (SEC-19, SEC-20) never entered the register — 106 table
@@ -37,17 +37,17 @@ coordinator's execution evidence. Cross-role mean score: **7.3 / 10**.
 
 | Aspect | File | Score | Highlights |
 |---|---|---|---|
-| Architect | [10-architect.md](10-architect.md) | 7.6 | CI toolchain ≠ artifact toolchain (ARCH-01, ↓Med); CI spine praised |
-| AI Developer | [11-ai-developer.md](11-ai-developer.md) | 6.8 | Critic sends empty `messages` — never runs in prod (AIDEV-09 ✓High) |
-| Fullstack | [12-fullstack.md](12-fullstack.md) | 7.2 | `window.open` null ignored, fallback dead (FS-01 ✓High) |
-| Project Manager | [13-project-manager.md](13-project-manager.md) | 6.5 | Features-left ledger PM-10..18; [Correction] deploy claim refuted |
-| User (seat) | [14-user.md](14-user.md) | 6.5 | Drop, SSE 401 loop, raw errors — all three confirmed High |
-| Feature Implementation | [20-feature-implementation.md](20-feature-implementation.md) | 7.5 | Branches/Merge/Decision Log absent (↓Med, end-state); proposals have no web loop (✓High) |
-| Code Quality | [21-code-quality.md](21-code-quality.md) | 8.4 | Line-budget rule holds; band-widget duplication; guarded-date helper bypassed |
-| Security | [22-security.md](22-security.md) | 7.5 | XFF trusted-proxy (SEC-10 — see correction); ex-member idea-convert hole |
-| Testing | [23-testing.md](23-testing.md) | 7.0 | Skip-guard scope (↓Med); no `-race`, no CI smoke |
-| Reliability & Ops | [24-reliability-ops.md](24-reliability-ops.md) | 7.5 | Rightmost-XFF collapses per-IP throttle sitewide (REL-13 ✓High) |
-| Completeness critic | [30-completeness-critic.md](30-completeness-critic.md) | n/a | CLI/observability/backup/mail unreviewed; CC-01..03 |
+| Architect | [10-architect.md](./10-architect.md) | 7.6 | CI toolchain ≠ artifact toolchain (ARCH-01, ↓Med); CI spine praised |
+| AI Developer | [11-ai-developer.md](./11-ai-developer.md) | 6.8 | Critic sends empty `messages` — never runs in prod (AIDEV-09 ✓High) |
+| Fullstack | [12-fullstack.md](./12-fullstack.md) | 7.2 | `window.open` null ignored, fallback dead (FS-01 ✓High) |
+| Project Manager | [13-project-manager.md](./13-project-manager.md) | 6.5 | Features-left ledger PM-10..18; [Correction] deploy claim refuted |
+| User (seat) | [14-user.md](./14-user.md) | 6.5 | Drop, SSE 401 loop, raw errors — all three confirmed High |
+| Feature Implementation | [20-feature-implementation.md](./20-feature-implementation.md) | 7.5 | Branches/Merge/Decision Log absent (↓Med, end-state); proposals have no web loop (✓High) |
+| Code Quality | [21-code-quality.md](./21-code-quality.md) | 8.4 | Line-budget rule holds; band-widget duplication; guarded-date helper bypassed |
+| Security | [22-security.md](./22-security.md) | 7.5 | XFF trusted-proxy (SEC-10 — see correction); ex-member idea-convert hole |
+| Testing | [23-testing.md](./23-testing.md) | 7.0 | Skip-guard scope (↓Med); no `-race`, no CI smoke |
+| Reliability & Ops | [24-reliability-ops.md](./24-reliability-ops.md) | 7.5 | Rightmost-XFF collapses per-IP throttle sitewide (REL-13 ✓High) |
+| Completeness critic | [30-completeness-critic.md](./30-completeness-critic.md) | n/a | CLI/observability/backup/mail unreviewed; CC-01..03 |
 
 ## The Criticals
 
@@ -89,19 +89,19 @@ Recorded subagent spend for the last five agents ≈ 5.2M tokens (code-quality
 0.35M, skeptics 0.98/1.23/0.38M, critic 2.2M); the first nine reviewers' usage
 was not retained. No finding was refuted outright; the rejected-leads story this
 round is the PM-13 sub-claim, recorded as a [Correction] in
-[13-project-manager.md](13-project-manager.md).
+[13-project-manager.md](./13-project-manager.md).
 
 Secret scans over the folder before writing: key-shaped patterns and deployment
 identifiers — **clean** (commands and output in the changelog for this review).
 
 ## Reading order for a fixer
 
-1. [40-remediation-plan.md](40-remediation-plan.md) — waves, cheapest first.
-2. [01-findings-register.md](01-findings-register.md) — all 108 rows by severity.
-3. [14-user.md](14-user.md) then [11-ai-developer.md](11-ai-developer.md) — the two confirmed-High clusters.
-4. [30-completeness-critic.md](30-completeness-critic.md) — what nobody covered.
+1. [40-remediation-plan.md](./40-remediation-plan.md) — waves, cheapest first.
+2. [01-findings-register.md](./01-findings-register.md) — all 108 rows by severity.
+3. [14-user.md](./14-user.md) then [11-ai-developer.md](./11-ai-developer.md) — the two confirmed-High clusters.
+4. [30-completeness-critic.md](./30-completeness-critic.md) — what nobody covered.
 
-*Note 2026-10-11: [00-executive-summary.md](00-executive-summary.md) —
+*Note 2026-10-11: [00-executive-summary.md](./00-executive-summary.md) —
 verdict, top ten by impact, effort table — was written after this list;
 read it first.*
 

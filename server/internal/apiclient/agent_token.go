@@ -67,12 +67,17 @@ func unixTime(sec float64) time.Time {
 // the login itself. A failed trade is a client that fails every call with the
 // reason, so a caller can not fall back to the full session. A token that already
 // has a scope, and one that is not a JWT, are sent as they are: the server decides.
-func AgentScoped(login *Client) *Client {
+func AgentScoped(login *Client) *Client { return AgentScopedTo(login, "") }
+
+// AgentScopedTo is AgentScoped with a token confined to the subtree of the node
+// root (POST /agent/token {"rootNodeId"}): the server refuses its node writes
+// outside that subtree. root "" mints an unconfined agent token.
+func AgentScopedTo(login *Client, root string) *Client {
 	claims, ok := ParseTokenClaims(login.token)
 	if !ok || claims.Scope != "" {
 		return login
 	}
-	token, err := heldAgentToken(login, claims.Subject)
+	token, err := heldAgentToken(login, claims.Subject, root)
 	if err != nil {
 		return Failing(err)
 	}
@@ -85,7 +90,7 @@ func AgentScoped(login *Client) *Client {
 // held is the agent-scope token minted for the login in use.
 var held struct {
 	sync.Mutex
-	key     string // the server and user the token was minted for; "" holds none
+	key     string // the server, user and root the token was minted for; "" holds none
 	token   string
 	renewAt time.Time // mint again from here: about a third of the token's life is left
 }
@@ -98,19 +103,20 @@ func ForgetAgentToken() {
 	held.Unlock()
 }
 
-// heldAgentToken returns the held token for login's server and user, or mints one.
+// heldAgentToken returns the held token for login's server, user and root, or
+// mints one.
 // The lock is held across the trade, so a burst of calls mints once.
 // ponytail: one slot (a process serves one server and one user at a time); a
 // client clock more than a token life off the server's mints on every call, or
 // rides one expired token until the 401.
-func heldAgentToken(login *Client, subject string) (string, error) {
+func heldAgentToken(login *Client, subject, root string) (string, error) {
 	held.Lock()
 	defer held.Unlock()
-	key := login.base + "\n" + subject
+	key := login.base + "\n" + subject + "\n" + root
 	if held.key == key && time.Now().Before(held.renewAt) {
 		return held.token, nil
 	}
-	token, claims, err := login.agentToken()
+	token, claims, err := login.agentToken(root)
 	if err != nil {
 		held.key = ""
 		return "", err
@@ -128,12 +134,16 @@ func heldAgentToken(login *Client, subject string) (string, error) {
 // (POST /agent/token) and returns it with its claims. It only works from a full
 // session; the server refuses the trade to an agent token. An answer that is not
 // an agent-scope token is an error, so a caller can never mistake a full session
-// for one.
-func (c *Client) agentToken() (string, TokenClaims, error) {
+// for one. A root other than "" asks for a token confined to that node's subtree.
+func (c *Client) agentToken(root string) (string, TokenClaims, error) {
 	var out struct {
 		AccessToken string `json:"accessToken"`
 	}
-	if err := c.do(http.MethodPost, "/agent/token", map[string]any{}, &out); err != nil {
+	body := map[string]any{}
+	if root != "" {
+		body["rootNodeId"] = root
+	}
+	if err := c.do(http.MethodPost, "/agent/token", body, &out); err != nil {
 		if strings.Contains(err.Error(), "/agent/token: 404") {
 			err = fmt.Errorf("%w (this server predates agent tokens: update the server before the MCP binary)", err)
 		}

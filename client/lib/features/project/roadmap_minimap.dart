@@ -7,6 +7,7 @@ import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 import '../../widgets/pressable_block.dart';
 import 'roadmap_painters.dart';
+import 'roadmap_tree.dart';
 
 /// Minimap: one tiny column per root band, one shape-coded mark per
 /// node (three levels deep; deeper nodes fold into their parent's
@@ -30,8 +31,7 @@ class RoadmapMinimap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final roots = nodes.where((n) => n.parentId == null).toList()
-      ..sort((a, b) => a.position.compareTo(b.position));
+    final roots = roadmapRoots(nodes);
 
     // The titles sit on the 12px floor, so a few bands can outgrow a phone:
     // scroll instead of overflowing, still centered while they fit.

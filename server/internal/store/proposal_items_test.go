@@ -108,7 +108,7 @@ func TestRoadmap_MemberCannotWrite(t *testing.T) {
 	if _, err := st.MoveRoadmapNode(ctx, reader.ID, node.ID, nil, 0); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("member move: want ErrForbidden, got %v", err)
 	}
-	if err := st.DeleteRoadmapNode(ctx, reader.ID, node.ID); !errors.Is(err, ErrForbidden) {
+	if err := st.DeleteRoadmapNode(ctx, reader.ID, node.ID, false); !errors.Is(err, ErrForbidden) {
 		t.Fatalf("member delete: want ErrForbidden, got %v", err)
 	}
 	if _, err := st.AddProjectUpdate(ctx, reader.ID, proj.ID, "agent_proposal", "a reader proposes"); !errors.Is(err, ErrForbidden) {

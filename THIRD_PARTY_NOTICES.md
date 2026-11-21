@@ -24,18 +24,6 @@ cannot reach the repository, open an issue at
 | Component | License | Copyright |
 |---|---|---|
 | Go standard library (the toolchain that built the binary) | BSD-3-Clause (Go Authors) | Copyright 2009 The Go Authors. |
-| github.com/atotto/clipboard | BSD-3-Clause (Ato Araki) | Copyright (c) 2013 Ato Araki. All rights reserved. |
-| github.com/aymanbagabas/go-osc52/v2 | MIT | Copyright (c) 2022 Ayman Bagabas |
-| github.com/catppuccin/go | MIT | Copyright (c) 2021 Catppuccin |
-| github.com/charmbracelet/bubbles | MIT | Copyright (c) 2020-2023 Charmbracelet, Inc |
-| github.com/charmbracelet/bubbletea | MIT | Copyright (c) 2020-2025 Charmbracelet, Inc |
-| github.com/charmbracelet/colorprofile | MIT | Copyright (c) 2020-2024 Charmbracelet, Inc |
-| github.com/charmbracelet/huh | MIT | Copyright (c) 2023 Charm |
-| github.com/charmbracelet/lipgloss | MIT | Copyright (c) 2021-2023 Charmbracelet, Inc |
-| github.com/charmbracelet/x/ansi | MIT | Copyright (c) 2023 Charmbracelet, Inc. |
-| github.com/charmbracelet/x/cellbuf | MIT | Copyright (c) 2023 Charmbracelet, Inc. |
-| github.com/charmbracelet/x/exp/strings | MIT | Copyright (c) 2023 Charmbracelet, Inc. |
-| github.com/charmbracelet/x/term | MIT | Copyright (c) 2023 Charmbracelet, Inc. |
 | github.com/dustin/go-humanize | MIT (go-humanize text) | Copyright (c) 2005-2008  Dustin Sallings |
 | github.com/golang-jwt/jwt/v5 | MIT | Copyright (c) 2012 Dave Grijalva; Copyright (c) 2021 golang-jwt maintainers |
 | github.com/google/uuid | BSD-3-Clause (Google) | Copyright (c) 2009,2014 Google Inc. All rights reserved. |

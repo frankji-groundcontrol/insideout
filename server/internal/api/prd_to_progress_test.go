@@ -96,8 +96,9 @@ func TestPrdThroughApprovalToProgress(t *testing.T) {
 		t.Fatalf("decode build: %v", err)
 	}
 	build.Body.Close()
-	if drafted.ProjectID == "" || len(drafted.Tree) == 0 {
-		t.Fatalf("build drafted nothing: %+v", drafted)
+	// The draft writes nothing, not even the project (rv5-FEAT-01).
+	if drafted.ProjectID != "" || len(drafted.Tree) == 0 {
+		t.Fatalf("build drafted nothing, or named a project before confirm: %+v", drafted)
 	}
 	confirmBody, err := json.Marshal(map[string]any{"tree": json.RawMessage(drafted.Tree)})
 	if err != nil {

@@ -29,7 +29,13 @@ func (c *Client) Register(email, password, username, inviteCode string) error {
 // RequestMagicLink emails a one-time sign-in link (uniform 200 contract —
 // the API never reveals whether the account exists).
 func (c *Client) RequestMagicLink(email string) error {
-	return c.authRequest("/auth/magic-link", map[string]string{"email": email})
+	_, err := c.RequestMagicLinkStatus(email)
+	return err
+}
+
+// RequestMagicLinkStatus is RequestMagicLink plus the mail word.
+func (c *Client) RequestMagicLinkStatus(email string) (string, error) {
+	return c.authMail("/auth/magic-link", email)
 }
 
 // ConsumeMagicLink exchanges an emailed link token for a session.
@@ -39,7 +45,21 @@ func (c *Client) ConsumeMagicLink(token string) error {
 
 // RequestLoginCode emails a 6-digit sign-in code (uniform 200 contract).
 func (c *Client) RequestLoginCode(email string) error {
-	return c.authRequest("/auth/login-code", map[string]string{"email": email})
+	_, err := c.RequestLoginCodeStatus(email)
+	return err
+}
+
+// RequestLoginCodeStatus is RequestLoginCode plus the mail word.
+func (c *Client) RequestLoginCodeStatus(email string) (string, error) {
+	return c.authMail("/auth/login-code", email)
+}
+
+func (c *Client) authMail(path, email string) (string, error) {
+	out, err := c.authPost(path, map[string]string{"email": email})
+	if err != nil {
+		return "", err
+	}
+	return out.Mail, nil
 }
 
 // VerifyLoginCode exchanges an emailed code for a session.
@@ -52,7 +72,42 @@ func (c *Client) VerifyLoginCode(email, code string) error {
 
 // ForgotPassword emails a one-time reset link (uniform 200 contract).
 func (c *Client) ForgotPassword(email string) error {
-	return c.authRequest("/auth/forgot-password", map[string]string{"email": email})
+	_, _, err := c.ForgotPasswordWatch(email)
+	return err
+}
+
+// ForgotPasswordWatch is ForgotPassword plus the id a caller polls to
+// learn that the link was used somewhere else. An empty id means this
+// server did not offer a watch.
+func (c *Client) ForgotPasswordWatch(email string) (watch, mail string, err error) {
+	out, err := c.authPost("/auth/forgot-password", map[string]string{"email": email})
+	if err != nil {
+		return "", "", err
+	}
+	return out.Watch, out.Mail, nil
+}
+
+// MailStatusLine is the sentence a person sees after an emailed-auth request.
+func MailStatusLine(word string) string {
+	switch word {
+	case "logged":
+		return "Email status: logged on the server, not delivered."
+	case "accepted":
+		return "Email status: accepted for delivery."
+	default:
+		return "Email status: accepted."
+	}
+}
+
+// ResetWatchStatus is pending, completed, or expired.
+func (c *Client) ResetWatchStatus(id string) (string, error) {
+	var out struct {
+		Status string `json:"status"`
+	}
+	if err := c.do(http.MethodGet, "/auth/reset-watch/"+escSeg(id), nil, &out); err != nil {
+		return "", err
+	}
+	return out.Status, nil
 }
 
 // ResetPassword sets a new password from an emailed reset token; the API
@@ -128,6 +183,8 @@ type authBody struct {
 	AccessToken  string `json:"accessToken"`
 	RefreshToken string `json:"refreshToken"`
 	Email        string `json:"email"`
+	Watch        string `json:"watch"`
+	Mail         string `json:"mail"`
 	Error        string `json:"error"`
 
 	status int // authPost sets it on a refusal only

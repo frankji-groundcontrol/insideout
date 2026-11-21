@@ -144,22 +144,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         ProductDock.clearance,
                       ),
                       children: [
-                        BlockField(
-                          label: l10n.t('workspace.createNamePlaceholder'),
-                          controller: title,
-                        ),
-                        const SizedBox(height: Cobalt.space3),
-                        BlockTextarea(
-                          label: l10n.t('workspace.createDescPlaceholder'),
-                          controller: description,
-                        ),
-                        const SizedBox(height: Cobalt.space4),
-                        BlockButton(
-                          label: l10n.t('common.save'),
-                          icon: Icons.save_outlined,
-                          expand: true,
-                          onPressed: _save,
-                        ),
+                        ..._about(context, snap.data!.ws),
                         const SizedBox(height: Cobalt.space8),
                         _inviteCard(context, snap.data!.ws),
                         const SizedBox(height: Cobalt.space8),
@@ -169,17 +154,18 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                         const SizedBox(height: Cobalt.space3),
                         for (final m in snap.data!.members) ...[
-                          _memberCard(context, m),
+                          _memberCard(context, m, _admin(snap.data!.ws)),
                           const SizedBox(height: Cobalt.space3),
                         ],
                         const SizedBox(height: Cobalt.space4),
-                        BlockButton(
-                          label: l10n.t('workspace.deleteWorkspace'),
-                          icon: Icons.delete_outline,
-                          variant: BlockButtonVariant.danger,
-                          expand: true,
-                          onPressed: _delete,
-                        ),
+                        if (snap.data!.ws.canDelete)
+                          BlockButton(
+                            label: l10n.t('workspace.deleteWorkspace'),
+                            icon: Icons.delete_outline,
+                            variant: BlockButtonVariant.danger,
+                            expand: true,
+                            onPressed: _delete,
+                          ),
                       ],
                     ),
                   ),
@@ -222,7 +208,46 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _memberCard(BuildContext context, WorkspaceMember m) {
+  /// The title and description: fields and Save for whoever the server lets
+  /// edit, read-only text for anyone else (rv5-FE-05).
+  List<Widget> _about(BuildContext context, Workspace ws) {
+    final l10n = context.watch<Appearance>();
+    final theme = Theme.of(context);
+    if (!ws.canEdit) {
+      return [
+        Text(ws.title, style: theme.textTheme.titleLarge),
+        if (ws.description.isNotEmpty) ...[
+          const SizedBox(height: Cobalt.space2),
+          Text(ws.description, style: theme.textTheme.bodyMedium),
+        ],
+      ];
+    }
+    return [
+      BlockField(
+        label: l10n.t('workspace.createNamePlaceholder'),
+        controller: title,
+      ),
+      const SizedBox(height: Cobalt.space3),
+      BlockTextarea(
+        label: l10n.t('workspace.createDescPlaceholder'),
+        controller: description,
+      ),
+      const SizedBox(height: Cobalt.space4),
+      BlockButton(
+        label: l10n.t('common.save'),
+        icon: Icons.save_outlined,
+        expand: true,
+        onPressed: _save,
+      ),
+    ];
+  }
+
+  /// Member management is an admin's (FE-05).
+  bool _admin(Workspace ws) => ws.myRole == 'admin';
+
+  /// [admin] manages everyone; anyone else only leaves (removes themselves).
+  Widget _memberCard(BuildContext context, WorkspaceMember m, bool admin) {
+    final self = m.userId == context.read<Session>().user?.id;
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
     return FieldCard(
@@ -244,24 +269,27 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-          PopupMenuButton<String>(
-            tooltip: l10n.t('common.moreActions'),
-            onSelected: (value) => _memberAction(m, value),
-            itemBuilder: (_) => [
-              PopupMenuItem(
-                value: 'admin',
-                child: Text(l10n.t('workspace.role.admin')),
-              ),
-              PopupMenuItem(
-                value: 'member',
-                child: Text(l10n.t('workspace.role.member')),
-              ),
-              PopupMenuItem(
-                value: 'remove',
-                child: Text(l10n.t('workspace.removeMember')),
-              ),
-            ],
-          ),
+          if (admin || self)
+            PopupMenuButton<String>(
+              tooltip: l10n.t('common.moreActions'),
+              onSelected: (value) => _memberAction(m, value),
+              itemBuilder: (_) => [
+                if (admin) ...[
+                  PopupMenuItem(
+                    value: 'admin',
+                    child: Text(l10n.t('workspace.role.admin')),
+                  ),
+                  PopupMenuItem(
+                    value: 'member',
+                    child: Text(l10n.t('workspace.role.member')),
+                  ),
+                ],
+                PopupMenuItem(
+                  value: 'remove',
+                  child: Text(l10n.t('workspace.removeMember')),
+                ),
+              ],
+            ),
         ],
       ),
     );

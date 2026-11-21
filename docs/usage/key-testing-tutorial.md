@@ -13,8 +13,8 @@ contain tokens. Keep `.env` and key values out of logs.
 From the repository root:
 
 ```bash
-python3 scripts/test_env_catalog.py
-python3 scripts/test_env_writes.py
+python3 scripts/tests/env/test_env_catalog.py
+python3 scripts/tests/env/test_env_writes.py
 (cd scripts && python3 -m unittest discover -s tests/keys -t . -p 'test_*.py' -v)
 ```
 
@@ -43,16 +43,16 @@ Use the setting's reference for the exact observable check:
 
 | Setting family | Proof | Expected result |
 | --- | --- | --- |
-| [address](keys/app/addr.md) | `insideout health` or `curl` the configured `/healthz` | HTTP 200 on the intended bind address |
-| [cookie security](keys/app/cookie-secure.md) | inspect the login response in a local browser/HTTP trace | `Secure` follows the setting; plain HTTP local testing needs `0` |
-| [CORS](keys/app/cors-origins.md), [dev CORS](keys/app/dev-cors.md) | send a preflight from the intended origin | only the declared origin receives the expected headers |
-| [access](keys/app/access-ttl.md) and [refresh TTL](keys/app/refresh-ttl.md) | login, decode expiry metadata without printing the token, and wait/use a short disposable TTL | access expiry and refresh rotation match the configured durations |
-| [compose ports](keys/compose/server-port.md) / [Postgres port](keys/compose/postgres-port.md) / [client port](keys/compose/client-port.md) | `docker compose up` followed by health and browser requests | published ports accept the intended service |
-| [superuser bootstrap password](keys/compose/postgres-superuser-password.md) | create a fresh disposable volume and run the init path | roles initialize; never test by printing the password |
+| [address](./keys/app/addr.md) | `insideout health` or `curl` the configured `/healthz` | HTTP 200 on the intended bind address |
+| [cookie security](./keys/app/cookie-secure.md) | inspect the login response in a local browser/HTTP trace | `Secure` follows the setting; plain HTTP local testing needs `0` |
+| [CORS](./keys/app/cors-origins.md), [dev CORS](./keys/app/dev-cors.md) | send a preflight from the intended origin | only the declared origin receives the expected headers |
+| [access](./keys/app/access-ttl.md) and [refresh TTL](./keys/app/refresh-ttl.md) | login, decode expiry metadata without printing the token, and wait/use a short disposable TTL | access expiry and refresh rotation match the configured durations |
+| [compose ports](./keys/compose/server-port.md) / [Postgres port](./keys/compose/postgres-port.md) / [client port](./keys/compose/client-port.md) | `docker compose up` followed by health and browser requests | published ports accept the intended service |
+| [superuser bootstrap password](./keys/compose/postgres-superuser-password.md) | create a fresh disposable volume and run the init path | roles initialize; never test by printing the password |
 
 ## 4. Prove authentication and JWT signing
 
-For [the JWT secret](keys/auth/jwt-secret.md), boot the server with the
+For [the JWT secret](./keys/auth/jwt-secret.md), boot the server with the
 configured environment, perform a real login against the disposable server,
 and make an authenticated request. The token must validate on the same server;
 an empty or short secret must fail before boot. The real-DB authorization suite
@@ -60,7 +60,7 @@ and the end-to-end smoke flow exercise this path without exposing token text.
 
 ## 5. Prove the coach configuration
 
-For the [LLM settings](keys/llm/README.md):
+For the [LLM settings](./keys/llm/README.md):
 
 ```bash
 insideout setup --check
@@ -77,7 +77,7 @@ configured.
 
 ## 6. Prove mail delivery
 
-For [the mail settings](keys/mail/README.md), an auth request returning `200`
+For [the mail settings](./keys/mail/README.md), an auth request returning `200`
 only proves the anti-enumeration API contract. It does not prove delivery.
 Run this only against an isolated disposable database: the smoke flow creates
 throwaway rows, requires `signup_mode=open`, requires `DATABASE_OWNER_URL` to
@@ -109,14 +109,14 @@ insideout repo set "$PROJECT_ID" "$REPO_URL"
 insideout sync "$PROJECT_ID"
 ```
 
-For the [GitHub App ID and private key](keys/github/README.md), install the App
+For the [GitHub App ID and private key](./keys/github/README.md), install the App
 on a private test repository and trigger a signed App delivery that requires a
 private guide fetch. The delivery must answer HTTP 200 and the server log must
-not report an unusable private key. For the [webhook secret](keys/github/gh-webhook-secret.md),
+not report an unusable private key. For the [webhook secret](./keys/github/gh-webhook-secret.md),
 send a signed delivery from GitHub and require HTTP 200; a mismatched signature
 must be rejected. To prove commit sync on a private repository, install the App
 on it and run the sync above: the installation token reads it. The
-[optional GitHub token](keys/github/github-token.md) is read only by
+[optional GitHub token](./keys/github/github-token.md) is read only by
 `insideout setup --check` and is validated there when present. The stored OAuth
 client secret has no live consumer and receives placement-only verification.
 
@@ -134,5 +134,5 @@ client secret has no live consumer and receives placement-only verification.
   probe until the warning is absent and the observable action succeeds.
 
 Finish by recording the command, status, and next action in the installation
-record. The per-key references under [keys/](keys/README.md) remain the
+record. The per-key references under [keys/](./keys/README.md) remain the
 authoritative details for each setting.

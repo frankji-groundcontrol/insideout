@@ -3,7 +3,7 @@
 **Status:** Finished 2026-10-04. **Source:**
 [`docs/review/2026-10-04-multirole-2/40-remediation-plan.md`](../../review/2026-10-04-multirole-2/40-remediation-plan.md)
 (register IDs below refer to it). Durable state:
-[`2026-10-04-remediation-review-2.track.yaml`](2026-10-04-remediation-review-2.track.yaml).
+[`2026-10-04-remediation-review-2.track.yaml`](./2026-10-04-remediation-review-2.track.yaml).
 Closure record:
 [`docs/changelogs/2026-10-04-remediation-review-2.md`](../../changelogs/2026-10-04-remediation-review-2.md).
 

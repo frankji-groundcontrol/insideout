@@ -6,13 +6,14 @@ calls and streaming replies over Server-Sent Events.
 
 ## Provider
 
-`internal/agent/anthropic.go` talks directly to the Anthropic Messages API
+`internal/llm/anthropic.go` talks directly to the Anthropic Messages API
 over stdlib `net/http`, with a hand-rolled SSE parser in `anthropic_parse.go` —
 no LLM framework dependency. This replaced an earlier `langchaingo`-based implementation; see
 [BUG-009](../issues/2026-07-21-bug-009-langchaingo-removed.md) for why (the library is
 unmaintained, and it silently dropped real answers behind extended-thinking
 content blocks). The provider is hidden behind one interface,
-`ChatStreamer` (`internal/agent/llm.go`):
+`ChatStreamer` (`internal/llm/llm.go`; the `llm` package is a leaf the coach
+imports, holding every provider client):
 
 ```go
 type ChatStreamer interface {
@@ -41,13 +42,13 @@ streaming response event-by-event: `message_start` → `content_block_start` (`t
 index**, not assumed to be one-per-response: an extended-thinking model
 returns a `thinking` block before the real `text`/`tool_use` block, and the
 first content block that carries a tool call wins; otherwise all `text`
-blocks are concatenated. `internal/agent/anthropic_test.go` uses real SSE
+blocks are concatenated. `internal/llm/anthropic_test.go` uses real SSE
 payloads captured from a live endpoint as test fixtures for exactly this
 case.
 
 A turn is whole only when its stream ends the way the provider says it does
 (rv4-AIDEV-05). An Anthropic stream must reach `message_stop`; a Responses
-stream (parsed in `trust_responses.go`) must reach `response.completed` or
+stream (parsed in `responses_parse.go`) must reach `response.completed` or
 `response.incomplete`. One that ends earlier is `ErrProviderTransient`, retried
 once when nothing had been streamed yet. A Responses stream cut mid-read is a
 transient failure too, retried once while nothing has been sent (a cancel stays
@@ -55,7 +56,7 @@ a cancel). A tool call cut by the token cap
 (`max_tokens` / `incomplete`) is never run: the turn is marked truncated and
 the stored answer ends with the truncation marker. `response.failed` and
 `error` frames are read as provider errors: a server error is retried, an
-`invalid_prompt`-class one is `PROVIDER_CONFIG`, and neither is a content
+`invalid_prompt`-class one is `provider_config`, and neither is a content
 refusal. Responses requests that carry tools send `parallel_tool_calls: false`.
 A gateway that rejects that field is retried once without it and then remembered,
 so later requests leave it out. Each call's arguments are filed under the
@@ -71,8 +72,8 @@ with a `tool_result` content block — Anthropic has no separate "tool" role.
 A non-2xx HTTP response surfaces the provider's actual error message (e.g.
 `model_not_found: Model "..." is not supported...`); a 429 maps to
 `ErrProviderRateLimited`, which the coach emits as an SSE `error` event with
-code `ANTHROPIC_RATE_LIMIT` (the stream is already open by then — see
-[backend](backend.md)).
+code `anthropic_rate_limit` (the stream is already open by then — see
+[backend](./backend.md)).
 
 ## Stage state machine
 
@@ -98,7 +99,7 @@ conversation view lists them as `pendingResolutions` (id, section, severity,
 issue, status) using the same filter confirm applies, so the card never shows a
 resolution confirm would skip (rv4-AIDEV-03). `POST
 /api/v1/conversations/{id}/stage/decline` (human-only, see
-[agent token scope](agent-token-scope.md)) removes both while a stage is
+[agent token scope](./agent-token-scope.md)) removes both while a stage is
 pending: the stage and the findings stay as they were, a second decline or a
 confirm after a decline is a 409, and a decline is no longer something only the
 client remembers (rv4-CLOSE-03). A second tab keeps its card until it refreshes,
@@ -118,12 +119,12 @@ Responses parser) run the first tool call they find and drop later ones — the
 coach's own prompting discipline never asks for more than one anyway.
 
 `record_fact` attests a fact only on the person's own words (rv4-AIDEV-07,
-`trust_facts.go`): the quote must appear verbatim in what they said, must hold
+`fact_evidence.go`): the quote must appear verbatim in what they said, must hold
 at least 12 characters of content once spaces and punctuation are dropped (a
 Han, kana or hangul character counts twice), and the fact's text must share at
 least 0.2 of its character n-grams with the quote. Both numbers are tunables
 chosen on a hand-written calibration set and pinned by
-`trust_facts_bounds_test.go`; support is lexical, so it catches text about
+`fact_evidence_bounds_test.go`; support is lexical, so it catches text about
 something else, not a restatement that merely sounds like the quote. The stored
 status stays `attested`; the interface and the gate copy say "recorded fact".
 

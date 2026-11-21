@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // maxToolIterations bounds the in-request tool-call loop so a
@@ -37,7 +39,7 @@ const truncatedMarker = "\n\n[response truncated — hit the token limit; ask me
 // tool call), bounded by maxToolIterations. It heartbeats the ai_run
 // before each provider call so the stale-run reaper can distinguish a
 // long-but-healthy turn from a crash-abandoned one.
-func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, prdTitle string, sections map[string]string, history []Message, executor *toolExecutor, onDelta func(string)) (string, error) {
+func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, prdTitle string, sections map[string]string, history []llm.Message, executor *toolExecutor, onDelta func(string)) (string, error) {
 	msgs := history
 	for i := 0; i < maxToolIterations; i++ {
 		logErr(c.log, "TouchAIRun", c.store.TouchAIRun(ctx, actorID, runID), "run_id", runID)
@@ -74,7 +76,7 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 		toolCallsJSON, _ := json.Marshal([]map[string]any{{
 			"id": turn.ToolCall.ID, "name": turn.ToolCall.Name, "arguments": turn.ToolCall.Arguments,
 		}})
-		if _, err := c.store.InsertAgentMessage(ctx, executor.actorID, executor.conversationID, string(RoleAssistant), "", toolCallsJSON, nil, nil); err != nil {
+		if _, err := c.store.InsertAgentMessage(ctx, executor.actorID, executor.conversationID, string(llm.RoleAssistant), "", toolCallsJSON, nil, nil); err != nil {
 			c.log.Error("persist tool-call message", "error", err)
 		}
 
@@ -90,19 +92,19 @@ func (c *Coach) runLoop(ctx context.Context, actorID, runID uuid.UUID, stage, pr
 		}
 
 		toolCallID := turn.ToolCall.ID
-		if _, err := c.store.InsertAgentMessage(ctx, executor.actorID, executor.conversationID, string(RoleTool), result, nil, &toolCallID, nil); err != nil {
+		if _, err := c.store.InsertAgentMessage(ctx, executor.actorID, executor.conversationID, string(llm.RoleTool), result, nil, &toolCallID, nil); err != nil {
 			c.log.Error("persist tool-result message", "error", err)
 		}
 
 		msgs = append(msgs,
-			Message{Role: RoleAssistant, ToolCall: turn.ToolCall},
-			Message{Role: RoleTool, Content: result, ToolCallID: turn.ToolCall.ID},
+			llm.Message{Role: llm.RoleAssistant, ToolCall: turn.ToolCall},
+			llm.Message{Role: llm.RoleTool, Content: result, ToolCallID: turn.ToolCall.ID},
 		)
 	}
 	return "", fmt.Errorf("%w: exceeded max tool iterations (%d)", ErrLoopInternal, maxToolIterations)
 }
 
-func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUID, limit int) ([]Message, error) {
+func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUID, limit int) ([]llm.Message, error) {
 	// The store filters to user turns and assistant text replies (dropping
 	// tool results and tool-call-only turns) and keeps the newest limit.
 	recent, err := c.store.ListRecentChatMessages(ctx, userID, conversationID, limit)
@@ -110,9 +112,9 @@ func (c *Coach) loadHistory(ctx context.Context, userID, conversationID uuid.UUI
 		return nil, fmt.Errorf("%w: %w", ErrLoopInternal, err)
 	}
 
-	var out []Message
+	var out []llm.Message
 	for _, m := range recent {
-		out = append(out, Message{Role: Role(m.Role), Content: m.Content})
+		out = append(out, llm.Message{Role: llm.Role(m.Role), Content: m.Content})
 	}
 	return out, nil
 }

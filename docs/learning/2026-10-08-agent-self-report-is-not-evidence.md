@@ -111,8 +111,8 @@ nothing, because the next agent trusts the first word it sees.
 and the documents were wrong. Both directions occur; verify each against
 its own source of truth.
 
-Related: [A signed-off token layer hides an unported component layer](2026-10-07-token-signoff-hides-unported-component-layer.md)
+Related: [A signed-off token layer hides an unported component layer](./2026-10-07-token-signoff-hides-unported-component-layer.md)
 — the same error one level down, where green tests over constants were
 read as proof the work was done. And
-[Skip-green and phantom-done](2026-10-05-skip-green-and-phantom-done.md)
+[Skip-green and phantom-done](./2026-10-05-skip-green-and-phantom-done.md)
 — a passing gate that never exercised anything.

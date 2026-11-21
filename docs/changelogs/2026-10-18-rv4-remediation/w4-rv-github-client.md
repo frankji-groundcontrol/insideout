@@ -7,7 +7,7 @@ two fixes and two comment-only commits), then this fragment. Cluster
 review IDs restart per review; `FR` is that review's prefix. The rules are in the
 [execution contract](../../review/2026-10-18-multirole-4/41-remediation-contract.md);
 the code these findings sit on is described in
-[w3-github-evidence.md](w3-github-evidence.md).
+[w3-github-evidence.md](./w3-github-evidence.md).
 
 Server only: two source files (`server/internal/github/github.go` and
 `appauth.go`), two new test files and two existing test files edited to clear the
@@ -87,7 +87,7 @@ spelled in this fragment.
 **Question: who may bind a private repo that the GitHub App can see?** Today the
 link check proves that this server can read the repo, not that the member linking
 it may. It is the open decision 2 of
-[w3-github-evidence.md](w3-github-evidence.md) ("Owner decision"), seen again by
+[w3-github-evidence.md](./w3-github-evidence.md) ("Owner decision"), seen again by
 the whole-change review and now reproduced. Until it is decided nothing changes:
 the first member to link an installed private repo holds it.
 
@@ -111,7 +111,7 @@ read its commit subjects; and the 200, 400 and 409 answers tell any member which
 private repos have the App installed and which are taken. A repo that is not
 installed and a name that does not exist cannot be told apart, on purpose.
 
-**Options** (the four of the cluster brief; [w3-github-evidence.md](w3-github-evidence.md)
+**Options** (the four of the cluster brief; [w3-github-evidence.md](./w3-github-evidence.md)
 lists the first, second and fourth):
 
 1. A proof inside the repo that names the project id (a file such as

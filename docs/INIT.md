@@ -6,14 +6,14 @@ definition.
 - The canonical **target product experience** is
   [`PRODUCT.md`](../PRODUCT.md).
 - The **currently running system** is described by
-  [`docs/architecture/`](architecture/index.md) and
-  [`docs/HANDOFF.md`](HANDOFF.md).
+  [`docs/architecture/`](./architecture/index.md) and
+  [`docs/HANDOFF.md`](./HANDOFF.md).
 - Delivery status lives on the task board,
-  [`docs/plans/README.md`](plans/README.md); known gaps and debt in
-  [`docs/issues/README.md`](issues/README.md), with the shipped-system
-  baseline in [`docs/TODO.md`](TODO.md).
+  [`docs/plans/README.md`](./plans/README.md); known gaps and debt in
+  [`docs/issues/README.md`](./issues/README.md), with the shipped-system
+  baseline in [`docs/TODO.md`](./TODO.md).
 - Historical decisions for the 2026-07-20 JuanLeMe → InsideOut rewrite remain
-  in [`docs/plans/2026-07-20-go-rewrite/`](plans/2026-07-20-go-rewrite/README.md).
+  in [`docs/plans/2026-07-20-go-rewrite/`](./plans/2026-07-20-go-rewrite/README.md).
 
 The product-experience baseline supersedes the old fixed eight-section PRD,
 rigid four-stage coaching, Workspace-admin PRD approval, and linear
@@ -31,4 +31,4 @@ production is now the Flutter Cobalt web client over the Go API and
 PostgreSQL with row-level security. Treat this section as historical context
 only: the target experience lives in [`PRODUCT.md`](../PRODUCT.md), and the
 running system (Go API, PostgreSQL/RLS, Flutter Cobalt web) is authoritative
-in [`docs/architecture/`](architecture/index.md).
+in [`docs/architecture/`](./architecture/index.md).

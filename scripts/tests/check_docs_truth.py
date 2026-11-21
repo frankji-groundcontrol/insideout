@@ -22,6 +22,12 @@ def read(name):
     return (ROOT / name).read_text(encoding="utf-8")
 
 
+def board():
+    """The task board plus the month files its finished rows move to (rv5-IDX-01)."""
+    months = sorted((ROOT / "docs/plans/index").glob("20*.md"))
+    return "\n".join([read("docs/plans/README.md")] + [p.read_text(encoding="utf-8") for p in months])
+
+
 def fail(failures, message):
     failures.append(message)
 
@@ -44,10 +50,10 @@ def board_row_matches_ci(failures):
     """PM-03: a CI android release-APK job voids the board's blocked row."""
     if "flutter build apk --release" not in read(".github/workflows/ci.yml"):
         return  # no android release build in CI; the row may stay blocked
-    row = next((line for line in read("docs/plans/README.md").splitlines()
+    row = next((line for line in board().splitlines()
                 if "2026-08-17-flutter-client.md" in line), "")
     if not row:
-        fail(failures, "docs/plans/README.md lost the 2026-08-17-flutter-client row")
+        fail(failures, "docs/plans/README.md and its index/ month files lost the 2026-08-17-flutter-client row")
         return
     if "In flight" in row or "blocked" in row:
         fail(failures, "plans/README.md's Nuxt→Flutter row is In flight/Android-blocked "
@@ -70,13 +76,13 @@ def backend_tree_matches_layout(failures):
         fail(failures, "backend.md's cmd/insideout line omits the cli*.go CLI/setup layer")
 
 
-def main_comment_defers_to_cli_go(failures):
-    """ARCH-04: main.go's doc comment points at cli.go's dispatch instead of
+def main_comment_defers_to_cli_dispatch(failures):
+    """ARCH-04: main.go's doc comment points at cli_dispatch.go's dispatch instead of
     enumerating product CLI verbs that go stale."""
     src = read("server/cmd/insideout/main.go")
     comment = src[: src.index("package main")]
-    if "cli.go" not in comment:
-        fail(failures, "cmd/insideout/main.go's doc comment does not point at cli.go's dispatch")
+    if "cli_dispatch.go" not in comment:
+        fail(failures, "cmd/insideout/main.go's doc comment does not point at cli_dispatch.go's dispatch")
     for match in re.finditer(r"//\s*insideout (login|whoami|workspaces|projects|prd)\b", comment):
         fail(failures, f"main.go still enumerates CLI verb '{match.group(1)}' in its doc comment")
 
@@ -151,7 +157,7 @@ def product_baseline_scopes_sections(failures):
 def handoff_records_mail_state(failures):
     """COMP-04: while the board still records 'all five flows exercised
     live', HANDOFF must carry the mail/lead-15 reconciliation line."""
-    if "all five flows exercised live" not in read("docs/plans/README.md"):
+    if "all five flows exercised live" not in board():
         return  # board record gone; the contradiction is settled
     handoff = read("docs/HANDOFF.md")
     for needle in ("all five flows", "owner-blocked", "pre-wave"):
@@ -178,7 +184,7 @@ def backup_doc_states_reality(failures):
 
 # Living docs checked for a PostgreSQL floor claim (rv4-COMP-08).
 PG_LIVING = ("README.md", "PRODUCT.md", "CONTRIBUTING.md", "SKILL.md", ".env.example",
-             "docs/SETENV.md", "docs/usage/", "docs/architecture/", "docs/PLAN.md", "skills/")
+             "docs/SETENV.md", "docs/usage/", "docs/architecture/", "skills/")
 PG_CLAIM = re.compile(r"(?i)postgres(?:ql)?\W{0,6}(\d+)\+")
 
 
@@ -206,7 +212,7 @@ if __name__ == "__main__":
     client_readme_matches_handoff(failures)
     board_row_matches_ci(failures)
     backend_tree_matches_layout(failures)
-    main_comment_defers_to_cli_go(failures)
+    main_comment_defers_to_cli_dispatch(failures)
     mcp_tool_counts(facts, failures)
     readme_quickstart_works_today(failures)
     product_baseline_scopes_sections(failures)

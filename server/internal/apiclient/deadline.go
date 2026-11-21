@@ -19,7 +19,7 @@ var (
 	// aiDeadline is for a call whose handler waits on the planner's model. A
 	// draft is one forced-tool call capped at 4096 output tokens, retried once
 	// when the provider hiccups, with a 90 s idle watchdog on the stream (see
-	// agent/taxonomy.go): on a slow provider it ends in minutes, not seconds.
+	// llm/taxonomy.go): on a slow provider it ends in minutes, not seconds.
 	aiDeadline = 5 * time.Minute
 )
 

@@ -68,6 +68,11 @@ func newRoadmapLocaleFixture(t *testing.T, locale string) roadmapLocaleFixture {
 	if err != nil {
 		t.Fatalf("convert idea: %v", err)
 	}
+	for _, s := range []string{"reviewing", "approved"} {
+		if _, err := st.UpdatePrdStatus(ctx, user.ID, prd.ID, s); err != nil {
+			t.Fatalf("status %s: %v", s, err)
+		}
+	}
 	project, err := st.EnsureProjectForPrd(ctx, user.ID, prd.ID)
 	if err != nil {
 		t.Fatalf("ensure project: %v", err)

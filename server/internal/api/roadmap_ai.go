@@ -71,8 +71,10 @@ func (s *Server) registerRoadmapAIRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/roadmap/{nid}/expand/confirm", s.requireAuth(s.handleConfirmExpandNode))
 }
 
-// handleBuildFromPrd drafts a branched roadmap from a refined PRD. It does
-// not write the tree; the caller confirms with handleConfirmBuildFromPrd.
+// handleBuildFromPrd drafts a branched roadmap from an approved PRD. It writes
+// nothing, not even the project (rv5-FEAT-01): projectId is in the answer only
+// when the PRD is already linked. The caller confirms with
+// handleConfirmBuildFromPrd.
 func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	prdID, ok := pathUUID(w, r, "pid")
@@ -84,12 +86,12 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	built, ok := s.loadBuildablePrd(w, r, userID, prdID)
+	prd, ok := s.loadBuildablePrd(w, r, userID, prdID)
 	if !ok {
 		return
 	}
 
-	done, ok := s.admitAI(w, r, built.project.WorkspaceID, userID, "roadmap:plan-mvp")
+	done, ok := s.admitAI(w, r, prd.WorkspaceID, userID, "roadmap:plan-mvp")
 	if !ok {
 		return
 	}
@@ -98,7 +100,7 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 	// errPlannerUnwound instead of staying "running".
 	planErr := errPlannerUnwound
 	defer func() { done(planErr) }()
-	tree, err := s.planner.PlanMVP(r.Context(), s.conversationLocale(r.Context(), userID, prdID), built.prd.Title, built.prd.Sections)
+	tree, err := s.planner.PlanMVP(r.Context(), s.conversationLocale(r.Context(), userID, prdID), prd.Title, prd.Sections)
 	planErr = err
 	if err != nil {
 		s.log.Error("plan mvp", "error", err)
@@ -106,15 +108,18 @@ func (s *Server) handleBuildFromPrd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusOK, map[string]any{
-		"projectId": built.project.ID.String(),
-		"tree":      planNodeResponse(*tree),
-	})
+	out := map[string]any{"tree": planNodeResponse(*tree)}
+	if prd.ProjectID != nil {
+		out["projectId"] = prd.ProjectID.String()
+	}
+	httpx.WriteJSON(w, http.StatusOK, out)
 }
 
 type confirmBuildRequest struct {
-	ExpectedCount *int         `json:"expectedCount"`
-	Tree          planNodeView `json:"tree"`
+	ExpectedCount *int `json:"expectedCount"`
+	// Force discards nodes with evidence or done or validated (rv5-FEAT-03).
+	Force bool         `json:"force"`
+	Tree  planNodeView `json:"tree"`
 }
 
 // handleConfirmBuildFromPrd writes a tree the caller already drafted.
@@ -122,6 +127,11 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 	userID, _ := UserID(r.Context())
 	prdID, ok := pathUUID(w, r, "pid")
 	if !ok {
+		return
+	}
+	// Replacing the whole tree is outside any one subtree.
+	if RootOf(r.Context()) != nil {
+		writeAgentScopeDenied(w)
 		return
 	}
 
@@ -135,28 +145,40 @@ func (s *Server) handleConfirmBuildFromPrd(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	built, ok := s.loadBuildablePrd(w, r, userID, prdID)
+	if _, ok := s.loadBuildablePrd(w, r, userID, prdID); !ok {
+		return
+	}
+	project, ok := s.ensureBuildProject(w, r, userID, prdID)
 	if !ok {
 		return
 	}
 
-	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, built.project.ID, req.ExpectedCount, planNodeFromView(req.Tree))
-	var rc *store.ReplaceConflictError
-	if errors.As(err, &rc) {
-		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount})
+	// An agent token may build onto an empty roadmap but never replace a live
+	// one, whatever it confirms (rv5-FEAT-02); the store checks under its lock.
+	opts := store.ReplaceOptions{ExpectedCount: req.ExpectedCount, Force: req.Force, EmptyOnly: isAgentToken(r)}
+	count, err := s.store.ReplaceRoadmapTree(r.Context(), userID, project.ID, opts, planNodeFromView(req.Tree))
+	if errors.Is(err, store.ErrRoadmapNotEmpty) {
+		writeAgentScopeDenied(w)
 		return
 	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
+	var rc *store.ReplaceConflictError
+	if errors.As(err, &rc) && rc.History {
+		httpx.WriteError(w, http.StatusConflict, "the roadmap has evidence or finished nodes a rebuild would erase; confirm with force", "roadmap_replace_has_history", map[string]interface{}{
+			"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount, "doneCount": rc.DoneCount, "validatedCount": rc.ValidatedCount})
+		return
+	}
+	if rc != nil {
+		httpx.WriteError(w, http.StatusConflict, "roadmap has existing nodes; confirm replacement", "replace_conflict", map[string]interface{}{"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount})
 		return
 	}
 	if err != nil {
-		s.log.Error("replace roadmap tree", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "replace roadmap tree", err, errMsgs{
+			store.ErrForbidden: "only the project owner or a workspace admin can change the roadmap",
+		})
 		return
 	}
 
-	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"projectId": built.project.ID.String(), "nodeCount": count})
+	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"projectId": project.ID.String(), "nodeCount": count})
 }
 
 type expandDraftView struct {
@@ -169,7 +191,7 @@ type expandDraftView struct {
 func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
+	if !ok || s.agentRootRefuses(w, r, &nid) {
 		return
 	}
 	if s.planner == nil {
@@ -178,13 +200,14 @@ func (s *Server) handleExpandNode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	node, err := s.store.GetRoadmapNode(r.Context(), userID, nid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
+	if err != nil {
+		s.writeStoreError(w, "get roadmap node", err, errMsgs{store.ErrNotFound: "node not found"})
 		return
 	}
-	if err != nil {
-		s.log.Error("get roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+	// Refuse before the planner runs: a draft the caller could never confirm
+	// would only spend a model call (rv5-TREEX-07).
+	if !node.CanWrite {
+		httpx.WriteError(w, http.StatusForbidden, nodeWriteDenied, "", nil)
 		return
 	}
 
@@ -241,7 +264,7 @@ type confirmExpandRequest struct {
 func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
+	if !ok || s.agentRootRefuses(w, r, &nid) {
 		return
 	}
 
@@ -281,17 +304,11 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 	}
 
 	created, err := s.store.ExpandRoadmapNode(r.Context(), userID, nid, children)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("expand roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "expand roadmap node", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: nodeWriteDenied,
+		})
 		return
 	}
 	now := s.now()

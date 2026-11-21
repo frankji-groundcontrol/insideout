@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/testlock"
 )
 
@@ -127,7 +128,7 @@ func TestAdmitDone_ReportsTheBreakerVerdicts(t *testing.T) {
 
 	t.Run("a success clears the failure count", func(t *testing.T) {
 		resetBreaker(t, c)
-		admitDone(t, fmt.Errorf("%w: anthropic returned 429", ErrProviderRateLimited))
+		admitDone(t, fmt.Errorf("%w: anthropic returned 429", llm.ErrProviderRateLimited))
 		admitDone(t, nil)
 		if failures, _ := breakerState(t, c); failures != 0 {
 			t.Fatalf("failure_count = %d after a successful call, want the reset to 0", failures)
@@ -138,9 +139,9 @@ func TestAdmitDone_ReportsTheBreakerVerdicts(t *testing.T) {
 		name string
 		err  error
 	}{
-		{"rate limited records a failure", fmt.Errorf("%w: anthropic returned 429", ErrProviderRateLimited)},
-		{"transient records a failure", fmt.Errorf("%w: anthropic returned 503", ErrProviderTransient)},
-		{"an upstream stall records a failure", ErrUpstreamStall},
+		{"rate limited records a failure", fmt.Errorf("%w: anthropic returned 429", llm.ErrProviderRateLimited)},
+		{"transient records a failure", fmt.Errorf("%w: anthropic returned 503", llm.ErrProviderTransient)},
+		{"an upstream stall records a failure", llm.ErrUpstreamStall},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			resetBreaker(t, c)
@@ -173,7 +174,7 @@ func TestAdmitDone_ReportsTheBreakerVerdicts(t *testing.T) {
 }
 
 // While the breaker is open, Admit refuses with the coach's own 503
-// CIRCUIT_OPEN before any permit, run row or provider call is spent.
+// circuit_open before any permit, run row or provider call is spent.
 func TestAdmit_RefusedWhileTheCircuitIsOpen(t *testing.T) {
 	c := New(newTestStore(t), nil, discardLog())
 	userID, workspaceID := admitFixture(t, c)
@@ -188,9 +189,9 @@ func TestAdmit_RefusedWhileTheCircuitIsOpen(t *testing.T) {
 		t.Fatal("admit was allowed while the circuit was open")
 	}
 	if rec.Code != http.StatusServiceUnavailable ||
-		!strings.Contains(rec.Body.String(), `"code":"CIRCUIT_OPEN"`) ||
-		!strings.Contains(rec.Body.String(), `"circuit_state":"open"`) {
-		t.Fatalf("open-circuit refusal = %d %s, want a 503 CIRCUIT_OPEN naming the open state", rec.Code, rec.Body.String())
+		!strings.Contains(rec.Body.String(), `"code":"circuit_open"`) ||
+		!strings.Contains(rec.Body.String(), `"circuitState":"open"`) {
+		t.Fatalf("open-circuit refusal = %d %s, want a 503 circuit_open naming the open state", rec.Code, rec.Body.String())
 	}
 
 	var runs int

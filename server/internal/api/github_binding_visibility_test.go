@@ -24,9 +24,9 @@ func TestLinkingARepoRequiresGitHubToShowItToTheServer(t *testing.T) {
 	}{
 		{"private repo the App is installed on", &fakeRepo{private: true, install: 77}, false, false, http.StatusOK, ""},
 		{"public repo the App is not installed on", &fakeRepo{}, false, false, http.StatusOK, ""},
-		{"private repo the App cannot see", &fakeRepo{private: true}, false, false, http.StatusBadRequest, "GITHUB_REPO_NOT_VISIBLE"},
-		{"repo GitHub has never heard of", nil, false, false, http.StatusBadRequest, "GITHUB_REPO_NOT_VISIBLE"},
-		{"GitHub is down", &fakeRepo{private: true, install: 77}, true, false, http.StatusBadGateway, "GITHUB_UPSTREAM"},
+		{"private repo the App cannot see", &fakeRepo{private: true}, false, false, http.StatusBadRequest, "github_repo_not_visible"},
+		{"repo GitHub has never heard of", nil, false, false, http.StatusBadRequest, "github_repo_not_visible"},
+		{"GitHub is down", &fakeRepo{private: true, install: 77}, true, false, http.StatusBadGateway, "github_upstream"},
 		{"no App configured: nothing to verify against", &fakeRepo{private: true}, false, true, http.StatusOK, ""},
 	}
 	for _, tc := range cases {

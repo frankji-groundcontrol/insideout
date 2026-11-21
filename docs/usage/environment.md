@@ -3,8 +3,8 @@
 The single source of truth for every environment variable InsideOut reads —
 what each one means, which process consumes it, whether it is required, and
 its default. For the developer workflow around these variables (prereqs,
-running, testing) see [local-development.md](local-development.md); for the
-compose topology see [deployment.md](deployment.md). The committed template is
+running, testing) see [local-development.md](./local-development.md); for the
+compose topology see [deployment.md](./deployment.md). The committed template is
 [`.env.example`](../../.env.example).
 
 ## How it works
@@ -39,7 +39,7 @@ means required and a *commented* one means optional, with the value shown being
 the default already in effect. Only `DATABASE_URL` and `INSIDEOUT_JWT_SECRET`
 are uncommented, because only those two make the server refuse to boot. The
 "Required" column below restates that, and
-[`scripts/test_env_catalog.py`](../../scripts/test_env_catalog.py) asserts the
+[`scripts/tests/env/test_env_catalog.py`](../../scripts/tests/env/test_env_catalog.py) asserts the
 two agree, and `server/internal/setup/catalog/parity_test.go` feeds the same
 skeleton and a live `.env` through both the Go catalog and `scripts/env_catalog.py`
 and fails CI if they differ. `./scripts/env.sh edit` shows every variable's live state; the
@@ -121,7 +121,7 @@ front of the compose nginx. With the value at 1 or more, bind the published
 client port (`CLIENT_PORT`) to `127.0.0.1` or firewall it, unless nothing else
 can reach it: a direct connection can write the entry the server counts when
 a further proxy is also trusted. The hosted image does not append (the edge
-already did), so hosted stays at 1. See [deployment](deployment.md).
+already did), so hosted stays at 1. See [deployment](./deployment.md).
 
 ### AI provider
 
@@ -183,12 +183,13 @@ derived default because Compose cannot nest `${...}` inside a `:-` default
 Read by the `insideout` CLI and the `insideout-mcp` stdio server through
 [`clientconfig.Resolve`](../../server/internal/clientconfig/resolve.go), never by
 `serve`. The saved-login file and the rest of the flow are in
-[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md).
+[cli-mcp-and-guidance.md](./cli-mcp-and-guidance.md).
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
 | `INSIDEOUT_API` | no | the saved login's server, else the hosted default | API base the client talks to, `/api/v1` included. Order: `--api`, this variable, the saved login, the hosted default. A saved token is only sent to the server it was saved for. |
 | `INSIDEOUT_TOKEN` | no | — | Bearer token for whichever base is in effect; wins over the saved login. Nothing renews it: the saved session's refresh token is never used with it. |
+| `INSIDEOUT_AGENT_ROOT` | no | — | `insideout-mcp` only: a roadmap node id. The agent-scope token the MCP mints carries it as its root, so the tools' node writes outside that node's subtree answer 403 `agent_scope_denied` and `agent_context` focuses on it by default. |
 
 ### Setup and test overrides
 
@@ -197,7 +198,7 @@ Test affordances; none is needed for a normal install.
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|
 | `INSIDEOUT_ENV_FILE` | no | `<repo>/.env` | Env file that `env.sh`, `setup.sh`, `insideout setup --local` and `setup --check` read and write instead of the root `.env`. Point it at a scratch file so a test never touches the real one. |
-| `INSIDEOUT_TEST_STRICT` | no | off | Test-only. When set (any value but empty, `0`, `false`, `no`, `off`), `server/internal/testlock` refuses a database that is not on this machine. Covered: store `newTestStore` and `writeWalkStore`, agent `newTestStore`, cmd `dbEnv` and `openTestStore`, and callers of `testlock.Acquire`, `SignupMode`, or `RequireLocalURL`. Other `DATABASE_URL`-gated tests are not. CI does not set the variable because `ci.yml` is at its line budget; shared-instance workflows leave it unset. |
+| `INSIDEOUT_TEST_STRICT` | no | off | Test-only. When set (any value but empty, `0`, `false`, `no`, `off`), `server/internal/testlock` refuses a database that is not on this machine. Covered: store `newTestStore` and `writeWalkStore`, agent `newTestStore`, cmd `dbEnv` and `openTestStore`, and callers of `testlock.Acquire`, `SignupMode`, or `RequireLocalURL`. Other `DATABASE_URL`-gated tests are not. CI does not set the variable yet; nothing stops it, since its database is a service container on `localhost` (workflows have no line limit). Shared-instance workflows leave it unset. |
 | `INSIDEOUT_SETUP_REPO_ROOT` | no | walk up from the working directory | Checkout `insideout setup` treats as the repo root. It must hold `docker-compose.yml`, `.env.example` and `server/go.mod`, else the command stops. |
 | `INSIDEOUT_ROLELESS_URL` | no | `postgres://postgres@127.0.0.1:5612/postgres?sslmode=disable` | `-tags roleless` Go tests only (CI sets it): a superuser DSN of a throwaway cluster that has no `insideout_*` roles; the suite refuses a cluster that already has them. Never aim it at a shared instance. |
 

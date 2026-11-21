@@ -71,9 +71,18 @@ func TestBuildDraftWaitsForConfirm(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	t.Cleanup(ts.Close)
 
+	// Linked first, so the draft names the project; that a draft never
+	// creates one is rv5_build_path_test.go's.
+	project, err := st.EnsureProjectForPrd(ctx, admin.ID, prd.ID)
+	if err != nil {
+		t.Fatalf("ensure project: %v", err)
+	}
 	drafted := draftBuild(t, ts, token, prd.ID)
+	if drafted.ProjectID != project.ID.String() {
+		t.Fatalf("draft of a linked PRD: projectId %q, want %s", drafted.ProjectID, project.ID)
+	}
 
-	projectID := uuid.MustParse(drafted.ProjectID)
+	projectID := project.ID
 	before, err := st.ListRoadmap(ctx, admin.ID, projectID)
 	if err != nil {
 		t.Fatalf("list roadmap after draft: %v", err)
@@ -115,8 +124,8 @@ func draftBuild(t *testing.T, ts *httptest.Server, token string, prdID uuid.UUID
 	if err := json.Unmarshal(body, &drafted); err != nil {
 		t.Fatalf("decode draft: %v; raw %s", err, body)
 	}
-	if drafted.ProjectID == "" || len(drafted.Tree) == 0 || string(drafted.Tree) == "null" {
-		t.Fatalf("draft response missing projectId or tree: %s", body)
+	if len(drafted.Tree) == 0 || string(drafted.Tree) == "null" {
+		t.Fatalf("draft response missing the tree: %s", body)
 	}
 	return draftedBuild{ProjectID: drafted.ProjectID, Tree: drafted.Tree}
 }

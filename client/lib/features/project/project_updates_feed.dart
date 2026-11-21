@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors_l10n.dart';
 import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
@@ -23,15 +24,23 @@ class ProjectUpdatesFeed extends StatefulWidget {
     required this.onChanged,
     required this.onEdit,
     required this.onRemove,
+    required this.canDecide,
+    this.nextCursor,
   });
 
-  /// Unread since the server began applying accepted proposals (rv4-FEAT-02);
-  /// kept so the page and the tests that build this widget still compile.
+  /// The project whose older pages "Load older updates" reads.
   final String projectId;
   final List<ProjectUpdate> updates;
   final Future<void> Function() onChanged;
   final Future<void> Function(ProjectUpdate update, String content) onEdit;
   final Future<void> Function(ProjectUpdate update) onRemove;
+
+  /// The project owner or an admin (the view's canWritePlan): only they
+  /// decide a proposal, so only they see Accept and Reject (FE-05).
+  final bool canDecide;
+
+  /// Where the older updates start; null when [updates] reach the first one.
+  final String? nextCursor;
 
   @override
   State<ProjectUpdatesFeed> createState() => _ProjectUpdatesFeedState();
@@ -46,6 +55,58 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
   /// exist (rv4-FR-F02, F08, F15).
   final _deciding = <String, bool>{};
   final _decided = <String>{};
+
+  /// Older pages read with "Load older updates" (rv5-PARB-07). The page
+  /// hands a new list on every rebuild, so the history starts over only when
+  /// the project or its newest update changes, or after this feed wrote to
+  /// an older row (the reload does not carry that row's new state).
+  var _older = <ProjectUpdate>[];
+  late String? _cursor = widget.nextCursor;
+  var _loading = false;
+  var _olderStale = false;
+
+  @override
+  void didUpdateWidget(ProjectUpdatesFeed old) {
+    super.didUpdateWidget(old);
+    if (_olderStale ||
+        old.projectId != widget.projectId ||
+        old.updates.firstOrNull?.id != widget.updates.firstOrNull?.id) {
+      _older = [];
+      _cursor = widget.nextCursor;
+      _olderStale = false;
+    }
+  }
+
+  /// Called before a write's reload: a write to an older row resets the
+  /// history on the next update.
+  void _wrote(ProjectUpdate u) {
+    if (_older.any((o) => o.id == u.id)) _olderStale = true;
+  }
+
+  Future<void> _loadOlder() async {
+    final cursor = _cursor;
+    if (cursor == null || _loading) return;
+    final api = context.read<Session>().api;
+    final t = context.read<Appearance>().t;
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _loading = true);
+    try {
+      final page = await api.listProjectUpdates(
+        widget.projectId,
+        before: cursor,
+      );
+      if (mounted) {
+        setState(() {
+          _older = [..._older, ...page.updates];
+          _cursor = page.nextCursor;
+        });
+      }
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(localizedError(e, t))));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
 
   // FEAT-03: the proposal decision loop — the server resolves authority
   // (project owner or workspace admin); the web just surfaces the outcome.
@@ -70,7 +131,9 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
       _deciding.remove(id);
       if (done) _decided.add(id);
     });
-    if (done) await widget.onChanged();
+    if (!done) return;
+    _wrote(update);
+    await widget.onChanged();
   }
 
   Widget _decision(ProjectUpdate u, Appearance l10n) {
@@ -107,7 +170,7 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
         const SizedBox(height: 12),
         if (widget.updates.isEmpty)
           Text(l10n.t('github.empty'), style: theme.textTheme.bodyLarge),
-        for (final u in widget.updates) ...[
+        for (final u in [...widget.updates, ..._older]) ...[
           FieldCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +190,12 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                   // FEAT-03: an agent proposal is decided, not
                   // edited — Accept/Reject own the record.
                   child: u.kind == 'agent_proposal' && u.decision.isEmpty
-                      ? _decision(u, l10n)
+                      ? (widget.canDecide
+                            ? _decision(u, l10n)
+                            : Text(
+                                l10n.t('proposal.pending'),
+                                style: theme.textTheme.bodySmall,
+                              ))
                       : PopupMenuButton<String>(
                           onSelected: (value) async {
                             if (value == 'edit') {
@@ -152,6 +220,7 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                                   () => widget.onEdit(u, values.first.trim()),
                                 );
                                 if (done && context.mounted) {
+                                  _wrote(u);
                                   await widget.onChanged();
                                 }
                               }
@@ -161,6 +230,7 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                                 () => widget.onRemove(u),
                               );
                               if (done && context.mounted) {
+                                _wrote(u);
                                 await widget.onChanged();
                               }
                             }
@@ -179,6 +249,16 @@ class _ProjectUpdatesFeedState extends State<ProjectUpdatesFeed> {
                 ),
               ],
             ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (_cursor != null) ...[
+          BlockButton(
+            label: l10n.t('project.loadOlder'),
+            variant: BlockButtonVariant.secondary,
+            expand: true,
+            busy: _loading,
+            onPressed: _loadOlder,
           ),
           const SizedBox(height: 12),
         ],

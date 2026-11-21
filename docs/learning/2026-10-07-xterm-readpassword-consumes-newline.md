@@ -17,7 +17,7 @@ slot (run `dwfrun-3453f271`, reviewer-C) caught exactly this at
 hung for a second Enter per secret. The fix removes the drain after
 `ReadPassword`. This is the TTY twin of the shared-stdin-buffer trap
 recorded 2026-08-24
-([learning](2026-08-24-cli-prompts-share-one-stdin-reader.md)): the
+([learning](./2026-08-24-cli-prompts-share-one-stdin-reader.md)): the
 buffered reader still matters for the non-TTY path, but after
 `ReadPassword` there is nothing left to drain.
 

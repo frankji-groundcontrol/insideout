@@ -8,7 +8,7 @@ they are.
 
 ## Execution
 
-Live coordination state: [track YAML](2026-10-20-completion-evidence-or-reason.track.yaml).
+Live coordination state: [track YAML](./2026-10-20-completion-evidence-or-reason.track.yaml).
 
 - [x] Red store test: `in_progress` to `done` with no evidence and no
       reason is refused.

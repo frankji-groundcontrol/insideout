@@ -44,7 +44,7 @@ docker compose exec -T postgres sh -c \
 
 Expected output is `insideout_app`, followed by
 `./scripts/env.sh check --db` and the `TestAuthz` command in
-[database-app-dsn.md](database-app-dsn.md). If authentication fails, compare
+[database-app-dsn.md](./database-app-dsn.md). If authentication fails, compare
 the value used to initialize the volume with the password in the app DSN;
 update both together or recreate the disposable volume.
 

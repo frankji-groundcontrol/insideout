@@ -63,18 +63,20 @@ set_config('app.user_id', $1, true)` from the JWT-validated caller's ID, runs
 `fn`, and commits. RLS policies (`server/db/migrations/20260720150000_row_level_security.sql`
 onward) read that value via a small `insideout.current_user_id()` SQL
 function and enforce the same authorization checklist the Go app layer
-already checks — a database-level backstop against app-layer bugs. `insideout_app` is
+already checks (for the roadmap tree, through the very same SQL function) — a database-level backstop against app-layer bugs. `insideout_app` is
 not the table owner, so RLS applies to the runtime login. DEFINER
 helpers run as `insideout_owner` (NOSUPERUSER, `BYPASSRLS`) so membership
 lookups do not recurse under FORCE RLS.
 
-16 tables carry RLS, every one of them `FORCE`d (`workspace_memberships` too,
+17 tables carry RLS, every one of them `FORCE`d (`workspace_memberships` too,
 since the 2026-08-19 role split): `agent_conversations`, `agent_messages`,
 `ai_runs`, `ideas`, `prd_commits`, `prd_revisions`, `prds`, `project_updates`,
 `projects`, `proposal_decisions`, `proposal_items`, `roadmap_evidence`,
-`roadmap_nodes`, `users`, `workspace_memberships` and `workspaces`.
-`sessions`, `auth_tokens`, `invitations`, `settings`, `ai_run_events`,
-`ai_circuit_breaker` and the migration ledger `schema_migrations` are
+`roadmap_node_assignments`, `roadmap_nodes`, `users`, `workspace_memberships`
+and `workspaces`.
+`sessions`, `auth_tokens`, `invitations`, `reset_watches`, `settings`,
+`ai_run_events`, `ai_circuit_breaker` and the migration ledger
+`schema_migrations` are
 intentionally left without RLS: backend-only auth plumbing, deployment
 settings, system telemetry and bookkeeping with no per-end-user access story.
 
@@ -128,6 +130,46 @@ drop and convert over the ideas they wrote there, cannot insert a PRD into it,
 and can no longer edit or snapshot their PRDs or edit or delete their project
 updates. The admin branches need no change, since `_is_admin` implies
 membership.
+
+Roadmap tree writes follow one rule in SQL (rv5 row 2.2, migration
+`20261121100000_roadmap_node_writer.sql`): `insideout._can_write_node(node,
+user)` is true for the project owner, a workspace admin of the node's
+workspace (`insideout._is_plan_writer(project, user)`), or a current member who
+owns the node or any ancestor of it. The functions are `SECURITY DEFINER`,
+owned by `insideout_owner`, `STABLE`, with `search_path = insideout, pg_temp`:
+a policy on `roadmap_nodes` that queried `roadmap_nodes` itself would recurse
+(42P17, BUG-007). The `roadmap_nodes` update and delete policies call it on
+the row; the insert policy calls it on the parent (a root takes
+`_is_plan_writer`) and still pins `created_by` to the caller; the
+`roadmap_evidence` insert policy calls it on the node. Insert and update also
+require a child's `project_id` to equal its parent's, read through the
+`SECURITY DEFINER` helper `insideout._node_project(node)`, so a writable
+parent cannot link a row into another tenant's project, and an update may
+not change `project_id`. Select stays
+workspace-wide. The policies hold less than the store: they judge the row
+where it stood when the statement started, so a raw `UPDATE` can still move
+a writable row anywhere inside its project, and the rules for a delegate's
+own root are not in SQL. The Go store calls the same function through
+`requireNodeWriter` (`server/internal/store/authz.go`) and adds what a policy
+cannot see: moving, deleting or reassigning a node takes `requireNodeManager`
+(a plan writer, or a writer of the node's parent), so a delegate never moves,
+deletes or reassigns the node they were handed. Validation, replacing the
+whole tree and proposals stay with `requirePlanWriter`. Pinned by
+`server/internal/store/roadmap_delegate_test.go`, raw SQL included.
+
+Every change of a node's owner is recorded (rv5 row 2.6, migration
+`20261121110000_roadmap_node_assignments.sql`): the append-only
+`insideout.roadmap_node_assignments` (node, from user, to user, assigned by,
+kind `delegate`, `handback` or `cleared`, a note of at most 500 characters,
+time) is readable by every member of the node's workspace and insertable only
+by a current member in their own name (`assigned_by = current_user_id()`);
+it has no update or delete policy. Its policies reach the workspace through
+`_node_project` and `_project_workspace`, never through `roadmap_nodes` under
+RLS. The migration backfills one `delegate` row, by an unknown hand, per node
+that already had an owner. The same migration gives `project_updates` a
+nullable `node_id` (`ON DELETE SET NULL`) and the kinds `node_delegated`,
+`node_handed_back` and `node_done`. Pinned by
+`server/internal/store/roadmap_assignments_test.go` and the RLS walks.
 
 The Go store checks the same: `requireMember` in `UpdateIdea`, `DropIdea` and
 `ConvertIdea` (and the membership predicate of `GetIdeaForMember`), and ahead
@@ -281,7 +323,7 @@ policies needs to route around any of these again:
   which is what makes the migration re-runnable).
 - `jsonb` columns bound from Go `map`/`[]byte` values fail under
   `pgx.QueryExecModeSimpleProtocol` (required for PgBouncer/Supavisor
-  transaction-pooling connections — see [deployment](deployment.md)): Go
+  transaction-pooling connections — see [deployment](./deployment.md)): Go
   `map` types have no default encoder at all, and `[]byte` defaults to
   `bytea` (hex-escaped) rather than plain text, which an `::jsonb` cast
   cannot parse. Fixed by `json.Marshal`-ing to a Go `string` explicitly and

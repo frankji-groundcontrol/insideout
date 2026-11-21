@@ -10,7 +10,17 @@
     "createdAt": "2026-10-19T01:15:41+08:00",
     "updatedAt": "2026-10-19T01:15:41+08:00",
     "acceptance": "",
-    "validationReason": ""
+    "validationReason": "",
+    "completionReason": "",
+    "canWrite": true,
+    "creatorName": "owner",
+    "editorName": "owner",
+    "rollup": {
+      "leaves": 1,
+      "done": 0,
+      "validated": 0,
+      "earliestDeadline": null
+    }
   },
   {
     "id": "04a92124-4aaa-4ee0-a956-491ed5d65083",
@@ -23,7 +33,17 @@
     "createdAt": "2026-10-19T01:15:41+08:00",
     "updatedAt": "2026-10-19T01:15:41+08:00",
     "acceptance": "",
-    "validationReason": ""
+    "validationReason": "",
+    "completionReason": "",
+    "canWrite": true,
+    "creatorName": "owner",
+    "editorName": "owner",
+    "rollup": {
+      "leaves": 1,
+      "done": 0,
+      "validated": 0,
+      "earliestDeadline": null
+    }
   },
   {
     "id": "937a598a-2006-4a45-a969-cf810e458646",
@@ -36,7 +56,17 @@
     "createdAt": "2026-10-19T01:15:41+08:00",
     "updatedAt": "2026-10-19T01:15:41+08:00",
     "acceptance": "",
-    "validationReason": ""
+    "validationReason": "",
+    "completionReason": "",
+    "canWrite": true,
+    "creatorName": "owner",
+    "editorName": "owner",
+    "rollup": {
+      "leaves": 1,
+      "done": 0,
+      "validated": 0,
+      "earliestDeadline": null
+    }
   },
   {
     "id": "3db03d88-3120-4e80-9e7e-9f42294237c8",
@@ -49,6 +79,16 @@
     "createdAt": "2026-10-19T01:15:41+08:00",
     "updatedAt": "2026-10-19T01:15:41+08:00",
     "acceptance": "",
-    "validationReason": ""
+    "validationReason": "",
+    "completionReason": "",
+    "canWrite": true,
+    "creatorName": "owner",
+    "editorName": "owner",
+    "rollup": {
+      "leaves": 1,
+      "done": 0,
+      "validated": 0,
+      "earliestDeadline": null
+    }
   }
 ]

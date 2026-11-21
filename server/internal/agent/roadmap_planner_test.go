@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -104,12 +105,12 @@ func TestAssembleTree_CycleSafe(t *testing.T) {
 // are not JSON, so PlanMVP cannot assemble a tree from them.
 type garbageRoadmapStreamer struct{}
 
-func (garbageRoadmapStreamer) StreamChat(context.Context, string, []Message, []Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (garbageRoadmapStreamer) StreamChat(context.Context, string, []llm.Message, []llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
-func (garbageRoadmapStreamer) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-	return Turn{ToolCall: &ToolCallRequest{Name: submitRoadmapTool.Name, Arguments: "not json {"}}, nil
+func (garbageRoadmapStreamer) StreamChatForcingTool(context.Context, string, []llm.Message, llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{ToolCall: &llm.ToolCallRequest{Name: submitRoadmapTool.Name, Arguments: "not json {"}}, nil
 }
 
 func (garbageRoadmapStreamer) Model() string { return "stub" }

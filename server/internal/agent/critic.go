@@ -2,12 +2,11 @@ package agent
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/google/uuid"
 )
 
@@ -126,126 +125,6 @@ func (c *Coach) captureRankedCritique(ctx context.Context, actorID, conversation
 	_ = sse.criticFindings(merged)
 }
 
-// CriticFinding is one item from a critic pass, persisted in
-// agent_conversations.meta.critic_findings — the critique→finalize gate
-// reads this list, never the model's say-so (plan §4.4).
-type CriticFinding struct {
-	ID         string `json:"id"`
-	Section    string `json:"section"`
-	Severity   string `json:"severity"` // blocking | major | minor
-	Kind       string `json:"kind"`     // defect (quotes the PRD) | omission (names what's missing)
-	Quote      string `json:"quote,omitempty"`
-	Issue      string `json:"issue"`
-	Suggestion string `json:"suggestion,omitempty"`
-	Status     string `json:"status"` // open | resolved | overridden
-}
-
-const (
-	FindingOpen       = "open"
-	FindingResolved   = "resolved"
-	FindingOverridden = "overridden"
-
-	maxCriticRounds = 2
-)
-
-func loadCriticFindings(extra map[string]json.RawMessage) []CriticFinding {
-	var out []CriticFinding
-	if v, ok := extra["critic_findings"]; ok {
-		_ = json.Unmarshal(v, &out)
-	}
-	return out
-}
-
-func saveCriticFindings(extra map[string]json.RawMessage, findings []CriticFinding) {
-	b, err := json.Marshal(findings)
-	if err != nil {
-		return
-	}
-	extra["critic_findings"] = b
-}
-
-// criticState is the small bit of round-tracking the finalize gate and
-// the round cap need, stored alongside the findings under the same
-// "critic_round_count" / "critic_skipped" extra keys.
-type criticState struct {
-	RoundCount int    `json:"roundCount"`
-	Skipped    string `json:"skipped,omitempty"` // reason, e.g. "contention" — empty means not skipped
-}
-
-func loadCriticState(extra map[string]json.RawMessage) criticState {
-	var cs criticState
-	if v, ok := extra["critic_state"]; ok {
-		_ = json.Unmarshal(v, &cs)
-	}
-	return cs
-}
-
-func saveCriticState(extra map[string]json.RawMessage, cs criticState) {
-	b, err := json.Marshal(cs)
-	if err != nil {
-		return
-	}
-	extra["critic_state"] = b
-}
-
-func hasOpenBlockingFindings(findings []CriticFinding) bool {
-	for _, f := range findings {
-		if f.Status == FindingOpen && f.Severity == "blocking" {
-			return true
-		}
-	}
-	return false
-}
-
-func reportFindingsTool() Tool {
-	return Tool{
-		Name:        "report_findings",
-		Description: "Report your critique findings against the PRD.",
-		Parameters: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"findings": map[string]any{
-					"type": "array",
-					"items": map[string]any{
-						"type": "object",
-						"properties": map[string]any{
-							"section":    map[string]any{"type": "string"},
-							"severity":   map[string]any{"type": "string", "enum": []any{"blocking", "major", "minor"}},
-							"kind":       map[string]any{"type": "string", "enum": []any{"defect", "omission"}},
-							"quote":      map[string]any{"type": "string", "description": "required for kind=defect: the exact PRD text motivating this finding, verbatim. Omit for kind=omission."},
-							"issue":      map[string]any{"type": "string"},
-							"suggestion": map[string]any{"type": "string"},
-						},
-						"required": []any{"section", "severity", "kind", "issue"},
-					},
-				},
-			},
-			"required": []any{"findings"},
-		},
-	}
-}
-
-const criticSystemPromptTemplate = `你是一位严格的 PRD 评审员，正在独立评审一份 PRD——你没有看过起草过程中的对话，只看到 PRD 本身和已记录的事实清单。你的评审基于以下标准：
-
-1. 目标用户是否具体（不能是"所有人"）？
-2. 问题是否从用户视角清晰陈述？
-3. 方案是否真的解决了这个问题？
-4. 是否说明了现有替代方案，以及为什么不够好？
-5. 目标是否可衡量？
-6. requirements 章节是否描述的是问题而非预设方案（Cagan 的 "what vs how"）？
-7. 一个工程师能否根据这份 PRD 构建，一个 QA 能否据此写测试计划？
-
-对每一节都要评估，不能跳过。每条 finding 分两种：kind="defect" 表示章节里有具体问题，quote 参数必须是该章节的原文片段；kind="omission" 表示章节缺少某项标准要求的内容，不需要 quote。severity 分 blocking/major/minor。必须通过 report_findings 工具报告，不要用自然语言回复。
-%s
-
-%s
-
-当前 PRD 标题：%s
-当前各章节内容：
-%s
-已记录的事实清单：
-%s`
-
 // runCritic makes one fresh-context critic call (no chat history — only
 // the PRD and the ledger, per plan §4.4) and returns verified findings.
 // The prompt language follows the conversation's locale (zh prompts here,
@@ -253,7 +132,7 @@ const criticSystemPromptTemplate = `你是一位严格的 PRD 评审员，正在
 // get one re-prompt retry with the error appended; a second failure
 // returns ok=false so the caller can degrade to single-context critique
 // rather than fail the turn.
-func runCritic(ctx context.Context, streamer ChatStreamer, locale, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage Usage, ok bool) {
+func runCritic(ctx context.Context, streamer llm.ChatStreamer, locale, prdTitle string, sections map[string]string, lm ledgerMeta, focusSections []string) (findings []CriticFinding, usage llm.Usage, ok bool) {
 	tmpl, focusPrefix, userDirective, retryFormat := criticSystemPromptTemplate,
 		"本轮只需重新评审以下此前被标记过的章节：",
 		"请按系统提示中的标准独立评审这份 PRD，并通过 report_findings 工具报告全部发现。",
@@ -282,7 +161,7 @@ func runCritic(ctx context.Context, streamer ChatStreamer, locale, prdTitle stri
 		// a 400 on every call — the PRD itself rides in the system prompt,
 		// so this turn only needs to direct the forced tool call.
 		user := userDirective
-		turn, err := streamer.StreamChatForcingTool(ctx, sys, []Message{{Role: RoleUser, Content: user}}, tool, nil)
+		turn, err := streamer.StreamChatForcingTool(ctx, sys, []llm.Message{{Role: llm.RoleUser, Content: user}}, tool, nil)
 		usage = turn.Usage
 		if err != nil {
 			lastErr = err
@@ -300,43 +179,4 @@ func runCritic(ctx context.Context, streamer ChatStreamer, locale, prdTitle stri
 		return parsed, usage, true
 	}
 	return nil, usage, false
-}
-
-// parseCriticFindings applies the verification gate: a defect finding
-// whose quote isn't actually grounded in the PRD text is dropped (the
-// hallucination it would otherwise let through), not the whole batch.
-func parseCriticFindings(argsJSON string, sections map[string]string) ([]CriticFinding, error) {
-	var args struct {
-		Findings []CriticFinding `json:"findings"`
-	}
-	if err := json.Unmarshal([]byte(argsJSON), &args); err != nil {
-		return nil, fmt.Errorf("invalid report_findings arguments: %w", err)
-	}
-
-	var allSections strings.Builder
-	for _, k := range store.PrdSectionKeys {
-		allSections.WriteString(sections[k])
-		allSections.WriteString("\n")
-	}
-	full := allSections.String()
-
-	var out []CriticFinding
-	for _, f := range args.Findings {
-		if f.Issue == "" || (f.Severity != "blocking" && f.Severity != "major" && f.Severity != "minor") {
-			continue
-		}
-		if !isPrdSection(f.Section) {
-			continue // section key outside the canonical eight — drop, don't fail the batch
-		}
-		if f.Kind != "defect" && f.Kind != "omission" {
-			continue
-		}
-		if f.Kind == "defect" && (f.Quote == "" || !quoteIsGrounded(f.Quote, full)) {
-			continue // unverifiable — the anti-hallucination gate this whole mechanism exists for
-		}
-		f.ID = "c" + uuid.NewString()[:8]
-		f.Status = FindingOpen
-		out = append(out, f)
-	}
-	return out, nil
 }

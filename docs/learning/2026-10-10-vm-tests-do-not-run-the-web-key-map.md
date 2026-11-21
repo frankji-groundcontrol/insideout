@@ -24,7 +24,7 @@ under the one the product ships with. For a control that handles key intents:
   finds this whole class.
 - When a record says a keyboard path works, say on which platform it was seen.
 
-The earlier note on [affordances no test asserts](2026-10-08-custom-primitives-drop-unasserted-affordances.md)
+The earlier note on [affordances no test asserts](./2026-10-08-custom-primitives-drop-unasserted-affordances.md)
 is the other half: there the tests never pressed Tab; here they pressed the key
 under the wrong table.
 

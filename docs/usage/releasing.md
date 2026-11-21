@@ -3,8 +3,8 @@
 How a release is cut and checked, read off
 [`.github/workflows/release.yml`](../../.github/workflows/release.yml), and the
 decisions that stay with the owner. A release is how a user without a checkout
-gets the CLI ([installation](installation.md)); the hosted service is deployed
-separately ([deployment](deployment.md)).
+gets the CLI ([installation](./installation.md)); the hosted service is deployed
+separately ([deployment](./deployment.md)).
 
 The gate, the provenance attestation, the notices in the archives and the
 no-overwrite publish below are review-4 row 3.4
@@ -80,7 +80,7 @@ job.
    release is an error, so a published release is never rewritten.
 
 `releases/latest/download/bootstrap.sh` (the one-liner in
-[installation](installation.md)) fetches the installer shipped with the newest
+[installation](./installation.md)) fetches the installer shipped with the newest
 release that is neither a draft nor a pre-release, so it always matches the
 assets it downloads.
 

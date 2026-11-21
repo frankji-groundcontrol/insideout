@@ -2,7 +2,7 @@
 
 Branch `rv4/w4-release-version`, base `582a4bd`. Findings are cited as
 `rv4-<ID>` elsewhere because review IDs restart per review. This cluster takes
-over what [wave 3, release supply chain](w3-release-supply.md#moved-to-wave-4)
+over what [wave 3, release supply chain](./w3-release-supply.md#moved-to-wave-4)
 left for the installer and the runbook: rv4-PM-04, rv4-PM-05, and the consumer
 side of rv4-PUB-03 and rv4-SEC-07 in `scripts/bootstrap.sh`.
 

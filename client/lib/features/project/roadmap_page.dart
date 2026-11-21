@@ -1,10 +1,6 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../api/client.dart';
-import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
@@ -18,131 +14,64 @@ import '../../theme/cobalt_chip.dart';
 import '../../theme/ink_motion.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_bands.dart';
+import 'roadmap_breadcrumb.dart';
 import 'roadmap_canvas.dart';
+import 'roadmap_controller.dart';
 import 'roadmap_header.dart';
 import 'roadmap_node_card.dart';
 import 'roadmap_progress_view.dart';
 import 'roadmap_tree.dart';
 
+part 'roadmap_page_views.dart';
+
 class RoadmapPage extends StatefulWidget {
-  const RoadmapPage({super.key, required this.projectId});
+  const RoadmapPage({super.key, required this.projectId, this.rootId});
 
   final String projectId;
+
+  /// The node opened as its own tree (/projects/:id/roadmap/:nodeId): the
+  /// page shows it and the nodes below it. Null for the whole project.
+  final String? rootId;
 
   @override
   State<RoadmapPage> createState() => _RoadmapPageState();
 }
 
-enum _RoadmapView { progress, bands, canvas }
+/// Mine is the canvas over the caller's own branches (owner decision 2: a
+/// default view, not a wall).
+enum _RoadmapView { progress, bands, canvas, mine }
 
 class _RoadmapPageState extends State<RoadmapPage> {
-  late Future<List<RoadmapNode>> _future;
-  late Future<RoadmapProgress> _progressFuture;
-  RoadmapProgress? _liveProgress;
+  /// The nodes, progress, presence and cursors; this State keeps the layout
+  /// and local UI state only.
+  late final RoadmapController _c;
   _RoadmapView _view = _RoadmapView.progress;
   final _canvasController = ScrollController();
-  List<PresenceEntry> _presence = [];
-  final Map<String, CursorDot> _cursors = {};
-  DateTime _lastCursorSent = DateTime.fromMillisecondsSinceEpoch(0);
-  final _retryTimers = <Timer>{};
 
-  /// Completed on dispose: the live streams close their connections with it.
-  final _stop = Completer<void>();
-  late final String _clientId = DateTime.now().microsecondsSinceEpoch
-      .toRadixString(36);
+  /// Branches folded on the canvas, kept for this page session.
+  final _collapsed = <String>{};
 
-  Future<void> _backoff(Duration d) {
-    final done = Completer<void>();
-    late final Timer t;
-    t = Timer(d, () {
-      _retryTimers.remove(t);
-      done.complete();
-    });
-    _retryTimers.add(t);
-    return done.future;
-  }
-
-  void _sendCursor(double x, double y) {
-    final now = DateTime.now();
-    if (now.difference(_lastCursorSent).inMilliseconds < 200) return;
-    _lastCursorSent = now;
-    context
-        .read<Session>()
-        .api
-        .cursor(widget.projectId, x, y, clientId: _clientId)
-        .catchError((_) {});
-  }
-
-  /// Runs [session] again each time it ends, until the page goes away: wait
-  /// 500ms, doubling to 5s, between runs; 401/403/404 are final.
-  Future<void> _retrying(Future<void> Function() session) async {
-    var backoff = const Duration(milliseconds: 500);
-    while (mounted) {
-      try {
-        await session();
-      } on ApiException catch (e) {
-        if (e.status == 401 || e.status == 403 || e.status == 404) return;
-      } catch (_) {}
-      if (!mounted) return;
-      await _backoff(backoff);
-      backoff = backoff * 2 > const Duration(seconds: 5)
-          ? const Duration(seconds: 5)
-          : backoff * 2;
-    }
-  }
-
-  Future<void> _progressLoop(ApiClient api) => _retrying(
-    () => api.progressStream(widget.projectId, (progress) {
-      if (!mounted) return;
-      setState(() => _liveProgress = progress);
-    }, stop: _stop.future),
-  );
-
-  Future<void> _presenceLoop(ApiClient api) => _retrying(
-    () => api.presenceStream(
-      widget.projectId,
-      _clientId,
-      (entries) {
-        if (!mounted) return;
-        final live = entries.map((e) => e.sessionId).toSet();
-        _cursors.removeWhere((id, _) => !live.contains(id));
-        setState(() => _presence = entries);
-      },
-      onCursor: (sessionId, name, x, y) {
-        if (!mounted) return;
-        setState(
-          () => _cursors[sessionId] = CursorDot(
-            sessionId: sessionId,
-            name: name,
-            x: x,
-            y: y,
-          ),
-        );
-      },
-      stop: _stop.future,
-    ),
-  );
-
-  @override
-  void dispose() {
-    _stop.complete();
-    for (final t in _retryTimers) {
-      t.cancel();
-    }
-    _canvasController.dispose();
-    super.dispose();
-  }
+  void _toggleFold(String nodeId) =>
+      setState(() => _collapsed.remove(nodeId) || _collapsed.add(nodeId));
 
   @override
   void initState() {
     super.initState();
     context.read<LoopFocus>().rememberProject(widget.projectId);
-    _future = context.read<Session>().api.listRoadmap(widget.projectId);
-    _progressFuture = context.read<Session>().api.roadmapProgress(
-      widget.projectId,
-    );
-    _progressLoop(context.read<Session>().api);
-    _presenceLoop(context.read<Session>().api);
+    _c = RoadmapController(
+      context.read<Session>().api,
+      projectId: widget.projectId,
+      rootId: widget.rootId,
+    )..addListener(_changed);
+  }
+
+  void _changed() => setState(() {});
+
+  @override
+  void dispose() {
+    _c.dispose();
+    _canvasController.dispose();
+    super.dispose();
   }
 
   void _scrollToBand(int i) {
@@ -162,24 +91,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
     );
   }
 
-  Future<void> _reload() async {
-    final nodes = context.read<Session>().api.listRoadmap(widget.projectId);
-    final progress = context.read<Session>().api.roadmapProgress(
-      widget.projectId,
-    );
-    setState(() {
-      _future = nodes;
-      _progressFuture = progress;
-      _liveProgress = null;
-    });
-    await Future.wait([nodes, progress]);
-  }
-
+  /// "New item": a top-level goal for a plan writer, or in an opened node a
+  /// child of that node for whoever may write it.
   Future<void> _addRoot() async {
     final t = context.read<Appearance>().t;
     final values = await showBlockForm(
       context: context,
-      title: t('roadmap.addRoot'),
+      title: t(widget.rootId == null ? 'roadmap.addRoot' : 'roadmap.addChild'),
       confirmLabel: t('roadmap.add'),
       fields: [
         BlockFormField(label: t('roadmap.rootPlaceholder'), required: true),
@@ -193,9 +111,10 @@ class _RoadmapPageState extends State<RoadmapPage> {
       () => context.read<Session>().api.createRoadmapNode(
         widget.projectId,
         title,
+        parentId: widget.rootId,
       ),
     );
-    if (done && mounted) await _reload();
+    if (done && mounted) await _c.reload();
   }
 
   @override
@@ -208,12 +127,13 @@ class _RoadmapPageState extends State<RoadmapPage> {
             _RoadmapView.progress => 'roadmap.viewProgress',
             _RoadmapView.bands => 'roadmap.viewBands',
             _RoadmapView.canvas => 'roadmap.viewCanvas',
+            _RoadmapView.mine => 'roadmap.viewMine',
           }),
           selected: _view == view,
           onTap: () => setState(() => _view = view),
         ),
     ];
-    // Three toggles plus four utility icons run off a phone's left edge, so
+    // Four toggles plus four utility icons run off a phone's left edge, so
     // there the toggles move into the header.
     final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
     return AppScaffold(
@@ -221,8 +141,20 @@ class _RoadmapPageState extends State<RoadmapPage> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RoadmapHeader(compact: narrow, viewChoices: choices, onAdd: _addRoot),
-          if (_presence.isNotEmpty)
+          RoadmapHeader(
+            compact: narrow,
+            viewChoices: choices,
+            onAdd: (widget.rootId == null ? _c.planWriter : _c.rootWritable)
+                ? _addRoot
+                : null,
+            breadcrumb: _c.read == null
+                ? null
+                : RoadmapBreadcrumb(
+                    projectId: widget.projectId,
+                    read: _c.read!,
+                  ),
+          ),
+          if (_c.presence.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 6),
               child: Wrap(
@@ -233,102 +165,15 @@ class _RoadmapPageState extends State<RoadmapPage> {
                     size: 16,
                     color: Cobalt.of(context).brand,
                   ),
-                  for (final e in _presence)
+                  for (final e in _c.presence)
                     ShadeChip(label: e.name, tone: ShadeTone.neutral),
                 ],
               ),
             ),
           Expanded(
             child: _view == _RoadmapView.progress
-                ? FutureBuilder(
-                    future: _progressFuture,
-                    builder: (context, snap) {
-                      final progress = _liveProgress ?? snap.data;
-                      if (progress == null) {
-                        return readGate(snap, _reload);
-                      }
-                      // Progress lists only dated work, so an empty one does
-                      // not mean there are no goals.
-                      return FutureBuilder(
-                        future: _future,
-                        builder: (context, nodes) => RoadmapProgressView(
-                          progress: progress,
-                          // Blank until the goals are known, so the wrong
-                          // sentence never flashes.
-                          emptyLabel: nodes.hasData
-                              ? l10n.t(
-                                  nodes.data!.isEmpty
-                                      ? 'roadmap.empty'
-                                      : 'roadmap.noneScheduled',
-                                )
-                              : '',
-                        ),
-                      );
-                    },
-                  )
-                : FutureBuilder(
-                    future: _future,
-                    builder: (context, snap) {
-                      if (!snap.hasData) {
-                        return readGate(snap, _reload);
-                      }
-                      if (snap.data!.isEmpty) {
-                        return BlockEmpty(
-                          icon: Icons.account_tree_outlined,
-                          body: l10n.t('roadmap.empty'),
-                        );
-                      }
-                      if (_view == _RoadmapView.bands) {
-                        // The reading the Progress tab shows, so a reload or
-                        // a quiet stream cannot make the two disagree.
-                        return FutureBuilder(
-                          future: _progressFuture,
-                          builder: (context, ps) {
-                            final progress = _liveProgress ?? ps.data;
-                            if (progress == null && !ps.hasError) {
-                              return const BlockLoading();
-                            }
-                            return RoadmapBands(
-                              projectId: widget.projectId,
-                              nodes: snap.data!,
-                              onReload: _reload,
-                              progress: progress,
-                            );
-                          },
-                        );
-                      }
-                      return Column(
-                        children: [
-                          RoadmapMinimap(
-                            nodes: snap.data!,
-                            onTapBand: _scrollToBand,
-                          ),
-                          const Divider(height: 1),
-                          Expanded(
-                            child: RoadmapCanvas(
-                              nodes: snap.data!,
-                              tileBuilder: (node, _) => RoadmapNodeCard(
-                                projectId: widget.projectId,
-                                node: node,
-                                onReload: _reload,
-                                childProgress: RoadmapNodeCard.childDoneShare(
-                                  snap.data!,
-                                  node,
-                                ),
-                                descendants: roadmapDescendantCount(
-                                  snap.data!,
-                                  node,
-                                ),
-                              ),
-                              controller: _canvasController,
-                              onCursor: _sendCursor,
-                              cursors: _cursors.values.toList(),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                ? _progressBody(l10n)
+                : _treeBody(l10n),
           ),
         ],
       ),

@@ -19,19 +19,17 @@ import (
 
 // AddValidationObservation records one human-entered observation on a
 // leaf node as evidence of the validation kind: what was observed, its
-// source, and the date it was seen. Only the project owner or a
-// workspace admin writes evidence (the table's INSERT policy); leaves
+// source, and the date it was seen. A writer of the node records it
+// (requireNodeWriter, and the table's INSERT policy); leaves
 // only, so the observation names one piece of work. (node_id, kind,
 // detail) dedupe applies: recording the same text again is a no-op.
 func (s *Store) AddValidationObservation(ctx context.Context, actorID, nodeID uuid.UUID, observed, sourceURL string, observedAt time.Time) error {
 	return s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		var projectID uuid.UUID
 		var children int
 		if err := tx.QueryRow(ctx, `
-			SELECT n.project_id,
-			       (SELECT count(*) FROM insideout.roadmap_nodes c WHERE c.parent_id = n.id)
+			SELECT (SELECT count(*) FROM insideout.roadmap_nodes c WHERE c.parent_id = n.id)
 			FROM insideout.roadmap_nodes n WHERE n.id = $1`, nodeID,
-		).Scan(&projectID, &children); err != nil {
+		).Scan(&children); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ErrNotFound
 			}
@@ -41,7 +39,7 @@ func (s *Store) AddValidationObservation(ctx context.Context, actorID, nodeID uu
 			// A branch with children would blur which work was observed.
 			return ErrConflict
 		}
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		if err := requireNodeWriter(ctx, tx, nodeID, actorID); err != nil {
 			return err
 		}
 		_, err := tx.Exec(ctx, `
@@ -93,9 +91,12 @@ func (s *Store) ValidateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UU
 			WHERE id = $1
 			RETURNING `+roadmapNodeColumns,
 			nodeID, reason, actorID)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
+		written, err := scanRoadmapNode(row)
+		if err != nil {
+			return err
+		}
+		n, err = readNodeViewTx(ctx, tx, actorID, written.ID)
+		return err
 	})
 	if err != nil {
 		return nil, err

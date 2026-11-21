@@ -13,8 +13,8 @@ quartet.
 
 The value moves from `.env` through `dev.sh` into the coach streamer. The
 provider key is never sent to the browser or printed by setup. The companion
-references are [llm-base-url](llm-base-url.md),
-[llm-model](llm-model.md), and [llm-schema](llm-schema.md).
+references are [llm-base-url](./llm-base-url.md),
+[llm-model](./llm-model.md), and [llm-schema](./llm-schema.md).
 
 ## 3. How to set it
 

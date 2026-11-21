@@ -1,21 +1,19 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/client.dart';
-import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../app.dart';
 import '../../chrome/loop_focus.dart';
 import '../../session/appearance.dart';
 import '../../session/session.dart';
-import '../../theme/block_modal.dart';
 import '../../theme/block_state.dart';
 import '../../theme/cobalt.dart';
 import '../../widgets/guarded_action.dart';
 import 'coach_panel.dart';
+import 'prd_build_flow.dart';
 import 'prd_desk.dart';
 import 'snapshot_flow.dart';
 
@@ -126,50 +124,7 @@ class _PrdPageState extends State<PrdPage> {
 
   Future<void> _snapshot() => showSnapshotRevision(context, prdId: widget.id);
 
-  Future<void> _build() async {
-    final api = context.read<Session>().api;
-    final t = context.read<Appearance>().t;
-    // The server drafts on /build and writes only on /build/confirm, so the
-    // draft goes straight to confirm; the replace prompt is the review step.
-    // Anything else the server rejects surfaces through the guard's SnackBar.
-    await guardWrite(context, () async {
-      final draft = await api.buildFromPrd(widget.id);
-      final tree = Map<String, dynamic>.from(draft['tree'] as Map);
-      Map<String, dynamic> result;
-      try {
-        result = await api.confirmBuildFromPrd(widget.id, tree);
-      } on ApiException catch (e) {
-        if (e.code != 'replace_conflict' || e.liveCount == null) rethrow;
-        if (!mounted) return;
-        final ok = await showBlockConfirm(
-          context: context,
-          title: t('prd.buildMVP'),
-          message: t(
-            e.liveCount == 1
-                ? 'prd.buildReplaceConfirmOne'
-                : 'prd.buildReplaceConfirm',
-            {'count': e.liveCount},
-          ),
-          confirmText: t('common.confirm'),
-          danger: true,
-        );
-        if (!ok || !mounted) return;
-        result = await api.confirmBuildFromPrd(
-          widget.id,
-          tree,
-          expectedCount: e.liveCount,
-        );
-      }
-      if (mounted) _goProject(result);
-    });
-  }
-
-  void _goProject(Map<String, dynamic> result) {
-    final projectId = result['projectId']?.toString();
-    if (projectId != null && projectId.isNotEmpty) {
-      context.go('/projects/$projectId/roadmap');
-    }
-  }
+  Future<void> _build() => buildRoadmapFromPrd(context, widget.id);
 
   // Mirrors the server (EnsureConversationForPrd): the PRD's author or a
   // workspace admin. While the role or the author is unknown the block stays
@@ -232,14 +187,22 @@ class _PrdPageState extends State<PrdPage> {
   }
 
   // The stored conversation carries what the confirm card must be honest
-  // about (a skipped critic review); fetch it when a turn ends. A failed
-  // refresh keeps what the page has: the next turn asks again.
+  // about (a skipped critic review) and the stored messages are the
+  // transcript; fetch both when a turn ends. A failed refresh keeps what the
+  // page has: the next turn asks again.
   Future<void> _refreshConversation() async {
     final conv = conversation;
     if (conv == null) return;
+    final api = context.read<Session>().api;
     try {
-      final fresh = await context.read<Session>().api.getConversation(conv.id);
-      if (mounted) setState(() => conversation = fresh);
+      final fresh = await api.getConversation(conv.id);
+      final msgs = await api.listMessages(conv.id);
+      if (mounted) {
+        setState(() {
+          conversation = fresh;
+          messages = msgs;
+        });
+      }
     } catch (_) {}
   }
 
@@ -306,6 +269,13 @@ class _PrdPageState extends State<PrdPage> {
       onConfirmStage: _confirmStage,
       onDeclineStage: _declineStage,
       onTurnDone: _refreshConversation,
+      onMessage: (m) => setState(() => messages = [...messages, m]),
+      onMessageDropped: (m) => setState(
+        () => messages = [
+          for (final x in messages)
+            if (!identical(x, m)) x,
+        ],
+      ),
     );
   }
 

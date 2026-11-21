@@ -10,7 +10,7 @@ import 'package:insideout/features/auth/auth_door.dart';
 import 'package:insideout/theme/block_button.dart';
 import 'package:web/web.dart' as web;
 
-import '../_block_test_helpers.dart';
+import '../theme/_block_test_helpers.dart';
 
 // rv4-PUB-02: the privacy link in a browser, end to end. The VM suite
 // (auth_door_privacy_link_test.dart) is compiled with the stub opener, so all

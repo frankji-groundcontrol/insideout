@@ -23,7 +23,7 @@ leaves the turn handler.
   the old file at the base commit (ignoring `package`/`import` boilerplate)
   are compared with the union of the new files. Every pair came back
   `PURE MOVE`. The coach split is checked at its own commit (`8ef010a`)
-  because the coach fixes ([backend-fixes.md](backend-fixes.md)) landed on top
+  because the coach fixes ([backend-fixes.md](./backend-fixes.md)) landed on top
   of it afterwards, each as a separate test-first commit.
 - **Real PostgreSQL 18** on a disposable local cluster: `go build`, `go vet`,
   `gofmt -l` and `go test ./... -count=1 -v` over the whole module. 470 PASS,

@@ -83,4 +83,4 @@ first; the register rows each change closes are named.
 
 `go test ./...` over 26 packages with exactly one allowed skip
 (`TestReadSecretTerminal`) against a real PostgreSQL clone —
-[verification.md](verification.md).
+[verification.md](./verification.md).

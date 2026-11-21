@@ -41,13 +41,13 @@ func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) 
 	if !s.authCooldown.allow(email, s.clientIP(r)) {
 		// Cooldown hit: same uniform 200 as every other outcome, so the
 		// gate never leaks whether the account exists or a mail went out.
-		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		s.writeAuthMail(w, nil)
 		return
 	}
 
 	user, err := s.store.GetUserByEmail(r.Context(), email)
 	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		s.writeAuthMail(w, nil)
 		return
 	}
 	if err != nil {
@@ -63,7 +63,7 @@ func (s *Server) handleMagicLinkRequest(w http.ResponseWriter, r *http.Request) 
 			"Sign in to InsideOut",
 		)
 	})
-	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	s.writeAuthMail(w, nil)
 }
 
 // handleMagicLinkConsume exchanges an emailed token for a full session —
@@ -116,30 +116,7 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if !s.authCooldown.allow(email, s.clientIP(r)) {
-		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
-		return
-	}
-
-	user, err := s.store.GetUserByEmail(r.Context(), email)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
-		return
-	}
-	if err != nil {
-		s.log.Error("forgot password: get user by email", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-
-	s.mail.Enqueue("forgot password", func(ctx context.Context) error {
-		return s.sendEmailLink(ctx, user.ID, user.Email, store.AuthTokenPasswordReset, passwordResetTTL, "/reset-password",
-			"Reset your InsideOut password",
-			"Set a new InsideOut password with this link (valid for 60 minutes):",
-			"Reset your InsideOut password",
-		)
-	})
-	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	s.answerForgotPassword(w, r, email)
 }
 
 // handleResetPassword consumes a reset token, rewrites the password hash,
@@ -164,7 +141,8 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := s.store.ConsumeAuthToken(r.Context(), store.AuthTokenPasswordReset, auth.HashOneTimeToken(req.Token))
+	tokenHash := auth.HashOneTimeToken(req.Token)
+	userID, err := s.store.ConsumeAuthToken(r.Context(), store.AuthTokenPasswordReset, tokenHash)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusUnauthorized, "invalid or expired reset link", "", nil)
 		return
@@ -193,6 +171,9 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("reset password: revoke sessions", "error", err, "user_id", userID)
 	}
 
+	if err := s.store.CompleteResetWatch(r.Context(), tokenHash); err != nil {
+		s.log.Error("reset password: complete watch", "error", err)
+	}
 	s.clearAuthCookies(w)
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
@@ -206,13 +187,13 @@ func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if !s.authCooldown.allow(email, s.clientIP(r)) {
-		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		s.writeAuthMail(w, nil)
 		return
 	}
 
 	user, err := s.store.GetUserByEmail(r.Context(), email)
 	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+		s.writeAuthMail(w, nil)
 		return
 	}
 	if err != nil {
@@ -224,7 +205,7 @@ func (s *Server) handleLoginCodeRequest(w http.ResponseWriter, r *http.Request) 
 	s.mail.Enqueue("login code", func(ctx context.Context) error {
 		return s.sendEmailCode(ctx, user.ID, user.Email)
 	})
-	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})
+	s.writeAuthMail(w, nil)
 }
 
 // handleLoginCodeVerify exchanges an emailed code for a full session.

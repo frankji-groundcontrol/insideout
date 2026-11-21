@@ -4,7 +4,7 @@
 **Score:** **7.0 / 10** (how complete this review is)  
 **Bottom line:** Review 4 is strong on server auth, RLS and closure accounting but never tested the zh-first runtime or native targets, and it under-scored write-side RLS and the broken front door; eight new findings are filed and the reconciled mean score is 6.24, not 6.69.
 
-Tree: `main` @ `9f0b1c7`. The critic read every reviewer bottom line, finding list, skeptic verdict and the coordinator's reproduction results. It recommends severities but does not set them; its 8 missed finding(s) are in the [register](01-findings-register.md) as `COMP-NN`. Corrections the coordinator makes to the critic or to a reviewer are marked **[Correction]**.
+Tree: `main` @ `9f0b1c7`. The critic read every reviewer bottom line, finding list, skeptic verdict and the coordinator's reproduction results. It recommends severities but does not set them; its 8 missed finding(s) are in the [register](./01-findings-register.md) as `COMP-NN`. Corrections the coordinator makes to the critic or to a reviewer are marked **[Correction]**.
 
 ---
 
@@ -126,7 +126,7 @@ I made no network calls, so COMP-03 is unverified. I did not run the Flutter app
 
 **[Correction] PM-06.** The reviewer counted 76 broken relative links; the coordinator's three parsers count 74, 75 and 76. By the repo's own gate definition (markdown targets only) 4 are broken, all inside older review records; the other 71 point at source paths that moved or were deleted. "Zero broken doc links" holds for the gate's definition on its date and is false for a plain relative-link scan; the plan scopes the claim rather than counting it.
 
-**Root-cause clusters.** One fix closes the rows in each cluster; plan rows are in [40-remediation-plan.md](40-remediation-plan.md).
+**Root-cause clusters.** One fix closes the rows in each cluster; plan rows are in [40-remediation-plan.md](./40-remediation-plan.md).
 
 | Cluster | Register IDs | Fix once | Plan row |
 |---|---|---|---|

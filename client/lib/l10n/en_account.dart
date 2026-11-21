@@ -47,6 +47,8 @@ const enAccount = <String, String>{
   'login.codeError': 'That code is wrong or has expired. Request a new one.',
   'login.codeSendError': 'Could not send the code. Please try again.',
   'login.forgot': 'Forgot password?',
+  'auth.mailLogged':
+      'This server did not send the email: it was only written to the server log. Ask the server operator for it.',
   'auth.mailOff':
       'Email is not configured on this server: sign-in links, codes and password-reset emails are only written to the server log.',
   'forgot.title': 'Reset your password',
@@ -56,7 +58,15 @@ const enAccount = <String, String>{
       'If that email has an account, a reset link is on its way. It works once, expires in 60 minutes, and signs out every device once used.',
   'forgot.error': 'Could not request the reset. Please try again.',
   'forgot.back': 'Back to login',
-  'reset.title': 'Choose a new password',
+  'reset.title': 'Reset your password',
+  'reset.chooseWeb': 'Reset on this page',
+  'reset.chooseCli': 'Get a code for the CLI',
+  'reset.cliHint':
+      'Copy this code, then run insideout reset-password and paste it. The code works once. Resetting here or in the CLI uses it up.',
+  'reset.cliCommand': 'insideout reset-password',
+  'reset.cliCopy': 'Copy code',
+  'reset.cliCopied': 'Copied.',
+  'reset.cliBack': 'Back',
   'reset.password': 'New password',
   'reset.passwordHint': 'At least 8 characters',
   'reset.confirm': 'Confirm new password',
@@ -66,6 +76,11 @@ const enAccount = <String, String>{
   'reset.doneLogin': 'Go to login',
   'reset.error':
       'This reset link is invalid or has expired. Request a new one.',
+  'reset.tooShort': 'Use at least 8 characters.',
+  'reset.throttled':
+      'Too many attempts. Wait a minute, then try again. The link still works.',
+  'reset.network':
+      'Could not reach the server. Check your connection and try again. The link still works.',
   'reset.back': 'Back to login',
   'magic.title': 'Sign-in link',
   'magic.working': 'Signing you in…',
@@ -104,6 +119,15 @@ const enAccount = <String, String>{
       "Registration is closed on this server. Ask the server's administrator to open sign-up.",
   'register.inviteError':
       'That invitation code is missing, invalid or expired. Check it, or ask an admin for a new invitation.',
+  'profile.dangerTitle': 'Danger zone',
+  'profile.deleteHint':
+      'Deleting your account removes your ideas, coach conversations, sessions and memberships. Work you shared with a workspace stays.',
+  'profile.deleteAccount': 'Delete my account',
+  'profile.deleteConfirm':
+      'This cannot be undone. Enter your current password to confirm.',
+  'profile.currentPassword': 'Current password',
+  'profile.deleteForever': 'Delete forever',
+  'profile.deleteWrongPassword': 'That is not your current password.',
   'profile.title': 'Profile',
   'profile.username': 'Username',
   'profile.bio': 'Bio',

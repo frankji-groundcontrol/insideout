@@ -1,21 +1,21 @@
 # CLI, MCP and client configuration
 
 InsideOut has one HTTP contract, `/api/v1`, and four ways to reach it: the web
-client ([frontend](frontend.md)), the `insideout` CLI, the `insideout-mcp` stdio
+client ([frontend](./frontend.md)), the `insideout` CLI, the `insideout-mcp` stdio
 server for agents, and the shared client code under both binaries. This
 document is the architecture of the last three, the non-web clients: which
 package decides what, how a client finds its server and its identity, how a
 saved session renews, and what the server must keep true for them. For how to
 use them see [CLI, MCP and the guidance system](../usage/cli-mcp-and-guidance.md);
-for the token an MCP process runs under see [agent token scope](agent-token-scope.md).
+for the token an MCP process runs under see [agent token scope](./agent-token-scope.md).
 
 ## Surfaces
 
 | Surface | Code (under `server/`) | Role |
 |---|---|---|
 | `insideout`, operator verbs | `cmd/insideout/main.go`, `seed.go`, `promote_admin.go` | No argument runs the API server; `migrate`, `seed` and `promote-admin` run beside it. These are the only verbs that load `config.Load()` (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`) and open a pool. |
-| `insideout`, client verbs | `cmd/insideout/cli*.go` | The product CLI, one verb per row of `cliVerbs` in `cli.go`. `runClientCommand` dispatches them before any server environment or database is touched; `help`, `version` and a mistyped verb are answered by `runFrontDoor` for the same reason. |
-| `insideout setup` | `cmd/insideout/cli_setup*.go`, `internal/setup/` | The first-run front door: a catalog of the variables InsideOut knows, the `.env` writer, a pure flow state machine, native probes and the huh form. Its hosted branch signs in and saves the session through `clientconfig.Save`; its local branch writes `.env` through the `envwrite` package. |
+| `insideout`, client verbs | `cmd/insideout/cli*.go` | The product CLI, one verb per row of `cliVerbs` in `cli_verbs.go`, each file named for the verbs it holds. `runClientCommand` (`cli_dispatch.go`) dispatches them before any server environment or database is touched; `help`, `version` and a mistyped verb are answered by `runFrontDoor` for the same reason. |
+| `insideout setup` | `cmd/insideout/cli_setup*.go` (flags and `--check`), `internal/setup/` | The first-run front door: a catalog of the variables InsideOut knows, the `.env` writer, a pure flow state machine, native probes and the huh form. Its hosted branch signs in and saves the session through `clientconfig.Save`; its local branch is the `internal/setup/local` engine (role provisioning, `.env` through the `envwrite` package, bundled Postgres, migrations, boot offer). `scripts/setup.sh` only forwards its flags here. |
 | `insideout-mcp` | `cmd/insideout-mcp/`, `internal/mcpserver/` | The stdio MCP server: one tool per CLI verb over the same contract, an agent profile, and fenced results. `main` only wires stdio; the server is built (and tested) in `mcpserver.Build`. |
 | shared client | `internal/apiclient/` | The HTTP client both binaries speak through: typed calls, the 401 renewal, the agent-token exchange, the hosted default. |
 | client configuration | `internal/clientconfig/` | `Resolve`: which server and which identity. The 0600 config file lives here too. |
@@ -26,10 +26,12 @@ contract. The plan that shaped the CLI and MCP projections is
 
 ## One contract, three projections
 
-`cliVerbs` in `cmd/insideout/cli.go` is the verb inventory: `insideout help`
+`cliVerbs` in `cmd/insideout/cli_verbs.go` is the verb inventory: `insideout help`
 prints it, and `TestVerbTableMatchesDispatch` fails when it and the dispatch
-switches drift apart. The MCP server registers one tool per verb
-(`addProductTools`, `addAdminTools`, `addAuthTools`), and a read tool returns
+switches drift apart. The MCP server registers one tool per verb, each
+resource from its own `server/internal/mcpserver/tools_*.go` file through one
+helper (`registerTool` in `register.go`, which holds the tool-call lock), and
+`testdata/tools_*.golden.json` pins the registry; a read tool returns
 the API's own JSON rather than a reshaping of it, so a surface cannot invent a
 field. What no test checks is that the three lists (CLI verbs, MCP tools,
 `apiclient` methods) agree with each other: that parity is by convention, and
@@ -37,7 +39,7 @@ review 4 records it as rv4-ARCH-07 in
 [the architect review](../review/2026-10-18-multirole-4/10-architect.md). Ask
 `tools/list` for the MCP tool set; a count written in prose drifted twice.
 
-A client verb runs under one context (`runInterruptible` in `cli.go`): the
+A client verb runs under one context (`runInterruptible` in `cli_interrupt.go`): the
 first Ctrl-C or SIGTERM cancels it, the request in flight aborts, and the
 command ends with status 130 and `insideout: interrupted` on stderr. A command
 that is still running 400 ms later, or a second signal, ends the process at once.
@@ -116,16 +118,23 @@ saved login's tokens only ever go to the server they were issued by.
 - Two clients exist inside it. `humanClient` is `Resolve` plus the process's own
   login (an `auth_*` tool's token is process state, never conversation output);
   only the `auth_*` tools and the token exchange use it. `client` is
-  `apiclient.AgentScoped(humanClient(api))`, and every product tool calls
-  through that: the login traded for an agent-scope token, held in one slot per
-  server and user and minted again with about a third of its life left. A failed
-  trade is a client that fails every call; no tool falls back to the full login.
+  `apiclient.AgentScopedTo(humanClient(api), root)`, and every product tool
+  calls through that: the login traded for an agent-scope token, held in one
+  slot keyed by server, user and root, and minted again with about a third of
+  its life left. `root` is `INSIDEOUT_AGENT_ROOT`, a roadmap node id that
+  confines the token's node writes to that subtree ("" mints an unconfined
+  token). A token that already carries a scope is sent as it is, so a root
+  beside a scoped `INSIDEOUT_TOKEN` is ignored and `Build` prints one warning
+  line on stderr at startup. A failed trade is a client that fails every call;
+  no tool falls back to the full login.
 - The registry has a profile. When the process holds a JWT login,
   `applyAgentProfile` removes the tools in `withheldFromAgents` (Commit, the
   proposal decision, the instance switches, the deletes, the password tools).
   Without a login the registry stays whole so the process can still sign in.
+  Delegation, hand-back and the member list are never registered: every tool
+  acts through an agent-scope token, which their human-only routes refuse.
   That removal is advice to the model; the server's 403 for an agent-scope
-  token is what holds. See [agent token scope](agent-token-scope.md), which also
+  token is what holds. See [agent token scope](./agent-token-scope.md), which also
   states the deploy order (server first, then the new binary).
 - Each call rides the context of what is running it. `apiclient.Client` has no
   `http.Client` timeout; `SetContext` binds a context and every request is cut

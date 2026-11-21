@@ -12,28 +12,28 @@ unimplemented and untracked.
 
 ## The delta, in recommended slice order
 
-1. [Product Branch, Merge and the Decision Log](2026-10-11-product-branch-merge-decision-log.md)
+1. [Product Branch, Merge and the Decision Log](./2026-10-11-product-branch-merge-decision-log.md)
    — the keystone: Commit/Merge language and the persona hypotheses hang
    off Branch (CQ-02, SEC-04).
-2. [Scoped external feedback invitations](2026-10-11-scoped-feedback-invitations.md)
+2. [Scoped external feedback invitations](./2026-10-11-scoped-feedback-invitations.md)
    — the only promise with an explicit privacy boundary; its security
    design comes first among the outward slices (CQ-02, SEC-04).
-3. [Tokenized audience-share link](2026-10-11-tokenized-audience-share-link.md)
+3. [Tokenized audience-share link](./2026-10-11-tokenized-audience-share-link.md)
    — the read-only outward leg, reusing the /prds/{id}/view projection
    (USER-04).
-4. [Persona grounding labels](2026-10-11-persona-grounding-labels.md)
+4. [Persona grounding labels](./2026-10-11-persona-grounding-labels.md)
    — core/key/later priority and grounded/synthesized/assumed labels (CQ-02).
-5. [Facts trust layer](2026-10-11-facts-trust-layer.md) — the
+5. [Facts trust layer](./2026-10-11-facts-trust-layer.md) — the
    confirm/correct/remove surface parked from AIDEV-09's full path; it
    governs what the outward slices may expose (FULL-03).
-6. [Roadmap lenses](2026-10-11-roadmap-lenses.md) — the five lenses as
+6. [Roadmap lenses](./2026-10-11-roadmap-lenses.md) — the five lenses as
    projections over the one graph (CQ-02, SEC-04).
-7. [Roadmap dependency edges](2026-10-11-roadmap-dependency-edges.md) —
+7. [Roadmap dependency edges](./2026-10-11-roadmap-dependency-edges.md) —
    depends_on edges, blocked surfacing, then the time-Diff rebaseline
    (FEAT-05).
-8. [Focus surface](2026-10-11-focus-surface.md) — the per-session focus
+8. [Focus surface](./2026-10-11-focus-surface.md) — the per-session focus
    pointer and team Now, reusing the presence TTL (FEAT-06).
-9. [Working-version autosave](2026-10-11-prd-autosave.md) — the autosaved
+9. [Working-version autosave](./2026-10-11-prd-autosave.md) — the autosaved
    mutable draft that never auto-Commits (FULL-03).
 
 ## Already disclosed in PRODUCT.md itself (not re-tracked here)

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"unicode/utf8"
 
@@ -13,6 +14,20 @@ import (
 // pass a 200-character cap (COMP-01). Use it for every text cap, never
 // len(s) > n.
 func tooLong(s string, n int) bool { return utf8.RuneCountInString(s) > n }
+
+// maxNoteRunes bounds the free-text notes beside a record: a proposal's
+// detail, a decision's reason, a commit's change summary and decision note.
+const maxNoteRunes = 2000
+
+// refuseTooLong answers 400 field_too_long and reports true when field's
+// value is over maxNoteRunes characters (rv5-PARB-10).
+func refuseTooLong(w http.ResponseWriter, field, value string) bool {
+	if !tooLong(value, maxNoteRunes) {
+		return false
+	}
+	httpx.WriteError(w, http.StatusBadRequest, fmt.Sprintf("%s is too long (max %d characters)", field, maxNoteRunes), "field_too_long", nil)
+	return true
+}
 
 // pathUUID parses a Go 1.22+ mux path wildcard as a UUID, writing a 400
 // and returning ok=false if it isn't one.

@@ -4,7 +4,7 @@ Branch `rv4/w4-project-handover-403`, base `582a4bd`, five commits
 `60b6ed6..40fa986` (one refactor, then two red/fix pairs), then this fragment.
 Wave 4, cluster `w4-project-handover-403`: the defect that `rv4-TEST-03` found
 while raising API coverage (recorded under "Found on the way" in the
-[wave 3 fragment](w3-test-hardening.md)) and the `rv4-FR-F194` finding of the
+[wave 3 fragment](./w3-test-hardening.md)) and the `rv4-FR-F194` finding of the
 final review. Findings are cited as `rv4-<ID>` because review IDs restart per
 review. No host, address, secret or token is spelled here; every database below
 was a private throwaway cluster on loopback, torn down at the end. Nothing was

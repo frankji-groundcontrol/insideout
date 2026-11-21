@@ -9,8 +9,8 @@
 //	insideout version     print the build version (also --version)
 //
 // The product CLI verbs (login, ideas, prd, roadmap, setup, …) dispatch
-// from runClientCommand in cli.go before any server env or DB is touched;
-// the cliVerbs table there is the verb inventory `help` prints — verbs
+// from runClientCommand in cli_dispatch.go before any server env or DB is touched;
+// the cliVerbs table (cli_verbs.go) is the verb inventory `help` prints — verbs
 // enumerated here went stale (review-3 ARCH-04), so this comment
 // deliberately does not list them. An unknown verb exits 2 (help.go).
 package main
@@ -30,6 +30,7 @@ import (
 	"github.com/frankji-groundcontrol/insideout/server/internal/api"
 	"github.com/frankji-groundcontrol/insideout/server/internal/auth"
 	"github.com/frankji-groundcontrol/insideout/server/internal/config"
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -129,26 +130,7 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 
 	tokens := auth.NewTokenIssuer(cfg.JWTSecret, cfg.AccessTTL)
 
-	var streamer agent.ChatStreamer
-	var planner agent.RoadmapPlanner
-	if cfg.AIAuthToken == "" {
-		log.Info("INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach")
-		streamer = agent.NewTemplateStreamer()
-		planner = agent.NewTemplateRoadmapPlanner()
-	} else {
-		s, err := agent.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
-		if err != nil {
-			log.Error("create llm streamer", "error", err)
-			os.Exit(1)
-		}
-		streamer = s
-		planner = agent.NewAnthropicRoadmapPlanner(s)
-		if checker, ok := s.(interface {
-			CheckModel(context.Context) (bool, []string, error)
-		}); ok {
-			checkModelAtStartup(ctx, log, checker, cfg.AIModel)
-		}
-	}
+	streamer, planner := newModel(ctx, log, cfg)
 	coach := agent.New(st, streamer, log)
 
 	srv := api.NewServer(st, tokens, cfg, log, coach, planner)
@@ -200,6 +182,27 @@ func runServe(ctx context.Context, log *slog.Logger, st *store.Store, cfg *confi
 	if err := httpServer.Shutdown(shutdownCtx); err != nil {
 		log.Error("shutdown", "error", err)
 	}
+}
+
+// newModel is the coach's streamer and the roadmap planner: the offline
+// templates when no model key is set, else the configured model, checked once
+// at boot.
+func newModel(ctx context.Context, log *slog.Logger, cfg *config.Config) (llm.ChatStreamer, agent.RoadmapPlanner) {
+	if cfg.AIAuthToken == "" {
+		log.Info("INSIDEOUT_LLM_API_KEY not set — using offline template-reply coach")
+		return agent.NewTemplateStreamer(), agent.NewTemplateRoadmapPlanner()
+	}
+	s, err := llm.NewLLMStreamer(cfg.AIBaseURL, cfg.AIAuthToken, cfg.AIModel, cfg.AISchema)
+	if err != nil {
+		log.Error("create llm streamer", "error", err)
+		os.Exit(1)
+	}
+	if checker, ok := s.(interface {
+		CheckModel(context.Context) (bool, []string, error)
+	}); ok {
+		checkModelAtStartup(ctx, log, checker, cfg.AIModel)
+	}
+	return s, agent.NewAnthropicRoadmapPlanner(s)
 }
 
 // checkModelAtStartup turns BUG-009's silent model_not_found (surfaced

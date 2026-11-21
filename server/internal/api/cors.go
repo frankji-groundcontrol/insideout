@@ -40,20 +40,6 @@ func localhostOrigin(origin string) bool {
 	return host == "localhost" || host == "127.0.0.1"
 }
 
-func splitCORSOrigins(raw string) []string {
-	if strings.TrimSpace(raw) == "" {
-		return nil
-	}
-	parts := strings.Split(raw, ",")
-	out := make([]string, 0, len(parts))
-	for _, p := range parts {
-		if s := strings.TrimSpace(p); s != "" {
-			out = append(out, s)
-		}
-	}
-	return out
-}
-
 func (s *Server) withAllowlistCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Allowed or not, the answer depends on Origin, so a cache must key

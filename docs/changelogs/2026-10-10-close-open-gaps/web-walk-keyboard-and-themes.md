@@ -5,7 +5,7 @@ The block-craft plan's verification item 4 asks for a web walk at 1440x900 and
 round spinner anywhere, errors localized in a banner, content column
 constrained on wide"
 ([plan](../../plans/2026-10-07-frontend-block-craft/2026-10-07-frontend-block-craft.md)).
-The [first pass](web-walk-and-phone-layouts.md) found the phone-layout defects.
+The [first pass](./web-walk-and-phone-layouts.md) found the phone-layout defects.
 This one added the dark theme, the keyboard and the pressed state, and found two
 more.
 

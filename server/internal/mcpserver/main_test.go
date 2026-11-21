@@ -17,10 +17,11 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	for k, v := range map[string]string{
-		"HOME":            home,
-		"XDG_CONFIG_HOME": "",
-		"INSIDEOUT_API":   "",
-		"INSIDEOUT_TOKEN": "",
+		"HOME":                 home,
+		"XDG_CONFIG_HOME":      "",
+		"INSIDEOUT_API":        "",
+		"INSIDEOUT_TOKEN":      "",
+		"INSIDEOUT_AGENT_ROOT": "",
 	} {
 		os.Setenv(k, v)
 	}

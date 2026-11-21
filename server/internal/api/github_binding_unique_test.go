@@ -20,7 +20,7 @@ import (
 // clearing a link frees the repo. A caller who cannot read the holder (another
 // workspace) is answered as for a repo GitHub does not show, so the answer is
 // not a way to ask which repos are linked elsewhere (rv4-FR-F199); a holder the
-// caller can read keeps the specific 409 (rv4_review_github_binding_test.go).
+// caller can read keeps the specific 409 (github_binding_cross_tenant_test.go).
 
 // anotherTenant is a second user with a workspace and a project of their own.
 func anotherTenant(t *testing.T, w *routeWorld) (routeUser, *store.Project) {
@@ -89,8 +89,8 @@ func TestASecondProjectCannotLinkARepoThatIsAlreadyLinked(t *testing.T) {
 	// repo GitHub does not show.
 	code, body = putRepoAs(t, w, other, otherProject.ID, strings.ToLower(name))
 	expect(t, "second project links the same repo", code, body, http.StatusBadRequest)
-	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_NOT_VISIBLE" {
-		t.Errorf("code = %q, want GITHUB_REPO_NOT_VISIBLE; body %s", got, body)
+	if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_repo_not_visible" {
+		t.Errorf("code = %q, want github_repo_not_visible; body %s", got, body)
 	}
 	for _, secret := range []string{w.project.ID.String(), w.owner.ID.String()} {
 		if strings.Contains(body, secret) {

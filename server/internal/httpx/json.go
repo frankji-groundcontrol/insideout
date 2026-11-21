@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 )
 
 // WriteJSON writes v as a JSON response body with the given status code.
@@ -16,11 +17,10 @@ func WriteJSON(w http.ResponseWriter, status int, v interface{}) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-// ErrorBody is the `{ "error": string, "code"?: string, ... }` contract
-// documented in docs/plans/2026-07-20-go-rewrite/02-backend-go.md §3.
-// Extra holds additional fields merged into the top-level JSON object
-// (e.g. retry_after_seconds) — kept snake_case to match the preserved AI
-// throttling contract verbatim.
+// ErrorBody is the `{ "error": string, "code": string, ... }` contract
+// (docs/architecture/backend.md). Code is lowercase snake_case; Extra holds
+// additional fields merged into the top-level JSON object, camelCase like
+// every other body (e.g. retryAfterSeconds, rv5-PARC-08).
 type ErrorBody struct {
 	Error string
 	Code  string
@@ -28,10 +28,12 @@ type ErrorBody struct {
 }
 
 func WriteError(w http.ResponseWriter, status int, message string, code string, extra map[string]interface{}) {
-	body := map[string]interface{}{"error": message}
-	if code != "" {
-		body["code"] = code
+	if code == "" {
+		// Every error carries a code: without a specific one, the status's
+		// own name ("not_found", "internal_server_error").
+		code = strings.ToLower(strings.ReplaceAll(http.StatusText(status), " ", "_"))
 	}
+	body := map[string]interface{}{"error": message, "code": code}
 	for k, v := range extra {
 		body[k] = v
 	}

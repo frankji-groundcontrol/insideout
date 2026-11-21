@@ -27,6 +27,7 @@ type userHolder struct {
 	id    uuid.UUID
 	ok    bool
 	scope auth.Scope
+	root  *uuid.UUID
 }
 
 func newUserHolderContext(ctx context.Context) context.Context {
@@ -45,6 +46,22 @@ func setScope(ctx context.Context, scope auth.Scope) {
 	if h, ok := ctx.Value(userHolderKey).(*userHolder); ok {
 		h.scope = scope
 	}
+}
+
+// setRoot records the root node an agent token is confined to (nil: none).
+func setRoot(ctx context.Context, root *uuid.UUID) {
+	if h, ok := ctx.Value(userHolderKey).(*userHolder); ok {
+		h.root = root
+	}
+}
+
+// RootOf returns the root node the request's agent token is confined to, or
+// nil when the token carries none (rv5-TREEB-05).
+func RootOf(ctx context.Context) *uuid.UUID {
+	if h, ok := ctx.Value(userHolderKey).(*userHolder); ok {
+		return h.root
+	}
+	return nil
 }
 
 // ScopeOf returns the scope of the token requireAuth verified: auth.ScopeFull

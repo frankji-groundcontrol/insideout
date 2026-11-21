@@ -45,4 +45,4 @@ pick
 
 *Superseded 2026-10-06: the pick landed the same day — the user named
 `breakout` the logo and it was installed on every platform
-([record](2026-10-06-app-icon-breakout.md)).*
+([record](./2026-10-06-app-icon-breakout.md)).*

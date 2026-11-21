@@ -52,6 +52,13 @@ var sweep = []sweepCase{
 	{"VerifyLoginCode", "POST", "/auth/login-code/verify", func(c *Client, h string) error { return c.VerifyLoginCode(h, h) }},
 	{"ForgotPassword", "POST", "/auth/forgot-password", func(c *Client, h string) error { return c.ForgotPassword(h) }},
 	{"ResetPassword", "POST", "/auth/reset-password", func(c *Client, h string) error { return c.ResetPassword(h, h) }},
+	{"ForgotPasswordWatch", "POST", "/auth/forgot-password", func(c *Client, h string) error {
+		_, _, err := c.ForgotPasswordWatch(h)
+		return err
+	}},
+	{"RequestLoginCodeStatus", "POST", "/auth/login-code", func(c *Client, h string) error { return drop(c.RequestLoginCodeStatus(h)) }},
+	{"RequestMagicLinkStatus", "POST", "/auth/magic-link", func(c *Client, h string) error { return drop(c.RequestMagicLinkStatus(h)) }},
+	{"ResetWatchStatus", "GET", "/auth/reset-watch/{h}", func(c *Client, h string) error { return drop(c.ResetWatchStatus(h)) }},
 	{"AuthConfig", "GET", "/auth/config", func(c *Client, h string) error { return drop(c.AuthConfig()) }},
 	{"CreateInvitation", "POST", "/admin/invitations", func(c *Client, h string) error { return drop(c.CreateInvitation(h, 24)) }},
 	{"ListInvitations", "GET", "/admin/invitations", func(c *Client, h string) error { return drop(c.ListInvitations()) }},
@@ -59,7 +66,7 @@ var sweep = []sweepCase{
 	{"SetSignupMode", "PUT", "/admin/settings", func(c *Client, h string) error { return drop(c.SetSignupMode(h)) }},
 
 	{"Ideas", "GET", "/workspaces/{h}/ideas", func(c *Client, h string) error { return drop(c.Ideas(h)) }},
-	{"UpdateIdea", "PATCH", "/ideas/{h}", func(c *Client, h string) error { return drop(c.UpdateIdea(h, h, h)) }},
+	{"UpdateIdea", "PATCH", "/ideas/{h}", func(c *Client, h string) error { return drop(c.UpdateIdea(h, h, &h)) }},
 	{"DeleteIdea", "DELETE", "/ideas/{h}", func(c *Client, h string) error { return c.DeleteIdea(h) }},
 	{"UpdatePrd", "PATCH", "/prds/{h}", func(c *Client, h string) error {
 		return drop(c.UpdatePrd(h, &h, map[string]string{"goals": h}))
@@ -106,30 +113,31 @@ var sweep = []sweepCase{
 
 	{"BuildFromPrd", "POST", "/prds/{h}/build", func(c *Client, h string) error { return drop(c.BuildFromPrd(h)) }},
 	{"ConfirmBuildFromPrd", "POST", "/prds/{h}/build/confirm", func(c *Client, h string) error {
-		return drop(c.ConfirmBuildFromPrd(h, emptyJSON, 3))
+		return drop(c.ConfirmBuildFromPrd(h, emptyJSON, 3, true))
 	}},
 	{"ExpandNode", "POST", "/roadmap/{h}/expand", func(c *Client, h string) error { return drop(c.ExpandNode(h)) }},
 	{"ConfirmExpandNode", "POST", "/roadmap/{h}/expand/confirm", func(c *Client, h string) error {
 		return drop(c.ConfirmExpandNode(h, emptyJSON))
 	}},
-	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress", func(c *Client, h string) error { return drop(c.RoadmapProgress(h)) }},
-	{"RoadmapList", "GET", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapList(h)) }},
+	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress", func(c *Client, h string) error { return drop(c.RoadmapProgress(h, "")) }},
+	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress?root={h}", func(c *Client, h string) error { return drop(c.RoadmapProgress(h, h)) }},
+	{"RoadmapList", "GET", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapList(h, "")) }},
+	{"RoadmapList", "GET", "/projects/{h}/roadmap?root={h}", func(c *Client, h string) error { return drop(c.RoadmapList(h, h)) }},
 	{"RoadmapAdd", "POST", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapAdd(h, h, h, &h)) }},
 	{"RoadmapUpdate", "PATCH", "/roadmap/{h}", func(c *Client, h string) error {
-		return drop(c.RoadmapUpdate(h, &h, &h, &h, &h, &h))
+		return drop(c.RoadmapUpdate(h, RoadmapPatch{Title: &h, Description: &h, Status: &h, Acceptance: &h, CompletionReason: &h, Deadline: &h, OwnerID: &h}))
 	}},
+	{"RoadmapNode", "GET", "/roadmap/{h}", func(c *Client, h string) error { return drop(c.RoadmapNode(h)) }},
+	{"RoadmapMine", "GET", "/workspaces/{h}/roadmap/mine", func(c *Client, h string) error { return drop(c.RoadmapMine(h)) }},
+	{"RoadmapDelegate", "POST", "/roadmap/{h}/delegate", func(c *Client, h string) error { return drop(c.RoadmapDelegate(h, h, h)) }},
+	{"RoadmapHandBack", "POST", "/roadmap/{h}/handback", func(c *Client, h string) error { return drop(c.RoadmapHandBack(h, h)) }},
+	{"RoadmapAssignments", "GET", "/roadmap/{h}/assignments", func(c *Client, h string) error { return drop(c.RoadmapAssignments(h)) }},
+	{"Members", "GET", "/workspaces/{h}/members", func(c *Client, h string) error { return drop(c.Members(h)) }},
 	{"RoadmapMove", "POST", "/roadmap/{h}/move", func(c *Client, h string) error { return drop(c.RoadmapMove(h, &h, nil)) }},
-	{"RoadmapDelete", "DELETE", "/roadmap/{h}", func(c *Client, h string) error { return c.RoadmapDelete(h) }},
+	{"RoadmapDelete", "DELETE", "/roadmap/{h}", func(c *Client, h string) error { return c.RoadmapDelete(h, false) }},
 	{"SetRepo", "PUT", "/projects/{h}/repo", func(c *Client, h string) error { return drop(c.SetRepo(h, h)) }},
 	{"SyncGithub", "POST", "/projects/{h}/sync-github", func(c *Client, h string) error { return drop(c.SyncGithub(h)) }},
 	{"Guide", "GET", "/projects/{h}/guide", func(c *Client, h string) error { return drop(c.Guide(h)) }},
-	{"Cursor", "POST", "/projects/{h}/cursor", func(c *Client, h string) error {
-		// The real route answers 204; this server's JSON body only trips
-		// Cursor's nil decoder after the request was recorded, and what is
-		// under test is the request, not the reply.
-		_ = c.Cursor(h, 1, 2)
-		return nil
-	}},
 	{"ProjectPresence", "GET", "/projects/{h}/presence", func(c *Client, h string) error { return drop(c.ProjectPresence(h)) }},
 }
 

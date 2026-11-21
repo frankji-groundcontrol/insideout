@@ -8,10 +8,10 @@ schema dropped. The product was rebranded from JuanLeMe (卷了么) to InsideOut
 
 ## Contents
 
-- [summary.md](summary.md) — what changed, subsystem by subsystem.
-- [verification.md](verification.md) — the verification actually performed,
+- [summary.md](./summary.md) — what changed, subsystem by subsystem.
+- [verification.md](./verification.md) — the verification actually performed,
   and what remains open.
-- [migration-notes.md](migration-notes.md) — what operators of an old
+- [migration-notes.md](./migration-notes.md) — what operators of an old
   JuanLeMe deployment need to know.
 
 ## Primary sources

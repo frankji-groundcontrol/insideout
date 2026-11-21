@@ -15,6 +15,8 @@ import (
 
 func (s *Server) registerRoadmapRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap", s.requireAuth(s.handleListRoadmap))
+	mux.HandleFunc("GET /api/v1/roadmap/{nid}", s.requireAuth(s.handleReadRoadmapNode))
+	mux.HandleFunc("GET /api/v1/workspaces/{id}/roadmap/mine", s.requireAuth(s.handleMyRoadmap))
 	mux.HandleFunc("POST /api/v1/projects/{pid}/roadmap", s.requireAuth(s.handleCreateRoadmapNode))
 	mux.HandleFunc("PATCH /api/v1/roadmap/{nid}", s.requireAuth(s.handleUpdateRoadmapNode))
 	mux.HandleFunc("POST /api/v1/roadmap/{nid}/move", s.requireAuth(s.handleMoveRoadmapNode))
@@ -55,6 +57,20 @@ type roadmapNodeView struct {
 	// unknown (pre-migration rows, or a removed author → ON DELETE SET NULL).
 	CreatorName *string `json:"creatorName,omitempty"`
 	EditorName  *string `json:"editorName,omitempty"`
+	// CanWrite: the caller may write this node (insideout._can_write_node),
+	// so a client shows write controls only where they would succeed.
+	CanWrite bool `json:"canWrite"`
+	// Rollup counts the leaves at or below the node (a leaf counts itself):
+	// done includes validated, as in Progress (rv5-TREEB-08).
+	Rollup nodeRollupView `json:"rollup"`
+}
+
+type nodeRollupView struct {
+	Leaves    int `json:"leaves"`
+	Done      int `json:"done"`
+	Validated int `json:"validated"`
+	// EarliestDeadline is the earliest deadline among the unfinished leaves.
+	EarliestDeadline *string `json:"earliestDeadline"`
 }
 
 // roadmapNodeResponse takes the instant a deadline is measured against;
@@ -84,41 +100,22 @@ func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	v.OwnerName = n.OwnerName
 	v.ValidationReason = n.ValidationReason
 	v.CompletionReason = n.CompletionReason
+	v.CanWrite = n.CanWrite
+	v.Rollup = nodeRollupView{Leaves: n.Rollup.Leaves, Done: n.Rollup.Done, Validated: n.Rollup.Validated}
+	if d := n.Rollup.EarliestDeadline; d != nil {
+		s := d.Format(time.RFC3339)
+		v.Rollup.EarliestDeadline = &s
+	}
 	return v
 }
+
+// nodeWriteDenied answers a node write refused by the tree's write rule.
+const nodeWriteDenied = "only the project owner, a workspace admin, or the owner of this branch can change this node"
 
 // validRoadmapStatuses admits 'validated' so an already-validated node's
 // fields stay editable, but the store refuses every transition INTO it —
 // that move belongs to the confirm endpoint with its reason.
 var validRoadmapStatuses = map[string]bool{"locked": true, "pending": true, "in_progress": true, "done": true, "validated": true}
-
-func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserID(r.Context())
-	pid, ok := pathUUID(w, r, "pid")
-	if !ok {
-		return
-	}
-	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
-	if err != nil {
-		s.log.Error("list roadmap", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	now := s.now()
-	views := make([]roadmapNodeView, len(nodes))
-	for i, n := range nodes {
-		views[i] = roadmapNodeResponse(n, now)
-	}
-	httpx.WriteJSON(w, http.StatusOK, views)
-}
 
 type createRoadmapNodeRequest struct {
 	ParentID    *string `json:"parentId"`
@@ -146,23 +143,17 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
+	if s.agentRootRefuses(w, r, parentID) {
+		return
+	}
 
 	n, err := s.store.CreateRoadmapNode(r.Context(), userID, pid, parentID, req.Title, req.Description)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project or parent node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "parent node belongs to a different project", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("create roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create roadmap node", err, errMsgs{
+			store.ErrNotFound:  "project or parent node not found",
+			store.ErrForbidden: nodeWriteDenied,
+			store.ErrConflict:  "parent node belongs to a different project",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, roadmapNodeResponse(*n, s.now()))
@@ -188,7 +179,7 @@ type updateRoadmapNodeRequest struct {
 func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
+	if !ok || s.agentRootRefuses(w, r, &nid) {
 		return
 	}
 	var req updateRoadmapNodeRequest
@@ -221,9 +212,20 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 	}
 	if req.CompletionReason != nil {
 		trimmed := strings.TrimSpace(*req.CompletionReason)
+		// The override stands in for evidence: the human's word only (rv5-FEAT-02).
+		if trimmed != "" && isAgentToken(r) {
+			writeAgentScopeDenied(w)
+			return
+		}
 		fields.CompletionReason = &trimmed
 	}
 	if req.OwnerID != nil {
+		// Ownership grants write rights over the subtree: a human decision.
+		// An agent files a proposal instead (owner decision 4, 2026-11-21).
+		if isAgentToken(r) {
+			writeAgentScopeDenied(w)
+			return
+		}
 		if *req.OwnerID == "" {
 			fields.ClearOwner = true
 		} else {
@@ -248,73 +250,12 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		}
 	}
 	n, err := s.store.UpdateRoadmapNode(r.Context(), userID, nid, fields)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap, and an assigned owner must be a member", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrInvalidTransition) {
-		httpx.WriteError(w, http.StatusBadRequest, err.Error(), "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrValidation) {
-		httpx.WriteError(w, http.StatusBadRequest, "moving in_progress to done needs linked evidence or a one-sentence completion reason", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
-		return
-	}
-	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
-}
-
-type moveRoadmapNodeRequest struct {
-	ParentID *string `json:"parentId"`
-	Position *int    `json:"position"`
-}
-
-func (s *Server) handleMoveRoadmapNode(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserID(r.Context())
-	nid, ok := pathUUID(w, r, "nid")
-	if !ok {
-		return
-	}
-	var req moveRoadmapNodeRequest
-	if err := httpx.DecodeJSON(r, &req); err != nil {
-		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
-		return
-	}
-	// parentId present-and-null → make it a root; absent → root too (move
-	// always sets the parent explicitly).
-	parentID, ok := parseOptionalUUID(w, req.ParentID)
-	if !ok {
-		return
-	}
-	position := 0
-	if req.Position != nil {
-		position = *req.Position
-	}
-
-	n, err := s.store.MoveRoadmapNode(r.Context(), userID, nid, parentID, position)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrConflict) {
-		httpx.WriteError(w, http.StatusConflict, "cannot move a node under itself or a descendant", "", nil)
-		return
-	}
-	if err != nil {
-		s.log.Error("move roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update roadmap node", err, errMsgs{
+			store.ErrNotFound:   "node not found",
+			store.ErrForbidden:  nodeWriteDenied + ", and an assigned owner must be a member",
+			store.ErrValidation: "moving in_progress to done needs linked evidence or a one-sentence completion reason",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
@@ -326,18 +267,19 @@ func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request)
 	if !ok {
 		return
 	}
-	err := s.store.DeleteRoadmapNode(r.Context(), userID, nid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "node not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
+	// The subtree cascades: evidence and finished work go only with force.
+	err := s.store.DeleteRoadmapNode(r.Context(), userID, nid, r.URL.Query().Get("force") == "true")
+	var rc *store.ReplaceConflictError
+	if errors.As(err, &rc) {
+		httpx.WriteError(w, http.StatusConflict, "this branch has evidence or finished nodes a delete would erase; confirm with force", "roadmap_delete_has_history", map[string]interface{}{
+			"liveCount": rc.LiveCount, "evidenceCount": rc.EvidenceCount, "doneCount": rc.DoneCount, "validatedCount": rc.ValidatedCount})
 		return
 	}
 	if err != nil {
-		s.log.Error("delete roadmap node", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete roadmap node", err, errMsgs{
+			store.ErrNotFound:  "node not found",
+			store.ErrForbidden: nodeWriteDenied,
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

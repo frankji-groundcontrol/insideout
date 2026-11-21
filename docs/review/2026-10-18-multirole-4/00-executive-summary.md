@@ -3,7 +3,7 @@
 **Repository:** InsideOut  
 **Branch / commit:** `main` @ `9f0b1c7` (clean detached worktree)  
 **Date:** 2026-10-18  
-**Cross-lens mean:** **6.7 / 10** (6.3 across the 5 roles, 7.0 across the 8 dimensions; the critic reconciles these to a lower mean in [30](30-completeness-critic.md)).
+**Cross-lens mean:** **6.7 / 10** (6.3 across the 5 roles, 7.0 across the 8 dimensions; the critic reconciles these to a lower mean in [30](./30-completeness-critic.md)).
 
 ## Verdict
 
@@ -13,21 +13,21 @@ Review 3 said the core was hardened but nothing shipped. Review 4 reads a produc
 
 | File | Lens | Score | Critic-reconciled | Why |
 |---|---|---|---|---|
-| [10](10-architect.md) | Architect (role) | 7 | 6.5 | Clean server layering; four disagreeing client base and token resolvers send a stored token to the hosted default. |
-| [11](11-ai-developer.md) | AI developer (role) | 6 | 6 | Bounded coach loop with server-side gates; MCP tool policy is prose, so an owner-token agent can decide its own proposals. |
-| [12](12-fullstack.md) | Fullstack (role) | 6.5 | 6 | Stack holds together; web Expand with AI is always broken and the CLI login dies in 15 minutes. |
-| [13](13-project-manager.md) | Project manager (role) | 6 | 6 | Real discipline, but safety nets are unplugged: four to five guards run nowhere, CI has no schedule, the binary has no help. |
-| [14](14-user.md) | User (role) | 5.8 | 5.8 | Core loop runs clean; the front door is broken (no first account, help fails, login does not persist). |
-| [20](20-feature-implementation.md) | Feature implementation (dimension) | 6.9 | 6.3 | The advertised loop is built end to end; seams double-apply proposals and leave the human boundary unenforced. |
-| [21](21-code-quality.md) | Code quality (dimension) | 8 | 7 | Disciplined and small-file; medium design debt, no High found. |
-| [22](22-security.md) | Security (dimension) | 6.8 | 6.5 | Sound design (AST-enforced route auth, RLS, HMAC webhooks); abuse resistance and the release path are weak. |
-| [23](23-testing.md) | Testing (dimension) | 6.6 | 6.2 | Real-DB, honest suite with seams: release ungated, no schedule, a global-row race, no CLI/MCP seam test. |
-| [24](24-reliability-ops.md) | Reliability and ops (dimension) | 7 | 6.5 | Graceful shutdown and DB recovery work; no SSE stream cap and no deadline on request or health paths. |
-| [25](25-closure-audit.md) | Closure audit (dimension) | 7.4 | 6.8 | 14 of 17 review-3 Highs verified closed; accounting over-claims and four guards unwired. |
-| [26](26-public-release.md) | Public release (dimension) | 6 | 5.5 | No secret in tree or history; real emails, ungated and unsigned release path, no privacy notice. |
-| [27](27-data-rls.md) | Data and RLS (dimension) | 7 | 6 | Schema confinement and FORCE RLS strong; write-side policies weak and untested. |
+| [10](./10-architect.md) | Architect (role) | 7 | 6.5 | Clean server layering; four disagreeing client base and token resolvers send a stored token to the hosted default. |
+| [11](./11-ai-developer.md) | AI developer (role) | 6 | 6 | Bounded coach loop with server-side gates; MCP tool policy is prose, so an owner-token agent can decide its own proposals. |
+| [12](./12-fullstack.md) | Fullstack (role) | 6.5 | 6 | Stack holds together; web Expand with AI is always broken and the CLI login dies in 15 minutes. |
+| [13](./13-project-manager.md) | Project manager (role) | 6 | 6 | Real discipline, but safety nets are unplugged: four to five guards run nowhere, CI has no schedule, the binary has no help. |
+| [14](./14-user.md) | User (role) | 5.8 | 5.8 | Core loop runs clean; the front door is broken (no first account, help fails, login does not persist). |
+| [20](./20-feature-implementation.md) | Feature implementation (dimension) | 6.9 | 6.3 | The advertised loop is built end to end; seams double-apply proposals and leave the human boundary unenforced. |
+| [21](./21-code-quality.md) | Code quality (dimension) | 8 | 7 | Disciplined and small-file; medium design debt, no High found. |
+| [22](./22-security.md) | Security (dimension) | 6.8 | 6.5 | Sound design (AST-enforced route auth, RLS, HMAC webhooks); abuse resistance and the release path are weak. |
+| [23](./23-testing.md) | Testing (dimension) | 6.6 | 6.2 | Real-DB, honest suite with seams: release ungated, no schedule, a global-row race, no CLI/MCP seam test. |
+| [24](./24-reliability-ops.md) | Reliability and ops (dimension) | 7 | 6.5 | Graceful shutdown and DB recovery work; no SSE stream cap and no deadline on request or health paths. |
+| [25](./25-closure-audit.md) | Closure audit (dimension) | 7.4 | 6.8 | 14 of 17 review-3 Highs verified closed; accounting over-claims and four guards unwired. |
+| [26](./26-public-release.md) | Public release (dimension) | 6 | 5.5 | No secret in tree or history; real emails, ungated and unsigned release path, no privacy notice. |
+| [27](./27-data-rls.md) | Data and RLS (dimension) | 7 | 6 | Schema confinement and FORCE RLS strong; write-side policies weak and untested. |
 
-The critic re-scored each lens against its own findings and the measured reproductions; the reconciled mean is **6.24**, against 6.69 as reported. The reviewers' scores stay in the role files; the reasons are in [30](30-completeness-critic.md).
+The critic re-scored each lens against its own findings and the measured reproductions; the reconciled mean is **6.24**, against 6.69 as reported. The reviewers' scores stay in the role files; the reasons are in [30](./30-completeness-critic.md).
 
 ## Top ten by user impact
 
@@ -46,28 +46,28 @@ The critic re-scored each lens against its own findings and the measured reprodu
 
 ## What each role would say at the door
 
-- **Architect** ([10](10-architect.md)): "Fix ARCH-01 and ARCH-02 together: one clientconfig.Resolve used by CLI, --api flags and the MCP binary, then delete the other three resolvers including the scripts/mcp-config.sh shadow."
-- **AI developer** ([11](11-ai-developer.md)): "Ship an enforced MCP agent tool policy (scoped agent token with no proposal_decide, commit, signup_mode set or invite tools, plus author-cannot-decide on proposals) together with the prompt contract that every tool result and MCP output carrying user-writable text is fenced and …"
-- **Fullstack** ([12](12-fullstack.md)): "Fix web expandRoadmapNode (read children, call confirm) and add a contract-shape test; the CLI help/version fix (~15 lines) is the cheapest alternative."
-- **Project manager** ([13](13-project-manager.md)): "Repair the one red test, then one small commit wiring the four orphaned guards into CI and adding a CI schedule, so the safety nets the records cite actually run."
-- **User** ([14](14-user.md)): "Fix USER-01 and USER-02 together (upsert in promote-admin, ~25 lines; pre-dispatch help/version/unknown-verb block in main.go, ~30 lines), then USER-03/04 so a saved login survives past 15 minutes, then USER-07 (8 lines)."
-- **Feature implementation** ([20](20-feature-implementation.md)): "Reproduce FEAT-02 and FEAT-01 as one regression test each, then fix FEAT-02 first because it silently doubles a roadmap people trust; then write a short design for the agent-scoped token."
-- **Code quality** ([21](21-code-quality.md)): "Fix QUAL-02 and QUAL-03 (a few lines each, both reachable from untrusted input), then land two mechanical commits: (1) delete dead helpers (splitCORSOrigins, hasOpenBlockingFindings, duplicate tokenFromLink) and apply the unconvert, S1002/QF1001 and six errorlint %w/errors.Is …"
-- **Security** ([22](22-security.md)): "Fix SEC-01 (atomic login-code verification, about 20 lines), then SEC-02 and SEC-06 together; today set a real INSIDEOUT_JWT_SECRET anywhere .env.example was copied, scope the GITHUB_TOKEN, and keep the Railway server service and compose server port off public interfaces."
-- **Testing** ([23](23-testing.md)): "Add a go test step to release.yml and a schedule trigger with -shuffle=on to ci.yml."
-- **Reliability and ops** ([24](24-reliability-ops.md)): "Set the two limits before the next release: a per-user/per-project cap on concurrent SSE streams sized under the 512m memory limit, and a per-request deadline (including a 2-3 s /healthz Ping) paired with stop_grace_period: 35s."
-- **Closure audit** ([25](25-closure-audit.md)): "Wire the Python check_*.py truth scripts into CI."
-- **Public release** ([26](26-public-release.md)): "Fix PUB-01 today: five doc edits plus a guard rule, then check the Supabase Data API exposure (PUB-05), then lock the release path before the next tag."
-- **Data and RLS** ([27](27-data-rls.md)): "Write the failing test: as a user who is neither the workspace creator nor holding app.join_code, a bare INSERT INTO insideout.workspace_memberships for that workspace must fail, and role='admin' must never be insertable by a non-creator; then fix the policy."
+- **Architect** ([10](./10-architect.md)): "Fix ARCH-01 and ARCH-02 together: one clientconfig.Resolve used by CLI, --api flags and the MCP binary, then delete the other three resolvers including the scripts/mcp-config.sh shadow."
+- **AI developer** ([11](./11-ai-developer.md)): "Ship an enforced MCP agent tool policy (scoped agent token with no proposal_decide, commit, signup_mode set or invite tools, plus author-cannot-decide on proposals) together with the prompt contract that every tool result and MCP output carrying user-writable text is fenced and …"
+- **Fullstack** ([12](./12-fullstack.md)): "Fix web expandRoadmapNode (read children, call confirm) and add a contract-shape test; the CLI help/version fix (~15 lines) is the cheapest alternative."
+- **Project manager** ([13](./13-project-manager.md)): "Repair the one red test, then one small commit wiring the four orphaned guards into CI and adding a CI schedule, so the safety nets the records cite actually run."
+- **User** ([14](./14-user.md)): "Fix USER-01 and USER-02 together (upsert in promote-admin, ~25 lines; pre-dispatch help/version/unknown-verb block in main.go, ~30 lines), then USER-03/04 so a saved login survives past 15 minutes, then USER-07 (8 lines)."
+- **Feature implementation** ([20](./20-feature-implementation.md)): "Reproduce FEAT-02 and FEAT-01 as one regression test each, then fix FEAT-02 first because it silently doubles a roadmap people trust; then write a short design for the agent-scoped token."
+- **Code quality** ([21](./21-code-quality.md)): "Fix QUAL-02 and QUAL-03 (a few lines each, both reachable from untrusted input), then land two mechanical commits: (1) delete dead helpers (splitCORSOrigins, hasOpenBlockingFindings, duplicate tokenFromLink) and apply the unconvert, S1002/QF1001 and six errorlint %w/errors.Is …"
+- **Security** ([22](./22-security.md)): "Fix SEC-01 (atomic login-code verification, about 20 lines), then SEC-02 and SEC-06 together; today set a real INSIDEOUT_JWT_SECRET anywhere .env.example was copied, scope the GITHUB_TOKEN, and keep the Railway server service and compose server port off public interfaces."
+- **Testing** ([23](./23-testing.md)): "Add a go test step to release.yml and a schedule trigger with -shuffle=on to ci.yml."
+- **Reliability and ops** ([24](./24-reliability-ops.md)): "Set the two limits before the next release: a per-user/per-project cap on concurrent SSE streams sized under the 512m memory limit, and a per-request deadline (including a 2-3 s /healthz Ping) paired with stop_grace_period: 35s."
+- **Closure audit** ([25](./25-closure-audit.md)): "Wire the Python check_*.py truth scripts into CI."
+- **Public release** ([26](./26-public-release.md)): "Fix PUB-01 today: five doc edits plus a guard rule, then check the Supabase Data API exposure (PUB-05), then lock the release path before the next tag."
+- **Data and RLS** ([27](./27-data-rls.md)): "Write the failing test: as a user who is neither the workspace creator nor holding app.join_code, a bare INSERT INTO insideout.workspace_memberships for that workspace must fail, and role='admin' must never be insertable by a non-creator; then fix the policy."
 
 ## Effort
 
 | Wave | What | Register IDs | Estimate |
 |---|---|---|---|
-| [0](40-remediation-plan.md) | Privacy and owner decisions | 6 | 0.5 day (owner time for 0.2 and 0.4) |
-| [1](40-remediation-plan.md) | One-commit fixes (front door, gates, release) | 33 | 1.5 days |
-| [2](40-remediation-plan.md) | Structural fixes with a red test first | 20 | 5 days |
-| [3](40-remediation-plan.md) | Trust, reliability, release hardening, docs truth | 56 | 8 to 10 days |
+| [0](./40-remediation-plan.md) | Privacy and owner decisions | 6 | 0.5 day (owner time for 0.2 and 0.4) |
+| [1](./40-remediation-plan.md) | One-commit fixes (front door, gates, release) | 33 | 1.5 days |
+| [2](./40-remediation-plan.md) | Structural fixes with a red test first | 20 | 5 days |
+| [3](./40-remediation-plan.md) | Trust, reliability, release hardening, docs truth | 56 | 8 to 10 days |
 | not in scope | features, rewrites, Lows | 30 | batch after Wave 3 |
 | **Total** | | **145** (some IDs sit in two waves) | **about 3 engineer-weeks** |
 
@@ -80,4 +80,4 @@ The critic re-scored each lens against its own findings and the measured reprodu
 - **Do not trust** "Fixed" ledger rows that are docs-only commits, the "zero broken doc links" claim, or "the head run is green" until rows 1.4 and 3.6 land.
 - **Do not start multi-replica work** (ARCH-03, CLOSE-05, REL-04); the single-replica contract is documented and holds.
 
-Next: [40-remediation-plan.md](40-remediation-plan.md), row 0.1 and row 1.1.
+Next: [40-remediation-plan.md](./40-remediation-plan.md), row 0.1 and row 1.1.

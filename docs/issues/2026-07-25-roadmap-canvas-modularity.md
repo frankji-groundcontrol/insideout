@@ -3,7 +3,7 @@
 > **Superseded 2026-10-10.** The file this record is about, `app/src/components/roadmap/RoadmapCanvas.vue`,
 > no longer exists: the Nuxt app was deleted in the Flutter rewrite and no `.vue`
 > file is tracked. The Flutter canvas had the same problem and was split on its
-> own record ([roadmap_canvas.dart line budget](2026-10-08-roadmap-canvas-line-budget.md)).
+> own record ([roadmap_canvas.dart line budget](./2026-10-08-roadmap-canvas-line-budget.md)).
 >
 > The original record follows, unedited.
 

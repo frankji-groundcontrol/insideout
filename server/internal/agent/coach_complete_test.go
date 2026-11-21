@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -82,8 +83,8 @@ func coachTurn(t *testing.T, c *Coach, ex *toolExecutor, reply string) string {
 	if err != nil {
 		t.Fatalf("get conversation: %v", err)
 	}
-	streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
-		return Turn{Text: reply}, nil
+	streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
+		return llm.Turn{Text: reply}, nil
 	}}
 	cc := New(c.store, streamer, discardLog())
 	cc.HandleMessage(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/", nil),

@@ -90,6 +90,31 @@ class TestStoreInvariants(unittest.TestCase):
                           f"{p} must name its own folder")
         self.assertGreater(seen, 0, "no hosts found")
 
+    # rv5-STRC-04: the manifests are a second catalogue of the variables in
+    # .env.example. Each listed difference is known drift, recorded in
+    # docs/issues/2026-11-21-key-manifests-one-set.md; a new one fails here.
+    SKELETON_ONLY = {
+        "INSIDEOUT_AI_TURN_DEADLINE": "added to the skeleton after the manifests were copied",
+        "INSIDEOUT_TRUSTED_PROXY_HOPS": "added to the skeleton after the manifests were copied",
+    }
+    MANIFEST_ONLY = {
+        "INSIDEOUT_GH_CLIENT_SECRET": "github/app.yaml: no server reader yet",
+    }
+
+    def test_manifest_variables_match_the_skeleton(self):
+        import env_catalog
+        from pathlib import Path
+        skeleton = {n for n, _, _, _ in env_catalog.parse_skeleton(Path(REPO) / ".env.example")}
+        hosts = keys.discover_hosts(REPO)
+        self.assertGreater(len(hosts), 0, "no hosts found")
+        want = (skeleton - set(self.SKELETON_ONLY)) | set(self.MANIFEST_ONLY)
+        for host in hosts:
+            mapped = set(keys.key_map(REPO, host))
+            self.assertEqual(sorted(mapped - want), [],
+                             f"{host}: manifests map variables .env.example does not declare")
+            self.assertEqual(sorted(want - mapped), [],
+                             f"{host}: .env.example declares variables no manifest maps")
+
 
 if __name__ == "__main__":
     unittest.main()

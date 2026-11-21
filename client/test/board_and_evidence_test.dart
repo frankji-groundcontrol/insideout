@@ -9,6 +9,7 @@ import 'package:insideout/features/workspace/workspace_page.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+import 'features/project/_project_model_helpers.dart';
 
 class _BoardApi extends ApiClient {
   _BoardApi({
@@ -65,7 +66,7 @@ class _BoardApi extends ApiClient {
       );
 
   @override
-  Future<Map<String, dynamic>> getProject(String id) async => {
+  Future<ProjectDetail> getProject(String id) async => projectDetail({
     'id': id,
     'workspaceId': 'ws-1',
     'title': 'Evidence Page Test',
@@ -74,7 +75,7 @@ class _BoardApi extends ApiClient {
     'repoUrl': '',
     'ownerId': 'u1',
     'updates': const <Map<String, dynamic>>[],
-  };
+  });
 
   @override
   Future<List<RoadmapNode>> listRoadmap(String projectId) async {
@@ -83,8 +84,8 @@ class _BoardApi extends ApiClient {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async =>
-      evidence;
+  Future<List<NodeEvidence>> listNodeEvidence(String nodeId) async =>
+      evidence.map(evidenceRow).toList();
 }
 
 Future<void> _pump(WidgetTester tester, Widget child, ApiClient api) async {

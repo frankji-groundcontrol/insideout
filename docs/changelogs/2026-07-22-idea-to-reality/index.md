@@ -4,8 +4,8 @@ Large change record. InsideOut pivoted from "a PRD tool" to "idea → reality":
 the PRD is one step, and after it the product now helps you build. Three key
 capabilities landed, plus a UI/UX prettify pass.
 
-- [summary.md](summary.md) — what changed, subsystem by subsystem.
-- [verification.md](verification.md) — the verification actually performed.
+- [summary.md](./summary.md) — what changed, subsystem by subsystem.
+- [verification.md](./verification.md) — the verification actually performed.
 
 ## Primary sources
 

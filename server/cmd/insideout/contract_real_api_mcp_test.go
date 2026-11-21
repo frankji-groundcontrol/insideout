@@ -98,6 +98,8 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 			"readiness": {"prd_id": r.prd}, "versions": {"prd_id": r.prd}, "view": {"prd_id": r.prd},
 			"prd_export": {"prd_id": r.prd}, "progress": {"project_id": r.project},
 			"presence": {"project_id": r.project}, "guide": {"project_id": r.project}, "roadmap_evidence": {"node_id": r.node},
+			"roadmap_node": {"node_id": r.node}, "roadmap_mine": {"workspace_id": r.workspace},
+			"roadmap_assignments": {"node_id": r.node},
 		} {
 			t.Run(name, func(t *testing.T) { toolData(t, s, name, args) })
 		}
@@ -111,6 +113,9 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		wantListed(t, "idea_list", toolData(t, s, "idea_list", kv{"workspace_id": r.workspace}), idea.ID)
 		if edited := toolJSON[doc](t, s, "idea_update", kv{"idea_id": idea.ID, "title": "Edited " + r.sfx, "content": "edited"}); edited.Title != "Edited "+r.sfx || edited.Content != "edited" {
 			t.Fatalf("idea_update = %+v, want the new title and content", edited)
+		}
+		if kept := toolJSON[doc](t, s, "idea_update", kv{"idea_id": idea.ID, "title": "Retitled " + r.sfx}); kept.Title != "Retitled "+r.sfx || kept.Content != "edited" {
+			t.Fatalf("title-only idea_update = %+v, want the body kept", kept)
 		}
 		if made := toolJSON[doc](t, s, "idea_convert", kv{"idea_id": idea.ID}); made.PrdID == "" || made.ConversationID == "" {
 			t.Fatalf("idea_convert = %+v, want a PRD and its coach conversation", made)
@@ -128,7 +133,11 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		if renamed := toolJSON[doc](t, s, "roadmap_update", kv{"node_id": child.ID, "title": "Renamed " + r.sfx}); renamed.Title != "Renamed "+r.sfx {
 			t.Fatalf("roadmap_update = %+v, want the new title", renamed)
 		}
-		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "", "position": 0}) // to the root
+		// An agent token may say what done means, never who owns the node (rv5-PARC-01),
+		// so roadmap_update takes no owner_id (rv5-PARB-04); the API's refusal is
+		// internal/api's TestAnAgentTokenCannotChangeANodesOwner.
+		toolData(t, s, "roadmap_update", kv{"node_id": child.ID, "acceptance": "Ships"})
+		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "root", "position": 0}) // to the root
 		nodes := map[string]doc{}
 		for _, n := range toolJSON[[]doc](t, s, "roadmap_list", kv{"project_id": r.project}) {
 			nodes[n.ID] = n
@@ -163,9 +172,9 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		}
 
 		// A human decides, on the CLI: the agent scope the tools run on cannot.
-		decided := cliJSON[doc](t, "idea", "proposal-decide", "--accept", "--apply", prop.ID)
+		decided := cliJSON[doc](t, "proposal", "decide", "--accept", prop.ID) // applies by default (rv5-PARB-05)
 		if decided.Decision != "accepted" || len(decided.AppliedNodes) != 1 {
-			t.Fatalf("proposal-decide = %+v, want it accepted, with the one proposed node applied", decided)
+			t.Fatalf("proposal decide = %+v, want it accepted, with the one proposed node applied", decided)
 		}
 		wantListed(t, "roadmap list", cliOut(t, "roadmap", "list", r.project), decided.AppliedNodes[0])
 	})
@@ -175,6 +184,12 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		for name, args := range map[string]kv{"build": {"prd_id": r.prd}, "expand": {"node_id": r.node}} {
 			if out := callTool(t, s, name, args); !out.isError || !strings.Contains(out.text, "roadmap planner is not configured") {
 				t.Fatalf("%s = %+v, want the API's planner-not-configured answer", name, out)
+			}
+		}
+		// Only an approved PRD is built, and approving is the human's (rv5-PARB-01).
+		for _, s := range []string{"reviewing", "approved"} {
+			if got := cliJSON[doc](t, "prd", "update", "--status", s, r.prd); got.Status != s {
+				t.Fatalf("prd update --status %s = %+v", s, got)
 			}
 		}
 		built := toolJSON[doc](t, s, "build_confirm", kv{"prd_id": r.prd, "tree": `{"title":"Plan","children":[{"title":"One"},{"title":"Two"}]}`})

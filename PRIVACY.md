@@ -2,7 +2,7 @@
 
 InsideOut is open-source software (MPL-2.0) and also runs as a hosted,
 multi-user service: the deployment whose address ships as `DefaultBase` in
-[server/internal/apiclient/default_base.go](server/internal/apiclient/default_base.go),
+[server/internal/apiclient/default_base.go](./server/internal/apiclient/default_base.go),
 operated by the repository owner. This notice says what the software stores
 about you, which outside services it can pass your data to, and how long it
 keeps it. It was written on 2026-10-19 from the code in this repository. It
@@ -57,10 +57,10 @@ configured that service. The code can reach these:
 | Resend, a mail provider | The recipient address, subject and body of sign-in links and codes, password-reset and invitation mails. | Only when `INSIDEOUT_MAIL_API_KEY` is set. Without it no mail is sent, and the server logs the recipient and subject (the body too, if the operator opted in for development). |
 | GitHub (`api.github.com`) | The repository you bind to a project, and requests made with the operator's GitHub App credential (an installation token for a private repository, none for a public one); GitHub also calls the server's webhook. What it returns (commits, activity) is stored as project updates. | Only for a project bound to a repository. |
 
-The variables are described in [docs/usage/environment.md](docs/usage/environment.md).
+The variables are described in [docs/usage/environment.md](./docs/usage/environment.md).
 The web client takes its renderer (CanvasKit) and its fonts from the
 deployment's own origin, and the policy its web server sends
-([client/nginx.conf](client/nginx.conf)) lets a page load from that origin
+([client/nginx.conf](./client/nginx.conf)) lets a page load from that origin
 alone, so opening the client sends nothing to a font or renderer host.
 The client and the server contain no analytics or advertising code. The
 server sets two HttpOnly cookies, `insideout_access` and `insideout_refresh`,
@@ -106,9 +106,10 @@ everything in it: its ideas, projects, PRDs, coach conversations and run
 records. A single PRD can be exported as Markdown from its export page. There
 is no export of a whole account, and this notice does not require one.
 
-You can delete your account yourself. While signed in with your own session,
-not with an agent token, send your current password to `DELETE /api/v1/me`.
-That deletes your conversations and messages, run records, ideas of every
+You can delete your account yourself, with your current password and your own
+session, not an agent token: on the web, the Delete my account section at the
+end of your profile page; in a terminal, `insideout account delete`; or the
+request `DELETE /api/v1/me` that both send. That deletes your conversations and messages, run records, ideas of every
 status, sessions, one-time tokens and memberships, and overwrites the account
 fields described above. It does not delete other members' PRDs, revisions,
 commits or projects. A workspace you created that still has another member
@@ -116,7 +117,7 @@ stays, and one of those members becomes its creator. A workspace you created
 that has no other member is deleted with everything in it.
 
 This notice promises no response time. The decision is recorded in
-[docs/issues/2026-10-18-rv4-retention-erasure.md](docs/issues/2026-10-18-rv4-retention-erasure.md).
+[docs/issues/2026-10-18-rv4-retention-erasure.md](./docs/issues/2026-10-18-rv4-retention-erasure.md).
 
 ## Contact
 

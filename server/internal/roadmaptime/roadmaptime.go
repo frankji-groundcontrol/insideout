@@ -81,21 +81,19 @@ func Assemble(nodes []Node, now time.Time) Progress {
 		if !n.Leaf {
 			continue
 		}
-		switch n.Status {
-		case "in_progress":
+		switch {
+		case n.Status == "in_progress":
 			item := item(n, now)
 			if n.Deadline == nil {
 				p.NeedsDeadline = append(p.NeedsDeadline, ProgressItem{ID: n.ID, Title: n.Title, Status: n.Status, Acceptance: n.Acceptance, OwnerName: n.OwnerName})
 			} else {
 				p.Now = append(p.Now, item)
 			}
-		case "pending":
+		case n.Status == "pending":
 			if n.Deadline != nil {
 				pending = append(pending, n)
 			}
-		case "done", "validated":
-			// A validated leaf is a finished leaf plus its human confirm;
-			// Done lists both or finished work would vanish on validate.
+		case Finished(n.Status):
 			p.DoneCount++
 			p.DoneItems = append(p.DoneItems, item(n, now))
 		}
@@ -108,6 +106,11 @@ func Assemble(nodes []Node, now time.Time) Progress {
 	}
 	return p
 }
+
+// Finished reports whether a leaf's status is finished work. A validated leaf
+// is a finished leaf plus its human confirm; Done and every roll-up count
+// both, or finished work would vanish on validate.
+func Finished(status string) bool { return status == "done" || status == "validated" }
 
 func item(n Node, now time.Time) ProgressItem {
 	it := ProgressItem{ID: n.ID, Title: n.Title, Status: n.Status, Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName}

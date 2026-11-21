@@ -16,6 +16,7 @@ part 'client_core.dart';
 part 'client_auth.dart';
 part 'client_workspace.dart';
 part 'client_project.dart';
+part 'client_roadmap.dart';
 part 'client_prd.dart';
 part 'client_stream.dart';
 
@@ -24,4 +25,10 @@ part 'client_stream.dart';
 /// instance members that test subclasses can override.
 // ignore: library_private_types_in_public_api
 class ApiClient = _ApiCore
-    with _AuthVerbs, _WorkspaceVerbs, _ProjectVerbs, _PrdVerbs, _StreamVerbs;
+    with
+        _AuthVerbs,
+        _WorkspaceVerbs,
+        _ProjectVerbs,
+        _RoadmapVerbs,
+        _PrdVerbs,
+        _StreamVerbs;

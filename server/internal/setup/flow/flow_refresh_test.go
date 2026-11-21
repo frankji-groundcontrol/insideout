@@ -40,7 +40,7 @@ func TestRunSavesTheRefreshTokenForEverySignInMethod(t *testing.T) {
 			_, err := Run(context.Background(), Inputs{
 				Mode: ModeRemote, BaseURL: api.URL, AuthMethod: method,
 				Email: "user@example.org", Secret: "secret-value",
-			}, Deps{Prober: &fakeProber{}, Client: apiclient.New(api.URL), Persister: pers})
+			}, Deps{Prober: &fakeProber{}, Client: mailClient{Client: apiclient.New(api.URL)}, Persister: pers})
 			if err != nil {
 				t.Fatalf("Run: %v", err)
 			}

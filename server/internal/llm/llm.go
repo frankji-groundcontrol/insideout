@@ -1,0 +1,114 @@
+// Package llm holds the model provider clients the coach talks to: the
+// provider-agnostic ChatStreamer contract, the Anthropic Messages and
+// OpenAI-compatible Responses streamers, their stream parsers, and the
+// retry and error taxonomy. It imports nothing from internal/agent.
+package llm
+
+import (
+	"context"
+	"errors"
+)
+
+type Role string
+
+const (
+	RoleUser      Role = "user"
+	RoleAssistant Role = "assistant"
+	RoleTool      Role = "tool"
+)
+
+// ToolCallRequest is the model asking to invoke one tool. Only one tool
+// call per assistant turn is supported — see §5 of 03-agents.md: the
+// coach prompts for exactly one tool call per turn anyway (see
+// agent/prompts.go), so the stream parsers (anthropic_parse.go,
+// responses_parse.go) only ever surface the first tool call in a response.
+type ToolCallRequest struct {
+	ID        string
+	Name      string
+	Arguments string // raw JSON object
+}
+
+// Message is one turn in a conversation, in our own provider-agnostic
+// shape (never the wire format of any specific provider) so only
+// anthropic.go knows about Anthropic's Messages API.
+type Message struct {
+	Role       Role
+	Content    string
+	ToolCall   *ToolCallRequest // set on an assistant message that is a tool call
+	ToolCallID string           // set on a tool-role message: which call this answers
+}
+
+// Tool is a tool definition offered to the model, JSON-Schema parameters.
+type Tool struct {
+	Name        string
+	Description string
+	Parameters  map[string]any
+}
+
+// Turn is what the model produced: either final text, or a request to
+// call one tool.
+type Turn struct {
+	Text     string
+	ToolCall *ToolCallRequest
+	Usage    Usage
+	// Truncated is set when the provider stopped at its output-token cap
+	// (stop_reason=max_tokens) rather than finishing naturally. The Text is
+	// still usable, but it was cut off mid-answer — the coach surfaces this
+	// to the user instead of silently presenting it as complete (F13).
+	Truncated bool
+}
+
+// Usage is token accounting for one provider call — metadata only, never
+// the prompt/response content itself (plan §10.6 privacy constraint on
+// telemetry).
+type Usage struct {
+	InputTokens  int
+	OutputTokens int
+}
+
+// Sentinel errors a ChatStreamer implementation classifies its failures
+// into, so the coach (agent/coach.go) can decide retry/circuit/user-message policy without
+// knowing provider-specific status codes (docs/plans/2026-07-21-prd-agent-harness/plan.md §5.2).
+// A ChatStreamer is expected to retry transient conditions (rate limit,
+// 5xx) internally once before returning; these sentinels represent the
+// final, exhausted-retry outcome.
+var (
+	// ErrProviderRateLimited: 429, retries exhausted. Circuit failure.
+	ErrProviderRateLimited = errors.New("agent: provider rate limited")
+	// ErrProviderTransient: 5xx/connect refusal, retries exhausted. Circuit failure.
+	ErrProviderTransient = errors.New("agent: provider transient error")
+	// ErrContextLength: 400 context-length-exceeded. Not retried by the
+	// streamer; the coach gets one auto-tighten attempt. Not a circuit failure.
+	ErrContextLength = errors.New("agent: context length exceeded")
+	// ErrProviderConfig: 400 other/401/403/model_not_found — a
+	// configuration problem, not provider load. Not a circuit failure
+	// (would poison the breaker for every user over one bad config).
+	ErrProviderConfig = errors.New("agent: provider configuration error")
+	// ErrContentRefusal: the model refused or returned empty content.
+	// Not a circuit failure.
+	ErrContentRefusal = errors.New("agent: content refused")
+	// ErrUpstreamStall: the provider stream went silent and the idle
+	// watchdog canceled it while the client was still connected — a hung
+	// upstream, NOT a client disconnect. Circuit failure (it's a
+	// provider-health signal), and the still-connected user gets an SSE
+	// error rather than a silently dead stream.
+	ErrUpstreamStall = errors.New("agent: upstream stream stalled")
+)
+
+// ChatStreamer sends one turn to a model: system prompt, message history,
+// available tools, and a callback for text deltas as they stream in. This
+// is the ONLY interface the coaching logic depends on — swapping the
+// Anthropic direct client (anthropic.go) for another provider later is a
+// one-file change (see docs/plans/2026-07-20-go-rewrite/03-agents.md §5).
+type ChatStreamer interface {
+	StreamChat(ctx context.Context, system string, msgs []Message, tools []Tool, onDelta func(string)) (Turn, error)
+
+	// StreamChatForcingTool is like StreamChat but forces the model to
+	// call exactly the given tool — used by the critic (agent/critic.go) to
+	// get schema-validated structured output instead of scraping JSON
+	// out of freeform text (plan §4.4).
+	StreamChatForcingTool(ctx context.Context, system string, msgs []Message, tool Tool, onDelta func(string)) (Turn, error)
+
+	// Model identifies which model this streamer talks to, for telemetry.
+	Model() string
+}

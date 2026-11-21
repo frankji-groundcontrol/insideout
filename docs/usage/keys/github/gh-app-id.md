@@ -7,8 +7,8 @@ installation-token requests for private guide, commit and evidence fetches.
 
 `hosts/<host>/keys/github/.secrets/gh-app-id.key` (manifest
 `github/app.yaml`; the matching credentials are
-[gh-app-private-key](gh-app-private-key.md) and
-[gh-private-key-file](gh-private-key-file.md)).
+[gh-app-private-key](./gh-app-private-key.md) and
+[gh-private-key-file](./gh-private-key-file.md)).
 
 ## 2. How it is propagated
 

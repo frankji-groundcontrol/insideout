@@ -1,6 +1,6 @@
 # 41 · Remediation execution contract
 
-How the [remediation plan](40-remediation-plan.md) is executed by a fan-out of
+How the [remediation plan](./40-remediation-plan.md) is executed by a fan-out of
 agents. The plan says *what* to change; this file says *how* the work is split,
 proven and merged. The goal prompt given to the coordinator is short on purpose
 and points here.

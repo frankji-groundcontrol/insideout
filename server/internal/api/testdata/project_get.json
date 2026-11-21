@@ -1,0 +1,24 @@
+{
+  "id": "2ee57740-c94d-4b26-80d0-b158df14364f",
+  "workspaceId": "2ec862eb-4b92-4500-9802-19f79c241514",
+  "title": "Route tests",
+  "description": "",
+  "ownerId": "bb925336-f741-4291-ae23-e01842b49359",
+  "status": "active",
+  "repoUrl": "",
+  "createdAt": "2026-11-21T19:20:37+08:00",
+  "flagged": false,
+  "canWritePlan": true,
+  "prdId": null,
+  "updates": [
+    {
+      "id": "32ef2c1b-20a2-470a-adc5-6e5f5bf30731",
+      "projectId": "2ee57740-c94d-4b26-80d0-b158df14364f",
+      "authorId": "bb925336-f741-4291-ae23-e01842b49359",
+      "kind": "progress",
+      "content": "Shipped the first screen",
+      "createdAt": "2026-11-21T19:20:37+08:00"
+    }
+  ],
+  "nextCursor": null
+}

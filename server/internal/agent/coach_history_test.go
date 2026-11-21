@@ -7,30 +7,32 @@ import (
 	"net/http/httptest"
 	"slices"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // historyRecorder is a coach-turn stub that keeps the messages every provider
 // call received. failFirst makes call 1 fail before any text is streamed.
 type historyRecorder struct {
-	calls     [][]Message
+	calls     [][]llm.Message
 	failFirst error
 }
 
-func (h *historyRecorder) StreamChat(_ context.Context, _ string, msgs []Message, _ []Tool, _ func(string)) (Turn, error) {
+func (h *historyRecorder) StreamChat(_ context.Context, _ string, msgs []llm.Message, _ []llm.Tool, _ func(string)) (llm.Turn, error) {
 	h.calls = append(h.calls, slices.Clone(msgs))
 	if len(h.calls) == 1 && h.failFirst != nil {
-		return Turn{}, h.failFirst
+		return llm.Turn{}, h.failFirst
 	}
-	return Turn{Text: "ok"}, nil
+	return llm.Turn{Text: "ok"}, nil
 }
 
-func (*historyRecorder) StreamChatForcingTool(context.Context, string, []Message, Tool, func(string)) (Turn, error) {
-	return Turn{}, nil
+func (*historyRecorder) StreamChatForcingTool(context.Context, string, []llm.Message, llm.Tool, func(string)) (llm.Turn, error) {
+	return llm.Turn{}, nil
 }
 
 func (*historyRecorder) Model() string { return "recorder" }
 
-func roleText(msgs []Message) []string {
+func roleText(msgs []llm.Message) []string {
 	out := make([]string, len(msgs))
 	for i, m := range msgs {
 		out[i] = string(m.Role) + ":" + m.Content
@@ -41,7 +43,7 @@ func roleText(msgs []Message) []string {
 // turnAfterOneExchange runs one coach turn on a conversation that already holds
 // one stored exchange and returns what the provider received, plus the
 // transcript as stored afterwards.
-func turnAfterOneExchange(t *testing.T, stub *historyRecorder) (calls [][]Message, stored []string) {
+func turnAfterOneExchange(t *testing.T, stub *historyRecorder) (calls [][]llm.Message, stored []string) {
 	t.Helper()
 	st := newTestStore(t)
 	ctx := context.Background()
@@ -92,7 +94,7 @@ func TestHandleMessage_ModelSeesTheLatestUserTurnOnce(t *testing.T) {
 // The context-length retry rebuilds the history with a smaller window; it must
 // not repeat the latest user turn either.
 func TestHandleMessage_TightenedRetryAlsoSeesTheLatestUserTurnOnce(t *testing.T) {
-	stub := &historyRecorder{failFirst: fmt.Errorf("%w: prompt is too long", ErrContextLength)}
+	stub := &historyRecorder{failFirst: fmt.Errorf("%w: prompt is too long", llm.ErrContextLength)}
 	calls, _ := turnAfterOneExchange(t, stub)
 
 	if len(calls) != 2 {

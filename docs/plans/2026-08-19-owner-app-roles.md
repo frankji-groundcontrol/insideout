@@ -66,4 +66,4 @@ OWNED`): [changelog](../changelogs/2026-08-20-owner-app-roles-shared-instance.md
 
 - User request this session
 - [BUG-007](../issues/2026-07-20-bug-007-rls-against-real-postgres.md) recursion
-- Historical D2: [01-database.md](2026-07-20-go-rewrite/01-database.md) §2
+- Historical D2: [01-database.md](./2026-07-20-go-rewrite/01-database.md) §2

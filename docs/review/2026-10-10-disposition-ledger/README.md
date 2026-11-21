@@ -8,7 +8,7 @@ issue record, plan, or changelog traced. The registers:
 - [Frontend Cobalt review (2026-10-06)](../2026-10-06-frontend-cobalt/01-findings-register.md)
 - [Multirole review 3 (2026-10-10)](../2026-10-10-multirole-3/01-findings-register.md)
   — executed directly as four remediation waves; rows are traced in
-  [04-multirole-3.md](04-multirole-3.md).
+  [04-multirole-3.md](./04-multirole-3.md).
 
 ## Method
 
@@ -42,7 +42,7 @@ Register 4's Fixed/Recorded split and its `Counts` line are held by
 
 ## Files
 
-- [01-multirole-1.md](01-multirole-1.md) — register 1 rows
-- [02-multirole-2.md](02-multirole-2.md) — register 2 rows
-- [03-frontend-cobalt.md](03-frontend-cobalt.md) — frontend register rows
-- [04-multirole-3.md](04-multirole-3.md) — register 3 rows (four remediation waves)
+- [01-multirole-1.md](./01-multirole-1.md) — register 1 rows
+- [02-multirole-2.md](./02-multirole-2.md) — register 2 rows
+- [03-frontend-cobalt.md](./03-frontend-cobalt.md) — frontend register rows
+- [04-multirole-3.md](./04-multirole-3.md) — register 3 rows (four remediation waves)

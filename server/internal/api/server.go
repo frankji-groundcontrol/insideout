@@ -123,6 +123,7 @@ func (s *Server) Handler() http.Handler {
 	s.registerPrdRoutes(mux)
 	s.registerConversationRoutes(mux)
 	s.registerRoadmapRoutes(mux)
+	s.registerDelegationRoutes(mux)
 	s.registerGithubRoutes(mux)
 	s.registerRoadmapAIRoutes(mux)
 	s.registerAgentRoutes(mux)

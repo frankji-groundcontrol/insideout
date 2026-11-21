@@ -27,7 +27,8 @@ A token has one of two scopes.
 
 An agent token is minted by `POST /api/v1/agent/token`: authenticated, deliberately
 not under `/auth` (it needs no throttle table), and answered `{accessToken,
-expiresAt, scope}` with no cookie and no refresh token. Its lifetime is the
+expiresAt, scope}` with no cookie and no refresh token. The body may name a
+`rootNodeId` (see "A token confined to one subtree" below). Its lifetime is the
 access-token lifetime (`INSIDEOUT_ACCESS_TTL`, default 15 minutes). The route is
 itself human-only, so an agent token can never mint another one or widen itself.
 
@@ -54,24 +55,45 @@ rule, not the MCP binary's.
 ## What each scope may do
 
 The agent scope is exactly the routes the MCP tools call, minus the human-only
-ones below, nothing wider: 36 of the 72 authenticated routes (the 71 that exist
-today plus the mint route). A route joins the agent list only when a tool needs it.
+ones below, nothing wider: 47 of the 81 authenticated routes (the mint route
+included). A route joins the agent list only when a tool needs it.
 
-Agent-allowed: `GET /me`; workspaces (list, create, join); projects (list, create);
-ideas (list, create, update, convert); PRDs (read, update, view, readiness, export,
+Agent-allowed: `GET /me`; workspaces (list, create, join, read
+`GET /workspaces/{id}`, edit `PATCH /workspaces/{id}`); projects (list, create,
+read `GET /projects/{pid}`, edit `PATCH /projects/{pid}`, the paged updates
+feed `GET /projects/{pid}/updates`, posting and editing an update);
+ideas (list, create, update, convert); PRDs (the workspace list
+`GET /workspaces/{id}/prds`, read, update, view, readiness, export,
 commits list, revisions list and create, and `POST /prds/{id}/status` to `draft` or
-`reviewing` only); roadmap (list, add, update, move, guide, progress, evidence
-read) and the four AI build/expand routes; repo bind and GitHub sync;
+`reviewing` only); roadmap (list, with an optional `?root=` subtree, one-node
+read `GET /roadmap/{nid}`, the caller's own tree `GET /workspaces/{id}/roadmap/mine`,
+a node's owner history `GET /roadmap/{nid}/assignments`, add, update, move,
+guide, progress, evidence read) and
+the four AI build/expand routes; repo bind and GitHub sync;
 `agent/context`, `agent/checkpoint`, `agent/propose`; the presence snapshot.
 
-Human-only (the other 36): proposal decision (`POST /agent/proposals/{uid}/decision`);
+Three agent-allowed routes refuse an agent token part of the way, in the handler,
+with the same 403 `agent_scope_denied` (rv5-FEAT-02): `POST /prds/{id}/build/confirm`
+builds onto an empty roadmap only, whatever count or `force` it sends (the check
+runs inside the replace's per-project lock), and `PATCH /roadmap/{nid}` refuses a
+non-empty `completionReason`, the human's override for done without evidence, and
+any `ownerId` (owner decision 4, 2026-11-21: owning a node grants write rights
+over its subtree, so an agent files a proposal instead), and `PATCH /projects/{pid}`
+refuses any `ownerId`, null included (rv5-PARB-04: an owner change is a human
+decision). An agent still moves a
+node to done when it has evidence. Filing a proposal stays a plan-writer right
+(BUG-020), so an agent acting for a delegate (who owns a subtree but is not a
+plan writer) has no route to propose an owner change; whether a node writer may
+file a proposal scoped to their subtree is an open owner question.
+
+Human-only (the other 34): delegating a node and handing it back
+(`POST /roadmap/{nid}/delegate`, `POST /roadmap/{nid}/handback`, owner
+decision 4); proposal decision (`POST /agent/proposals/{uid}/decision`);
 Commit (`POST /prds/{id}/commit`); all six `/admin/*` routes (`signup_mode`,
 `invite_*`, the mail probe); every `DELETE` (ideas, roadmap nodes, projects,
-updates, workspaces, members); member roles; workspace and project edits and
-timeline updates; `PATCH /me`; the coach conversation routes; evidence entry and
-validation; the SSE streams and cursor; the single-record reads no tool calls
-(`GET /ideas/{iid}`, `GET /projects/{pid}`, `GET /workspaces/{id}` and its member
-list); `POST /prds/{id}/status` to `approved` or `rejected` (a workspace-admin
+updates, workspaces, members); member roles; `PATCH /me`; the coach
+conversation routes; evidence entry and validation; the SSE streams and cursor;
+the reads no tool calls (`GET /ideas/{iid}` and a workspace's member list); `POST /prds/{id}/status` to `approved` or `rejected` (a workspace-admin
 review gate, so an agent holding an admin's token cannot approve its own
 submission); and `POST /agent/token`.
 
@@ -80,6 +102,28 @@ scope cannot gate them, and an agent token gives no extra reach there (a reset
 needs the emailed token, a refresh needs a refresh token, which agent tokens do not
 have). The MCP profile drops the password tools so a password never enters the
 conversation.
+
+## A token confined to one subtree
+
+`POST /agent/token {"rootNodeId": nid}` (rv5-TREEB-05) mints an agent token
+whose signed `root` claim names a node the caller can see (404 otherwise; 400
+for a malformed id); the answer echoes `rootNodeId`. Only an agent token may
+carry a root: a full token with one, or a root that is not a node id, is
+rejected (401). The token's reads stay workspace-wide (owner decision 2), but
+its node writes stay inside the root and the nodes below it: `PATCH
+/roadmap/{nid}`, `POST /roadmap/{nid}/move` (the node and its new parent),
+`POST /projects/{pid}/roadmap` (the parent; a new root is outside),
+`POST /roadmap/{nid}/expand` and `/expand/confirm` answer 403
+`agent_scope_denied` for a node outside (404 for a node the caller cannot see,
+as without a root), and `POST /prds/{pid}/build/confirm`
+refuses a root-scoped token outright, since a rebuild replaces the whole tree.
+The check is `agentRootRefuses` (`server/internal/api/agent_root.go`) over
+`Store.NodeInSubtree`; it runs in its own transaction before the write's, so a
+concurrent move can slip a node out between the two (a recorded shortcut). `GET /agent/context` with no `focus` defaults its focus
+to the root when the root is a node of the requested project. The MCP binary
+asks for a root when `INSIDEOUT_AGENT_ROOT` names one
+(`apiclient.AgentScopedTo`, called from `server/internal/mcpserver/server.go`);
+the held token is keyed by server, user and root.
 
 ## A proposal's author cannot decide it
 
@@ -104,14 +148,17 @@ MCP binary. A token that already carries a scope (an agent token handed to the
 process as `INSIDEOUT_TOKEN`) is sent as it is, and the server decides.
 
 The registry follows the credential. When the credential in use is a JWT (at
-startup, or right after an in-process sign-in), the profile removes `commit`,
-`proposal_decide`, `signup_mode`, `invite_create`, `invite_list`, `invite_revoke`,
-`idea_delete`, `roadmap_delete` and the password tools (`auth_register`,
-`auth_login`, `auth_forgot_password`, `auth_reset_password`). The passwordless
-sign-in tools stay so an unauthenticated process can still be signed in. A token
-that is not a JWT cannot carry a scope and no InsideOut server accepts it, so it is
-passed through unchanged and the registry stays whole. Removal is advice to the
-model; the 403 above is the guarantee.
+startup, or right after an in-process sign-in), the profile removes the password
+tools (`auth_register`, `auth_login`, `auth_forgot_password`,
+`auth_reset_password`). The passwordless sign-in tools stay so an unauthenticated
+process can still be signed in. A token that is not a JWT cannot carry a scope and
+no InsideOut server accepts it, so it is passed through unchanged and the registry
+stays whole. No tool is registered for a human-only route (rv5-COMP-03,
+rv5-PARA-07): every tool acts through an agent-scope token, and before a login it
+answers 401, so Commit, the proposal decision, the admin writes, every delete,
+delegation, hand-back, the member list, member roles, profile edits, account
+deletion and validation could never succeed there. They are CLI and web verbs.
+`signup_mode` stays as the public read of `GET /auth/config`.
 
 ## Fencing and labelling
 

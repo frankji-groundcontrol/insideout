@@ -202,7 +202,8 @@ func (s *Store) ListWorkspacesForUser(ctx context.Context, userID uuid.UUID) ([]
 
 // UpdateWorkspace requires actorID to be the creator or a workspace admin,
 // re-checked inside the same transaction as the write per the TOCTOU
-// lesson in docs/plans/2026-07-20-go-rewrite/01-database.md §5.
+// lesson in docs/plans/2026-07-20-go-rewrite/01-database.md §5. A nil
+// coverURL keeps the stored one and "" clears it (rv5-PARA-09).
 func (s *Store) UpdateWorkspace(ctx context.Context, actorID, workspaceID uuid.UUID, title, description string, coverURL *string) (*Workspace, error) {
 	var ws Workspace
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -211,7 +212,7 @@ func (s *Store) UpdateWorkspace(ctx context.Context, actorID, workspaceID uuid.U
 		}
 		return tx.QueryRow(ctx, `
 			UPDATE insideout.workspaces
-			SET title = $2, description = $3, cover_url = $4
+			SET title = $2, description = $3, cover_url = CASE WHEN $4::text IS NULL THEN cover_url ELSE NULLIF($4, '') END
 			WHERE id = $1
 			RETURNING id, title, description, cover_url, code, creator_id, status, created_at, updated_at`,
 			workspaceID, title, description, coverURL,

@@ -15,19 +15,19 @@ and cherry-picked after that.
 - Retention and erasure. `d5a45fe` and `3ecef69`. Idle coach conversations
   are purged 365 days after the newest message, and `DELETE /api/v1/me`
   tombstones the account.
-  [Detail](2026-10-20-retention-and-erasure.md).
+  [Detail](./2026-10-20-retention-and-erasure.md).
 - Session-tool withhold. `8f3a76d` and `9e6e68e`. While a login is held, the
   MCP server does not advertise `auth_login_code_verify`,
   `auth_magic_link_consume`, or `auth_logout`.
 - Completion. `0a87f91`, from worker fix `1cb3d1d`. `in_progress` to `done`
   needs linked evidence or a one-sentence reason. Migration
   `20261020150000`.
-  [Detail](2026-10-20-completion-evidence-or-reason.md).
+  [Detail](./2026-10-20-completion-evidence-or-reason.md).
 - Omitted owner. `e25bb80` and `269391f`, from `c2ee18e` and `221fb87`. A
   PATCH that leaves `ownerId` out keeps the current owner. `null` and `""`
   still clear it, and clearing still needs a workspace admin. The API
   change was required to tell an omitted key from `null`.
-  [Detail](2026-10-20-omitted-project-owner.md). The last admin was already
+  [Detail](./2026-10-20-omitted-project-owner.md). The last admin was already
   refused by `ErrLastAdmin` in `memberships.go`.
 - Keep-as-built decisions. `5938aa5`, from `17f15e7`.
   [Record](../issues/2026-10-20-rv4-decisions-adopted.md).

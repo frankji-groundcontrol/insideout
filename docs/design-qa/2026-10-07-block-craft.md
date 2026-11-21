@@ -19,7 +19,7 @@ Cobalt-Neo tokens.
 Run as the nine-wave block-craft plan. The primitive contract
 (`client/lib/theme/block_*.dart`) shipped first and every surface was then
 swept onto it; the token table and its test
-(`client/test/cobalt_test.dart`) stayed frozen. Implementation record:
+(`client/test/theme/cobalt_test.dart`) stayed frozen. Implementation record:
 [changelog](../changelogs/2026-10-07-frontend-block-craft.md).
 
 ## What changed per surface

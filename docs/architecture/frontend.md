@@ -22,7 +22,7 @@ Hosted web is built with `--dart-define=API_BASE=/api/v1`. nginx on the
 Railway `app` service serves the static Flutter bundle and proxies
 `/api/` to `$NGINX_API_UPSTREAM` (default `http://server.railway.internal:8080`,
 looked up per request; buffering off for Coach SSE). Native and `flutter run` use the public Go URL
-(`https://server-production-9c338.up.railway.app/api/v1`). Login and
+(`https://<server-host>/api/v1`). Login and
 register still set httpOnly cookies (unused by Flutter web) and also
 return top-level `accessToken` / `refreshToken`.
 
@@ -43,13 +43,18 @@ client/lib/
   router.dart         current product paths
   session/            Session, Appearance, auth redirect
   api/                client.dart is a library over per-resource part files
-                      (core, auth, workspace, project, prd, stream); models.dart
-                      is a barrel over models_{session,project,roadmap,prd};
-                      request builders, errors, SSE transport
-  features/           landing, auth (AuthDoor), dashboard, workspace, profile;
-                      project (project page and the roadmap: page, header,
-                      bands, canvas, minimap, progress view); prd (desk, coach,
-                      versions stack + commit details, revisions, export)
+                      (core, auth, workspace, project, roadmap, prd, stream);
+                      models.dart is a barrel over
+                      models_{session,project,roadmap,prd}; request builders,
+                      errors, SSE transport
+  features/           landing, auth (AuthDoor), dashboard (with My work),
+                      workspace, profile;
+                      project (project page and the roadmap: page, its
+                      controller (nodes, progress, presence, cursors, stream
+                      retries), header, breadcrumb, bands, canvas, minimap,
+                      progress view, node menu, edit, delegate and detail);
+                      prd (desk, coach, versions stack + commit details,
+                      revisions, export)
   l10n/               zh-CN + en-US; en.dart and zh.dart spread four namespace
                       files each (shell, workspace, account, prd)
 ```
@@ -59,9 +64,15 @@ roadmap, workspace, ideas, home and revisions views stack, and the PRD page
 embeds the desk column (`PrdDeskColumn(embedded: true)`, shrink-wrapped with no
 scroll of its own) so the page scrolls as one
 ([BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
-`client/test/l10n_unread_keys_test.dart` fails when a locale key has no reader in
-`lib/`, so a restyle cannot leave dead strings behind
+`client/test/scans/l10n_unread_keys_test.dart` fails when a locale key has no
+reader in `lib/`, so a restyle cannot leave dead strings behind
 ([BUG-026](../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md)).
+
+`client/test/` mirrors `lib/` (`api/`, `chrome/`, `features/<name>/`, `l10n/`,
+`session/`, `theme/`, `widgets/`), with each `_*_helpers.dart` beside the tests
+that own it. `scans/` holds the tests that read source, config or assets
+instead of running code, `web/` the browser-only suites, and the root the
+app-level and cross-feature tests and `line_budget_test.dart`.
 
 The custom blocks take keyboard focus and activate through `BlockFocus`, which
 binds both `ActivateIntent` and `ButtonActivateIntent`: on the web Enter is the
@@ -71,8 +82,8 @@ second, and a control that handled only the first ignored Enter in a browser
 ### Coach chat
 
 The PRD page consumes the SSE contract in
-[the agent doc](prd-coach-agent.md): deltas, stage changes, throttle
-countdown (`APP_THROTTLE` / `CIRCUIT_OPEN`). History is
+[the agent doc](./prd-coach-agent.md): deltas, stage changes, throttle
+countdown (`app_throttle` / `circuit_open`). History is
 `GET /api/v1/conversations/{id}/messages`. On Flutter web, Coach POST
 and presence GET both use `fetch` + `ReadableStream` (dio's XHR adapter
 does not emit SSE frames until the socket closes; [BUG-014](../issues/2026-08-23-bug-014-dio-web-sse-never-streams.md)).

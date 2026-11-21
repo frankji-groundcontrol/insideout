@@ -1,7 +1,7 @@
 # Working-version autosave is promised but not built
 
 Open, recorded 2026-10-11 (review-3 wave 4, finding FULL-03; slice 9 of the
-[promise-gap set](2026-10-11-product-promise-gaps.md)).
+[promise-gap set](./2026-10-11-product-promise-gaps.md)).
 
 ## What PRODUCT.md promises
 

@@ -17,7 +17,7 @@ Architecture confirmed; engineering review recorded in that plan.
   port). The Railway `server` service now has a public HTTPS domain so
   native Flutter can reach the API.
 
-Nuxt stays on `https://app-production-591e.up.railway.app` until Flutter
+Nuxt stays on `https://<app-host>` until Flutter
 parity is verified on web, iOS, and Android.
 
 ## Verification
@@ -33,7 +33,7 @@ Railway `server` was redeployed with the token/CORS change. Flutter
 against that host:
 
 ```bash
-cd client && flutter run -d chrome --dart-define=API_BASE=https://server-production-9c338.up.railway.app/api/v1
+cd client && flutter run -d chrome --dart-define=API_BASE=https://<server-host>/api/v1
 ```
 
 ## 2026-08-18 follow-up

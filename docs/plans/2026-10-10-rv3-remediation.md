@@ -60,4 +60,4 @@ enumerated in [HANDOFF](../HANDOFF.md) and the
 (`b6c34c4`, 7 migrations confirmed, BUG-027 checks passed), the mail key
 re-keyed with the full funnel live plus one real hosted LLM turn, and
 `v0.1.0` published; see
-[2026-10-11-owner-gap-closure.md](2026-10-11-owner-gap-closure.md).*
+[2026-10-11-owner-gap-closure.md](./2026-10-11-owner-gap-closure.md).*

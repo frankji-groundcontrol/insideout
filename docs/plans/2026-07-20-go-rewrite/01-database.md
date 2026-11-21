@@ -1,6 +1,6 @@
 # 01 — Database: Rename, Decouple, Extend / 数据库：重命名、解耦、扩展
 
-> Part of the [InsideOut rewrite plan](README.md). / [InsideOut 重写计划](README.md)的一部分。
+> Part of the [InsideOut rewrite plan](./README.md). / [InsideOut 重写计划](./README.md)的一部分。
 >
 > **Implementation outcome (2026-07-21) / 实现结果**: the shipped migration set diverged from §2/§3 below in three ways, all recorded in the main plan's D1/D2/D4 and implemented as the 13 timestamped files under `server/db/migrations/`: (1) no in-place `juanleme` rename — the `insideout` schema was created fresh, real data was copied over, and `juanleme` was then dropped; (2) the `REVOKE CREATE ON SCHEMA public` lockdown migration was removed — "never write to `public`" is enforced by the migrations never targeting it (required for the shared-instance model, see [BUG-008](../../issues/2026-07-20-bug-008-shared-instance-db-provisioning.md)); (3) §5's "optional later hardening" RLS **was** subsequently implemented (migrations `20260720150000`+ and `withUserContext` in `server/internal/store/pool.go`) — the live database runs with RLS on. Current state: [docs/architecture/database-and-rls.md](../../architecture/database-and-rls.md).
 > **实现结果（2026-07-21）**：实际交付的迁移集与下文 §2/§3 有三处出入，均记录于主计划 D1/D2/D4，落地为 `server/db/migrations/` 下的 13 个带时间戳文件：(1) 未做 `juanleme` 原地改名——`insideout` schema 全新创建、真实数据复制后删除 `juanleme`；(2) `REVOKE CREATE ON SCHEMA public` 锁定迁移被移除——「绝不写入 `public`」靠迁移从不指向它来保证（共用实例模型的要求，见 [BUG-008](../../issues/2026-07-20-bug-008-shared-instance-db-provisioning.md)）；(3) §5 的「可选后续加固」RLS **已**实现（迁移 `20260720150000` 起与 `server/internal/store/pool.go` 的 `withUserContext`）——线上数据库已启用 RLS。当前状态见 [docs/architecture/database-and-rls.md](../../architecture/database-and-rls.md)。
@@ -32,8 +32,8 @@ Per the decided D1: **rename `juanleme` → `insideout` and evolve in place**. T
 **Simplified (D2 revised during implementation)**: a **single role, `insideout_app`**, for everything — it owns the `insideout` schema, applies migrations, and is the runtime role the Go server connects as. The two-role (`insideout_admin` + `insideout_app`) split from the original draft added `ALTER DEFAULT PRIVILEGES`/`FOR ROLE` bookkeeping that only matters when different roles create vs. use objects; since our own Go server is what applies migrations (no external migration tool, no Supabase MCP in the loop for this — the target is whatever remote PostgreSQL URL the user provides), one role that owns everything it creates needs no default-privilege dance at all.
 **简化（实现期修订 D2）**：**单一角色 `insideout_app`** 承担一切——拥有 `insideout` schema、执行迁移、也是 Go 服务连接的运行时角色。原草案的双角色（`insideout_admin` + `insideout_app`）拆分带来了 `ALTER DEFAULT PRIVILEGES`/`FOR ROLE` 的额外簿记，那只在「建对象的角色」与「用对象的角色」不同时才有意义；既然是我们自己的 Go 服务在执行迁移（不经外部迁移工具、这次也不经 Supabase MCP——目标是用户提供的任意远程 PostgreSQL URL），一个拥有自己所建一切对象的角色完全不需要默认权限那套机制。
 
-Provisioning is whatever the user's remote PostgreSQL provider requires to end up with: a dedicated database, and one role/user — call it `insideout_app` — that **owns** that database (so it also owns `public` within it by Postgres default, letting migration #1 lock `public` down without any separate admin step). `DATABASE_URL` in `.env` is that role's connection string; the Go server's own embedded migration runner ([02 §1](02-backend-go.md)) is the *only* thing that ever runs DDL, no separate migration tool or MCP required for a non-Supabase remote instance.
-配置方式取决于用户的远程 PostgreSQL 服务商，但目标一致：一个专用数据库，加一个角色/用户——就叫 `insideout_app`——**拥有**该数据库（因此按 Postgres 默认规则它也拥有库内的 `public`，使迁移 #1 无需额外管理员步骤即可锁定 `public`）。`.env` 里的 `DATABASE_URL` 就是这个角色的连接串；Go 服务自带的内嵌迁移执行器（[02 §1](02-backend-go.md)）是**唯一**执行 DDL 的东西，非 Supabase 的远程实例不需要额外迁移工具或 MCP。
+Provisioning is whatever the user's remote PostgreSQL provider requires to end up with: a dedicated database, and one role/user — call it `insideout_app` — that **owns** that database (so it also owns `public` within it by Postgres default, letting migration #1 lock `public` down without any separate admin step). `DATABASE_URL` in `.env` is that role's connection string; the Go server's own embedded migration runner ([02 §1](./02-backend-go.md)) is the *only* thing that ever runs DDL, no separate migration tool or MCP required for a non-Supabase remote instance.
+配置方式取决于用户的远程 PostgreSQL 服务商，但目标一致：一个专用数据库，加一个角色/用户——就叫 `insideout_app`——**拥有**该数据库（因此按 Postgres 默认规则它也拥有库内的 `public`，使迁移 #1 无需额外管理员步骤即可锁定 `public`）。`.env` 里的 `DATABASE_URL` 就是这个角色的连接串；Go 服务自带的内嵌迁移执行器（[02 §1](./02-backend-go.md)）是**唯一**执行 DDL 的东西，非 Supabase 的远程实例不需要额外迁移工具或 MCP。
 
 ```sql
 -- Migration #2, run as insideout_app (already owns this database & its public schema):
@@ -49,8 +49,8 @@ Verification (P1 acceptance): connect as `insideout_app` and assert it **can** r
 
 ## 3. Migration Sequence / 迁移顺序
 
-SQL files live in `server/db/migrations/` (timestamp-prefixed), applied in order by the Go server's own embedded migration runner ([02 §1](02-backend-go.md)) against whichever `DATABASE_URL` (remote PostgreSQL, user-provided) is configured — no external migration tool, no MCP in this loop. One migration = one concern:
-SQL 文件放在 `server/db/migrations/`（时间戳前缀），由 Go 服务自带的迁移执行器（[02 §1](02-backend-go.md)）按顺序应用于配置的 `DATABASE_URL`（远程 PostgreSQL，用户提供）——不经外部迁移工具，也不经 MCP。一条迁移只做一件事：
+SQL files live in `server/db/migrations/` (timestamp-prefixed), applied in order by the Go server's own embedded migration runner ([02 §1](./02-backend-go.md)) against whichever `DATABASE_URL` (remote PostgreSQL, user-provided) is configured — no external migration tool, no MCP in this loop. One migration = one concern:
+SQL 文件放在 `server/db/migrations/`（时间戳前缀），由 Go 服务自带的迁移执行器（[02 §1](./02-backend-go.md)）按顺序应用于配置的 `DATABASE_URL`（远程 PostgreSQL，用户提供）——不经外部迁移工具，也不经 MCP。一条迁移只做一件事：
 
 1. `rename_schema` — `ALTER SCHEMA juanleme RENAME TO insideout;`
 2. `create_app_role_lock_public` — §2 above / 见上文 §2

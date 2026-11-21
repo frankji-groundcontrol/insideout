@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 func TestTelemetryErrorClass(t *testing.T) {
@@ -13,12 +15,12 @@ func TestTelemetryErrorClass(t *testing.T) {
 		want string
 	}{
 		{"nil", nil, ""},
-		{"rate limited", ErrProviderRateLimited, "rate_limited"},
-		{"wrapped rate limited", errors.New("wrap: " + ErrProviderRateLimited.Error()), "unknown"}, // not errors.Is-wrapped -> unknown, by design
-		{"transient", ErrProviderTransient, "transient"},
-		{"context length", ErrContextLength, "context_length"},
-		{"config", ErrProviderConfig, "config"},
-		{"refusal", ErrContentRefusal, "refusal"},
+		{"rate limited", llm.ErrProviderRateLimited, "rate_limited"},
+		{"wrapped rate limited", errors.New("wrap: " + llm.ErrProviderRateLimited.Error()), "unknown"}, // not errors.Is-wrapped -> unknown, by design
+		{"transient", llm.ErrProviderTransient, "transient"},
+		{"context length", llm.ErrContextLength, "context_length"},
+		{"config", llm.ErrProviderConfig, "config"},
+		{"refusal", llm.ErrContentRefusal, "refusal"},
 		{"canceled", context.Canceled, "canceled"},
 		{"deadline", context.DeadlineExceeded, "canceled"},
 		{"unknown", errors.New("boom"), "unknown"},

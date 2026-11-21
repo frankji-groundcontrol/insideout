@@ -1,7 +1,9 @@
 package main
 
-// `insideout idea create|convert` — the idea write verbs
-// (docs/plans/2026-08-21-cli-mcp-parity.md Stage 3).
+// The idea inbox on the CLI: `insideout ideas` lists a workspace's ideas and
+// `insideout idea create|update|delete|convert` writes them
+// (docs/plans/2026-08-21-cli-mcp-parity.md Stage 3,
+// docs/plans/2026-08-25-agent-crud-tool-surface.md).
 
 import (
 	"flag"
@@ -13,12 +15,18 @@ import (
 
 func runIdeaCommand(args []string) (bool, int) {
 	if len(args) == 0 {
-		fmt.Fprintln(os.Stderr, "usage: insideout idea <create|convert> …")
+		fmt.Fprintln(os.Stderr, "usage: insideout idea <create|update|delete|convert|proposal-decide> …")
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]
 
 	switch sub {
+	case "proposal-decide": // the old spelling of `proposal decide`
+		return runProposalDecide(rest)
+	case "update":
+		return runIdeaUpdate(rest)
+	case "delete":
+		return runIdeaDelete(rest)
 	case "create":
 		fs := flag.NewFlagSet("idea create", flag.ContinueOnError)
 		api := apiFlag(fs)
@@ -29,22 +37,6 @@ func runIdeaCommand(args []string) (bool, int) {
 			return true, 2
 		}
 		return printJSON(clientFromFlag(*api).IdeaCreate(fs.Args()[0], *title, *content))
-	case "proposal-decide":
-		fs := flag.NewFlagSet("proposal-decide", flag.ContinueOnError)
-		api := apiFlag(fs)
-		accept := fs.Bool("accept", false, "accept the proposal")
-		reject := fs.Bool("reject", false, "reject the proposal")
-		reason := fs.String("reason", "", "why")
-		apply := fs.Bool("apply", false, "apply the proposal structured items (with --accept)")
-		if err := fs.Parse(rest); err != nil || len(fs.Args()) != 1 || *accept == *reject {
-			fmt.Fprintln(os.Stderr, "usage: insideout idea proposal-decide --accept|--reject [--apply] [--reason R] <update-id>")
-			return true, 2
-		}
-		decision := "rejected"
-		if *accept {
-			decision = "accepted"
-		}
-		return printJSON(clientFromFlag(*api).DecideProposal(fs.Args()[0], decision, *reason, *apply))
 	case "convert":
 		fs := flag.NewFlagSet("idea convert", flag.ContinueOnError)
 		api := apiFlag(fs)
@@ -62,4 +54,37 @@ func runIdeaCommand(args []string) (bool, int) {
 	}
 	fmt.Fprintln(os.Stderr, "unknown idea subcommand:", sub)
 	return true, 2
+}
+
+// runIdeas is `insideout ideas <workspace-id>`.
+func runIdeas(args []string) (bool, int) {
+	f, ok := parseWriteFlags("ideas", args)
+	if !ok || !f.need(1, "insideout ideas <workspace-id>") {
+		return true, 2
+	}
+	return printJSON(clientFromFlag(*f.api).Ideas(f.positional[0]))
+}
+
+// runIdeaUpdate is `insideout idea update`. An absent or empty --content
+// keeps the body (PARA-02); the word clear clears it.
+func runIdeaUpdate(args []string) (bool, int) {
+	f, ok := parseWriteFlags("idea update", args)
+	if !ok || !f.need(1, "insideout idea update --title T [--content C|clear] <id>") {
+		return true, 2
+	}
+	return printJSON(clientFromFlag(*f.api).UpdateIdea(f.positional[0], *f.title, apiclient.PatchText(*f.content)))
+}
+
+// runIdeaDelete is `insideout idea delete <id>`, a soft delete.
+func runIdeaDelete(args []string) (bool, int) {
+	f, ok := parseWriteFlags("idea delete", args)
+	if !ok || !f.need(1, "insideout idea delete <id>") {
+		return true, 2
+	}
+	if err := clientFromFlag(*f.api).DeleteIdea(f.positional[0]); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return true, 1
+	}
+	fmt.Println("dropped (soft — it no longer appears in your ideas list)")
+	return true, 0
 }

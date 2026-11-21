@@ -20,7 +20,7 @@ on live surfaces.
 ## Source of truth (in order)
 
 1. This prompt and
-   [`docs/plans/2026-09-18-cobalt-flutter.md`](2026-09-18-cobalt-flutter.md).
+   [`docs/plans/2026-09-18-cobalt-flutter.md`](./2026-09-18-cobalt-flutter.md).
 2. Lock screens in
    [`docs/design-system/cobalt/`](../design-system/cobalt/README.md)
    (`LOCK-home-light.jpg`, `LOCK-home-dark.jpg`, `LOCK-ideas.jpg`,
@@ -159,4 +159,4 @@ Repo contract: [`AGENTS.md`](../../AGENTS.md),
 PR #2 (this goal prompt, docs) and PR #3 (the Cobalt restyle itself)
 both merged 2026-09-18, so "Stay on `cursor/vibrant-ink-seal-198b` (PR
 #2)" is dead guidance; the restyle record is
-[2026-09-18-cobalt-flutter.md](2026-09-18-cobalt-flutter.md).*
+[2026-09-18-cobalt-flutter.md](./2026-09-18-cobalt-flutter.md).*

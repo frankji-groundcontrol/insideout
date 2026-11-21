@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
 )
 
@@ -28,10 +29,10 @@ func seedLongClarify(t *testing.T, st *store.Store, ex *toolExecutor) {
 		if i == 0 {
 			text = earlyAnswer
 		}
-		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(RoleUser), text, nil, nil, nil); err != nil {
+		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(llm.RoleUser), text, nil, nil, nil); err != nil {
 			t.Fatalf("insert user turn %d: %v", i, err)
 		}
-		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(RoleAssistant), fmt.Sprintf("noted %d", i), nil, nil, nil); err != nil {
+		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(llm.RoleAssistant), fmt.Sprintf("noted %d", i), nil, nil, nil); err != nil {
 			t.Fatalf("insert assistant turn %d: %v", i, err)
 		}
 	}
@@ -77,12 +78,12 @@ func TestHandleMessage_RecordFactGroundsAQuoteFromBeyondTheReplayWindow(t *testi
 	}
 
 	calls := 0
-	streamer := fakeStreamer{chat: func(string, func(string)) (Turn, error) {
+	streamer := fakeStreamer{chat: func(string, func(string)) (llm.Turn, error) {
 		calls++
 		if calls == 1 {
-			return Turn{ToolCall: &ToolCallRequest{ID: "call-1", Name: "record_fact", Arguments: recordEarlyAnswerArgs()}}, nil
+			return llm.Turn{ToolCall: &llm.ToolCallRequest{ID: "call-1", Name: "record_fact", Arguments: recordEarlyAnswerArgs()}}, nil
 		}
-		return Turn{Text: "got it"}, nil
+		return llm.Turn{Text: "got it"}, nil
 	}}
 	c := New(st, streamer, discardLog())
 	c.HandleMessage(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, "/", nil),
@@ -96,7 +97,7 @@ func TestHandleMessage_RecordFactGroundsAQuoteFromBeyondTheReplayWindow(t *testi
 		msgs, _ := st.ListAgentMessages(ctx, ex.actorID, ex.conversationID)
 		var toolResult string
 		for _, m := range msgs {
-			if m.Role == string(RoleTool) {
+			if m.Role == string(llm.RoleTool) {
 				toolResult = m.Content
 			}
 		}
@@ -117,7 +118,7 @@ func TestRecordFact_DoesNotStitchAQuoteFromSeveralTurns(t *testing.T) {
 		t.Fatal("fixture premise broken: the stitched quote must ground in the joined turns only, in neither alone")
 	}
 	for _, text := range []string{turnA, turnB} {
-		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(RoleUser), text, nil, nil, nil); err != nil {
+		if _, err := st.InsertAgentMessage(ctx, ex.actorID, ex.conversationID, string(llm.RoleUser), text, nil, nil, nil); err != nil {
 			t.Fatalf("insert user turn: %v", err)
 		}
 	}

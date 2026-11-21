@@ -8,7 +8,7 @@ removal of scratch left over from the Prisma detour.
 - **Converted the self-hosted PuHuiTi fonts to WOFF2.** The 4 weights
   (Regular 400, Medium 500, Bold 700, ExtraBold 800) were committed as full
   TTFs (~32 MB total) in the
-  [frontend VC commit](2026-07-23-frontend-version-control.md). They are now
+  [frontend VC commit](./2026-07-23-frontend-version-control.md). They are now
   WOFF2 (~16.4 MB total, ≈49–51% smaller per weight). `@font-face` in
   `app/src/style.css` now points at the `.woff2`
   files and the TTFs are deleted.
@@ -20,7 +20,7 @@ removal of scratch left over from the Prisma detour.
 - **Deleted obsolete scratch.** Removed the `prisma-*.png` reference
   screenshots and the `.landing-mock/` mock left over from the reverted Prisma
   cinematic detour (see
-  [the landing changelog](2026-07-23-ink-seal-landing/index.md)). None were
+  [the landing changelog](./2026-07-23-ink-seal-landing/index.md)). None were
   referenced by any source. `.claude/` stays untracked (active local tool
   config).
 

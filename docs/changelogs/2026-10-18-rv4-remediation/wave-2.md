@@ -1,6 +1,6 @@
 # Review-4 remediation, wave 2: credentials, apply once, agent scope and RLS writes
 
-The wave-2 record of the [folder index](index.md): the outcome, the per-ID
+The wave-2 record of the [folder index](./index.md): the outcome, the per-ID
 dispositions, the gates, the live check, the carry-forward and the operator
 notes. Each cluster's own account (what changed, the evidence, the ceilings) is
 its fragment, linked below.
@@ -21,8 +21,8 @@ insertions, 807 deletions), adds two migrations
 stays unused) and no dependency.
 
 Outcome lists (23 rows): `FIXED` 21; `PARTIAL` 2 (`FEAT-02-CLIENT-APPLY`,
-rv4-DATA-03; wave 3 closed both: [w3-client-apply](w3-client-apply.md),
-[w3-users-read-grant](w3-users-read-grant.md)); `NOT_REAL` none; `BLOCKED` none.
+rv4-DATA-03; wave 3 closed both: [w3-client-apply](./w3-client-apply.md),
+[w3-users-read-grant](./w3-users-read-grant.md)); `NOT_REAL` none; `BLOCKED` none.
 rv4-SEC-05 was `PARTIAL` in its own cluster (the client half) and is `FIXED` here
 because rv4-AIDEV-04 closed the admin-tools half in the same wave.
 `FEAT-02-CLIENT-APPLY` is the worker's id for the web feed that re-applies an
@@ -38,10 +38,10 @@ binary), all in the last table of the
 
 | Cluster | Rows | What landed | Verifier | Fragment |
 | --- | --- | --- | --- | --- |
-| `w2-client-credentials` | 2.1, 2.2 | one `clientconfig.Resolve(flagAPI)` for the CLI, every `--api` flag and `insideout-mcp`; a saved token goes only to the base it was saved for and an unreadable config is an error; `DefaultBase` is a `var` that `-ldflags -X` retargets; setup keeps the refresh token and a saved session renews once on 401 (a loser of a concurrent renewal waits for the winner's pair); `login` and `register` save the session; `setup --check` fails a rejected login; the web session ends only on a 401 or 403 refresh; `scripts/mcp-config.sh` is gone | round 1 | [w2-client-credentials.md](w2-client-credentials.md) |
-| `w2-proposal-apply` | 2.3, 2.4 | `proposal_items.applied_at`: an item is applied once, in one transaction with the decision, and a failed apply is a 500; propose validates before its first write; the Decision Log comment tells the truth; web "Break down with AI" drafts, shows the draft and confirms it | round 1 | [w2-proposal-apply.md](w2-proposal-apply.md) |
-| `w2-agent-scope` | 2.5 | a signed `scope` claim, `POST /api/v1/agent/token` and one fail-closed `agentRoutePolicy`; the MCP binary runs on an agent token and its registry follows the login (52 to 40 tools); coach and MCP results are labelled and fenced; the `invite_create` description names `mailSent` | round 1 | [w2-agent-scope.md](w2-agent-scope.md) |
-| `w2-rls` | 2.6 | membership `INSERT` needs the creator or the join code; `users` `INSERT` is cut by column grants and `UPDATE` is pinned by a trigger; `serve` refuses a `BYPASSRLS` or `SUPERUSER` pool role; a write-side RLS walk | round 1 | [w2-rls.md](w2-rls.md) |
+| `w2-client-credentials` | 2.1, 2.2 | one `clientconfig.Resolve(flagAPI)` for the CLI, every `--api` flag and `insideout-mcp`; a saved token goes only to the base it was saved for and an unreadable config is an error; `DefaultBase` is a `var` that `-ldflags -X` retargets; setup keeps the refresh token and a saved session renews once on 401 (a loser of a concurrent renewal waits for the winner's pair); `login` and `register` save the session; `setup --check` fails a rejected login; the web session ends only on a 401 or 403 refresh; `scripts/mcp-config.sh` is gone | round 1 | [w2-client-credentials.md](./w2-client-credentials.md) |
+| `w2-proposal-apply` | 2.3, 2.4 | `proposal_items.applied_at`: an item is applied once, in one transaction with the decision, and a failed apply is a 500; propose validates before its first write; the Decision Log comment tells the truth; web "Break down with AI" drafts, shows the draft and confirms it | round 1 | [w2-proposal-apply.md](./w2-proposal-apply.md) |
+| `w2-agent-scope` | 2.5 | a signed `scope` claim, `POST /api/v1/agent/token` and one fail-closed `agentRoutePolicy`; the MCP binary runs on an agent token and its registry follows the login (52 to 40 tools); coach and MCP results are labelled and fenced; the `invite_create` description names `mailSent` | round 1 | [w2-agent-scope.md](./w2-agent-scope.md) |
+| `w2-rls` | 2.6 | membership `INSERT` needs the creator or the join code; `users` `INSERT` is cut by column grants and `UPDATE` is pinned by a trigger; `serve` refuses a `BYPASSRLS` or `SUPERUSER` pool role; a write-side RLS walk | round 1 | [w2-rls.md](./w2-rls.md) |
 
 ### Dispositions
 
@@ -66,7 +66,7 @@ the one-line dispositions are in the
 | rv4-USER-05 | client-credentials | 2.2 | FIXED | `719b780` | `76b55a2` | An unreachable server stays a `skip`, on purpose: the check also runs offline right after install |
 | rv4-FULL-05 | client-credentials | 2.2 | FIXED | `f3d51af` | `1d9d1ff` | none |
 | rv4-FEAT-02 | proposal-apply | 2.3 | FIXED | `f624efb` | `a512e0a`; guard `70d3136` | Server half. The web feed's own re-apply is the next row. `AddProposalItems`, `ApplyProposalItems` and `ApplyProposalItemsForUpdate` have no production caller (R2-14) |
-| FEAT-02-CLIENT-APPLY | proposal-apply | 2.3, 2.4 | PARTIAL (FIXED in wave 3) | the changed test in the staged patch (red on the old feed, scratch copy) | not applied | `project_updates_feed.dart` re-creates every accepted `add_node` item after the server already did; the patch was not in the cluster's files and the integrator took no product code (R2-01). Closed in wave 3 by `w3-client-apply`: red `6096862`, fix `0d33077` ([record](w3-client-apply.md)) |
+| FEAT-02-CLIENT-APPLY | proposal-apply | 2.3, 2.4 | PARTIAL (FIXED in wave 3) | the changed test in the staged patch (red on the old feed, scratch copy) | not applied | `project_updates_feed.dart` re-creates every accepted `add_node` item after the server already did; the patch was not in the cluster's files and the integrator took no product code (R2-01). Closed in wave 3 by `w3-client-apply`: red `6096862`, fix `0d33077` ([record](./w3-client-apply.md)) |
 | rv4-FEAT-09 | proposal-apply | 2.3 | FIXED | `3891f08` | `f8c9959` | Older migrations keep their historical "immutable" comments (migrations are not edited) |
 | rv4-LEAD-PROPOSE-VALIDATE (R1-09) | proposal-apply | 2.3 | FIXED | `6d8e957` | `bfe019e` | none; R1-09 is closed |
 | rv4-FULL-01 | proposal-apply | 2.4 | FIXED | `2046fb5` | `29c0956` | The expand route takes no per-project position lock and gates on membership only (R2-04) |
@@ -77,7 +77,7 @@ the one-line dispositions are in the
 | R1-03 | agent-scope | 2.5 | FIXED | `0b2e9fd` | `f9e9894` | none; a JWT login no longer offers `invite_create`, so the sentence serves a process with no credential or an opaque token |
 | rv4-DATA-01 | rls | 2.6 | FIXED | `91098a7` | `f696db4` | A seat can still be re-pointed by its workspace's admin (R2-03) |
 | rv4-DATA-02 | rls | 2.6 | FIXED | `91098a7` | `f108e64` | The write walk shares its red commit with DATA-01 and DATA-03; its third test is green on the base on purpose |
-| rv4-DATA-03 | rls | 2.6 | PARTIAL (read half FIXED in wave 3) | `91098a7` | `f108e64` | Write half done. Read half: a co-member's `password_hash` is readable by anything that holds the app role (no API response carries it) (R2-02). Closed in wave 3 by `w3-users-read-grant`: red `8f57d77`, fix `c57073b` ([record](w3-users-read-grant.md)) |
+| rv4-DATA-03 | rls | 2.6 | PARTIAL (read half FIXED in wave 3) | `91098a7` | `f108e64` | Write half done. Read half: a co-member's `password_hash` is readable by anything that holds the app role (no API response carries it) (R2-02). Closed in wave 3 by `w3-users-read-grant`: red `8f57d77`, fix `c57073b` ([record](./w3-users-read-grant.md)) |
 | rv4-DATA-04 | rls | 2.6 | FIXED | `ad7ce63` | `e9d8a79` | Hosted `DATABASE_URL` must be the app role before the first deploy (owner decisions); `SUPERUSER` is covered by a table test only |
 
 Why `FEAT-02-CLIENT-APPLY` was still open at the end of wave 2: the pre-gate rule
@@ -87,7 +87,7 @@ patch edits `client/lib/features/project/project_updates_feed.dart` and
 through the web feed made the server's nodes and then the feed's own copy. The
 server-side once-only guarantee held for every other caller (API, CLI, MCP).
 Wave 3 closed it: the feed now only asks the server to decide and apply
-(`6096862` red, `0d33077` fix; [w3-client-apply](w3-client-apply.md)).
+(`6096862` red, `0d33077` fix; [w3-client-apply](./w3-client-apply.md)).
 
 ### Gates (integrator, at `e6bc637`)
 
@@ -148,8 +148,8 @@ changed; each item was read back and the guards pass.
 | Four stale line citations (`cli_version.go`, `product_tools.go`, `proposal_decisions.go`, `agentcontext.go`) | `docs/issues/2026-10-11-focus-surface.md`, `docs/issues/2026-10-11-product-branch-merge-decision-log.md` | none |
 | New: two reusable notes, a route policy that keys on the pattern and fails closed, and a column grant turns zero rows into permission denied | [learning](../../learning/README.md) | rv4-FEAT-01, rv4-DATA-03 |
 
-Also: the four wave-2 fragments are listed in the [index](index.md); the
-`w1-auth-atomic` and `w1-clock-and-runes` fragments and [wave 1](wave-1.md) now
+Also: the four wave-2 fragments are listed in the [index](./index.md); the
+`w1-auth-atomic` and `w1-clock-and-runes` fragments and [wave 1](./wave-1.md) now
 mark R1-03 (`f9e9894`) and R1-09 (`bfe019e`) closed; `docs/architecture/` and
 `docs/usage/` carry the new contract; and the rest became the residue table
 R2-01 to R2-15 in the open-findings record, each with an owner and a one-line
@@ -195,7 +195,7 @@ over the line budget and each grew by a few lines, so their split is recorded in
    server fails every tool); the `clientconfig` behaviour changes in item 4.
 7. **HANDOFF and the plans board.** The "Everything engineering is closed"
    paragraph of `docs/HANDOFF.md` and the docs-order row of `docs/plans/README.md`
-   stay as [wave 1](wave-1.md) left them for `w3-docs-truth` (row 3.6). The
+   stay as [wave 1](./wave-1.md) left them for `w3-docs-truth` (row 3.6). The
    coordinator's lessons from the run are not recorded yet; they become one
    `docs/learning/` note in the final records commit.
 

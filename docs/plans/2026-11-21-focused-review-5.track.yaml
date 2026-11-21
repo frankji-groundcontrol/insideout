@@ -1,0 +1,39 @@
+version: 2
+task: "Focused review 5: completeness, surface parity, role task trees, structure, indexing"
+coordinator: claude
+main:
+  outcome: "A review of main @ 4d186da plus its uncommitted files on the owner's five lenses, with every High skeptic-reviewed, the top findings reproduced by running the code, a completeness critic, and an ordered remediation plan in docs/review/2026-11-21-focused-review-5/."
+  owner: claude
+  status: completed
+  next_evidence: "Review delivered in docs/review/2026-11-21-focused-review-5/: 127 findings (0 Critical, 21 High as 15 distinct defects, 81 Medium, 25 Low); 29 filed as High, 20 confirmed, 9 downgraded, 0 refuted, 1 High added by the critic. Reproduced by the coordinator on private PostgreSQL 18 (R1-R11): a node's assigned owner is refused on every write inside it; a non-author member's build creates unlinked projects; a rebuild erases evidence; a title-only idea update erases the body; committed main fails TestExpandDraftAndConfirmKeepTheirCapturedShapes; row-level security alone lets any member update or delete a node. Remediation not started; next evidence is a green ci run after plan row 0.1."
+side_tracks: []
+updated_at: "2026-11-21T00:00:00Z"
+plan:
+- step: "Scout: product is main, 14 leads with run results"
+  owner: claude
+  status: completed
+- step: "Coordinator runs: backend, Flutter, docs gates, Marksman"
+  owner: claude
+  status: completed
+- step: "Reproduce the delegation claim on a private PostgreSQL cluster"
+  owner: claude
+  status: completed
+- step: "Fan out ten reviewers on one schema"
+  owner: claude
+  status: completed
+- step: "Skeptics on every High, then the completeness critic"
+  owner: claude
+  status: completed
+  depends_on: "Fan out ten reviewers on one schema"
+- step: "Write, redact and index docs/review/2026-11-21-focused-review-5/"
+  owner: claude
+  status: completed
+  depends_on: "Skeptics on every High, then the completeness critic"
+- step: "Close records: changelog, issue record, board row, HANDOFF"
+  owner: claude
+  status: completed
+  depends_on: "Write, redact and index docs/review/2026-11-21-focused-review-5/"
+- step: "Remediation: six waves, starting at plan row 0.1"
+  owner: unassigned
+  status: pending
+  depends_on: "Owner decisions in docs/issues/2026-11-21-review-5-open-findings.md for wave 2"

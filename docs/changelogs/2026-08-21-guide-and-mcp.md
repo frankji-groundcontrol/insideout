@@ -58,4 +58,4 @@ the generated file's header.
 
 *Superseded 2026-10-11: both closed the same day — the loader shipped and the
 App was installed (install ping 200), per the
-[evidence-loop record](2026-08-21-evidence-loop.md).*
+[evidence-loop record](./2026-08-21-evidence-loop.md).*

@@ -35,7 +35,7 @@ bundled fonts on iOS/Android.
 - `cd client && flutter analyze --no-fatal-infos` — no errors (pre-existing infos only)
 - `cd client && flutter test` — 43 passed (landing prompt overlay + click-in keyframes)
 - Local Chrome at `http://localhost:5173` against the hosted API
-  (`API_BASE=https://server-production-9c338.up.railway.app/api/v1`).
+  (`API_BASE=https://<server-host>/api/v1`).
 
 ## Sources
 

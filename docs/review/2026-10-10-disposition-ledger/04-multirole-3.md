@@ -1,6 +1,6 @@
 # Multirole review 3 (2026-10-10): what happened to each finding
 
-The register is [2026-10-10-multirole-3/01-findings-register.md](../2026-10-10-multirole-3/01-findings-register.md) (83 rows: 0 Critical · 17 High · 33 Medium · 33 Low). Unlike the earlier registers, review 3 shipped a [remediation plan](../2026-10-10-multirole-3/40-remediation-plan.md) that was then executed as four verified waves, so every row below is traced to its wave, red test and fix commit. [Reading the statuses](README.md#statuses).
+The register is [2026-10-10-multirole-3/01-findings-register.md](../2026-10-10-multirole-3/01-findings-register.md) (83 rows: 0 Critical · 17 High · 33 Medium · 33 Low). Unlike the earlier registers, review 3 shipped a [remediation plan](../2026-10-10-multirole-3/40-remediation-plan.md) that was then executed as four verified waves, so every row below is traced to its wave, red test and fix commit. [Reading the statuses](./README.md#statuses).
 
 ## Method
 

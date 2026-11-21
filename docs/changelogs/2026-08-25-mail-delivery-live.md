@@ -1,7 +1,7 @@
 # 2026-08-25 — Mail delivery enabled on production
 
 The operator-owned step from the
-[email-auth slice](2026-08-24-email-auth.md) is done: the user set the
+[email-auth slice](./2026-08-24-email-auth.md) is done: the user set the
 Resend key in the local `.env`; it was propagated into the Railway
 `server` environment (`INSIDEOUT_MAIL_API_KEY` + `INSIDEOUT_MAIL_FROM`,
 values never printed — sourced in a subshell like `dev.sh` does) and the

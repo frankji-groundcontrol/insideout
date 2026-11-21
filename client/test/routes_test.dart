@@ -81,6 +81,7 @@ void main() {
       '/workspace/:id/settings',
       '/projects/:id',
       '/projects/:id/roadmap',
+      '/projects/:id/roadmap/:nodeId',
       '/prd/:id',
       '/prd/:id/revisions',
       '/prd/:id/versions',
@@ -129,6 +130,9 @@ void main() {
     final router = await _pumpRouter(tester, session);
 
     router.go('/reset-password?token=T0KEN');
+    await tester.pumpAndSettle();
+    // The emailed link opens on a choice between this page and the CLI.
+    await tester.tap(find.text('Reset on this page'));
     await tester.pumpAndSettle();
     await tester.enterText(_field('New password'), 'newpass123');
     await tester.enterText(_field('Confirm new password'), 'newpass123');

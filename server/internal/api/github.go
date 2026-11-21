@@ -101,7 +101,7 @@ func (s *Server) writeRepoStoreError(w http.ResponseWriter, err error) {
 	case errors.Is(err, store.ErrRepoHeldOutOfReach):
 		s.writeGithubError(w, errRepoNotVisible, "")
 	case errors.Is(err, store.ErrRepoTaken):
-		httpx.WriteError(w, http.StatusConflict, "this repository is already linked to another project", "GITHUB_REPO_ALREADY_LINKED", nil)
+		httpx.WriteError(w, http.StatusConflict, "this repository is already linked to another project", "github_repo_already_linked", nil)
 	default:
 		s.log.Error("set project repo", "error", err)
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
@@ -116,25 +116,25 @@ func (s *Server) writeGithubError(w http.ResponseWriter, err error, upstreamMsg 
 	var refused *github.AccessRefusedError
 	switch {
 	case errors.As(err, &rle):
-		httpx.WriteError(w, http.StatusTooManyRequests, "GitHub rate limit hit — try again shortly", "GITHUB_RATE_LIMITED", map[string]any{"retry_after_seconds": rle.RetryAfterSeconds})
+		httpx.WriteError(w, http.StatusTooManyRequests, "GitHub rate limit hit — try again shortly", "github_rate_limited", map[string]any{"retryAfterSeconds": rle.RetryAfterSeconds})
 	case errors.As(err, &refused):
 		// GitHub said no and waiting will not change it (a blocked repository, a
 		// permission the App was not granted, a suspended installation): not a
 		// gateway failure to retry, so a 400 that carries GitHub's own words
 		// (cleaned and capped by the client) for the user to act on at GitHub.
 		s.log.Warn("github refused access", "error", err)
-		httpx.WriteError(w, http.StatusBadRequest, "GitHub refused access to this repository: "+refused.Message, "GITHUB_ACCESS_REFUSED", nil)
+		httpx.WriteError(w, http.StatusBadRequest, "GitHub refused access to this repository: "+refused.Message, "github_access_refused", nil)
 	case errors.Is(err, github.ErrRepoNotFound):
-		httpx.WriteError(w, http.StatusNotFound, "GitHub repository not found — private repo, or check the name", "GITHUB_NOT_FOUND", nil)
+		httpx.WriteError(w, http.StatusNotFound, "GitHub repository not found — private repo, or check the name", "github_not_found", nil)
 	case errors.Is(err, errRepoURLInvalid):
-		httpx.WriteError(w, http.StatusBadRequest, "the linked repository URL is not a GitHub repository — link the repository again", "GITHUB_REPO_URL_INVALID", nil)
+		httpx.WriteError(w, http.StatusBadRequest, "the linked repository URL is not a GitHub repository — link the repository again", "github_repo_url_invalid", nil)
 	case errors.Is(err, errRepoNotVisible):
 		// Also the answer for a repo held by a project the caller cannot read
 		// (rv4-FR-F199), so the sentence allows for that cause as well.
-		httpx.WriteError(w, http.StatusBadRequest, "GitHub does not show this repository to InsideOut, or another project already holds it — install the InsideOut GitHub App on it, or link a public repository", "GITHUB_REPO_NOT_VISIBLE", nil)
+		httpx.WriteError(w, http.StatusBadRequest, "GitHub does not show this repository to InsideOut, or another project already holds it — install the InsideOut GitHub App on it, or link a public repository", "github_repo_not_visible", nil)
 	default:
 		s.log.Error("github call", "error", err)
-		httpx.WriteError(w, http.StatusBadGateway, upstreamMsg, "GITHUB_UPSTREAM", nil)
+		httpx.WriteError(w, http.StatusBadGateway, upstreamMsg, "github_upstream", nil)
 	}
 }
 

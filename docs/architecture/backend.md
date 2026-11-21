@@ -15,7 +15,8 @@ server/
   cmd/insideout-mcp/   the stdio MCP server binary — same /api/v1 contract
   db/                  embed.go (go:embed migrations), migrations/*.sql
   internal/
-    agent/             PRD Coach: prompts, tools, SSE, the Anthropic client
+    agent/             PRD Coach: prompts, tools, SSE, the critic, the fact ledger,
+                       the roadmap planner
     agentcontext/      the compact, focus-scoped context agent-context briefs from,
                        with an `untrusted` block and the one fence rule (FenceData)
     api/               HTTP routes, middleware, per-domain handlers
@@ -33,11 +34,14 @@ server/
     github/            linked-repo commit fetch feeding project progress
     guide/             the repo-side matching guide (insideout.yaml) generator
     httpx/             JSON request/response helpers, the error contract
-    linebudget/        the file-budget guard the server tree runs: a Go file over 400 lines
-                       fails the build
+    linebudget/        the code-budget guard: a non-test Go file or function over the
+                       thresholds in config/code-budget.json fails the tests
+    llm/               the model provider clients (a leaf: imports nothing internal):
+                       ChatStreamer, the Anthropic Messages and Responses streamers,
+                       their stream parsers, the retry and error taxonomy
     mail/              transactional email through the Resend HTTP API
     mcpserver/         the MCP surface: one tool per CLI verb, an agent profile that
-                       withholds twelve tools, and the result fence (fence.go)
+                       withholds the four password tools, and the result fence (fence.go)
     modtidy/           the module tidiness guard: `go mod tidy -diff` must print nothing
     presence/          in-memory who-is-here registry behind live canvas presence
     progresshub/       in-memory fan-out for the live roadmap progress view
@@ -46,13 +50,16 @@ server/
     roadmaptime/       the time-first deadline and pressure rules
     setup/             the guided-setup flow engine behind `insideout setup`
     store/             all pgx queries; files grouped by domain resource (Store layer below)
+    surfaceparity/     the request-field parity guard: every field an API handler decodes
+                       is reached by the Go client, the CLI and MCP, or is a listed omission
+                       ([practice](../practices/2026-11-21-surface-parity-guards.md))
     testlock/          cross-process advisory locks and the strict-mode host guard shared by the
                        DATABASE_URL-gated tests (imported by tests only)
 ```
 
 The non-web clients (`cmd/insideout-mcp`, `apiclient`, `clientconfig`, `mcpserver`,
 `setup`, the CLI verbs) are described in
-[CLI, MCP and client configuration](cli-mcp-and-client-config.md).
+[CLI, MCP and client configuration](./cli-mcp-and-client-config.md).
 
 ## Request flow
 
@@ -70,7 +77,7 @@ patterns (the two passive streams, the coach message POST, `build`, and
 database under a 2 s deadline and answers 503 when it cannot (rv4-REL-02).
 The two passive streams (presence, roadmap progress) are capped at 20 per user
 and 100 per project, with
-429 `APP_STREAM_LIMIT` past the cap, cursor posts are limited to 25 a second per
+429 `app_stream_limit` past the cap, cursor posts are limited to 25 a second per
 user, and each 10 s heartbeat re-verifies the stream's own access token and the
 caller's project membership, so a stream ends when its session or membership
 does (rv4-REL-01, REL-03, SEC-08).
@@ -92,7 +99,7 @@ the server still accepts them, which keeps a plain browser session working.
 `/auth/refresh` reads the refresh token from the httpOnly cookie, else a
 `{"refreshToken"}` body, and the cookie wins when both are present. The hosted
 Flutter web client is served by an nginx that proxies `/api/v1/**` to this
-server same-origin (see [deployment](deployment.md)), so it needs no CORS; local
+server same-origin (see [deployment](./deployment.md)), so it needs no CORS; local
 Flutter web dev is cross-origin and uses the `INSIDEOUT_CORS_ORIGINS`
 allow-list (`dev.sh` defaults it to the `localhost` token).
 
@@ -106,7 +113,7 @@ agent token on every human-only route (the proposal decision, Commit, the
 admin routes, the deletes). A pattern missing from the table is human-only,
 and a route-table test fails the build for a route with no entry. A token with
 no claim is full scope, so nothing issued earlier changes. See
-[agent token scope](agent-token-scope.md).
+[agent token scope](./agent-token-scope.md).
 
 Beyond email+password, emailed one-time-credential flows share the same
 session issuance: magic-link login (`POST /auth/magic-link` then
@@ -145,13 +152,21 @@ generator, hand-scanned SQL. Files are grouped by resource family, one file per
 concern inside a family:
 
 - accounts: `users.go`, `sessions.go`, `auth_tokens.go` (magic links, resets,
-  sign-in codes), `invitations.go`
+  sign-in codes), `invitations.go`, `reset_watch.go` (the password-reset watch
+  the CLI polls; outside RLS, purged by the reaper's retention purge),
+  `erasure.go` (the account tombstone behind `DELETE /me`)
 - teams: `workspaces.go`, `memberships.go`
 - work: `ideas.go`, `project*.go` (projects, updates, the linked repo), `prd*.go`
   (PRDs, revisions, Commit)
-- the coach: `agent_*.go` (conversations, messages, the context queries)
+- the coach: `agent_*.go` (conversations, messages, the context queries),
+  `ai_runs.go` (the run lifecycle, the stale-run reaper, run events),
+  `ai_ops.go` (the rate limiter and circuit breaker), `retention.go` (the
+  reaper's retention purge and the idle-conversation purge)
 - proposals: `proposal_*.go` (the human decision, the structured items)
-- roadmap: `roadmap*.go` (nodes, evidence, moves, plans, validation)
+- roadmap: `roadmap*.go` (nodes, reads, evidence, moves, plans, validation;
+  `roadmap_views.go` the node views with roll-ups, `roadmap_assignments.go`
+  the owner history and delegation, `roadmap_mine.go` a person's own tree,
+  `roadmap_delete.go` the guarded subtree delete)
 - GitHub: `github_webhook.go` (the system-run webhook path)
 - plumbing: `pool.go`, `errors.go` (the sentinels the api maps to statuses),
   `migrate*.go`, `serve_role.go`
@@ -160,10 +175,13 @@ Authorization is enforced twice, deliberately:
 
 1. **Go app layer** — every mutating function re-checks the caller's
    membership/ownership/admin role inside the same transaction as the write
-   (the TOCTOU-safe pattern; see [database and RLS](database-and-rls.md) for
-   why explicit row locks were removed from these checks).
+   (the TOCTOU-safe pattern; see [database and RLS](./database-and-rls.md) for
+   why explicit row locks were removed from these checks). The predicates
+   live in `authz.go` (`requireMember`, `requireAdminMember`,
+   `requirePlanWriter`, and the roadmap tree's `requireNodeWriter` and
+   `requireNodeManager`, which call the same SQL function as the policies).
 2. **PostgreSQL RLS** — a database-level backstop matching the same rules,
-   described in [database and RLS](database-and-rls.md).
+   described in [database and RLS](./database-and-rls.md).
 
 ## API surface
 
@@ -176,28 +194,47 @@ Domain handlers live in `internal/api`, grouped by resource:
   SSE per-user/per-project caps and the heartbeat membership recheck),
   `request_deadline.go` (the per-request deadline on non-stream routes)
 - accounts: `auth*.go` (sign-in, the emailed one-time flows and their
-  templates, the throttle and resend cooldown), `me.go`, `admin.go`
+  templates, the throttle and resend cooldown; `auth_reset_watch.go` answers
+  forgot-password with a watch id and serves `GET /auth/reset-watch/{id}`),
+  `me.go`, `me_delete.go` (the human-only account erasure), `admin.go`
   (invitations and the signup-mode switch)
-- agents: `agent_*.go` (the agent vocabulary routes and `agentRoutePolicy`)
+- agents: `agent_*.go` (the agent vocabulary routes and `agentRoutePolicy`;
+  `agent_root.go` the token mint and the root-scoped token's subtree check)
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
-  `project_updates.go`, `ideas.go`, `guide.go`
-- PRDs: `prd*.go` (PRDs, audience views, readiness, Commit), `conversations.go`
+  `project_updates.go` and `project_updates_page.go` (the paged feed,
+  `GET /projects/{pid}/updates?before=&limit=`), `ideas.go`, `guide.go`
+- PRDs: `prd*.go` (PRDs, audience views, readiness, Commit; `prd_list.go`
+  the workspace's PRD list, `GET /workspaces/{id}/prds`, member-visible and
+  agent-allowed; a project view's `prdId` names the PRD it was built from),
+  `conversations.go`
   (the coach's SSE turns, the stage confirm and the human-only `stage/decline`
   route, and the conversation view with `criticSkipped` and `criticRounds`),
   `conversations_trust.go` (the parked finding resolutions the view lists as
   `pendingResolutions` on the confirm card)
-- roadmap: `roadmap*.go` (nodes, drafting, evidence, progress, validation),
-  `presence_routes.go`
+- roadmap: `roadmap*.go` (nodes, reads and `mine`, drafting, evidence,
+  progress, validation; `roadmap_delegation.go` delegate, hand-back and the
+  owner history), `presence_routes.go`
 - GitHub: `github*.go` (repo sync, the webhook and its evidence)
 
 The single-replica contract and its guard are in
-[CLI, MCP and client configuration](cli-mcp-and-client-config.md#the-single-replica-contract).
-The error contract is `{"error": string, "code"?: string, ...extra}` (see
-`internal/httpx/json.go`); AI-specific throttling responses preserve the
-`APP_THROTTLE` (429) and `CIRCUIT_OPEN` (503) JSON shapes the original
-frontend countdown logic expects; a provider-side rate limit hits after the
+[CLI, MCP and client configuration](./cli-mcp-and-client-config.md#the-single-replica-contract).
+The error contract is `{"error": string, "code": string, ...extra}` (see
+`internal/httpx/json.go`). Every code is lowercase snake_case; an error with
+no specific code carries its status's name (`not_found`, `bad_request`,
+`internal_server_error`), and extra keys are camelCase (`retryAfterSeconds`,
+`liveCount`). `internal/httpx/error_style_test.go` reads every `WriteError`
+and SSE `errorEvent` call and fails on another style (rv5-PARC-08).
+Handlers report a store error through `writeStoreError` in
+`internal/api/store_error.go`. It maps each store error (`ErrNotFound`,
+`ErrForbidden`, `ErrConflict`, `ErrValidation` and the errors that wrap them)
+to one status and code, and the handler supplies only its own wording. The
+handlers not yet converted are listed in
+[the ladders issue](../issues/2026-11-21-store-error-ladders.md) (rv5-STRS-11).
+AI-specific throttling responses keep the
+`app_throttle` (429) and `circuit_open` (503) shapes with `retryAfterSeconds`
+that the frontend countdown reads; a provider-side rate limit hits after the
 SSE stream is already open, so it surfaces as an SSE `error` event with code
-`ANTHROPIC_RATE_LIMIT` rather than an HTTP status.
+`anthropic_rate_limit` rather than an HTTP status.
 
 Response builders take the instant as a parameter instead of reading the wall
 clock: `Server` owns a `clock` behind `s.now()` (nil means the wall clock;

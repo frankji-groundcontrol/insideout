@@ -78,4 +78,4 @@ documented design choice, not a defect. See the
 [routing learning note](../learning/2026-07-26-nuxt-dynamic-route-parent-shadowing.md).
 
 Related: the `RoadmapCanvas.vue` over-350-line split is tracked separately in
-[2026-07-25-roadmap-canvas-modularity.md](2026-07-25-roadmap-canvas-modularity.md).
+[2026-07-25-roadmap-canvas-modularity.md](./2026-07-25-roadmap-canvas-modularity.md).

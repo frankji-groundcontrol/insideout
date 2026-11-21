@@ -1,7 +1,7 @@
 # Product subsystems
 
 The subsystems added in the 2026-08 product arc, layered on
-[backend.md](backend.md) and [database-and-rls.md](database-and-rls.md).
+[backend.md](./backend.md) and [database-and-rls.md](./database-and-rls.md).
 Each is a projection of the same `/api/v1` contract — one truth, many
 views (PRODUCT.md principle 3).
 
@@ -29,7 +29,10 @@ views (PRODUCT.md principle 3).
 
 - `GET /api/v1/agent/context?project_id&mode&focus` — compact,
   focus-scoped context (`internal/agentcontext`): brainstorming /
-  implementation / review shapes, never the whole graph; every response
+  implementation / review shapes, never the whole graph. With a focus,
+  implementation mode lists only the leaves of the focus subtree and the
+  focus block carries its description and path (ancestor titles); an
+  unknown focus answers 404. Every response
   embeds the vocabulary contract and an `untrusted` block naming the
   fields that hold text people wrote (data, not instructions).
 - `POST /agent/checkpoint` and `POST /agent/propose` write typed
@@ -39,8 +42,8 @@ views (PRODUCT.md principle 3).
   Agents never apply strategic changes and never Commit versions —
   `version` is surfaced from commits, human-only. The server enforces it:
   an agent-scope token is refused (403 `agent_scope_denied`) on the
-  decision route, Commit, the admin routes and every delete, whichever
-  client sends it ([agent token scope](agent-token-scope.md)).
+  decision route, Commit, the admin routes, every delete and a node owner
+  change, whichever client sends it ([agent token scope](./agent-token-scope.md)).
 - Proposals may carry structured `items` (`proposal_items`: add_node
   with optional parent hint). `POST /agent/proposals/{uid}/decision`
   records the human accept/reject (`proposal_decisions`, the decision
@@ -66,8 +69,10 @@ views (PRODUCT.md principle 3).
   overdue) and the Progress assembly — **Now admits deadlined work
   only**; in-progress items without a deadline surface as
   `needsDeadline`; Next caps at three by earliest deadline.
-	`GET /projects/{id}/roadmap/progress`; node views carry `deadline` +
-	computed `pressure`; PATCH accepts `deadline` (RFC3339 or `""`). The web
+	`GET /projects/{id}/roadmap/progress` (`?root={nid}` for one subtree);
+	node views carry `deadline` + computed `pressure` and a `rollup` over the
+	leaves below (`roadmaptime.Rollups`, counting done and validated as
+	finished, as Progress does); PATCH accepts `deadline` (RFC3339 or `""`). The web
 	picker sends the picked day at noon UTC (RFC3339), so every member reads
 	the same calendar date.
 	`GET /projects/{id}/roadmap/progress/stream` (SSE) writes that same
@@ -100,9 +105,9 @@ views (PRODUCT.md principle 3).
   commit sync as that project's owner.
 - One repo, one project (rv4-COMP-05): linking canonicalises the URL, and a
   second project linking the same repo, in any letter case, gets 409
-  `GITHUB_REPO_ALREADY_LINKED`. With the App configured the repo must also be
+  `github_repo_already_linked`. With the App configured the repo must also be
   visible to the server (an installation covers it, or it is public), else
-  400 `GITHUB_REPO_NOT_VISIBLE`. `_projects_by_repo` therefore names at most
+  400 `github_repo_not_visible`. `_projects_by_repo` therefore names at most
   one project, the earliest-created one with an owner; the bind check,
   webhook delivery and the token gate all ask it. Migration
   `20261018180000_github_repo_binding.sql` rewrites the URLs already stored to

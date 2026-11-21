@@ -29,7 +29,7 @@ uses it for magic-link, code, reset, and invitation messages.
 
 ## 4. How to test it
 
-Run the real mail probe from [mail-api-key](mail-api-key.md), then inspect the
+Run the real mail probe from [mail-api-key](./mail-api-key.md), then inspect the
 provider-accepted message in the verified recipient's inbox.
 
 **Expected result:** the probe reports `status=sent`, the message arrives, and

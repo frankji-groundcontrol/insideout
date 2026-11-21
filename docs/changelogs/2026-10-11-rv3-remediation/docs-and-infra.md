@@ -59,5 +59,5 @@ wave 4 `b056e30..4464330`. Register rows each change closes are named.
 
 ## Verification
 
-See [verification.md](verification.md) for the full gate run and the
+See [verification.md](./verification.md) for the full gate run and the
 adversarial contract that accepted every cluster.

@@ -1,0 +1,27 @@
+{
+  "id": "75451c0a-41b4-4823-ab3a-b013e7f707b5",
+  "projectId": "dd7f1811-ddfe-4e43-8c69-7473cd501dd4",
+  "parentId": "499c4dee-afbd-46ff-a794-552c94648948",
+  "title": "Pilot",
+  "description": "",
+  "status": "done",
+  "position": 0,
+  "deadline": "2026-03-02T20:00:00+08:00",
+  "pressure": "high_risk",
+  "createdAt": "2026-11-21T19:59:09+08:00",
+  "updatedAt": "2026-11-21T19:59:09+08:00",
+  "acceptance": "Ten teams use it",
+  "ownerId": "475e27aa-89f3-40c5-ae7a-2b32a5f4a9a0",
+  "ownerName": "owner",
+  "validationReason": "",
+  "completionReason": "Shipped by hand.",
+  "creatorName": "owner",
+  "editorName": "owner",
+  "canWrite": true,
+  "rollup": {
+    "leaves": 1,
+    "done": 0,
+    "validated": 0,
+    "earliestDeadline": "2026-03-02T20:00:00+08:00"
+  }
+}

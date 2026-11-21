@@ -24,11 +24,15 @@ class BoardProjectCard extends StatelessWidget {
     required this.project,
     required this.progress,
     required this.onOpen,
+    this.ownerName,
   });
 
   final Project project;
   final Future<RoadmapProgress> progress;
   final VoidCallback onOpen;
+
+  /// The owner's name, from [projectOwnerName]; nothing shows for null or ''.
+  final String? ownerName;
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +87,14 @@ class BoardProjectCard extends StatelessWidget {
               ),
             ],
           ),
+          if (ownerName case final String name when name.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: Cobalt.space2),
+              child: Text(
+                l10n.t('project.owner', {'name': name}),
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
           if (p.latestUpdateKind != null)
             Padding(
               padding: const EdgeInsets.only(top: Cobalt.space3),

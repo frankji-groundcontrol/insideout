@@ -95,7 +95,7 @@ new primitives for `Focus`.
 
 Nothing to deploy on its own — this is part of the same uncommitted
 `client/` slice as the
-[2026-10-07 block-craft changelog](2026-10-07-frontend-block-craft.md).
+[2026-10-07 block-craft changelog](./2026-10-07-frontend-block-craft.md).
 The worktree also still carries the app-icon slice, so stage one task at
 a time; do not use `git add .`. Ship `client/` changes with
 `railway up --service app`.

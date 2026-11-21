@@ -5,7 +5,7 @@ API is nearly complete — agent planning (`POST /prds/{pid}/build`,
 `POST /roadmap/{nid}/expand`), node CRUD + move, repo binding + pull
 sync — but only the web client can reach it, and GitHub progress is
 poll-based with a server-level token instead of user-granted access.
-Extends [cli-mcp-parity](2026-08-21-cli-mcp-parity.md).
+Extends [cli-mcp-parity](./2026-08-21-cli-mcp-parity.md).
 
 ## Stage A — roadmap parity on the CLI (this increment)
 

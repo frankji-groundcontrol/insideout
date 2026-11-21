@@ -73,7 +73,7 @@ Do not start an HTML prototype. Keep exploring in images.
 > Share it with open design as reference, build design language
 
 3Q is the lock. Pinned in OpenDesign as `REFERENCE-3Q.jpg`. Language:
-[2026-09-17-3q-recap-language.md](2026-09-17-3q-recap-language.md).
+[2026-09-17-3q-recap-language.md](./2026-09-17-3q-recap-language.md).
 Still images first.
 
 ## Follow-up (same day)

@@ -1,10 +1,13 @@
 # Installation
 
-Two ways to get a working InsideOut. The CLI and the MCP server
-already know the hosted API, so the usual path needs no environment
-variables. A server on your own machine is a separate, guided setup.
-Once the binary exists, `insideout setup` is the front door for both
-paths — interactive on a terminal, flag-driven for agents.
+People start at the [user guide](./user-guide.md): the prebuilt binaries,
+`insideout setup`, and sign-in. That path needs no environment variables.
+The maintained map of the wizard is [setup paths](./setup-paths.md).
+
+This page is the full reference. `insideout setup` with no flags, on a
+terminal, asks numbered questions (Enter accepts the hosted service).
+Flags drive the same door when there is no terminal. A server on your
+own machine is [below](#your-own-server).
 
 Print the hosted API the binaries call:
 
@@ -37,7 +40,7 @@ attestation step: with `gh` signed in the one-liner stops on it until a
 tag cut by the current workflow exists, and `scripts/install.sh` from a
 checkout (build from source) works meanwhile. An archive you built
 yourself has no attestation either. How to verify by hand:
-[releasing.md](releasing.md#verifying-a-download).
+[releasing.md](./releasing.md#verifying-a-download).
 
 `INSIDEOUT_RELEASE_BASE` overrides the download base for a self-hosted
 mirror of a release, and must be an `https://` URL: plain http is accepted
@@ -97,7 +100,7 @@ Cursor reads `~/.cursor/mcp.json` (global) or `.cursor/mcp.json`
 client that does not inherit your shell `PATH` needs the absolute path
 from `command -v insideout-mcp`. Reload MCP servers after writing the
 file. Details:
-[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md#mcp-server).
+[cli-mcp-and-guidance.md](./cli-mcp-and-guidance.md#mcp-server).
 
 Signup on the hosted service is invitation-only. Register with an invitation
 code, then sign in with a password, emailed code, or magic link:
@@ -125,21 +128,17 @@ Confirm the hosted path without installing again:
 
 ## Your own server
 
-You need PostgreSQL 18 (the major CI tests) and, for the bundled database, Docker. After the
-binary/local server path is selected, use the complete
-[key setup tutorial](key-setup-tutorial.md) and
-[key testing tutorial](key-testing-tutorial.md) to configure and prove each
-setting. The
-two values the server refuses to boot without are `DATABASE_URL` and
-`INSIDEOUT_JWT_SECRET` (at least 32 characters). Full variable
-reference: [environment.md](environment.md). Day-to-day commands:
-[local-development.md](local-development.md).
+You need PostgreSQL 18 (the major CI tests) and, for the bundled database, Docker.
+The two values the server refuses to boot without are `DATABASE_URL` and
+`INSIDEOUT_JWT_SECRET` (at least 32 characters). `insideout setup --local`
+writes both. Full variable reference: [environment.md](./environment.md).
+Day-to-day commands: [local-development.md](./local-development.md).
 
 ### Guided setup
 
-`insideout setup --local` (or `./scripts/setup.sh` before the binary
-exists — same flags) asks when stdin is a terminal and requires
-flags otherwise, so an agent can drive it.
+`insideout setup` on a terminal offers this path as choice 3. The flags
+below are the same work without a terminal (`./scripts/setup.sh` before
+the binary exists).
 
 The setup command writes `.env` through the Go catalog writer
 (comments preserved, 0600, values never displayed — the DSN is shown
@@ -193,7 +192,7 @@ insideout signup-mode open      # optional, local disposable DB only
 
 The seed command is strictly for a disposable local database; it creates the
 public development demo account described in
-[local development](local-development.md) and must never run against a
+[local development](./local-development.md) and must never run against a
 shared or production database. Restore `insideout signup-mode invitation_only`
 after any local open-signup exercise.
 
@@ -230,32 +229,34 @@ role should own only that schema. See
 
 ## For an agent
 
-Ask one question, then run the matching command. Do not read `.env`.
-Do not print secret values, tokens, or database URLs.
+The hosted path is [the setup skill](../../skills/insideout-setup/SKILL.md).
+A server on this machine is [the server skill](../../skills/insideout-server/SKILL.md).
+Do not read `.env`. Do not print secret values, tokens, or database URLs.
 
-1. Ask whether they want the hosted service or a server on this machine.
-2. Hosted: `./scripts/install.sh`, then `insideout setup --hosted`
-   (or the interactive `insideout setup` on a terminal). Merge
+1. If they did not ask to run a server, install the prebuilt binaries
+   ([user guide](./user-guide.md)) and run `insideout setup` on a terminal,
+   or `insideout setup --hosted` without one. Merge
    `{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }`
-   into the agent MCP config. Do not
-   set `INSIDEOUT_API`. Do not invent a token. Sign-in is
+   into the agent MCP config. Do not set `INSIDEOUT_API`. Do not invent
+   a token. Sign-in is
    `ACCOUNT_EMAIL='you@example.test'; insideout login "$ACCOUNT_EMAIL"` with
    the password on stdin.
-3. Own server: ask bundled Docker Postgres, or a URL they already have.
+2. Own server, only when they asked: bundled Docker Postgres, or a URL
+   they already have.
    - Bundled: `insideout setup --local --postgres bundled`
    - Existing URL: `insideout setup --local --postgres own` with the
      URL on stdin.
    - A fresh own-URL database needs the two roles; add `--create-roles`
      when the DSN's role may create them (stdin carries the DSN, so
      setup cannot prompt), or run the SQL it prints.
-4. After a local server exists, set
+3. After a local server exists, set
    `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI still calls
    the hosted API.
-5. First admin: on a disposable local database, run `insideout seed`, then
+4. First admin: on a disposable local database, run `insideout seed`, then
    promote `demo@insideout.local`; on a shared or hosted server, run
    `ACCOUNT_EMAIL='you@example.test'; ./scripts/dev.sh -C server go run ./cmd/insideout promote-admin "$ACCOUNT_EMAIL"`,
    which creates the account (password read from stdin) when it does not exist
    and promotes it.
-6. Verify everything with `insideout setup --check`.
+5. Verify everything with `insideout setup --check`.
 
-Non-interactive `setup.sh` with no flags exits 2 and points here.
+Non-interactive `insideout setup` (or `setup.sh`, which forwards to it) with no flags exits 2 and names the flags.

@@ -1,7 +1,11 @@
 package api
 
 import (
+	"encoding/json"
+	"net/http"
 	"net/url"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 )
 
 // maxStoredURLLen caps user-supplied display URLs so a hostile client
@@ -23,4 +27,22 @@ func validStoredURL(raw string) bool {
 	}
 	u, err := url.Parse(raw)
 	return err == nil && u.Scheme == "https" && u.Host != ""
+}
+
+// storedURLPatch reads a PATCH's avatarUrl or coverUrl (rv5-PARA-09): an
+// absent key is nil (keep the stored one), null or "" is "" (clear it), and
+// anything else must pass validStoredURL. ok is false once it has answered 400.
+func storedURLPatch(w http.ResponseWriter, field string, raw json.RawMessage) (patch *string, ok bool) {
+	if raw == nil {
+		return nil, true
+	}
+	var v *string
+	if err := json.Unmarshal(raw, &v); err != nil || (v != nil && !validStoredURL(*v)) {
+		httpx.WriteError(w, http.StatusBadRequest, field+" must be an https URL (max 2048 characters)", "", nil)
+		return nil, false
+	}
+	if v == nil {
+		v = new(string)
+	}
+	return v, true
 }

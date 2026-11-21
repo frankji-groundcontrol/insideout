@@ -5,7 +5,7 @@
 run as background workflow `wf-67acfb81-b5e` (run `wf_6b6a6481-1a2`):
 Wave 0 alone, waves 1–5 as five concurrent disjoint partitions, waves
 6–8 alone. Companion to the
-[Cobalt-Neo token pass](2026-10-06-frontend-cobalt-neo.md) — the tokens
+[Cobalt-Neo token pass](./2026-10-06-frontend-cobalt-neo.md) — the tokens
 stayed frozen (`client/test/cobalt_test.dart` untouched and green); this
 ported the reference app's **component and interaction** layer onto them
 and removed the nine recorded drifts D1–D9. Nothing is committed or
@@ -121,5 +121,5 @@ thread is recorded at
 [design-qa/2026-10-07-block-craft.md](../design-qa/2026-10-07-block-craft.md).
 
 *Superseded 2026-10-11: committed as `185ed46` ([host
-sync](2026-10-09-host-sync.md)) and shipped with the 2026-10-11 app deploy
-([owner-deploy record](2026-10-11-owner-deploy-and-mail-truth.md)).*
+sync](./2026-10-09-host-sync.md)) and shipped with the 2026-10-11 app deploy
+([owner-deploy record](./2026-10-11-owner-deploy-and-mail-truth.md)).*

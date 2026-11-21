@@ -24,9 +24,9 @@ to `0`), so this is not a major bump. It landed in three dated passes: tokens
 ([2026-10-06](../changelogs/2026-10-06-frontend-cobalt-neo.md)), components
 ([2026-10-07](../changelogs/2026-10-07-frontend-block-craft.md)), and keyboard
 focus ([2026-10-08](../changelogs/2026-10-08-block-focus-ring.md)). The law is
-[`DESIGN.md`](../../DESIGN.md); the [lock screens](cobalt/README.md) predate
+[`DESIGN.md`](../../DESIGN.md); the [lock screens](./cobalt/README.md) predate
 this version. Token values stay pinned by
-[`client/test/cobalt_test.dart`](../../client/test/cobalt_test.dart) (frozen
+[`client/test/theme/cobalt_test.dart`](../../client/test/theme/cobalt_test.dart) (frozen
 assertions plus the WCAG contrast script).
 
 ### Changed — token values (keys unchanged)

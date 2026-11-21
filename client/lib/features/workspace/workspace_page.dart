@@ -20,8 +20,10 @@ import '../../theme/cobalt_theme.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 import 'block_refresh.dart';
+import '../project/project_header.dart';
 import 'board_project_card.dart';
 import 'quick_capture_fab.dart';
+import 'workspace_prd_list.dart';
 
 // N1: the square quick-capture FAB floats over the dock's top-right corner.
 // The body extends behind the dock (AppScaffold extendBody), so reserve the
@@ -33,6 +35,13 @@ const double _bottomInset =
     quickCaptureSize +
     kFloatingActionButtonMargin +
     Cobalt.space4;
+
+typedef _Board = ({
+  Workspace ws,
+  List<Project> projects,
+  List<WorkspaceMember> members,
+  List<WorkspacePrd>? prds,
+});
 
 class WorkspacePage extends StatefulWidget {
   const WorkspacePage({super.key, required this.id});
@@ -55,7 +64,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     );
   }
 
-  late Future<({Workspace ws, List<Project> projects})> _future;
+  late Future<_Board> _future;
 
   @override
   void initState() {
@@ -64,16 +73,27 @@ class _WorkspacePageState extends State<WorkspacePage> {
     _future = _load();
   }
 
-  Future<({Workspace ws, List<Project> projects})> _load() async {
+  Future<_Board> _load() async {
     final api = context.read<Session>().api;
     final ws = await api.getWorkspace(widget.id);
     final projects = await api.listProjects(widget.id);
-    if (!mounted) return (ws: ws, projects: projects);
+    // Owner names only; the board stands without them.
+    final members = await api
+        .listMembers(widget.id)
+        .catchError((_) => <WorkspaceMember>[]);
+    // Read with the board so a refresh re-reads it (rv5-FE-02); the board
+    // stands without it.
+    List<WorkspacePrd>? prds;
+    try {
+      prds = await api.listWorkspacePrds(widget.id);
+    } catch (_) {}
+    final board = (ws: ws, projects: projects, members: members, prds: prds);
+    if (!mounted) return board;
     final focus = context.read<LoopFocus>();
     if (focus.projectFor(widget.id) == null && projects.isNotEmpty) {
       focus.rememberProject(projects.first.id, workspaceId: widget.id);
     }
-    return (ws: ws, projects: projects);
+    return board;
   }
 
   Future<void> _reload() async {
@@ -152,7 +172,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<({Workspace ws, List<Project> projects})>(
+    return FutureBuilder<_Board>(
       future: _future,
       builder: (context, snap) {
         final l10n = context.watch<Appearance>();
@@ -176,10 +196,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     );
   }
 
-  Widget _board(
-    BuildContext context,
-    ({Workspace ws, List<Project> projects}) data,
-  ) {
+  Widget _board(BuildContext context, _Board data) {
     final l10n = context.watch<Appearance>();
     final width = MediaQuery.sizeOf(context).width;
     final hPad = width >= Cobalt.bpDesk
@@ -206,25 +223,30 @@ class _WorkspacePageState extends State<WorkspacePage> {
               label: l10n.t('workspace.settings'),
               onTap: () => context.go('/workspace/${widget.id}/settings'),
             ),
-            const SizedBox(height: Cobalt.space4),
-            Wrap(
-              spacing: Cobalt.space3,
-              runSpacing: Cobalt.space3,
-              children: [
-                BlockButton(
-                  label: l10n.t('common.edit'),
-                  icon: Icons.edit_outlined,
-                  variant: BlockButtonVariant.secondary,
-                  onPressed: () => _edit(data.ws),
-                ),
-                BlockButton(
-                  label: l10n.t('workspace.deleteWorkspace'),
-                  icon: Icons.delete_outline,
-                  variant: BlockButtonVariant.danger,
-                  onPressed: _delete,
-                ),
-              ],
-            ),
+            // Only what the server would let this viewer do (rv5-FE-05).
+            if (data.ws.canEdit || data.ws.canDelete) ...[
+              const SizedBox(height: Cobalt.space4),
+              Wrap(
+                spacing: Cobalt.space3,
+                runSpacing: Cobalt.space3,
+                children: [
+                  if (data.ws.canEdit)
+                    BlockButton(
+                      label: l10n.t('common.edit'),
+                      icon: Icons.edit_outlined,
+                      variant: BlockButtonVariant.secondary,
+                      onPressed: () => _edit(data.ws),
+                    ),
+                  if (data.ws.canDelete)
+                    BlockButton(
+                      label: l10n.t('workspace.deleteWorkspace'),
+                      icon: Icons.delete_outline,
+                      variant: BlockButtonVariant.danger,
+                      onPressed: _delete,
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: Cobalt.space8),
             if (data.projects.isEmpty)
               BlockEmpty(
@@ -258,6 +280,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                 BoardProjectCard(
                   project: p,
                   progress: progressFutureFor(p.id),
+                  ownerName: projectOwnerName(p.ownerId, data.members),
                   onOpen: () {
                     context.read<LoopFocus>().rememberProject(
                       p.id,
@@ -269,6 +292,8 @@ class _WorkspacePageState extends State<WorkspacePage> {
                 const SizedBox(height: Cobalt.space3),
               ],
             ],
+            const SizedBox(height: Cobalt.space8),
+            WorkspacePrdList(prds: data.prds, projects: data.projects),
           ],
         ),
       ),

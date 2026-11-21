@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -17,12 +18,32 @@ type RoadmapPlanNode struct {
 }
 
 // ReplaceConflictError reports a tree-replace precondition failure: the live
-// roadmap holds LiveCount nodes the caller did not confirm overwriting. It
-// matches ErrConflict so handlers map it to 409 and can surface the count.
-type ReplaceConflictError struct{ LiveCount int }
+// roadmap holds LiveCount nodes the caller did not confirm overwriting, or,
+// with History set, nodes with evidence or done or validated that the caller
+// did not force away (rv5-FEAT-03). It matches ErrConflict so handlers map it
+// to 409 and can surface the counts.
+type ReplaceConflictError struct {
+	LiveCount, EvidenceCount, DoneCount, ValidatedCount int
+	History                                             bool
+}
 
 func (e *ReplaceConflictError) Error() string        { return "roadmap replace not confirmed" }
 func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConflict }
+
+// ReplaceOptions are what a replace's caller confirmed.
+type ReplaceOptions struct {
+	// ExpectedCount is the live node count the caller saw; a non-empty
+	// roadmap is only replaced when it matches.
+	ExpectedCount *int
+	// Force discards nodes that have evidence or are done or validated.
+	Force bool
+	// EmptyOnly refuses any non-empty roadmap with ErrRoadmapNotEmpty: an
+	// agent token builds only onto an empty roadmap (rv5-FEAT-02).
+	EmptyOnly bool
+}
+
+// ErrRoadmapNotEmpty is an EmptyOnly replace that met a live roadmap.
+var ErrRoadmapNotEmpty = errors.New("roadmap is not empty")
 
 // ReplaceRoadmapTree atomically swaps a project's whole roadmap for the given
 // tree — used by "build the MVP" generation. Returns the number of nodes
@@ -30,11 +51,13 @@ func (e *ReplaceConflictError) Is(target error) bool { return target == ErrConfl
 // the project owner or a workspace admin (BUG-020). The expected count below is
 // a staleness guard, not an authorisation.
 //
-// Guard: a non-empty roadmap is only replaced when expectedCount confirms the
-// exact live count, else ReplaceConflictError. The count check runs behind a
-// per-project advisory lock so two concurrent builds can't both pass the check
-// then both delete (check-then-act TOCTOU). An empty roadmap needs no confirm.
-func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.UUID, expectedCount *int, root RoadmapPlanNode) (int, error) {
+// Guard: a non-empty roadmap is only replaced when ExpectedCount confirms the
+// exact live count, and, while any node has evidence or is done or validated
+// (the delete cascades through all of it), only with Force; else
+// ReplaceConflictError. The checks run behind a per-project advisory lock so
+// two concurrent builds can't both pass them then both delete (check-then-act
+// TOCTOU). An empty roadmap needs no confirm.
+func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.UUID, opts ReplaceOptions, root RoadmapPlanNode) (int, error) {
 	count := 0
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
@@ -47,16 +70,35 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 			return err
 		}
 
-		var liveCount int
-		if err := tx.QueryRow(ctx, `SELECT count(*) FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID).Scan(&liveCount); err != nil {
+		var c ReplaceConflictError
+		if err := tx.QueryRow(ctx, `
+			SELECT count(*), count(*) FILTER (WHERE status = 'done'), count(*) FILTER (WHERE status = 'validated'),
+				(SELECT count(*) FROM insideout.roadmap_evidence e
+				 JOIN insideout.roadmap_nodes en ON en.id = e.node_id WHERE en.project_id = $1)
+			FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID,
+		).Scan(&c.LiveCount, &c.DoneCount, &c.ValidatedCount, &c.EvidenceCount); err != nil {
 			return err
 		}
-		if liveCount > 0 && (expectedCount == nil || *expectedCount != liveCount) {
-			return &ReplaceConflictError{LiveCount: liveCount}
+		if opts.EmptyOnly && c.LiveCount > 0 {
+			return ErrRoadmapNotEmpty
+		}
+		if c.LiveCount > 0 && (opts.ExpectedCount == nil || *opts.ExpectedCount != c.LiveCount) {
+			return &c
+		}
+		if !opts.Force && c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
+			c.History = true
+			return &c
 		}
 
 		if _, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE project_id = $1`, projectID); err != nil {
 			return err
+		}
+		// A forced rebuild discards history: the feed keeps a note of it.
+		if c.EvidenceCount+c.DoneCount+c.ValidatedCount > 0 {
+			if _, err := addProjectUpdateTx(ctx, tx, actorID, projectID, "note",
+				fmt.Sprintf("Rebuilt the roadmap (%d nodes), discarding %s", c.LiveCount, discardedHistory(&c))); err != nil {
+				return err
+			}
 		}
 
 		var insert func(parentID *uuid.UUID, n RoadmapPlanNode) error
@@ -86,16 +128,24 @@ func (s *Store) ReplaceRoadmapTree(ctx context.Context, actorID, projectID uuid.
 		}
 		// Seed the first leaf in_progress with a deadline, so a freshly
 		// built tree shows on Progress instead of filtering out entirely
-		// (every new node would otherwise be pending + undeadlined).
+		// (every new node would otherwise be pending + undeadlined). The
+		// builder owns it: work in progress has one human owner (rv5-FEAT-05),
+		// on the record as a delegate row by the builder (no feed row), so
+		// hand-back and history agree.
 		if _, err := tx.Exec(ctx, `
-			UPDATE insideout.roadmap_nodes leaf
-			SET status = 'in_progress', deadline = now() + interval '7 days'
-			WHERE leaf.id = (
-				SELECT n.id FROM insideout.roadmap_nodes n
-				WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
-				ORDER BY n.created_at, n.position
-				LIMIT 1
-			)`, projectID); err != nil {
+			WITH leaf AS (
+				UPDATE insideout.roadmap_nodes leaf
+				SET status = 'in_progress', deadline = now() + interval '7 days', owner_user_id = $2
+				WHERE leaf.id = (
+					SELECT n.id FROM insideout.roadmap_nodes n
+					WHERE n.project_id = $1 AND n.parent_id IS NOT NULL
+					ORDER BY n.created_at, n.position
+					LIMIT 1
+				)
+				RETURNING leaf.id
+			)
+			INSERT INTO insideout.roadmap_node_assignments (node_id, to_user_id, assigned_by, kind)
+			SELECT id, $2, $2, 'delegate' FROM leaf`, projectID, actorID); err != nil {
 			return err
 		}
 		return nil
@@ -115,9 +165,10 @@ var expandFailAt int
 
 // ExpandRoadmapNode inserts all proposed children under parentID in one
 // transaction — either the whole AI expansion lands or none of it does.
-// Children append after any existing siblings. Like every plan write it takes
-// the project owner or a workspace admin (BUG-020), and each child goes in
-// through createRoadmapNodeTx, behind the same per-project lock as a manual add.
+// Children append after any existing siblings. It takes a writer of the parent
+// (requireNodeWriter: a delegate breaks down inside their subtree), and each
+// child goes in through createRoadmapNodeTx, behind the same per-project lock
+// as a manual add.
 func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UUID, children []RoadmapPlanNode) ([]RoadmapNode, error) {
 	var out []RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -130,9 +181,10 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 			return err
 		}
 		// Up front, so an expansion with nothing to add is refused too.
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		if err := requireNodeWriter(ctx, tx, parentID, actorID); err != nil {
 			return err
 		}
+		var ids []uuid.UUID
 
 		for i, c := range children {
 			if expandFailAt > 0 && i+1 == expandFailAt {
@@ -142,9 +194,10 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 			if err != nil {
 				return err
 			}
-			out = append(out, *n)
+			ids = append(ids, n.ID)
 		}
-		return nil
+		out, err = readNodeViewsTx(ctx, tx, actorID, ids)
+		return err
 	})
 	if err != nil {
 		return nil, err
@@ -153,24 +206,6 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 		s.noteRoadmapChange(out[0].ProjectID)
 	}
 	return out, nil
-}
-
-// GetRoadmapNode returns one node for a workspace member (used by AI expand).
-func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (*RoadmapNode, error) {
-	var n *RoadmapNode
-	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		if _, err := nodeWorkspace(ctx, tx, nodeID); err != nil {
-			return err
-		}
-		row := tx.QueryRow(ctx, `SELECT `+roadmapNodeColumns+` FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
-	})
-	if err != nil {
-		return nil, err
-	}
-	return n, nil
 }
 
 // PrdIDForProject returns the PRD a project was built from (prds.project_id),
@@ -193,7 +228,10 @@ func (s *Store) PrdIDForProject(ctx context.Context, actorID, projectID uuid.UUI
 
 // EnsureProjectForPrd returns the project a PRD builds into, creating and
 // linking one (titled from the PRD) on first use. This is the PRD → reality
-// bridge: an approved/refined PRD becomes a project with a buildable roadmap.
+// bridge: an approved PRD becomes a project with a buildable roadmap. Only the
+// build confirm calls it. Creating the project takes the CreatePrdCommit rule,
+// the PRD's author or a workspace admin (rv5-FEAT-01); an existing link is
+// returned to any member, and the roadmap write that follows checks its own rule.
 func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUID) (*Project, error) {
 	var p *Project
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -210,15 +248,17 @@ func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUI
 		var workspaceID uuid.UUID
 		var linkedProject *uuid.UUID
 		var title string
-		err := tx.QueryRow(ctx, `SELECT workspace_id, project_id, title FROM insideout.prds WHERE id = $1`, prdID).
-			Scan(&workspaceID, &linkedProject, &title)
+		var authorID uuid.UUID
+		err := tx.QueryRow(ctx, `SELECT workspace_id, project_id, title, author_id FROM insideout.prds WHERE id = $1`, prdID).
+			Scan(&workspaceID, &linkedProject, &title, &authorID)
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrNotFound
 		}
 		if err != nil {
 			return err
 		}
-		if _, err := requireMember(ctx, tx, workspaceID, actorID); err != nil {
+		role, err := requireMember(ctx, tx, workspaceID, actorID)
+		if err != nil {
 			return err
 		}
 
@@ -227,6 +267,9 @@ func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUI
 			var scanErr error
 			p, scanErr = scanProject(row)
 			return scanErr
+		}
+		if authorID != actorID && role != "admin" {
+			return ErrForbidden
 		}
 
 		row := tx.QueryRow(ctx, `
@@ -239,8 +282,14 @@ func (s *Store) EnsureProjectForPrd(ctx context.Context, actorID, prdID uuid.UUI
 		if err != nil {
 			return err
 		}
-		if _, err := tx.Exec(ctx, `UPDATE insideout.prds SET project_id = $2 WHERE id = $1`, prdID, proj.ID); err != nil {
+		tag, err := tx.Exec(ctx, `UPDATE insideout.prds SET project_id = $2 WHERE id = $1`, prdID, proj.ID)
+		if err != nil {
 			return err
+		}
+		// Row-level security answers a refused UPDATE with zero rows: roll the
+		// project back rather than leave it unlinked.
+		if tag.RowsAffected() != 1 {
+			return ErrForbidden
 		}
 		p = proj
 		return nil

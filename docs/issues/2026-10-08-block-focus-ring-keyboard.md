@@ -12,7 +12,7 @@ Wired into `BlockButton` (enabled path only — a disabled block is not
 wrapped, so it leaves Tab traversal), `BlockIconButton`, and
 `PressableBlock`, which carries `BlockChoice` and every `FieldCard`
 `onTap`. Seven widget tests in
-[`client/test/block_focus_test.dart`](../../client/test/block_focus_test.dart);
+[`client/test/theme/block_focus_test.dart`](../../client/test/theme/block_focus_test.dart);
 `block_primitives_test.dart` passes unmodified. Gate: analyze 0
 errors / 0 warnings (16 pre-existing infos), **167/167** tests, format
 clean, `cobalt_test.dart` untouched
@@ -21,7 +21,7 @@ clean, `cobalt_test.dart` untouched
 **Correction 2026-10-10.** Enter activated the blocks on the VM and desktop but
 not in a browser, where Enter is `ButtonActivateIntent` and `BlockFocus` bound
 only `ActivateIntent`; fixed in
-[BUG-028](2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md).
+[BUG-028](./2026-10-10-bug-028-enter-did-not-activate-focused-blocks-on-the-web.md).
 
 The original finding, kept below as filed.
 
@@ -68,7 +68,7 @@ own test pass, not a verification gate.
 "Give `BlockButton`, `BlockChoice`, `BlockIconButton`, and
 `PressableBlock` keyboard focus and activation with a cobalt focus
 ring, per
-[docs/issues/2026-10-08-block-focus-ring-keyboard.md](2026-10-08-block-focus-ring-keyboard.md).
+[docs/issues/2026-10-08-block-focus-ring-keyboard.md](./2026-10-08-block-focus-ring-keyboard.md).
 Add widget tests: Tab traversal reaches a `BlockButton` in a real form,
 Enter/Space fire `onPressed`, and the focused block paints the ring
 (finder on the ring widget, both themes). No visual change to the

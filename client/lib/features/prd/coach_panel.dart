@@ -12,10 +12,10 @@ import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
-import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
 import 'coach_finding.dart';
 import 'coach_start.dart';
+import 'coach_suggestions.dart';
 import 'coach_trust_notices.dart';
 import 'coach_trust_row.dart';
 
@@ -31,6 +31,8 @@ class CoachPanel extends StatefulWidget {
     this.onConfirmStage,
     this.onDeclineStage,
     this.onTurnDone,
+    this.onMessage,
+    this.onMessageDropped,
   });
 
   final String prdId;
@@ -50,6 +52,15 @@ class CoachPanel extends StatefulWidget {
   /// Runs when a turn ends, however it ended: the page refreshes the stored
   /// conversation the proposal's trust notes come from.
   final Future<void> Function()? onTurnDone;
+
+  /// Adds a message to the page's transcript: the sent text at once, the
+  /// streamed reply when the turn ends (rv5-FE-01); [onTurnDone] then re-reads
+  /// the stored ones.
+  final void Function(ChatMessage message)? onMessage;
+
+  /// Takes back a sent message [onMessage] added when the send failed: its
+  /// text returns to the composer, and a re-read shows it if it was stored.
+  final void Function(ChatMessage message)? onMessageDropped;
 
   @override
   State<CoachPanel> createState() => _CoachPanelState();
@@ -115,6 +126,8 @@ class _CoachPanelState extends State<CoachPanel> {
     // A suggestion chip is not the member's text: leave the composer alone.
     final fromDraft = preset == null;
     if (fromDraft) draft.clear();
+    final sent = ChatMessage(id: '', role: 'user', content: text);
+    widget.onMessage?.call(sent);
     var delivered = false;
     try {
       await context.read<Session>().api.sendCoach(
@@ -162,6 +175,16 @@ class _CoachPanelState extends State<CoachPanel> {
       if (mounted) {
         // A failed send gives the text back, unless they have typed since.
         if (fromDraft && !delivered && draft.text.isEmpty) draft.text = text;
+        if (!delivered) widget.onMessageDropped?.call(sent);
+        // The reply joins the transcript before the buffer empties, so it
+        // stays on screen even when the re-read below fails.
+        final reply = stream;
+        if (reply.isNotEmpty) {
+          widget.onMessage?.call(
+            ChatMessage(id: '', role: 'assistant', content: reply),
+          );
+        }
+        setState(() => stream = '');
         // Refresh before the confirm button frees up (see CoachProposalRow).
         await widget.onTurnDone?.call();
       }
@@ -174,11 +197,9 @@ class _CoachPanelState extends State<CoachPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    final palette = Cobalt.of(context);
     final stage = widget.conversation?.stage ?? 'clarify';
     final err = error;
     final suggestions = l10n.suggestions(stage);
-    final ink = coachInk(context);
     if (!open) {
       return Align(
         alignment: Alignment.centerRight,
@@ -236,36 +257,9 @@ class _CoachPanelState extends State<CoachPanel> {
               )
             else ...[
               if (suggestions.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Cobalt.space6,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.t('coach.suggestTitle'),
-                        style: cobaltSerif(
-                          palette,
-                          size: 12,
-                          weight: FontWeight.w600,
-                          color: ink.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: Cobalt.space2),
-                      Wrap(
-                        spacing: Cobalt.space2,
-                        runSpacing: Cobalt.space2,
-                        children: [
-                          for (final prompt in suggestions)
-                            CoachPrompt(
-                              label: prompt,
-                              onTap: _busy ? null : () => _send(prompt),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                CoachSuggestions(
+                  suggestions: suggestions,
+                  onPick: _busy ? null : _send,
                 ),
               Expanded(
                 child: ListView(
@@ -279,11 +273,14 @@ class _CoachPanelState extends State<CoachPanel> {
                     ...widget.messages.map(
                       (m) => CoachQuote(
                         text: _displayText(m.content),
-                        role: m.role,
+                        role: coachRoleLabel(l10n.t, m.role),
                       ),
                     ),
                     if (stream.isNotEmpty)
-                      CoachQuote(text: stream, role: 'assistant'),
+                      CoachQuote(
+                        text: stream,
+                        role: coachRoleLabel(l10n.t, 'assistant'),
+                      ),
                     for (final finding in findings)
                       CoachFinding(finding: finding),
                   ],

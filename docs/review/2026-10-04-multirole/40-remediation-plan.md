@@ -1,7 +1,7 @@
 # 40 · Remediation plan
 
 Waves ordered by impact over effort; start at Wave 0, row one. Register IDs
-refer to [01-findings-register.md](01-findings-register.md). Every wave names
+refer to [01-findings-register.md](./01-findings-register.md). Every wave names
 its runnable check. Nothing here requires new product judgment — each row is
 a verified defect with a named change.
 

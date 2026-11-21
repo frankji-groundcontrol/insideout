@@ -21,38 +21,40 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
-- [2026-10-07 — Block craft against the reference app](2026-10-07-block-craft.md)
+- [2026-10-22 — Reset link choices](./2026-10-22-reset-link-choices.md)
+  — the reset page offers reset-here or a code for `insideout reset-password`.
+- [2026-10-07 — Block craft against the reference app](./2026-10-07-block-craft.md)
   — "optimize the frontend against the design language of the reference
   reimbursement app, keeping the cobalt blue hue family"; component layer
   ported, fidelity review 7.5/10, focus-ring gap filed. Every finding closed
   by 2026-10-10, including the 390px web walk ([BUG-025](../issues/2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
-- [2026-10-06 — App icon candidates](2026-10-06-app-icon.md)
+- [2026-10-06 — App icon candidates](./2026-10-06-app-icon.md)
   — user named `breakout.svg`; that mark is the installed icon.
-- [2026-09-18 — Cobalt Flutter against a real API](2026-09-18-cobalt-backend-walk.md)
+- [2026-09-18 — Cobalt Flutter against a real API](./2026-09-18-cobalt-backend-walk.md)
   — signed-in path-URL walk on a local `/api/v1`; dock IDs and Coach send.
-- [2026-09-18 — Cobalt Flutter browser walk](2026-09-18-cobalt-flutter-walk.md)
+- [2026-09-18 — Cobalt Flutter browser walk](./2026-09-18-cobalt-flutter-walk.md)
   — light/dark × zh-CN/en-US on the six lock surfaces; no seals left.
-- [2026-09-17 — Cobalt layouts accepted as references](2026-09-17-cobalt-layouts.md)
+- [2026-09-17 — Cobalt layouts accepted as references](./2026-09-17-cobalt-layouts.md)
   — Card lock pinned; 2026-09-18: accepted for Flutter + goal prompt.
-- [2026-09-17 — One hue, light and dark](2026-09-17-cobalt-shade.md)
+- [2026-09-17 — One hue, light and dark](./2026-09-17-cobalt-shade.md)
   — not too colorful; cobalt shades; light + dark.
-- [2026-09-17 — Live language (Ink & Seal retired)](2026-09-17-live-language.md)
+- [2026-09-17 — Live language (Ink & Seal retired)](./2026-09-17-live-language.md)
   — Recap cream/stamp rejected; night + cobalt + magenta next.
-- [2026-09-17 — Recap (3Q) design language](2026-09-17-3q-recap-language.md)
+- [2026-09-17 — Recap (3Q) design language](./2026-09-17-3q-recap-language.md)
   — user voted 3Q; OpenDesign reference + tokens; images first.
-- [2026-09-17 — Vibrant for younger audiences](2026-09-17-vibrant-younger-audiences.md)
+- [2026-09-17 — Vibrant for younger audiences](./2026-09-17-vibrant-younger-audiences.md)
   — vibrant / no Ink & Seal / vote 3 / 3Q lock; Flutter waits.
-- [2026-08-24 — Login form action stack](2026-08-24-login-form-action-stack.md)
+- [2026-08-24 — Login form action stack](./2026-08-24-login-form-action-stack.md)
   — "so ugly"; four identical stacked red links under 登录 re-grouped into
   secondary sign-in buttons + a footer row.
-- [2026-08-23 — Web first-refresh font flash](2026-08-23-web-font-flash.md)
+- [2026-08-23 — Web first-refresh font flash](./2026-08-23-web-font-flash.md)
   — "it shows garbage characters for a second before the Chinese finally
   appears"; CanvasKit first frame gated on CJK font readiness.
-- [2026-08-19 — Flutter cutover dropped Ink & Seal](2026-08-19-restore-ink-seal.md)
+- [2026-08-19 — Flutter cutover dropped Ink & Seal](./2026-08-19-restore-ink-seal.md)
   — "ditched our visual on nuxt" / "an infra migration does not mean visual
   change"; Material 3 lock reversed; tokens + AuthDoor chrome restoring on
   Flutter.
-- [2026-07-27 — Auth door: login/register as a prompted floating modal](2026-07-27-auth-door.md)
+- [2026-07-27 — Auth door: login/register as a prompted floating modal](./2026-07-27-auth-door.md)
   — two comments ("ugly… the seal logo is not applied" / "make it a prompted
   floating modal with motion?") resolved by one shared `AuthDoor` dialog shell;
   implementation in the

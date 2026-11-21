@@ -2,7 +2,7 @@
 
 A whole-tree review of InsideOut at `main` @ `9f0b1c7` (a clean detached worktree; the reviewers and the critic did not read the dirty in-flight checkout). 13 reviewers (5 roles, 8 dimensions) filed on one schema, 8 skeptic clusters tried to refute every one of the 23 Highs, the coordinator reproduced the top findings by running the code on private PostgreSQL 18.4 clusters, and a completeness critic closed the review. Review 3 is [here](../2026-10-10-multirole-3/README.md); this one reads the product after it went public (2026-10-11) and shipped `v0.1.0`.
 
-> **Bottom line.** The hardened core held: no Critical, 14 of 17 review-3 Highs verified closed in the code, `FORCE` RLS on 16 tables, and the real-database suite is green on a clean checkout except one test. What is wrong is the edge and the gates. A self-hoster cannot create the first account; the binary's `--help` and `version` fail with a server-config error; a saved CLI login dies after 15 minutes; four resolvers disagree about which server a client talks to; the web "Expand with AI" button never works; re-accepting a proposal duplicates roadmap nodes; and MCP gives an agent the human-only Commit and decision tools. The critic adds that, for the zh-first product, a picked deadline displays a day early in UTC+ time zones and Chinese titles are limited by bytes, not characters. `main` has been red since 2026-10-16 because a test reads the wall clock and CI has no schedule, and `release.yml` publishes on any `v*` tag without running a test. About three engineer-weeks close the register; the first day closes what a stranger would hit. [Start at the plan](40-remediation-plan.md).
+> **Bottom line.** The hardened core held: no Critical, 14 of 17 review-3 Highs verified closed in the code, `FORCE` RLS on 16 tables, and the real-database suite is green on a clean checkout except one test. What is wrong is the edge and the gates. A self-hoster cannot create the first account; the binary's `--help` and `version` fail with a server-config error; a saved CLI login dies after 15 minutes; four resolvers disagree about which server a client talks to; the web "Expand with AI" button never works; re-accepting a proposal duplicates roadmap nodes; and MCP gives an agent the human-only Commit and decision tools. The critic adds that, for the zh-first product, a picked deadline displays a day early in UTC+ time zones and Chinese titles are limited by bytes, not characters. `main` has been red since 2026-10-16 because a test reads the wall clock and CI has no schedule, and `release.yml` publishes on any `v*` tag without running a test. About three engineer-weeks close the register; the first day closes what a stranger would hit. [Start at the plan](./40-remediation-plan.md).
 
 ## Findings at a glance
 
@@ -10,24 +10,24 @@ A whole-tree review of InsideOut at `main` @ `9f0b1c7` (a clean detached worktre
 
 | File | Lens | Score | Reconciled | Highlights |
 |---|---|---|---|---|
-| [10](10-architect.md) | Architect | 7 | 6.5 | four base resolvers, hosted URL baked in, wall clock in view builders |
-| [11](11-ai-developer.md) | AI developer | 6 | 6 | MCP policy is prose; unfenced `get_prd`; skipped critic opens the gate |
-| [12](12-fullstack.md) | Fullstack | 6.5 | 6 | Expand with AI always broken; 15-minute CLI token |
-| [13](13-project-manager.md) | Project manager | 6 | 6 | five guards unwired, no CI schedule, no `--help` |
-| [14](14-user.md) | User | 5.8 | 5.8 | no first account; `login` persists nothing; `setup --check` cannot fail |
-| [20](20-feature-implementation.md) | Feature implementation | 6.9 | 6.3 | human boundary unenforced; apply twice duplicates nodes |
-| [21](21-code-quality.md) | Code quality | 8 | 7 | no High; divergent client-IP copy, unescaped apiclient URLs |
-| [22](22-security.md) | Security | 6.8 | 6.5 | login-code burst bypass; XFF tail trusted; unsigned supply chain |
-| [23](23-testing.md) | Testing | 6.6 | 6.2 | release ungated, no schedule, global `signup_mode` race |
-| [24](24-reliability-ops.md) | Reliability and ops | 7 | 6.5 | no SSE cap, no deadline on `/healthz`, 10 s SIGKILL |
-| [25](25-closure-audit.md) | Closure audit | 7.4 | 6.8 | 14 of 17 closed; docs-only "Fixed" rows; guards unwired |
-| [26](26-public-release.md) | Public release | 6 | 5.5 | real emails in docs, author identities in history, no privacy notice |
-| [27](27-data-rls.md) | Data and RLS | 7 | 6 | write-side RLS weak and untested; no erasure path |
-| [30](30-completeness-critic.md) | Completeness critic | 7.0 | n/a | 8 missed findings, 10 clusters, reconciled scores |
-| [00](00-executive-summary.md) | Executive summary | n/a | n/a | top ten, effort, what not to do yet |
-| [01](01-findings-register.md) | Findings register | n/a | n/a | 145 rows, 0 rejected |
-| [40](40-remediation-plan.md) | Remediation plan | n/a | n/a | 4 waves, a check per wave |
-| [41](41-remediation-contract.md) | Remediation execution contract | n/a | n/a | how the plan is split, proven and merged |
+| [10](./10-architect.md) | Architect | 7 | 6.5 | four base resolvers, hosted URL baked in, wall clock in view builders |
+| [11](./11-ai-developer.md) | AI developer | 6 | 6 | MCP policy is prose; unfenced `get_prd`; skipped critic opens the gate |
+| [12](./12-fullstack.md) | Fullstack | 6.5 | 6 | Expand with AI always broken; 15-minute CLI token |
+| [13](./13-project-manager.md) | Project manager | 6 | 6 | five guards unwired, no CI schedule, no `--help` |
+| [14](./14-user.md) | User | 5.8 | 5.8 | no first account; `login` persists nothing; `setup --check` cannot fail |
+| [20](./20-feature-implementation.md) | Feature implementation | 6.9 | 6.3 | human boundary unenforced; apply twice duplicates nodes |
+| [21](./21-code-quality.md) | Code quality | 8 | 7 | no High; divergent client-IP copy, unescaped apiclient URLs |
+| [22](./22-security.md) | Security | 6.8 | 6.5 | login-code burst bypass; XFF tail trusted; unsigned supply chain |
+| [23](./23-testing.md) | Testing | 6.6 | 6.2 | release ungated, no schedule, global `signup_mode` race |
+| [24](./24-reliability-ops.md) | Reliability and ops | 7 | 6.5 | no SSE cap, no deadline on `/healthz`, 10 s SIGKILL |
+| [25](./25-closure-audit.md) | Closure audit | 7.4 | 6.8 | 14 of 17 closed; docs-only "Fixed" rows; guards unwired |
+| [26](./26-public-release.md) | Public release | 6 | 5.5 | real emails in docs, author identities in history, no privacy notice |
+| [27](./27-data-rls.md) | Data and RLS | 7 | 6 | write-side RLS weak and untested; no erasure path |
+| [30](./30-completeness-critic.md) | Completeness critic | 7.0 | n/a | 8 missed findings, 10 clusters, reconciled scores |
+| [00](./00-executive-summary.md) | Executive summary | n/a | n/a | top ten, effort, what not to do yet |
+| [01](./01-findings-register.md) | Findings register | n/a | n/a | 145 rows, 0 rejected |
+| [40](./40-remediation-plan.md) | Remediation plan | n/a | n/a | 4 waves, a check per wave |
+| [41](./41-remediation-contract.md) | Remediation execution contract | n/a | n/a | how the plan is split, proven and merged |
 
 Mean of the 13 scores: **6.7** reported, **6.2** after the critic's reconciliation.
 
@@ -72,7 +72,7 @@ Clean worktree at the SHA above; private PostgreSQL 18.4 clusters with CI-parity
 | R14 | COMP-02 | `TZ=Asia/Shanghai dart run` of the picker line (`picked.toUtc().toIso8601String()`) and `isoDate` (`substring(0, 10)`), no Flutter dependencies; UTC and New York as controls | Shanghai: sent `2026-10-17T16:00:00.000Z`, shown `2026-10-17` for a picked 2026-10-18; UTC and New York show 2026-10-18 |
 | R15 | COMP-01 | count a 67-character Chinese title in Go; grep the `len(req.X) > N` sites in `internal/api` (16 on strings) | 67 characters = 201 bytes, rejected by `len(...) > 200` whose message says "max 200 characters"; the in-tree rune pattern is `project_updates.go:49` |
 
-Not run: the hosted deployment beyond one read-only health probe during scouting, a real mail provider, and a real LLM turn (no keys were read or used). See [30](30-completeness-critic.md) for what the critic says was not covered.
+Not run: the hosted deployment beyond one read-only health probe during scouting, a real mail provider, and a real LLM turn (no keys were read or used). See [30](./30-completeness-critic.md) for what the critic says was not covered.
 
 ## Methodology
 
@@ -81,7 +81,7 @@ Not run: the hosted deployment beyond one read-only health probe during scouting
 3. **Fan out.** 13 agents in parallel on one schema: 5 roles (architect, AI developer, fullstack, project manager, user) and 8 dimensions (feature implementation, code quality, security, testing, reliability and ops, closure audit, public release, data and RLS). Cap of 12 findings each, `file:line` plus a verbatim quote or dropped, a fix or a direction plus first check on every row.
 4. **Dedup, then refute.** 137 unique rows before the critic, 145 after (dedup key `(file, summary[:60])`). The 23 Highs went to 8 skeptic clusters told to refute by default and given the coordinator's run results: 9 CONFIRMED, 14 DOWNGRADED, 0 REFUTED, 0 UNVERIFIED.
 5. **Reproduce.** The coordinator ran R1 to R6, R8, R11 to R13 and, after the critic, R14 and R15 above; skeptics reproduced R7, R9 and R10 (the coordinator read the cited lines for R7 and R9).
-6. **Completeness critic.** One agent answered the four questions in [30](30-completeness-critic.md): 8 missed findings (COMP-01 to COMP-08), a score reconciliation (mean 6.69 to 6.24), three verdict-versus-measurement notes and 10 root-cause clusters. It changed no severity.
+6. **Completeness critic.** One agent answered the four questions in [30](./30-completeness-critic.md): 8 missed findings (COMP-01 to COMP-08), a score reconciliation (mean 6.69 to 6.24), three verdict-versus-measurement notes and 10 root-cause clusters. It changed no severity.
 7. **Redact, then write.** Key-shaped scan and identifier scan over the whole folder, below.
 
 Fleet: 22 agents (13 reviewers, 8 skeptic clusters, 1 critic), about 8.1 M tokens across the reviewers and skeptics plus 0.34 M for the critic. No finding was rejected, so the register has no "Rejected" rows.
@@ -100,13 +100,13 @@ not counted as identifiers: the public repo path, the key name ssh_alias, and th
 
 ## Reading order for a fixer
 
-1. [40-remediation-plan.md](40-remediation-plan.md), rows 0.1 and 1.1 first; to run it as a fan-out, [41-remediation-contract.md](41-remediation-contract.md).
-2. [00-executive-summary.md](00-executive-summary.md), the top ten and "what not to do yet".
-3. [01-findings-register.md](01-findings-register.md), then the role file for the area you are touching (10 to 14, 20 to 27).
-4. [30-completeness-critic.md](30-completeness-critic.md), for the root-cause clusters and what was not covered.
+1. [40-remediation-plan.md](./40-remediation-plan.md), rows 0.1 and 1.1 first; to run it as a fan-out, [41-remediation-contract.md](./41-remediation-contract.md).
+2. [00-executive-summary.md](./00-executive-summary.md), the top ten and "what not to do yet".
+3. [01-findings-register.md](./01-findings-register.md), then the role file for the area you are touching (10 to 14, 20 to 27).
+4. [30-completeness-critic.md](./30-completeness-critic.md), for the root-cause clusters and what was not covered.
 
 ## Related
 
-- Prior review: [2026-10-10 multirole review 3](../2026-10-10-multirole-3/README.md); the remediation that followed: [rv3 plan](../../plans/2026-10-10-rv3-remediation.md) and the [disposition ledger](../2026-10-10-disposition-ledger/README.md), whose 17 Highs the closure audit ([25](25-closure-audit.md)) re-checked in code.
+- Prior review: [2026-10-10 multirole review 3](../2026-10-10-multirole-3/README.md); the remediation that followed: [rv3 plan](../../plans/2026-10-10-rv3-remediation.md) and the [disposition ledger](../2026-10-10-disposition-ledger/README.md), whose 17 Highs the closure audit ([25](./25-closure-audit.md)) re-checked in code.
 - Records: [changelog](../../changelogs/2026-10-18-multirole-review-4.md), [plan](../../plans/2026-10-18-multirole-4.md), [issue tracker](../../issues/2026-10-18-review-4-open-findings.md), [learning note](../../learning/2026-10-18-a-wall-clock-test-needs-a-scheduled-run.md).
 - [Review index](../README.md).

@@ -43,7 +43,7 @@ file next needs structural change is the smaller total diff.
 
 "Split `scripts/env.sh` (~365 lines) into a thin dispatcher plus a sourced
 `scripts/env-lib.sh` holding the helpers and verbs, per
-[docs/issues/2026-07-29-envsh-line-budget.md](2026-07-29-envsh-line-budget.md).
+[docs/issues/2026-07-29-envsh-line-budget.md](./2026-07-29-envsh-line-budget.md).
 Keep behavior byte-identical: re-run the `INSIDEOUT_ENV_FILE` battery (empty /
 fully-set / partial / missing files, plus the leak grep) and `bash -n` on
 both files; keep both under ~350 lines and bash 3.2 compatible. Record the

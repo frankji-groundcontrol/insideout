@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
+import '../../session/appearance.dart';
+import '../../theme/block_icon_button.dart';
 import '../../theme/cobalt.dart';
+import 'roadmap_tree.dart';
 
 export 'roadmap_minimap.dart';
 export 'roadmap_painters.dart';
@@ -34,6 +38,8 @@ class RoadmapCanvas extends StatelessWidget {
     required this.controller,
     this.onCursor,
     this.cursors = const [],
+    this.collapsed = const {},
+    this.onToggle,
   });
 
   final List<RoadmapNode> nodes;
@@ -50,6 +56,11 @@ class RoadmapCanvas extends StatelessWidget {
   /// Other sessions' live cursors, rendered as labeled pointers.
   final List<CursorDot> cursors;
 
+  /// Folded branches: their descendants stay off the canvas. The page holds
+  /// the set, so a fold survives a view switch or a reload.
+  final Set<String> collapsed;
+  final void Function(String nodeId)? onToggle;
+
   static const bandWidth = 300.0;
   static const bandSpacing = 16.0;
 
@@ -65,24 +76,21 @@ class RoadmapCanvas extends StatelessWidget {
     ),
   };
 
-  List<RoadmapNode> get _roots {
-    final roots = nodes.where((n) => n.parentId == null).toList()
-      ..sort((a, b) => a.position.compareTo(b.position));
-    return roots;
-  }
+  List<RoadmapNode> get _roots => roadmapRoots(nodes);
 
   List<RoadmapNode> _subtree(RoadmapNode root) {
     final out = <RoadmapNode>[root];
-    void walk(String parentId, int depth) {
+    void walk(String parentId) {
+      if (collapsed.contains(parentId)) return;
       final kids = nodes.where((n) => n.parentId == parentId).toList()
         ..sort((a, b) => a.position.compareTo(b.position));
       for (final k in kids) {
         out.add(k);
-        walk(k.id, depth + 1);
+        walk(k.id);
       }
     }
 
-    walk(root.id, 1);
+    walk(root.id);
     return out;
   }
 
@@ -99,7 +107,10 @@ class RoadmapCanvas extends StatelessWidget {
             _Band(
               width: bandWidth,
               nodes: _subtree(roots[i]),
+              all: nodes,
               tileBuilder: tileBuilder,
+              collapsed: collapsed,
+              onToggle: onToggle,
             ),
           ],
         ],
@@ -154,12 +165,20 @@ class _Band extends StatelessWidget {
   const _Band({
     required this.width,
     required this.nodes,
+    required this.all,
     required this.tileBuilder,
+    required this.collapsed,
+    required this.onToggle,
   });
 
   final double width;
   final List<RoadmapNode> nodes;
+
+  /// Every node on the canvas, folded ones included, for the fold counts.
+  final List<RoadmapNode> all;
   final Widget Function(RoadmapNode node, double indent) tileBuilder;
+  final Set<String> collapsed;
+  final void Function(String nodeId)? onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -177,12 +196,46 @@ class _Band extends StatelessWidget {
         itemBuilder: (context, i) {
           final node = nodes[i];
           final depth = _depth(node);
+          final branch =
+              onToggle != null && all.any((n) => n.parentId == node.id);
           return Padding(
             padding: EdgeInsets.only(left: depth * 18),
-            child: tileBuilder(node, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // The house icon button is 36 wide; the rest is the gutter.
+                SizedBox(
+                  width: 40,
+                  child: branch ? _fold(context, node) : null,
+                ),
+                Expanded(child: tileBuilder(node, 0)),
+              ],
+            ),
           );
         },
       ),
+    );
+  }
+
+  /// The fold toggle; a folded branch says how many nodes it hides.
+  Widget _fold(BuildContext context, RoadmapNode node) {
+    final folded = collapsed.contains(node.id);
+    final t = context.watch<Appearance>().t;
+    return Column(
+      children: [
+        BlockIconButton(
+          key: Key('roadmap-collapse-${node.id}'),
+          tooltip: t(folded ? 'roadmap.expand' : 'roadmap.collapse'),
+          semanticLabel: t(folded ? 'roadmap.expand' : 'roadmap.collapse'),
+          icon: folded ? Icons.chevron_right : Icons.expand_more,
+          onPressed: () => onToggle!(node.id),
+        ),
+        if (folded)
+          Text(
+            '+${roadmapDescendantCount(all, node)}',
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
+      ],
     );
   }
 

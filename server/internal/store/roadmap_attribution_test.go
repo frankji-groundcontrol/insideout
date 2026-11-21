@@ -55,7 +55,7 @@ func TestRoadmap_Attribution(t *testing.T) {
 
 	// replace: the whole generated tree is attributed to the caller (create path).
 	tree := RoadmapPlanNode{Title: "Root", Children: []RoadmapPlanNode{{Title: "c1"}, {Title: "c2"}}}
-	if _, err := st.ReplaceRoadmapTree(ctx, alice.ID, proj.ID, nil, tree); err != nil {
+	if _, err := st.ReplaceRoadmapTree(ctx, alice.ID, proj.ID, ReplaceOptions{}, tree); err != nil {
 		t.Fatalf("replace: %v", err)
 	}
 	nodes, err := st.ListRoadmap(ctx, bob.ID, proj.ID)

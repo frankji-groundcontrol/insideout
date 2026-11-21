@@ -18,6 +18,7 @@ func (s *Server) registerProjectRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}", s.requireAuth(s.handleGetProject))
 	mux.HandleFunc("PATCH /api/v1/projects/{pid}", s.requireAuth(s.handleUpdateProject))
 	mux.HandleFunc("DELETE /api/v1/projects/{pid}", s.requireAuth(s.handleDeleteProject))
+	mux.HandleFunc("GET /api/v1/projects/{pid}/updates", s.requireAuth(s.handleListProjectUpdates))
 	mux.HandleFunc("POST /api/v1/projects/{pid}/updates", s.requireAuth(s.handleAddProjectUpdate))
 	mux.HandleFunc("PATCH /api/v1/updates/{uid}", s.requireAuth(s.handleEditProjectUpdate))
 	mux.HandleFunc("DELETE /api/v1/updates/{uid}", s.requireAuth(s.handleDeleteProjectUpdate))
@@ -36,6 +37,12 @@ type projectView struct {
 	LatestUpdateKind    *string `json:"latestUpdateKind,omitempty"`
 	LatestUpdateContent *string `json:"latestUpdateContent,omitempty"`
 	LatestUpdateAt      *string `json:"latestUpdateAt,omitempty"`
+	// CanWritePlan: the caller may change the plan itself (add a root node,
+	// rebuild), so the web offers root-level "New item" only then.
+	CanWritePlan bool `json:"canWritePlan"`
+	// PrdID is the PRD the project was built from, null for a project made
+	// by hand (rv5-PARB-03).
+	PrdID *string `json:"prdId"`
 }
 
 // quietAfter is the board's quiet-project threshold (FEAT-01): an active
@@ -87,6 +94,8 @@ func projectResponse(p store.ProjectWithLatest, now time.Time) projectView {
 		Flagged:             projectQuietFlagged(p, now),
 		LatestUpdateKind:    p.LatestUpdateKind,
 		LatestUpdateContent: previewRunes(p.LatestUpdateContent),
+		CanWritePlan:        p.CanWritePlan,
+		PrdID:               uuidString(p.PrdID),
 	}
 	if p.OwnerID != nil {
 		id := p.OwnerID.String()
@@ -151,15 +160,13 @@ func (s *Server) handleCreateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}
-
-	p, err := s.store.CreateProject(r.Context(), userID, wsID, req.Title, req.Description)
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
+	if refuseTooLong(w, "description", req.Description) {
 		return
 	}
+
+	p, err := s.store.CreateProject(r.Context(), userID, wsID, req.Title, req.Description)
 	if err != nil {
-		s.log.Error("create project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "create project", err, errMsgs{store.ErrForbidden: "you must be a member of this workspace"})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
@@ -172,40 +179,23 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p, err := s.store.GetProjectForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("get project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "get project", err, errMsgs{store.ErrNotFound: "project not found"})
 		return
 	}
 
-	updates, err := s.store.ListProjectUpdates(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil)
+	// Embed only the newest page; nextCursor reads the rest from
+	// GET /projects/{pid}/updates?before= (rv5-PARB-07).
+	updates, nextCursor, err := s.updatesPage(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil)
 	if err != nil {
-		s.log.Error("list project updates", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list project updates", err, nil)
 		return
 	}
-
-	// Embed only the newest page; a full page signals there's older history,
-	// surfaced as nextCursor for a future load-more (frontend follow-up).
-	var nextCursor *string
-	if len(updates) == store.ProjectUpdatesPageSize {
-		last := updates[len(updates)-1].ID.String()
-		nextCursor = &last
-	}
-
-	resp := struct {
+	httpx.WriteJSON(w, http.StatusOK, struct {
 		projectView
 		Updates    []projectUpdateView `json:"updates"`
 		NextCursor *string             `json:"nextCursor"`
-	}{projectView: projectResponse(store.ProjectWithLatest{Project: *p}, s.now()), Updates: make([]projectUpdateView, len(updates)), NextCursor: nextCursor}
-	for i, u := range updates {
-		resp.Updates[i] = projectUpdateResponse(u)
-	}
-	httpx.WriteJSON(w, http.StatusOK, resp)
+	}{projectResponse(store.ProjectWithLatest{Project: *p}, s.now()), updates, nextCursor})
 }
 
 type updateProjectRequest struct {
@@ -230,9 +220,17 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
+	// An owner change is a human decision (owner decision 4), as on PATCH /roadmap.
+	if req.OwnerID != nil && isAgentToken(r) {
+		writeAgentScopeDenied(w)
+		return
+	}
 	req.Title = strings.TrimSpace(req.Title)
 	if req.Title == "" || tooLong(req.Title, 200) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
+		return
+	}
+	if refuseTooLong(w, "description", req.Description) {
 		return
 	}
 	if !validProjectStatuses[req.Status] {
@@ -247,25 +245,13 @@ func (s *Server) handleUpdateProject(w http.ResponseWriter, r *http.Request) {
 	p, err := s.store.UpdateProject(r.Context(), userID, pid, store.ProjectUpdateFields{
 		Title: req.Title, Description: req.Description, Status: req.Status, OwnerID: ownerID, ClearOwner: clearOwner,
 	})
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrValidation) {
-		httpx.WriteError(w, http.StatusBadRequest, "ownerId must be a member of this workspace", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrHandoverNeedsAdmin) {
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can give the project to someone else or leave it without an owner", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can do this", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("update project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "update project", err, errMsgs{
+			store.ErrNotFound:           "project not found",
+			store.ErrValidation:         "ownerId must be a member of this workspace",
+			store.ErrHandoverNeedsAdmin: "only a workspace admin can give the project to someone else or leave it without an owner",
+			store.ErrForbidden:          "only the project owner or a workspace admin can do this",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, projectResponse(store.ProjectWithLatest{Project: *p}, s.now()))
@@ -278,17 +264,11 @@ func (s *Server) handleDeleteProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err := s.store.DeleteProject(r.Context(), userID, pid)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only a workspace admin can delete projects", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("delete project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "delete project", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "only a workspace admin can delete projects",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]bool{"ok": true})

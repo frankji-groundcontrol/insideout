@@ -2,7 +2,7 @@
 
 Ordered by impact over effort. Each wave ends with one runnable check; do not
 start a wave until the previous wave's check passes. Register IDs refer to
-[01-findings-register.md](01-findings-register.md). All paths under
+[01-findings-register.md](./01-findings-register.md). All paths under
 `client/` unless noted.
 
 *Corrected 2026-10-11: many File-column paths above never existed at the

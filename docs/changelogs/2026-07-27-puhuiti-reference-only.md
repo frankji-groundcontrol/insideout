@@ -3,7 +3,7 @@
 The Alibaba PuHuiTi web-font binaries are removed from the repository and from
 git history. The font is now **referenced by name only**, with proper
 attribution, instead of being bundled. Supersedes the
-[2026-07-23 self-hosting](2026-07-23-woff2-fonts-and-scratch-cleanup.md) of the
+[2026-07-23 self-hosting](./2026-07-23-woff2-fonts-and-scratch-cleanup.md) of the
 same font.
 
 ## Why

@@ -36,15 +36,19 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		mode = "implementation"
 	}
 	focus := r.URL.Query().Get("focus")
+	if u, err := uuid.Parse(focus); err == nil {
+		focus = u.String() // the form node ids are compared in
+	}
+	// A root-scoped agent token is briefed on its root by default, when the
+	// root is a node of this project (rv5-TREEB-05).
+	defaulted := false
+	if root := RootOf(r.Context()); focus == "" && root != nil {
+		focus, defaulted = root.String(), true
+	}
 
 	project, err := s.store.GetProjectForMember(r.Context(), pid, userID)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("agent context: project", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent context: project", err, errMsgs{store.ErrNotFound: "project not found"})
 		return
 	}
 	nodes, err := s.store.ListRoadmap(r.Context(), userID, pid)
@@ -67,15 +71,28 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		Nodes:          make([]agentcontext.NodeIn, 0, len(nodes)),
 		EvidenceCounts: evidence,
 	}
+	focusFound := false
 	for _, n := range nodes {
 		parent := ""
 		if n.ParentID != nil {
 			parent = n.ParentID.String()
 		}
 		in.Nodes = append(in.Nodes, agentcontext.NodeIn{
-			ID: n.ID.String(), ParentID: parent, Title: n.Title, Status: n.Status, Deadline: n.Deadline,
-			Acceptance: n.Acceptance, OwnerName: n.OwnerName,
+			ID: n.ID.String(), ParentID: parent, Title: n.Title, Description: n.Description, Status: n.Status,
+			Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName,
 		})
+		if n.ID.String() == focus {
+			focusFound = true
+		}
+	}
+	// An unknown focus is refused, not ignored: an agent asked for one
+	// subtree and must not get the whole project back (rv5-TREEX-05).
+	if defaulted && !focusFound {
+		focus, in.FocusNodeID = "", ""
+	}
+	if focus != "" && !focusFound {
+		httpx.WriteError(w, http.StatusNotFound, "focus node not found in this project", "", nil)
+		return
 	}
 	if project.ID != uuid.Nil {
 		if prd, err := s.store.PrdByProject(r.Context(), userID, pid); err == nil && prd != nil {
@@ -113,20 +130,27 @@ func (s *Server) handleAgentCheckpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	content := "[agent checkpoint] " + req.Summary
 	if req.NodeID != "" {
-		content += " (node " + req.NodeID + ")"
+		// The node a checkpoint names is a node of its project (rv5-PARB-10).
+		nid, ok := parseUUIDParam(w, "nodeId", req.NodeID)
+		if !ok {
+			return
+		}
+		n, err := s.store.GetRoadmapNode(r.Context(), userID, nid)
+		if err == nil && n.ProjectID != pid {
+			err = store.ErrNotFound
+		}
+		if err != nil {
+			s.writeStoreError(w, "agent checkpoint node", err, errMsgs{store.ErrNotFound: "node not found in this project"})
+			return
+		}
+		content += " (node " + nid.String() + ")"
 	}
 	u, err := s.store.AddProjectUpdate(r.Context(), userID, pid, "agent_checkpoint", content)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "you must be a member of this workspace", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("agent checkpoint", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent checkpoint", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "you must be a member of this workspace",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "recorded": true})
@@ -160,6 +184,9 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	req.Summary = strings.TrimSpace(req.Summary)
 	if req.Summary == "" || tooLong(req.Summary, 2000) {
 		httpx.WriteError(w, http.StatusBadRequest, "summary is required (max 2000 characters)", "", nil)
+		return
+	}
+	if refuseTooLong(w, "detail", strings.TrimSpace(req.Detail)) {
 		return
 	}
 	pid, ok := parseUUIDParam(w, "projectId", req.ProjectID)
@@ -196,17 +223,11 @@ func (s *Server) handleAgentPropose(w http.ResponseWriter, r *http.Request) {
 	}
 	// The proposal and its items are one transaction: both land or neither.
 	u, err := s.store.AddProposal(r.Context(), userID, pid, content, items)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "project not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can propose a change", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("agent propose", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "agent propose", err, errMsgs{
+			store.ErrNotFound:  "project not found",
+			store.ErrForbidden: "only the project owner or a workspace admin can propose a change",
+		})
 		return
 	}
 	httpx.WriteJSON(w, http.StatusCreated, map[string]any{"id": u.ID, "kind": u.Kind, "proposed": true, "accepted": false, "items": len(items)})
@@ -244,21 +265,18 @@ func (s *Server) handleProposalDecision(w http.ResponseWriter, r *http.Request) 
 		httpx.WriteError(w, http.StatusBadRequest, "decision must be \"accepted\" or \"rejected\"", "", nil)
 		return
 	}
+	if refuseTooLong(w, "reason", strings.TrimSpace(req.Reason)) {
+		return
+	}
 	// Decide and apply are one transaction: an apply that fails answers 500 and
 	// records no decision, so the proposal stays open to accept again; items
 	// already applied by an earlier accept are skipped, never created twice.
 	d, nodeIDs, err := s.store.DecideAndApplyProposal(r.Context(), userID, uid, req.Decision, strings.TrimSpace(req.Reason), req.Apply)
-	if errors.Is(err, store.ErrNotFound) {
-		httpx.WriteError(w, http.StatusNotFound, "proposal not found", "", nil)
-		return
-	}
-	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only agent_proposal records can be decided, by the project owner or a workspace admin", "", nil)
-		return
-	}
 	if err != nil {
-		s.log.Error("proposal decision", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "proposal decision", err, errMsgs{
+			store.ErrNotFound:  "proposal not found",
+			store.ErrForbidden: "only agent_proposal records can be decided, by the project owner or a workspace admin",
+		})
 		return
 	}
 	applied := make([]string, 0, len(nodeIDs))

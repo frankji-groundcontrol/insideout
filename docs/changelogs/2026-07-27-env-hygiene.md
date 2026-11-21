@@ -13,7 +13,7 @@ a shell incantation copy-pasted across docs. No behavior change.
   frontend's one real variable (`NUXT_API_INTERNAL_BASE`, server-only) is
   documented in prose in [local-development.md](../usage/local-development.md).
   The removal itself was already recorded in
-  [2026-07-20-go-rewrite-and-rls-cutover/migration-notes.md](2026-07-20-go-rewrite-and-rls-cutover/migration-notes.md);
+  [2026-07-20-go-rewrite-and-rls-cutover/migration-notes.md](./2026-07-20-go-rewrite-and-rls-cutover/migration-notes.md);
   this deletes the now-dead template. (The frozen
   [docs/history/nuxt-migration.md](../history/nuxt-migration.md) still
   mentions it as a record of the old project state — left as-is.)
@@ -28,7 +28,7 @@ a shell incantation copy-pasted across docs. No behavior change.
   `DATABASE_URL` setup-(a)/(b) explanation and a note that the frontend needs
   nothing from this file.
 - **Added `server/scripts/dev.sh`** (moved to the repo root the next day —
-  see [2026-07-28 — dev.sh moves to the repo root](2026-07-28-devsh-root.md)) — exports
+  see [2026-07-28 — dev.sh moves to the repo root](./2026-07-28-devsh-root.md)) — exports
   the root `.env` (the sanctioned `set -a; source; set +a` pattern) and execs
   a command from `server/`, so `./scripts/dev.sh go run ./cmd/insideout`
   replaces the hand-typed incantation. It never prints env values and fails

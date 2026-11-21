@@ -71,6 +71,12 @@ func newGateFixture(t *testing.T) gateFixture {
 	if err != nil {
 		t.Fatalf("convert idea: %v", err)
 	}
+	// Only an approved PRD is built (rv5-PARB-01).
+	for _, s := range []string{"reviewing", "approved"} {
+		if _, err := st.UpdatePrdStatus(ctx, user.ID, prd.ID, s); err != nil {
+			t.Fatalf("status %s: %v", s, err)
+		}
+	}
 	project, err := st.EnsureProjectForPrd(ctx, user.ID, prd.ID)
 	if err != nil {
 		t.Fatalf("ensure project: %v", err)
@@ -161,7 +167,7 @@ func (g *gateStub) Admit(w http.ResponseWriter, _ *http.Request, workspaceID, _ 
 	g.labels = append(g.labels, label)
 	g.workspaces = append(g.workspaces, workspaceID)
 	if !g.allow {
-		httpx.WriteError(w, http.StatusTooManyRequests, "Rate limit exceeded", "APP_THROTTLE", nil)
+		httpx.WriteError(w, http.StatusTooManyRequests, "Rate limit exceeded", "app_throttle", nil)
 		return nil, false
 	}
 	return func(err error) {
@@ -251,8 +257,8 @@ func TestBuildAndExpandCountTowardTheCoachRateLimit(t *testing.T) {
 	}
 	for name, call := range map[string]func(*testing.T, *httptest.Server) (int, string){"build": f.build, "expand": f.expand} {
 		code, body := call(t, ts)
-		if code != http.StatusTooManyRequests || !strings.Contains(body, "APP_THROTTLE") {
-			t.Fatalf("%s after 10 gated calls = %d %s, want 429 APP_THROTTLE", name, code, body)
+		if code != http.StatusTooManyRequests || !strings.Contains(body, "app_throttle") {
+			t.Fatalf("%s after 10 gated calls = %d %s, want 429 app_throttle", name, code, body)
 		}
 	}
 	if plans, expands := planner.counts(); plans != 5 || expands != 5 {

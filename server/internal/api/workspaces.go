@@ -1,12 +1,14 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/httpx"
 	"github.com/frankji-groundcontrol/insideout/server/internal/store"
+	"github.com/google/uuid"
 )
 
 func (s *Server) registerWorkspaceRoutes(mux *http.ServeMux) {
@@ -30,13 +32,20 @@ type workspaceView struct {
 	Status      string  `json:"status"`
 	MemberCount int     `json:"memberCount"`
 	MyRole      string  `json:"myRole"`
-	CreatedAt   string  `json:"createdAt"`
+	// CanEdit and CanDelete mirror UpdateWorkspace's and DeleteWorkspace's
+	// checks for the viewer, so a client hides what would be refused (rv5-FE-05).
+	CanEdit   bool   `json:"canEdit"`
+	CanDelete bool   `json:"canDelete"`
+	CreatedAt string `json:"createdAt"`
 }
 
-func workspaceResponse(w store.WorkspaceSummary) workspaceView {
+// workspaceResponse is w as viewerID sees it.
+func workspaceResponse(w store.WorkspaceSummary, viewerID uuid.UUID) workspaceView {
+	creator := w.CreatorID == viewerID
 	return workspaceView{
 		ID: w.ID.String(), Title: w.Title, Description: w.Description, CoverURL: w.CoverURL,
 		Code: w.Code, Status: w.Status, MemberCount: w.MemberCount, MyRole: w.MyRole,
+		CanEdit: creator || w.MyRole == "admin", CanDelete: creator,
 		CreatedAt: w.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
@@ -51,7 +60,7 @@ func (s *Server) handleListWorkspaces(w http.ResponseWriter, r *http.Request) {
 	}
 	views := make([]workspaceView, len(list))
 	for i, ws := range list {
-		views[i] = workspaceResponse(ws)
+		views[i] = workspaceResponse(ws, userID)
 	}
 	httpx.WriteJSON(w, http.StatusOK, views)
 }
@@ -87,7 +96,7 @@ func (s *Server) handleCreateWorkspace(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusCreated, workspaceResponse(*summary))
+	httpx.WriteJSON(w, http.StatusCreated, workspaceResponse(*summary, userID))
 }
 
 type joinWorkspaceRequest struct {
@@ -128,7 +137,7 @@ func (s *Server) handleJoinWorkspace(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*summary))
+	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*summary, userID))
 }
 
 func (s *Server) handleGetWorkspace(w http.ResponseWriter, r *http.Request) {
@@ -148,13 +157,14 @@ func (s *Server) handleGetWorkspace(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*ws))
+	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*ws, userID))
 }
 
 type updateWorkspaceRequest struct {
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	CoverURL    *string `json:"coverUrl"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	// CoverURL: absent keeps the stored cover; null or "" clears it.
+	CoverURL json.RawMessage `json:"coverUrl"`
 }
 
 func (s *Server) handleUpdateWorkspace(w http.ResponseWriter, r *http.Request) {
@@ -173,12 +183,12 @@ func (s *Server) handleUpdateWorkspace(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "title is required (max 200 characters)", "", nil)
 		return
 	}
-	if req.CoverURL != nil && !validStoredURL(*req.CoverURL) {
-		httpx.WriteError(w, http.StatusBadRequest, "coverUrl must be an https URL (max 2048 characters)", "", nil)
+	cover, ok := storedURLPatch(w, "coverUrl", req.CoverURL)
+	if !ok {
 		return
 	}
 
-	_, err := s.store.UpdateWorkspace(r.Context(), userID, wsID, req.Title, req.Description, req.CoverURL)
+	_, err := s.store.UpdateWorkspace(r.Context(), userID, wsID, req.Title, req.Description, cover)
 	if errors.Is(err, store.ErrNotFound) {
 		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
 		return
@@ -199,7 +209,7 @@ func (s *Server) handleUpdateWorkspace(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
 		return
 	}
-	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*summary))
+	httpx.WriteJSON(w, http.StatusOK, workspaceResponse(*summary, userID))
 }
 
 func (s *Server) handleDeleteWorkspace(w http.ResponseWriter, r *http.Request) {

@@ -6,7 +6,7 @@ import "fmt"
 // PRODUCT.md makes English and Simplified Chinese first-class product
 // languages, so an 'en' conversation must be coached and critiqued in
 // English. Each literal mirrors its Chinese counterpart in prompts.go /
-// critic.go line for line — same stage discipline, same tool contracts;
+// critic_prompt.go line for line — same stage discipline, same tool contracts;
 // only the fence clause (prompt_fence.go) stays language-independent by
 // design, and the shared data formatters (sections, gaps, ledger) keep
 // their labels because they wrap human-written text, not instructions.
@@ -96,7 +96,7 @@ const (
 )
 
 // The roadmap planner's prompts, English mirrors of plannerPlanMVPPromptZH
-// and plannerExpandPromptZH (roadmap_planner.go).
+// and plannerExpandPromptZH (roadmap_planner_llm.go).
 const (
 	plannerPlanMVPPromptEN = `You are InsideOut's product-delivery coach. From the PRD the user provides (title and sections), break the product down into an executable MVP roadmap tree.
 Rules: one root node (the overall goal of delivering the MVP); 3-5 workstreams under the root that can advance in parallel (for example: core functionality, polish and validation, release); 2-4 concrete tasks under each workstream. Each node's title is short (12 characters or fewer), its description one sentence. Do not invent major directions the PRD does not contain. Return only through the submit_roadmap tool.`

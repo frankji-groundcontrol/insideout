@@ -92,18 +92,18 @@ hard 4px 4px zero-blur cast shadows, and a 100ms press-the-block motion.
 Not a full-bleed slab, not rounded cards, not type-rows, not a left rail.
 
 Lock screens live in
-[`docs/design-system/cobalt/`](docs/design-system/cobalt/README.md).
+[`docs/design-system/cobalt/`](./docs/design-system/cobalt/README.md).
 The Flutter tokens are `Cobalt` in
-[`client/lib/theme/cobalt.dart`](client/lib/theme/cobalt.dart); cast shadows
+[`client/lib/theme/cobalt.dart`](./client/lib/theme/cobalt.dart); cast shadows
 and theme wiring in
-[`client/lib/theme/cobalt_theme.dart`](client/lib/theme/cobalt_theme.dart);
+[`client/lib/theme/cobalt_theme.dart`](./client/lib/theme/cobalt_theme.dart);
 press motion in
-[`client/lib/widgets/pressable_block.dart`](client/lib/widgets/pressable_block.dart).
+[`client/lib/widgets/pressable_block.dart`](./client/lib/widgets/pressable_block.dart).
 The component layer — buttons, fields, the one modal chrome, chrome
 pieces, and read states — lives in `client/lib/theme/block_*.dart`
 (see [Block primitives](#block-primitives)).
 The signed-off token table and its verification record live in
-[`docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md`](docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md).
+[`docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md`](./docs/plans/2026-10-06-frontend-cobalt-neo/2026-10-06-frontend-cobalt-neo.md).
 
 **Key Characteristics:**
 
@@ -151,7 +151,7 @@ The signed-off token table and its verification record live in
 | cobalt-700 | `#1D4ED8` | Pressed / chip text (light) |
 | cobalt-950 | `#1E2A5A` | `brandSubtle` (dark), dark status-chip bg only |
 
-Strokes (verified against the WCAG script in `client/test/cobalt_test.dart`):
+Strokes (verified against the WCAG script in `client/test/theme/cobalt_test.dart`):
 
 | Token | Theme | Hex | Measured contrast |
 | --- | --- | --- | --- |
@@ -187,7 +187,7 @@ Web loads faces from `client/web/index.html` and gates the first frame in
 - **Display** (700, 48–58; Home numeral 120; Ideas wall up to 320): page names
   and the Home numeral. The numeral is a named exception to the band, like the
   Ideas wall: the giant index figure of the Home lock
-  ([`LOCK-home-light.jpg`](docs/design-system/cobalt/LOCK-home-light.jpg)),
+  ([`LOCK-home-light.jpg`](./docs/design-system/cobalt/LOCK-home-light.jpg)),
   an index mark beside the chapter title rather than a heading.
 - **Title** (700, 26+): card and section headings.
 - **Body** (400, 17.5): reading text.
@@ -211,25 +211,25 @@ The component layer lives in `client/lib/theme/` and is the mandated
 grammar for interactive surfaces — no stock Material dialogs, default-
 chrome buttons, floating-label fields, or round spinners:
 
-- [`block_button.dart`](client/lib/theme/block_button.dart) — `BlockButton`
+- [`block_button.dart`](./client/lib/theme/block_button.dart) — `BlockButton`
   (fixed outer heights 32 / 40 / 52 for `sm` / `md` / `lg`; variants
   `primary`, `secondary`, `danger`, `ghost`) and `BlockChoice`, the
   pressable pick-one selection block (brand fill + ink edge selected,
   raised block unselected).
-- [`block_field.dart`](client/lib/theme/block_field.dart) — `BlockField`,
+- [`block_field.dart`](./client/lib/theme/block_field.dart) — `BlockField`,
   `BlockTextarea`, `BlockSelect`: label above (12, w600), raised
   fixed-height box (44; dense 40), 2px border `strokeSubtle` at rest →
   `brand` on focus → `fgDanger` on error, `helper` and error slots below.
-- [`block_modal.dart`](client/lib/theme/block_modal.dart) — `showBlockModal`
+- [`block_modal.dart`](./client/lib/theme/block_modal.dart) — `showBlockModal`
   / `showBlockConfirm`: the one modal chrome (512 max width, header +
   close block, 2px divider, scroll body, sunken footer bar).
-- [`block_chrome.dart`](client/lib/theme/block_chrome.dart) — `BlockBanner`
+- [`block_chrome.dart`](./client/lib/theme/block_chrome.dart) — `BlockBanner`
   (4px tone strip), `BlockIconButton`, `BlockBadge`, `BlockTag`,
   `BlockIconWell`, and the square `BlockLoader`.
-- [`block_state.dart`](client/lib/theme/block_state.dart) — `BlockEmpty` /
+- [`block_state.dart`](./client/lib/theme/block_state.dart) — `BlockEmpty` /
   `BlockLoading` / `BlockError`; `BlockError` localizes through
   `api/errors_l10n.dart` and offers a retry — never a raw error string.
-- [`block_form.dart`](client/lib/theme/block_form.dart) — `showBlockForm`
+- [`block_form.dart`](./client/lib/theme/block_form.dart) — `showBlockForm`
   builds a labeled form dialog on the shared chrome.
 
 ### Buttons
@@ -259,7 +259,7 @@ gone quiet) sits on cobalt-200, where cobalt-700 text would be 4.49:1, so
 its label is ink (13.03:1): still in-palette, no new hue. Dark chips keep
 cobalt-200 on cobalt-950 (9.18:1); done and danger share it there by the
 one-hue decree, so the label, not a second colour, says which is which.
-Every chip label owes 4.5:1 and `client/test/cobalt_test.dart` pins each
+Every chip label owes 4.5:1 and `client/test/theme/cobalt_test.dart` pins each
 tone in both themes. Status marks are square blocks, never dots. Not chops.
 
 ### Cards

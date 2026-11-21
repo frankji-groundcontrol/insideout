@@ -9,7 +9,7 @@ the [disposition ledger](../../review/2026-10-10-disposition-ledger/README.md).
 The rest were fixed test-first on real PostgreSQL 18: the test failed on the old
 code for the stated reason and was committed red, then the fix turned it green,
 and each fix was mutated once to prove the test goes red again. The client half
-of the sweep is in [review-sweep-client.md](review-sweep-client.md).
+of the sweep is in [review-sweep-client.md](./review-sweep-client.md).
 
 ## Row-level security, the store and migrations
 

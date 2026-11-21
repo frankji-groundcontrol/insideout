@@ -20,7 +20,7 @@ nothing to deploy. Plan:
 
     *Superseded 2026-10-05 (same day): the manifest was renamed
     `postgres.yaml` — the kind is the role-scoped Postgres DSNs, and Supabase
-    is merely today's host ([buddy host keys](2026-10-05-buddy-host-keys.md),
+    is merely today's host ([buddy host keys](./2026-10-05-buddy-host-keys.md),
     slice 4).*
   - `github/app.yaml` — App id + private key + client secret;
     `github/webhooks.yaml` — webhook secret; `github/tokens.yaml` —
@@ -45,7 +45,7 @@ nothing to deploy. Plan:
 
   *Superseded 2026-10-05 (same day): `scripts/test_keys.py` was retired for
   the `scripts/tests/keys/` tree, which CI's env-suites job discovers instead
-  ([buddy host keys](2026-10-05-buddy-host-keys.md), slice 10).*
+  ([buddy host keys](./2026-10-05-buddy-host-keys.md), slice 10).*
 - **`docs/SETENV.md`** — pointer paragraph: `.env` stays the only file
   processes read; the hosts tree is the out-of-git credential store.
 

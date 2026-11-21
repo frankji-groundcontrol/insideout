@@ -1,0 +1,5 @@
+# Marksman (markdown language server) settings for this workspace.
+# A document link resolves to the file, not to its first heading, so the
+# dated registers that carry two H1 headings stay unambiguous (IDX-11).
+[core]
+title_from_heading = false

@@ -17,9 +17,9 @@ Connect, log in, exercise the existing loop, fix only wiring that
 breaks. Do not restyle. Do not add routes or schema.
 
 - Goal prompt (paste this):
-  [`2026-09-18-cobalt-backend-goal.md`](2026-09-18-cobalt-backend-goal.md)
+  [`2026-09-18-cobalt-backend-goal.md`](./2026-09-18-cobalt-backend-goal.md)
 - Restyle:
-  [`2026-09-18-cobalt-flutter.md`](2026-09-18-cobalt-flutter.md)
+  [`2026-09-18-cobalt-flutter.md`](./2026-09-18-cobalt-flutter.md)
 
 ## Out of scope
 

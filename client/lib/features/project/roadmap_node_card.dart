@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../api/errors.dart';
 import '../../api/models.dart';
 import '../../chrome/time_ago.dart';
 import '../../session/appearance.dart';
@@ -15,8 +17,11 @@ import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_completion_prompt.dart';
+import 'roadmap_node_detail.dart';
 
 part 'roadmap_expand_draft.dart';
+part 'roadmap_node_delegate.dart';
+part 'roadmap_node_edit.dart';
 part 'roadmap_node_menu.dart';
 
 class RoadmapNodeCard extends StatelessWidget {
@@ -26,8 +31,11 @@ class RoadmapNodeCard extends StatelessWidget {
     required this.node,
     required this.onReload,
     this.compact = false,
-    this.childProgress,
     this.descendants = 0,
+    this.planWriter = false,
+    this.parentWritable = false,
+    this.inheritedOwner,
+    this.openedRoot = false,
   });
 
   final String projectId;
@@ -38,24 +46,41 @@ class RoadmapNodeCard extends StatelessWidget {
   /// Nodes beneath this one; the server deletes the branch with it.
   final int descendants;
 
-  /// Share of this node's children that are done (0..1), or null for a
-  /// leaf — leaves show no bar rather than an invented percentage. Only a
-  /// caller holding the whole tree can compute it.
-  final double? childProgress;
+  /// The caller writes the whole plan (project owner or workspace admin),
+  /// and the caller may write this node's parent (owns a branch above it):
+  /// together they decide the move, delete and delegate items.
+  final bool planWriter;
+  final bool parentWritable;
 
-  /// done-children share of [n] within [all], or null when [n] is a leaf.
-  static double? childDoneShare(List<RoadmapNode> all, RoadmapNode n) {
-    final children = all.where((o) => o.parentId == n.id).toList();
-    if (children.isEmpty) return null;
-    final done = children.where((c) => c.status == 'done').length;
-    return done / children.length;
-  }
+  /// The owner this node holds through an owned ancestor, when it has none
+  /// of its own (roadmapInheritedOwner).
+  final ({String name, String via})? inheritedOwner;
+
+  /// This node is the root of the opened tree: deleting it leaves for the
+  /// parent's tree, since this route no longer exists.
+  final bool openedRoot;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
     final theme = Theme.of(context);
+    // The server's roll-up over every leaf below (validated counts as done);
+    // a leaf shows no bar rather than an invented percentage.
+    final rollup = node.rollup;
+    final showRollup = descendants > 0 && rollup.leaves > 0;
+    final ownerLabel = roadmapOwnerLabel(l10n.t, node, inheritedOwner);
     return FieldCard(
+      // A branch opens as its own tree; a leaf has nothing below it, so it
+      // opens its read-only detail instead.
+      onTap: descendants > 0
+          ? () => GoRouter.maybeOf(
+              context,
+            )?.go('/projects/$projectId/roadmap/${node.id}')
+          : () => showRoadmapNodeDetail(
+              context,
+              node,
+              inheritedOwner: inheritedOwner,
+            ),
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,6 +97,10 @@ class RoadmapNodeCard extends StatelessWidget {
                 node: node,
                 onReload: onReload,
                 descendants: descendants,
+                planWriter: planWriter,
+                parentWritable: parentWritable,
+                inheritedOwner: inheritedOwner,
+                openedRoot: openedRoot,
               ),
             ],
           ),
@@ -98,11 +127,11 @@ class RoadmapNodeCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ),
-          if (node.ownerName.isNotEmpty)
+          if (ownerLabel != null)
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Text(
-                '${l10n.t('roadmap.owner')}: ${node.ownerName}',
+                '${l10n.t('roadmap.owner')}: $ownerLabel',
                 style: theme.textTheme.bodySmall,
               ),
             ),
@@ -117,14 +146,27 @@ class RoadmapNodeCard extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ),
-          if (childProgress != null) ...[
+          if (showRollup) ...[
             const SizedBox(height: 12),
             ClipRRect(
               borderRadius: BorderRadius.circular(Cobalt.radiusPill),
               child: LinearProgressIndicator(
-                value: childProgress,
+                value: rollup.done / rollup.leaves,
                 minHeight: 4,
+                semanticsLabel: l10n.t('roadmap.rollupShort', {
+                  'done': rollup.done,
+                  'leaves': rollup.leaves,
+                }),
               ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.t('roadmap.rollup', {
+                'done': rollup.done,
+                'leaves': rollup.leaves,
+                'validated': rollup.validated,
+              }),
+              style: theme.textTheme.bodySmall,
             ),
           ],
         ],

@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/frankji-groundcontrol/insideout/server/internal/llm"
 )
 
 // USER-03: the offline template coach must disclose itself in-band. Its reply
@@ -18,7 +20,7 @@ func TestTemplate_ReplyEchoesWithoutOperatorInstructions(t *testing.T) {
 	var reply string
 	_, err := NewTemplateStreamer().StreamChat(
 		context.Background(), "",
-		[]Message{{Role: RoleUser, Content: "who is it for?"}},
+		[]llm.Message{{Role: llm.RoleUser, Content: "who is it for?"}},
 		nil, func(s string) { reply = s },
 	)
 	if err != nil {

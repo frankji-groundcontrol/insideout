@@ -17,6 +17,13 @@ func newValidationServer() *Server {
 	return NewServer(nil, nil, &config.Config{}, slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)
 }
 
+func getJSON(s *Server, path string) *httptest.ResponseRecorder {
+	r := httptest.NewRequest(http.MethodGet, path, nil)
+	w := httptest.NewRecorder()
+	s.Handler().ServeHTTP(w, r)
+	return w
+}
+
 func postJSON(s *Server, path, body string) *httptest.ResponseRecorder {
 	r := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
 	r.Header.Set("Content-Type", "application/json")

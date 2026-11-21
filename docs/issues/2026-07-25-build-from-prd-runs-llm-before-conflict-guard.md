@@ -10,7 +10,7 @@
 > `build` tool, which draft first and pass the count only to confirm, would be refused a
 > draft over any populated roadmap. The one remaining cost is a draft the user
 > declines to apply. The Flutter button had never reached the confirm call at all;
-> that bug is [BUG-022](2026-10-10-bug-022-build-mvp-wrote-nothing.md).
+> that bug is [BUG-022](./2026-10-10-bug-022-build-mvp-wrote-nothing.md).
 >
 > The original record follows, unedited.
 
@@ -64,3 +64,5 @@ has N>0 nodes returns 409 *without* invoking the planner (assert via the
 existing planner interface seam / a no-op planner that records calls). The
 confirm-retry path (body carries the live count) still reaches the planner and
 replaces under the lock.
+
+> **Correction 2026-11-21 (rv5-FEAT-01):** the closing note above said the draft never touches the roadmap; until this date it did create and link a project on first use. Since rv5 the draft writes nothing at all, and only `POST /prds/{id}/build/confirm` creates the project, for the PRD author or a workspace admin.

@@ -2,6 +2,7 @@ package apiclient
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -17,11 +18,16 @@ func (c *Client) BuildFromPrd(prdID string) (json.RawMessage, error) {
 }
 
 // ConfirmBuildFromPrd writes a previously drafted tree
-// (POST /prds/{id}/build/confirm).
-func (c *Client) ConfirmBuildFromPrd(prdID string, tree json.RawMessage, expectedCount int) (json.RawMessage, error) {
+// (POST /prds/{id}/build/confirm). force discards nodes that have evidence or
+// are done or validated, which the server otherwise refuses with 409
+// roadmap_replace_has_history.
+func (c *Client) ConfirmBuildFromPrd(prdID string, tree json.RawMessage, expectedCount int, force bool) (json.RawMessage, error) {
 	body := map[string]any{"tree": json.RawMessage(tree)}
 	if expectedCount > 0 {
 		body["expectedCount"] = expectedCount
+	}
+	if force {
+		body["force"] = true
 	}
 	var out json.RawMessage
 	if err := c.do(http.MethodPost, apiPath("prds", prdID, "build", "confirm"), body, &out); err != nil {
@@ -52,14 +58,23 @@ func (c *Client) ConfirmExpandNode(nodeID string, children json.RawMessage) (jso
 }
 
 // RoadmapProgress returns the Progress view
-// (GET /projects/{id}/roadmap/progress).
-func (c *Client) RoadmapProgress(projectID string) (json.RawMessage, error) {
-	return c.get(apiPath("projects", projectID, "roadmap", "progress"))
+// (GET /projects/{id}/roadmap/progress); a root other than "" limits it to
+// that node's subtree (?root=).
+func (c *Client) RoadmapProgress(projectID, root string) (json.RawMessage, error) {
+	return c.get(withRoot(apiPath("projects", projectID, "roadmap", "progress"), root))
 }
 
-// RoadmapList returns GET /projects/{id}/roadmap.
-func (c *Client) RoadmapList(projectID string) (json.RawMessage, error) {
-	return c.get(apiPath("projects", projectID, "roadmap"))
+// RoadmapList returns GET /projects/{id}/roadmap; a root other than "" lists
+// that node and the nodes below it (?root=).
+func (c *Client) RoadmapList(projectID, root string) (json.RawMessage, error) {
+	return c.get(withRoot(apiPath("projects", projectID, "roadmap"), root))
+}
+
+func withRoot(path, root string) string {
+	if root == "" {
+		return path
+	}
+	return withQuery(path, "root", root)
 }
 
 // RoadmapAdd creates a node (POST /projects/{id}/roadmap); parentID may
@@ -76,38 +91,37 @@ func (c *Client) RoadmapAdd(projectID, title, description string, parentID *stri
 	return out, nil
 }
 
-// RoadmapUpdate partially updates a node (PATCH /roadmap/{id}); nil
-// fields are left untouched server-side. deadline: non-nil sets
-// (RFC3339) or clears (empty string).
-func (c *Client) RoadmapUpdate(nodeID string, title, description, status, deadline, completionReason *string) (json.RawMessage, error) {
-	body := map[string]any{}
-	if title != nil {
-		body["title"] = *title
-	}
-	if description != nil {
-		body["description"] = *description
-	}
-	if status != nil {
-		body["status"] = *status
-	}
-	if deadline != nil {
-		body["deadline"] = *deadline
-	}
-	if completionReason != nil {
-		body["completionReason"] = *completionReason
-	}
+// RoadmapPatch is the node edit the CLI and MCP both fill (PATCH /roadmap/{id})
+// and the request body itself: nil leaves a field alone, a pointer to "" clears
+// it (fill the clearable fields with PatchText). Deadline is RFC3339; OwnerID is
+// a member's user id, which the server refuses to change for an agent token.
+type RoadmapPatch struct {
+	Title            *string `json:"title,omitempty"`
+	Description      *string `json:"description,omitempty"`
+	Status           *string `json:"status,omitempty"`
+	Deadline         *string `json:"deadline,omitempty"`
+	Acceptance       *string `json:"acceptance,omitempty"`
+	OwnerID          *string `json:"ownerId,omitempty"`
+	CompletionReason *string `json:"completionReason,omitempty"`
+}
+
+// RoadmapUpdate sends patch to PATCH /roadmap/{id}.
+func (c *Client) RoadmapUpdate(nodeID string, patch RoadmapPatch) (json.RawMessage, error) {
 	var out json.RawMessage
-	if err := c.do(http.MethodPatch, apiPath("roadmap", nodeID), body, &out); err != nil {
+	if err := c.do(http.MethodPatch, apiPath("roadmap", nodeID), patch, &out); err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
 // RoadmapMove re-parents and/or repositions a branch
-// (POST /roadmap/{id}/move). nil parentID makes it a root.
+// (POST /roadmap/{id}/move). nil parentID keeps the current parent; a pointer
+// to "" makes the node a root (sent as an explicit null).
 func (c *Client) RoadmapMove(nodeID string, parentID *string, position *int) (json.RawMessage, error) {
 	body := map[string]any{}
-	if parentID != nil {
+	if parentID != nil && *parentID == "" {
+		body["parentId"] = nil
+	} else if parentID != nil {
 		body["parentId"] = *parentID
 	}
 	if position != nil {
@@ -120,12 +134,36 @@ func (c *Client) RoadmapMove(nodeID string, parentID *string, position *int) (js
 	return out, nil
 }
 
-// RoadmapDelete removes a node (DELETE /roadmap/{id}); any response
-// body is discarded.
-func (c *Client) RoadmapDelete(nodeID string) error {
+// RoadmapDelete removes a node and its subtree (DELETE /roadmap/{id}); any
+// response body is discarded. A subtree holding evidence or done or validated
+// nodes is refused with a *DeleteHistoryError unless force is set.
+func (c *Client) RoadmapDelete(nodeID string, force bool) error {
+	path := apiPath("roadmap", nodeID)
+	if force {
+		path += "?force=true"
+	}
 	var discard json.RawMessage
-	return c.do(http.MethodDelete, apiPath("roadmap", nodeID), nil, &discard)
+	err := c.do(http.MethodDelete, path, nil, &discard)
+	var se *StatusError
+	if errors.As(err, &se) && se.Code == http.StatusConflict {
+		h := &DeleteHistoryError{err: err}
+		if json.Unmarshal(se.Body, h) == nil && h.Code == "roadmap_delete_has_history" {
+			return h
+		}
+	}
+	return err
 }
+
+// DeleteHistoryError is the 409 roadmap_delete_has_history: what a delete
+// would erase. Re-sending with force deletes anyway.
+type DeleteHistoryError struct {
+	Code                                                string
+	LiveCount, EvidenceCount, DoneCount, ValidatedCount int
+	err                                                 error
+}
+
+func (e *DeleteHistoryError) Error() string { return e.err.Error() }
+func (e *DeleteHistoryError) Unwrap() error { return e.err }
 
 // SetRepo binds a GitHub repository to a project (PUT /projects/{id}/repo).
 func (c *Client) SetRepo(projectID, repoURL string) (json.RawMessage, error) {
@@ -152,12 +190,6 @@ func (c *Client) SyncGithub(projectID string) (json.RawMessage, error) {
 // (rv4-FR-F169).
 func (c *Client) Guide(projectID string) ([]byte, error) {
 	return c.getBytes(apiPath("projects", projectID, "guide"))
-}
-
-// Cursor moves this session's canvas cursor (POST /projects/{id}/cursor).
-func (c *Client) Cursor(projectID string, x, y float64) error {
-	return c.do(http.MethodPost, apiPath("projects", projectID, "cursor"),
-		map[string]float64{"x": x, "y": y}, nil)
 }
 
 // ProjectPresence returns who is currently viewing a project

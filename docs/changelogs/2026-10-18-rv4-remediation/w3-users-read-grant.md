@@ -5,7 +5,7 @@ the cluster this one is ordered after), two commits `ea1d675` (red) and
 `fdd0a56` (fix), then this fragment. Findings are cited as `rv4-<ID>` because
 review IDs restart per review. This is the read half of rv4-DATA-03, carried as
 R2-02 in the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md):
-wave 2 ([w2-rls.md](w2-rls.md)) closed the write half and recorded this as its
+wave 2 ([w2-rls.md](./w2-rls.md)) closed the write half and recorded this as its
 follow-up. The one migration slot the cluster was given, `20261018200000`, is
 used and nothing else touches `server/db/migrations/`. No address, host,
 secret, token or database URL is spelled here; every account in the runs below

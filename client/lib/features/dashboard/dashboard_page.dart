@@ -11,6 +11,7 @@ import '../../theme/block_form.dart';
 import '../../theme/block_state.dart';
 import '../../widgets/guarded_action.dart';
 import 'home_field.dart';
+import 'my_work_section.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -121,6 +122,11 @@ class _DashboardPageState extends State<DashboardPage> {
             onJoin: _join,
             onOpen: _openWorkspace,
             onCapture: () => _capture(list),
+            // Keyed by the workspaces, so a create or join reads again.
+            myWork: MyWorkSection(
+              key: ValueKey(list.map((w) => w.id).join(',')),
+              workspaces: list,
+            ),
           );
         },
       ),

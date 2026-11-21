@@ -23,14 +23,14 @@ is no longer what Railway serves.
 `app/` was **not** deleted.
 
 *Corrected 2026-10-11: `app/` was deleted later the same day — the delete
-record's `test -d app` is false ([delete record](2026-08-18-delete-nuxt-app.md)).*
+record's `test -d app` is false ([delete record](./2026-08-18-delete-nuxt-app.md)).*
 
 ## Verification
 
 - Railway deploy `<deployment-id>` (path strategy)
   follows a healthy `<prior-deployment-id>` Flutter image
   (`/healthz` 200).
-- `GET https://app-production-591e.up.railway.app/` is Flutter
+- `GET https://<app-host>/` is Flutter
   (`flutter_bootstrap.js`), not Nuxt.
 - `GET /api/v1/me` through the public app host returns 401
   `authentication required` (nginx → Go).
