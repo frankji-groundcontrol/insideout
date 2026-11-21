@@ -187,3 +187,70 @@ ApiCall postPrdBuildConfirm(
     if (force) 'force': true,
   });
 }
+
+/// `?root=` when the read covers one subtree only (rv5-PARC-12).
+String _root(String? rootId) =>
+    rootId == null ? '' : '?root=${Uri.encodeQueryComponent(rootId)}';
+
+ApiCall getRoadmap(String projectId, {String? rootId}) =>
+    ApiCall('GET', '/projects/$projectId/roadmap${_root(rootId)}');
+
+ApiCall getRoadmapNode(String nodeId) => ApiCall('GET', '/roadmap/$nodeId');
+
+ApiCall getNodeAssignments(String nodeId) =>
+    ApiCall('GET', '/roadmap/$nodeId/assignments');
+
+ApiCall getNodeEvidence(String nodeId) =>
+    ApiCall('GET', '/roadmap/$nodeId/evidence');
+
+ApiCall getRoadmapProgress(String projectId, {String? rootId}) =>
+    ApiCall('GET', '/projects/$projectId/roadmap/progress${_root(rootId)}');
+
+/// One human-entered validation observation; [observedAt] is sent as its date.
+ApiCall postNodeEvidence(
+  String nodeId, {
+  required String detail,
+  required String source,
+  required DateTime observedAt,
+}) => ApiCall('POST', '/roadmap/$nodeId/evidence', {
+  'detail': detail,
+  'sourceUrl': source,
+  'observedAt': observedAt.toIso8601String().substring(0, 10),
+});
+
+ApiCall postValidate(String nodeId, String reason) =>
+    ApiCall('POST', '/roadmap/$nodeId/validate', {'reason': reason});
+
+ApiCall postCursor(
+  String projectId,
+  double x,
+  double y, {
+  required String clientId,
+}) => ApiCall(
+  'POST',
+  '/projects/$projectId/cursor?client=${Uri.encodeQueryComponent(clientId)}',
+  {'x': x, 'y': y},
+);
+
+ApiCall putProjectRepo(String projectId, String repoUrl) =>
+    ApiCall('PUT', '/projects/$projectId/repo', {'repoUrl': repoUrl});
+
+ApiCall postSyncGithub(String projectId) =>
+    ApiCall('POST', '/projects/$projectId/sync-github');
+
+ApiCall postProjectUpdate(String projectId, String kind, String content) =>
+    ApiCall('POST', '/projects/$projectId/updates', {
+      'kind': kind,
+      'content': content,
+    });
+
+ApiCall postProposalDecision(
+  String updateId, {
+  required bool accept,
+  required String reason,
+  required bool apply,
+}) => ApiCall('POST', '/agent/proposals/$updateId/decision', {
+  'decision': accept ? 'accepted' : 'rejected',
+  'reason': reason,
+  'apply': apply,
+});

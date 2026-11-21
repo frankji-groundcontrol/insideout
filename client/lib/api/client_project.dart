@@ -53,11 +53,10 @@ mixin _ProjectVerbs on _ApiCore {
   }
 
   Future<void> addUpdate(String projectId, String kind, String content) async {
-    final res = await _dio.post(
-      '/projects/$projectId/updates',
-      data: {'kind': kind, 'content': content},
+    await _parse(
+      await _exec(req.postProjectUpdate(projectId, kind, content)),
+      (d) => d,
     );
-    await _parse(res, (d) => d);
   }
 
   Future<void> editUpdate(String updateId, String content) async {
@@ -72,15 +71,12 @@ mixin _ProjectVerbs on _ApiCore {
   }
 
   Future<Project> setRepo(String projectId, String repoUrl) async {
-    final res = await _dio.put(
-      '/projects/$projectId/repo',
-      data: {'repoUrl': repoUrl},
-    );
+    final res = await _exec(req.putProjectRepo(projectId, repoUrl));
     return _parse(res, (d) => Project.fromJson(d as Map<String, dynamic>));
   }
 
   Future<Map<String, dynamic>> syncGithub(String projectId) async {
-    final res = await _dio.post('/projects/$projectId/sync-github');
+    final res = await _exec(req.postSyncGithub(projectId));
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
@@ -93,19 +89,19 @@ mixin _ProjectVerbs on _ApiCore {
     String reason = '',
     bool apply = true,
   }) async {
-    final res = await _dio.post(
-      '/agent/proposals/$updateId/decision',
-      data: {
-        'decision': accept ? 'accepted' : 'rejected',
-        'reason': reason,
-        'apply': apply,
-      },
+    final res = await _exec(
+      req.postProposalDecision(
+        updateId,
+        accept: accept,
+        reason: reason,
+        apply: apply,
+      ),
     );
     return _parse(res, (d) => d as Map<String, dynamic>);
   }
 
   Future<List<RoadmapNode>> listRoadmap(String projectId) async {
-    final res = await _dio.get('/projects/$projectId/roadmap');
+    final res = await _exec(req.getRoadmap(projectId));
     return _parse(
       res,
       (d) => (d as List)
@@ -119,10 +115,7 @@ mixin _ProjectVerbs on _ApiCore {
     String projectId,
     String rootId,
   ) async {
-    final res = await _dio.get(
-      '/projects/$projectId/roadmap',
-      queryParameters: {'root': rootId},
-    );
+    final res = await _exec(req.getRoadmap(projectId, rootId: rootId));
     return _parse(
       res,
       (d) => (d as List)
@@ -133,7 +126,7 @@ mixin _ProjectVerbs on _ApiCore {
 
   /// One node with its ancestors (root first) and its project.
   Future<RoadmapNodeRead> readRoadmapNode(String nodeId) async {
-    final res = await _dio.get('/roadmap/$nodeId');
+    final res = await _exec(req.getRoadmapNode(nodeId));
     return _parse(
       res,
       (d) => RoadmapNodeRead.fromJson(d as Map<String, dynamic>),
@@ -159,7 +152,7 @@ mixin _ProjectVerbs on _ApiCore {
 
   /// Who held the node, newest first.
   Future<List<NodeAssignment>> listNodeAssignments(String nodeId) async {
-    final res = await _dio.get('/roadmap/$nodeId/assignments');
+    final res = await _exec(req.getNodeAssignments(nodeId));
     return _parse(
       res,
       (d) => (d as List)
@@ -212,16 +205,12 @@ mixin _ProjectVerbs on _ApiCore {
     double y, {
     required String clientId,
   }) async {
-    await _dio.post(
-      '/projects/$projectId/cursor',
-      queryParameters: {'client': clientId},
-      data: {'x': x, 'y': y},
-    );
+    await _exec(req.postCursor(projectId, x, y, clientId: clientId));
   }
 
   /// A node's delivery evidence, newest first (kind/detail/sourceUrl).
   Future<List<Map<String, dynamic>>> listNodeEvidence(String nodeId) async {
-    final res = await _dio.get('/roadmap/$nodeId/evidence');
+    final res = await _exec(req.getNodeEvidence(nodeId));
     final body = res.data;
     return (body is List ? body : const [])
         .map((e) => Map<String, dynamic>.from(e as Map))
@@ -236,13 +225,13 @@ mixin _ProjectVerbs on _ApiCore {
     String source = '',
     required DateTime observedAt,
   }) async {
-    final res = await _dio.post(
-      '/roadmap/$nodeId/evidence',
-      data: {
-        'detail': detail,
-        'sourceUrl': source,
-        'observedAt': observedAt.toIso8601String().substring(0, 10),
-      },
+    final res = await _exec(
+      req.postNodeEvidence(
+        nodeId,
+        detail: detail,
+        source: source,
+        observedAt: observedAt,
+      ),
     );
     await _parse(res, (d) => d);
   }
@@ -250,15 +239,12 @@ mixin _ProjectVerbs on _ApiCore {
   /// The human confirm into 'validated': a done node plus the reason it
   /// counts as validated. The plain status PATCH cannot make this move.
   Future<RoadmapNode> validateRoadmapNode(String nodeId, String reason) async {
-    final res = await _dio.post(
-      '/roadmap/$nodeId/validate',
-      data: {'reason': reason},
-    );
+    final res = await _exec(req.postValidate(nodeId, reason));
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
   Future<RoadmapProgress> roadmapProgress(String projectId) async {
-    final res = await _dio.get('/projects/$projectId/roadmap/progress');
+    final res = await _exec(req.getRoadmapProgress(projectId));
     return _parse(
       res,
       (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>),
@@ -270,10 +256,7 @@ mixin _ProjectVerbs on _ApiCore {
     String projectId,
     String rootId,
   ) async {
-    final res = await _dio.get(
-      '/projects/$projectId/roadmap/progress',
-      queryParameters: {'root': rootId},
-    );
+    final res = await _exec(req.getRoadmapProgress(projectId, rootId: rootId));
     return _parse(
       res,
       (d) => RoadmapProgress.fromJson(d as Map<String, dynamic>),
