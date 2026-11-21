@@ -63,12 +63,18 @@ func TestRoadmapTreeVerbsSendTheirRequests(t *testing.T) {
 	}{
 		{words("roadmap", "update", "--owner", "u2", "--acceptance", "ships", "n1"),
 			[]sent{{"PATCH /roadmap/n1", map[string]any{"ownerId": "u2", "acceptance": "ships"}}}},
-		{words("roadmap", "update", "--owner", "none", "n1"),
+		{words("roadmap", "update", "--owner", "clear", "n1"),
 			[]sent{{"PATCH /roadmap/n1", map[string]any{"ownerId": ""}}}},
 		{words("roadmap", "update", "--owner", "me", "n1"),
 			[]sent{{"GET /me", nil}, {"PATCH /roadmap/n1", map[string]any{"ownerId": "u-me"}}}},
-		{words("roadmap", "update", "--acceptance", "", "n1"),
+		// One rule on the CLI and MCP (rv5-STRS-06, PARC-07, PARC-09): an absent
+		// or empty value leaves a field alone and the word clear clears it.
+		{words("roadmap", "update", "--acceptance", "clear", "n1"),
 			[]sent{{"PATCH /roadmap/n1", map[string]any{"acceptance": ""}}}},
+		{words("roadmap", "update", "--description", "clear", "--completion-reason", "clear", "n1"),
+			[]sent{{"PATCH /roadmap/n1", map[string]any{"description": "", "completionReason": ""}}}},
+		{words("roadmap", "update", "--deadline", "clear", "--acceptance", "", "n1"),
+			[]sent{{"PATCH /roadmap/n1", map[string]any{"deadline": ""}}}},
 		{words("roadmap", "update", "--title", "T", "n1"),
 			[]sent{{"PATCH /roadmap/n1", map[string]any{"title": "T"}}}},
 		{words("roadmap", "show", "n1"), []sent{{"GET /roadmap/n1", nil}}},
@@ -109,6 +115,7 @@ func TestRoadmapTreeVerbsRefuseMissingArguments(t *testing.T) {
 		words("roadmap", "mine"),
 		words("members"),
 		words("roadmap", "update", "n1"),
+		words("roadmap", "update", "--acceptance", "", "--description", "", "n1"),
 	} {
 		var handled bool
 		var code int

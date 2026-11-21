@@ -58,10 +58,16 @@ func TestRoadmapTreeToolsSendTheirRequests(t *testing.T) {
 	}{
 		{"roadmap_update", `{"node_id":"n1","owner_id":"u2","acceptance":"ships"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"ownerId": "u2", "acceptance": "ships"}}},
-		{"roadmap_update", `{"node_id":"n1","owner_id":"none"}`,
+		// The CLI's rule (rv5-STRS-06, PARC-07, PARC-09): an absent or empty
+		// argument leaves a field alone and the word clear clears it.
+		{"roadmap_update", `{"node_id":"n1","owner_id":"clear"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"ownerId": ""}}},
-		{"roadmap_update", `{"node_id":"n1","acceptance":""}`,
-			treeRequest{"PATCH /roadmap/n1", map[string]any{"acceptance": ""}}},
+		{"roadmap_update", `{"node_id":"n1","acceptance":"clear","description":"clear"}`,
+			treeRequest{"PATCH /roadmap/n1", map[string]any{"acceptance": "", "description": ""}}},
+		{"roadmap_update", `{"node_id":"n1","deadline":"clear","completion_reason":"clear"}`,
+			treeRequest{"PATCH /roadmap/n1", map[string]any{"deadline": "", "completionReason": ""}}},
+		{"roadmap_update", `{"node_id":"n1","title":"T","deadline":"","acceptance":"","owner_id":""}`,
+			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
 		{"roadmap_update", `{"node_id":"n1","title":"T"}`,
 			treeRequest{"PATCH /roadmap/n1", map[string]any{"title": "T"}}},
 		{"roadmap_node", `{"node_id":"n1"}`, treeRequest{"GET /roadmap/n1", nil}},
