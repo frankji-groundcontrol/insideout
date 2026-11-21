@@ -5,7 +5,7 @@ main:
   outcome: "Every row of docs/review/2026-11-21-focused-review-5/40-remediation-plan.md landed on rv5/remediation with its gates green and the CI run on the draft pull request green; the task tree for roles works on web, REST, MCP and CLI."
   owner: claude
   status: in_progress
-  next_evidence: "Pushed c0356a2, all gates green (flutter +618, 0 DB skips). On the branch: wave 3 server-contract; wave 4 rule-guards, setup-engine, agent-split; wave 5 doc-records; the function guard list pruned to 13. Running: wave 3 surfaces and web (workflow), wave 4 names-a (server test renames, dead code). After wave 3 merges: mcp-split, names-b (cli.go split, cmd and apiclient renames), web-controllers, parity test in parallel; doc-graph last."
+  next_evidence: "Wave 3 rows 3.2-3.7 integrated (record wave-3.md); gates green at 23eca01 (flutter +650, 0 DB skips). Wave 4 so far: rule-guards, setup-engine, agent-split, names-a. Wave 5 doc-records in. Running in parallel from 23eca01: mcp-split, names-b, web-controllers, wave 3 follow-ups. Then the parity test (row 3.1), then doc-graph."
 side_tracks: []
 updated_at: "2026-11-21T00:00:00Z"
 plan:

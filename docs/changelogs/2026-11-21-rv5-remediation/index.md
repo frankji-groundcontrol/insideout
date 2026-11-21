@@ -18,3 +18,6 @@ results and anything left open:
   hand-back with an assignment history and feed rows, the Mine view and My
   work, the server roll-up and a foldable canvas, an agent token confined to a
   root; the CLI and MCP reads, the web route and menu.
+- [Wave 3](./wave-3.md) — the four surfaces in step: one error style, one patch rule,
+  the PRD list and updates paging, the missing CLI, MCP and web verbs; row 3.1 (the
+  parity test) lands after wave 4.
