@@ -67,6 +67,27 @@ void main() {
     expect(find.text('Search'), findsNothing);
   });
 
+  testWidgets('an ancestor crumb inside an opened tree opens that node', (
+    tester,
+  ) async {
+    final api = TreeApi();
+    final router = await pumpTreeRouter(tester, treeSession(api));
+    router.go('/projects/p1/roadmap/a1');
+    await tester.pumpAndSettle();
+
+    // Same route pattern, new node id: the page must load the new subtree.
+    await tester.tap(_crumb('Payments'));
+    await tester.pumpAndSettle();
+
+    expect(api.subtreeRoots, ['a1', 'a']);
+    expect(_crumb('Loop project'), findsOneWidget);
+    expect(_crumb('Ship'), findsOneWidget);
+    expect(_crumb('Payments'), findsOneWidget);
+    expect(_crumb('Refunds'), findsNothing);
+    await _canvas(tester);
+    expect(find.text('Refunds'), findsWidgets);
+  });
+
   testWidgets('the node deep link renders after a cold start', (tester) async {
     tester.binding.platformDispatcher.defaultRouteNameTestValue =
         '/projects/p1/roadmap/a1';
