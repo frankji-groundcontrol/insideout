@@ -258,10 +258,13 @@ func addProductTools(s *server.MCPServer, api string) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.Ideas(reqStr(req, "workspace_id")))
 		})
-	addTextTool("idea_update", "Rewrite an idea's title and content (title required)",
-		[]mcp.ToolOption{strReq("idea_id", "idea id"), strReq("title", "new title"), strOpt("content", "idea body")},
+	addTextTool("idea_update", "Rewrite an idea's title and, if given, its content (title required; omit content to keep the body)",
+		[]mcp.ToolOption{strReq("idea_id", "idea id"), strReq("title", "new title"), strOpt("content", "idea body (omit to keep it)")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			content, _ := req.GetArguments()["content"].(string)
+			var content *string
+			if v, ok := req.GetArguments()["content"].(string); ok {
+				content = &v
+			}
 			return call(c.UpdateIdea(reqStr(req, "idea_id"), reqStr(req, "title"), content))
 		})
 	addTextTool("idea_delete", "Drop an idea (soft: the row is kept for audit but idea_list no longer returns it)",

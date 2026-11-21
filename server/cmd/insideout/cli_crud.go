@@ -53,7 +53,13 @@ func runCrudCommand(cmd string, args []string) (bool, int) {
 		if !need(1, "insideout idea update --title T [--content C] <id>") {
 			return true, 2
 		}
-		return printJSON(c.UpdateIdea(positional[0], *title, *content))
+		var body *string // only an explicit --content replaces the body (PARA-02)
+		fs.Visit(func(f *flag.Flag) {
+			if f.Name == "content" {
+				body = content
+			}
+		})
+		return printJSON(c.UpdateIdea(positional[0], *title, body))
 	case "idea delete":
 		if !need(1, "insideout idea delete <id>") {
 			return true, 2

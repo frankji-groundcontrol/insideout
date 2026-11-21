@@ -88,7 +88,7 @@ insideout reset-password                            # paste link/token + new pas
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `workspaces create --title [--desc]`, `join <code>`, `projects create --title [--desc] <ws-id>` |
 | Read surface | `whoami`, `workspaces`, `projects <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>` |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
-| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>`, `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
+| Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content] <id>` (without `--content` the body is kept), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
 | Roadmap | `roadmap list/add/update/move/delete`, `roadmap update --deadline RFC3339\|clear`, `roadmap progress <proj>`, `roadmap presence <proj>` |
 | Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--item Title[@Parent]]… <proj> <summary>`, `idea proposal-decide --accept\|--reject [--apply] <update-id>` |
 | Admin | `invite [--ttl hours] <email>`, `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |

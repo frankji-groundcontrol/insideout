@@ -127,8 +127,8 @@ func (s *Server) handleGetIdea(w http.ResponseWriter, r *http.Request) {
 }
 
 type updateIdeaRequest struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title   string  `json:"title"`
+	Content *string `json:"content"` // nil (absent or null) keeps the stored body
 }
 
 func (s *Server) handleUpdateIdea(w http.ResponseWriter, r *http.Request) {

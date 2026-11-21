@@ -66,7 +66,7 @@ var sweep = []sweepCase{
 	{"SetSignupMode", "PUT", "/admin/settings", func(c *Client, h string) error { return drop(c.SetSignupMode(h)) }},
 
 	{"Ideas", "GET", "/workspaces/{h}/ideas", func(c *Client, h string) error { return drop(c.Ideas(h)) }},
-	{"UpdateIdea", "PATCH", "/ideas/{h}", func(c *Client, h string) error { return drop(c.UpdateIdea(h, h, h)) }},
+	{"UpdateIdea", "PATCH", "/ideas/{h}", func(c *Client, h string) error { return drop(c.UpdateIdea(h, h, &h)) }},
 	{"DeleteIdea", "DELETE", "/ideas/{h}", func(c *Client, h string) error { return c.DeleteIdea(h) }},
 	{"UpdatePrd", "PATCH", "/prds/{h}", func(c *Client, h string) error {
 		return drop(c.UpdatePrd(h, &h, map[string]string{"goals": h}))

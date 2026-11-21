@@ -27,7 +27,7 @@ func TestCrudVerbsHitRightRoutes(t *testing.T) {
 	}{
 		{"idea_list", func() error { _, err := c.Ideas("ws1"); return err },
 			"GET", "/workspaces/ws1/ideas", ""},
-		{"idea_update", func() error { _, err := c.UpdateIdea("i1", "T", "C"); return err },
+		{"idea_update", func() error { _, err := c.UpdateIdea("i1", "T", &[]string{"C"}[0]); return err },
 			"PATCH", "/ideas/i1", `{"content":"C","title":"T"}`},
 		{"idea_delete", func() error { return c.DeleteIdea("i1") },
 			"DELETE", "/ideas/i1", ""},

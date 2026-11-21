@@ -123,8 +123,9 @@ func (s *Store) GetIdeaForMember(ctx context.Context, ideaID, viewerID uuid.UUID
 }
 
 // UpdateIdea requires actorID to be the idea's author and still a member of
-// its workspace (SEC-11: authorship outlives membership).
-func (s *Store) UpdateIdea(ctx context.Context, actorID, ideaID uuid.UUID, title, content string) (*Idea, error) {
+// its workspace (SEC-11: authorship outlives membership). A nil content keeps
+// the stored body; a non-nil one, even "", replaces it.
+func (s *Store) UpdateIdea(ctx context.Context, actorID, ideaID uuid.UUID, title string, content *string) (*Idea, error) {
 	var idea *Idea
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		var authorID, workspaceID uuid.UUID
@@ -145,7 +146,7 @@ func (s *Store) UpdateIdea(ctx context.Context, actorID, ideaID uuid.UUID, title
 
 		row := tx.QueryRow(ctx, `
 			UPDATE insideout.ideas
-			SET title = $2, content = $3, status = CASE WHEN status = 'inbox' THEN 'refining' ELSE status END
+			SET title = $2, content = COALESCE($3, content), status = CASE WHEN status = 'inbox' THEN 'refining' ELSE status END
 			WHERE id = $1
 			RETURNING `+ideaColumns,
 			ideaID, title, content,
