@@ -201,4 +201,13 @@ func TestRLSKeepsADelegateInsideTheirSubtree(t *testing.T) {
 	if _, err := asApp(t, st, m, "", reparent, w.refunds.ID, froot.ID); !denied(err) {
 		t.Errorf("reparent under another project's node: want 42501, got %v", err)
 	}
+	// Even as a member of the foreign workspace, a delegate cannot lift a node
+	// out of its project as a root there: an update keeps project_id.
+	if _, err := st.JoinWorkspace(ctx, m, fws.Code); err != nil {
+		t.Fatalf("join the foreign workspace: %v", err)
+	}
+	const rehome = `UPDATE insideout.roadmap_nodes SET project_id = $2, parent_id = NULL WHERE id = $1`
+	if _, err := asApp(t, st, m, "", rehome, w.refunds.ID, fp.ID); !denied(err) {
+		t.Errorf("move a node into another project as a root: want 42501, got %v", err)
+	}
 }
