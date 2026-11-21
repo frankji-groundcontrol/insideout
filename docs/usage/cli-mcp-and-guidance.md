@@ -115,6 +115,12 @@ signal, ends the process at once (rv4-QUAL-04, rv4-REL-06).
   members, newest first: `id`, `title`, `status`, `authorId`, `authorName`,
   `projectId` (null until built) and `updatedAt`. An agent token may read it.
   Every project view carries `prdId`, the PRD it was built from, or null.
+- `GET /api/v1/projects/{pid}` embeds the newest 50 updates and a
+  `nextCursor` (null when no older update exists).
+  `GET /api/v1/projects/{pid}/updates?before=<nextCursor>&limit=<1..100>`
+  answers `{"updates": [...], "nextCursor": ...}` with the next page; without
+  `before` it starts from the newest, and `limit` defaults to 50. An agent
+  token may read it.
 
 ### Errors
 

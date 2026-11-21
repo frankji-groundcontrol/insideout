@@ -41,6 +41,7 @@ var agentAllowedRoutes = []string{
 	"PATCH /api/v1/ideas/{iid}",
 	"POST /api/v1/ideas/{iid}/convert",
 	"GET /api/v1/workspaces/{id}/prds",
+	"GET /api/v1/projects/{pid}/updates",
 	"GET /api/v1/prds/{id}",
 	"PATCH /api/v1/prds/{id}",
 	"GET /api/v1/prds/{id}/view",

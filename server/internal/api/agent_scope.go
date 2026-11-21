@@ -60,6 +60,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"PATCH /api/v1/ideas/{iid}":                   agentOK,
 	"POST /api/v1/ideas/{iid}/convert":            agentOK,
 	"GET /api/v1/workspaces/{id}/prds":            agentOK,
+	"GET /api/v1/projects/{pid}/updates":          agentOK,
 	"GET /api/v1/prds/{id}":                       agentOK,
 	"PATCH /api/v1/prds/{id}":                     agentOK,
 	"GET /api/v1/prds/{id}/view":                  agentOK,

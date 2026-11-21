@@ -39,9 +39,9 @@ func TestProjectReadsAreForWorkspaceMembersOnly(t *testing.T) {
 	w.must(t, w.owner, "GET", "/api/v1/workspaces/not-a-uuid/projects", "", http.StatusBadRequest)
 }
 
-// The detail embeds one page of the timeline. A full page is the only hint
-// that older history exists, so the cursor appears exactly when the page is
-// full and points at the oldest update shown.
+// The detail embeds one page of the timeline. The cursor appears exactly when
+// older history exists (rv5-PARB-07: the server reads one row past the page),
+// and points at the oldest update shown.
 func TestProjectDetailEmbedsOnePageOfUpdatesAndPointsAtTheRest(t *testing.T) {
 	w := newCoverageWorld(t)
 	add := func() {
@@ -52,19 +52,19 @@ func TestProjectDetailEmbedsOnePageOfUpdatesAndPointsAtTheRest(t *testing.T) {
 			t.Fatalf("add an update: %v", err)
 		}
 	}
-	for i := 0; i < store.ProjectUpdatesPageSize-1; i++ {
+	for i := 0; i < store.ProjectUpdatesPageSize; i++ {
 		add()
 	}
 	got := decodeAs[projectDetail](t, w.must(t, w.member, "GET", w.proj(), "", http.StatusOK))
-	if len(got.Updates) != store.ProjectUpdatesPageSize-1 || got.NextCursor != nil {
-		t.Fatalf("%d updates, cursor %v: a page that is not full must not claim there is more", len(got.Updates), got.NextCursor)
+	if len(got.Updates) != store.ProjectUpdatesPageSize || got.NextCursor != nil {
+		t.Fatalf("%d updates, cursor %v: a page holding the whole history must not claim there is more", len(got.Updates), got.NextCursor)
 	}
 
 	add()
 	got = decodeAs[projectDetail](t, w.must(t, w.member, "GET", w.proj(), "", http.StatusOK))
 	last := got.Updates[len(got.Updates)-1].ID
 	if len(got.Updates) != store.ProjectUpdatesPageSize || got.NextCursor == nil || *got.NextCursor != last {
-		t.Fatalf("%d updates, cursor %v: a full page must point at its oldest update %s", len(got.Updates), got.NextCursor, last)
+		t.Fatalf("%d updates, cursor %v: a page with older history must point at its oldest update %s", len(got.Updates), got.NextCursor, last)
 	}
 }
 

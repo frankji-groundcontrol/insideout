@@ -18,6 +18,7 @@ func (s *Server) registerProjectRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}", s.requireAuth(s.handleGetProject))
 	mux.HandleFunc("PATCH /api/v1/projects/{pid}", s.requireAuth(s.handleUpdateProject))
 	mux.HandleFunc("DELETE /api/v1/projects/{pid}", s.requireAuth(s.handleDeleteProject))
+	mux.HandleFunc("GET /api/v1/projects/{pid}/updates", s.requireAuth(s.handleListProjectUpdates))
 	mux.HandleFunc("POST /api/v1/projects/{pid}/updates", s.requireAuth(s.handleAddProjectUpdate))
 	mux.HandleFunc("PATCH /api/v1/updates/{uid}", s.requireAuth(s.handleEditProjectUpdate))
 	mux.HandleFunc("DELETE /api/v1/updates/{uid}", s.requireAuth(s.handleDeleteProjectUpdate))
@@ -180,30 +181,18 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updates, err := s.store.ListProjectUpdates(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil)
+	// Embed only the newest page; nextCursor reads the rest from
+	// GET /projects/{pid}/updates?before= (rv5-PARB-07).
+	updates, nextCursor, err := s.updatesPage(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil)
 	if err != nil {
-		s.log.Error("list project updates", "error", err)
-		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		s.writeStoreError(w, "list project updates", err, nil)
 		return
 	}
-
-	// Embed only the newest page; a full page signals there's older history,
-	// surfaced as nextCursor for a future load-more (frontend follow-up).
-	var nextCursor *string
-	if len(updates) == store.ProjectUpdatesPageSize {
-		last := updates[len(updates)-1].ID.String()
-		nextCursor = &last
-	}
-
-	resp := struct {
+	httpx.WriteJSON(w, http.StatusOK, struct {
 		projectView
 		Updates    []projectUpdateView `json:"updates"`
 		NextCursor *string             `json:"nextCursor"`
-	}{projectView: projectResponse(store.ProjectWithLatest{Project: *p}, s.now()), Updates: make([]projectUpdateView, len(updates)), NextCursor: nextCursor}
-	for i, u := range updates {
-		resp.Updates[i] = projectUpdateResponse(u)
-	}
-	httpx.WriteJSON(w, http.StatusOK, resp)
+	}{projectResponse(store.ProjectWithLatest{Project: *p}, s.now()), updates, nextCursor})
 }
 
 type updateProjectRequest struct {
