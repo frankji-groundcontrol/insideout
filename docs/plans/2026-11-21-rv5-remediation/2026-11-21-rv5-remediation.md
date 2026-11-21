@@ -56,7 +56,8 @@ PRD, no completion override by an agent.
 - [x] Wave 2 · the task tree (rows 2.1 to 2.9) —
       [record](../../changelogs/2026-11-21-rv5-remediation/wave-2.md)
 - [ ] Wave 3 · surface parity (rows 3.1 to 3.7)
-- [ ] Wave 4 · structure (rows 4.1 to 4.7)
+- [x] Wave 4 · structure (rows 4.1 to 4.7) —
+      [record](../../changelogs/2026-11-21-rv5-remediation/wave-4.md)
 - [ ] Wave 5 · documentation index (rows 5.1 to 5.6)
 
 Per-row dispositions are recorded wave by wave in the

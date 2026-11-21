@@ -21,3 +21,6 @@ results and anything left open:
 - [Wave 3](./wave-3.md) — the four surfaces in step: one error style, one patch rule,
   the PRD list and updates paging, the missing CLI, MCP and web verbs; row 3.1 (the
   parity test) lands after wave 4.
+- [Wave 4](./wave-4.md) — structure: a responsibility rule with a function guard, the
+  MCP, CLI, setup, LLM and web splits, tests named for what they pin, and the wave 3
+  follow-ups.
