@@ -80,10 +80,10 @@ insideout forgot-password you@example.com           # emails a reset link
 insideout reset-password                            # paste link/token + new password
 ```
 
-`login --code`, `login --magic` and `forgot-password` print the server's
-email status first: `accepted for delivery`, or `logged on the server, not
-delivered` when the server has no mail provider (ask its operator for the
-code or link).
+`login --code`, `login --magic`, `forgot-password` (and MCP
+`auth_login_code_request`, `auth_magic_link_request`) print the server's email
+status: `accepted for delivery`, or `logged on the server, not delivered` when
+the server has no mail provider (ask its operator for the code or link).
 
 ## Verbs
 

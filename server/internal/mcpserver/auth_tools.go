@@ -101,10 +101,12 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool("auth_login_code_request", "Email a 6-digit sign-in code to the account (uniform ok — never reveals whether it exists). Then ask the human for the digits and call auth_login_code_verify",
 		[]mcp.ToolOption{strReq("email", "account email")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			if err := c.RequestLoginCode(reqStr(req, "email")); err != nil {
+			mail, err := c.RequestLoginCodeStatus(reqStr(req, "email"))
+			if err != nil {
 				return "", err
 			}
-			return "code sent if the account exists — ask the human for the 6 digits, then call auth_login_code_verify", nil
+			return "code sent if the account exists. " + apiclient.MailStatusLine(mail) +
+				" Ask the human for the 6 digits, then call auth_login_code_verify", nil
 		})
 	addTool("auth_login_code_verify", "Verify the emailed 6-digit code and sign this MCP server process in",
 		[]mcp.ToolOption{strReq("email", "account email"), strReq("code", "6-digit code from the email")},
@@ -121,10 +123,12 @@ func addAuthTools(s *server.MCPServer, api string) {
 	addTool("auth_magic_link_request", "Email a one-time sign-in link (uniform ok). Then ask the human for the link (or just the token after token=) and call auth_magic_link_consume",
 		[]mcp.ToolOption{strReq("email", "account email")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			if err := c.RequestMagicLink(reqStr(req, "email")); err != nil {
+			mail, err := c.RequestMagicLinkStatus(reqStr(req, "email"))
+			if err != nil {
 				return "", err
 			}
-			return "link sent if the account exists — ask the human for it, then call auth_magic_link_consume with the token (the part after token=)", nil
+			return "link sent if the account exists. " + apiclient.MailStatusLine(mail) +
+				" Ask the human for it, then call auth_magic_link_consume with the token (the part after token=)", nil
 		})
 	addTool("auth_magic_link_consume", "Exchange an emailed magic-link token for a session for this MCP server process",
 		[]mcp.ToolOption{strReq("token", "token from the emailed link (the part after token=)")},
