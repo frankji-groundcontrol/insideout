@@ -147,10 +147,12 @@ func loginCommand(c *apiclient.Client, base string, positional []string, useCode
 		fmt.Fprintln(os.Stderr, "login: pick one of --code or --magic")
 		return true, 2
 	case useCode:
-		if err = c.RequestLoginCode(email); err != nil {
+		var mail string
+		if mail, err = c.RequestLoginCodeStatus(email); err != nil {
 			break
 		}
-		fmt.Fprintf(os.Stderr, "code sent (if the account exists) — check %s\n", email)
+		fmt.Fprintln(os.Stderr, apiclient.MailStatusLine(mail))
+		fmt.Fprintf(os.Stderr, "if that account exists, a code is on its way — check %s\n", email)
 		code, serr := readSecret("code: ")
 		if serr != nil {
 			err = serr
@@ -162,10 +164,12 @@ func loginCommand(c *apiclient.Client, base string, positional []string, useCode
 		}
 		err = c.VerifyLoginCode(email, code)
 	case useMagic:
-		if err = c.RequestMagicLink(email); err != nil {
+		var mail string
+		if mail, err = c.RequestMagicLinkStatus(email); err != nil {
 			break
 		}
-		fmt.Fprintln(os.Stderr, "link sent (if the account exists) — paste the link (or token) from the email")
+		fmt.Fprintln(os.Stderr, apiclient.MailStatusLine(mail))
+		fmt.Fprintln(os.Stderr, "if that account exists, a link is on its way — paste the link (or token) from the email")
 		link, serr := readSecret("link or token: ")
 		if serr != nil {
 			err = serr
