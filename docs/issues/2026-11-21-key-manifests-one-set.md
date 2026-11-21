@@ -1,6 +1,6 @@
 # 2026-11-21 — key manifests: one set under hosts/_manifests/keys/
 
-*Open. Found by review 5 as `STRC-04`
+*Resolved 2026-11-21. Found by review 5 as `STRC-04`
 ([findings register](../review/2026-11-21-focused-review-5/01-findings-register.md)).
 Wave 4 landed the guard only; the move is this record.*
 
@@ -54,3 +54,27 @@ resolves `.secrets/` under the host), the fixtures in
 Verify with `python3 -m unittest discover -s tests/keys -t . -p "test_*.py"`
 from `scripts/`, and `python3 -I scripts/keys.py audit` on a host that has a
 store.
+
+## Resolution (2026-11-21)
+
+- One manifest set now lives under
+  [`hosts/_manifests/keys/`](../../hosts/_manifests/keys/): the primary host's
+  copies were moved (they carried the three `optional: true` lines), the
+  `host:` line and host-specific notes dropped, and the other host's copies
+  deleted. `host.yml`, `keys/README.md` and the ignored `.secrets/` stay per
+  host; the `.secrets/` paths did not change.
+- `keys.key_map(root, host)` reads the shared manifests (`keys.manifest_paths`)
+  and resolves each value to `hosts/<host>/keys/<module>/.secrets/<name>.key`.
+  `test_manifests_live_in_one_shared_set` fails if a per-host copy returns.
+- Drift settled: `INSIDEOUT_AI_TURN_DEADLINE` is mapped as
+  `llm/coach.yaml` `ai-turn-deadline` and `INSIDEOUT_TRUSTED_PROXY_HOPS` as
+  `app/runtime.yaml` `trusted-proxy-hops`, each with a per-key doc and test.
+  `INSIDEOUT_GH_CLIENT_SECRET` is **unmapped, not added to `.env.example`**:
+  no server code reads it, so it is not a variable of this app; its per-key
+  doc and test were removed. Both exception sets in `test_store.py` are
+  empty.
+- Operator follow-up on each machine with a store: run
+  `INSIDEOUT_KEYS_HOST=<host> python3 scripts/keys.py init` to create the two
+  new placeholders (the never-absent test fails on a present host until
+  then). The old `gh-client-secret.key` stays on disk unread; delete it or
+  keep the value in a password manager if the OAuth flow is ever built.
