@@ -6,6 +6,7 @@ package agentcontext
 
 import (
 	"regexp"
+	"slices"
 	"time"
 
 	"github.com/frankji-groundcontrol/insideout/server/internal/readiness"
@@ -107,7 +108,15 @@ func Assemble(in Inputs) map[string]any {
 		if in.FocusNodeID != "" {
 			if n := findNode(in.Nodes, in.FocusNodeID); n != nil {
 				out["focus"] = nodeContext(n, in)
-				untrusted = append(untrusted, "focus.title", "focus.acceptance", "focus.owner", "focus.siblings[]")
+				untrusted = append(untrusted, "focus.title", "focus.path[]",
+					"focus.acceptance", "focus.owner", "focus.siblings[]")
+				if n.Description != "" {
+					untrusted = append(untrusted, "focus.description")
+				}
+				// The focus subtree only: the leaves below the focus, or the
+				// focus itself when it is a leaf (rv5-TREEX-05).
+				below := subtreeIDs(in.Nodes, n.ID)
+				leaves = slices.DeleteFunc(leaves, func(l NodeIn) bool { return !below[l.ID] })
 			}
 		}
 		out["leaves"] = leavesContext(leaves, in)
@@ -131,12 +140,21 @@ func nodeContext(n *NodeIn, in Inputs) map[string]any {
 		"id": n.ID, "title": n.Title, "status": n.Status,
 		"evidence": in.EvidenceCounts[n.ID],
 	}
+	if n.Description != "" {
+		ctx["description"] = n.Description
+	}
 	if n.Acceptance != "" {
 		ctx["acceptance"] = n.Acceptance
 	}
 	if n.OwnerName != "" {
 		ctx["owner"] = n.OwnerName
 	}
+	// path: the ancestors' titles, root first.
+	path := []string{}
+	for p := findNode(in.Nodes, n.ParentID); p != nil; p = findNode(in.Nodes, p.ParentID) {
+		path = append([]string{p.Title}, path...)
+	}
+	ctx["path"] = path
 	putDeadline(ctx, n, in)
 	var siblings []string
 	for _, other := range in.Nodes {
@@ -190,6 +208,20 @@ func leafNodes(nodes []NodeIn) []NodeIn {
 		}
 	}
 	return leaves
+}
+
+// subtreeIDs is the set of rootID and every node below it.
+func subtreeIDs(nodes []NodeIn, rootID string) map[string]bool {
+	in := map[string]bool{rootID: true}
+	for grew := true; grew; {
+		grew = false
+		for _, n := range nodes {
+			if !in[n.ID] && n.ParentID != "" && in[n.ParentID] {
+				in[n.ID], grew = true, true
+			}
+		}
+	}
+	return in
 }
 
 func findNode(nodes []NodeIn, id string) *NodeIn {

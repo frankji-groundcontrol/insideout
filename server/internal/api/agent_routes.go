@@ -36,6 +36,9 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		mode = "implementation"
 	}
 	focus := r.URL.Query().Get("focus")
+	if u, err := uuid.Parse(focus); err == nil {
+		focus = u.String() // the form node ids are compared in
+	}
 
 	project, err := s.store.GetProjectForMember(r.Context(), pid, userID)
 	if errors.Is(err, store.ErrNotFound) {
@@ -67,15 +70,25 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		Nodes:          make([]agentcontext.NodeIn, 0, len(nodes)),
 		EvidenceCounts: evidence,
 	}
+	focusFound := false
 	for _, n := range nodes {
 		parent := ""
 		if n.ParentID != nil {
 			parent = n.ParentID.String()
 		}
 		in.Nodes = append(in.Nodes, agentcontext.NodeIn{
-			ID: n.ID.String(), ParentID: parent, Title: n.Title, Status: n.Status, Deadline: n.Deadline,
-			Acceptance: n.Acceptance, OwnerName: n.OwnerName,
+			ID: n.ID.String(), ParentID: parent, Title: n.Title, Description: n.Description, Status: n.Status,
+			Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName,
 		})
+		if n.ID.String() == focus {
+			focusFound = true
+		}
+	}
+	// An unknown focus is refused, not ignored: an agent asked for one
+	// subtree and must not get the whole project back (rv5-TREEX-05).
+	if focus != "" && !focusFound {
+		httpx.WriteError(w, http.StatusNotFound, "focus node not found in this project", "", nil)
+		return
 	}
 	if project.ID != uuid.Nil {
 		if prd, err := s.store.PrdByProject(r.Context(), userID, pid); err == nil && prd != nil {
