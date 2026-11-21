@@ -40,6 +40,7 @@ typedef _Board = ({
   Workspace ws,
   List<Project> projects,
   List<WorkspaceMember> members,
+  List<WorkspacePrd>? prds,
 });
 
 class WorkspacePage extends StatefulWidget {
@@ -80,7 +81,13 @@ class _WorkspacePageState extends State<WorkspacePage> {
     final members = await api
         .listMembers(widget.id)
         .catchError((_) => <WorkspaceMember>[]);
-    final board = (ws: ws, projects: projects, members: members);
+    // Read with the board so a refresh re-reads it (rv5-FE-02); the board
+    // stands without it.
+    List<WorkspacePrd>? prds;
+    try {
+      prds = await api.listWorkspacePrds(widget.id);
+    } catch (_) {}
+    final board = (ws: ws, projects: projects, members: members, prds: prds);
     if (!mounted) return board;
     final focus = context.read<LoopFocus>();
     if (focus.projectFor(widget.id) == null && projects.isNotEmpty) {
@@ -284,12 +291,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
               ],
             ],
             const SizedBox(height: Cobalt.space8),
-            // Keyed by the loaded list so a refresh re-reads the PRDs too.
-            WorkspacePrdList(
-              key: ObjectKey(data.projects),
-              workspaceId: widget.id,
-              projects: data.projects,
-            ),
+            WorkspacePrdList(prds: data.prds, projects: data.projects),
           ],
         ),
       ),
