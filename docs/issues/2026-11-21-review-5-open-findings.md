@@ -30,29 +30,26 @@ Current state and the decided target:
 
 ## The build path writes before it checks
 
-| ID | Finding | Where | Plan row | Priority | Owner |
-| --- | --- | --- | --- | --- | --- |
-| FEAT-01, PARB-02 | The Build draft call creates a project; a non-author member's builds create unlinked projects (reproduced) | `server/internal/store/roadmap_plan.go:242` | 1.2 | P0 | unassigned |
-| FEAT-03 | A rebuild erases every evidence row and validation record (reproduced) | `server/internal/store/roadmap_plan.go:58` | 1.5 | P0 | unassigned |
-| FEAT-02 | An agent token may replace the whole roadmap | `server/internal/api/agent_scope.go:79` | 1.4 | P0 | unassigned |
-| PARB-01 | The approval gate before Build is a web button only | `server/internal/api/roadmap_draft.go:50` | 1.3 | P1 | unassigned |
+*Fixed on `rv5/remediation` in wave 1
+([record](../changelogs/2026-11-21-rv5-remediation/wave-1.md)): FEAT-01,
+PARB-02, FEAT-03, FEAT-02 and PARB-01. TREEB-10 (Medium) is partly fixed: the
+replace guard is in; a subtree delete with history and a record of a forced
+discard move to wave 2.*
 
 ## Other Highs
 
 | ID | Finding | Where | Plan row | Priority | Owner |
 | --- | --- | --- | --- | --- | --- |
-| IDX-02, COMP-01 | The pushed tip is red in three CI jobs: the docs truth gate, the expand response-shape test, the analyzer baseline (reproduced) | `docs/architecture/backend.md:147`, `server/internal/api/testdata/roadmap_expand_confirm.json` | 0.1 | P0 | unassigned |
-| PARA-02 | A title-only idea update from CLI or MCP erases the idea body (reproduced) | `server/internal/apiclient/crud.go:24` | 1.1 | P0 | unassigned |
-| FE-01 | The coach transcript does not update during a session | `client/lib/features/prd/coach_panel.dart:112` | 1.7 | P0 | unassigned |
+| IDX-02, COMP-01 | Fixed in wave 0 (`50b7437`): the docs truth gate, the expand response-shape test and the analyzer baseline | `docs/architecture/backend.md`, `server/internal/api/testdata/roadmap_expand_confirm.json` | 0.1 | done | claude |
+| PARA-02 | Fixed in wave 1 (`a695b8f`): a title-only idea update keeps the body | `server/internal/apiclient/crud.go` | 1.1 | done | claude |
+| FE-01 | Fixed in wave 1 (`7941126`, `458ff76`): the coach transcript keeps every turn | `client/lib/features/prd/coach_panel.dart` | 1.7 | done | claude |
 | FE-02, PARB-03 | Nobody can find a PRD they did not create | `server/internal/api/projects.go:26` | 3.3 | P1 | unassigned |
 | PARB-04 | `SKILL.md:107` and `README.md:35` promise every verb on every surface; projects beyond list and create are web-only | `SKILL.md:107` | 3.4, 3.5 | P1 | unassigned |
 
 ## The uncommitted slice
 
-The install front door and password-reset work (35 modified and 22 untracked
-files) has no plan and no board row, and leaves five tests and two contract
-gates red. Its closing checklist is plan row 0.4 (`PARA-01`, `PARA-08`,
-`PARA-10`, `STRC-01`, `FE-06`, `IDX-09`, `COMP-04`, `COMP-06`).
+*Finished and committed in wave 0 (`454ab0b`,
+[record](../changelogs/2026-11-21-rv5-remediation/wave-0.md)).*
 
 ## Decisions only the owner can make
 

@@ -47,7 +47,8 @@ of 350 lines, which blocks two CI additions) and the
 **Update 2026-11-21:** one new open record —
 [govulncheck red on main](2026-11-21-govulncheck-go-toolchain.md): the
 `security` workflow on `4d186da9` flags two Go stdlib vulnerabilities; the
-fix is a `server/go.mod` toolchain bump to go1.26.11.
+fix is a `server/go.mod` toolchain bump to go1.26.11. *Resolved on
+`rv5/remediation` (`7bcb71e`).*
 
 **Update 2026-11-21:** [focused review 5](../review/2026-11-21-focused-review-5/README.md) opened
 [fifteen High defects and six owner decisions](./2026-11-21-review-5-open-findings.md);

@@ -1,5 +1,9 @@
 # 2026-11-21 — govulncheck red on main: Go toolchain behind two stdlib fixes
 
+*Resolved 2026-11-21 on `rv5/remediation` in `7bcb71e`: `toolchain go1.26.11`;
+`govulncheck ./...` reports no vulnerabilities in called code
+([wave 1 record](../changelogs/2026-11-21-rv5-remediation/wave-1.md)).*
+
 ## Symptom
 
 The `security` workflow on the first push of wave 4b

@@ -11,3 +11,5 @@ results and anything left open:
 
 - [Wave 0](./wave-0.md) — green tip, the install and password-reset slice
   finished and committed, the task-tree concept written; all seven rows closed.
+- [Wave 1](./wave-1.md) — the idea body, the build path, the coach transcript and
+  the drafted-tree preview; Go toolchain go1.26.11; TREEB-10 partly closed.
