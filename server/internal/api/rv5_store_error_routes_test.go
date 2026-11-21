@@ -55,6 +55,18 @@ func TestStoreErrorAnswersOfTheMemberAndWorkspaceRoutes(t *testing.T) {
 	})
 }
 
+// rv5-STRS-11: the last admin's refusal carries the store's own code, as it
+// does on every other route that meets ErrLastAdmin.
+func TestLastAdminRefusalCarriesItsCode(t *testing.T) {
+	w := newCoverageWorld(t)
+	owner := w.ws() + "/members/" + w.owner.ID.String()
+	const why = "a workspace needs at least one admin"
+	w.expectErrors(t, []errCase{
+		{"step down", w.owner, "PATCH", owner, `{"role":"member"}`, http.StatusConflict, "last_admin", why},
+		{"leave", w.owner, "DELETE", owner, "", http.StatusConflict, "last_admin", why},
+	})
+}
+
 func TestStoreErrorAnswersOfTheConversationRoutes(t *testing.T) {
 	w := newCoverageWorld(t)
 	other := w.newMember(t, "other")
