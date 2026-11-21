@@ -23,6 +23,9 @@ func serverRoot() string {
 	return filepath.Join(filepath.Dir(thisFile), "..", "..")
 }
 
+// fset holds every file the walk parses, so a type checker can place them.
+var fset = token.NewFileSet()
+
 // parseDir parses the non-test Go files of one server directory.
 func parseDir(t *testing.T, rel string) []*ast.File {
 	t.Helper()
@@ -31,7 +34,6 @@ func parseDir(t *testing.T, rel string) []*ast.File {
 	if err != nil {
 		t.Fatalf("read %s: %v", rel, err)
 	}
-	fset := token.NewFileSet()
 	var files []*ast.File
 	for _, e := range entries {
 		if !strings.HasSuffix(e.Name(), ".go") || strings.HasSuffix(e.Name(), "_test.go") {

@@ -16,8 +16,17 @@ type surface struct {
 }
 
 func loadSurface(t *testing.T, name, rel string) surface {
+	s := scanSurface(t, name, parseDir(t, rel))
+	if len(s.calls) < 20 {
+		t.Fatalf("%s: found only %d call names in %s; the scan is broken", name, len(s.calls), rel)
+	}
+	return s
+}
+
+// scanSurface collects the client calls and struct field sets in one package's files.
+func scanSurface(t *testing.T, name string, files []*ast.File) surface {
 	s := surface{name: name, calls: map[string][][]ast.Expr{}, sets: map[string]map[string]bool{}}
-	for _, f := range parseDir(t, rel) {
+	for _, f := range files {
 		mentioned := map[string]bool{} // apiclient types this file names
 		ast.Inspect(f, func(n ast.Node) bool {
 			if sel, ok := n.(*ast.SelectorExpr); ok {
@@ -55,9 +64,6 @@ func loadSurface(t *testing.T, name, rel string) surface {
 			}
 			return true
 		})
-	}
-	if len(s.calls) < 20 {
-		t.Fatalf("%s: found only %d call names in %s; the scan is broken", name, len(s.calls), rel)
 	}
 	return s
 }
