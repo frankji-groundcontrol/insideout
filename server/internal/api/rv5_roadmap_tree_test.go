@@ -156,3 +156,22 @@ func TestAgentContextKeepsToTheFocusSubtree(t *testing.T) {
 	w.must(t, w.member, "GET", base+uuid.NewString(), "", http.StatusNotFound)
 	w.must(t, w.member, "GET", base+"not-a-node", "", http.StatusNotFound)
 }
+
+// An agent token may not change who owns a node: ownership grants write rights,
+// so it stays a human decision (owner decision 4, 2026-11-21). The agent
+// proposes instead; its other edits still go through.
+func TestAnAgentTokenCannotChangeANodesOwner(t *testing.T) {
+	w := newTreeWorld(t)
+	agentTok := w.asAgent(t, w.owner)
+	patch := "/api/v1/roadmap/" + w.card.ID.String()
+	for _, body := range []string{`{"ownerId":"` + w.member.ID.String() + `"}`, `{"ownerId":""}`, `{"title":"Card v2","ownerId":""}`} {
+		status, resp := w.call(agentTok, "PATCH", patch, body)
+		requireScopeRefusal(t, "agent PATCH "+body, status, resp)
+	}
+	n, err := w.st.GetRoadmapNode(context.Background(), w.owner.ID, w.card.ID)
+	if err != nil || n.Title != "Card" || n.OwnerID != nil {
+		t.Fatalf("after refused agent patches: %+v, err %v; want Card, no owner", n, err)
+	}
+	w.must(t, agentTok, "PATCH", patch, `{"title":"Card v2"}`, http.StatusOK)
+	w.must(t, w.owner, "PATCH", patch, `{"ownerId":"`+w.member.ID.String()+`"}`, http.StatusOK)
+}
