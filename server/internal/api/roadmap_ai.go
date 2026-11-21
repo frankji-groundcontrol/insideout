@@ -306,7 +306,7 @@ func (s *Server) handleConfirmExpandNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
 		return
 	}
 	if err != nil {

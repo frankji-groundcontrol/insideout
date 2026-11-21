@@ -113,7 +113,8 @@ func nodeWorkspace(ctx context.Context, tx pgx.Tx, nodeID uuid.UUID) (uuid.UUID,
 }
 
 // CreateRoadmapNode appends a node under parentID (nil = root) at the next
-// sibling position. Only the project owner or a workspace admin may add.
+// sibling position. A root takes a plan writer; a child takes a writer of
+// its parent (requireNodeWriter), so a delegate adds inside their subtree.
 func (s *Store) CreateRoadmapNode(ctx context.Context, actorID, projectID uuid.UUID, parentID *uuid.UUID, title, description string) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -133,18 +134,12 @@ func (s *Store) CreateRoadmapNode(ctx context.Context, actorID, projectID uuid.U
 // proposal — can make them all land or none. The caller announces the change
 // with noteRoadmapChange once its transaction has committed.
 func createRoadmapNodeTx(ctx context.Context, tx pgx.Tx, actorID, projectID uuid.UUID, parentID *uuid.UUID, title, description string) (*RoadmapNode, error) {
-	if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
-		return nil, err
-	}
-
-	// Same per-project advisory lock as MoveRoadmapNode: serializes the
-	// MAX(position)+1 read-modify-write so concurrent sibling creates
-	// can't land on the same position.
-	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, projectID.String()); err != nil {
-		return nil, err
-	}
-
-	if parentID != nil {
+	if parentID == nil {
+		// A new root is a plan write; a child is a write to its parent.
+		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+			return nil, err
+		}
+	} else {
 		// The parent must live in the same project, else the tree could
 		// silently span projects.
 		var parentProject uuid.UUID
@@ -158,6 +153,16 @@ func createRoadmapNodeTx(ctx context.Context, tx pgx.Tx, actorID, projectID uuid
 		if parentProject != projectID {
 			return nil, ErrConflict
 		}
+		if err := requireNodeWriter(ctx, tx, *parentID, actorID); err != nil {
+			return nil, err
+		}
+	}
+
+	// Same per-project advisory lock as MoveRoadmapNode: serializes the
+	// MAX(position)+1 read-modify-write so concurrent sibling creates
+	// can't land on the same position.
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext($1))`, projectID.String()); err != nil {
+		return nil, err
 	}
 
 	// IS NOT DISTINCT FROM matches parent_id = $2 including NULL = NULL.
@@ -245,38 +250,40 @@ func statusTransitionAllowed(from, to string) bool {
 	return false
 }
 
-// UpdateRoadmapNode edits a node's content/status. Only the project owner
-// or a workspace admin; the assigned owner, when set, must also be a
-// member; status moves only through the legal transitions.
+// UpdateRoadmapNode edits a node's content/status. The actor must be a writer
+// of the node (requireNodeWriter); changing its owner takes a manager of the
+// node (requireNodeManager), so a delegate re-delegates below the node they
+// were handed, not that node. The assigned owner, when set, must be a member;
+// status moves only through the legal transitions.
 func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, f RoadmapNodeFields) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
-		var projectID uuid.UUID
-		if err := tx.QueryRow(ctx, `SELECT project_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&projectID); err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return ErrNotFound
-			}
-			return err
-		}
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		if err := requireNodeWriter(ctx, tx, nodeID, actorID); err != nil {
 			return err
 		}
 		wsID, err := nodeWorkspace(ctx, tx, nodeID)
 		if err != nil {
 			return err
 		}
-		if f.OwnerID != nil && *f.OwnerID != uuid.Nil {
-			if _, err := requireMember(ctx, tx, wsID, *f.OwnerID); err != nil {
-				return ErrForbidden
-			}
-		}
-
 		var current string
-		if err := tx.QueryRow(ctx, `SELECT status FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&current); err != nil {
+		var owner *uuid.UUID
+		if err := tx.QueryRow(ctx, `SELECT status, owner_user_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).Scan(&current, &owner); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ErrNotFound
 			}
 			return err
+		}
+		// The web's Edit form sends the owner it shows on every save: only a
+		// real change is an owner change.
+		if (f.ClearOwner && owner != nil) || (f.OwnerID != nil && (owner == nil || *owner != *f.OwnerID)) {
+			if err := requireNodeManager(ctx, tx, nodeID, actorID); err != nil {
+				return err
+			}
+		}
+		if f.OwnerID != nil && *f.OwnerID != uuid.Nil {
+			if _, err := requireMember(ctx, tx, wsID, *f.OwnerID); err != nil {
+				return ErrForbidden
+			}
 		}
 		if f.Status != nil && !statusTransitionAllowed(current, *f.Status) {
 			return fmt.Errorf("%w: status %q cannot move to %q", ErrInvalidTransition, current, *f.Status)
@@ -311,7 +318,8 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 }
 
 // DeleteRoadmapNode removes a node; its subtree cascades via the parent_id
-// FK's ON DELETE CASCADE. Only the project owner or a workspace admin.
+// FK's ON DELETE CASCADE. It takes a manager of the node (requireNodeManager):
+// a delegate deletes below the node they were handed, never that node.
 func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) error {
 	var projectID uuid.UUID
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -321,7 +329,7 @@ func (s *Store) DeleteRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 			}
 			return err
 		}
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		if err := requireNodeManager(ctx, tx, nodeID, actorID); err != nil {
 			return err
 		}
 		_, err := tx.Exec(ctx, `DELETE FROM insideout.roadmap_nodes WHERE id = $1`, nodeID)

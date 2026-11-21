@@ -78,3 +78,48 @@ func requirePlanWriter(ctx context.Context, tx pgx.Tx, projectID, userID uuid.UU
 	}
 	return nil
 }
+
+// requireNodeWriter allows a write to one roadmap node under the tree's one
+// rule, insideout._can_write_node (the function the roadmap_nodes policies
+// call too): the project owner, a workspace admin, or a current member who
+// owns the node or an ancestor of it. ErrNotFound when the node is not visible.
+func requireNodeWriter(ctx context.Context, tx pgx.Tx, nodeID, userID uuid.UUID) error {
+	var ok bool
+	err := tx.QueryRow(ctx,
+		`SELECT insideout._can_write_node(id, $2) FROM insideout.roadmap_nodes WHERE id = $1`,
+		nodeID, userID).Scan(&ok)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return ErrForbidden
+	}
+	return nil
+}
+
+// requireNodeManager allows moving, deleting or reassigning a node: a plan
+// writer, or a writer of the node's parent. A delegate therefore manages what
+// lies strictly below the node they were handed, never that node itself
+// (owner decision 3, 2026-11-21).
+func requireNodeManager(ctx context.Context, tx pgx.Tx, nodeID, userID uuid.UUID) error {
+	var projectID uuid.UUID
+	var parentID *uuid.UUID
+	err := tx.QueryRow(ctx, `SELECT project_id, parent_id FROM insideout.roadmap_nodes WHERE id = $1`, nodeID).
+		Scan(&projectID, &parentID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if err := requirePlanWriter(ctx, tx, projectID, userID); !errors.Is(err, ErrForbidden) {
+		return err
+	}
+	if parentID == nil {
+		return ErrForbidden
+	}
+	return requireNodeWriter(ctx, tx, *parentID, userID)
+}

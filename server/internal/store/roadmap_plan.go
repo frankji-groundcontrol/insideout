@@ -149,9 +149,10 @@ var expandFailAt int
 
 // ExpandRoadmapNode inserts all proposed children under parentID in one
 // transaction — either the whole AI expansion lands or none of it does.
-// Children append after any existing siblings. Like every plan write it takes
-// the project owner or a workspace admin (BUG-020), and each child goes in
-// through createRoadmapNodeTx, behind the same per-project lock as a manual add.
+// Children append after any existing siblings. It takes a writer of the parent
+// (requireNodeWriter: a delegate breaks down inside their subtree), and each
+// child goes in through createRoadmapNodeTx, behind the same per-project lock
+// as a manual add.
 func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UUID, children []RoadmapPlanNode) ([]RoadmapNode, error) {
 	var out []RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -164,7 +165,7 @@ func (s *Store) ExpandRoadmapNode(ctx context.Context, actorID, parentID uuid.UU
 			return err
 		}
 		// Up front, so an expansion with nothing to add is refused too.
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		if err := requireNodeWriter(ctx, tx, parentID, actorID); err != nil {
 			return err
 		}
 

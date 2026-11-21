@@ -153,7 +153,7 @@ func (s *Server) handleCreateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrConflict) {
@@ -258,7 +258,7 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap, and an assigned owner must be a member", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node, and an assigned owner must be a member", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrInvalidTransition) {
@@ -289,7 +289,7 @@ func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can change the roadmap", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can change this node", "", nil)
 		return
 	}
 	if err != nil {

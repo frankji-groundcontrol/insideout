@@ -57,7 +57,7 @@ func (s *Server) handleAddObservation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusForbidden, "only the project owner or a workspace admin can record evidence", "", nil)
+		httpx.WriteError(w, http.StatusForbidden, "only the project owner, a workspace admin, or the owner of this branch can record evidence here", "", nil)
 		return
 	}
 	if errors.Is(err, store.ErrConflict) {

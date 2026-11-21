@@ -63,7 +63,7 @@ set_config('app.user_id', $1, true)` from the JWT-validated caller's ID, runs
 `fn`, and commits. RLS policies (`server/db/migrations/20260720150000_row_level_security.sql`
 onward) read that value via a small `insideout.current_user_id()` SQL
 function and enforce the same authorization checklist the Go app layer
-already checks — a database-level backstop against app-layer bugs. `insideout_app` is
+already checks (for the roadmap tree, through the very same SQL function) — a database-level backstop against app-layer bugs. `insideout_app` is
 not the table owner, so RLS applies to the runtime login. DEFINER
 helpers run as `insideout_owner` (NOSUPERUSER, `BYPASSRLS`) so membership
 lookups do not recurse under FORCE RLS.
@@ -129,6 +129,25 @@ drop and convert over the ideas they wrote there, cannot insert a PRD into it,
 and can no longer edit or snapshot their PRDs or edit or delete their project
 updates. The admin branches need no change, since `_is_admin` implies
 membership.
+
+Roadmap tree writes follow one rule in SQL (rv5 row 2.2, migration
+`20261121100000_roadmap_node_writer.sql`): `insideout._can_write_node(node,
+user)` is true for the project owner, a workspace admin of the node's
+workspace (`insideout._is_plan_writer(project, user)`), or a current member who
+owns the node or any ancestor of it. Both functions are `SECURITY DEFINER`,
+owned by `insideout_owner`, `STABLE`, with `search_path = insideout, pg_temp`:
+a policy on `roadmap_nodes` that queried `roadmap_nodes` itself would recurse
+(42P17, BUG-007). The `roadmap_nodes` update and delete policies call it on
+the row; the insert policy calls it on the parent (a root takes
+`_is_plan_writer`) and still pins `created_by` to the caller; the
+`roadmap_evidence` insert policy calls it on the node. Select stays
+workspace-wide. The Go store calls the same function through
+`requireNodeWriter` (`server/internal/store/authz.go`) and adds what a policy
+cannot see: moving, deleting or reassigning a node takes `requireNodeManager`
+(a plan writer, or a writer of the node's parent), so a delegate never moves,
+deletes or reassigns the node they were handed. Validation, replacing the
+whole tree and proposals stay with `requirePlanWriter`. Pinned by
+`server/internal/store/roadmap_delegate_test.go`, raw SQL included.
 
 The Go store checks the same: `requireMember` in `UpdateIdea`, `DropIdea` and
 `ConvertIdea` (and the membership predicate of `GetIdeaForMember`), and ahead

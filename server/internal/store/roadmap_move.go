@@ -10,8 +10,9 @@ import (
 
 // MoveRoadmapNode reparents a node (newParentID nil = make it a root) and sets
 // its sibling position. It refuses to move a node under itself or one of its
-// own descendants, which would create a cycle. Only the project owner or a
-// workspace admin.
+// own descendants, which would create a cycle. It takes a manager of the node
+// (requireNodeManager) and a writer of the new parent, or a plan writer for a
+// new root: a delegate moves what lies below their node, within what they own.
 func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, newParentID *uuid.UUID, position int) (*RoadmapNode, error) {
 	var n *RoadmapNode
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -22,7 +23,14 @@ func (s *Store) MoveRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID, 
 			}
 			return err
 		}
-		if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+		if err := requireNodeManager(ctx, tx, nodeID, actorID); err != nil {
+			return err
+		}
+		if newParentID == nil {
+			if err := requirePlanWriter(ctx, tx, projectID, actorID); err != nil {
+				return err
+			}
+		} else if err := requireNodeWriter(ctx, tx, *newParentID, actorID); err != nil {
 			return err
 		}
 
