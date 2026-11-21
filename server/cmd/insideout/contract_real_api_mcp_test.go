@@ -133,11 +133,10 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		if renamed := toolJSON[doc](t, s, "roadmap_update", kv{"node_id": child.ID, "title": "Renamed " + r.sfx}); renamed.Title != "Renamed "+r.sfx {
 			t.Fatalf("roadmap_update = %+v, want the new title", renamed)
 		}
-		// An agent token may say what done means, never who owns the node (rv5-PARC-01).
+		// An agent token may say what done means, never who owns the node (rv5-PARC-01),
+		// so roadmap_update takes no owner_id (rv5-PARB-04); the API's refusal is
+		// internal/api's TestAnAgentTokenCannotChangeANodesOwner.
 		toolData(t, s, "roadmap_update", kv{"node_id": child.ID, "acceptance": "Ships"})
-		if out := callTool(t, s, "roadmap_update", kv{"node_id": child.ID, "owner_id": "clear"}); !out.isError || !strings.Contains(out.text, "agent token") {
-			t.Fatalf("roadmap_update owner_id = %+v, want the agent-scope refusal", out)
-		}
 		toolData(t, s, "roadmap_move", kv{"node_id": child.ID, "parent_id": "root", "position": 0}) // to the root
 		nodes := map[string]doc{}
 		for _, n := range toolJSON[[]doc](t, s, "roadmap_list", kv{"project_id": r.project}) {
