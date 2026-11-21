@@ -9,6 +9,41 @@ Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
 records continue the numbering (next: BUG-031).
 
+## Open
+
+Every record whose own status line says open, plus the records that carry no
+status line (listed so nothing is lost; close one by giving it a status line
+and moving its row out). Read 2026-11-21; newest first. The full list of
+records, open and closed, follows under the later headings.
+
+| Record | Kind | Since | What is open |
+| --- | --- | --- | --- |
+| [Per-Project roles](2026-11-21-per-project-roles.md) | product slice | 2026-11-21 | Decision Owner, Driver, Contributor, Reviewer and Viewer have no storage or check |
+| [Review 5 open findings](./2026-11-21-review-5-open-findings.md) | review ledger | 2026-11-21 | the review 5 High defects not yet remediated, and the open owner question on proposals |
+| [Review 4 open findings](2026-10-18-review-4-open-findings.md) | review ledger | 2026-10-18 | review 4's open residue, gate notes and owner rows |
+| [Review 4 privacy: what only the owner can finish](2026-10-18-rv4-owner-privacy-decisions.md) | owner decisions | 2026-10-18 | the owner halves of wave-0 rows 0.1 to 0.4 |
+| [ci.yml line-budget split](2026-10-18-ci-yml-split.md) | structural debt | 2026-10-18 | no status line; `ci.yml` is 350 lines |
+| [PRODUCT.md and SETENV.md line-budget split](2026-10-18-product-and-setenv-over-line-budget.md) | structural debt | 2026-10-19 | no status line; 477 and 368 lines |
+| [Change Proposal for delivery-revealed change](2026-10-18-promise-partial-change-proposal.md) | partial promise | 2026-10-18 | no impact view before a new baseline |
+| [Roadmap tied to a PRD Commit baseline](2026-10-18-promise-partial-commit-baseline-tie.md) | partial promise | 2026-10-18 | the Roadmap is not tied to a Commit |
+| [Outcome target time ranges](2026-10-18-promise-partial-outcome-time-ranges.md) | partial promise | 2026-10-18 | outcomes carry no target range |
+| [Overdue work resolved with a reason](2026-10-18-promise-partial-overdue-resolution.md) | partial promise | 2026-10-18 | overdue work closes or moves without a reason |
+| [Secondary audiences on a working version](2026-10-18-promise-partial-secondary-audiences.md) | partial promise | 2026-10-18 | only one primary audience |
+| [PRODUCT.md promise gaps (enumeration)](2026-10-11-product-promise-gaps.md) | product slices | 2026-10-11 | the nine slices below and their order |
+| [Product Branch, Merge and the Decision Log](2026-10-11-product-branch-merge-decision-log.md) | product slice | 2026-10-11 | no branch machinery |
+| [Scoped external feedback invitations](2026-10-11-scoped-feedback-invitations.md) | product slice | 2026-10-11 | no feedback route |
+| [Tokenized audience-share link](2026-10-11-tokenized-audience-share-link.md) | product slice | 2026-10-11 | audience views are auth-only |
+| [Persona grounding labels](2026-10-11-persona-grounding-labels.md) | product slice | 2026-10-11 | no priority or grounding label |
+| [Facts trust layer](2026-10-11-facts-trust-layer.md) | product slice | 2026-10-11 | no route to confirm, correct or remove facts |
+| [Roadmap lenses](2026-10-11-roadmap-lenses.md) | product slice | 2026-10-11 | the five lenses are docs-only |
+| [Roadmap dependency edges](2026-10-11-roadmap-dependency-edges.md) | product slice | 2026-10-11 | no depends_on edge |
+| [Focus surface](2026-10-11-focus-surface.md) | product slice | 2026-10-11 | no user focus pointer or team Now |
+| [Working-version autosave](2026-10-11-prd-autosave.md) | product slice | 2026-10-11 | no autosave |
+| [Historical records over the line budget](2026-10-11-historical-records-over-line-budget.md) | structural debt | 2026-10-11 | no status line; split deferred behind record immutability |
+| [Changelogs README line budget](2026-10-11-changelogs-readme-line-budget.md) | structural debt | 2026-10-11 | no status line; the split it asks for has landed (month files; the flat list dropped 2026-11-21, IDX-06) |
+
+## State notes
+
 **State on 2026-10-11:** every record is fixed, superseded or closed with
 evidence, except the open-by-design product slices below. The last two
 owner items closed 2026-10-11:
@@ -86,6 +121,10 @@ is in [2026-10-11 — PRODUCT.md promise gaps](2026-10-11-product-promise-gaps.m
   per-node status and canvas presence.
 - [Working-version autosave](2026-10-11-prd-autosave.md) — saves are manual
   guardWrite actions; no autosave or debounce anywhere in the client.
+- [Per-Project roles](2026-11-21-per-project-roles.md) — recorded 2026-11-21
+  (review 5, FEAT-04), outside the enumeration above: authority is workspace
+  admin, project owner, PRD author and node owner; the five per-Project roles
+  have no storage or check.
 
 ## Resolved partial promises
 
