@@ -115,6 +115,8 @@ rejected (401). The token's reads stay workspace-wide (owner decision 2), but
 its node writes stay inside the root and the nodes below it: `PATCH
 /roadmap/{nid}`, `POST /roadmap/{nid}/move` (the node and its new parent),
 `POST /projects/{pid}/roadmap` (the parent; a new root is outside),
+`POST /roadmap/{nid}/dependencies` and `DELETE /roadmap/{nid}/dependencies/{did}`
+(the waiting node only; the node waited on may lie anywhere in the project),
 `POST /roadmap/{nid}/expand` and `/expand/confirm` answer 403
 `agent_scope_denied` for a node outside (404 for a node the caller cannot see,
 as without a root), and `POST /prds/{pid}/build/confirm`

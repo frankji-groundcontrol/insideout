@@ -143,6 +143,7 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | `DELETE /api/v1/roadmap/{nid}` | Delete with subtree; 409 `roadmap_delete_has_history` with the counts unless `?force=true` (the CLI: `roadmap delete --force`) | `server/internal/api/roadmap.go`, `server/internal/store/roadmap_delete.go` |
 | `POST /api/v1/roadmap/{nid}/delegate`, `/handback` | Hand a node to a member (400 for a non-member), hand it back | `server/internal/api/roadmap_delegation.go` |
 | `GET /api/v1/roadmap/{nid}/assignments` | The node's owner history, newest first | `server/internal/api/roadmap_delegation.go` |
+| `POST /api/v1/roadmap/{nid}/dependencies`, `DELETE .../dependencies/{did}` | Make a node wait on another, or stop it (see Dependencies below) | `server/internal/api/roadmap_dependencies.go` |
 | `GET /api/v1/workspaces/{id}/roadmap/mine` | The caller's topmost owned nodes in the workspace, each `{node, projectId, projectName, ancestors}`, by project then position | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_mine.go` |
 | `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping; `?root={nid}` restricts it to one subtree | `server/internal/api/roadmap_progress.go` |
 | `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap_validation.go` |
@@ -151,8 +152,8 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | `POST /api/v1/roadmap/{nid}/expand` and `/confirm` | Break a node down | `server/internal/api/roadmap_ai.go` |
 | `GET /api/v1/agent/context` | Agent briefing | `server/internal/api/agent_routes.go` |
 
-Every node view carries `canWrite`, the caller's right under
-`_can_write_node`, and `rollup {leaves, done, validated, earliestDeadline}`
+Every node view carries `dependsOn` (see Dependencies below), `canWrite`, the
+caller's right under `_can_write_node`, and `rollup {leaves, done, validated, earliestDeadline}`
 over the leaves at or below it (a leaf counts itself; `done` counts done and
 validated, the Progress rule; `earliestDeadline` is the earliest deadline among
 the unfinished leaves). A list computes both in its one query plus Go
@@ -179,6 +180,49 @@ tree verbs and those three (`roadmap show`, `mine`, `delegate`,
 `handback`, `assignments`, `--root`, `update --owner/--acceptance`, and
 `members`; `server/cmd/insideout/cli_roadmap_tree.go`) over the Go client
 (`server/internal/apiclient/roadmap.go`, `roadmap_tree.go`).
+
+### Dependencies
+
+A node may wait on other nodes of its project, across branches, so parallel
+work can merge. `insideout.roadmap_dependencies (node_id, depends_on_id,
+created_by, created_at)` holds one row per link: `node_id` waits on
+`depends_on_id`. The pair is the primary key, both ids reference
+`roadmap_nodes` with `ON DELETE CASCADE` (deleting either node, or replacing
+the whole tree, drops the link), and a check refuses a node waiting on itself
+(`server/db/migrations/20261122100000_roadmap_dependencies.sql`). RLS follows
+the node's project: every member of its workspace reads the links; an insert
+needs `created_by` to be the caller, `_can_write_node` on `node_id`, and both
+ends in one project; a delete needs `_can_write_node` on `node_id`.
+
+The store (`server/internal/store/roadmap_dependencies.go`) adds and removes a
+link behind the per-project advisory lock and pings the progress streams. It
+refuses a link between a node and its own ancestor or descendant (the tree
+already says that, `ErrDependencyInTree`) and one that closes a cycle of
+waiting (`ErrDependencyCycle`); re-adding an existing link is no change. The
+writer of the waiting node decides; any node of the project the caller can see
+may be waited on.
+
+| Route | Answer |
+| --- | --- |
+| `POST /api/v1/roadmap/{nid}/dependencies {"dependsOnId"}` | 201 with the node view of `{nid}` |
+| `DELETE /api/v1/roadmap/{nid}/dependencies/{did}` | 204, or 404 `dependency not found` when there is no such link |
+
+Errors: 400 for a bad id or `dependency_self`; 403 for a caller who does not
+write `{nid}`; 404 for a node not visible or in another project; 409
+`dependency_in_tree` or `dependency_cycle`
+(`server/internal/api/roadmap_dependencies.go`). Agent tokens may call both
+routes; a root-scoped token needs `{nid}` inside its root (the waited-on node
+may lie anywhere in the project). Every node view carries `dependsOn`, the
+waited-on ids, oldest link first, `[]` when none. The agent context lists a
+node's unfinished dependencies (not done or validated) as `waitsOn` titles, on
+the focus and on each leaf. The Go client has `AddRoadmapDependency` and
+`RemoveRoadmapDependency`, the CLI `roadmap depend --on <node> <node>` and
+`roadmap undepend --on <node> <node>`, MCP `roadmap_dependency_add` and
+`roadmap_dependency_remove`.
+
+Known limit: a move is not checked against existing links, so moving a node
+under the node it waits on (or the reverse) keeps a link the add would now
+refuse as `dependency_in_tree`.
 
 ### Agent context focus
 
