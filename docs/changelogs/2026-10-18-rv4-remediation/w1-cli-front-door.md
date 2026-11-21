@@ -141,7 +141,7 @@ rv4-PM-05. Still open, as residue in the [open-findings record](../../issues/202
 README first-run lines (R1-06, wave 3), the Dockerfile and `install.sh`
 version stamp (R1-04), the stronger release gate (R1-05) and the version
 policy and rollback (R1-16). The per-ID dispositions are in this folder's
-[index](index.md).
+[index](./index.md).
 
 ## Verification
 

@@ -39,7 +39,7 @@ the dock marks the unfinished step; the workspace board shows each
 project's stage and counts; the Evidence dock renders leaf evidence.
 
 **Add (3 of 7).** Progress updates while work runs
-([own changelog](2026-10-05-roadmap-progress-stream.md)); accepting a
+([own changelog](./2026-10-05-roadmap-progress-stream.md)); accepting a
 proposal applies its roadmap items; a build lands on the roadmap, not
 the evidence page.
 

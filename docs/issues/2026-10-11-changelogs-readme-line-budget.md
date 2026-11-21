@@ -9,7 +9,7 @@
 
 **Date:** 2026-10-11
 **Kind:** structural debt (line-budget split)
-**File:** [`docs/changelogs/README.md`](README.md) — 473 lines against the
+**File:** [`docs/changelogs/README.md`](./README.md) — 473 lines against the
 ~350-line budget, and it grows by roughly one entry per change record.
 
 ## Why it grew

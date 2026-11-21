@@ -10,7 +10,7 @@ and `POST /prds/{pid}/build/confirm`, checked workspace membership only, while
 every other roadmap write takes the project owner or a workspace admin
 ([BUG-020](../../issues/2026-10-06-bug-020-workspace-member-writes-the-plan.md)).
 Record R2-04 of the [open-findings record](../../issues/2026-10-18-review-4-open-findings.md)
-carried the expand half as a lead and [w2-proposal-apply](w2-proposal-apply.md)
+carried the expand half as a lead and [w2-proposal-apply](./w2-proposal-apply.md)
 listed it as a ceiling; this cluster closes it. The seventh finding, and the
 agent half of one of the six, are an owner decision (`DEFERRED_OWNER`) and
 change nothing. No address, host, secret or one-time code is spelled in this
@@ -139,7 +139,7 @@ agent to "grow the roadmap" with `roadmap_add/update/move/delete` and `expand`;
 `TestAnAgentTokenStillDoesTheAgentsWork` pins the neighbouring direct writes
 (roadmap add and update, PRD section edits) as intended, and
 `agent_scope_routes_test.go` pins the four routes themselves.
-[w2-agent-scope](w2-agent-scope.md) records how the table was drawn.
+[w2-agent-scope](./w2-agent-scope.md) records how the table was drawn.
 
 **Options.**
 

@@ -9,7 +9,7 @@ has a roadmap with N nodes…") could never appear, so a second build never
 asked and never replaced anything either.
 
 Found 2026-10-10 while closing the
-[build-from-PRD record](2026-07-25-build-from-prd-runs-llm-before-conflict-guard.md),
+[build-from-PRD record](./2026-07-25-build-from-prd-runs-llm-before-conflict-guard.md),
 and confirmed against a real server in a browser (below). The CLI
 (`build` then `build-confirm`) and the MCP `build` / `build_confirm` tools
 were never affected.
@@ -32,7 +32,7 @@ Why the tests stayed green: `prd_actions_test.dart` answered the draft
 endpoint with a 409 on the first call and a success on the retry, which is the
 old contract. The fake encoded the same misreading as the page, so the test
 pinned the page's consistency, not the server's behavior (the same shape as
-[BUG-015](2026-09-03-bug-015-signup-mode-wrong-method.md)).
+[BUG-015](./2026-09-03-bug-015-signup-mode-wrong-method.md)).
 
 ## Fix
 
@@ -56,7 +56,7 @@ server, not only in widget tests: tapping Build MVP on a PRD wrote the nodes
 and landed on the populated roadmap; a second tap showed the replace dialog
 with the live count, and confirming replaced the tree. The pre-existing
 singular wording was fixed on the same pass
-([BUG-025](2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
+([BUG-025](./2026-10-10-bug-025-phone-layouts-and-copy-found-by-the-web-walk.md)).
 See the [web walk changelog](../changelogs/2026-10-10-close-open-gaps/web-walk-and-phone-layouts.md)
 and [client fidelity fixes](../changelogs/2026-10-10-close-open-gaps/client-fidelity-fixes.md).
 

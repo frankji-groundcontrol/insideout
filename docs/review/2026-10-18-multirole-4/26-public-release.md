@@ -4,7 +4,7 @@
 **Score:** **6 / 10**  
 **Bottom line:** No secret in tree or history (independently confirmed), but the public repo exposes real hosted-admin and owner-domain email addresses in docs, institutional and machine-name author identities in history, an ungated and unsigned release path with no license notices in the binaries, no security automation, and no privacy notice for the hosted service.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

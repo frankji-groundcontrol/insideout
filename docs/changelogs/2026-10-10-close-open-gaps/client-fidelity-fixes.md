@@ -6,7 +6,7 @@ and the Nuxt-era canvas records left two items with Flutter equivalents
 ([record](../../issues/2026-07-26-roadmap-canvas-adversarial-followups.md)).
 Each one below is a test that fails against the unfixed code, then the fix.
 The 390px defects the web walk found are in
-[web-walk-and-phone-layouts.md](web-walk-and-phone-layouts.md), and the
+[web-walk-and-phone-layouts.md](./web-walk-and-phone-layouts.md), and the
 Build MVP bug is [BUG-022](../../issues/2026-10-10-bug-022-build-mvp-wrote-nothing.md).
 
 ## Theme and surfaces
@@ -63,7 +63,7 @@ Build MVP bug is [BUG-022](../../issues/2026-10-10-bug-022-build-mvp-wrote-nothi
   repeats it with a web build.
 - **Real browser:** the project, roadmap (Progress, Bands, Canvas), PRD and
   Versions pages were walked at 1440x900 and 390x844 against a local server
-  ([web walk](web-walk-and-phone-layouts.md)).
+  ([web walk](./web-walk-and-phone-layouts.md)).
 
 ## Reviewed and kept
 

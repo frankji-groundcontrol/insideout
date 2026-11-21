@@ -1,6 +1,6 @@
 # Multirole review 1 (2026-10-04): what happened to each untraced finding
 
-The register is [2026-10-04-multirole/01-findings-register.md](../2026-10-04-multirole/01-findings-register.md). Rows below are the findings no remediation plan or issue record named; each has one status. [Reading the statuses](README.md#statuses).
+The register is [2026-10-04-multirole/01-findings-register.md](../2026-10-04-multirole/01-findings-register.md). Rows below are the findings no remediation plan or issue record named; each has one status. [Reading the statuses](./README.md#statuses).
 
 | ID | Sev | Finding | Status | Resolution |
 |---|---|---|---|---|

@@ -323,7 +323,7 @@ policies needs to route around any of these again:
   which is what makes the migration re-runnable).
 - `jsonb` columns bound from Go `map`/`[]byte` values fail under
   `pgx.QueryExecModeSimpleProtocol` (required for PgBouncer/Supavisor
-  transaction-pooling connections — see [deployment](deployment.md)): Go
+  transaction-pooling connections — see [deployment](./deployment.md)): Go
   `map` types have no default encoder at all, and `[]byte` defaults to
   `bytea` (hex-escaped) rather than plain text, which an `::jsonb` cast
   cannot parse. Fixed by `json.Marshal`-ing to a Go `string` explicitly and

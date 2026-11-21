@@ -3,7 +3,7 @@
 Second wave of the [multirole-review remediation](../review/2026-10-04-multirole/40-remediation-plan.md)
 (register: [01-findings-register.md](../review/2026-10-04-multirole/01-findings-register.md));
 plan of record [docs/plans/2026-10-04-remediation-wave-2.md](../plans/2026-10-04-remediation-wave-2.md).
-Waves 0–1 landed in [2026-10-04-remediation-wave-0-1.md](2026-10-04-remediation-wave-0-1.md).
+Waves 0–1 landed in [2026-10-04-remediation-wave-0-1.md](./2026-10-04-remediation-wave-0-1.md).
 Also on board: the compose stack moves to `postgres:18`.
 
 ## What changed

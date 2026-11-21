@@ -1,7 +1,7 @@
 # Remediation plan — multirole review 2
 
 Waves ordered by impact over effort. Register IDs refer to
-[01-findings-register.md](01-findings-register.md). Repo rules apply throughout:
+[01-findings-register.md](./01-findings-register.md). Repo rules apply throughout:
 DB-gated tests against real PostgreSQL, failing test first for substantial
 behavior changes, SSE changes exercised against a live server before "done".
 

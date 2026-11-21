@@ -16,12 +16,12 @@ line budget; this page is the way in.
 
 | Wave | Clusters | State | Record |
 | --- | --- | --- | --- |
-| 0 | `w0-privacy` (rows 0.1 to 0.4) | integrated; one gate failure, proven to be on the base | [wave-0.md](wave-0.md) |
-| 1 | 9 clusters (rows 1.1 to 1.18) | integrated; gates green; 30 of 34 findings `FIXED`, 4 `PARTIAL` | [wave-1.md](wave-1.md) |
-| 2 | 4 clusters (rows 2.1 to 2.6) | integrated at `e6bc637`; gates and a live check green; 23 rows: 21 `FIXED`, 2 `PARTIAL` | [wave-2.md](wave-2.md) |
-| 3 | 13 clusters (rows 3.1 to 3.11, plus `w3-client-apply` and `w3-users-read-grant` added after wave 2) | integrated at `3a1c4ac` (171 commits above the wave-2 records head); gates green, workflow properties pending the first CI run; 64 rows: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` | [wave-3.md](wave-3.md), [wave-3-dispositions.md](wave-3-dispositions.md) |
-| 4 | 21 clusters (carry-forward plus the whole-change review) | on `main` at `e6a3d14` (tested code head `97cf4c06`; 174 cherry-picks, two pre-gate fixups); gates were green before that landing; the first CI run is red on `env-suites` only | [wave-4.md](wave-4.md) |
-| 4b | four code clusters plus the five living-doc files | on `origin/main` since 2026-11-21 (landed at `4e16d1b`, pushed within `4d186da9`; [sync record](../2026-11-21-wave-4b-sync-and-push.md)) | [wave-4b.md](wave-4b.md) |
+| 0 | `w0-privacy` (rows 0.1 to 0.4) | integrated; one gate failure, proven to be on the base | [wave-0.md](./wave-0.md) |
+| 1 | 9 clusters (rows 1.1 to 1.18) | integrated; gates green; 30 of 34 findings `FIXED`, 4 `PARTIAL` | [wave-1.md](./wave-1.md) |
+| 2 | 4 clusters (rows 2.1 to 2.6) | integrated at `e6bc637`; gates and a live check green; 23 rows: 21 `FIXED`, 2 `PARTIAL` | [wave-2.md](./wave-2.md) |
+| 3 | 13 clusters (rows 3.1 to 3.11, plus `w3-client-apply` and `w3-users-read-grant` added after wave 2) | integrated at `3a1c4ac` (171 commits above the wave-2 records head); gates green, workflow properties pending the first CI run; 64 rows: 48 `FIXED`, 13 `PARTIAL`, 3 `DEFERRED_OWNER` | [wave-3.md](./wave-3.md), [wave-3-dispositions.md](./wave-3-dispositions.md) |
+| 4 | 21 clusters (carry-forward plus the whole-change review) | on `main` at `e6a3d14` (tested code head `97cf4c06`; 174 cherry-picks, two pre-gate fixups); gates were green before that landing; the first CI run is red on `env-suites` only | [wave-4.md](./wave-4.md) |
+| 4b | four code clusters plus the five living-doc files | on `origin/main` since 2026-11-21 (landed at `4e16d1b`, pushed within `4d186da9`; [sync record](../2026-11-21-wave-4b-sync-and-push.md)) | [wave-4b.md](./wave-4b.md) |
 
 ## Cluster fragments
 
@@ -30,54 +30,54 @@ the ceilings and the integrator's to-do. The wave files hold the dispositions.
 
 | Wave | Cluster | Plan rows | Fragment |
 | --- | --- | --- | --- |
-| 0 | `w0-privacy` | 0.1 to 0.4 | [w0-privacy.md](w0-privacy.md) |
-| 1 | `w1-cli-front-door` | 1.1, 1.2, 1.5 | [w1-cli-front-door.md](w1-cli-front-door.md) |
-| 1 | `w1-ci-gates` | 1.4, 1.6, 1.11, CI half of 1.15 | [w1-ci-gates.md](w1-ci-gates.md) |
-| 1 | `w1-clock-and-runes` | 1.3, 1.17 | [w1-clock-and-runes.md](w1-clock-and-runes.md) |
-| 1 | `w1-auth-atomic` | 1.9, 1.10, cooldown half of 1.13 | [w1-auth-atomic.md](w1-auth-atomic.md) |
-| 1 | `w1-apiclient-escape` | apiclient half of 1.13 | [w1-apiclient-escape.md](w1-apiclient-escape.md) |
-| 1 | `w1-github-repo` | 1.14 | [w1-github-repo.md](w1-github-repo.md) |
-| 1 | `w1-client-polish` | 1.16, dialog half of 1.12 | [w1-client-polish.md](w1-client-polish.md) |
-| 1 | `w1-ops-docs` | 1.7, 1.8, 1.18, bootstrap half of 1.12 | [w1-ops-docs.md](w1-ops-docs.md) |
-| 1 | `w1-misc-correctness` | 1.15 without its CI step | [w1-misc-correctness.md](w1-misc-correctness.md) |
-| 2 | `w2-client-credentials` | 2.1, 2.2 | [w2-client-credentials.md](w2-client-credentials.md) |
-| 2 | `w2-proposal-apply` | 2.3, 2.4 | [w2-proposal-apply.md](w2-proposal-apply.md) |
-| 2 | `w2-agent-scope` | 2.5 | [w2-agent-scope.md](w2-agent-scope.md) |
-| 2 | `w2-rls` | 2.6 | [w2-rls.md](w2-rls.md) |
-| 3 | `w3-coach-trust` | 3.1 | [w3-coach-trust.md](w3-coach-trust.md) |
-| 3 | `w3-stream-bounds` | 3.2 | [w3-stream-bounds.md](w3-stream-bounds.md) |
-| 3 | `w3-auth-network` | 3.3 | [w3-auth-network.md](w3-auth-network.md) |
-| 3 | `w3-release-supply` | 3.4 | [w3-release-supply.md](w3-release-supply.md) |
-| 3 | `w3-privacy` | 3.5 | [w3-privacy.md](w3-privacy.md) |
-| 3 | `w3-docs-truth` | 3.6, README hunks of 3.8 | [w3-docs-truth.md](w3-docs-truth.md) |
-| 3 | `w3-test-hardening` | 3.7 | [w3-test-hardening.md](w3-test-hardening.md) |
-| 3 | `w3-first-run-copy` | 3.8 | [w3-first-run-copy.md](w3-first-run-copy.md) |
-| 3 | `w3-context-deadlines` | 3.9 | [w3-context-deadlines.md](w3-context-deadlines.md) |
-| 3 | `w3-github-evidence` | 3.10 | [w3-github-evidence.md](w3-github-evidence.md) |
-| 3 | `w3-client-assets` | 3.11 | [w3-client-assets.md](w3-client-assets.md) |
-| 3 | `w3-client-apply` | 2.3, 2.4 (R2-01) | [w3-client-apply.md](w3-client-apply.md) |
-| 3 | `w3-users-read-grant` | 2.6 (R2-02) | [w3-users-read-grant.md](w3-users-read-grant.md) |
-| 4 | `w4-supply-chain` | PUB-07 | [w4-supply-chain.md](w4-supply-chain.md) |
-| 4 | `w4-release-version` | PM-04, PM-05, PUB-03, SEC-07 | [w4-release-version.md](w4-release-version.md) |
-| 4 | `w4-privacy-opener` | PUB-02 | [w4-privacy-opener.md](w4-privacy-opener.md) |
-| 4 | `w4-project-handover-403` | TEST-03 | [w4-project-handover-403.md](w4-project-handover-403.md) |
-| 4 | `w4-cli-setup-check` | QUAL-04 | [w4-cli-setup-check.md](w4-cli-setup-check.md) |
-| 4 | `w4-env-truth` | FEAT-04 | [w4-env-truth.md](w4-env-truth.md) |
-| 4 | `w4-copy-sweep` | PM-08, USER-10 | [w4-copy-sweep.md](w4-copy-sweep.md) |
-| 4 | `w4-rv-client-boot` | whole-change client boot | [w4-rv-client-boot.md](w4-rv-client-boot.md) |
-| 4 | `w4-rv-client-api` | whole-change client API | [w4-rv-client-api.md](w4-rv-client-api.md) |
-| 4 | `w4-rv-redaction-guard` | whole-change redaction | [w4-rv-redaction-guard.md](w4-rv-redaction-guard.md) |
-| 4 | `w4-rv-store-db` | whole-change store | [w4-rv-store-db.md](w4-rv-store-db.md) |
-| 4 | `w4-rv-github-client` | whole-change GitHub client | [w4-rv-github-client.md](w4-rv-github-client.md) |
-| 4 | `w4-rv-github-binding` | whole-change GitHub binding | [w4-rv-github-binding.md](w4-rv-github-binding.md) |
-| 4 | `w4-rv-agent` | whole-change agent | [w4-rv-agent.md](w4-rv-agent.md) |
-| 4 | `w4-rv-prd-cap` | whole-change PRD cap | [w4-rv-prd-cap.md](w4-rv-prd-cap.md) |
-| 4 | `w4-rv-roadmap-expand` | whole-change roadmap expand | [w4-rv-roadmap-expand.md](w4-rv-roadmap-expand.md) |
-| 4 | `w4-rv-auth-refresh` | whole-change refresh | [w4-rv-auth-refresh.md](w4-rv-auth-refresh.md) |
-| 4 | `w4-rv-api-guards` | whole-change API guards | [w4-rv-api-guards.md](w4-rv-api-guards.md) |
-| 4 | `w4-rv-apiclient` | whole-change API client | [w4-rv-apiclient.md](w4-rv-apiclient.md) |
-| 4 | `w4-rv-mcpserver` | whole-change MCP session | [w4-rv-mcpserver.md](w4-rv-mcpserver.md) |
-| 4 | `w4-rv-deploy-truth` | whole-change deploy truth | [w4-rv-deploy-truth.md](w4-rv-deploy-truth.md) |
+| 0 | `w0-privacy` | 0.1 to 0.4 | [w0-privacy.md](./w0-privacy.md) |
+| 1 | `w1-cli-front-door` | 1.1, 1.2, 1.5 | [w1-cli-front-door.md](./w1-cli-front-door.md) |
+| 1 | `w1-ci-gates` | 1.4, 1.6, 1.11, CI half of 1.15 | [w1-ci-gates.md](./w1-ci-gates.md) |
+| 1 | `w1-clock-and-runes` | 1.3, 1.17 | [w1-clock-and-runes.md](./w1-clock-and-runes.md) |
+| 1 | `w1-auth-atomic` | 1.9, 1.10, cooldown half of 1.13 | [w1-auth-atomic.md](./w1-auth-atomic.md) |
+| 1 | `w1-apiclient-escape` | apiclient half of 1.13 | [w1-apiclient-escape.md](./w1-apiclient-escape.md) |
+| 1 | `w1-github-repo` | 1.14 | [w1-github-repo.md](./w1-github-repo.md) |
+| 1 | `w1-client-polish` | 1.16, dialog half of 1.12 | [w1-client-polish.md](./w1-client-polish.md) |
+| 1 | `w1-ops-docs` | 1.7, 1.8, 1.18, bootstrap half of 1.12 | [w1-ops-docs.md](./w1-ops-docs.md) |
+| 1 | `w1-misc-correctness` | 1.15 without its CI step | [w1-misc-correctness.md](./w1-misc-correctness.md) |
+| 2 | `w2-client-credentials` | 2.1, 2.2 | [w2-client-credentials.md](./w2-client-credentials.md) |
+| 2 | `w2-proposal-apply` | 2.3, 2.4 | [w2-proposal-apply.md](./w2-proposal-apply.md) |
+| 2 | `w2-agent-scope` | 2.5 | [w2-agent-scope.md](./w2-agent-scope.md) |
+| 2 | `w2-rls` | 2.6 | [w2-rls.md](./w2-rls.md) |
+| 3 | `w3-coach-trust` | 3.1 | [w3-coach-trust.md](./w3-coach-trust.md) |
+| 3 | `w3-stream-bounds` | 3.2 | [w3-stream-bounds.md](./w3-stream-bounds.md) |
+| 3 | `w3-auth-network` | 3.3 | [w3-auth-network.md](./w3-auth-network.md) |
+| 3 | `w3-release-supply` | 3.4 | [w3-release-supply.md](./w3-release-supply.md) |
+| 3 | `w3-privacy` | 3.5 | [w3-privacy.md](./w3-privacy.md) |
+| 3 | `w3-docs-truth` | 3.6, README hunks of 3.8 | [w3-docs-truth.md](./w3-docs-truth.md) |
+| 3 | `w3-test-hardening` | 3.7 | [w3-test-hardening.md](./w3-test-hardening.md) |
+| 3 | `w3-first-run-copy` | 3.8 | [w3-first-run-copy.md](./w3-first-run-copy.md) |
+| 3 | `w3-context-deadlines` | 3.9 | [w3-context-deadlines.md](./w3-context-deadlines.md) |
+| 3 | `w3-github-evidence` | 3.10 | [w3-github-evidence.md](./w3-github-evidence.md) |
+| 3 | `w3-client-assets` | 3.11 | [w3-client-assets.md](./w3-client-assets.md) |
+| 3 | `w3-client-apply` | 2.3, 2.4 (R2-01) | [w3-client-apply.md](./w3-client-apply.md) |
+| 3 | `w3-users-read-grant` | 2.6 (R2-02) | [w3-users-read-grant.md](./w3-users-read-grant.md) |
+| 4 | `w4-supply-chain` | PUB-07 | [w4-supply-chain.md](./w4-supply-chain.md) |
+| 4 | `w4-release-version` | PM-04, PM-05, PUB-03, SEC-07 | [w4-release-version.md](./w4-release-version.md) |
+| 4 | `w4-privacy-opener` | PUB-02 | [w4-privacy-opener.md](./w4-privacy-opener.md) |
+| 4 | `w4-project-handover-403` | TEST-03 | [w4-project-handover-403.md](./w4-project-handover-403.md) |
+| 4 | `w4-cli-setup-check` | QUAL-04 | [w4-cli-setup-check.md](./w4-cli-setup-check.md) |
+| 4 | `w4-env-truth` | FEAT-04 | [w4-env-truth.md](./w4-env-truth.md) |
+| 4 | `w4-copy-sweep` | PM-08, USER-10 | [w4-copy-sweep.md](./w4-copy-sweep.md) |
+| 4 | `w4-rv-client-boot` | whole-change client boot | [w4-rv-client-boot.md](./w4-rv-client-boot.md) |
+| 4 | `w4-rv-client-api` | whole-change client API | [w4-rv-client-api.md](./w4-rv-client-api.md) |
+| 4 | `w4-rv-redaction-guard` | whole-change redaction | [w4-rv-redaction-guard.md](./w4-rv-redaction-guard.md) |
+| 4 | `w4-rv-store-db` | whole-change store | [w4-rv-store-db.md](./w4-rv-store-db.md) |
+| 4 | `w4-rv-github-client` | whole-change GitHub client | [w4-rv-github-client.md](./w4-rv-github-client.md) |
+| 4 | `w4-rv-github-binding` | whole-change GitHub binding | [w4-rv-github-binding.md](./w4-rv-github-binding.md) |
+| 4 | `w4-rv-agent` | whole-change agent | [w4-rv-agent.md](./w4-rv-agent.md) |
+| 4 | `w4-rv-prd-cap` | whole-change PRD cap | [w4-rv-prd-cap.md](./w4-rv-prd-cap.md) |
+| 4 | `w4-rv-roadmap-expand` | whole-change roadmap expand | [w4-rv-roadmap-expand.md](./w4-rv-roadmap-expand.md) |
+| 4 | `w4-rv-auth-refresh` | whole-change refresh | [w4-rv-auth-refresh.md](./w4-rv-auth-refresh.md) |
+| 4 | `w4-rv-api-guards` | whole-change API guards | [w4-rv-api-guards.md](./w4-rv-api-guards.md) |
+| 4 | `w4-rv-apiclient` | whole-change API client | [w4-rv-apiclient.md](./w4-rv-apiclient.md) |
+| 4 | `w4-rv-mcpserver` | whole-change MCP session | [w4-rv-mcpserver.md](./w4-rv-mcpserver.md) |
+| 4 | `w4-rv-deploy-truth` | whole-change deploy truth | [w4-rv-deploy-truth.md](./w4-rv-deploy-truth.md) |
 
 ## Where the open items are
 
@@ -98,10 +98,10 @@ the ceilings and the integrator's to-do. The wave files hold the dispositions.
   `testlock` line and the new api file names in `docs/architecture/backend.md`,
   two rows of `docs/usage/environment.md`, and the `go.mod` toolchain and
   `x/text` bump. See
-  [the coordinator note](wave-3.md#applied-before-the-gates-coordinator-note).
+  [the coordinator note](./wave-3.md#applied-before-the-gates-coordinator-note).
 - Wave 4 is on `main` at `e6a3d14`. The first CI run on that commit is red
-  on `env-suites` only. Owner questions stay in [wave-4.md](wave-4.md).
+  on `env-suites` only. Owner questions stay in [wave-4.md](./wave-4.md).
 - Wave 4b is on local `main` at `4e16d1b`
-  ([wave-4b.md](wave-4b.md)): four code clusters plus the five living-doc
+  ([wave-4b.md](./wave-4b.md)): four code clusters plus the five living-doc
   files. That tip reached `origin/main` 2026-11-21 within `4d186da9`
   ([sync record](../2026-11-21-wave-4b-sync-and-push.md)). The owner decisions were adopted 2026-10-20 ([adopted record](../../issues/2026-10-20-rv4-decisions-adopted.md)).

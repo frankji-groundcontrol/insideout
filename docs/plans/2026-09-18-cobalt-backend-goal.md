@@ -37,9 +37,9 @@ The live entrypoint is already real
 ## Source of truth (in order)
 
 1. This prompt and
-   [`docs/plans/2026-09-18-cobalt-backend.md`](2026-09-18-cobalt-backend.md).
+   [`docs/plans/2026-09-18-cobalt-backend.md`](./2026-09-18-cobalt-backend.md).
 2. Restyle record:
-   [`docs/plans/2026-09-18-cobalt-flutter.md`](2026-09-18-cobalt-flutter.md),
+   [`docs/plans/2026-09-18-cobalt-flutter.md`](./2026-09-18-cobalt-flutter.md),
    [`docs/changelogs/2026-09-18-cobalt-flutter-restyle.md`](../changelogs/2026-09-18-cobalt-flutter-restyle.md).
 3. Transport:
    [`docs/architecture/frontend.md`](../architecture/frontend.md),
@@ -72,7 +72,7 @@ If `DATABASE_URL` is already set, a local server is also fine:
 Do **not** `env.sh init` unless the user asked to set up this machine.
 Never read or print `.env` / `.env.local`. Never invent a hosted user.
 Signup is invitation-only
-([plan](2026-08-25-invitation-only-signup.md)). If you cannot log in,
+([plan](./2026-08-25-invitation-only-signup.md)). If you cannot log in,
 **stop and ask** for a login path (existing account, magic link, or
 operator). The local seed identity lives in
 [`server/cmd/insideout/seed.go`](../../server/cmd/insideout/seed.go) —
@@ -127,7 +127,7 @@ Do not add a preview `ApiClient`. Do not ship `tool/lock_preview.dart`.
 ## How to work
 
 1. Open a dated plan (or drive
-   [`2026-09-18-cobalt-backend.md`](2026-09-18-cobalt-backend.md))
+   [`2026-09-18-cobalt-backend.md`](./2026-09-18-cobalt-backend.md))
    **before** editing. Keep `docs/plans/README.md` and
    `docs/HANDOFF.md` current.
 2. Get a real session first. Then the smallest wiring fix that unblocks
@@ -172,4 +172,4 @@ bundle until someone runs `railway up --service app`" no longer holds —
 both services were deployed and domain-verified 2026-10-04, and the owner
 deploy 2026-10-11 shipped `b6c34c4` (server) / `6b1f24f` (app) with
 `v0.1.0` published
-([owner-gap plan](2026-10-11-owner-gap-closure.md)).*
+([owner-gap plan](./2026-10-11-owner-gap-closure.md)).*

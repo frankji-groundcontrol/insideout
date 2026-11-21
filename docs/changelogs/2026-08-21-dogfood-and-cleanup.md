@@ -1,6 +1,6 @@
 # 2026-08-21 — Dogfood project made real; scratch data purged
 
-Follow-ups to the [evidence loop](2026-08-21-evidence-loop.md), executed
+Follow-ups to the [evidence loop](./2026-08-21-evidence-loop.md), executed
 the same day.
 
 ## Dogfood

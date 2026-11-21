@@ -10,8 +10,8 @@ never one folder per key.
 
 | Path | Host |
 | --- | --- |
-| [franks-macbook-pro.local/](franks-macbook-pro.local/README.md) | The macOS development workstation |
-| [buddys-macbook-pro-2.local/](buddys-macbook-pro-2.local/README.md) | The secondary macOS development workstation (being filled key-by-key) |
+| [franks-macbook-pro.local/](./franks-macbook-pro.local/README.md) | The macOS development workstation |
+| [buddys-macbook-pro-2.local/](./buddys-macbook-pro-2.local/README.md) | The secondary macOS development workstation (being filled key-by-key) |
 
 Do not put passwords, tokens, or raw key files anywhere tracked. Values
 live only under each module's `.secrets/` (a dotfolder — `ls -a` to see

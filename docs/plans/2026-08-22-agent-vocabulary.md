@@ -1,7 +1,7 @@
 # 2026-08-22 — Agent vocabulary v1 (context, checkpoint, propose)
 
 Status: **in flight**. The last designed piece of
-[cli-mcp-parity](2026-08-21-cli-mcp-parity.md) Stage 3: PRODUCT.md's
+[cli-mcp-parity](./2026-08-21-cli-mcp-parity.md) Stage 3: PRODUCT.md's
 minimum agent-facing vocabulary — `context`, `focus`,
 `checkpoint/report`, `propose`, `version`.
 *Corrected 2026-10-11: completed 2026-08-22 — the checklist closes with
@@ -15,7 +15,7 @@ minimum agent-facing vocabulary — `context`, `focus`,
   priority changes**; they cannot apply strategic changes, Commit
   versions, or Merge branches.
 - `version` is already served by the human Commit
-  ([version-commit](2026-08-21-version-commit.md)) — context surfaces
+  ([version-commit](./2026-08-21-version-commit.md)) — context surfaces
   the latest Commit rather than duplicating it.
 - `focus` v1 is a context parameter (node id) scoping the assembly; a
   persisted per-session Focus pointer needs agent sessions and stays

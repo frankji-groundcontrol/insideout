@@ -3,7 +3,7 @@
 InsideOut is an MPL-2.0 application with a hosted multi-user deployment: the
 API the CLI calls by default plus the Flutter web client in front of it — the
 deployment whose base URL ships as `DefaultBase` in
-[server/internal/apiclient/default_base.go](server/internal/apiclient/default_base.go).
+[server/internal/apiclient/default_base.go](./server/internal/apiclient/default_base.go).
 This page is the disclosure door for that hosted instance and for the code in
 this repository, in good faith and without a fixed timeline.
 
@@ -43,4 +43,4 @@ Out of scope:
 ## Review records
 
 Whole-tree review reports, each with a security findings file
-(`22-security.md`), are kept under [docs/review/](docs/review/README.md).
+(`22-security.md`), are kept under [docs/review/](./docs/review/README.md).

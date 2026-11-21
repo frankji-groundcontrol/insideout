@@ -3,7 +3,7 @@
 Status: **reviewed and revised** — plan-ceo-review (13 findings, 1
 blocking) and plan-eng-review (20 findings) both executed; every
 blocking/major finding is resolved in this revision. See
-[reviews.md](reviews.md) for verbatim findings and resolutions.
+[reviews.md](./reviews.md) for verbatim findings and resolutions.
 
 ## 1. Problem
 
@@ -14,7 +14,7 @@ requirements the human never said. The current harness
 `server/internal/agent/`) is a good skeleton — four stages, three tools, SSE
 — but nothing structurally prevents fabrication, and the critique stage is
 the same model critiquing itself in the same context (documented
-sycophancy risk, [research](research.md)). Operationally, the harness also
+sycophancy risk, [research](./research.md)). Operationally, the harness also
 has verified production gaps (checked against code, not hypothesized):
 
 - `internal/agent/anthropic.go` uses `http.DefaultClient` — no timeouts; a
@@ -34,7 +34,7 @@ has verified production gaps (checked against code, not hypothesized):
   startup model check ([BUG-009](../../issues/2026-07-21-bug-009-langchaingo-removed.md)'s `model_not_found` surfaced only at the
   first user request).
 
-## 2. What the research says (see [research.md](research.md))
+## 2. What the research says (see [research.md](./research.md))
 
 1. **Elicitation is the highest-leverage stage.** STORM's
    perspective-guided questioning ~tripled unique sources gathered before
@@ -478,7 +478,7 @@ here as binding plan amendments:
 - **CROSS-MODEL:** eng-review and codex agreed on the load-bearing structural fixes (permit inheritance, lock-before-durable-writes, critic omission-findings). No unreconciled tension: where they overlapped they agreed; codex added enforcement-correctness findings the rubric sections didn't reach.
 - **VERDICT:** ENG reviewed, not CLEARED — this is a design plan, not a diff; the review's job was to harden it, and every blocking/major finding is resolved or explicitly accepted as a residual risk (§10.12). Ready to implement once the plan §9 user decisions are made.
 
-*Corrected 2026-10-11: the Eng Review row above said "38 issues"; [reviews.md](reviews.md) numbers 20 eng-review findings (13 CEO + 20 eng = 33 total), matching this plan's own opening "plan-eng-review (20 findings)".*
+*Corrected 2026-10-11: the Eng Review row above said "38 issues"; [reviews.md](./reviews.md) numbers 20 eng-review findings (13 CEO + 20 eng = 33 total), matching this plan's own opening "plan-eng-review (20 findings)".*
 
 **UNRESOLVED DECISIONS:**
 - Critic model: same as coach vs cheaper (decidable by eval 6c).

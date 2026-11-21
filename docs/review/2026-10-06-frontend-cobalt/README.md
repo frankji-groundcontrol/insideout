@@ -17,7 +17,7 @@ not just reading.
 > signature mechanics (0 radius, cast shadow, border weight, press motion)
 > exists in the theme. Mean score **5.22/10**. 114 findings
 > (7 Critical, 22 High); 28 High/Critical confirmed, 1 downgraded, 0 refuted.
-> Ordered fix path: [40-remediation-plan.md](40-remediation-plan.md) —
+> Ordered fix path: [40-remediation-plan.md](./40-remediation-plan.md) —
 > ~11–12 engineer-days, highest-impact repairs first.
 
 ## Findings at a glance
@@ -29,19 +29,19 @@ Verdicts on the 29 High/Critical: **28 CONFIRMED, 1 DOWNGRADED
 
 | File | Aspect | Score | Highlights |
 |---|---|---|---|
-| [10-fullstack.md](10-fullstack.md) | Full-stack wiring | 6.5 | Solid API/session architecture; write actions fail silently in 6 places |
-| [11-project-manager.md](11-project-manager.md) | Ship-readiness | 6.0 | Two most-seen defects (mid-viewport dock, auth header collision) block release |
-| [12-first-run-user.md](12-first-run-user.md) | First-run experience | 4.0 | Dock floats mid-screen; create-project FAB hidden behind it |
-| [20-feature-implementation.md](20-feature-implementation.md) | Feature completeness | 7.2 | Core loop exists; raw enum as idea status, silent capture/convert failures |
-| [21-code-quality.md](21-code-quality.md) | Code quality | 6.5 | Clean modules; 55/68 files not dart-format-clean, no CI gate |
-| [22-testing.md](22-testing.md) | Test coverage | 6.5 | Harness hides the dock overlap; no golden at real viewport sizes |
-| [23-reliability-ops.md](23-reliability-ops.md) | Reliability & ops | 5.5 | No network timeouts anywhere; hydrate wipes tokens on transport error |
-| [24-design-fidelity.md](24-design-fidelity.md) | Design-language fidelity | 2.5 | None of the four Cobalt-Neo mechanics implemented; rounded decree inverted |
-| [25-a11y-visual.md](25-a11y-visual.md) | Accessibility & visual contrast | 4.5 | Every stroke token 1.40–2.26:1; blue-on-blue dock states |
-| [26-responsive.md](26-responsive.md) | Responsive behavior | 3.0 | Root cause of the mid-screen dock; no viewport meta tag |
-| [30-completeness-critic.md](30-completeness-critic.md) | Missed dimensions | — | Security never assigned (clean probe, 1 Low filed); 41MB dead fonts in web bundle; 3 score/finding mismatches |
+| [10-fullstack.md](./10-fullstack.md) | Full-stack wiring | 6.5 | Solid API/session architecture; write actions fail silently in 6 places |
+| [11-project-manager.md](./11-project-manager.md) | Ship-readiness | 6.0 | Two most-seen defects (mid-viewport dock, auth header collision) block release |
+| [12-first-run-user.md](./12-first-run-user.md) | First-run experience | 4.0 | Dock floats mid-screen; create-project FAB hidden behind it |
+| [20-feature-implementation.md](./20-feature-implementation.md) | Feature completeness | 7.2 | Core loop exists; raw enum as idea status, silent capture/convert failures |
+| [21-code-quality.md](./21-code-quality.md) | Code quality | 6.5 | Clean modules; 55/68 files not dart-format-clean, no CI gate |
+| [22-testing.md](./22-testing.md) | Test coverage | 6.5 | Harness hides the dock overlap; no golden at real viewport sizes |
+| [23-reliability-ops.md](./23-reliability-ops.md) | Reliability & ops | 5.5 | No network timeouts anywhere; hydrate wipes tokens on transport error |
+| [24-design-fidelity.md](./24-design-fidelity.md) | Design-language fidelity | 2.5 | None of the four Cobalt-Neo mechanics implemented; rounded decree inverted |
+| [25-a11y-visual.md](./25-a11y-visual.md) | Accessibility & visual contrast | 4.5 | Every stroke token 1.40–2.26:1; blue-on-blue dock states |
+| [26-responsive.md](./26-responsive.md) | Responsive behavior | 3.0 | Root cause of the mid-screen dock; no viewport meta tag |
+| [30-completeness-critic.md](./30-completeness-critic.md) | Missed dimensions | — | Security never assigned (clean probe, 1 Low filed); 41MB dead fonts in web bundle; 3 score/finding mismatches |
 
-Full detail: [01-findings-register.md](01-findings-register.md).
+Full detail: [01-findings-register.md](./01-findings-register.md).
 
 ## The Criticals
 
@@ -68,7 +68,7 @@ Full detail: [01-findings-register.md](01-findings-register.md).
 and `client/lib/theme/ink_motion.dart` (verified via `git ls-tree` at the
 reviewed `f185e94` and at HEAD; the register cites the `chrome/` path). The
 same wrong `lib/widgets/` family recurs in
-[40-remediation-plan.md](40-remediation-plan.md).*
+[40-remediation-plan.md](./40-remediation-plan.md).*
 
 ## Bugs reproduced
 
@@ -82,7 +82,7 @@ Reading is not evidence for runtime claims; the top three were executed:
 
 *Corrected 2026-10-11: the REFUTED verdict on the companion lead is wrong —
 the register row `dead-dock-height-constant-and-magic-140s` and
-[26-responsive.md](26-responsive.md) both establish that six pages hardcode
+[26-responsive.md](./26-responsive.md) both establish that six pages hardcode
 `bottom: 140` (e.g. `dashboard_page.dart:137`), and the disposition ledger
 later fixed those clearance copies with a red scan test; the register is the
 standard. The same refuted-lead claim recurs under Methodology below.*
@@ -103,40 +103,40 @@ report.
 
 ## Reading order
 
-1. [40-remediation-plan.md](40-remediation-plan.md) — the ordered fix path;
+1. [40-remediation-plan.md](./40-remediation-plan.md) — the ordered fix path;
    start at Wave 1.
-2. [00-executive-summary.md](00-executive-summary.md) — scores, top ten with
+2. [00-executive-summary.md](./00-executive-summary.md) — scores, top ten with
    fix sizes, effort buckets.
-3. [01-findings-register.md](01-findings-register.md) — all 114 findings with
+3. [01-findings-register.md](./01-findings-register.md) — all 114 findings with
    verdicts.
-4. Role files by interest; [30-completeness-critic.md](30-completeness-critic.md)
+4. Role files by interest; [30-completeness-critic.md](./30-completeness-critic.md)
    last.
 
 ## Raw outputs and captures
 
-- [raw/](raw/README.md) — the ten role agents' unedited submissions, one
+- [raw/](./raw/README.md) — the ten role agents' unedited submissions, one
   file per role, indexed by its own README.
-- [reviews-wave1.json](reviews-wave1.json) /
-  [reviews-wave2.json](reviews-wave2.json) — the ten role submissions as
+- [reviews-wave1.json](./reviews-wave1.json) /
+  [reviews-wave2.json](./reviews-wave2.json) — the ten role submissions as
   machine-readable JSON on the shared schema: wave 1 carries the six
   engineering roles (code-quality, testing, reliability-ops, fullstack,
   feature-implementation, project-manager), wave 2 the four experience roles
   (first-run-user, design-fidelity, a11y-visual, responsive).
-- [reviews-all.json](reviews-all.json) — the two waves merged into one
+- [reviews-all.json](./reviews-all.json) — the two waves merged into one
   ten-review file.
-- [build_result.py](build_result.py) — the script that attaches the 29
+- [build_result.py](./build_result.py) — the script that attaches the 29
   skeptic verdicts (and carries the critic block through) to
   `reviews-all.json`, writing `result.json` for the register build.
-- [result.json](result.json) — that merged output: the ten reviews plus the
+- [result.json](./result.json) — that merged output: the ten reviews plus the
   `verdicts` and `critic` sections, the input the register was generated
   from.
-- [shots/captures.md](shots/captures.md) — wave-1 capture index: the baseline
+- [shots/captures.md](./shots/captures.md) — wave-1 capture index: the baseline
   screenshot pass at 1440×900 and 390×844, with per-shot notes and anomalies.
-- [shots-wave2/captures.md](shots-wave2/captures.md) — wave-2 capture index:
+- [shots-wave2/captures.md](./shots-wave2/captures.md) — wave-2 capture index:
   light/dark pairs re-shot on the rebuilt client.
-- [shots-wave3/captures.md](shots-wave3/captures.md) — wave-3 capture index:
+- [shots-wave3/captures.md](./shots-wave3/captures.md) — wave-3 capture index:
   verification pass after the Cobalt-Neo tokens were applied.
-- [register-all-table.md](register-all-table.md) — the deduped finding
+- [register-all-table.md](./register-all-table.md) — the deduped finding
   register as flat per-severity tables (111 findings, before the critic's +3
   and the one downgrade).
 

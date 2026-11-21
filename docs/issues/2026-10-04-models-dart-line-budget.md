@@ -36,7 +36,7 @@ classes grouped by domain:
 "Split `client/lib/api/models.dart` (~478 lines) into the four domain
 files above, with `models.dart` kept as a barrel that re-exports them so
 no import sites change, per
-[docs/issues/2026-10-04-models-dart-line-budget.md](2026-10-04-models-dart-line-budget.md).
+[docs/issues/2026-10-04-models-dart-line-budget.md](./2026-10-04-models-dart-line-budget.md).
 Gate: `cd client && flutter analyze && flutter test` green with zero
 import-path changes outside the barrel. Every file ends under ~350
 lines. Record the split in a changelog entry and close this issue."

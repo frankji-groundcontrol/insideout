@@ -15,7 +15,7 @@ Two design-QA comments from the user: *"the login page is ugly, is it possible
 for you to refine it? for example, a motion to prompt a modal, and the seal
 logo is not applied"* and *"can you make it a prompted floating modal with
 motion?"*. The earlier same-day
-[login refinement](2026-07-27-login-page-refinement.md) added the real seal and
+[login refinement](./2026-07-27-login-page-refinement.md) added the real seal and
 a card that *surfaces like* a modal; this change makes it a *real* modal, and
 brings `register` to parity (it still carried the fake bordered-glyph seal
 placeholder).

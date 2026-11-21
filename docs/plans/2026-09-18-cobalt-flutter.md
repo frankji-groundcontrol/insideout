@@ -15,7 +15,7 @@ Exploration is closed. This plan is the implementation slice.
 Implement the accepted lock. Do not invent a new language.
 
 - Goal prompt (paste this):
-  [`2026-09-18-cobalt-flutter-goal.md`](2026-09-18-cobalt-flutter-goal.md)
+  [`2026-09-18-cobalt-flutter-goal.md`](./2026-09-18-cobalt-flutter-goal.md)
 - Lock screens:
   [`docs/design-system/cobalt/`](../design-system/cobalt/README.md)
 - QA thread:

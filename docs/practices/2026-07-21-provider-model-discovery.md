@@ -38,5 +38,5 @@ Step 2 returns a 200 with a real `content` block from the exact base URL + token
 ## Related
 
 - [BUG-009: langchaingo removed; model discovery via direct curl](../issues/2026-07-21-bug-009-langchaingo-removed.md)
-- [Live-exercise streaming endpoints](2026-07-21-live-exercise-streaming-endpoints.md)
+- [Live-exercise streaming endpoints](./2026-07-21-live-exercise-streaming-endpoints.md)
 - [Learning records](../learning/README.md)

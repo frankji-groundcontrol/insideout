@@ -1,7 +1,7 @@
 # The Focus surface (per-session pointer, team Now) is promised but not built
 
 Open, recorded 2026-10-11 (review-3 wave 4, finding FEAT-06; slice 8 of the
-[promise-gap set](2026-10-11-product-promise-gaps.md)).
+[promise-gap set](./2026-10-11-product-promise-gaps.md)).
 
 ## What PRODUCT.md promises
 

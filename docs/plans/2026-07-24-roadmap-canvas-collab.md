@@ -13,7 +13,7 @@ surfaced popover-stacking defect was fixed in-line; two pre-existing low items
 are tracked in the
 [follow-ups issue](../issues/2026-07-26-roadmap-canvas-adversarial-followups.md)).
 All decisions (D1–D11 across both eng passes) are resolved in § Decisions.
-Follow-up to [2026-07-24 — Roadmap: tree on a canvas](2026-07-24-roadmap-canvas.md).
+Follow-up to [2026-07-24 — Roadmap: tree on a canvas](./2026-07-24-roadmap-canvas.md).
 Owner directive: "read the layout, and think about the connections and user
 behaviors hard about how user would use them collaboratively."
 
@@ -386,7 +386,7 @@ display depends on B3 backend. D is sequential after C.
   edited in the other session; build-from-PRD on a non-empty roadmap 409s until
   confirmed with the live count; review mode makes status/drag/add inert; delete
   confirms with the right count; light + dark; EN + 中文.
-- Update [docs/plans/README.md](README.md) index + changelog on completion.
+- Update [docs/plans/README.md](./README.md) index + changelog on completion.
 
 ## Checklist
 

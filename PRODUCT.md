@@ -264,7 +264,7 @@ second owner. A personal tree is a default view, not a wall: everyone in the
 Workspace can still read the whole project, and managers can open any node to
 check its details and progress. An Agent token cannot change a node's owner;
 it files a proposal that a human decides. Current state and target:
-[roadmap tree](docs/architecture/roadmap-tree.md).
+[roadmap tree](./docs/architecture/roadmap-tree.md).
 
 Early users and advisers can receive a scoped feedback invitation without
 joining the Workspace. Feedback retains author, time, and context and becomes
@@ -358,7 +358,7 @@ Agents can checkpoint work and propose structure, scope, or priority changes.
 They cannot directly apply strategic changes, Commit a product version, or
 Merge a Product Branch. The server enforces the first two for any token issued
 to an agent (there is no Product Branch to merge yet): see
-[agent token scope](docs/architecture/agent-token-scope.md).
+[agent token scope](./docs/architecture/agent-token-scope.md).
 
 ## Completion and learning
 
@@ -453,9 +453,9 @@ also have no implementation: Product Branch / Merge (loop item 7's Merge
 decisions), the Decision Log beyond a Commit's free-text note (loop item 5),
 and scoped feedback invitations for readers outside the Workspace; the full
 per-promise classification is in the
-[promise register](docs/review/2026-10-10-multirole-3/50-promise-register.md),
+[promise register](./docs/review/2026-10-10-multirole-3/50-promise-register.md),
 and every PARTIAL promise there links a dated issue; the parked slices are in the
-[2026-10-11 promise-gap record](docs/issues/2026-10-11-product-promise-gaps.md).
+[2026-10-11 promise-gap record](./docs/issues/2026-10-11-product-promise-gaps.md).
 Delivery should evolve that foundation
 in small vertical slices and reuse its existing PRD revisions, Roadmap tree,
 project updates, and GitHub integration before adding new mechanisms.
@@ -466,9 +466,9 @@ project updates, and GitHub integration before adding new mechanisms.
 - **Voice:** warm, confident, concrete; English and Simplified Chinese are
   first-class product languages.
 - **Visual identity:** the shipped Cobalt-Neo design system — one cobalt hue
-  on squared blocks, bilingual first; [`DESIGN.md`](DESIGN.md) is the design
+  on squared blocks, bilingual first; [`DESIGN.md`](./DESIGN.md) is the design
   law. The lock screens in
-  [`docs/design-system/cobalt/`](docs/design-system/cobalt/README.md)
+  [`docs/design-system/cobalt/`](./docs/design-system/cobalt/README.md)
   (2026-09-18) predate the Neo geometry: they record hue, type, and layout,
   not corners, borders, or shadows. The earlier Ink & Seal system (celadon
   ground, sumi-ink text, a single vermilion accent, Noto Serif SC display,

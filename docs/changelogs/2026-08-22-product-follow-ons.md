@@ -52,7 +52,7 @@ The five follow-ons from the week's product arc, tracked in
 
   *Corrected 2026-10-11: presence shipped the same day — the depth-thread
   record landed the presence registry, the SSE stream, and the web chips,
-  live-verified with two tabs ([depth thread](2026-08-22-depth-thread.md)).*
+  live-verified with two tabs ([depth thread](./2026-08-22-depth-thread.md)).*
 
 ## Android — verified blocked
 

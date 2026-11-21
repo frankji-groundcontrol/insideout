@@ -206,7 +206,7 @@ floor is a length, not a stoplist.
    [open-findings record](../../issues/2026-10-18-review-4-open-findings.md). F82, F83, F96 and
    F91 are `FIXED`; F90 is `PARTIAL` with the calibration question; F94 and F86 are `PARTIAL`
    until items 1 to 3 land. The
-   [w3-coach-trust record](w3-coach-trust.md) is where the wave-3 half of the quote rule lives.
+   [w3-coach-trust record](./w3-coach-trust.md) is where the wave-3 half of the quote rule lives.
 
 ## Verification
 

@@ -4,7 +4,7 @@
 **Score:** **7 / 10**  
 **Bottom line:** The service shuts down gracefully and recovers from a killed database, but it has no cap on SSE streams per user and no deadline on the request or health path. One user can push the container past its 512m limit, and a stalled database leaves /healthz hanging. No Critical or High defect was found at runtime.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ---
 

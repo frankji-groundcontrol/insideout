@@ -59,8 +59,8 @@ port (`flutter run` picks a random one unless `--web-port` pins it) or
 The full variable reference — every variable grouped by consumer, with
 required/default/meaning, the `.env`→process bridges, database setups,
 recipes, and troubleshooting — lives in
-[environment.md](environment.md). docker-compose topology vars are in
-[deployment.md](deployment.md).
+[environment.md](./environment.md). docker-compose topology vars are in
+[deployment.md](./deployment.md).
 
 ### Offline AI mode
 
@@ -70,7 +70,7 @@ in a template streamer (`server/internal/agent/template.go`). It only **echoes**
 the member's last message back: no stage moves, no PRD section fills and no
 tool runs. That is enough to exercise sign-in, projects, the stream and the UI
 with no network and no cost, but it is not coaching; to get coaching, set
-`INSIDEOUT_LLM_API_KEY` (recipes in [environment.md](environment.md)). The web
+`INSIDEOUT_LLM_API_KEY` (recipes in [environment.md](./environment.md)). The web
 client says so with an "offline" banner, shown once the first reply starts
 streaming rather than before the first send.
 
@@ -83,7 +83,7 @@ notice that mail is not configured on this server. To follow a link or code
 locally, read it from that log: `scripts/dev.sh` turns on
 `INSIDEOUT_MAIL_DEV_BODY` for the server, which adds the message body to the
 log line. Both variables are in the Go backend table of
-[environment.md](environment.md#go-backend) (`INSIDEOUT_MAIL_API_KEY` and
+[environment.md](./environment.md#go-backend) (`INSIDEOUT_MAIL_API_KEY` and
 `INSIDEOUT_MAIL_DEV_BODY` rows).
 
 ## Database setup
@@ -134,7 +134,7 @@ seed`, promote `demo@insideout.local`, set
 `insideout setup` before optionally running `insideout signup-mode open`.
 Restore
 `invitation_only` afterward. See
-[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md).
+[cli-mcp-and-guidance.md](./cli-mcp-and-guidance.md).
 
 **Transaction poolers:** if `DATABASE_URL` contains `pgbouncer=true`
 (PgBouncer/Supavisor transaction mode), the server automatically switches pgx
@@ -163,7 +163,7 @@ For browser dev against the local server, `scripts/dev.sh` exports
 `INSIDEOUT_CORS_ORIGINS=localhost` when unset, so Flutter web on any
 localhost port passes CORS without extra config.
 Hosted web uses same-origin `/api/v1` behind nginx
-([deployment.md](deployment.md#railway-current-public-deploy)).
+([deployment.md](./deployment.md#railway-current-public-deploy)).
 
 Android (rv4-COMP-06): no build type allows cleartext http except debug and
 profile, and those only for `localhost`, `127.0.0.1` and `10.0.2.2`. In the
@@ -247,5 +247,5 @@ naming), plus the `keys.py` tool behaviors including multi-host
 scoping. They never print values and skip cleanly where a host's
 `.secrets/` is absent (CI). Run them after any key lands, copies
 between hosts, or rotates; the per-key **live probes** (part 4 of each
-doc under [keys/](keys/README.md)) remain the second layer — the suite
+doc under [keys/](./keys/README.md)) remain the second layer — the suite
 says the key is well-formed and well-placed, the probe says it works.

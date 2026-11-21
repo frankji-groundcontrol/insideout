@@ -75,7 +75,7 @@ stamp.
 
 *Superseded 2026-10-11: "the committed world stays 国风留白 / Ink & Seal"
 no longer holds. Ink & Seal was retired 2026-09-17 (see
-[2026-09-17 — Live language](2026-09-17-live-language.md)); the semantic
+[2026-09-17 — Live language](./2026-09-17-live-language.md)); the semantic
 tokens were renamed InkSeal → Cobalt in the
 [design-system changelog](../design-system/CHANGELOG.md) 1.0.0
 (2026-09-18), and [`DESIGN.md`](../../DESIGN.md) is now the Cobalt-Neo

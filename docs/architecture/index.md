@@ -9,28 +9,28 @@ and the bug records it links to.
 
 ## Documents
 
-- [Backend](backend.md) — Go service layout, auth, store layer, API surface.
-- [Database and RLS](database-and-rls.md) — schema ownership model,
+- [Backend](./backend.md) — Go service layout, auth, store layer, API surface.
+- [Database and RLS](./database-and-rls.md) — schema ownership model,
   migrations, JWT+RLS defense-in-depth, known Postgres gotchas.
-- [PRD Coach agent](prd-coach-agent.md) — the four-stage coaching agent,
+- [PRD Coach agent](./prd-coach-agent.md) — the four-stage coaching agent,
   tool calling, SSE streaming, the direct Anthropic client.
-- [Frontend](frontend.md) — Flutter client (`client/`) on Railway, wearing
+- [Frontend](./frontend.md) — Flutter client (`client/`) on Railway, wearing
   Cobalt; the Nuxt tree was deleted 2026-08-18.
-- [Product subsystems](product-subsystems.md) — the 2026-08 product arc:
+- [Product subsystems](./product-subsystems.md) — the 2026-08 product arc:
   version control (Commit + readiness + audience views), the agent
   vocabulary (with proposal application), the time-first roadmap,
   real-time presence/cursors, and the GitHub evidence loop.
-- [Roadmap tree](roadmap-tree.md) — the roadmap node table, the single
+- [Roadmap tree](./roadmap-tree.md) — the roadmap node table, the single
   write rule and its looser row-level-security policies, the routes that read
   and write the tree, and the target per-person work tree with delegation.
-- [CLI, MCP and client configuration](cli-mcp-and-client-config.md) — the
+- [CLI, MCP and client configuration](./cli-mcp-and-client-config.md) — the
   non-web clients: `clientconfig.Resolve` (which server, which identity), the
   saved 0600 session and its renewal, the MCP process and its agent profile,
   install and release, and the single-replica contract.
-- [Agent token scope](agent-token-scope.md) — the signed `scope` claim, the
+- [Agent token scope](./agent-token-scope.md) — the signed `scope` claim, the
   route policy that refuses an agent token on human-only routes, the MCP
   profile and token exchange, and the fencing of user-written text.
-- [Deployment](deployment.md) — docker-compose topology, environment
+- [Deployment](./deployment.md) — docker-compose topology, environment
   configuration, the two supported database-provisioning models; the
   hosted Railway instance is documented in
   [usage/deployment.md](../usage/deployment.md#railway-current-public-deploy).

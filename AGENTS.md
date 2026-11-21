@@ -2,16 +2,16 @@
 
 Operating contract for Codex and any coding agent working in this
 repository. Keep this file a thin router to the modular docs under `docs/`
-([doc map](docs/index.md)); it stays in parity with [CLAUDE.md](CLAUDE.md).
+([doc map](./docs/index.md)); it stays in parity with [CLAUDE.md](./CLAUDE.md).
 
 ## Before editing
 
-- Read the [doc map](docs/index.md), the relevant
-  [architecture doc](docs/architecture/index.md), the concurrent task status in
-  [docs/plans/README.md](docs/plans/README.md), and the concise resume guide in
-  [docs/HANDOFF.md](docs/HANDOFF.md).
+- Read the [doc map](./docs/index.md), the relevant
+  [architecture doc](./docs/architecture/index.md), the concurrent task status in
+  [docs/plans/README.md](./docs/plans/README.md), and the concise resume guide in
+  [docs/HANDOFF.md](./docs/HANDOFF.md).
 - For multi-step work, open a dated plan in
-  [docs/plans/](docs/plans/README.md) **before editing** and maintain it as
+  [docs/plans/](./docs/plans/README.md) **before editing** and maintain it as
   the live checklist; close it only when every item is resolved. Keep its row
   in `docs/plans/README.md` accurate when status, priority, next action, or
   blocker changes. Keep `docs/HANDOFF.md` short: one resume path and current
@@ -24,8 +24,8 @@ repository. Keep this file a thin router to the modular docs under `docs/`
 ## Build, test, verify
 
 Commands and environment reference:
-[docs/usage/local-development.md](docs/usage/local-development.md); hands-on
-`.env` setup: [docs/SETENV.md](docs/SETENV.md) (`scripts/env.sh
+[docs/usage/local-development.md](./docs/usage/local-development.md); hands-on
+`.env` setup: [docs/SETENV.md](./docs/SETENV.md) (`scripts/env.sh
 init|edit|check|propagate` sets, inspects and validates keys without printing
 values; `scripts/dev.sh` preflights `env.sh check <component>` before
 launching). The non-negotiables:
@@ -35,9 +35,9 @@ launching). The non-negotiables:
   PostgreSQL; for substantial behavior changes, write the failing test
   first (test-driven development), then the smallest passing change.
 - Never write outside the `insideout` schema
-  ([why](docs/architecture/database-and-rls.md)).
+  ([why](./docs/architecture/database-and-rls.md)).
 - Exercise streaming (SSE) endpoints against a live server before calling
-  them done ([practice](docs/practices/2026-07-21-live-exercise-streaming-endpoints.md)).
+  them done ([practice](./docs/practices/2026-07-21-live-exercise-streaming-endpoints.md)).
 - For plan-level work, run an engineering review of the plan (or record why
   not) before implementation.
 
@@ -55,31 +55,31 @@ launching). The non-negotiables:
 
 - `docs/` prose is English-only (the 2026-07-20 plan folder is bilingual as
   a historical record; keep exact non-English text only when quoting).
-- Record meaningful changes in [docs/changelogs/](docs/changelogs/README.md):
+- Record meaningful changes in [docs/changelogs/](./docs/changelogs/README.md):
   a dated file for ordinary changes, a dated folder with focused child
   files for large changes. The git guardrail warns on unrecorded source
   commits; `[checkpoint]`-tagged commits block unless the changelog entry,
   active plan, and `docs/HANDOFF.md` are staged
-  ([practice](docs/practices/2026-07-21-docs-recording-guardrail.md)).
+  ([practice](./docs/practices/2026-07-21-docs-recording-guardrail.md)).
 - Keep the record system whole and indexed:
-  [architecture](docs/architecture/index.md) when structure changes,
-  [usage](docs/usage/README.md) when commands/install/operator flows
-  change, [issues](docs/issues/README.md) for bugs and structural debt,
-  [learning](docs/learning/README.md) for reusable lessons,
-  [practices](docs/practices/README.md) for repeatable methods — plus the
+  [architecture](./docs/architecture/index.md) when structure changes,
+  [usage](./docs/usage/README.md) when commands/install/operator flows
+  change, [issues](./docs/issues/README.md) for bugs and structural debt,
+  [learning](./docs/learning/README.md) for reusable lessons,
+  [practices](./docs/practices/README.md) for repeatable methods — plus the
   nearest README index for every added, moved, or retired record.
 - Keep source code modular: one responsibility per file, split by
   responsibility rather than trimmed to fit; functions under about 80
   lines and files under one shared threshold, both in
-  [config/code-budget.json](config/code-budget.json) and guarded by
+  [config/code-budget.json](./config/code-budget.json) and guarded by
   `server/internal/linebudget` and `client/test/line_budget_test.dart`.
   No line rule for workflows, YAML or prose. A chunky or
   mixed-responsibility file that can't be split now gets a dated
-  modularity issue in [docs/issues/](docs/issues/README.md) with the
+  modularity issue in [docs/issues/](./docs/issues/README.md) with the
   target structure and a bounded fix prompt.
 - **Design QA**: when the user posts comments about how a page looks or
   the frontend, record them in
-  [docs/design-qa/](docs/design-qa/README.md) — append to the relevant
+  [docs/design-qa/](./docs/design-qa/README.md) — append to the relevant
   dated file there (creating one if needed) and keep its README index
   current.
 

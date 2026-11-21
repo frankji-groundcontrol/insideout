@@ -3,7 +3,7 @@
 **Learned** 2026-08-24 during the auth-parity live exercise
 ([changelog](../changelogs/2026-08-24-auth-parity-cli-mcp.md)); same
 family as the
-[proxy/localhost lesson](2026-08-24-gated-integration-tests-rerun-collisions.md)'s
+[proxy/localhost lesson](./2026-08-24-gated-integration-tests-rerun-collisions.md)'s
 "environment first, conclusion second" posture.
 
 ## The lesson

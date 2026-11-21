@@ -2,9 +2,9 @@
 
 > **Status**: high-level overview for the dev team. The full phased technical
 > plan (database, backend, agent, frontend) lives in
-> [`docs/plans/2026-07-20-go-rewrite/`](plans/2026-07-20-go-rewrite/README.md);
+> [`docs/plans/2026-07-20-go-rewrite/`](./plans/2026-07-20-go-rewrite/README.md);
 > the current implemented shape is documented in
-> [`docs/architecture/`](architecture/index.md) — treat those as authoritative.
+> [`docs/architecture/`](./architecture/index.md) — treat those as authoritative.
 
 ## Technical architecture
 
@@ -73,7 +73,7 @@ docs/                          # see docs/index.md for the documentation map
 
 ## Milestones
 
-See [`docs/plans/2026-07-20-go-rewrite/README.md`](plans/2026-07-20-go-rewrite/README.md)
+See [`docs/plans/2026-07-20-go-rewrite/README.md`](./plans/2026-07-20-go-rewrite/README.md)
 §5 (phases P1–P7); the shipped-system baseline is
-[`docs/TODO.md`](TODO.md), and live status sits on the
-[`docs/plans/`](plans/README.md) board.
+[`docs/TODO.md`](./TODO.md), and live status sits on the
+[`docs/plans/`](./plans/README.md) board.

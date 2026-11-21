@@ -15,10 +15,10 @@ CLI/MCP surface. This skill is the contract for the second mode.
 ## Setup
 
 Using the hosted service is
-[skills/insideout-setup/SKILL.md](skills/insideout-setup/SKILL.md)
-and [the user guide](docs/usage/user-guide.md). Running the server on
+[skills/insideout-setup/SKILL.md](./skills/insideout-setup/SKILL.md)
+and [the user guide](./docs/usage/user-guide.md). Running the server on
 this machine is
-[skills/insideout-server/SKILL.md](skills/insideout-server/SKILL.md).
+[skills/insideout-server/SKILL.md](./skills/insideout-server/SKILL.md).
 
 ```bash
 ./scripts/install.sh          # binaries into ~/.local/bin; hosted API, no env vars
@@ -36,7 +36,7 @@ A server on this machine is `insideout setup --local --postgres bundled|own` (bu
 Docker Postgres, or your own URL on stdin). Then set
 `INSIDEOUT_API=http://127.0.0.1:8080/api/v1` or the CLI keeps calling
 the hosted API. Full steps, including the questions an agent should
-ask: [docs/usage/installation.md](docs/usage/installation.md).
+ask: [docs/usage/installation.md](./docs/usage/installation.md).
 
 To register the MCP server, merge this entry into the agent's MCP config
 (Claude Code: `claude mcp add insideout -- insideout-mcp`). It needs no
@@ -141,4 +141,4 @@ assumptions.
 - The web coach's conversations are not exposed here; when a user wants
   the coached experience, point them to the web app.
 - Full command/tool reference:
-  [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
+  [docs/usage/cli-mcp-and-guidance.md](./docs/usage/cli-mcp-and-guidance.md).

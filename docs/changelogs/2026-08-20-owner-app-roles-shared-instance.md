@@ -1,7 +1,7 @@
 # 2026-08-20 — Owner/app roles rolled out to the shared Supabase instance
 
 The two-role model from
-[2026-08-19](2026-08-19-owner-app-roles.md) is now live on the shared
+[2026-08-19](./2026-08-19-owner-app-roles.md) is now live on the shared
 Supabase instance (the one Railway `server` runs on). Plan:
 [owner-app-roles](../plans/2026-08-19-owner-app-roles.md).
 

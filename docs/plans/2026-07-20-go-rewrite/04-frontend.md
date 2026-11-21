@@ -1,14 +1,14 @@
 # 04 — Frontend: API Swap + Modernization / 前端：API 切换与现代化
 
-> Part of the [InsideOut rewrite plan](README.md). / [InsideOut 重写计划](README.md)的一部分。
+> Part of the [InsideOut rewrite plan](./README.md). / [InsideOut 重写计划](./README.md)的一部分。
 
 ## 1. Service Layer Swap / 服务层切换
 
 The existing registry seam (`src/services/registry.ts` + `useServices()`) is exactly the right cut point: pages/stores never import supabase directly. Plan:
 现有注册表接缝（`src/services/registry.ts` + `useServices()`）正是理想切换点：页面/store 从不直接引入 supabase。计划：
 
-- Add an **`api` mode** whose adapters call `/api/v1` with `$fetch`/`useFetch`. All calls are **same-origin**: a Nitro route rule proxies `/api/v1/**` to the Go server ([02 §4](02-backend-go.md)), so the httpOnly auth cookies are first-party and flow automatically in the browser; SSR data fetches use `useRequestFetch()` so the incoming request's cookies are forwarded through the proxy. No CORS, no `SameSite` pitfalls. `api` becomes the default; ~~**`mock` mode stays**~~ **[superseded during implementation, per user decision: mock mode was removed entirely — the registry ships a single real API-backed bundle; the offline dev path is the server-side template-reply coach instead]**.
-  新增 **`api` 模式**，适配器用 `$fetch`/`useFetch` 调 `/api/v1`。所有调用均为**同源**：Nitro 路由规则将 `/api/v1/**` 代理到 Go 服务（[02 §4](02-backend-go.md)），因此 httpOnly 认证 cookie 属第一方、在浏览器中自动携带；SSR 数据获取使用 `useRequestFetch()`，将入站请求的 cookie 经代理转发。无 CORS、无 `SameSite` 陷阱。`api` 成为默认；~~**`mock` 模式保留**~~ **【实现期已被取代（用户决定）：mock 模式已彻底移除——注册表只提供单一的真实 API 实现；离线开发路径改由服务端模板回复教练承担】**。
+- Add an **`api` mode** whose adapters call `/api/v1` with `$fetch`/`useFetch`. All calls are **same-origin**: a Nitro route rule proxies `/api/v1/**` to the Go server ([02 §4](./02-backend-go.md)), so the httpOnly auth cookies are first-party and flow automatically in the browser; SSR data fetches use `useRequestFetch()` so the incoming request's cookies are forwarded through the proxy. No CORS, no `SameSite` pitfalls. `api` becomes the default; ~~**`mock` mode stays**~~ **[superseded during implementation, per user decision: mock mode was removed entirely — the registry ships a single real API-backed bundle; the offline dev path is the server-side template-reply coach instead]**.
+  新增 **`api` 模式**，适配器用 `$fetch`/`useFetch` 调 `/api/v1`。所有调用均为**同源**：Nitro 路由规则将 `/api/v1/**` 代理到 Go 服务（[02 §4](./02-backend-go.md)），因此 httpOnly 认证 cookie 属第一方、在浏览器中自动携带；SSR 数据获取使用 `useRequestFetch()`，将入站请求的 cookie 经代理转发。无 CORS、无 `SameSite` 陷阱。`api` 成为默认；~~**`mock` 模式保留**~~ **【实现期已被取代（用户决定）：mock 模式已彻底移除——注册表只提供单一的真实 API 实现；离线开发路径改由服务端模板回复教练承担】**。
 - The interface set changes with the pivot: keep `IAuthService`; replace `IWorkshopService`/`IEditorService` with `IWorkspaceService`, `IProjectService`, `IIdeaService`, `IPrdService`; replace `IAiService` with `ICoachService` (SSE streaming); `IExportService` becomes one download call. Mock implementations updated to match.
   接口集随产品转向调整：保留 `IAuthService`；以 `IWorkspaceService`、`IProjectService`、`IIdeaService`、`IPrdService` 取代 `IWorkshopService`/`IEditorService`；以 `ICoachService`（SSE 流式）取代 `IAiService`；`IExportService` 收敛为一个下载调用。mock 实现同步更新。
 - After cutover: **delete** `src/services/supabase/`, `src/lib/supabase.ts`, the `@supabase/supabase-js` dependency, and their mocked unit tests. Dead surface (unused `updateNodeStatus`/`getSubmission`/etc.) is not re-created in the new interfaces.

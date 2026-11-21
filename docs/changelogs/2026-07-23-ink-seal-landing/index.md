@@ -5,8 +5,8 @@ cinematic" theme detour back to the committed **国风留白 / Ink & Seal** worl
 and **rethink the public landing** as 「The Assembly」/「一步步」 — the product
 story drawn as ink build-instructions.
 
-- [summary.md](summary.md) — what changed, phase by phase.
-- [verification.md](verification.md) — the verification actually performed.
+- [summary.md](./summary.md) — what changed, phase by phase.
+- [verification.md](./verification.md) — the verification actually performed.
 
 ## Primary sources
 

@@ -138,9 +138,9 @@ def main():
         for name, what in live + [(ENUMERATION, "the promise-gap enumeration")]:
             if not (issues / name).is_file():
                 failures.append(f"{what}: no dated record docs/issues/{name}")
-            elif f"]({name})" not in readme:
+            elif f"]({name})" not in readme and f"](./{name})" not in readme:
                 failures.append(f"{what}: docs/issues/README.md does not list {name}")
-        if f"](docs/issues/{ENUMERATION})" not in read("PRODUCT.md"):
+        if not re.search(rf"\]\((?:\./)?docs/issues/{re.escape(ENUMERATION)}\)", read("PRODUCT.md")):
             failures.append(
                 "PRODUCT.md's status section does not link "
                 f"docs/issues/{ENUMERATION}"

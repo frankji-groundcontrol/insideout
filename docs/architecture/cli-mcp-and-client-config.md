@@ -1,13 +1,13 @@
 # CLI, MCP and client configuration
 
 InsideOut has one HTTP contract, `/api/v1`, and four ways to reach it: the web
-client ([frontend](frontend.md)), the `insideout` CLI, the `insideout-mcp` stdio
+client ([frontend](./frontend.md)), the `insideout` CLI, the `insideout-mcp` stdio
 server for agents, and the shared client code under both binaries. This
 document is the architecture of the last three, the non-web clients: which
 package decides what, how a client finds its server and its identity, how a
 saved session renews, and what the server must keep true for them. For how to
 use them see [CLI, MCP and the guidance system](../usage/cli-mcp-and-guidance.md);
-for the token an MCP process runs under see [agent token scope](agent-token-scope.md).
+for the token an MCP process runs under see [agent token scope](./agent-token-scope.md).
 
 ## Surfaces
 
@@ -134,7 +134,7 @@ saved login's tokens only ever go to the server they were issued by.
   Delegation, hand-back and the member list are never registered: every tool
   acts through an agent-scope token, which their human-only routes refuse.
   That removal is advice to the model; the server's 403 for an agent-scope
-  token is what holds. See [agent token scope](agent-token-scope.md), which also
+  token is what holds. See [agent token scope](./agent-token-scope.md), which also
   states the deploy order (server first, then the new binary).
 - Each call rides the context of what is running it. `apiclient.Client` has no
   `http.Client` timeout; `SetContext` binds a context and every request is cut

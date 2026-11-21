@@ -2,8 +2,8 @@
 
 Review 3 over `main` @ `754c502`. 83 findings (0 Critical, 17 High, 33 Medium,
 33 Low); all 16 reviewer Highs CONFIRMED by skeptics. Full detail in the
-[register](01-findings-register.md); execution shape in the
-[remediation plan](40-remediation-plan.md).
+[register](./01-findings-register.md); execution shape in the
+[remediation plan](./40-remediation-plan.md).
 
 ## The top ten, ordered by what they cost the product
 
@@ -73,7 +73,7 @@ Review 3 over `main` @ `754c502`. 83 findings (0 Critical, 17 High, 33 Medium,
 
 Owner-blocked (deploy, mail/LLM keys, first release tag): PM-01, PM-02,
 PM-04, SEC-01, USER-02, FEAT-03, REL-06, SEC-05, USER-05 — listed in the
-plan's [owner list](40-remediation-plan.md#owner-blocked-not-workflow-work)
+plan's [owner list](./40-remediation-plan.md#owner-blocked-not-workflow-work)
 and already in [HANDOFF](../../HANDOFF.md).
 
 ## The convergent recommendation

@@ -4,7 +4,7 @@
 **Score:** **6.5 / 10**  
 **Bottom line:** The stack mostly holds together, but the web Expand with AI button is always broken by a draft/confirm contract drift, and the CLI persists a 15-minute access token with no refresh. Docs and env agree except for a few small drifts.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

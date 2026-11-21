@@ -2,7 +2,7 @@
 
 Structured findings from a six-lane research fan-out (2026-07-21). Each
 finding carries its source. The synthesis these feed lives in
-[plan.md](plan.md).
+[plan.md](./plan.md).
 
 ## PRD quality: what good looks like and how it fails
 

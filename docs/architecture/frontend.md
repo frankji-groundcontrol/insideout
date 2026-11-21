@@ -82,7 +82,7 @@ second, and a control that handled only the first ignored Enter in a browser
 ### Coach chat
 
 The PRD page consumes the SSE contract in
-[the agent doc](prd-coach-agent.md): deltas, stage changes, throttle
+[the agent doc](./prd-coach-agent.md): deltas, stage changes, throttle
 countdown (`app_throttle` / `circuit_open`). History is
 `GET /api/v1/conversations/{id}/messages`. On Flutter web, Coach POST
 and presence GET both use `fetch` + `ReadableStream` (dio's XHR adapter

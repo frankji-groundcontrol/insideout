@@ -1,7 +1,7 @@
 # No way to share an audience view with an outside reader
 
 Open, recorded 2026-10-11 (review-3 wave 4, finding USER-04; slice 3 of the
-[promise-gap set](2026-10-11-product-promise-gaps.md)).
+[promise-gap set](./2026-10-11-product-promise-gaps.md)).
 
 ## What PRODUCT.md promises
 

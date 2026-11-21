@@ -3,8 +3,8 @@
 The single source of truth for every environment variable InsideOut reads —
 what each one means, which process consumes it, whether it is required, and
 its default. For the developer workflow around these variables (prereqs,
-running, testing) see [local-development.md](local-development.md); for the
-compose topology see [deployment.md](deployment.md). The committed template is
+running, testing) see [local-development.md](./local-development.md); for the
+compose topology see [deployment.md](./deployment.md). The committed template is
 [`.env.example`](../../.env.example).
 
 ## How it works
@@ -121,7 +121,7 @@ front of the compose nginx. With the value at 1 or more, bind the published
 client port (`CLIENT_PORT`) to `127.0.0.1` or firewall it, unless nothing else
 can reach it: a direct connection can write the entry the server counts when
 a further proxy is also trusted. The hosted image does not append (the edge
-already did), so hosted stays at 1. See [deployment](deployment.md).
+already did), so hosted stays at 1. See [deployment](./deployment.md).
 
 ### AI provider
 
@@ -183,7 +183,7 @@ derived default because Compose cannot nest `${...}` inside a `:-` default
 Read by the `insideout` CLI and the `insideout-mcp` stdio server through
 [`clientconfig.Resolve`](../../server/internal/clientconfig/resolve.go), never by
 `serve`. The saved-login file and the rest of the flow are in
-[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md).
+[cli-mcp-and-guidance.md](./cli-mcp-and-guidance.md).
 
 | Variable | Required | Default | Meaning |
 |----------|----------|---------|---------|

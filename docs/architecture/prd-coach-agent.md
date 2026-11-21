@@ -73,7 +73,7 @@ A non-2xx HTTP response surfaces the provider's actual error message (e.g.
 `model_not_found: Model "..." is not supported...`); a 429 maps to
 `ErrProviderRateLimited`, which the coach emits as an SSE `error` event with
 code `anthropic_rate_limit` (the stream is already open by then — see
-[backend](backend.md)).
+[backend](./backend.md)).
 
 ## Stage state machine
 
@@ -99,7 +99,7 @@ conversation view lists them as `pendingResolutions` (id, section, severity,
 issue, status) using the same filter confirm applies, so the card never shows a
 resolution confirm would skip (rv4-AIDEV-03). `POST
 /api/v1/conversations/{id}/stage/decline` (human-only, see
-[agent token scope](agent-token-scope.md)) removes both while a stage is
+[agent token scope](./agent-token-scope.md)) removes both while a stage is
 pending: the stage and the findings stay as they were, a second decline or a
 confirm after a decline is a 409, and a decline is no longer something only the
 client remembers (rv4-CLOSE-03). A second tab keeps its card until it refreshes,

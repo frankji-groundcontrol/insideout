@@ -44,7 +44,7 @@ The tables reassemble with a spread (`{...enCommon, ...enAuth, ...}`) so
 "Split `client/lib/l10n/en.dart` (414 lines) and `zh.dart` (372) into
 the namespace files above, reassembling `enUS`/`zhCN` by spread so
 `lookup()` and every call site are untouched, per
-[docs/issues/2026-10-08-l10n-tables-line-budget.md](2026-10-08-l10n-tables-line-budget.md).
+[docs/issues/2026-10-08-l10n-tables-line-budget.md](./2026-10-08-l10n-tables-line-budget.md).
 Gate: `cd client && flutter analyze --no-fatal-infos && flutter test`;
 `l10n_test.dart` (key-set parity, interpolation) passes unmodified.
 Every file ends under ~350 lines. Record the split in a changelog entry

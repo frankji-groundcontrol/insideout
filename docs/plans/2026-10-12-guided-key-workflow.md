@@ -10,7 +10,7 @@ live credentials, change deployed settings, or add a new configuration UI.
 
 ## Execution
 
-Live coordination state: [track YAML](2026-10-12-guided-key-workflow.track.yaml).
+Live coordination state: [track YAML](./2026-10-12-guided-key-workflow.track.yaml).
 
 - [x] Review the plan against the real commands and consumers before editing.
 - [x] Write the shared walkthrough and connect installation, SETENV, usage,

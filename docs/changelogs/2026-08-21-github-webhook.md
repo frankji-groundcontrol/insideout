@@ -55,4 +55,4 @@ verify and sync.
 
 *Superseded 2026-10-11: both items closed the same day — the guide loader and
 installation-token path shipped, and the App install ping answered 200
-([evidence-loop record](2026-08-21-evidence-loop.md)).*
+([evidence-loop record](./2026-08-21-evidence-loop.md)).*

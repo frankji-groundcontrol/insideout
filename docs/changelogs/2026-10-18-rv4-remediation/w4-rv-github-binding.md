@@ -7,8 +7,8 @@ whole-change review of `git diff d53035a..rv4/integration`. Findings are cited a
 The rules are in the
 [execution contract](../../review/2026-10-18-multirole-4/41-remediation-contract.md);
 the code these findings sit on is described in
-[w3-github-evidence.md](w3-github-evidence.md), and the owner question below is
-the one [w4-rv-github-client.md](w4-rv-github-client.md) reproduced a step
+[w3-github-evidence.md](./w3-github-evidence.md), and the owner question below is
+the one [w4-rv-github-client.md](./w4-rv-github-client.md) reproduced a step
 earlier.
 
 Server only: one forward migration (`20261018222000_repo_holder_ownerless.sql`),
@@ -118,8 +118,8 @@ in this fragment.
 ## Owner decision (DEFERRED_OWNER): rv4-FR-F119, F32, F27 and the squatting half of F199
 
 **Question: who may bind a repo that the GitHub App can see, and what proves it?**
-It is the open decision 2 of [w3-github-evidence.md](w3-github-evidence.md) and
-F171/F174 of [w4-rv-github-client.md](w4-rv-github-client.md), now named from four
+It is the open decision 2 of [w3-github-evidence.md](./w3-github-evidence.md) and
+F171/F174 of [w4-rv-github-client.md](./w4-rv-github-client.md), now named from four
 more sides. The link check proves that this server can read the repo, not that the
 member linking it may; the first binder wins. Nothing is changed until it is
 decided.

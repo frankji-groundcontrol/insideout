@@ -43,7 +43,7 @@ docker compose exec -T postgres sh -c \
 ```
 
 Expected output is `insideout_owner`, followed by the migration command in
-[database-owner-dsn.md](database-owner-dsn.md). If the role cannot log in or
+[database-owner-dsn.md](./database-owner-dsn.md). If the role cannot log in or
 migrations fail, repair the role password and `DATABASE_OWNER_URL` together;
 never substitute the app or image superuser for the migration role.
 

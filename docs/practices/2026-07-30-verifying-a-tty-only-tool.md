@@ -188,7 +188,7 @@ unrelated check flap. Point them at a temp copy.
 ## Related
 
 - [SETENV.md](../SETENV.md) — the operating manual these guards protect.
-- [Verify against a real database](2026-07-21-verify-against-real-database.md)
+- [Verify against a real database](./2026-07-21-verify-against-real-database.md)
   — the same argument for DB-dependent work.
-- [Live-exercise streaming endpoints](2026-07-21-live-exercise-streaming-endpoints.md)
+- [Live-exercise streaming endpoints](./2026-07-21-live-exercise-streaming-endpoints.md)
   — the same argument for SSE.

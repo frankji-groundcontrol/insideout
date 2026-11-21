@@ -46,6 +46,6 @@ binary built from the fix applies the pending migrations and exits 0. The
 own-URL path got the matching treatment in the same wave (roles probe and the
 not-ready-database stop), see
 [setup roles and the bundled owner](../changelogs/2026-10-10-close-open-gaps/setup-roles-and-bundled-owner.md)
-and the [own-URL record](2026-10-07-own-url-fresh-db-bootstrap.md).
+and the [own-URL record](./2026-10-07-own-url-fresh-db-bootstrap.md).
 
 Lesson: [a path nobody can run hides a missing write](../learning/2026-10-10-a-path-nobody-can-run-hides-a-missing-write.md).

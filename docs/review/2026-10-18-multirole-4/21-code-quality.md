@@ -4,7 +4,7 @@
 **Score:** **8 / 10**  
 **Bottom line:** Disciplined, small-file, well-commented code base with clean vet, gofmt -s and race build; the defects are medium design debt: a nondeterministic agentcontext helper, a divergent duplicate client-IP extractor, unescaped apiclient URLs, no context in apiclient, swallowed bookkeeping errors, and two mega-functions hiding under the file budget. No High or Critical found.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ---
 

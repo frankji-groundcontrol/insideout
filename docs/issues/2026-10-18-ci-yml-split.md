@@ -7,7 +7,7 @@
 > and prose have no line rule. `ci.yml` is a workflow, so the two additions
 > below are no longer blocked by a line count and can land in it directly (they
 > stay open as R1-01 in the [review-4
-> register](2026-10-18-review-4-open-findings.md)); split the file only if a
+> register](./2026-10-18-review-4-open-findings.md)); split the file only if a
 > job's responsibility calls for it.
 
 **Date:** 2026-10-18

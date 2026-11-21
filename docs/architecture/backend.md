@@ -59,7 +59,7 @@ server/
 
 The non-web clients (`cmd/insideout-mcp`, `apiclient`, `clientconfig`, `mcpserver`,
 `setup`, the CLI verbs) are described in
-[CLI, MCP and client configuration](cli-mcp-and-client-config.md).
+[CLI, MCP and client configuration](./cli-mcp-and-client-config.md).
 
 ## Request flow
 
@@ -99,7 +99,7 @@ the server still accepts them, which keeps a plain browser session working.
 `/auth/refresh` reads the refresh token from the httpOnly cookie, else a
 `{"refreshToken"}` body, and the cookie wins when both are present. The hosted
 Flutter web client is served by an nginx that proxies `/api/v1/**` to this
-server same-origin (see [deployment](deployment.md)), so it needs no CORS; local
+server same-origin (see [deployment](./deployment.md)), so it needs no CORS; local
 Flutter web dev is cross-origin and uses the `INSIDEOUT_CORS_ORIGINS`
 allow-list (`dev.sh` defaults it to the `localhost` token).
 
@@ -113,7 +113,7 @@ agent token on every human-only route (the proposal decision, Commit, the
 admin routes, the deletes). A pattern missing from the table is human-only,
 and a route-table test fails the build for a route with no entry. A token with
 no claim is full scope, so nothing issued earlier changes. See
-[agent token scope](agent-token-scope.md).
+[agent token scope](./agent-token-scope.md).
 
 Beyond email+password, emailed one-time-credential flows share the same
 session issuance: magic-link login (`POST /auth/magic-link` then
@@ -175,13 +175,13 @@ Authorization is enforced twice, deliberately:
 
 1. **Go app layer** — every mutating function re-checks the caller's
    membership/ownership/admin role inside the same transaction as the write
-   (the TOCTOU-safe pattern; see [database and RLS](database-and-rls.md) for
+   (the TOCTOU-safe pattern; see [database and RLS](./database-and-rls.md) for
    why explicit row locks were removed from these checks). The predicates
    live in `authz.go` (`requireMember`, `requireAdminMember`,
    `requirePlanWriter`, and the roadmap tree's `requireNodeWriter` and
    `requireNodeManager`, which call the same SQL function as the policies).
 2. **PostgreSQL RLS** — a database-level backstop matching the same rules,
-   described in [database and RLS](database-and-rls.md).
+   described in [database and RLS](./database-and-rls.md).
 
 ## API surface
 
@@ -217,7 +217,7 @@ Domain handlers live in `internal/api`, grouped by resource:
 - GitHub: `github*.go` (repo sync, the webhook and its evidence)
 
 The single-replica contract and its guard are in
-[CLI, MCP and client configuration](cli-mcp-and-client-config.md#the-single-replica-contract).
+[CLI, MCP and client configuration](./cli-mcp-and-client-config.md#the-single-replica-contract).
 The error contract is `{"error": string, "code": string, ...extra}` (see
 `internal/httpx/json.go`). Every code is lowercase snake_case; an error with
 no specific code carries its status's name (`not_found`, `bad_request`,

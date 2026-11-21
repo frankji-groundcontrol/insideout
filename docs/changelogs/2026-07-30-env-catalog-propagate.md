@@ -59,7 +59,7 @@ name list is derived from the skeletons.
 
 **New — `app/.env.example`.** Recreated, for a different purpose than the
 Supabase-era file deleted on
-[2026-07-27](2026-07-27-env-hygiene.md): it is the component's *contract*,
+[2026-07-27](./2026-07-27-env-hygiene.md): it is the component's *contract*,
 declaring the one variable Nuxt reads (`NUXT_API_INTERNAL_BASE`) and thereby
 bounding what `propagate` may copy in.
 

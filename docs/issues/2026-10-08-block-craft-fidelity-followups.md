@@ -19,7 +19,7 @@ The Wave 7 fidelity review of the
 [block-craft plan](../plans/2026-10-07-frontend-block-craft/2026-10-07-frontend-block-craft.md)
 scored the component pass 7.5/10. The high finding (focus ring /
 keyboard) is filed separately
-([issue](2026-10-08-block-focus-ring-keyboard.md)); this issue holds the
+([issue](./2026-10-08-block-focus-ring-keyboard.md)); this issue holds the
 medium and low residue, each a bounded fix. Line numbers are against
 the uncommitted worktree of 2026-10-08.
 
@@ -92,7 +92,7 @@ the uncommitted worktree of 2026-10-08.
 ## Bounded fix prompt
 
 "Work the medium items (then any low items) in
-[docs/issues/2026-10-08-block-craft-fidelity-followups.md](2026-10-08-block-craft-fidelity-followups.md),
+[docs/issues/2026-10-08-block-craft-fidelity-followups.md](./2026-10-08-block-craft-fidelity-followups.md),
 one commit per finding or one commit per medium cluster. No new hues;
 keep en/zh l10n parity (`l10n_test.dart` green). Gate per fix:
 `cd client && flutter analyze --no-fatal-infos && flutter test && dart

@@ -80,6 +80,6 @@ is the natural home for that kind of check. Value assertions and a
 contrast script cannot substitute for it — they only ever see the
 tokens.
 
-Related: [Port a reference scheme structurally, not by approximation](2026-10-05-port-reference-schemes-structurally.md)
+Related: [Port a reference scheme structurally, not by approximation](./2026-10-05-port-reference-schemes-structurally.md)
 — the same failure mode one level down, where an approximation
 contained every fact but not the shape.

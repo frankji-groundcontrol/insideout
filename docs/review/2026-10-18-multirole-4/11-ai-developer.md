@@ -4,7 +4,7 @@
 **Score:** **6 / 10**  
 **Bottom line:** The coach loop is well bounded and its stage gates are server-side and human-confirmed, but the trust boundary has holes (get_prd tool result unfenced, MCP outputs unlabelled), a skipped critic silently opens the finalize gate, and the MCP tool policy is advisory prose rather than enforcement, so an owner-token agent can accept its own proposals.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

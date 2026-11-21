@@ -26,7 +26,7 @@ someone runs `railway up --service app` after merge.
 
 *Superseded 2026-10-11: the hosted bundle no longer predates the restyle —
 the 2026-10-11 owner deploy shipped both services
-([record](2026-10-11-owner-deploy-and-mail-truth.md)).*
+([record](./2026-10-11-owner-deploy-and-mail-truth.md)).*
 
 ## Verification
 

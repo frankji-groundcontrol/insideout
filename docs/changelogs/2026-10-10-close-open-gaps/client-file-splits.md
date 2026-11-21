@@ -4,7 +4,7 @@ Eleven files were over the ~350-line budget in CLAUDE.md: ten in `client/` and
 one Go test. Each is now split along a responsibility seam with no behavior
 change. Line counts are the base commit (`8ee97fc`) against the tree now, so
 the "after" column includes the fidelity fixes that landed on top of the
-splits ([client-fidelity-fixes.md](client-fidelity-fixes.md)); the l10n tables
+splits ([client-fidelity-fixes.md](./client-fidelity-fixes.md)); the l10n tables
 are after the removal of 31 unused keys.
 
 | File | Before | After | New file(s) |

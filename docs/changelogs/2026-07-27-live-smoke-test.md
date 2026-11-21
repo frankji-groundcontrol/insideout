@@ -41,7 +41,7 @@ exercise a real-key server instead.
 
 *Superseded 2026-10-11: the variable is `INSIDEOUT_LLM_API_KEY` since the
 2026-08-18 rename — the current script forces that one
-([llm-env record](2026-08-18-llm-env.md); `server/scripts/smoke.sh:93`).*
+([llm-env record](./2026-08-18-llm-env.md); `server/scripts/smoke.sh:93`).*
 
 ## Operator notes
 

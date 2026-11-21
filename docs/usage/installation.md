@@ -1,8 +1,8 @@
 # Installation
 
-People start at the [user guide](user-guide.md): the prebuilt binaries,
+People start at the [user guide](./user-guide.md): the prebuilt binaries,
 `insideout setup`, and sign-in. That path needs no environment variables.
-The maintained map of the wizard is [setup paths](setup-paths.md).
+The maintained map of the wizard is [setup paths](./setup-paths.md).
 
 This page is the full reference. `insideout setup` with no flags, on a
 terminal, asks numbered questions (Enter accepts the hosted service).
@@ -40,7 +40,7 @@ attestation step: with `gh` signed in the one-liner stops on it until a
 tag cut by the current workflow exists, and `scripts/install.sh` from a
 checkout (build from source) works meanwhile. An archive you built
 yourself has no attestation either. How to verify by hand:
-[releasing.md](releasing.md#verifying-a-download).
+[releasing.md](./releasing.md#verifying-a-download).
 
 `INSIDEOUT_RELEASE_BASE` overrides the download base for a self-hosted
 mirror of a release, and must be an `https://` URL: plain http is accepted
@@ -100,7 +100,7 @@ Cursor reads `~/.cursor/mcp.json` (global) or `.cursor/mcp.json`
 client that does not inherit your shell `PATH` needs the absolute path
 from `command -v insideout-mcp`. Reload MCP servers after writing the
 file. Details:
-[cli-mcp-and-guidance.md](cli-mcp-and-guidance.md#mcp-server).
+[cli-mcp-and-guidance.md](./cli-mcp-and-guidance.md#mcp-server).
 
 Signup on the hosted service is invitation-only. Register with an invitation
 code, then sign in with a password, emailed code, or magic link:
@@ -131,8 +131,8 @@ Confirm the hosted path without installing again:
 You need PostgreSQL 18 (the major CI tests) and, for the bundled database, Docker.
 The two values the server refuses to boot without are `DATABASE_URL` and
 `INSIDEOUT_JWT_SECRET` (at least 32 characters). `insideout setup --local`
-writes both. Full variable reference: [environment.md](environment.md).
-Day-to-day commands: [local-development.md](local-development.md).
+writes both. Full variable reference: [environment.md](./environment.md).
+Day-to-day commands: [local-development.md](./local-development.md).
 
 ### Guided setup
 
@@ -192,7 +192,7 @@ insideout signup-mode open      # optional, local disposable DB only
 
 The seed command is strictly for a disposable local database; it creates the
 public development demo account described in
-[local development](local-development.md) and must never run against a
+[local development](./local-development.md) and must never run against a
 shared or production database. Restore `insideout signup-mode invitation_only`
 after any local open-signup exercise.
 
@@ -234,7 +234,7 @@ A server on this machine is [the server skill](../../skills/insideout-server/SKI
 Do not read `.env`. Do not print secret values, tokens, or database URLs.
 
 1. If they did not ask to run a server, install the prebuilt binaries
-   ([user guide](user-guide.md)) and run `insideout setup` on a terminal,
+   ([user guide](./user-guide.md)) and run `insideout setup` on a terminal,
    or `insideout setup --hosted` without one. Merge
    `{ "mcpServers": { "insideout": { "command": "insideout-mcp" } } }`
    into the agent MCP config. Do not set `INSIDEOUT_API`. Do not invent

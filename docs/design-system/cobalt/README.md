@@ -10,18 +10,18 @@ Design law: [DESIGN.md](../../../DESIGN.md); token record:
 
 | File | Surface |
 | --- | --- |
-| [LOCK-home-light.jpg](LOCK-home-light.jpg) | Home (F Index), light |
-| [LOCK-home-dark.jpg](LOCK-home-dark.jpg) | Home, dark |
-| [LOCK-ideas.jpg](LOCK-ideas.jpg) | Ideas (A Type Wall) |
-| [LOCK-prd.jpg](LOCK-prd.jpg) | PRD + Coach (D Split Desk) |
-| [LOCK-commit.jpg](LOCK-commit.jpg) | Commit (C Soft Stack) |
-| [LOCK-roadmap.jpg](LOCK-roadmap.jpg) | Roadmap (B Shade Bands) |
+| [LOCK-home-light.jpg](./LOCK-home-light.jpg) | Home (F Index), light |
+| [LOCK-home-dark.jpg](./LOCK-home-dark.jpg) | Home, dark |
+| [LOCK-ideas.jpg](./LOCK-ideas.jpg) | Ideas (A Type Wall) |
+| [LOCK-prd.jpg](./LOCK-prd.jpg) | PRD + Coach (D Split Desk) |
+| [LOCK-commit.jpg](./LOCK-commit.jpg) | Commit (C Soft Stack) |
+| [LOCK-roadmap.jpg](./LOCK-roadmap.jpg) | Roadmap (B Shade Bands) |
 
 The installed app icon is
-[breakout.svg](icon-candidates/breakout.svg)
+[breakout.svg](./icon-candidates/breakout.svg)
 ([changelog](../../changelogs/2026-10-06-app-icon-breakout.md)).
 The other candidates stay in
-[icon-candidates/](icon-candidates/). Each pair is an SVG master and a
+[icon-candidates/](./icon-candidates/). Each pair is an SVG master and a
 transparent PNG.
 
 Language and prompt:

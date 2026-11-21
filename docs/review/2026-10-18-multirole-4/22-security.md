@@ -4,7 +4,7 @@
 **Score:** **6.8 / 10**  
 **Bottom line:** Sound security design (AST-enforced route auth, RLS, HMAC webhooks, hashed rotating refresh tokens) undermined by abuse-resistance gaps: the login-code attempt budget is bypassed by a concurrent burst and the IP throttle trusts a client-controlled XFF tail off-edge, both confirmed by running. Supply chain is unsigned and tag-pinned. Nothing Critical.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

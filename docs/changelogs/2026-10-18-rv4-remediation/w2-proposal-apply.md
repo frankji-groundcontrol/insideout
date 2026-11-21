@@ -142,7 +142,7 @@ the whole client suite passes (474), `dart format` and the analyzer are clean,
 landed the web accept showed the doubled nodes. **Closed in wave 3:**
 `w3-client-apply` re-derived the patch (red `6096862`, fix `0d33077`; the test
 also asserts the page re-reads the roadmap after the decision), see
-[w3-client-apply](w3-client-apply.md).
+[w3-client-apply](./w3-client-apply.md).
 
 ## Known ceilings, recorded on purpose
 

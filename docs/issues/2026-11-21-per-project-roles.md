@@ -4,7 +4,7 @@ Open, recorded 2026-11-21 (focused review 5, finding FEAT-04; plan row 5.6 of
 the [remediation plan](../review/2026-11-21-focused-review-5/40-remediation-plan.md)).
 Product scope, not a defect: the owner sets the priority. Until now the gap was
 only conceded in PRODUCT.md and listed as "not re-tracked here" in the
-[promise-gap enumeration](2026-10-11-product-promise-gaps.md).
+[promise-gap enumeration](./2026-10-11-product-promise-gaps.md).
 
 ## The promise
 
@@ -26,7 +26,7 @@ current behavior". The promise register stamps the row
 - **Plan writers.** `requirePlanWriter` in `server/internal/store/authz.go`
   admits the project's `owner_id` or a workspace admin. Only a plan writer
   changes the project row, builds the plan or files a proposal
-  ([BUG-020](2026-10-06-bug-020-workspace-member-writes-the-plan.md)).
+  ([BUG-020](./2026-10-06-bug-020-workspace-member-writes-the-plan.md)).
 - **PRD authority.** The PRD author or a workspace admin edits a PRD and
   commits a version (`requirePrdAuthorOrAdmin` in `server/internal/store/prds.go`,
   the author check in `prd_commits.go`); only an admin approves or rejects it.
@@ -34,7 +34,7 @@ current behavior". The promise register stamps the row
   `owner_user_id` may write the node and everything below it
   (`requireNodeWriter`, `insideout._can_write_node`) and may re-delegate the
   nodes strictly below it (`requireNodeManager`), per the owner's decisions 1
-  to 4 in the [review 5 open findings](2026-11-21-review-5-open-findings.md).
+  to 4 in the [review 5 open findings](./2026-11-21-review-5-open-findings.md).
   This is per-node authority, not a per-Project role.
 
 ## What is missing
@@ -69,7 +69,7 @@ First slice, server only, test first on real PostgreSQL:
    their project role.
 
 Out of the first slice: client surfaces, the Viewer narrowing, Product Branch
-Merge (its own [record](2026-10-11-product-branch-merge-decision-log.md)), and
+Merge (its own [record](./2026-10-11-product-branch-merge-decision-log.md)), and
 Driver transfer. Decide with the owner whether node ownership stays a separate
 axis (recommended: yes, roles say what a person may do, node ownership says
 where).

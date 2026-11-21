@@ -16,17 +16,17 @@ provider lane requires the key, base URL, model, and schema to agree; the
 concurrency and queue settings are runtime backpressure knobs rather than
 provider credentials.
 
-- [llm-api-key.md](llm-api-key.md) — `INSIDEOUT_LLM_API_KEY`
+- [llm-api-key.md](./llm-api-key.md) — `INSIDEOUT_LLM_API_KEY`
   (manifest `llm/provider.yaml`)
-- [llm-base-url.md](llm-base-url.md) — `INSIDEOUT_LLM_BASE_URL`
+- [llm-base-url.md](./llm-base-url.md) — `INSIDEOUT_LLM_BASE_URL`
   (`llm/provider.yaml`)
-- [llm-model.md](llm-model.md) — `INSIDEOUT_LLM_MODEL`
+- [llm-model.md](./llm-model.md) — `INSIDEOUT_LLM_MODEL`
   (`llm/provider.yaml`)
-- [llm-schema.md](llm-schema.md) — `INSIDEOUT_LLM_SCHEMA`
+- [llm-schema.md](./llm-schema.md) — `INSIDEOUT_LLM_SCHEMA`
   (`llm/provider.yaml`)
-- [ai-max-concurrent.md](ai-max-concurrent.md) —
+- [ai-max-concurrent.md](./ai-max-concurrent.md) —
   `INSIDEOUT_AI_MAX_CONCURRENT` (`llm/coach.yaml`)
-- [ai-queue-wait.md](ai-queue-wait.md) — `INSIDEOUT_AI_QUEUE_WAIT`
+- [ai-queue-wait.md](./ai-queue-wait.md) — `INSIDEOUT_AI_QUEUE_WAIT`
   (`llm/coach.yaml`)
 
 `INSIDEOUT_AI_TURN_DEADLINE` (default `12m`) is a third coach knob with no key

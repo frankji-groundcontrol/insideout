@@ -66,4 +66,4 @@ The register is broad and mostly self-consistent: all four mandate asks are popu
 
 *Corrected 2026-10-11: recounted, the register's severity tables contain 106
 rows (the folder README headlines 108, its methodology says 105 unique) — see
-the correction note in [01-findings-register.md](01-findings-register.md).*
+the correction note in [01-findings-register.md](./01-findings-register.md).*

@@ -1,7 +1,7 @@
 # Deployment
 
 Operator guide for running InsideOut with the repo's docker-compose stack.
-For developer setup, see [local-development.md](local-development.md).
+For developer setup, see [local-development.md](./local-development.md).
 
 ## Topology
 
@@ -33,7 +33,7 @@ them and adjust.
 
 ## Environment (compose reads `.env`)
 
-The full variable reference is [environment.md](environment.md); the tables
+The full variable reference is [environment.md](./environment.md); the tables
 below cover only what the compose topology needs.
 
 Required — compose fails fast (`:?`) without them:
@@ -306,7 +306,7 @@ On `app`:
   `client/web/fonts/NOTICE.txt`), loosen only that directive in
   [`client/nginx.conf`](../../client/nginx.conf) and run
   `python3 scripts/checks/check_nginx_headers.py`
-  ([local-development.md](local-development.md#testing)). The headers reach
+  ([local-development.md](./local-development.md#testing)). The headers reach
   the hosted app with the next `railway up --service app`.
 
 LLM vars are set on `server`. Empty `INSIDEOUT_LLM_API_KEY` still selects

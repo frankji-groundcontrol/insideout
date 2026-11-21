@@ -16,11 +16,11 @@ resulting design before any implementation.
 
 ## Files
 
-- [research.md](research.md) — digested online research with sources:
+- [research.md](./research.md) — digested online research with sources:
   PRD-quality literature, agent-harness design patterns, multi-agent
   writing/critique systems, existing PRD-AI products.
-- [plan.md](plan.md) — the harness design plan (the deliverable).
-- [reviews.md](reviews.md) — plan-ceo-review and plan-eng-review findings
+- [plan.md](./plan.md) — the harness design plan (the deliverable).
+- [reviews.md](./reviews.md) — plan-ceo-review and plan-eng-review findings
   and their resolutions.
 
 ## Checklist

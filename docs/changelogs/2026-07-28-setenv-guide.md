@@ -18,7 +18,7 @@ minimal placeholder `.env` skeletons, one per database setup.
 - **Added [`docs/SETENV.md`](../SETENV.md)** — English-only per the docs
   convention; links out to the reference for variable semantics rather than
   duplicating tables. Documents the `dev.sh` → `env.sh check` preflight
-  ([added the same day](2026-07-28-envsh.md)) and is explicit about which
+  ([added the same day](./2026-07-28-envsh.md)) and is explicit about which
   commands load `.env` through the wrapper vs on their own
   (`server/scripts/smoke.sh` self-locates it).
 - **Cross-links wired:** [docs/index.md](../index.md) map entry and

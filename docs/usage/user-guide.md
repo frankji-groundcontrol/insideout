@@ -1,7 +1,7 @@
 # User guide
 
 From nothing to a signed-in CLI. This page does not set up a server.
-Running InsideOut on your own machine is [your own server](installation.md#your-own-server).
+Running InsideOut on your own machine is [your own server](./installation.md#your-own-server).
 
 ## Web
 
@@ -21,7 +21,7 @@ insideout version
 
 The script checks the checksum and, when `gh` is signed in and new
 enough, the build provenance. The details are in
-[releasing](releasing.md#verifying-a-download).
+[releasing](./releasing.md#verifying-a-download).
 
 ## Set up
 
@@ -39,7 +39,7 @@ or registering. Login offers a password, an emailed code, or a magic
 link. Register asks for an invitation code when the server requires one,
 then your email, a display name, and a password. The password is hidden.
 
-The paths are mapped in [setup paths](setup-paths.md). That is the
+The paths are mapped in [setup paths](./setup-paths.md). That is the
 document we keep up to date.
 
 ```bash
@@ -71,4 +71,4 @@ insideout register --invite <invitation-code> you@example.com
 
 No token in that snippet. `insideout-mcp` reads the saved login.
 Claude Code can also use `claude mcp add insideout -- insideout-mcp`.
-More is in [CLI, MCP, and guidance](cli-mcp-and-guidance.md).
+More is in [CLI, MCP, and guidance](./cli-mcp-and-guidance.md).

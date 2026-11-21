@@ -2,7 +2,7 @@
 
 The Nuxt 4 SSR frontend rewrite and the deployment infra had been built and
 verified across the 2026-07-20 → 2026-07-23 changelogs but were **never tracked
-by git**. Following the [backend commit](2026-07-23-backend-version-control.md),
+by git**. Following the [backend commit](./2026-07-23-backend-version-control.md),
 this change tracks the frontend and infra — completing the cutover so
 `origin/main` now holds the whole new stack (frontend + Go backend + infra).
 

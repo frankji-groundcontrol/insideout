@@ -1,6 +1,6 @@
 # Review-register sweep: the client
 
-The client half of the [review-register sweep](review-sweep-server.md). Every
+The client half of the [review-register sweep](./review-sweep-server.md). Every
 fix was written test-first: the widget or wire test failed on the old code for
 the stated reason and was committed red, then the fix turned it green, and each
 fix was mutated once to prove the test goes red again. Client gates after each

@@ -12,7 +12,7 @@ address is referred to as `privacyNoticeUrl`.
 ## What changed
 
 - **The privacy link opens the notice in a new tab on the web** (rv4-PUB-02,
-  red `f6db60d`, fix `68eb299`). This restores what [w3-privacy](w3-privacy.md)
+  red `f6db60d`, fix `68eb299`). This restores what [w3-privacy](./w3-privacy.md)
   built as `e225bed` and had to drop in `ca5115a` because the opener files sat
   outside its owned paths; the verifier had run that opener green, so it is a
   restore, not a design. `client/lib/api/open_url_web.dart` (new, 19 lines):

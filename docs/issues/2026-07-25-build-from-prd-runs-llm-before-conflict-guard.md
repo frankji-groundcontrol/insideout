@@ -10,7 +10,7 @@
 > `build` tool, which draft first and pass the count only to confirm, would be refused a
 > draft over any populated roadmap. The one remaining cost is a draft the user
 > declines to apply. The Flutter button had never reached the confirm call at all;
-> that bug is [BUG-022](2026-10-10-bug-022-build-mvp-wrote-nothing.md).
+> that bug is [BUG-022](./2026-10-10-bug-022-build-mvp-wrote-nothing.md).
 >
 > The original record follows, unedited.
 

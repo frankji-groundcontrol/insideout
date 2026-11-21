@@ -1,7 +1,7 @@
 # 2026-09-17 — Vibrant Ink & Seal for younger audiences
 
 Status: **Completed** — Cobalt lock accepted for Flutter; restyle owned by
-[`2026-09-18-cobalt-flutter.md`](2026-09-18-cobalt-flutter.md).
+[`2026-09-18-cobalt-flutter.md`](./2026-09-18-cobalt-flutter.md).
 
 ## Why
 
@@ -27,7 +27,7 @@ users. Product loop stays the same.
 ## Out of scope
 
 - Shipping the Flutter theme change in *this* slice — handed to
-  [`2026-09-18-cobalt-flutter.md`](2026-09-18-cobalt-flutter.md).
+  [`2026-09-18-cobalt-flutter.md`](./2026-09-18-cobalt-flutter.md).
 - `DESIGN.md` replacement ships with that Flutter restyle.
 
 ## Checklist
@@ -61,7 +61,7 @@ users. Product loop stays the same.
 - [x] User review of the locked language and prototypes
 - [x] Flutter restyle only after acceptance — accepted 2026-09-18;
       implementation:
-      [`2026-09-18-cobalt-flutter.md`](2026-09-18-cobalt-flutter.md)
+      [`2026-09-18-cobalt-flutter.md`](./2026-09-18-cobalt-flutter.md)
 
 ## Club Editorial variants
 

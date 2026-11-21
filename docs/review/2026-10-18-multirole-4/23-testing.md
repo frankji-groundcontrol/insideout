@@ -4,7 +4,7 @@
 **Score:** **6.6 / 10**  
 **Bottom line:** The suite is real-DB, honest and mostly deterministic (-shuffle=on -count=2 only fails L1, and the skip gate matches real output), but the lanes have seams. The release is ungated while main is red, the schedule is missing, a global signup_mode race fails under contention, and the CLI/MCP-to-API seam and the refresh/logout path have no automated guard.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

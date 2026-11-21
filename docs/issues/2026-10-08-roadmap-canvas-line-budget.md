@@ -16,8 +16,8 @@ oversize predates the
 (minimap `InkWell` → `PressableBlock`, D7) without changing the budget,
 and the Wave 7 review flagged that no modularity issue had been filed —
 `project_page.dart` and the l10n tables both have one
-([project_page](2026-10-08-project-page-line-budget.md),
-[l10n](2026-10-08-l10n-tables-line-budget.md)); this is the third of
+([project_page](./2026-10-08-project-page-line-budget.md),
+[l10n](./2026-10-08-l10n-tables-line-budget.md)); this is the third of
 the trio.
 
 ## Why not split now
@@ -34,7 +34,7 @@ split and those fixes should land in one pass, not collide.
   testing (under ~250 lines).
 - `roadmap_minimap.dart` — `_Minimap`, `_MinimapMark`, cursor labels;
   the localization and 12px-type fixes from the
-  [fidelity follow-ups](2026-10-08-block-craft-fidelity-followups.md)
+  [fidelity follow-ups](./2026-10-08-block-craft-fidelity-followups.md)
   land here.
 - `roadmap_painters.dart` — the dash/edge painters.
 
@@ -43,7 +43,7 @@ split and those fixes should land in one pass, not collide.
 "Split `client/lib/features/project/roadmap_canvas.dart` (400 lines)
 into the shell plus `roadmap_minimap.dart` and `roadmap_painters.dart`
 per
-[docs/issues/2026-10-08-roadmap-canvas-line-budget.md](2026-10-08-roadmap-canvas-line-budget.md).
+[docs/issues/2026-10-08-roadmap-canvas-line-budget.md](./2026-10-08-roadmap-canvas-line-budget.md).
 No behavior changes: the roadmap canvas tests (paint fingerprints,
 minimap shape channel) pass unmodified. Gate: `cd client && flutter
 analyze --no-fatal-infos && flutter test && dart format --output=none

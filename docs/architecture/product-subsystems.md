@@ -1,7 +1,7 @@
 # Product subsystems
 
 The subsystems added in the 2026-08 product arc, layered on
-[backend.md](backend.md) and [database-and-rls.md](database-and-rls.md).
+[backend.md](./backend.md) and [database-and-rls.md](./database-and-rls.md).
 Each is a projection of the same `/api/v1` contract — one truth, many
 views (PRODUCT.md principle 3).
 
@@ -43,7 +43,7 @@ views (PRODUCT.md principle 3).
   `version` is surfaced from commits, human-only. The server enforces it:
   an agent-scope token is refused (403 `agent_scope_denied`) on the
   decision route, Commit, the admin routes, every delete and a node owner
-  change, whichever client sends it ([agent token scope](agent-token-scope.md)).
+  change, whichever client sends it ([agent token scope](./agent-token-scope.md)).
 - Proposals may carry structured `items` (`proposal_items`: add_node
   with optional parent hint). `POST /agent/proposals/{uid}/decision`
   records the human accept/reject (`proposal_decisions`, the decision

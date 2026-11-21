@@ -10,5 +10,5 @@ Set `INSIDEOUT_JWT_SECRET` during the required server setup, then run the
 masked server check before booting the API. The installation sequence is
 [SETENV Step 2](../../../SETENV.md#step-2--insideout_jwt_secret-required).
 
-- [jwt-secret.md](jwt-secret.md) — `INSIDEOUT_JWT_SECRET`
+- [jwt-secret.md](./jwt-secret.md) — `INSIDEOUT_JWT_SECRET`
   (manifest `auth/jwt.yaml`)

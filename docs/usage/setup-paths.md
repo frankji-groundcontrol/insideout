@@ -8,7 +8,7 @@ dim dot: `1.1.2 · Email`. Say the number when you walk a path, for
 example "1.1.4". The blocks below are the screen for that step, without
 the button row. The developer key files are not part of this map. The
 flag forms (`--hosted`, `--local`, `--check`) are the same work without
-a terminal, and they are listed in [installation](installation.md).
+a terminal, and they are listed in [installation](./installation.md).
 
 ## Buttons
 

@@ -1,7 +1,7 @@
 # InsideOut — Documentation Map
 
 All repository documentation, by purpose. Prose under `docs/` is English-only
-(the [2026-07-20 rewrite plan folder](plans/2026-07-20-go-rewrite/README.md)
+(the [2026-07-20 rewrite plan folder](./plans/2026-07-20-go-rewrite/README.md)
 keeps its original bilingual text as a historical record).
 
 ## Product and planning
@@ -11,16 +11,16 @@ keeps its original bilingual text as a historical record).
   product-language baseline.
 - [DESIGN.md](../DESIGN.md) — the design law: Cobalt-Neo tokens, the block
   component grammar and motion; the accepted lock screens are in
-  [design-system/cobalt/](design-system/cobalt/README.md).
-- [INIT.md](INIT.md) — compatibility pointer from the former product
+  [design-system/cobalt/](./design-system/cobalt/README.md).
+- [INIT.md](./INIT.md) — compatibility pointer from the former product
   definition to PRODUCT.md and the current architecture.
-- [PLAN.md](PLAN.md) — high-level development overview: architecture table,
+- [PLAN.md](./PLAN.md) — high-level development overview: architecture table,
   repo layout, information architecture, conventions.
-- [TODO.md](TODO.md) — slim shipped-system baseline (known limitations and
-  debt live in [issues/](issues/README.md)).
-- [plans/README.md](plans/README.md) — authoritative concurrent task board:
+- [TODO.md](./TODO.md) — slim shipped-system baseline (known limitations and
+  debt live in [issues/](./issues/README.md)).
+- [plans/README.md](./plans/README.md) — authoritative concurrent task board:
   priorities, status, next actions, and blockers.
-- [HANDOFF.md](HANDOFF.md) — concise next-agent resume path and worktree
+- [HANDOFF.md](./HANDOFF.md) — concise next-agent resume path and worktree
   warnings; links to plans instead of repeating task history.
 
 ## For agents
@@ -34,30 +34,30 @@ keeps its original bilingual text as a historical record).
 
 ## Records
 
-- [architecture/](architecture/index.md) — current system shape: backend,
+- [architecture/](./architecture/index.md) — current system shape: backend,
   database and RLS, PRD Coach agent, frontend, deployment, and the CLI/MCP
-  client configuration ([cli-mcp-and-client-config.md](architecture/cli-mcp-and-client-config.md)).
-- [usage/](usage/README.md) — installation, local development, and operator/deployment
+  client configuration ([cli-mcp-and-client-config.md](./architecture/cli-mcp-and-client-config.md)).
+- [usage/](./usage/README.md) — installation, local development, and operator/deployment
   guides.
-- [SETENV.md](SETENV.md) — the environment operating manual: create the file,
+- [SETENV.md](./SETENV.md) — the environment operating manual: create the file,
   choose each key, see and set everything (`env.sh edit`), propagate to the
   components, prove it works (companion to the variable reference in
   usage/environment.md).
-- [changelogs/](changelogs/README.md) — dated change records (folder form
+- [changelogs/](./changelogs/README.md) — dated change records (folder form
   for large changes).
-- [plans/](plans/README.md) — concurrent task board plus detailed live and
+- [plans/](./plans/README.md) — concurrent task board plus detailed live and
   historical task plans.
-- [issues/](issues/README.md) — the bug book (BUG-001…) and other dated
+- [issues/](./issues/README.md) — the bug book (BUG-001…) and other dated
   issue records.
-- [design-qa/](design-qa/README.md) — verbatim user design-QA feedback on
+- [design-qa/](./design-qa/README.md) — verbatim user design-QA feedback on
   page appearance and the frontend, with resolutions and files touched.
-- [learning/](learning/README.md) — reusable lessons from real failures.
-- [practices/](practices/README.md) — repeatable guardrails and methods.
-- [review/](review/README.md) — dated whole-tree review reports: indexed
+- [learning/](./learning/README.md) — reusable lessons from real failures.
+- [practices/](./practices/README.md) — repeatable guardrails and methods.
+- [review/](./review/README.md) — dated whole-tree review reports: indexed
   findings with skeptic verdicts, reproduction evidence, and remediation
   plans.
-- [history/](history/README.md) — retired JuanLeMe-era records.
-- [design-system/](design-system/README.md) — the design system's home:
-  the token-layer version record ([CHANGELOG.md](design-system/CHANGELOG.md);
+- [history/](./history/README.md) — retired JuanLeMe-era records.
+- [design-system/](./design-system/README.md) — the design system's home:
+  the token-layer version record ([CHANGELOG.md](./design-system/CHANGELOG.md);
   live Flutter is Cobalt-Neo **1.1.0**) and the pre-Neo lock screens in
-  [cobalt/](design-system/cobalt/README.md).
+  [cobalt/](./design-system/cobalt/README.md).

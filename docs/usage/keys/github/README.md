@@ -21,16 +21,16 @@ for a future consumer and is placement-only today. All App and webhook kinds
 are optional: a blank placeholder means the GitHub App integration is disabled;
 a nonblank value must pass its shape and capability check.
 
-- [gh-app-id.md](gh-app-id.md) — `INSIDEOUT_GH_APP_ID`
+- [gh-app-id.md](./gh-app-id.md) — `INSIDEOUT_GH_APP_ID`
   (manifest `github/app.yaml`)
-- [gh-app-private-key.md](gh-app-private-key.md) —
+- [gh-app-private-key.md](./gh-app-private-key.md) —
   `INSIDEOUT_GH_PRIVATE_KEY` (`github/app.yaml`)
-- [gh-client-secret.md](gh-client-secret.md) —
+- [gh-client-secret.md](./gh-client-secret.md) —
   `INSIDEOUT_GH_CLIENT_SECRET` (`github/app.yaml`)
-- [gh-private-key-file.md](gh-private-key-file.md) —
+- [gh-private-key-file.md](./gh-private-key-file.md) —
   `INSIDEOUT_GH_PRIVATE_KEY_FILE` (kind: path) (`github/app.yaml`)
-- [gh-webhook-secret.md](gh-webhook-secret.md) —
+- [gh-webhook-secret.md](./gh-webhook-secret.md) —
   `INSIDEOUT_GH_WEBHOOK_SECRET` (`github/webhooks.yaml`)
-- [github-token.md](github-token.md) — `GITHUB_TOKEN` (optional; read only by
+- [github-token.md](./github-token.md) — `GITHUB_TOKEN` (optional; read only by
   `setup --check`)
   (`github/tokens.yaml`)

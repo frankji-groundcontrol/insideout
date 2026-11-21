@@ -49,7 +49,7 @@ pre-existing at HEAD, canvas + bands + minimap + dash painter).
 "Split `client/lib/features/project/project_page.dart` (675 lines) into
 the shell plus `project_github_card.dart`, `project_updates_feed.dart`,
 and `project_dialogs.dart` per
-[docs/issues/2026-10-08-project-page-line-budget.md](2026-10-08-project-page-line-budget.md).
+[docs/issues/2026-10-08-project-page-line-budget.md](./2026-10-08-project-page-line-budget.md).
 No behavior changes: `project_page_test.dart` (Accept/Reject, more_vert
 menu, repo save error, evidence pulse) and `feature_wiring_test.dart`
 (`updateProject`, `deleteProject`, `editUpdate`, `removeUpdate`

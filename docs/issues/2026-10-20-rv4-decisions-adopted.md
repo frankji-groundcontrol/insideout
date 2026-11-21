@@ -1,7 +1,7 @@
 # Review 4 decisions adopted
 
 Recorded 2026-10-20. These rows were open owner decisions in
-[the open findings](2026-10-18-review-4-open-findings.md). Each is now
+[the open findings](./2026-10-18-review-4-open-findings.md). Each is now
 decided. The Decision cell is the whole decision; this record adds no
 further policy. The release sentences are also the runbook in
 [releasing](../usage/releasing.md).

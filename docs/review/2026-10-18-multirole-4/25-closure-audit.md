@@ -4,7 +4,7 @@
 **Score:** **7.4 / 10**  
 **Bottom line:** Most review-3 High closures are real: 14 of 17 have the fix at the cited location and a mutation-killable test. The weak points are the accounting and four unwired guard scripts: about 11 'Fixed' ledger rows are docs-only commits, and four check_*.py scripts cited as red tests run nowhere in CI. FEAT-01, USER-01 and REL-01 are only partially closed.
 
-Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](01-findings-register.md).
+Tree: `main` @ `9f0b1c7`. Every High this lens filed went to an adversarial skeptic cluster; where the skeptic changed a severity or corrected a claim it is marked **[Correction]** below. The full register is [01-findings-register.md](./01-findings-register.md).
 
 ## Skeptic verdicts on this lens's Highs
 

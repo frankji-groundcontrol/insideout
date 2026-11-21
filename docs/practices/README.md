@@ -6,15 +6,15 @@ Repeatable sequences and guardrails distilled from real failures in this repo. E
 |------|----------|
 | 2026-11-21 | [Surface parity guards: request fields and response keys](./2026-11-21-surface-parity-guards.md) |
 | 2026-11-21 | [Probe a real database without touching the tree](./2026-11-21-probe-a-real-database-without-touching-the-tree.md) |
-| 2026-10-09 | [Sync two Macs and GitHub onto one `main`](2026-10-09-sync-two-macs-and-github.md) |
-| 2026-10-07 | [Live TTY walk of `insideout setup` (PTY-driven)](2026-10-07-live-tty-walk-insideout-setup.md) |
-| 2026-10-06 | [Simulate a user across CLI, Web, and MCP](2026-10-06-simulate-a-user-across-surfaces.md) |
-| 2026-07-21 | [Verify database-dependent work against real PostgreSQL](2026-07-21-verify-against-real-database.md) |
-| 2026-07-21 | [Docker layer-cache COPY must include every manifest the installer reads](2026-07-21-docker-copy-manifest-completeness.md) |
-| 2026-07-21 | [Live-exercise streaming (SSE) endpoints before completion](2026-07-21-live-exercise-streaming-endpoints.md) |
-| 2026-07-21 | [Discover provider models before assuming a model id works](2026-07-21-provider-model-discovery.md) |
-| 2026-07-21 | [Docs-recording guardrail (git hooks + checkpoint gate)](2026-07-21-docs-recording-guardrail.md) |
-| 2026-07-30 | [Verifying a tty-only tool, and guards that fail closed](2026-07-30-verifying-a-tty-only-tool.md) |
-| 2026-10-05 | [Setting up a key on a host (full sequence)](2026-10-05-setting-up-a-key.md) |
+| 2026-10-09 | [Sync two Macs and GitHub onto one `main`](./2026-10-09-sync-two-macs-and-github.md) |
+| 2026-10-07 | [Live TTY walk of `insideout setup` (PTY-driven)](./2026-10-07-live-tty-walk-insideout-setup.md) |
+| 2026-10-06 | [Simulate a user across CLI, Web, and MCP](./2026-10-06-simulate-a-user-across-surfaces.md) |
+| 2026-07-21 | [Verify database-dependent work against real PostgreSQL](./2026-07-21-verify-against-real-database.md) |
+| 2026-07-21 | [Docker layer-cache COPY must include every manifest the installer reads](./2026-07-21-docker-copy-manifest-completeness.md) |
+| 2026-07-21 | [Live-exercise streaming (SSE) endpoints before completion](./2026-07-21-live-exercise-streaming-endpoints.md) |
+| 2026-07-21 | [Discover provider models before assuming a model id works](./2026-07-21-provider-model-discovery.md) |
+| 2026-07-21 | [Docs-recording guardrail (git hooks + checkpoint gate)](./2026-07-21-docs-recording-guardrail.md) |
+| 2026-07-30 | [Verifying a tty-only tool, and guards that fail closed](./2026-07-30-verifying-a-tty-only-tool.md) |
+| 2026-10-05 | [Setting up a key on a host (full sequence)](./2026-10-05-setting-up-a-key.md) |
 
 Related: [learning records](../learning/README.md), [bug book](../issues/README.md).

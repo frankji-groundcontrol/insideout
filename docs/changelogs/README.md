@@ -15,15 +15,15 @@ code) with relative links.
 
 ## Records
 
-Per-month index files ([folder README](index/README.md)), newest first:
+Per-month index files ([folder README](./index/README.md)), newest first:
 
-- [November 2026](index/2026-11.md)
-- [October 2026](index/2026-10.md)
-- [September 2026](index/2026-09.md)
-- [August 2026](index/2026-08.md)
-- [July 2026](index/2026-07.md)
+- [November 2026](./index/2026-11.md)
+- [October 2026](./index/2026-10.md)
+- [September 2026](./index/2026-09.md)
+- [August 2026](./index/2026-08.md)
+- [July 2026](./index/2026-07.md)
 
 The month files are the only index: every record file and dated folder
 directly in this folder is listed, with a one-line description, in the month
 file for its date. A new record adds its entry there; a new month adds a
-month file and a line here and in the [month index README](index/README.md).
+month file and a line here and in the [month index README](./index/README.md).

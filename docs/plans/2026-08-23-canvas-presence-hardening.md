@@ -6,7 +6,7 @@ deployed with the font fix; hosted cold capture clean (see the checklist).*
 
 ## Why this exists
 
-The board row for [restore-ink-seal](2026-08-19-restore-ink-seal.md) still
+The board row for [restore-ink-seal](./2026-08-19-restore-ink-seal.md) still
 names "real-time multi-user presence on the canvas" as the open follow-on,
 but the [frontier](../changelogs/2026-08-22-frontier.md) and
 [depth](../changelogs/2026-08-22-depth-thread.md) threads already shipped it:

@@ -4,7 +4,7 @@
 > **Track the work. Refine the ideas. Ship better PRDs.**
 >
 > This README describes the current runnable build. The confirmed target
-> product experience is in [`PRODUCT.md`](PRODUCT.md).
+> product experience is in [`PRODUCT.md`](./PRODUCT.md).
 
 ---
 
@@ -46,18 +46,18 @@ Three surfaces, one `/api/v1` contract:
 
 ### 网页端 / Web
 
-打开你的部署地址即可（注册默认**仅限邀请**，见下方快速上手）。自托管见 [docs/usage/deployment.md](docs/usage/deployment.md)。
+打开你的部署地址即可（注册默认**仅限邀请**，见下方快速上手）。自托管见 [docs/usage/deployment.md](./docs/usage/deployment.md)。
 
 Open your deployment's URL (signup is **invitation-only** by default — see
 Quick start below). For self-hosting, see
-[docs/usage/deployment.md](docs/usage/deployment.md).
+[docs/usage/deployment.md](./docs/usage/deployment.md).
 
-托管实例的地址是 `./scripts/default-api.sh` 所打印 API 基址去掉 `/api/v1` 的部分。没有邀请码？在本仓库开一个标题为 “Invite request” 的 issue（不要贴邮箱），或像 [SECURITY.md](SECURITY.md) 那样通过 GitHub 联系仓库所有者。
+托管实例的地址是 `./scripts/default-api.sh` 所打印 API 基址去掉 `/api/v1` 的部分。没有邀请码？在本仓库开一个标题为 “Invite request” 的 issue（不要贴邮箱），或像 [SECURITY.md](./SECURITY.md) 那样通过 GitHub 联系仓库所有者。
 
 The hosted instance is the host in the API base `./scripts/default-api.sh`
 prints (without `/api/v1`). No invitation code? Open an issue titled "Invite
 request" on this repository (do not paste an email address into it), or reach
-the repository owner through GitHub, the contact [SECURITY.md](SECURITY.md)
+the repository owner through GitHub, the contact [SECURITY.md](./SECURITY.md)
 lists.
 
 **无账号试用 / Try it without an account.** 在本仓库检出里运行 `insideout setup --local --postgres bundled`，用 Docker 在本机起一套自己的服务（需要检出和 Docker，只装预编译二进制不够）。
@@ -96,7 +96,7 @@ From a checkout of this repository (needs Go 1.26+):
 ./scripts/install.sh
 ```
 
-默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。装好后 CLI 与 MCP 直接调用托管 API，不必设置环境变量；`./scripts/default-api.sh` 打印该地址。自建服务（含 PostgreSQL）用 `insideout setup`，没有二进制时才使用 `./scripts/setup.sh`，完整步骤见 [docs/usage/installation.md](docs/usage/installation.md)。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
+默认安装到 `~/.local/bin`（可用第一个参数或 `INSIDEOUT_INSTALL_DIR` 覆盖），并在该目录不在 PATH 时自动把它写进 shell 的 rc 文件（zsh → `~/.zshrc`，bash → `~/.bashrc`，其余 → `~/.profile`）。脚本可重复执行。装好后 CLI 与 MCP 直接调用托管 API，不必设置环境变量；`./scripts/default-api.sh` 打印该地址。自建服务（含 PostgreSQL）用 `insideout setup`，没有二进制时才使用 `./scripts/setup.sh`，完整步骤见 [docs/usage/installation.md](./docs/usage/installation.md)。没有脚本时的手动路径：`cd server && go build -o /usr/local/bin/insideout ./cmd/insideout`（`insideout-mcp` 同理）。
 
 Installs both binaries into `~/.local/bin` by default (override with the
 first argument or `INSIDEOUT_INSTALL_DIR`) and, when that directory is not
@@ -106,7 +106,7 @@ The CLI and MCP server then call the hosted API with no environment
 variables. `./scripts/default-api.sh` prints that URL. Sign in with
 `insideout login <email>`. A server on this machine, including
 PostgreSQL, is `insideout setup --local --postgres bundled|own` in a checkout. The full walk-through is
-[docs/usage/installation.md](docs/usage/installation.md).
+[docs/usage/installation.md](./docs/usage/installation.md).
 Manual fallback without the script: `cd server && go build -o
 /usr/local/bin/insideout ./cmd/insideout` (same for `insideout-mcp`).
 
@@ -128,16 +128,16 @@ insideout setup --local --postgres bundled   # 本地服务，需仓库检出和
 insideout setup --check               # 健康探测 / re-run health probes
 ```
 
-用托管服务的话，短路径是 [用户指南](docs/usage/user-guide.md)，代理加载
-[`skills/insideout-setup/SKILL.md`](skills/insideout-setup/SKILL.md)。
+用托管服务的话，短路径是 [用户指南](./docs/usage/user-guide.md)，代理加载
+[`skills/insideout-setup/SKILL.md`](./skills/insideout-setup/SKILL.md)。
 在本机跑服务器才用
-[`skills/insideout-server/SKILL.md`](skills/insideout-server/SKILL.md)。
+[`skills/insideout-server/SKILL.md`](./skills/insideout-server/SKILL.md)。
 
 Using the hosted service? The short path is
-[the user guide](docs/usage/user-guide.md). An agent loads
-[`skills/insideout-setup/SKILL.md`](skills/insideout-setup/SKILL.md).
+[the user guide](./docs/usage/user-guide.md). An agent loads
+[`skills/insideout-setup/SKILL.md`](./skills/insideout-setup/SKILL.md).
 Running the server on this machine is
-[`skills/insideout-server/SKILL.md`](skills/insideout-server/SKILL.md).
+[`skills/insideout-server/SKILL.md`](./skills/insideout-server/SKILL.md).
 
 把 MCP 服务器注册进你的代理（同一段 JSON 适用于 Claude Code、Cursor 等标准 `mcpServers` 配置）。不需要 `env`：`insideout-mcp` 自己读取 `insideout login` 保存的服务器与令牌。Claude Code 也可以用 `claude mcp add insideout -- insideout-mcp`：
 
@@ -170,7 +170,7 @@ links from `INSIDEOUT_PUBLIC_URL` (default `http://localhost:5173`); Flutter
 otherwise picks a random port, and those links would point at a port
 nothing listens on.
 
-`dev.sh` 是必需的：应用只读进程环境变量，由它先导出 `.env` 并做缺项检查。必填只有 `DATABASE_URL`（PostgreSQL 18，即 CI 所测版本）和 `INSIDEOUT_JWT_SECRET`（≥32 字符）；不设 `INSIDEOUT_LLM_API_KEY` 时教练走离线模板，只回显你最后一条消息、不做辅导。详见 [docs/SETENV.md](docs/SETENV.md) 与 [docs/usage/local-development.md](docs/usage/local-development.md)。
+`dev.sh` 是必需的：应用只读进程环境变量，由它先导出 `.env` 并做缺项检查。必填只有 `DATABASE_URL`（PostgreSQL 18，即 CI 所测版本）和 `INSIDEOUT_JWT_SECRET`（≥32 字符）；不设 `INSIDEOUT_LLM_API_KEY` 时教练走离线模板，只回显你最后一条消息、不做辅导。详见 [docs/SETENV.md](./docs/SETENV.md) 与 [docs/usage/local-development.md](./docs/usage/local-development.md)。
 
 `dev.sh` is not optional: nothing reads `.env` itself (Go reads the
 process environment), so it exports it first and checks for missing keys.
@@ -178,8 +178,8 @@ Only two variables are required — `DATABASE_URL` (PostgreSQL 18, the version C
 `INSIDEOUT_JWT_SECRET` (min 32 chars); without `INSIDEOUT_LLM_API_KEY` the
 coach falls back to an offline template that only echoes your last message
 (no coaching). Step by step:
-[docs/SETENV.md](docs/SETENV.md) and
-[docs/usage/local-development.md](docs/usage/local-development.md).
+[docs/SETENV.md](./docs/SETENV.md) and
+[docs/usage/local-development.md](./docs/usage/local-development.md).
 
 ## 基本用法 / Basic usage
 
@@ -203,12 +203,12 @@ insideout roadmap list <proj-id>       # 路线图 / the roadmap tree
 insideout commit --name "v0.1" --audience decision <prd-id>   # 人类专属 / humans only
 ```
 
-代理词汇——代理汇报、人类决策：`agent-context`（简报）、`checkpoint`（记录工作）、`propose`（提议变更）、`proposal decide`（人类批准或驳回）。完整动词表见 [docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md)。
+代理词汇——代理汇报、人类决策：`agent-context`（简报）、`checkpoint`（记录工作）、`propose`（提议变更）、`proposal decide`（人类批准或驳回）。完整动词表见 [docs/usage/cli-mcp-and-guidance.md](./docs/usage/cli-mcp-and-guidance.md)。
 
 The agent vocabulary — agents report, humans decide: `agent-context`
 (the briefing), `checkpoint` (record work), `propose` (propose changes),
 `proposal decide` (a human accepts or rejects). Full verb table:
-[docs/usage/cli-mcp-and-guidance.md](docs/usage/cli-mcp-and-guidance.md).
+[docs/usage/cli-mcp-and-guidance.md](./docs/usage/cli-mcp-and-guidance.md).
 
 > 注册默认「仅限邀请」：全新数据库播种 `signup_mode = invitation_only`，无邀请码注册返回 403。本地首跑先用 `insideout promote-admin <your-email>` 提升管理员（该邮箱还没有账号时会先创建账号，密码从标准输入读取）、再生成邀请码（本地开发可 `insideout signup-mode open`）。
 > Registration is **invitation-only by default**: a fresh database seeds
@@ -222,20 +222,20 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 
 | 想了解 / Want to know | 去看 / Read |
 | --- | --- |
-| 产品定义 / Product definition | [`PRODUCT.md`](PRODUCT.md) |
-| 设计准则 / Design law | [`DESIGN.md`](DESIGN.md) |
-| 文档总地图 / Doc map | [`docs/index.md`](docs/index.md) |
-| CLI / MCP / GitHub 证据环 / CLI, MCP, evidence loop | [`docs/usage/cli-mcp-and-guidance.md`](docs/usage/cli-mcp-and-guidance.md) |
-| 安装 / Installation | [`docs/usage/installation.md`](docs/usage/installation.md) |
-| 密钥设置教程 / Key setup tutorial | [`docs/usage/key-setup-tutorial.md`](docs/usage/key-setup-tutorial.md) |
-| 密钥测试教程 / Key testing tutorial | [`docs/usage/key-testing-tutorial.md`](docs/usage/key-testing-tutorial.md) |
-| 本地开发 / Local development | [`docs/usage/local-development.md`](docs/usage/local-development.md) |
-| 环境变量 / Environment variables | [`docs/usage/environment.md`](docs/usage/environment.md) · [`docs/SETENV.md`](docs/SETENV.md) |
-| 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](docs/usage/backup-restore.md) |
-| 架构 / Architecture | [`docs/architecture/index.md`](docs/architecture/index.md) |
-| 变更记录 / Change log | [`docs/changelogs/`](docs/changelogs/README.md) |
-| 贡献、安全与隐私 / Contributing, security & privacy | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`SECURITY.md`](SECURITY.md) · [`PRIVACY.md`](PRIVACY.md) |
-| 许可证 / License | [`LICENSE`](LICENSE) - Mozilla Public License 2.0 |
+| 产品定义 / Product definition | [`PRODUCT.md`](./PRODUCT.md) |
+| 设计准则 / Design law | [`DESIGN.md`](./DESIGN.md) |
+| 文档总地图 / Doc map | [`docs/index.md`](./docs/index.md) |
+| CLI / MCP / GitHub 证据环 / CLI, MCP, evidence loop | [`docs/usage/cli-mcp-and-guidance.md`](./docs/usage/cli-mcp-and-guidance.md) |
+| 安装 / Installation | [`docs/usage/installation.md`](./docs/usage/installation.md) |
+| 密钥设置教程 / Key setup tutorial | [`docs/usage/key-setup-tutorial.md`](./docs/usage/key-setup-tutorial.md) |
+| 密钥测试教程 / Key testing tutorial | [`docs/usage/key-testing-tutorial.md`](./docs/usage/key-testing-tutorial.md) |
+| 本地开发 / Local development | [`docs/usage/local-development.md`](./docs/usage/local-development.md) |
+| 环境变量 / Environment variables | [`docs/usage/environment.md`](./docs/usage/environment.md) · [`docs/SETENV.md`](./docs/SETENV.md) |
+| 部署与备份 / Deploy + backup | [`docs/usage/deployment.md`](./docs/usage/deployment.md) · [`docs/usage/backup-restore.md`](./docs/usage/backup-restore.md) |
+| 架构 / Architecture | [`docs/architecture/index.md`](./docs/architecture/index.md) |
+| 变更记录 / Change log | [`docs/changelogs/`](./docs/changelogs/README.md) |
+| 贡献、安全与隐私 / Contributing, security & privacy | [`CONTRIBUTING.md`](./CONTRIBUTING.md) · [`SECURITY.md`](./SECURITY.md) · [`PRIVACY.md`](./PRIVACY.md) |
+| 许可证 / License | [`LICENSE`](./LICENSE) - Mozilla Public License 2.0 |
 
 ## 第三方资源 / Third-party assets
 
@@ -244,7 +244,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
 - 原生构建（iOS / Android / 桌面端）附带两份 SIL OFL 许可的可变字体：**Noto Sans SC** 与
   **Noto Serif SC**（`client/assets/fonts/`，经 `client/pubspec.yaml` 打包，由
   `client/lib/theme/native_fonts.dart` 加载）。许可全文随附于
-  [`client/assets/fonts/OFL.txt`](client/assets/fonts/OFL.txt)。
+  [`client/assets/fonts/OFL.txt`](./client/assets/fonts/OFL.txt)。
 - Web 端自带引擎绘制所需的全部字体（145 个字族，SIL OFL 1.1 许可的 Noto 与
   Roboto），放在 `client/web/fonts/`，由 `client/web/flutter_bootstrap.js` 指向同源
   地址，页面不再访问任何字体托管域。许可全文见 `client/web/fonts/licenses/`，版权
@@ -253,7 +253,7 @@ The agent vocabulary — agents report, humans decide: `agent-context`
   fonts, **Noto Sans SC** and **Noto Serif SC** (`client/assets/fonts/`,
   bundled via `client/pubspec.yaml`, loaded by
   `client/lib/theme/native_fonts.dart`). The full license text ships alongside
-  as [`client/assets/fonts/OFL.txt`](client/assets/fonts/OFL.txt).
+  as [`client/assets/fonts/OFL.txt`](./client/assets/fonts/OFL.txt).
 - The web build serves its own fonts: the whole table the engine paints with
   (145 SIL OFL 1.1 families, Noto and Roboto) sits in `client/web/fonts/`, and
   `client/web/flutter_bootstrap.js` points the engine at it, so a page contacts no

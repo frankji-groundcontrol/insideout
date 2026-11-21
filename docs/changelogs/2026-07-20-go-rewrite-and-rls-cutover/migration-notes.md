@@ -11,7 +11,7 @@ into the `insideout` schema; the retired tables (`workshop_nodes`,
 were archived as JSON **outside the repository**, and then the whole
 `juanleme` schema was dropped. There is no rollback path in the database;
 recovery of retired-table data means the archive files, not SQL. See
-[summary.md](summary.md) and [TODO.md](../../TODO.md) P1.
+[summary.md](./summary.md) and [TODO.md](../../TODO.md) P1.
 
 ## Auth moved off Supabase
 

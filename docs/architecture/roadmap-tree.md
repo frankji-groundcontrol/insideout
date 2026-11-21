@@ -163,7 +163,7 @@ token may read one node, the subtree list, `mine` and the owner history, and
 may edit through `PATCH`, but is refused on `ownerId`, delegate and hand-back
 (`server/internal/api/agent_scope.go`); delete is human-only. An agent token
 minted with a `rootNodeId` writes only inside that subtree
-([agent token scope](agent-token-scope.md)). The only change signal is an in-memory callback
+([agent token scope](./agent-token-scope.md)). The only change signal is an in-memory callback
 (`server/internal/store/pool.go`) that pings open progress streams. The web
 has one roadmap route per project (`client/lib/router.dart`). MCP exposes
 `roadmap_add`, `roadmap_move` and `roadmap_evidence` (no `roadmap_delete`: delete is human-only)

@@ -23,7 +23,7 @@ change shipped.
   OpenDesign `LOCK-*` references with `DESIGN_LANGUAGE.md` and
   page prototypes in `insideout-cobalt.html`.
   Accepted for Flutter on 2026-09-18
-  ([follow-on](2026-09-18-cobalt-flutter-lock.md)); no theme shipped yet.
+  ([follow-on](./2026-09-18-cobalt-flutter-lock.md)); no theme shipped yet.
 
 ## Operator
 

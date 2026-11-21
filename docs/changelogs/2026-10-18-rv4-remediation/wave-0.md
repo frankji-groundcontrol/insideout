@@ -1,6 +1,6 @@
 # Review-4 remediation, wave 0: the privacy scrub
 
-The wave-0 section of the [folder index](index.md), moved here unchanged so
+The wave-0 section of the [folder index](./index.md), moved here unchanged so
 each wave record stays under the line budget. The index lists every wave and
 every cluster fragment.
 
@@ -14,7 +14,7 @@ mutations each turned a test red again, and the diff equals the 15 owned
 files. The integrator cherry-picked the 13 commits with `-x` onto the contract
 commit `2502f46` (`c9216d7..97d7529`, no conflicts); the records follow-ups
 are the single commit `3d65d50`. Fragment:
-[w0-privacy.md](w0-privacy.md).
+[w0-privacy.md](./w0-privacy.md).
 
 ### Dispositions
 

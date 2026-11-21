@@ -30,7 +30,7 @@ The safest lane is the file form:
    `INSIDEOUT_GH_PRIVATE_KEY_FILE` to the absolute target path, and leave
    `INSIDEOUT_GH_PRIVATE_KEY` empty.
 4. Run the host `keys.py init` and `fill` commands from
-   [gh-app-id](gh-app-id.md). `fill` records the pointer; it must not rewrite
+   [gh-app-id](./gh-app-id.md). `fill` records the pointer; it must not rewrite
    the raw PEM.
 
 If an inline deployment is required, enter the PEM with literal `\n` escapes
@@ -42,7 +42,7 @@ leave both PEM lanes blank and keep the initialized placeholders.
 ## 4. How to test it
 
 Use the signed private-repository delivery walk in
-[gh-app-id](gh-app-id.md): redeliver a `push` or `pull_request` event from the
+[gh-app-id](./gh-app-id.md): redeliver a `push` or `pull_request` event from the
 GitHub App delivery page and require HTTP 200 plus matching guide evidence.
 When the integration is disabled, run
 `INSIDEOUT_KEYS_HOST='<host>' python3 scripts/keys.py audit` and accept

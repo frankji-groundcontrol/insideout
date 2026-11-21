@@ -11,7 +11,7 @@ spelled here.
 ## Root cause
 
 The 10,000-character PRD section cap (rv4-COMP-04, see
-[w3-stream-bounds](w3-stream-bounds.md)) was enforced by one of the two callers
+[w3-stream-bounds](./w3-stream-bounds.md)) was enforced by one of the two callers
 of `store.UpdateSections`, the only writer of `prds.sections`. The human
 `PATCH /prds/{id}` handler checked each section before calling the store; the
 coach's `update_prd_section` tool did not. Three symptoms followed:

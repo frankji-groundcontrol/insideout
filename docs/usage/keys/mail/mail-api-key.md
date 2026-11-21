@@ -11,8 +11,8 @@ one-time codes, password reset, and invitations.
 ## 2. How it is propagated
 
 The value moves from `.env` through `dev.sh` into the mail sender. A real key
-requires both [mail-from](mail-from.md) and
-[public-url](public-url.md); those companions determine sender acceptance and
+requires both [mail-from](./mail-from.md) and
+[public-url](./public-url.md); those companions determine sender acceptance and
 where links point.
 
 ## 3. How to set it

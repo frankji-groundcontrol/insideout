@@ -5,9 +5,9 @@ Everything else is a committed skeleton (`.env.example`), a generated copy, or
 a code default. Nothing secret appears inline in a command, a doc, or a commit.
 
 This is the operating manual — *what to type*. For the meaning, default and
-consumer of every variable see [usage/environment.md](usage/environment.md);
+consumer of every variable see [usage/environment.md](./usage/environment.md);
 for the day-to-day dev workflow see
-[usage/local-development.md](usage/local-development.md).
+[usage/local-development.md](./usage/local-development.md).
 
 `.env` stays the only file processes read. Its values have a second,
 out-of-git home since 2026-10-05: the host key store under
@@ -21,10 +21,10 @@ rule; `init` creates the empty placeholders). Rebuilding a
 fresh `.env` still goes through `env.sh init`; paste from the `.key` files.
 The six-part reference for that store (where / propagated / set / tested /
 used / install guide, one standalone file per kind) starts at
-[usage/keys/](usage/keys/README.md).
+[usage/keys/](./usage/keys/README.md).
 The complete operator walkthrough is
-[key-setup-tutorial.md](usage/key-setup-tutorial.md), followed by its
-[key-testing-tutorial.md](usage/key-testing-tutorial.md).
+[key-setup-tutorial.md](./usage/key-setup-tutorial.md), followed by its
+[key-testing-tutorial.md](./usage/key-testing-tutorial.md).
 
 ## Layout
 
@@ -83,7 +83,7 @@ mint per-email invites. For a disposable local database, run the documented
 `insideout seed` command first, promote `demo@insideout.local`, and sign in
 through `insideout setup` before optionally opening signup. Restore
 `invitation_only` afterward. Full detail:
-[usage/cli-mcp-and-guidance.md](usage/cli-mcp-and-guidance.md).
+[usage/cli-mcp-and-guidance.md](./usage/cli-mcp-and-guidance.md).
 
 ## The skeleton is the schema
 
@@ -163,13 +163,13 @@ server-side prepared statements do not survive transaction pooling.
 
 **Multi-tenant caution:** `DATABASE_URL` may point at a shared instance —
 migrations and the app stay inside the `insideout` schema and never touch other
-tenants' objects ([why](architecture/database-and-rls.md)).
+tenants' objects ([why](./architecture/database-and-rls.md)).
 
 Per-key detail (value source, tests, rotation, store paths):
-[usage/keys/database/database-app-dsn.md](usage/keys/database/database-app-dsn.md),
-[usage/keys/database/database-owner-dsn.md](usage/keys/database/database-owner-dsn.md),
-[usage/keys/database/postgres-app-password.md](usage/keys/database/postgres-app-password.md),
-[usage/keys/database/postgres-owner-password.md](usage/keys/database/postgres-owner-password.md).
+[usage/keys/database/database-app-dsn.md](./usage/keys/database/database-app-dsn.md),
+[usage/keys/database/database-owner-dsn.md](./usage/keys/database/database-owner-dsn.md),
+[usage/keys/database/postgres-app-password.md](./usage/keys/database/postgres-app-password.md),
+[usage/keys/database/postgres-owner-password.md](./usage/keys/database/postgres-owner-password.md).
 
 ## Step 2 — `INSIDEOUT_JWT_SECRET` (required)
 
@@ -178,7 +178,7 @@ under that the server refuses to start. `openssl rand -hex 32` yields 64 hex
 characters, well clear of the bar — or let `./scripts/env.sh init` generate and
 store it for you. Generate a fresh value per environment; never reuse a dev
 secret in production. Per-key detail:
-[usage/keys/auth/jwt-secret.md](usage/keys/auth/jwt-secret.md).
+[usage/keys/auth/jwt-secret.md](./usage/keys/auth/jwt-secret.md).
 
 ## Step 3 — AI provider (a choice, not a gap)
 
@@ -191,35 +191,35 @@ lines are commented in the skeleton. For real coaching, set `INSIDEOUT_LLM_API_K
 on the base URL yourself. `INSIDEOUT_LLM_MODEL` defaults to
 `claude-sonnet-4-20250514`; `INSIDEOUT_LLM_SCHEMA` is `messages` or `responses`.
 Per-key detail:
-[usage/keys/llm/llm-api-key.md](usage/keys/llm/llm-api-key.md),
-[usage/keys/llm/llm-base-url.md](usage/keys/llm/llm-base-url.md),
-[usage/keys/llm/llm-model.md](usage/keys/llm/llm-model.md),
-[usage/keys/llm/llm-schema.md](usage/keys/llm/llm-schema.md),
-[usage/keys/llm/ai-max-concurrent.md](usage/keys/llm/ai-max-concurrent.md),
-[usage/keys/llm/ai-queue-wait.md](usage/keys/llm/ai-queue-wait.md).
+[usage/keys/llm/llm-api-key.md](./usage/keys/llm/llm-api-key.md),
+[usage/keys/llm/llm-base-url.md](./usage/keys/llm/llm-base-url.md),
+[usage/keys/llm/llm-model.md](./usage/keys/llm/llm-model.md),
+[usage/keys/llm/llm-schema.md](./usage/keys/llm/llm-schema.md),
+[usage/keys/llm/ai-max-concurrent.md](./usage/keys/llm/ai-max-concurrent.md),
+[usage/keys/llm/ai-queue-wait.md](./usage/keys/llm/ai-queue-wait.md).
 
 ## Step 4 — Local-dev toggles
 
 - `INSIDEOUT_COOKIE_SECURE=0` — set this when browsing over plain http, or the
   browser drops the auth cookies. Only the exact value `0` turns it off. See
-  [cookie-secure](usage/keys/app/cookie-secure.md).
+  [cookie-secure](./usage/keys/app/cookie-secure.md).
 - `INSIDEOUT_DEV_CORS=1` — usually unnecessary. Hosted Flutter is
   same-origin via nginx; local Flutter web needs
   `INSIDEOUT_CORS_ORIGINS=localhost`. Only the exact value `1` turns
-  permissive CORS on. See [dev-cors](usage/keys/app/dev-cors.md) and
-  [cors-origins](usage/keys/app/cors-origins.md).
+  permissive CORS on. See [dev-cors](./usage/keys/app/dev-cors.md) and
+  [cors-origins](./usage/keys/app/cors-origins.md).
 - `INSIDEOUT_MAIL_API_KEY` — leave it empty for **mail dev mode**: the server
   delivers no email, it only logs sign-in links, sign-in codes and
   password-reset mails (`mail dev mode — not sent`), and the sign-in screens
   say so. `scripts/dev.sh` sets `INSIDEOUT_MAIL_DEV_BODY=1` for the server so
   the log line carries the link or code itself. Both rows are in the Go backend
-  table of [usage/environment.md](usage/environment.md#go-backend). Per-key
+  table of [usage/environment.md](./usage/environment.md#go-backend). Per-key
   detail for the body toggle:
-  [usage/keys/mail/mail-dev-body.md](usage/keys/mail/mail-dev-body.md).
+  [usage/keys/mail/mail-dev-body.md](./usage/keys/mail/mail-dev-body.md).
 - `INSIDEOUT_ADDR` and the two TTLs rarely need changing. If you do change
-  them, follow [addr](usage/keys/app/addr.md),
-  [access-ttl](usage/keys/app/access-ttl.md), and
-  [refresh-ttl](usage/keys/app/refresh-ttl.md), then run their live probes.
+  them, follow [addr](./usage/keys/app/addr.md),
+  [access-ttl](./usage/keys/app/access-ttl.md), and
+  [refresh-ttl](./usage/keys/app/refresh-ttl.md), then run their live probes.
 
 ## Step 5 — Only if you run docker compose
 
@@ -233,19 +233,19 @@ Skip for bare `go run` / `dev.sh` use.
   because a flat "required" would cry wolf for everyone on a remote DSN — a
   conditional requirement belongs in the checker, and `check` enforces it
   exactly when the bundled setup is in use. Override both in `.env` for any
-  real deployment. See [postgres-app-password](usage/keys/database/postgres-app-password.md)
-  and [postgres-owner-password](usage/keys/database/postgres-owner-password.md).
+  real deployment. See [postgres-app-password](./usage/keys/database/postgres-app-password.md)
+  and [postgres-owner-password](./usage/keys/database/postgres-owner-password.md).
 - `POSTGRES_SUPERUSER_PASSWORD` — bootstrap only; the app never connects with it.
-  See [postgres-superuser-password](usage/keys/compose/postgres-superuser-password.md).
+  See [postgres-superuser-password](./usage/keys/compose/postgres-superuser-password.md).
 - `SERVER_PORT` / `POSTGRES_PORT` / `CLIENT_PORT` — host-side mappings. Inside
   the containers the ports are fixed at `8080` / `5432`; Postgres binds to
-  `127.0.0.1` on the host. See [server-port](usage/keys/compose/server-port.md),
-  [postgres-port](usage/keys/compose/postgres-port.md), and
-  [client-port](usage/keys/compose/client-port.md).
+  `127.0.0.1` on the host. See [server-port](./usage/keys/compose/server-port.md),
+  [postgres-port](./usage/keys/compose/postgres-port.md), and
+  [client-port](./usage/keys/compose/client-port.md).
 
 Per-key detail:
-[usage/keys/database/postgres-app-password.md](usage/keys/database/postgres-app-password.md),
-[usage/keys/database/postgres-owner-password.md](usage/keys/database/postgres-owner-password.md).
+[usage/keys/database/postgres-app-password.md](./usage/keys/database/postgres-app-password.md),
+[usage/keys/database/postgres-owner-password.md](./usage/keys/database/postgres-owner-password.md).
 
 ## Seeing and setting everything
 
@@ -266,7 +266,7 @@ It writes only the root `.env`, then offers to re-run `propagate` so the
 components see the change. All of its logic lives in
 [`scripts/env_catalog.py`](../scripts/env_catalog.py); the curses file only
 draws. That split is what makes the behaviour testable at all — see
-[verifying a tty-only tool](practices/2026-07-30-verifying-a-tty-only-tool.md).
+[verifying a tty-only tool](./practices/2026-07-30-verifying-a-tty-only-tool.md).
 
 ## Propagating to the components
 
@@ -313,7 +313,7 @@ exits 1 when the `DATABASE_URL` role has `BYPASSRLS` or is a superuser (it
 would skip every row-level security policy). Use the `insideout_app` role
 there and keep the privileged role in `DATABASE_OWNER_URL`.
 
-See [usage/environment.md § Troubleshooting](usage/environment.md#troubleshooting)
+See [usage/environment.md § Troubleshooting](./usage/environment.md#troubleshooting)
 for the full list.
 
 ## Never print a secret
@@ -358,11 +358,11 @@ before handing the DSN to `pg_isready`, because argv is not private.
 
 ## Related
 
-- [usage/environment.md](usage/environment.md) — the variable reference:
+- [usage/environment.md](./usage/environment.md) — the variable reference:
   meaning, default and consumer of every variable.
-- [usage/local-development.md](usage/local-development.md) — prereqs, running,
+- [usage/local-development.md](./usage/local-development.md) — prereqs, running,
   testing.
-- [Verifying a tty-only tool](practices/2026-07-30-verifying-a-tty-only-tool.md)
+- [Verifying a tty-only tool](./practices/2026-07-30-verifying-a-tty-only-tool.md)
   — how these guards were tested, and why green unit tests were not enough.
-- [Database conventions](architecture/database-and-rls.md) — `insideout_app`,
+- [Database conventions](./architecture/database-and-rls.md) — `insideout_app`,
   RLS, the shared-instance rule.

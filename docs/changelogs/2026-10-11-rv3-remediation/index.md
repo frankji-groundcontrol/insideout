@@ -14,10 +14,10 @@ mutation-checked before acceptance. All 32 clusters were accepted in round 1.
 
 | Record | Waves | State |
 | --- | --- | --- |
-| [server.md](server.md) | 1, 2, 4 | landed — API, store, agent, three migrations |
-| [client.md](client.md) | 2, 3, 4 | landed — coach panel, capture, polish, validation leg |
-| [docs-and-infra.md](docs-and-infra.md) | 1, 3, 4 | landed — CI lanes, truth checks, doors, promise records |
-| [verification.md](verification.md) | all | gates green on a fresh database; one allowed skip |
+| [server.md](./server.md) | 1, 2, 4 | landed — API, store, agent, three migrations |
+| [client.md](./client.md) | 2, 3, 4 | landed — coach panel, capture, polish, validation leg |
+| [docs-and-infra.md](./docs-and-infra.md) | 1, 3, 4 | landed — CI lanes, truth checks, doors, promise records |
+| [verification.md](./verification.md) | all | gates green on a fresh database; one allowed skip |
 
 ## Operator notes
 
@@ -25,7 +25,7 @@ mutation-checked before acceptance. All 32 clusters were accepted in round 1.
   `20261010*` files plus `20261011100000_circuit_breaker_row_id`,
   `20261011110000_conversation_locale`, `20261011140000_roadmap_validation`.
   All seven apply together on a fresh clone of the migrated base
-  ([verification.md](verification.md)); the first hosted apply is the owner's
+  ([verification.md](./verification.md)); the first hosted apply is the owner's
   SEC-01 step, now rehearsed by CI's upgrade-replay lane on production-shaped
   seed data.
 - `20261011100000` **drops and recreates** `ai_check_circuit` /

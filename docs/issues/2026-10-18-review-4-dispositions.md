@@ -2,7 +2,7 @@
 
 The per-ID dispositions of waves 1 to 3 of the
 [review-4 remediation](../changelogs/2026-10-18-rv4-remediation/index.md), moved out of the
-[open-findings record](2026-10-18-review-4-open-findings.md) so that both stay
+[open-findings record](./2026-10-18-review-4-open-findings.md) so that both stay
 inside the 350-line budget. That record keeps the Highs, the open residue (R1,
 R2, R3), the gate notes, the coordinator notes and the owner decisions; this one
 keeps what is closed. Wave 0's dispositions are the first six rows of the owner
@@ -21,7 +21,7 @@ installed), so those rows end with "pending first CI run after push" (R1-17). Ru
 state and the clusters are in the
 [wave-1 record](../changelogs/2026-10-18-rv4-remediation/wave-1.md);
 what each cluster left open is the
-[residue table](2026-10-18-review-4-open-findings.md#wave-1-open-residue-integrator-2026-10-18). A "Wave 3:" tail marks a row that wave 3
+[residue table](./2026-10-18-review-4-open-findings.md#wave-1-open-residue-integrator-2026-10-18). A "Wave 3:" tail marks a row that wave 3
 changed; the counts are as wave 1 left them.
 
 | Register ID | Row | Disposition | Red | Fix | Reason or what is left |
@@ -33,7 +33,7 @@ changed; the counts are as wave 1 left them.
 | rv4-TEST-01 | 1.5 | `FIXED` | `0baafaf` | `b7db11d` | `release.yml` runs `go test ./... -race -count=1` before any build or upload. The release runner has no PostgreSQL service: R1-05. Pending first CI run: R1-17. |
 | rv4-PM-05 | 1.5 | `PARTIAL` | `0baafaf` | `b7db11d` | The test gate is done with TEST-01 and [releasing](../usage/releasing.md) records the process (`7091e14`). `DEFERRED_OWNER`: the version policy, the rollback rule, a stronger gate (R1-05, R1-16). Wave 3: the gate half landed with rv4-PUB-03 (pending first CI run); the `releasing.md` rewrite was reverted (`12bc405`) and the policy and rollback stay `DEFERRED_OWNER` (R3-18). |
 | rv4-PM-02 | 1.4 | `FIXED` | `8b9cd0b` | `57fa71e`, `5f52381` | A weekly `schedule` runs `go test ./... -race -shuffle=on`; HANDOFF cites `9f0b1c7` (2026-10-11) since `7091e14`, which closed the clause the worker had reported `PARTIAL`. Pending first CI run: R1-17. |
-| rv4-TEST-08 | 1.4 | `PARTIAL` | `735ba99`, `4609a63` | `adf2177`, `cc534e7` | In-progress runs are cancelled for pull requests only; every other run has a group of its own. The client image job did not fit (`ci.yml` 346 of 350 lines): R1-01, [ci-yml-split](2026-10-18-ci-yml-split.md). Wave 3: `ci.yml` is now 349 of 350 lines (R3-20). |
+| rv4-TEST-08 | 1.4 | `PARTIAL` | `735ba99`, `4609a63` | `adf2177`, `cc534e7` | In-progress runs are cancelled for pull requests only; every other run has a group of its own. The client image job did not fit (`ci.yml` 346 of 350 lines): R1-01, [ci-yml-split](./2026-10-18-ci-yml-split.md). Wave 3: `ci.yml` is now 349 of 350 lines (R3-20). |
 | rv4-PM-01 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | The `env-suites` job runs every `scripts/tests/check_*.py` with `python3 -I`. Pending first CI run: R1-17. |
 | rv4-CLOSE-01 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | Same step as PM-01 (the guard loop). |
 | rv4-TEST-05 | 1.6 | `FIXED` | `9112dc6` | `352dbc2`, `b410302` | Same step as PM-01 (the guard loop). |
@@ -72,7 +72,7 @@ One row for each of the 23 rows wave 2 touched: 21 `FIXED`, 2 `PARTIAL`
 (`FEAT-02-CLIENT-APPLY`, rv4-DATA-03; wave 3 closed both), no `NOT_REAL`, no
 `BLOCKED`; the owner
 calls and operator actions are `DEFERRED_OWNER` in the
-[owner decisions](2026-10-18-review-4-open-findings.md#owner-decisions-no-engineering-action-until-decided). SHAs are on
+[owner decisions](./2026-10-18-review-4-open-findings.md#owner-decisions-no-engineering-action-until-decided). SHAs are on
 `rv4/integration` (the cluster fragments cite the worker-branch SHAs). No row is
 a CI-config property, so none waits for the first CI run. R1-03 and R1-09 are
 the closed wave-1 residue rows; `FEAT-02-CLIENT-APPLY` is the worker's id for the
@@ -114,7 +114,7 @@ rv4-TEST-04, rv4-TEST-06, rv4-CLOSE-08, rv4-FEAT-05, rv4-USER-12, rv4-QUAL-04,
 rv4-COMP-05), 3 `DEFERRED_OWNER` (rv4-DATA-06, rv4-TEST-07, rv4-CLOSE-09), no
 `NOT_REAL`, no `BLOCKED`. Three more rows carry an owner half beside finished
 engineering (rv4-AIDEV-02, rv4-COMP-05, `COMP-08-DECISION`); those are in the
-[owner decisions](2026-10-18-review-4-open-findings.md#owner-decisions-no-engineering-action-until-decided). SHAs are on `rv4/integration`
+[owner decisions](./2026-10-18-review-4-open-findings.md#owner-decisions-no-engineering-action-until-decided). SHAs are on `rv4/integration`
 and each integration commit is patch-identical to its worker commit (the
 fragments cite the worker-branch SHAs). Every `FIXED` has a red test that failed
 before its fix, except rv4-TEST-03 (a coverage task) and rv4-CLOSE-10 (the
@@ -122,7 +122,7 @@ integrator's pre-gate patch); six rows say `-` in the Red column: those two,
 rv4-TEST-04 (test-only commits) and the three `DEFERRED_OWNER` rows. A row that
 rests on a workflow file or a CI-config property is **pending first CI run after
 push** (R1-17); that is not repeated in every cell. The R3 IDs are the rows of the
-[wave-3 residue table](2026-10-18-review-4-open-findings.md#wave-3-open-residue-integrator-2026-10-19). The cluster of
+[wave-3 residue table](./2026-10-18-review-4-open-findings.md#wave-3-open-residue-integrator-2026-10-19). The cluster of
 each row and the judgement calls are in
 [wave-3-dispositions.md](../changelogs/2026-10-18-rv4-remediation/wave-3-dispositions.md); the gates, the lane
 logs and the operator notes are in the [wave-3 record](../changelogs/2026-10-18-rv4-remediation/wave-3.md).

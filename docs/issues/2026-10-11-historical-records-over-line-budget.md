@@ -27,7 +27,7 @@ All three are dated records (a retired migration spec, two historical
 plans). Splitting a dated record violates the record-immutability policy
 the same pass enforces: original sentences stay, corrections annotate.
 This differs from
-[`docs/changelogs/README.md`](2026-10-11-changelogs-readme-line-budget.md),
+[`docs/changelogs/README.md`](./2026-10-11-changelogs-readme-line-budget.md),
 which is a **living index** and was split into per-month files.
 
 ## Bounded fix prompt

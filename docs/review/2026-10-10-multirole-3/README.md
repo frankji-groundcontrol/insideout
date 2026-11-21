@@ -24,7 +24,7 @@ real commands against the tree and the live hosted deployment.
 > conversion drops the body the coach was supposed to inherit, and the offline
 > template coach is indistinguishable from the real one. 83 findings: 17 High,
 > 33 Medium, 33 Low; the workflow-shaped remediation plan is
-> [40-remediation-plan.md](40-remediation-plan.md).
+> [40-remediation-plan.md](./40-remediation-plan.md).
 
 ## Scores
 
@@ -72,8 +72,8 @@ Buckets: FIX 22 · HARDEN 22 · IMPROVE 25 · ADD 8 (+6 critic rows).
 ## Methodology
 
 One dynamic workflow: 10 reviewer briefs (roles
-[10](10-architect.md)–[14](14-user.md), dimensions
-[20](20-feature-implementation.md)–[24](24-reliability-ops.md)) fanned out in
+[10](./10-architect.md)–[14](./14-user.md), dimensions
+[20](./20-feature-implementation.md)–[24](./24-reliability-ops.md)) fanned out in
 parallel over the same tree, each capped at 12 findings with a mandatory
 `file:line` verbatim quote and a fix or a direction; in-script dedup on
 `(file, summary[:60])`; every High/Critical handed to one of three adversarial
@@ -96,13 +96,13 @@ throughout; no `.env` content was read.
    is in the [ledger](../2026-10-10-disposition-ledger/04-multirole-3.md)
    and the changes in the
    [changelog](../../changelogs/2026-10-11-rv3-remediation/index.md).
-1. [00-executive-summary.md](00-executive-summary.md) — top ten, effort by bucket
-2. [01-findings-register.md](01-findings-register.md) — every finding, verdict-joined
-3. [50-promise-register.md](50-promise-register.md) — every PRODUCT.md promise stamped IMPLEMENTED/PARTIAL/DEAD/DOCS-ONLY (lead 14, run in remediation wave 4)
-4. [40-remediation-plan.md](40-remediation-plan.md) — the workflow-executable plan
-5. [30-completeness-critic.md](30-completeness-critic.md) — what this review could not cover
-6. Role and dimension files, worst-first: [14-user](14-user.md), [20-feature-implementation](20-feature-implementation.md), [11-ai-developer](11-ai-developer.md), [10-architect](10-architect.md), [23-testing](23-testing.md), then the rest
+1. [00-executive-summary.md](./00-executive-summary.md) — top ten, effort by bucket
+2. [01-findings-register.md](./01-findings-register.md) — every finding, verdict-joined
+3. [50-promise-register.md](./50-promise-register.md) — every PRODUCT.md promise stamped IMPLEMENTED/PARTIAL/DEAD/DOCS-ONLY (lead 14, run in remediation wave 4)
+4. [40-remediation-plan.md](./40-remediation-plan.md) — the workflow-executable plan
+5. [30-completeness-critic.md](./30-completeness-critic.md) — what this review could not cover
+6. Role and dimension files, worst-first: [14-user](./14-user.md), [20-feature-implementation](./20-feature-implementation.md), [11-ai-developer](./11-ai-developer.md), [10-architect](./10-architect.md), [23-testing](./23-testing.md), then the rest
 
-*Note 2026-10-11: "the rest" is [12-fullstack](12-fullstack.md),
-[13-project-manager](13-project-manager.md),
-[21-code-quality](21-code-quality.md) and [22-security](22-security.md).*
+*Note 2026-10-11: "the rest" is [12-fullstack](./12-fullstack.md),
+[13-project-manager](./13-project-manager.md),
+[21-code-quality](./21-code-quality.md) and [22-security](./22-security.md).*

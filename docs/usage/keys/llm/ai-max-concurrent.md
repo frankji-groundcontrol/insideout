@@ -50,7 +50,7 @@ A provider 429 is a quota signal, not proof that this setting was applied.
 ## 5. How it is used
 
 The coach semaphore limits concurrent model calls so one burst of sessions
-cannot exhaust the [llm-api-key](llm-api-key.md) quota.
+cannot exhaust the [llm-api-key](./llm-api-key.md) quota.
 
 ## 6. Installation guide
 

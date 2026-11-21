@@ -27,7 +27,7 @@ and every defect it found was fixed test-first.
 | Commit card gap reasons half in English in zh | BUG-025 #4 |
 | "1 members", "1 nodes" | BUG-025 #5 |
 | Build MVP drafted but wrote nothing (draft-then-confirm had no confirm in the UI) | [BUG-022](../../issues/2026-10-10-bug-022-build-mvp-wrote-nothing.md) |
-| A committed version's card showed none of the open items, section lines or decision note it recorded | [BUG-026](../../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md), [commit-card-details.md](commit-card-details.md) |
+| A committed version's card showed none of the open items, section lines or decision note it recorded | [BUG-026](../../issues/2026-10-10-bug-026-committed-versions-hid-what-they-recorded.md), [commit-card-details.md](./commit-card-details.md) |
 
 BUG-025's five defects were fixed with a red test first and re-walked in the
 browser. Build MVP was exercised end to end: draft, the confirm step, the

@@ -5,7 +5,7 @@ pair), then this fragment. Findings are cited as `rv4-<ID>` because review IDs
 restart per review. One row: `FEAT-02-CLIENT-APPLY`, the worker's id for the
 register row rv4-FEAT-02 (plan rows 2.3 and 2.4, residue row R2-01 of the
 [open-findings record](../../issues/2026-10-18-review-4-open-findings.md)). It
-closes the `PARTIAL` facet that [w2-proposal-apply](w2-proposal-apply.md) left
+closes the `PARTIAL` facet that [w2-proposal-apply](./w2-proposal-apply.md) left
 open. No address, host, secret or one-time code is spelled in this fragment.
 
 ## What changed

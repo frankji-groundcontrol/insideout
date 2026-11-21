@@ -34,7 +34,7 @@ diff, not a ride-along.
 `contentBlockAcc`, `classifyInStreamError`) from
 `server/internal/agent/anthropic.go` into `anthropic_parse.go` in the
 same package — no signature changes, per
-[docs/issues/2026-10-04-anthropic-go-line-budget.md](2026-10-04-anthropic-go-line-budget.md).
+[docs/issues/2026-10-04-anthropic-go-line-budget.md](./2026-10-04-anthropic-go-line-budget.md).
 Gate: `go build ./... && go vet ./... && go test ./...` green — the
 stream-parse and error-classification table tests are the behavioral
 pins. Both files end under ~350 lines. Record the split in a changelog

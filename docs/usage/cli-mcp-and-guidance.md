@@ -17,7 +17,7 @@ Since the `v0.1.0` release (2026-10-11),
 `curl -fsSL https://github.com/frankji-groundcontrol/insideout/releases/latest/download/bootstrap.sh | bash`
 (or `scripts/bootstrap.sh` from a checkout) installs prebuilt,
 checksum-verified binaries with no checkout and no Go toolchain.
-The full guide is [installation.md](installation.md).
+The full guide is [installation.md](./installation.md).
 
 ```bash
 ./scripts/install.sh
@@ -92,7 +92,7 @@ call and none for a human-only route (see [Agent scope](#agent-scope)).
 
 | Area | Verbs |
 | --- | --- |
-| Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `logout`, `forgot-password <email>`, `reset-password`, `account delete` (the current password from the hidden prompt; see [account deletion](account-deletion.md)) |
+| Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `logout`, `forgot-password <email>`, `reset-password`, `account delete` (the current password from the hidden prompt; see [account deletion](./account-deletion.md)) |
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `evidence add --detail D [--source URL] [--observed YYYY-MM-DD] <node-id>` (a validation observation on a leaf; the day defaults to today), `workspaces create --title [--desc]`, `workspace update [--title] [--description D\|clear] [--cover URL\|clear] <ws>`, `join <code>`, `projects create --title [--desc] <ws-id>`, `project update [--title] [--description D\|clear] [--status planning\|active\|paused\|done\|archived] [--owner user-id\|me\|clear] <proj>`, `project delete --yes <proj>` (workspace admins), `workspace delete --yes <ws>` (its creator), `update add --kind progress\|blocker\|note --content C <proj>`, `update edit --content C <update>`, `update delete <update>` (author or admin), `member role --role admin\|member <ws> <user>`, `member remove <ws> <user>` (admins), `profile update [--username U] [--bio B\|clear] [--keywords a,b\|clear] [--avatar URL\|clear]` |
 | Read surface | `whoami`, `workspaces`, `workspace <ws>`, `projects <ws>`, `project <proj>`, `updates [--before c] [--limit n] <proj>`, `prds <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>`, `export [--format markdown\|print] [--audience A] [--out FILE] <prd>` (the whole PRD on stdout or in a file, as MCP `prd_export` gives it) |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
