@@ -173,7 +173,7 @@ func TestAdmitDone_ReportsTheBreakerVerdicts(t *testing.T) {
 }
 
 // While the breaker is open, Admit refuses with the coach's own 503
-// CIRCUIT_OPEN before any permit, run row or provider call is spent.
+// circuit_open before any permit, run row or provider call is spent.
 func TestAdmit_RefusedWhileTheCircuitIsOpen(t *testing.T) {
 	c := New(newTestStore(t), nil, discardLog())
 	userID, workspaceID := admitFixture(t, c)
@@ -188,9 +188,9 @@ func TestAdmit_RefusedWhileTheCircuitIsOpen(t *testing.T) {
 		t.Fatal("admit was allowed while the circuit was open")
 	}
 	if rec.Code != http.StatusServiceUnavailable ||
-		!strings.Contains(rec.Body.String(), `"code":"CIRCUIT_OPEN"`) ||
-		!strings.Contains(rec.Body.String(), `"circuit_state":"open"`) {
-		t.Fatalf("open-circuit refusal = %d %s, want a 503 CIRCUIT_OPEN naming the open state", rec.Code, rec.Body.String())
+		!strings.Contains(rec.Body.String(), `"code":"circuit_open"`) ||
+		!strings.Contains(rec.Body.String(), `"circuitState":"open"`) {
+		t.Fatalf("open-circuit refusal = %d %s, want a 503 circuit_open naming the open state", rec.Code, rec.Body.String())
 	}
 
 	var runs int

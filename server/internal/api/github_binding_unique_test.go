@@ -89,8 +89,8 @@ func TestASecondProjectCannotLinkARepoThatIsAlreadyLinked(t *testing.T) {
 	// repo GitHub does not show.
 	code, body = putRepoAs(t, w, other, otherProject.ID, strings.ToLower(name))
 	expect(t, "second project links the same repo", code, body, http.StatusBadRequest)
-	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_NOT_VISIBLE" {
-		t.Errorf("code = %q, want GITHUB_REPO_NOT_VISIBLE; body %s", got, body)
+	if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_repo_not_visible" {
+		t.Errorf("code = %q, want github_repo_not_visible; body %s", got, body)
 	}
 	for _, secret := range []string{w.project.ID.String(), w.owner.ID.String()} {
 		if strings.Contains(body, secret) {

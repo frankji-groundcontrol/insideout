@@ -126,14 +126,14 @@ void main() {
       () => applyCoachFrame(
         const SseFrame(
           'error',
-          '{"error":"slow down","code":"APP_THROTTLE","retry_after_seconds":9}',
+          '{"error":"slow down","code":"app_throttle","retryAfterSeconds":9}',
         ),
         const CoachHandlers(),
       ),
       throwsA(
         isA<ApiException>()
             .having((e) => e.message, 'message', 'slow down')
-            .having((e) => e.code, 'code', 'APP_THROTTLE')
+            .having((e) => e.code, 'code', 'app_throttle')
             .having((e) => e.retryAfterSeconds, 'retry', 9),
       ),
     );

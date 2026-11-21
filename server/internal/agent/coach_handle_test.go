@@ -83,8 +83,8 @@ func TestHandleMessage_ProviderConfigErrorDoesNotLeakTheProviderBody(t *testing.
 		ex.conversationID.String(), userID, conv.WorkspaceID.String(), "hi")
 
 	body := rec.Body.String()
-	if !strings.Contains(body, `"code":"PROVIDER_CONFIG"`) {
-		t.Fatalf("the stream has no PROVIDER_CONFIG error event:\n%s", body)
+	if !strings.Contains(body, `"code":"provider_config"`) {
+		t.Fatalf("the stream has no provider_config error event:\n%s", body)
 	}
 	if strings.Contains(body, secret) {
 		t.Fatalf("the SSE stream carried the provider's response body to the end user:\n%s", body)

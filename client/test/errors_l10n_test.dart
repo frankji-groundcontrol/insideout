@@ -27,15 +27,15 @@ void main() {
 
   test('backoff codes and 429 collapse to throttled', () {
     expect(
-      key(ApiException('slow down', status: 429, code: 'APP_THROTTLE')),
+      key(ApiException('slow down', status: 429, code: 'app_throttle')),
       'error.throttled',
     );
     expect(
-      key(ApiException('circuit', status: 503, code: 'CIRCUIT_OPEN')),
+      key(ApiException('circuit', status: 503, code: 'circuit_open')),
       'error.throttled',
     );
     expect(
-      key(ApiException('anthropic', status: 429, code: 'ANTHROPIC_RATE_LIMIT')),
+      key(ApiException('anthropic', status: 429, code: 'anthropic_rate_limit')),
       'error.throttled',
     );
     expect(key(ApiException('plain 429', status: 429)), 'error.throttled');
@@ -85,9 +85,9 @@ void main() {
   // request" and 409 reads "changed elsewhere, refresh", though refreshing
   // changes nothing and the fix for a private repo is installing the App.
   const repoCodes = <(int, String, String)>[
-    (400, 'GITHUB_REPO_NOT_VISIBLE', 'error.githubRepoNotVisible'),
-    (400, 'GITHUB_REPO_URL_INVALID', 'error.githubRepoUrlInvalid'),
-    (409, 'GITHUB_REPO_ALREADY_LINKED', 'error.githubRepoAlreadyLinked'),
+    (400, 'github_repo_not_visible', 'error.githubRepoNotVisible'),
+    (400, 'github_repo_url_invalid', 'error.githubRepoUrlInvalid'),
+    (409, 'github_repo_already_linked', 'error.githubRepoAlreadyLinked'),
   ];
 
   for (final (status, code, want) in repoCodes) {

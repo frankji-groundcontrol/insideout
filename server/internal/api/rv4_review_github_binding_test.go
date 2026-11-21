@@ -61,8 +61,8 @@ func TestRvGhBindAnOwnerlessProjectStillHoldsItsRepoOverHTTP(t *testing.T) {
 
 	code, body = putRepoAs(t, w, w.owner, second.ID, strings.ToLower(name))
 	expect(t, "a second project links the repo an ownerless project holds", code, body, http.StatusConflict)
-	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_ALREADY_LINKED" {
-		t.Errorf("code = %q, want GITHUB_REPO_ALREADY_LINKED; body %s", got, body)
+	if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_repo_already_linked" {
+		t.Errorf("code = %q, want github_repo_already_linked; body %s", got, body)
 	}
 
 	// The admin can release the ownerless holder, and the repo is then free.
@@ -157,8 +157,8 @@ func TestRvGhBindARepoHeldByAnotherWorkspaceIsAnsweredLikeOneGitHubDoesNotShow(t
 	} {
 		code, body := link()
 		expect(t, who+" links the held repo", code, body, http.StatusConflict)
-		if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_REPO_ALREADY_LINKED" {
-			t.Errorf("%s: code = %q, want GITHUB_REPO_ALREADY_LINKED; body %s", who, got, body)
+		if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_repo_already_linked" {
+			t.Errorf("%s: code = %q, want github_repo_already_linked; body %s", who, got, body)
 		}
 	}
 }
@@ -202,8 +202,8 @@ func TestRvGhBindAGithubRefusalWhileLinkingIsNotABadGateway(t *testing.T) {
 	code, body := putRepo(t, w, name)
 	expect(t, "link while GitHub refuses the App", code, body, http.StatusBadRequest)
 	got := decodeAs[struct{ Code, Error string }](t, body)
-	if got.Code != "GITHUB_ACCESS_REFUSED" || !strings.Contains(got.Error, why) {
-		t.Errorf("answer = %s, want code GITHUB_ACCESS_REFUSED carrying GitHub's words %q", body, why)
+	if got.Code != "github_access_refused" || !strings.Contains(got.Error, why) {
+		t.Errorf("answer = %s, want code github_access_refused carrying GitHub's words %q", body, why)
 	}
 	if repoURL, _, err := w.st.ProjectRepoSync(context.Background(), w.owner.ID, w.project.ID); err != nil || repoURL != "" {
 		t.Errorf("a refused link stored repo_url %q (err %v), want nothing", repoURL, err)
@@ -223,8 +223,8 @@ func TestRvGhBindAGithubRefusalWhileSyncingIsNotABadGateway(t *testing.T) {
 	code, body = w.call(w.owner, http.MethodPost, syncPath(w), "")
 	expect(t, "sync while GitHub refuses the commits read", code, body, http.StatusBadRequest)
 	got := decodeAs[struct{ Code, Error string }](t, body)
-	if got.Code != "GITHUB_ACCESS_REFUSED" || !strings.Contains(got.Error, why) {
-		t.Errorf("answer = %s, want code GITHUB_ACCESS_REFUSED carrying GitHub's words %q", body, why)
+	if got.Code != "github_access_refused" || !strings.Contains(got.Error, why) {
+		t.Errorf("answer = %s, want code github_access_refused carrying GitHub's words %q", body, why)
 	}
 }
 
@@ -239,8 +239,8 @@ func TestRvGhBindASpentQuotaIsStillARateLimitNotARefusal(t *testing.T) {
 
 	code, body := putRepo(t, w, name)
 	expect(t, "link while the quota is spent", code, body, http.StatusTooManyRequests)
-	if got := decodeAs[struct{ Code string }](t, body).Code; got != "GITHUB_RATE_LIMITED" {
-		t.Errorf("code = %q, want GITHUB_RATE_LIMITED; body %s", got, body)
+	if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_rate_limited" {
+		t.Errorf("code = %q, want github_rate_limited; body %s", got, body)
 	}
 }
 

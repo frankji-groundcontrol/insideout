@@ -238,17 +238,17 @@ void main() {
   for (final (status, code, advice) in <(int, String, String)>[
     (
       400,
-      'GITHUB_REPO_NOT_VISIBLE',
+      'github_repo_not_visible',
       'GitHub cannot see that repository — install the InsideOut GitHub App on the repository, then link it again',
     ),
     (
       400,
-      'GITHUB_REPO_URL_INVALID',
+      'github_repo_url_invalid',
       'That is not a GitHub repository address — check it, then link the repository again',
     ),
     (
       409,
-      'GITHUB_REPO_ALREADY_LINKED',
+      'github_repo_already_linked',
       'That repository is already linked to another project',
     ),
   ]) {

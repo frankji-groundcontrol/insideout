@@ -64,7 +64,7 @@ class _LateFailingApi extends ApiClient {
     throw ApiException(
       'Rate limit exceeded',
       status: 429,
-      code: 'APP_THROTTLE',
+      code: 'app_throttle',
       retryAfterSeconds: 12,
     );
   }
@@ -111,7 +111,7 @@ final _cases = <_Case>[
     failure: ApiException(
       'Rate limit exceeded',
       status: 429,
-      code: 'APP_THROTTLE',
+      code: 'app_throttle',
       retryAfterSeconds: 12,
     ),
     notice: 'error.throttled',
@@ -124,7 +124,7 @@ final _cases = <_Case>[
     failure: ApiException(
       'AI service temporarily unavailable',
       status: 503,
-      code: 'CIRCUIT_OPEN',
+      code: 'circuit_open',
     ),
     notice: 'error.throttled',
     countdown: 'coach.serviceUnavailable',
@@ -136,7 +136,7 @@ final _cases = <_Case>[
     failure: ApiException(
       'AI service is busy, try again shortly',
       status: 503,
-      code: 'CIRCUIT_OPEN',
+      code: 'circuit_open',
     ),
     notice: 'error.throttled',
     countdown: 'coach.serviceUnavailable',
@@ -147,7 +147,7 @@ final _cases = <_Case>[
     name: 'provider rate limit',
     failure: ApiException(
       'AI provider is rate limited',
-      code: 'ANTHROPIC_RATE_LIMIT',
+      code: 'anthropic_rate_limit',
     ),
     notice: 'error.throttled',
     countdown: 'coach.rateLimited',

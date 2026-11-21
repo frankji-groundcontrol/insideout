@@ -94,7 +94,7 @@ void main() {
     'a throttle': ApiException(
       'Rate limit exceeded',
       status: 429,
-      code: 'APP_THROTTLE',
+      code: 'app_throttle',
       retryAfterSeconds: 12,
     ),
     'a server error': ApiException('coach failed', status: 500),

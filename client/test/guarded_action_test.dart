@@ -71,15 +71,15 @@ void main() {
   });
 
   // The deferred roadmap-copy issue: an AI build/expand answered with
-  // APP_THROTTLE or CIRCUIT_OPEN must surface the coach's specific copy
+  // app_throttle or circuit_open must surface the coach's specific copy
   // with its countdown, not guardWrite's generic save-failed snackbar.
-  testWidgets('an APP_THROTTLE write shows the coach rate-limit countdown', (
+  testWidgets('an app_throttle write shows the coach rate-limit countdown', (
     tester,
   ) async {
     await _pump(
       tester,
       () async =>
-          throw ApiException('throttled', status: 429, code: 'APP_THROTTLE'),
+          throw ApiException('throttled', status: 429, code: 'app_throttle'),
       (_) {},
     );
 
@@ -91,14 +91,14 @@ void main() {
   });
 
   testWidgets(
-    'a CIRCUIT_OPEN write says the AI service is down, with a timer',
+    'a circuit_open write says the AI service is down, with a timer',
     (tester) async {
       await _pump(
         tester,
         () async => throw ApiException(
           'open',
           status: 503,
-          code: 'CIRCUIT_OPEN',
+          code: 'circuit_open',
           retryAfterSeconds: 30,
         ),
         (_) {},

@@ -47,8 +47,8 @@ func TestAdmit_CountsTowardTheRateLimit(t *testing.T) {
 	if ok || done != nil {
 		t.Fatal("the 11th admit within a minute was allowed")
 	}
-	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), `"code":"APP_THROTTLE"`) {
-		t.Fatalf("refusal = %d %s, want 429 APP_THROTTLE", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), `"code":"app_throttle"`) {
+		t.Fatalf("refusal = %d %s, want 429 app_throttle", rec.Code, rec.Body.String())
 	}
 }
 
@@ -64,8 +64,8 @@ func TestAdmit_HoldsAPermitUntilDone(t *testing.T) {
 		t.Fatal("the first admit was refused")
 	}
 	rec, _, ok := admit(c, userID, workspaceID)
-	if ok || rec.Code != http.StatusServiceUnavailable || !strings.Contains(rec.Body.String(), `"code":"CIRCUIT_OPEN"`) {
-		t.Fatalf("second admit while the only permit is held = %d %s (ok=%v), want 503 CIRCUIT_OPEN", rec.Code, rec.Body.String(), ok)
+	if ok || rec.Code != http.StatusServiceUnavailable || !strings.Contains(rec.Body.String(), `"code":"circuit_open"`) {
+		t.Fatalf("second admit while the only permit is held = %d %s (ok=%v), want 503 circuit_open", rec.Code, rec.Body.String(), ok)
 	}
 	first(nil)
 	_, third, ok := admit(c, userID, workspaceID)
@@ -143,9 +143,9 @@ func TestHandleMessage_IsThrottledByThePerUserRateLimit(t *testing.T) {
 	c.HandleMessage(rec, httptest.NewRequest(http.MethodPost, "/", nil),
 		ex.conversationID.String(), userID, conv.WorkspaceID.String(), "one too many")
 
-	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), `"code":"APP_THROTTLE"`) ||
+	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), `"code":"app_throttle"`) ||
 		!strings.HasPrefix(rec.Header().Get("Content-Type"), "application/json") {
-		t.Fatalf("throttled turn = %d %s %q, want a plain JSON 429 APP_THROTTLE", rec.Code, rec.Body.String(), rec.Header().Get("Content-Type"))
+		t.Fatalf("throttled turn = %d %s %q, want a plain JSON 429 app_throttle", rec.Code, rec.Body.String(), rec.Header().Get("Content-Type"))
 	}
 	var msgs []store.AgentMessage
 	if msgs, err = st.ListAgentMessages(ctx, ex.actorID, ex.conversationID); err != nil || len(msgs) != 0 {
