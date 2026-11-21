@@ -4,6 +4,7 @@ Repeatable sequences and guardrails distilled from real failures in this repo. E
 
 | Date | Practice |
 |------|----------|
+| 2026-11-21 | [Surface parity guards: request fields and response keys](./2026-11-21-surface-parity-guards.md) |
 | 2026-11-21 | [Probe a real database without touching the tree](./2026-11-21-probe-a-real-database-without-touching-the-tree.md) |
 | 2026-10-09 | [Sync two Macs and GitHub onto one `main`](2026-10-09-sync-two-macs-and-github.md) |
 | 2026-10-07 | [Live TTY walk of `insideout setup` (PTY-driven)](2026-10-07-live-tty-walk-insideout-setup.md) |

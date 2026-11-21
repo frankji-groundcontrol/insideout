@@ -50,6 +50,9 @@ server/
     roadmaptime/       the time-first deadline and pressure rules
     setup/             the guided-setup flow engine behind `insideout setup`
     store/             all pgx queries; files grouped by domain resource (Store layer below)
+    surfaceparity/     the request-field parity guard: every field an API handler decodes
+                       is reached by the Go client, the CLI and MCP, or is a listed omission
+                       ([practice](../practices/2026-11-21-surface-parity-guards.md))
     testlock/          cross-process advisory locks and the strict-mode host guard shared by the
                        DATABASE_URL-gated tests (imported by tests only)
 ```
