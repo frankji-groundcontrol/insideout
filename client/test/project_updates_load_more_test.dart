@@ -53,43 +53,7 @@ void main() {
     tester,
   ) async {
     final api = _Api();
-    final session = Session()
-      ..ready = true
-      ..api = api;
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(
-            create: (_) =>
-                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
-          ),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: ProjectUpdatesFeed(
-                canDecide: true,
-                projectId: 'p1',
-                nextCursor: 'u1',
-                onChanged: () async {},
-                onEdit: (u, content) async {},
-                onRemove: (u) async {},
-                updates: [
-                  ProjectUpdate(
-                    id: 'u1',
-                    kind: 'note',
-                    content: 'The newest note',
-                    createdAt: '2026-11-01T00:00:00Z',
-                    authorId: 'a1',
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(_feed(api, [_newest()]));
     await tester.pumpAndSettle();
     expect(find.text('The oldest note'), findsNothing);
 
@@ -100,4 +64,81 @@ void main() {
     expect(find.text('The oldest note'), findsOneWidget);
     expect(find.text('Load older updates'), findsNothing);
   });
+
+  // The project page builds a new list on every rebuild: an equal first page
+  // must not drop the older pages already read.
+  testWidgets('a parent rebuild with an equal list keeps the older pages', (
+    tester,
+  ) async {
+    final api = _Api();
+    await tester.pumpWidget(_feed(api, [_newest()]));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Load older updates'));
+    await tester.pumpAndSettle();
+    expect(find.text('The oldest note'), findsOneWidget);
+
+    await tester.pumpWidget(_feed(api, [_newest()]));
+    await tester.pumpAndSettle();
+    expect(find.text('The oldest note'), findsOneWidget);
+    expect(find.text('Load older updates'), findsNothing);
+  });
+
+  testWidgets('a new newest update starts the history over', (tester) async {
+    final api = _Api();
+    await tester.pumpWidget(_feed(api, [_newest()]));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Load older updates'));
+    await tester.pumpAndSettle();
+
+    final added = ProjectUpdate(
+      id: 'u2',
+      kind: 'note',
+      content: 'A note just added',
+      createdAt: '2026-11-02T00:00:00Z',
+      authorId: 'a1',
+    );
+    await tester.pumpWidget(_feed(api, [added, _newest()]));
+    await tester.pumpAndSettle();
+    expect(find.text('A note just added'), findsOneWidget);
+    expect(find.text('The oldest note'), findsNothing);
+    expect(find.text('Load older updates'), findsOneWidget);
+  });
+}
+
+ProjectUpdate _newest() => ProjectUpdate(
+  id: 'u1',
+  kind: 'note',
+  content: 'The newest note',
+  createdAt: '2026-11-01T00:00:00Z',
+  authorId: 'a1',
+);
+
+Widget _feed(_Api api, List<ProjectUpdate> updates) {
+  final session = Session()
+    ..ready = true
+    ..api = api;
+  return MultiProvider(
+    providers: [
+      ChangeNotifierProvider.value(value: session),
+      ChangeNotifierProvider(
+        create: (_) =>
+            Appearance(store: MemorySettingsStore(), locale: 'en-US'),
+      ),
+    ],
+    child: MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: ProjectUpdatesFeed(
+            canDecide: true,
+            projectId: 'p1',
+            nextCursor: 'u1',
+            onChanged: () async {},
+            onEdit: (u, content) async {},
+            onRemove: (u) async {},
+            updates: updates,
+          ),
+        ),
+      ),
+    ),
+  );
 }
