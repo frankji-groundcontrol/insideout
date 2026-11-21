@@ -177,6 +177,25 @@ mixin _RoadmapVerbs on _ApiCore {
     return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
   }
 
+  /// [nodeId] waits on [dependsOnId] from now on; an existing link is kept.
+  Future<RoadmapNode> addRoadmapDependency(
+    String nodeId,
+    String dependsOnId,
+  ) async {
+    final res = await _exec(req.postRoadmapDependency(nodeId, dependsOnId));
+    return _parse(res, (d) => RoadmapNode.fromJson(d as Map<String, dynamic>));
+  }
+
+  Future<void> removeRoadmapDependency(
+    String nodeId,
+    String dependsOnId,
+  ) async {
+    await _parse(
+      await _exec(req.deleteRoadmapDependency(nodeId, dependsOnId)),
+      (d) => d,
+    );
+  }
+
   Future<void> deleteRoadmapNode(String nodeId, {bool force = false}) async {
     await _parse(
       await _exec(req.deleteRoadmapNode(nodeId, force: force)),

@@ -88,6 +88,10 @@ void main() {
     (400, 'github_repo_not_visible', 'error.githubRepoNotVisible'),
     (400, 'github_repo_url_invalid', 'error.githubRepoUrlInvalid'),
     (409, 'github_repo_already_linked', 'error.githubRepoAlreadyLinked'),
+    // A refused dependency link: refreshing changes nothing either.
+    (400, 'dependency_self', 'error.dependencySelf'),
+    (409, 'dependency_cycle', 'error.dependencyCycle'),
+    (409, 'dependency_in_tree', 'error.dependencyInTree'),
   ];
 
   for (final (status, code, want) in repoCodes) {

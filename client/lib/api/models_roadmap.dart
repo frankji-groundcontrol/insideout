@@ -18,6 +18,7 @@ class RoadmapNode {
     this.completionReason = '',
     this.canWrite = false,
     this.rollup = const RoadmapRollup(),
+    this.dependsOn = const [],
   });
 
   final String id;
@@ -53,6 +54,10 @@ class RoadmapNode {
   /// The leaves at or below this node (a leaf counts itself).
   final RoadmapRollup rollup;
 
+  /// The nodes this one waits on, anywhere in the project: the merges a
+  /// tree cannot draw. Oldest link first.
+  final List<String> dependsOn;
+
   factory RoadmapNode.fromJson(Map<String, dynamic> j) => RoadmapNode(
     id: j['id'] as String,
     projectId: j['projectId'] as String,
@@ -74,6 +79,9 @@ class RoadmapNode {
     rollup: j['rollup'] is Map<String, dynamic>
         ? RoadmapRollup.fromJson(j['rollup'] as Map<String, dynamic>)
         : const RoadmapRollup(),
+    dependsOn: [
+      for (final id in (j['dependsOn'] as List?) ?? const []) id as String,
+    ],
   );
 }
 

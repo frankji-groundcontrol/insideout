@@ -56,6 +56,20 @@ void main() {
     });
   });
 
+  test('dependencies: link a node to the one it waits on, and unlink', () {
+    expectCall(
+      postRoadmapDependency('n1', 'n2'),
+      'POST',
+      '/roadmap/n1/dependencies',
+      {'dependsOnId': 'n2'},
+    );
+    expectCall(
+      deleteRoadmapDependency('n1', 'n2'),
+      'DELETE',
+      '/roadmap/n1/dependencies/n2',
+    );
+  });
+
   test('cursor names the client it speaks for', () {
     expectCall(
       postCursor('p1', 12, 34, clientId: 'c1'),
