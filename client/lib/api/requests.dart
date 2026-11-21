@@ -150,19 +150,25 @@ ApiCall postConversationStage(String id, String stage) =>
     ApiCall('POST', '/conversations/$id/stage', {'stage': stage});
 
 /// Drafts a branched roadmap from the PRD. Nothing is written: the response
-/// is `{projectId, tree}`, to be sent on through [postPrdBuildConfirm].
+/// is `{tree}` (plus `projectId` only when the PRD is already linked), to be
+/// sent on through [postPrdBuildConfirm]. An unapproved PRD answers 409
+/// `prd_not_approved`.
 ApiCall postPrdBuild(String id) => ApiCall('POST', '/prds/$id/build');
 
 /// Writes a drafted [tree] (`/build` only drafts). When the project already
 /// has roadmap nodes the server answers 409 `replace_conflict` with
-/// `liveCount`; send that back as [expectedCount] to replace them.
+/// `liveCount` (and `evidenceCount`); send that back as [expectedCount] to
+/// replace them. A roadmap with evidence or done/validated nodes answers 409
+/// `roadmap_replace_has_history` with the counts; [force] accepts that loss.
 ApiCall postPrdBuildConfirm(
   String id,
   Map<String, dynamic> tree, {
   int? expectedCount,
+  bool force = false,
 }) {
   return ApiCall('POST', '/prds/$id/build/confirm', {
     'tree': tree,
     'expectedCount': ?expectedCount,
+    if (force) 'force': true,
   });
 }

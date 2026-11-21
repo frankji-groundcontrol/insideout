@@ -24,7 +24,8 @@ void main() {
           read('lib/features/project/roadmap_expand_draft.dart');
       final prd =
           read('lib/features/prd/prd_page.dart') +
-          read('lib/features/prd/coach_panel.dart');
+          read('lib/features/prd/coach_panel.dart') +
+          read('lib/features/prd/prd_build_flow.dart');
       final exportPage = read('lib/features/prd/export_page.dart');
       final client =
           read('lib/api/client.dart') +

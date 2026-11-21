@@ -92,7 +92,7 @@ class _RecordingApi extends ApiClient {
   Future<Map<String, dynamic>> buildFromPrd(String id) async {
     calls.add(postPrdBuild(id));
     if (buildError != null) throw buildError!;
-    return {'projectId': 'proj-1', 'tree': _tree};
+    return {'tree': _tree};
   }
 
   @override
@@ -100,8 +100,11 @@ class _RecordingApi extends ApiClient {
     String id,
     Map<String, dynamic> tree, {
     int? expectedCount,
+    bool force = false,
   }) async {
-    calls.add(postPrdBuildConfirm(id, tree, expectedCount: expectedCount));
+    calls.add(
+      postPrdBuildConfirm(id, tree, expectedCount: expectedCount, force: force),
+    );
     if (_confirmErrors.isNotEmpty) throw _confirmErrors.removeAt(0);
     return {'projectId': 'proj-1', 'nodeCount': 2};
   }
@@ -166,8 +169,9 @@ void main() {
 
     expect(find.text('Draft the roadmap'), findsOneWidget);
     await tester.tap(find.text('Draft the roadmap'));
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
 
     // /build only drafts; the roadmap exists once /build/confirm has run.
     expect(api.calls, hasLength(3));
@@ -202,6 +206,8 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Draft the roadmap'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('with 5 nodes'), findsOneWidget);
     expect(api.calls, hasLength(3), reason: 'nothing is replaced unasked');
@@ -233,8 +239,10 @@ void main() {
     await tester.pump();
     await tester.tap(find.text('Draft the roadmap'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
 
-    expect(find.textContaining('with 1 node.'), findsOneWidget);
+    expect(find.textContaining('with 1 node and'), findsOneWidget);
     expect(find.textContaining('1 nodes'), findsNothing);
   });
 
@@ -256,6 +264,8 @@ void main() {
     await tester.tap(find.text('Next: Request review'));
     await tester.pump();
     await tester.tap(find.text('Draft the roadmap'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
@@ -297,6 +307,8 @@ void main() {
     await tester.tap(find.text('Next: Request review'));
     await tester.pump();
     await tester.tap(find.text('Draft the roadmap'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
     await tester.pump();
     await tester.pump();
 

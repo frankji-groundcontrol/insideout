@@ -28,9 +28,17 @@ const enPrd = <String, String>{
   'prd.exportTitle': 'Export',
   'prd.buildMVP': 'Draft the roadmap',
   'prd.buildReplaceConfirm':
-      'This project already has a roadmap with {count} nodes. Replace it with a freshly drafted one? The current tree will be lost.',
+      'This project already has a roadmap with {count} nodes and {evidence} evidence records. Replace it with the reviewed draft? The current tree and its evidence will be lost.',
   'prd.buildReplaceConfirmOne':
-      'This project already has a roadmap with {count} node. Replace it with a freshly drafted one? The current tree will be lost.',
+      'This project already has a roadmap with {count} node and {evidence} evidence records. Replace it with the reviewed draft? The current tree and its evidence will be lost.',
+  'prd.buildReviewTitle': 'Review the drafted roadmap',
+  'prd.buildReviewHint':
+      'Nothing is written until you apply. Applying creates these items.',
+  'prd.buildApply': 'Apply',
+  'prd.buildHistoryTitle': 'This roadmap has recorded work',
+  'prd.buildHistoryConfirm':
+      'Replacing it deletes {nodes} nodes, {evidence} evidence records, {done} done and {validated} validated items. This cannot be undone.',
+  'prd.buildHistoryAction': 'Delete and replace',
   'prd.exportPrint': 'Print / Save as PDF',
   'prd.revisionsTitle': 'Version history',
   'prd.revisionN': 'Version {n}',

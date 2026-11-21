@@ -5,6 +5,9 @@ class ApiException implements Exception {
     this.code,
     this.retryAfterSeconds,
     this.liveCount,
+    this.evidenceCount,
+    this.doneCount,
+    this.validatedCount,
   });
 
   final String message;
@@ -12,6 +15,12 @@ class ApiException implements Exception {
   final String? code;
   final int? retryAfterSeconds;
   final int? liveCount;
+
+  /// What a roadmap replace would erase (409 replace_conflict and
+  /// roadmap_replace_has_history).
+  final int? evidenceCount;
+  final int? doneCount;
+  final int? validatedCount;
 
   @override
   String toString() => message;
@@ -23,15 +32,20 @@ ApiException toApiError(int? status, Map<String, dynamic> body) {
   final retry = body['retry_after_seconds'];
   int? retryAfter;
   if (retry is num) retryAfter = retry.toInt();
-  final live = body['liveCount'];
-  int? liveCount;
-  if (live is num) liveCount = live.toInt();
+  int? count(String key) {
+    final v = body[key];
+    return v is num ? v.toInt() : null;
+  }
+
   return ApiException(
     message,
     status: status,
     code: code,
     retryAfterSeconds: retryAfter,
-    liveCount: liveCount,
+    liveCount: count('liveCount'),
+    evidenceCount: count('evidenceCount'),
+    doneCount: count('doneCount'),
+    validatedCount: count('validatedCount'),
   );
 }
 

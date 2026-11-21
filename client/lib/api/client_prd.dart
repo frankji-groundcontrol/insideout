@@ -143,8 +143,8 @@ mixin _PrdVerbs on _ApiCore {
     return _parse(res, (d) => Prd.fromJson(d as Map<String, dynamic>));
   }
 
-  /// Drafts the roadmap: `{projectId, tree}`. Nothing is written until
-  /// [confirmBuildFromPrd].
+  /// Drafts the roadmap: `{tree}`, plus `projectId` only for a linked PRD.
+  /// Nothing is written until [confirmBuildFromPrd].
   Future<Map<String, dynamic>> buildFromPrd(String id) async {
     final res = await _exec(req.postPrdBuild(id));
     return _parse(res, (d) => d as Map<String, dynamic>);
@@ -155,9 +155,15 @@ mixin _PrdVerbs on _ApiCore {
     String id,
     Map<String, dynamic> tree, {
     int? expectedCount,
+    bool force = false,
   }) async {
     final res = await _exec(
-      req.postPrdBuildConfirm(id, tree, expectedCount: expectedCount),
+      req.postPrdBuildConfirm(
+        id,
+        tree,
+        expectedCount: expectedCount,
+        force: force,
+      ),
     );
     return _parse(res, (d) => d as Map<String, dynamic>);
   }

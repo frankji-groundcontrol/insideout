@@ -22,6 +22,8 @@ const _codeKeys = <String, String>{
   'GITHUB_REPO_NOT_VISIBLE': 'error.githubRepoNotVisible',
   'GITHUB_REPO_URL_INVALID': 'error.githubRepoUrlInvalid',
   'GITHUB_REPO_ALREADY_LINKED': 'error.githubRepoAlreadyLinked',
+  // A 409 that a refresh cannot fix: the PRD needs an admin's approval.
+  'prd_not_approved': 'error.prdNotApproved',
 };
 
 String localizedError(Object error, TFn t) {

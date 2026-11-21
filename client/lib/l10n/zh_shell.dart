@@ -53,6 +53,7 @@ const zhShell = <String, String>{
       'GitHub 看不到这个仓库，请先在该仓库上安装 InsideOut GitHub 应用，再重新关联',
   'error.githubRepoUrlInvalid': '这不是有效的 GitHub 仓库地址，请检查后重新关联',
   'error.githubRepoAlreadyLinked': '这个仓库已关联到另一个项目',
+  'error.prdNotApproved': '这份 PRD 需先获批准，才能生成路线图',
   'error.throttled': '操作过于频繁，请稍后再试',
   'error.server': '服务器开小差了，请稍后重试',
   'error.network': '网络异常，请检查连接',
