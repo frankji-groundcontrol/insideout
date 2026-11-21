@@ -21,6 +21,9 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-21 — Roadmap canvas band](./2026-11-21-roadmap-canvas-band.md)
+  — "the visual is problematic": a lone card sat offset in an over-tall band;
+  the fold gutter, the inherited dock padding and a one-column minimap fixed.
 - [2026-10-22 — Reset link choices](./2026-10-22-reset-link-choices.md)
   — the reset page offers reset-here or a code for `insideout reset-password`.
 - [2026-10-07 — Block craft against the reference app](./2026-10-07-block-craft.md)
