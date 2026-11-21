@@ -12,10 +12,10 @@ import '../../session/appearance.dart';
 import '../../session/session.dart';
 import '../../theme/block_chrome.dart';
 import '../../theme/cobalt.dart';
-import '../../theme/cobalt_theme.dart';
 import 'coach_column.dart';
 import 'coach_finding.dart';
 import 'coach_start.dart';
+import 'coach_suggestions.dart';
 import 'coach_trust_notices.dart';
 import 'coach_trust_row.dart';
 
@@ -174,11 +174,9 @@ class _CoachPanelState extends State<CoachPanel> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
-    final palette = Cobalt.of(context);
     final stage = widget.conversation?.stage ?? 'clarify';
     final err = error;
     final suggestions = l10n.suggestions(stage);
-    final ink = coachInk(context);
     if (!open) {
       return Align(
         alignment: Alignment.centerRight,
@@ -236,36 +234,9 @@ class _CoachPanelState extends State<CoachPanel> {
               )
             else ...[
               if (suggestions.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Cobalt.space6,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.t('coach.suggestTitle'),
-                        style: cobaltSerif(
-                          palette,
-                          size: 12,
-                          weight: FontWeight.w600,
-                          color: ink.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      const SizedBox(height: Cobalt.space2),
-                      Wrap(
-                        spacing: Cobalt.space2,
-                        runSpacing: Cobalt.space2,
-                        children: [
-                          for (final prompt in suggestions)
-                            CoachPrompt(
-                              label: prompt,
-                              onTap: _busy ? null : () => _send(prompt),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
+                CoachSuggestions(
+                  suggestions: suggestions,
+                  onPick: _busy ? null : _send,
                 ),
               Expanded(
                 child: ListView(
