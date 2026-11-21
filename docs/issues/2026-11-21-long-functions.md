@@ -28,11 +28,11 @@ Length is counted from the `func` line to the closing brace, at `87c95f5`:
 | ~~`Store.Migrate`~~ | `internal/store/migrate.go` | 100: split into bootstrap, list and apply steps in the closing-gaps round |
 | ~~`Store.ReplaceRoadmapTree`~~ | `internal/store/roadmap_plan.go` | 99: split into guard, insert and seed steps in the closing-gaps round |
 | ~~`parseResponsesStream`~~ | `internal/llm/responses_parse.go` (moved by wave 4) | 98: split into a per-event handler in the closing-gaps round |
-| `Server.handleUpdateRoadmapNode` | `internal/api/roadmap.go` | 97 |
+| ~~`Server.handleUpdateRoadmapNode`~~ | `internal/api/roadmap.go` | 97: split in the gaps round (`roadmapNodeFields`) |
 | ~~`Store.MoveRoadmapNode`~~ | `internal/store/roadmap_move.go` | 94: split into authorize, cycle-check and sibling-shift steps in the closing-gaps round |
-| `Server.handleAgentContext` | `internal/api/agent_routes.go` | 89 |
+| ~~`Server.handleAgentContext`~~ | `internal/api/agent_routes.go` | 89: split in the gaps round (`agentContextQuery`, `agentContextNodes`, `addAgentContextPrd`) |
 | ~~`runServe`~~ | `cmd/insideout/main.go` | 87: split in wave 4 (`newModel`) |
-| `Server.handlePresenceStream` | `internal/api/presence_routes.go` | 85 |
+| ~~`Server.handlePresenceStream`~~ | `internal/api/presence_routes.go` | 85: split in the gaps round (`streamPresence`, `presenceName`) |
 | ~~`runRegister`~~ | `internal/setup/ui/register.go` | 84: submit step split out in the closing-gaps round |
 
 Each is listed in `longFunctions` with its current length. A listed function

@@ -78,10 +78,7 @@ func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
 		httpx.WriteError(w, http.StatusBadRequest, "invalid request body", "", nil)
 		return
 	}
-	name := userID.String()[:8]
-	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {
-		name = u.Username
-	}
+	name := s.presenceName(r, userID)
 	s.presence.Cursor(pid.String(), presenceKey(userID, r.URL.Query().Get("client")), name, req.X, req.Y)
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -101,12 +98,6 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer release()
-	key := presenceKey(userID, r.URL.Query().Get("client"))
-	name := userID.String()[:8]
-	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {
-		name = u.Username
-	}
-
 	flusher, canFlush := w.(http.Flusher)
 	if !canFlush {
 		httpx.WriteError(w, http.StatusInternalServerError, "streaming unsupported", "", nil)
@@ -114,7 +105,24 @@ func (s *Server) handlePresenceStream(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
+	s.streamPresence(w, r, flusher, userID, pid)
+}
 
+// presenceName is the name a viewer shows under: their username, else the
+// start of their id.
+func (s *Server) presenceName(r *http.Request, userID uuid.UUID) string {
+	if u, err := s.store.GetUserByID(r.Context(), userID); err == nil && u.Username != "" {
+		return u.Username
+	}
+	return userID.String()[:8]
+}
+
+// streamPresence registers the viewer and pushes the project's presence
+// snapshots and the other viewers' cursors until the request ends, the server
+// shuts down, or a heartbeat finds the viewer no longer allowed.
+func (s *Server) streamPresence(w http.ResponseWriter, r *http.Request, flusher http.Flusher, userID, pid uuid.UUID) {
+	key := presenceKey(userID, r.URL.Query().Get("client"))
+	name := s.presenceName(r, userID)
 	updates, cancel := s.presence.Subscribe(pid.String())
 	defer cancel()
 	cursorCh, cancelCursors := s.presence.SubscribeCursors(pid.String())

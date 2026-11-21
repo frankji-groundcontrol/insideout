@@ -204,50 +204,9 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		httpx.WriteError(w, http.StatusBadRequest, "invalid status", "", nil)
 		return
 	}
-
-	fields := store.RoadmapNodeFields{Title: req.Title, Description: req.Description, Status: req.Status, Acceptance: req.Acceptance}
-	if req.Acceptance != nil {
-		*req.Acceptance = strings.TrimSpace(*req.Acceptance)
-		fields.Acceptance = req.Acceptance
-	}
-	if req.CompletionReason != nil {
-		trimmed := strings.TrimSpace(*req.CompletionReason)
-		// The override stands in for evidence: the human's word only (rv5-FEAT-02).
-		if trimmed != "" && isAgentToken(r) {
-			writeAgentScopeDenied(w)
-			return
-		}
-		fields.CompletionReason = &trimmed
-	}
-	if req.OwnerID != nil {
-		// Ownership grants write rights over the subtree: a human decision.
-		// An agent files a proposal instead (owner decision 4, 2026-11-21).
-		if isAgentToken(r) {
-			writeAgentScopeDenied(w)
-			return
-		}
-		if *req.OwnerID == "" {
-			fields.ClearOwner = true
-		} else {
-			oid, err := uuid.Parse(*req.OwnerID)
-			if err != nil {
-				httpx.WriteError(w, http.StatusBadRequest, "ownerId must be a user id (or \"\" to clear)", "", nil)
-				return
-			}
-			fields.OwnerID = &oid
-		}
-	}
-	if req.Deadline != nil {
-		if *req.Deadline == "" {
-			fields.ClearDeadline = true
-		} else {
-			dl, err := time.Parse(time.RFC3339, *req.Deadline)
-			if err != nil {
-				httpx.WriteError(w, http.StatusBadRequest, "deadline must be RFC3339 (or \"\" to clear)", "", nil)
-				return
-			}
-			fields.Deadline = &dl
-		}
+	fields, ok := roadmapNodeFields(w, r, req)
+	if !ok {
+		return
 	}
 	n, err := s.store.UpdateRoadmapNode(r.Context(), userID, nid, fields)
 	if err != nil {
@@ -259,6 +218,56 @@ func (s *Server) handleUpdateRoadmapNode(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, roadmapNodeResponse(*n, s.now()))
+}
+
+// roadmapNodeFields turns a validated update request into the store's fields,
+// answering the request itself (and false) when a field is refused.
+func roadmapNodeFields(w http.ResponseWriter, r *http.Request, req updateRoadmapNodeRequest) (store.RoadmapNodeFields, bool) {
+	fields := store.RoadmapNodeFields{Title: req.Title, Description: req.Description, Status: req.Status, Acceptance: req.Acceptance}
+	if req.Acceptance != nil {
+		*req.Acceptance = strings.TrimSpace(*req.Acceptance)
+		fields.Acceptance = req.Acceptance
+	}
+	if req.CompletionReason != nil {
+		trimmed := strings.TrimSpace(*req.CompletionReason)
+		// The override stands in for evidence: the human's word only (rv5-FEAT-02).
+		if trimmed != "" && isAgentToken(r) {
+			writeAgentScopeDenied(w)
+			return fields, false
+		}
+		fields.CompletionReason = &trimmed
+	}
+	if req.OwnerID != nil {
+		// Ownership grants write rights over the subtree: a human decision.
+		// An agent files a proposal instead (owner decision 4, 2026-11-21).
+		if isAgentToken(r) {
+			writeAgentScopeDenied(w)
+			return fields, false
+		}
+		if *req.OwnerID == "" {
+			fields.ClearOwner = true
+		} else {
+			oid, err := uuid.Parse(*req.OwnerID)
+			if err != nil {
+				httpx.WriteError(w, http.StatusBadRequest, "ownerId must be a user id (or \"\" to clear)", "", nil)
+				return fields, false
+			}
+			fields.OwnerID = &oid
+		}
+	}
+	if req.Deadline != nil {
+		if *req.Deadline == "" {
+			fields.ClearDeadline = true
+		} else {
+			dl, err := time.Parse(time.RFC3339, *req.Deadline)
+			if err != nil {
+				httpx.WriteError(w, http.StatusBadRequest, "deadline must be RFC3339 (or \"\" to clear)", "", nil)
+				return fields, false
+			}
+			fields.Deadline = &dl
+		}
+	}
+	return fields, true
 }
 
 func (s *Server) handleDeleteRoadmapNode(w http.ResponseWriter, r *http.Request) {

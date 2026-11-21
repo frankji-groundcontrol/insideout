@@ -29,22 +29,7 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	mode := r.URL.Query().Get("mode")
-	switch mode {
-	case "brainstorming", "implementation", "review":
-	default:
-		mode = "implementation"
-	}
-	focus := r.URL.Query().Get("focus")
-	if u, err := uuid.Parse(focus); err == nil {
-		focus = u.String() // the form node ids are compared in
-	}
-	// A root-scoped agent token is briefed on its root by default, when the
-	// root is a node of this project (rv5-TREEB-05).
-	defaulted := false
-	if root := RootOf(r.Context()); focus == "" && root != nil {
-		focus, defaulted = root.String(), true
-	}
+	mode, focus, defaulted := agentContextQuery(r)
 
 	project, err := s.store.GetProjectForMember(r.Context(), pid, userID)
 	if err != nil {
@@ -63,21 +48,61 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		evidence = map[string]int{}
 	}
 
+	nodesIn, focusFound := agentContextNodes(nodes, focus)
+	// An unknown focus is refused, not ignored: an agent asked for one
+	// subtree and must not get the whole project back (rv5-TREEX-05).
+	if defaulted && !focusFound {
+		focus = ""
+	}
+	if focus != "" && !focusFound {
+		httpx.WriteError(w, http.StatusNotFound, "focus node not found in this project", "", nil)
+		return
+	}
 	in := agentcontext.Inputs{
 		ProjectTitle:   project.Title,
 		ProjectID:      pid.String(),
 		Mode:           mode,
 		FocusNodeID:    focus,
-		Nodes:          make([]agentcontext.NodeIn, 0, len(nodes)),
+		Nodes:          nodesIn,
 		EvidenceCounts: evidence,
 	}
+	if project.ID != uuid.Nil {
+		s.addAgentContextPrd(r, userID, pid, &in)
+	}
+	httpx.WriteJSON(w, http.StatusOK, agentcontext.Assemble(in))
+}
+
+// agentContextQuery reads the context's mode (implementation by default) and
+// focus node. A root-scoped agent token is briefed on its root by default,
+// when the root is a node of this project (rv5-TREEB-05): defaulted says so.
+func agentContextQuery(r *http.Request) (mode, focus string, defaulted bool) {
+	mode = r.URL.Query().Get("mode")
+	switch mode {
+	case "brainstorming", "implementation", "review":
+	default:
+		mode = "implementation"
+	}
+	focus = r.URL.Query().Get("focus")
+	if u, err := uuid.Parse(focus); err == nil {
+		focus = u.String() // the form node ids are compared in
+	}
+	if root := RootOf(r.Context()); focus == "" && root != nil {
+		focus, defaulted = root.String(), true
+	}
+	return mode, focus, defaulted
+}
+
+// agentContextNodes is the roadmap as the context assembler takes it, and
+// whether the focus node is one of it.
+func agentContextNodes(nodes []store.RoadmapNode, focus string) ([]agentcontext.NodeIn, bool) {
+	out := make([]agentcontext.NodeIn, 0, len(nodes))
 	focusFound := false
 	for _, n := range nodes {
 		parent := ""
 		if n.ParentID != nil {
 			parent = n.ParentID.String()
 		}
-		in.Nodes = append(in.Nodes, agentcontext.NodeIn{
+		out = append(out, agentcontext.NodeIn{
 			ID: n.ID.String(), ParentID: parent, Title: n.Title, Description: n.Description, Status: n.Status,
 			Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName,
 		})
@@ -85,27 +110,23 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 			focusFound = true
 		}
 	}
-	// An unknown focus is refused, not ignored: an agent asked for one
-	// subtree and must not get the whole project back (rv5-TREEX-05).
-	if defaulted && !focusFound {
-		focus, in.FocusNodeID = "", ""
-	}
-	if focus != "" && !focusFound {
-		httpx.WriteError(w, http.StatusNotFound, "focus node not found in this project", "", nil)
+	return out, focusFound
+}
+
+// addAgentContextPrd adds the project's PRD and its latest commit, when it has
+// them; a failed read leaves them out.
+func (s *Server) addAgentContextPrd(r *http.Request, userID, pid uuid.UUID, in *agentcontext.Inputs) {
+	prd, err := s.store.PrdByProject(r.Context(), userID, pid)
+	if err != nil || prd == nil {
 		return
 	}
-	if project.ID != uuid.Nil {
-		if prd, err := s.store.PrdByProject(r.Context(), userID, pid); err == nil && prd != nil {
-			in.PrdTitle = prd.Title
-			in.PrdSections = prd.Sections
-			if commits, err := s.store.ListPrdCommits(r.Context(), userID, prd.ID); err == nil && len(commits) > 0 {
-				in.LatestCommit = &agentcontext.CommitIn{
-					Revision: commits[0].Revision, Name: commits[0].Name, Audience: commits[0].PrimaryAudience,
-				}
-			}
+	in.PrdTitle = prd.Title
+	in.PrdSections = prd.Sections
+	if commits, err := s.store.ListPrdCommits(r.Context(), userID, prd.ID); err == nil && len(commits) > 0 {
+		in.LatestCommit = &agentcontext.CommitIn{
+			Revision: commits[0].Revision, Name: commits[0].Name, Audience: commits[0].PrimaryAudience,
 		}
 	}
-	httpx.WriteJSON(w, http.StatusOK, agentcontext.Assemble(in))
 }
 
 func (s *Server) handleAgentCheckpoint(w http.ResponseWriter, r *http.Request) {
