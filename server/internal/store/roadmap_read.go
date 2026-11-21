@@ -157,27 +157,9 @@ func (s *Store) ReadRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) 
 		if err := tx.QueryRow(ctx, `SELECT title FROM insideout.projects WHERE id = $1`, out.Node.ProjectID).Scan(&out.ProjectName); err != nil {
 			return err
 		}
-		rows, err := tx.Query(ctx, `
-			WITH RECURSIVE up AS (
-				SELECT parent_id AS id, 1 AS depth FROM insideout.roadmap_nodes WHERE id = $1
-				UNION ALL
-				SELECT n.parent_id, up.depth + 1 FROM insideout.roadmap_nodes n
-				JOIN up ON n.id = up.id WHERE n.parent_id IS NOT NULL
-			)
-			SELECT a.id, a.title FROM up JOIN insideout.roadmap_nodes a ON a.id = up.id
-			ORDER BY up.depth DESC`, nodeID)
-		if err != nil {
-			return err
-		}
-		defer rows.Close()
-		for rows.Next() {
-			var a RoadmapNodeRef
-			if err := rows.Scan(&a.ID, &a.Title); err != nil {
-				return err
-			}
-			out.Ancestors = append(out.Ancestors, a)
-		}
-		return rows.Err()
+		paths, err := ancestorsTx(ctx, tx, []uuid.UUID{nodeID})
+		out.Ancestors = paths[nodeID]
+		return err
 	})
 	if err != nil {
 		return nil, err

@@ -89,3 +89,43 @@ func (s *Server) handleReadRoadmapNode(w http.ResponseWriter, r *http.Request) {
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)
 }
+
+type myRoadmapRootView struct {
+	Node        roadmapNodeView `json:"node"`
+	ProjectID   string          `json:"projectId"`
+	ProjectName string          `json:"projectName"`
+	Ancestors   []nodeRefView   `json:"ancestors"`
+}
+
+// handleMyRoadmap lists the caller's own work tree in one workspace: the
+// topmost nodes they own, each a root with its project and path
+// (rv5-TREEB-04). A workspace the caller is not in is 404.
+func (s *Server) handleMyRoadmap(w http.ResponseWriter, r *http.Request) {
+	userID, _ := UserID(r.Context())
+	wsID, ok := pathUUID(w, r, "id")
+	if !ok {
+		return
+	}
+	roots, err := s.store.ListMyRoadmapRoots(r.Context(), userID, wsID)
+	if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
+		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
+		return
+	}
+	if err != nil {
+		s.log.Error("list my roadmap", "error", err)
+		httpx.WriteError(w, http.StatusInternalServerError, "internal error", "", nil)
+		return
+	}
+	now := s.now()
+	out := make([]myRoadmapRootView, len(roots))
+	for i, root := range roots {
+		out[i] = myRoadmapRootView{
+			Node: roadmapNodeResponse(root.Node, now), ProjectID: root.Node.ProjectID.String(),
+			ProjectName: root.ProjectName, Ancestors: make([]nodeRefView, len(root.Ancestors)),
+		}
+		for j, a := range root.Ancestors {
+			out[i].Ancestors[j] = nodeRefView{ID: a.ID.String(), Title: a.Title}
+		}
+	}
+	httpx.WriteJSON(w, http.StatusOK, out)
+}
