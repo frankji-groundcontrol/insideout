@@ -55,11 +55,13 @@ rule, not the MCP binary's.
 ## What each scope may do
 
 The agent scope is exactly the routes the MCP tools call, minus the human-only
-ones below, nothing wider: 39 of the 79 authenticated routes (the mint route
+ones below, nothing wider: 41 of the 81 authenticated routes (the mint route
 included). A route joins the agent list only when a tool needs it.
 
-Agent-allowed: `GET /me`; workspaces (list, create, join); projects (list, create);
-ideas (list, create, update, convert); PRDs (read, update, view, readiness, export,
+Agent-allowed: `GET /me`; workspaces (list, create, join); projects (list, create,
+the paged updates feed `GET /projects/{pid}/updates`);
+ideas (list, create, update, convert); PRDs (the workspace list
+`GET /workspaces/{id}/prds`, read, update, view, readiness, export,
 commits list, revisions list and create, and `POST /prds/{id}/status` to `draft` or
 `reviewing` only); roadmap (list, with an optional `?root=` subtree, one-node
 read `GET /roadmap/{nid}`, the caller's own tree `GET /workspaces/{id}/roadmap/mine`,
