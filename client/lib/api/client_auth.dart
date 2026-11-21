@@ -69,13 +69,14 @@ mixin _AuthVerbs on _ApiCore {
     return _parse(res, (d) => UserProfile.fromJson(d as Map<String, dynamic>));
   }
 
-  /// Requests a password-reset email for [email] (uniform 200 contract).
-  Future<void> forgotPassword(String email) async {
+  /// Requests a password-reset email for [email] (uniform 200 contract),
+  /// with the same mail word as [requestMagicLink] (PARA-05).
+  Future<String?> forgotPassword(String email) async {
     final res = await _dio.post(
       '/auth/forgot-password',
       data: {'email': email},
     );
-    await _parse(res, (d) => d);
+    return _parse(res, _mailWord);
   }
 
   /// Sets a new password with an emailed reset token. On success every
