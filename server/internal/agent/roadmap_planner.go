@@ -247,7 +247,7 @@ func (p *anthropicRoadmapPlanner) ExpandNode(ctx context.Context, locale, projec
 	// (assembleTree's maxNodes): a runaway expansion can't flood a single node
 	// with dozens of subtasks, and an overlong title is trimmed by rune (not
 	// byte) so multibyte CJK titles don't split a character — same inline
-	// pattern github.go uses for commit subjects (F18).
+	// pattern github/commits.go uses for commit subjects (F18).
 	if len(payload.Subtasks) > maxSubtasks {
 		payload.Subtasks = payload.Subtasks[:maxSubtasks]
 	}
