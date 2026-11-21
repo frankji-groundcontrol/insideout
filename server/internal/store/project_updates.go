@@ -16,6 +16,9 @@ type ProjectUpdate struct {
 	Kind      string
 	Content   string
 	CreatedAt time.Time
+	// NodeID names the roadmap node a node_* row is about (nil otherwise,
+	// or once the node is deleted).
+	NodeID *uuid.UUID
 	// Decision is set only for an agent_proposal that a human has
 	// accepted or rejected. Empty means still open.
 	Decision string
@@ -138,7 +141,7 @@ func (s *Store) ListProjectUpdatesBefore(ctx context.Context, actorID, projectID
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
 		rows, err := tx.Query(ctx, `
 				SELECT pu.id, pu.project_id, pu.author_id, pu.kind, pu.content, pu.created_at,
-				       COALESCE(pd.decision, '')
+				       COALESCE(pd.decision, ''), pu.node_id
 				FROM insideout.project_updates pu
 				LEFT JOIN insideout.proposal_decisions pd ON pd.update_id = pu.id
 				WHERE pu.project_id = $1
@@ -153,7 +156,7 @@ func (s *Store) ListProjectUpdatesBefore(ctx context.Context, actorID, projectID
 
 		for rows.Next() {
 			var u ProjectUpdate
-			if err := rows.Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt, &u.Decision); err != nil {
+			if err := rows.Scan(&u.ID, &u.ProjectID, &u.AuthorID, &u.Kind, &u.Content, &u.CreatedAt, &u.Decision, &u.NodeID); err != nil {
 				return err
 			}
 			out = append(out, u)

@@ -57,7 +57,11 @@ func (s *Store) EraseUser(ctx context.Context, userID uuid.UUID) error {
 			`DELETE FROM insideout.ideas WHERE author_id = $1`,
 			`DELETE FROM insideout.sessions WHERE user_id = $1`,
 			`DELETE FROM insideout.auth_tokens WHERE user_id = $1`,
-			// Node ownership goes before the memberships that authorise the update.
+			// Node ownership goes before the memberships that authorise the
+			// update, each node on its history as 'cleared' (rv5-TREEB-01).
+			`INSERT INTO insideout.roadmap_node_assignments (node_id, from_user_id, assigned_by, kind)
+			 SELECT n.id, $1, $1, 'cleared' FROM insideout.roadmap_nodes n
+			 WHERE n.owner_user_id = $1 AND insideout._is_member(insideout._project_workspace(n.project_id), $1)`,
 			`UPDATE insideout.roadmap_nodes SET owner_user_id = NULL WHERE owner_user_id = $1`,
 			`DELETE FROM insideout.workspace_memberships WHERE user_id = $1`,
 		}

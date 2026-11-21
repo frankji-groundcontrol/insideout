@@ -68,11 +68,12 @@ not the table owner, so RLS applies to the runtime login. DEFINER
 helpers run as `insideout_owner` (NOSUPERUSER, `BYPASSRLS`) so membership
 lookups do not recurse under FORCE RLS.
 
-16 tables carry RLS, every one of them `FORCE`d (`workspace_memberships` too,
+17 tables carry RLS, every one of them `FORCE`d (`workspace_memberships` too,
 since the 2026-08-19 role split): `agent_conversations`, `agent_messages`,
 `ai_runs`, `ideas`, `prd_commits`, `prd_revisions`, `prds`, `project_updates`,
 `projects`, `proposal_decisions`, `proposal_items`, `roadmap_evidence`,
-`roadmap_nodes`, `users`, `workspace_memberships` and `workspaces`.
+`roadmap_node_assignments`, `roadmap_nodes`, `users`, `workspace_memberships`
+and `workspaces`.
 `sessions`, `auth_tokens`, `invitations`, `reset_watches`, `settings`,
 `ai_run_events`, `ai_circuit_breaker` and the migration ledger
 `schema_migrations` are
@@ -155,6 +156,20 @@ cannot see: moving, deleting or reassigning a node takes `requireNodeManager`
 deletes or reassigns the node they were handed. Validation, replacing the
 whole tree and proposals stay with `requirePlanWriter`. Pinned by
 `server/internal/store/roadmap_delegate_test.go`, raw SQL included.
+
+Every change of a node's owner is recorded (rv5 row 2.6, migration
+`20261121110000_roadmap_node_assignments.sql`): the append-only
+`insideout.roadmap_node_assignments` (node, from user, to user, assigned by,
+kind `delegate`, `handback` or `cleared`, a note of at most 500 characters,
+time) is readable by every member of the node's workspace and insertable only
+by a current member in their own name (`assigned_by = current_user_id()`);
+it has no update or delete policy. Its policies reach the workspace through
+`_node_project` and `_project_workspace`, never through `roadmap_nodes` under
+RLS. The migration backfills one `delegate` row, by an unknown hand, per node
+that already had an owner. The same migration gives `project_updates` a
+nullable `node_id` (`ON DELETE SET NULL`) and the kinds `node_delegated`,
+`node_handed_back` and `node_done`. Pinned by
+`server/internal/store/roadmap_assignments_test.go` and the RLS walks.
 
 The Go store checks the same: `requireMember` in `UpdateIdea`, `DropIdea` and
 `ConvertIdea` (and the membership predicate of `GetIdeaForMember`), and ahead

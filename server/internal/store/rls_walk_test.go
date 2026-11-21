@@ -34,22 +34,23 @@ import (
 // (the idle-conversation purge, 20261020140000) are: each has a
 // `insideout.current_user_id() IS NULL` policy clause on purpose.
 var rlsTables = map[string]bool{
-	"agent_conversations":   true,
-	"agent_messages":        true,
-	"ai_runs":               true,
-	"ideas":                 false,
-	"prd_commits":           false,
-	"prd_revisions":         false,
-	"prds":                  false,
-	"project_updates":       false,
-	"projects":              false,
-	"proposal_decisions":    false,
-	"proposal_items":        false,
-	"roadmap_evidence":      false,
-	"roadmap_nodes":         false,
-	"users":                 true,
-	"workspace_memberships": false,
-	"workspaces":            false,
+	"agent_conversations":      true,
+	"agent_messages":           true,
+	"ai_runs":                  true,
+	"ideas":                    false,
+	"prd_commits":              false,
+	"prd_revisions":            false,
+	"prds":                     false,
+	"project_updates":          false,
+	"projects":                 false,
+	"proposal_decisions":       false,
+	"proposal_items":           false,
+	"roadmap_evidence":         false,
+	"roadmap_node_assignments": false,
+	"roadmap_nodes":            false,
+	"users":                    true,
+	"workspace_memberships":    false,
+	"workspaces":               false,
 }
 
 // rlsCatalog returns the RLS tables the catalog reports, reporting (not
@@ -128,6 +129,8 @@ func seedRLSWalk(t *testing.T, st *Store) (member, outsider *User) {
 	node, err := st.CreateRoadmapNode(ctx, member.ID, proj.ID, nil, "Walk node", "")
 	must("roadmap node", err)
 	must("roadmap evidence", st.AddRoadmapEvidence(ctx, member.ID, node.ID, "commit", "walk evidence", ""))
+	_, err = st.DelegateRoadmapNode(ctx, member.ID, node.ID, member.ID, "walk")
+	must("node assignment", err)
 	idea, err := st.CreateIdea(ctx, member.ID, ws.ID, "Walk idea", "")
 	must("idea", err)
 	prd, conv, err := st.ConvertIdea(ctx, member.ID, idea.ID)

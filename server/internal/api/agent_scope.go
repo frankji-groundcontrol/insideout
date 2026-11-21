@@ -76,6 +76,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"GET /api/v1/projects/{pid}/guide":            agentOK,
 	"GET /api/v1/projects/{pid}/roadmap/progress": agentOK,
 	"GET /api/v1/roadmap/{nid}/evidence":          agentOK,
+	"GET /api/v1/roadmap/{nid}/assignments":       agentOK,
 	"POST /api/v1/prds/{pid}/build":               agentOK,
 	"POST /api/v1/prds/{pid}/build/confirm":       agentOK,
 	"POST /api/v1/roadmap/{nid}/expand":           agentOK,
@@ -125,6 +126,9 @@ var agentRoutePolicy = map[string]agentAccess{
 	"POST /api/v1/projects/{pid}/updates":                humanOnly,
 	"POST /api/v1/roadmap/{nid}/evidence":                humanOnly,
 	"POST /api/v1/roadmap/{nid}/validate":                humanOnly,
+	// Ownership is write authority: a human decision (owner decision 4).
+	"POST /api/v1/roadmap/{nid}/delegate": humanOnly,
+	"POST /api/v1/roadmap/{nid}/handback": humanOnly,
 }
 
 // agentMayCall reports whether an agent-scope token may call the route the mux

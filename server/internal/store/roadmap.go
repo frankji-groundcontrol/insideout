@@ -240,7 +240,7 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 		}
 		if f.OwnerID != nil && *f.OwnerID != uuid.Nil {
 			if _, err := requireMember(ctx, tx, wsID, *f.OwnerID); err != nil {
-				return ErrForbidden
+				return ErrOwnerNotMember
 			}
 		}
 		if f.Status != nil && !statusTransitionAllowed(current, *f.Status) {
@@ -267,9 +267,15 @@ func (s *Store) UpdateRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID
 			RETURNING `+roadmapNodeColumns,
 			nodeID, f.Title, f.Description, f.Status, actorID, f.ClearDeadline, f.Deadline, f.Acceptance, f.ClearOwner, f.OwnerID, f.CompletionReason,
 		)
-		var scanErr error
-		n, scanErr = scanRoadmapNode(row)
-		return scanErr
+		written, err := scanRoadmapNode(row)
+		if err != nil {
+			return err
+		}
+		if err := recordNodeUpdateTx(ctx, tx, actorID, written, current, owner); err != nil {
+			return err
+		}
+		n, err = readNodeViewTx(ctx, tx, actorID, nodeID)
+		return err
 	})
 	if err != nil {
 		return nil, err

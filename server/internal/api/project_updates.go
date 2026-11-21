@@ -20,13 +20,16 @@ type projectUpdateView struct {
 	// Decision is "accepted" or "rejected" once a human has decided an
 	// agent proposal, and empty while it is still open.
 	Decision string `json:"decision,omitempty"`
+	// NodeID: the roadmap node a node_delegated, node_handed_back or
+	// node_done row is about (omitted otherwise).
+	NodeID *string `json:"nodeId,omitempty"`
 }
 
 func projectUpdateResponse(u store.ProjectUpdate) projectUpdateView {
 	return projectUpdateView{
 		ID: u.ID.String(), ProjectID: u.ProjectID.String(), AuthorID: u.AuthorID.String(),
 		Kind: u.Kind, Content: u.Content, CreatedAt: u.CreatedAt.Format(timeLayout),
-		Decision: u.Decision,
+		Decision: u.Decision, NodeID: uuidString(u.NodeID),
 	}
 }
 

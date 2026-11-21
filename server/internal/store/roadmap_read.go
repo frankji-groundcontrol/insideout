@@ -119,6 +119,17 @@ func (s *Store) GetRoadmapNode(ctx context.Context, actorID, nodeID uuid.UUID) (
 	return &n, nil
 }
 
+// readNodeViewTx reads one node as the actor sees it, inside the caller's
+// transaction: after a write, so CanWrite is computed, not assumed (handing
+// back the node you were handed leaves you without the right to write it).
+func readNodeViewTx(ctx context.Context, tx pgx.Tx, actorID, nodeID uuid.UUID) (*RoadmapNode, error) {
+	n, err := scanNodeView(tx.QueryRow(ctx, nodeViewSelect()+` WHERE n.id = $2`, actorID, nodeID))
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
+}
+
 // RoadmapNodeRef names a node in a path.
 type RoadmapNodeRef struct {
 	ID    uuid.UUID
