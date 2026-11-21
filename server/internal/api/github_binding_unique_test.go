@@ -20,7 +20,7 @@ import (
 // clearing a link frees the repo. A caller who cannot read the holder (another
 // workspace) is answered as for a repo GitHub does not show, so the answer is
 // not a way to ask which repos are linked elsewhere (rv4-FR-F199); a holder the
-// caller can read keeps the specific 409 (rv4_review_github_binding_test.go).
+// caller can read keeps the specific 409 (github_binding_cross_tenant_test.go).
 
 // anotherTenant is a second user with a workspace and a project of their own.
 func anotherTenant(t *testing.T, w *routeWorld) (routeUser, *store.Project) {

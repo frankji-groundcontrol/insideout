@@ -2,9 +2,7 @@ package api
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -12,9 +10,10 @@ import (
 )
 
 // Whole-change review of the repo binding, API half (rv4-FR-F193, F205, F200,
-// F121; F199's oracle; the typed refusal of rv4-FR-F170 / F186 / F130). The
-// store half is in internal/store/rv4_review_github_binding_test.go. The
-// entitlement question (who may bind a repo the App can see: F119, F32, F27 and
+// F121): a project without an owner still holds its repo. The store half is in
+// internal/store/github_binding_ownerless_test.go; F199's oracle is in
+// github_binding_cross_tenant_test.go and the typed refusal of rv4-FR-F170 /
+// F186 / F130 in github_access_refused_test.go. The entitlement question (who may bind a repo the App can see: F119, F32, F27 and
 // F199's squatting) is the owner's and is not tested here: it has no answer yet.
 
 // rvGhBindSecondProject is another project in the workspace of w.project, owned
@@ -112,158 +111,5 @@ func TestRvGhBindAnAdminCanStillSyncAnOwnerlessProjectThatHoldsAPrivateRepo(t *t
 
 	if got := syncAdded(t, w); got != 2 {
 		t.Errorf("admin's sync added %d commit(s), want the 2 of the private repo", got)
-	}
-}
-
-// F199, oracle half: _projects_by_repo is SECURITY DEFINER and sees every
-// workspace's projects, so the 409 for a repo another workspace holds told any
-// signed-in user which repos are linked anywhere on the instance. A caller who
-// cannot read the holder is answered exactly as for a repo GitHub does not show
-// to the server. A caller who can (a project of the holder's own workspace) is
-// still told the repo is taken: that reveals nothing they could not read.
-func TestRvGhBindARepoHeldByAnotherWorkspaceIsAnsweredLikeOneGitHubDoesNotShow(t *testing.T) {
-	f := newFakeGitHub(t)
-	w := appServerWorld(t)
-	stranger, strangerProject := anotherTenant(t, w)
-	held, hidden := uniqueRepo(), uniqueRepo()
-	f.addRepo(held, fakeRepo{private: true, install: 77})
-	f.addRepo(hidden, fakeRepo{private: true}) // no installation: GitHub shows it to nobody
-	code, body := putRepo(t, w, held)
-	expect(t, "the holder links its repo", code, body, http.StatusOK)
-
-	heldCode, heldBody := putRepoAs(t, w, stranger, strangerProject.ID, held)
-	hiddenCode, hiddenBody := putRepoAs(t, w, stranger, strangerProject.ID, hidden)
-	if heldCode != hiddenCode || heldBody != hiddenBody {
-		t.Errorf("a stranger can tell a repo another workspace holds (%d %s) from one GitHub does not show (%d %s)", heldCode, heldBody, hiddenCode, hiddenBody)
-	}
-	for _, id := range []string{w.project.ID.String(), w.owner.ID.String()} {
-		if strings.Contains(heldBody, id) {
-			t.Errorf("the refusal names %s; body %s", id, heldBody)
-		}
-	}
-	if repoURL, _, err := w.st.ProjectRepoSync(context.Background(), stranger.ID, strangerProject.ID); err != nil || repoURL != "" {
-		t.Errorf("the stranger's project stored repo_url %q (err %v), want nothing", repoURL, err)
-	}
-
-	// Inside the holder's workspace the specific answer stays: a sibling project
-	// of the admin, and the project of a plain member.
-	mine, err := w.st.CreateProject(context.Background(), w.member.ID, w.project.WorkspaceID, "Member project", "")
-	if err != nil {
-		t.Fatalf("create the member's project: %v", err)
-	}
-	for who, link := range map[string]func() (int, string){
-		"the admin's second project":   func() (int, string) { return putRepoAs(t, w, w.owner, rvGhBindSecondProject(t, w).ID, held) },
-		"a plain member's own project": func() (int, string) { return putRepoAs(t, w, w.member, mine.ID, held) },
-	} {
-		code, body := link()
-		expect(t, who+" links the held repo", code, body, http.StatusConflict)
-		if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_repo_already_linked" {
-			t.Errorf("%s: code = %q, want github_repo_already_linked; body %s", who, got, body)
-		}
-	}
-}
-
-// rvGhBindRefuse makes GitHub answer 403 with message to the requests whose path
-// ends in suffix; everything else goes on to the fake installed before it. The
-// answer carries no rate-limit header unless header/value pairs are given.
-func rvGhBindRefuse(t *testing.T, suffix, message string, headers ...string) {
-	t.Helper()
-	next := http.DefaultTransport
-	http.DefaultTransport = roundTripFunc(func(r *http.Request) (*http.Response, error) {
-		if r.URL.Hostname() != "api.github.com" || !strings.HasSuffix(r.URL.Path, suffix) {
-			return next.RoundTrip(r)
-		}
-		h := http.Header{"Content-Type": {"application/json"}}
-		for i := 0; i+1 < len(headers); i += 2 {
-			h.Set(headers[i], headers[i+1])
-		}
-		return &http.Response{
-			StatusCode: http.StatusForbidden, Status: "403 Forbidden", Request: r, Header: h,
-			Body: io.NopCloser(strings.NewReader(`{"message":` + strconv.Quote(message) + `}`)),
-		}, nil
-	})
-	t.Cleanup(func() { http.DefaultTransport = next })
-}
-
-// rv4-FR-F170 (API half of F186, F130): the github client now tells a refusal
-// from a rate limit (*github.AccessRefusedError). Answered as a bad gateway the
-// user is told GitHub failed and to try later, which cannot help: a blocked repo,
-// a permission the App lacks or a suspended installation stays that way. The
-// answer is the user's to act on at GitHub, so it is a 400 with its own code and
-// GitHub's words; a rate limit keeps its 429.
-func TestRvGhBindAGithubRefusalWhileLinkingIsNotABadGateway(t *testing.T) {
-	f := newFakeGitHub(t)
-	w := appServerWorld(t)
-	name := uniqueRepo()
-	f.addRepo(name, fakeRepo{private: true, install: 77})
-	const why = "Repository access blocked"
-	rvGhBindRefuse(t, "/installation", why)
-
-	code, body := putRepo(t, w, name)
-	expect(t, "link while GitHub refuses the App", code, body, http.StatusBadRequest)
-	got := decodeAs[struct{ Code, Error string }](t, body)
-	if got.Code != "github_access_refused" || !strings.Contains(got.Error, why) {
-		t.Errorf("answer = %s, want code github_access_refused carrying GitHub's words %q", body, why)
-	}
-	if repoURL, _, err := w.st.ProjectRepoSync(context.Background(), w.owner.ID, w.project.ID); err != nil || repoURL != "" {
-		t.Errorf("a refused link stored repo_url %q (err %v), want nothing", repoURL, err)
-	}
-}
-
-func TestRvGhBindAGithubRefusalWhileSyncingIsNotABadGateway(t *testing.T) {
-	f := newFakeGitHub(t)
-	w := appServerWorld(t)
-	name := uniqueRepo()
-	f.addRepo(name, fakeRepo{private: true, install: 77, shas: []string{"c1"}})
-	code, body := putRepo(t, w, name)
-	expect(t, "link the private repo", code, body, http.StatusOK)
-	const why = "Resource not accessible by integration"
-	rvGhBindRefuse(t, "/commits", why)
-
-	code, body = w.call(w.owner, http.MethodPost, syncPath(w), "")
-	expect(t, "sync while GitHub refuses the commits read", code, body, http.StatusBadRequest)
-	got := decodeAs[struct{ Code, Error string }](t, body)
-	if got.Code != "github_access_refused" || !strings.Contains(got.Error, why) {
-		t.Errorf("answer = %s, want code github_access_refused carrying GitHub's words %q", body, why)
-	}
-}
-
-// The refusal is not a rate limit: the same 403 that carries a spent quota keeps
-// its 429 and its retry hint.
-func TestRvGhBindASpentQuotaIsStillARateLimitNotARefusal(t *testing.T) {
-	f := newFakeGitHub(t)
-	w := appServerWorld(t)
-	name := uniqueRepo()
-	f.addRepo(name, fakeRepo{private: true, install: 77})
-	rvGhBindRefuse(t, "/installation", "API rate limit exceeded", "X-RateLimit-Remaining", "0")
-
-	code, body := putRepo(t, w, name)
-	expect(t, "link while the quota is spent", code, body, http.StatusTooManyRequests)
-	if got := decodeAs[struct{ Code string }](t, body).Code; got != "github_rate_limited" {
-		t.Errorf("code = %q, want github_rate_limited; body %s", got, body)
-	}
-}
-
-// The one answer given to "held by a project you cannot read" and to "GitHub does
-// not show it" has to be true of both. The squatted owner of F199 gets it with
-// the App already installed, and on an instance with no App configured a holder
-// is the only cause there can be, so "install the App" alone sends them in a
-// circle. The sentence names a holder as a possible cause for everyone alike.
-func TestRvGhBindTheNotVisibleAnswerAllowsForAHolder(t *testing.T) {
-	f := newFakeGitHub(t)
-	w := appServerWorld(t)
-	stranger, strangerProject := anotherTenant(t, w)
-	held, hidden := uniqueRepo(), uniqueRepo()
-	f.addRepo(held, fakeRepo{private: true, install: 77})
-	f.addRepo(hidden, fakeRepo{private: true}) // no installation
-	code, body := putRepo(t, w, held)
-	expect(t, "the holder links its repo", code, body, http.StatusOK)
-
-	for what, name := range map[string]string{"held by another workspace": held, "not shown by GitHub": hidden} {
-		code, body := putRepoAs(t, w, stranger, strangerProject.ID, name)
-		expect(t, "a stranger links a repo "+what, code, body, http.StatusBadRequest)
-		if msg := decodeAs[struct{ Error string }](t, body).Error; !strings.Contains(msg, "another project") {
-			t.Errorf("%s: the answer %q does not say that another project may hold the repo", what, msg)
-		}
 	}
 }

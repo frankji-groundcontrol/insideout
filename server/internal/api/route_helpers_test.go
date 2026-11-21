@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// rv4-TEST-03: the coverage_*_test.go files drive handlers no test reached
-// (project, idea, update, member, PRD and session routes) through the real
+// rv4-TEST-03: the *_routes_test.go files built on these helpers drive the
+// project, idea, update, member, PRD and session routes through the real
 // router, real PostgreSQL and its row-level security. Fixtures are made
 // through the same routes, so a fixture that breaks is a route that broke, and
 // a denied write is judged by what it left behind as well as by its status.
