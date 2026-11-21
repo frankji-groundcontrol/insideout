@@ -62,6 +62,8 @@ var agentAllowedRoutes = []string{
 	"POST /api/v1/projects/{pid}/roadmap",
 	"PATCH /api/v1/roadmap/{nid}",
 	"POST /api/v1/roadmap/{nid}/move",
+	"POST /api/v1/roadmap/{nid}/dependencies",
+	"DELETE /api/v1/roadmap/{nid}/dependencies/{did}",
 	"GET /api/v1/projects/{pid}/guide",
 	"GET /api/v1/projects/{pid}/roadmap/progress",
 	"GET /api/v1/roadmap/{nid}/evidence",

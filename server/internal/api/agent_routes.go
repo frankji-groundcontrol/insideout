@@ -105,6 +105,7 @@ func agentContextNodes(nodes []store.RoadmapNode, focus string) ([]agentcontext.
 		out = append(out, agentcontext.NodeIn{
 			ID: n.ID.String(), ParentID: parent, Title: n.Title, Description: n.Description, Status: n.Status,
 			Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName,
+			DependsOn: uuidStrings(n.DependsOn),
 		})
 		if n.ID.String() == focus {
 			focusFound = true

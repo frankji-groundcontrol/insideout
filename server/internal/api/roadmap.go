@@ -63,6 +63,9 @@ type roadmapNodeView struct {
 	// Rollup counts the leaves at or below the node (a leaf counts itself):
 	// done includes validated, as in Progress (rv5-TREEB-08).
 	Rollup nodeRollupView `json:"rollup"`
+	// DependsOn: the ids of the nodes this one waits on, oldest link first;
+	// always present, [] when none.
+	DependsOn []string `json:"dependsOn"`
 }
 
 type nodeRollupView struct {
@@ -101,6 +104,7 @@ func roadmapNodeResponse(n store.RoadmapNode, now time.Time) roadmapNodeView {
 	v.ValidationReason = n.ValidationReason
 	v.CompletionReason = n.CompletionReason
 	v.CanWrite = n.CanWrite
+	v.DependsOn = uuidStrings(n.DependsOn)
 	v.Rollup = nodeRollupView{Leaves: n.Rollup.Leaves, Done: n.Rollup.Done, Validated: n.Rollup.Validated}
 	if d := n.Rollup.EarliestDeadline; d != nil {
 		s := d.Format(time.RFC3339)
