@@ -94,6 +94,16 @@ func TestIdeaEditsBelongToItsAuthorAlone(t *testing.T) {
 	if got.Title != "Second draft" || got.Content != "more" || got.Status != "refining" || got.AuthorID != w.member.ID.String() {
 		t.Fatalf("edited idea = %+v, want the new text, refining, still the member's", got)
 	}
+
+	// PARA-02: an omitted content key keeps the body; an explicit "" clears it.
+	got = decodeAs[ideaView](t, w.must(t, w.member, "PATCH", path, `{"title":"Third draft"}`, http.StatusOK))
+	if got.Title != "Third draft" || got.Content != "more" {
+		t.Fatalf("title-only edit = %+v, want the new title and the body kept", got)
+	}
+	got = decodeAs[ideaView](t, w.must(t, w.member, "PATCH", path, `{"title":"Third draft","content":""}`, http.StatusOK))
+	if got.Content != "" {
+		t.Fatalf("explicit empty content = %+v, want the body cleared", got)
+	}
 }
 
 // Dropping is the author's, or an admin's; a dropped idea leaves the inbox but
