@@ -19,15 +19,16 @@ func descendantsOf(param string) string {
 	)`
 }
 
-// nodeViewSelect reads nodes as "n" with their display names and the actor's
-// write right; $1 is the actor. LEFT JOIN (D6): a removed author (ON DELETE
-// SET NULL) must not drop the node; NULL names flow to the UI as "unknown".
+// nodeViewSelect reads nodes as "n" with their display names, the actor's
+// write right and the ids each waits on; $1 is the actor. LEFT JOIN (D6): a
+// removed author (ON DELETE SET NULL) must not drop the node; NULL names flow
+// to the UI as "unknown".
 // qualifyColumns keeps the join's shared id/created_at unambiguous. CanWrite
 // calls insideout._can_write_node per row inside the one query.
 func nodeViewSelect() string {
 	return `SELECT ` + qualifyColumns("n", roadmapNodeColumns) + `,
 		       u_cr.username, u_ed.username, COALESCE(u_ow.username, ''),
-		       insideout._can_write_node(n.id, $1)
+		       insideout._can_write_node(n.id, $1), ` + dependsOnColumn + `
 		FROM insideout.roadmap_nodes n
 		LEFT JOIN insideout.users u_cr ON u_cr.id = n.created_by
 		LEFT JOIN insideout.users u_ed ON u_ed.id = n.updated_by
@@ -36,7 +37,7 @@ func nodeViewSelect() string {
 
 func scanNodeView(row pgx.Row) (RoadmapNode, error) {
 	var n RoadmapNode
-	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason, &n.CreatorName, &n.EditorName, &n.OwnerName, &n.CanWrite)
+	err := row.Scan(&n.ID, &n.ProjectID, &n.ParentID, &n.Title, &n.Description, &n.Status, &n.Position, &n.Deadline, &n.CreatedAt, &n.UpdatedAt, &n.CreatedBy, &n.UpdatedBy, &n.Acceptance, &n.OwnerID, &n.ValidationReason, &n.ValidatedBy, &n.ValidatedAt, &n.CompletionReason, &n.CreatorName, &n.EditorName, &n.OwnerName, &n.CanWrite, &n.DependsOn)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return n, ErrNotFound
 	}

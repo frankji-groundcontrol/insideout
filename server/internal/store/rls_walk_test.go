@@ -45,6 +45,7 @@ var rlsTables = map[string]bool{
 	"projects":                 false,
 	"proposal_decisions":       false,
 	"proposal_items":           false,
+	"roadmap_dependencies":     false,
 	"roadmap_evidence":         false,
 	"roadmap_node_assignments": false,
 	"roadmap_nodes":            false,
@@ -131,6 +132,10 @@ func seedRLSWalk(t *testing.T, st *Store) (member, outsider *User) {
 	must("roadmap evidence", st.AddRoadmapEvidence(ctx, member.ID, node.ID, "commit", "walk evidence", ""))
 	_, err = st.DelegateRoadmapNode(ctx, member.ID, node.ID, member.ID, "walk")
 	must("node assignment", err)
+	waited, err := st.CreateRoadmapNode(ctx, member.ID, proj.ID, nil, "Walk node waited on", "")
+	must("second roadmap node", err)
+	_, err = st.AddRoadmapDependency(ctx, member.ID, node.ID, waited.ID)
+	must("roadmap dependency", err)
 	idea, err := st.CreateIdea(ctx, member.ID, ws.ID, "Walk idea", "")
 	must("idea", err)
 	prd, conv, err := st.ConvertIdea(ctx, member.ID, idea.ID)
