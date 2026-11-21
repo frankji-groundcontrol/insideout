@@ -1,5 +1,53 @@
 # 50 · PRODUCT.md promise register (lead 14, run)
 
+> **Note 2026-11-21 (focused review 5, plan row 5.6).** Rows below that the
+> [review](../2026-11-21-focused-review-5/10-feature-product.md) found
+> stamped better than the tree, re-checked on `rv5/remediation` after waves 0
+> to 2. The stamps and words below are unchanged; this note is what is true.
+>
+> - *Start-progress creates the Project* (IMPLEMENTED), FEAT-08: still not
+>   true. Converting an idea creates the PRD, the conversation and the first
+>   message, no Project (`store/ideas.go`). Since wave 1 (FEAT-01) the Project
+>   is created when a Build draft is confirmed (`store/roadmap_plan.go`), not
+>   at start-progress.
+> - *"Form a version now" any time* (IMPLEMENTED), FEAT-10: still not true.
+>   The draft stage refuses until four fact kinds are recorded
+>   (`agent/tools.go`, "cannot draft yet"), and the stage route only confirms
+>   a stage the Coach proposed; no human form-now route or button exists.
+> - *Coach recommends Commit moments* (IMPLEMENTED), FEAT-11: half true. No
+>   gate on Commit holds; the English prompts never mention a Commit or an
+>   audience, so nothing recommends one.
+> - *Saved versions immutable; later changes form the next working version*
+>   (IMPLEMENTED), FEAT-11: immutability holds; no route starts a working
+>   version from an earlier Commit (`api/prds.go`).
+> - *Contributions remain proposals until accepted* (PARTIAL), FEAT-12: the
+>   cell's "human members edit the shared mainline directly in v1" stopped
+>   being true with BUG-020. Only a plan writer (project owner or workspace
+>   admin) may write the plan or file a proposal (`store/project_updates.go`),
+>   so a plain member can do neither; and a reversed decision overwrites the
+>   decision row (`ON CONFLICT ... DO UPDATE` in
+>   `store/proposal_decisions.go`) while the applied nodes stay.
+> - *Each Now item has exactly one human responsible owner* (IMPLEMENTED),
+>   FEAT-11 and FEAT-05: partly fixed in wave 2. Starting an ownerless leaf
+>   now makes the acting human its owner, and leaving a workspace or erasure
+>   clears ownership; but a started leaf whose owner leaves stays in Now with
+>   no owner, and the Progress view has no needs-owner list.
+> - *Progress view: Done with evidence* (IMPLEMENTED), FEAT-11: Done lists
+>   the finished leaves with acceptance and owner, but no evidence
+>   (`roadmaptime.ProgressItem` carries none).
+> - *Unmatched activity stays visibly unassociated* (IMPLEMENTED), FEAT-11:
+>   unmatched commits still reach the updates feed; an unmatched pull request
+>   or deployment leaves no record (`attachGuideEvidence` returns 0).
+> - *Compact focus-scoped agent context* (IMPLEMENTED), FEAT-11: partly fixed
+>   in wave 2 (TREEX-05): the focus context now carries the ancestor path and
+>   keeps to the focus subtree; it still has no repository and no latest
+>   checkpoint.
+> - *Completion links to verifiable evidence* (PARTIAL, tracked as fixed
+>   2026-10-20), FEAT-07: still not true. Any evidence row satisfies the rule
+>   (`store/roadmap_completion.go`, no kind filter), so a failed deployment
+>   recorded as activity lets a node close. Wave 1 (FEAT-02) made the
+>   reason-instead-of-evidence path human-only.
+
 **Why this exists:** COMP-01 (High). Review 3's feature-implementation
 dimension promised a per-advertised-feature IMPLEMENTED / PARTIAL / DEAD /
 DOCS-ONLY classification and never delivered it: coordinator lead 14 was
