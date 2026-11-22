@@ -46,13 +46,13 @@ once, checks the Spark data live, and merges one PR with `[skip ci]`.
 
 ## Checklist
 
-- [ ] V1, server: the route, the in-charge resolution with `via`, the Go
+- [x] V1, server: the route, the in-charge resolution with `via`, the Go
       client, CLI, MCP, docs, and real-PostgreSQL tests on the Spark world.
-- [ ] V2, client:
+- [x] V2, client:
   - The banner on an opened node, saying "Priya Nair's view · in charge", or
     "Your view" for yourself.
   - A Canvas step tap and a My work tap open the node on Progress.
   - The fourth toggle shows the person in charge's nodes.
   - A Canvas level narrower than the screen is centred.
-- [ ] Integrated gates green, checked live as Maya opening Onboarding (Priya)
+- [x] Integrated gates green, checked live as Maya opening Onboarding (Priya)
       and Matching (Leo); records written; PR merged.

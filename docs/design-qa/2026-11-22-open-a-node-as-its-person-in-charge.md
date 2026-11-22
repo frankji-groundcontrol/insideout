@@ -30,4 +30,4 @@ The owner chose "Node, as its owner sees it". The plan is in
 
 ## Status
 
-The fix is in progress on `feat/view-as-in-charge`.
+Fixed: see the [changelog](../changelogs/2026-11-22-view-as-the-person-in-charge.md).
