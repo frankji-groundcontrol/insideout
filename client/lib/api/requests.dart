@@ -219,6 +219,10 @@ ApiCall getRoadmap(String projectId, {String? rootId}) => ApiCall(
 
 ApiCall getRoadmapNode(String nodeId) => ApiCall('GET', '/roadmap/$nodeId');
 
+/// Who is in charge of the node and their first glance at it.
+ApiCall getRoadmapGlance(String nodeId) =>
+    ApiCall('GET', '/roadmap/$nodeId/glance');
+
 ApiCall getNodeAssignments(String nodeId) =>
     ApiCall('GET', '/roadmap/$nodeId/assignments');
 

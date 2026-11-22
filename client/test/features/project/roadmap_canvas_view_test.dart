@@ -8,7 +8,7 @@ import '_roadmap_tree_helpers.dart';
 // The Canvas view moves: drag pans, the wheel and the +/- block zoom between
 // 0.3x and 2x, Fit shows the whole flow. It opens on a fit when that reads at
 // 0.75x or more, else at 1x from the first column. A step opens as its own
-// steps, on the Canvas; a leaf opens its detail.
+// tree, on Progress; a leaf opens its detail.
 
 double _scale(WidgetTester tester) => canvasMatrix(tester).getMaxScaleOnAxis();
 
@@ -88,7 +88,7 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('a step opens as its own steps, on the Canvas; a drag on it '
+  testWidgets('a step opens as its own tree, on Progress; a drag on it '
       'pans instead', (tester) async {
     final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
     router.go('/projects/p1/roadmap?view=canvas');
@@ -110,7 +110,10 @@ void main() {
     await tester.pumpAndSettle();
     final uri = router.routerDelegate.currentConfiguration.uri;
     expect(uri.path, '/projects/p1/roadmap/a');
-    expect(uri.queryParameters['view'], 'canvas');
+    expect(uri.queryParameters['view'], isNull);
+    expect(find.byType(RoadmapCanvas), findsNothing);
+    await tester.tap(find.text('Canvas'));
+    await tester.pumpAndSettle();
     expect(stepBox('a1'), findsOneWidget);
     expect(stepBox('a'), findsNothing);
   });

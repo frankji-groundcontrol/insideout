@@ -17,7 +17,9 @@ import 'roadmap_breadcrumb.dart';
 import 'roadmap_canvas.dart';
 import 'roadmap_controller.dart';
 import 'roadmap_header.dart';
+import 'roadmap_lens_banner.dart';
 import 'roadmap_node_card.dart';
+import 'roadmap_node_detail.dart';
 import 'roadmap_progress_view.dart';
 import 'roadmap_step_flow.dart';
 import 'roadmap_tree.dart';
@@ -38,8 +40,8 @@ class RoadmapPage extends StatefulWidget {
   /// page shows it and the nodes below it. Null for the whole project.
   final String? rootId;
 
-  /// The view to open on (`?view=canvas`): a node opened from the Canvas
-  /// stays on the Canvas. Progress when absent or unknown.
+  /// The view to open on (`?view=canvas`). Progress when absent or
+  /// unknown, as an opened node opens.
   final String? view;
 
   @override
@@ -47,7 +49,8 @@ class RoadmapPage extends StatefulWidget {
 }
 
 /// Mine is the canvas over the caller's own branches (owner decision 2: a
-/// default view, not a wall).
+/// default view, not a wall); on a node someone else is in charge of it is
+/// theirs ("Priya's").
 enum _RoadmapView { progress, bands, canvas, mine }
 
 class _RoadmapPageState extends State<RoadmapPage> {
@@ -107,15 +110,20 @@ class _RoadmapPageState extends State<RoadmapPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    final them = _theirs;
     final choices = [
       for (final view in _RoadmapView.values)
         BlockChoice(
-          label: l10n.t(switch (view) {
-            _RoadmapView.progress => 'roadmap.viewProgress',
-            _RoadmapView.bands => 'roadmap.viewBands',
-            _RoadmapView.canvas => 'roadmap.viewCanvas',
-            _RoadmapView.mine => 'roadmap.viewMine',
-          }),
+          label: l10n.t(
+            switch (view) {
+              _RoadmapView.progress => 'roadmap.viewProgress',
+              _RoadmapView.bands => 'roadmap.viewBands',
+              _RoadmapView.canvas => 'roadmap.viewCanvas',
+              _RoadmapView.mine =>
+                them == null ? 'roadmap.viewMine' : 'roadmap.viewTheirs',
+            },
+            {'name': them?.firstName},
+          ),
           selected: _view == view,
           onTap: () => setState(() => _view = view),
         ),
@@ -154,6 +162,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
   /// many sessions they hold open.
   Widget _header(List<Widget> choices, bool narrow) {
     final people = {for (final e in _c.presence) e.userId: e.name};
+    final glance = _c.glance;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -183,6 +192,12 @@ class _RoadmapPageState extends State<RoadmapPage> {
                   ShadeChip(label: name, tone: ShadeTone.neutral),
               ],
             ),
+          ),
+        if (glance != null)
+          RoadmapLensBanner(
+            glance: glance,
+            viewerId: context.read<Session>().user?.id ?? '',
+            onOpen: _openNow,
           ),
       ],
     );

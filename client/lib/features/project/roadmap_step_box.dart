@@ -58,7 +58,7 @@ class RoadmapStepBox extends StatelessWidget {
         onTap: inside > 0
             ? () => GoRouter.maybeOf(
                 context,
-              )?.go('/projects/$projectId/roadmap/${node.id}?view=canvas')
+              )?.go('/projects/$projectId/roadmap/${node.id}')
             : () => showRoadmapNodeDetail(
                 context,
                 node,

@@ -12,6 +12,7 @@ import 'package:insideout/router.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+
 import '_project_model_helpers.dart';
 
 /// A scripted API over one project tree: Ship > {Payments > Refunds, Search}.
@@ -44,6 +45,11 @@ class TreeApi extends ApiClient {
   ApiException? dependencyError;
   bool history = false;
   final _gone = <String>{};
+
+  /// GET /roadmap/{nid}/glance's body; null answers 404, as for a node the
+  /// caller cannot see. [glanceCalls] records the nodes asked for.
+  Map<String, dynamic>? glance;
+  final glanceCalls = <String>[];
 
   RoadmapNode node(String id, String title, String? parent, {String? owner}) =>
       RoadmapNode(
@@ -138,6 +144,13 @@ class TreeApi extends ApiClient {
       projectId: 'p1',
       projectName: 'Loop project',
     );
+  }
+
+  @override
+  Future<RoadmapGlance> roadmapGlance(String nodeId) async {
+    glanceCalls.add(nodeId);
+    if (glance == null) throw _notFound;
+    return RoadmapGlance.fromJson(glance!);
   }
 
   @override

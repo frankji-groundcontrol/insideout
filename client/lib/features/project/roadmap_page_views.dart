@@ -67,16 +67,20 @@ extension _RoadmapViews on _RoadmapPageState {
           );
         }
         final all = snap.data!;
-        // Mine's steps are the caller's topmost owned nodes; under an
-        // ancestor the caller owns, the whole opened tree is theirs. The
-        // steps still read the whole list for links and counts.
-        final uid = context.read<Session>().user?.id ?? '';
+        // Mine's steps are the topmost nodes the caller, or on someone
+        // else's node its person in charge, owns; under an ancestor they
+        // own, the whole opened tree is theirs. The steps still read the
+        // whole list for links and counts.
+        final them = _theirs;
+        final uid = them?.userId ?? context.read<Session>().user?.id ?? '';
         final mine = _view == _RoadmapView.mine;
         final shown = mine ? _c.mine(all, uid) : all;
         if (shown.isEmpty) {
           return BlockEmpty(
             icon: Icons.person_outline,
-            body: l10n.t('roadmap.mineEmpty'),
+            body: them == null
+                ? l10n.t('roadmap.mineEmpty')
+                : l10n.t('roadmap.theirsEmpty', {'name': them.firstName}),
           );
         }
         return RoadmapCanvas(
@@ -101,6 +105,26 @@ extension _RoadmapViews on _RoadmapPageState {
           cursors: mine ? const [] : _c.cursors.values.toList(),
         );
       },
+    );
+  }
+
+  /// The opened node's person in charge when that is someone else: the
+  /// fourth toggle is then theirs.
+  RoadmapInCharge? get _theirs {
+    final who = _c.glance?.inCharge;
+    final uid = context.read<Session>().user?.id ?? '';
+    return who == null || who.userId.isEmpty || who.userId == uid ? null : who;
+  }
+
+  /// Opens a Now item of the banner's glance, when it is in the loaded tree.
+  Future<void> _openNow(ProgressItem item) async {
+    final all = await _c.nodes.catchError((_) => <RoadmapNode>[]);
+    final node = all.where((n) => n.id == item.id).firstOrNull;
+    if (node == null || !mounted) return;
+    await showRoadmapNodeDetail(
+      context,
+      node,
+      inheritedOwner: _inherited(node, all),
     );
   }
 

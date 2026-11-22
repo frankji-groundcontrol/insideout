@@ -35,6 +35,15 @@ mixin _RoadmapVerbs on _ApiCore {
     );
   }
 
+  /// The node's person in charge and their first glance at it.
+  Future<RoadmapGlance> roadmapGlance(String nodeId) async {
+    final res = await _exec(req.getRoadmapGlance(nodeId));
+    return _parse(
+      res,
+      (d) => RoadmapGlance.fromJson(d as Map<String, dynamic>),
+    );
+  }
+
   Future<RoadmapNode> delegateRoadmapNode(
     String nodeId,
     String toUserId, {
