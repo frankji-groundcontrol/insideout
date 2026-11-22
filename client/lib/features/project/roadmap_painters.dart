@@ -3,10 +3,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../theme/cobalt.dart';
+import 'roadmap_flow_routes.dart';
 
-/// The flow arrows behind the steps: a 2px curve in the brand hue from the
-/// right edge of a step waited on to the left edge of the waiting step, with
-/// an arrowhead at the waiting end. An arrow that carries several links says
+/// The flow arrows behind the steps: a 2px path in the brand hue from the
+/// right edge of a step waited on to the left edge of the waiting step
+/// (roadmapFlowRoutes), with an arrowhead at the waiting end. An arrow that carries several links says
 /// how many in a small squared label near its head. Steps that wait on each
 /// other (a loop group, stacked in one column) share one two-headed bracket
 /// on their right with a [loopLabel] mark. The boxes' places are read at
@@ -14,6 +15,7 @@ import '../../theme/cobalt.dart';
 class RoadmapFlowPainter extends CustomPainter {
   RoadmapFlowPainter({
     required this.edges,
+    this.lanes = const {},
     required this.loops,
     required this.loopLabel,
     required this.rectOf,
@@ -22,7 +24,10 @@ class RoadmapFlowPainter extends CustomPainter {
     required this.labelFill,
   });
 
-  final List<({String from, String to, int count})> edges;
+  final List<FlowEdge> edges;
+
+  /// The reserved lanes a long link runs through, in column order.
+  final Map<FlowEdge, List<String>> lanes;
   final List<List<String>> loops;
   final String loopLabel;
   final Rect? Function(String id) rectOf;
@@ -32,31 +37,18 @@ class RoadmapFlowPainter extends CustomPainter {
 
   static const _headLength = 10.0;
 
+  /// Each arrow's path over the boxes as laid out now.
+  Map<FlowEdge, Path> routes() => roadmapFlowRoutes(edges, lanes, rectOf);
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = Cobalt.borderContainer;
-    for (final e in edges) {
-      final from = rectOf(e.from);
-      final to = rectOf(e.to);
-      if (from == null || to == null) continue;
-      final start = from.centerRight;
-      final end = to.centerLeft - const Offset(Cobalt.borderContainer, 0);
-      final pull = math.max(40.0, (end.dx - start.dx).abs() / 2);
-      final path = Path()
-        ..moveTo(start.dx, start.dy)
-        ..cubicTo(
-          start.dx + pull,
-          start.dy,
-          end.dx - pull,
-          end.dy,
-          end.dx,
-          end.dy,
-        );
+    for (final MapEntry(key: e, value: path) in routes().entries) {
       canvas.drawPath(path, paint);
-      final metric = path.computeMetrics().first;
+      final metric = path.computeMetrics().last;
       final tip = metric.getTangentForOffset(metric.length)!;
       _head(canvas, tip.position, -tip.vector, paint);
       if (e.count > 1) {

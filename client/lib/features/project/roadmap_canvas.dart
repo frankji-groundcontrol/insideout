@@ -6,6 +6,7 @@ import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 import 'roadmap_canvas_view.dart';
+import 'roadmap_flow_routes.dart';
 import 'roadmap_painters.dart';
 import 'roadmap_step_box.dart';
 import 'roadmap_step_flow.dart';
@@ -152,14 +153,26 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
     final palette = Cobalt.of(context);
     final flow = RoadmapStepFlow.of(widget.steps, widget.all);
     String title(String id) => widget.titles[id] ?? t('roadmap.someItem');
+    final lanes = roadmapFlowLanes([
+      for (final column in flow.columns) [for (final s in column) s.id],
+    ], flow.edges);
     final steps = Row(
       spacing: 72,
       children: [
-        for (final column in flow.columns)
+        for (final (c, column) in flow.columns.indexed)
           Column(
             mainAxisSize: MainAxisSize.min,
             spacing: Cobalt.space6,
-            children: [for (final s in column) _step(s, flow, title)],
+            children: [
+              for (final s in column) _step(s, flow, title),
+              // Empty room a long link runs through, clear of every box.
+              for (final lane in lanes.byColumn[c] ?? const <String>[])
+                SizedBox(
+                  key: _keys.putIfAbsent(lane, GlobalKey.new),
+                  width: RoadmapStepBox.width,
+                  height: Cobalt.space6,
+                ),
+            ],
           ),
       ],
     );
@@ -183,6 +196,7 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
             child: CustomPaint(
               painter: RoadmapFlowPainter(
                 edges: flow.edges,
+                lanes: lanes.byEdge,
                 loops: flow.loops,
                 loopLabel: t('roadmap.loop'),
                 rectOf: _rectOf,
