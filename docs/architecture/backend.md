@@ -49,6 +49,7 @@ server/
     readiness/         per-audience gap disclosure for a working PRD
     roadmaptime/       the time-first deadline and pressure rules
     setup/             the guided-setup flow engine behind `insideout setup`
+    sparkworld/        the Spark demo tree and dependencies, shared by the store and API tests
     store/             all pgx queries; files grouped by domain resource (Store layer below)
     surfaceparity/     the request-field parity guard: every field an API handler decodes
                        is reached by the Go client, the CLI and MCP, or is a listed omission
