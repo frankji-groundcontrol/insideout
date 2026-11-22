@@ -7,7 +7,7 @@ Bug record: [BUG-031](../issues/2026-11-22-bug-031-node-window-loaded-forever.md
 
 | Change | Commits |
 | --- | --- |
-| A node's window holds no live stream. It reloads when the page's progress stream reports a change. A hidden tab releases its progress and presence streams and reconnects and reloads when it is shown again. Before this change, every window and tab held its own Server-Sent Events streams. A browser gives one server only six HTTP/1.1 connections, so two tabs plus two windows left new requests queued forever. | see the PR |
+| A node's window holds no live stream. It reloads when the page's progress stream reports a change. A hidden tab releases its progress and presence streams and reconnects and reloads when it is shown again. Before this change, every window and tab held its own Server-Sent Events streams. A browser gives one server only six HTTP/1.1 connections, so two tabs plus two windows left new requests queued forever. | `234f25e1` |
 
 ## Notes
 
@@ -19,7 +19,7 @@ Bug record: [BUG-031](../issues/2026-11-22-bug-031-node-window-loaded-forever.md
 ## Verification
 
 - `flutter analyze`: 8 infos (baseline). `flutter test`: 757 passed.
-- Full gates on a fresh database: see the PR.
+- Full gates on a fresh database: build, vet, gofmt, Go tests with and without a database (0 skipped), dart format, doc checks and redaction all pass.
 - Live as Maya, with four tabs on the roadmap:
   - Hiding three of the tabs closed their six streams on the server.
   - The front tab then loaded and opened three node windows (Matching,
