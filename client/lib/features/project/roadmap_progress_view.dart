@@ -165,6 +165,16 @@ class _ProgressCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+          if (item.waitsOn.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(
+                l10n.t('roadmap.waitsOn', {'titles': item.waitsOn.join(', ')}),
+                style: theme.textTheme.bodySmall,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           const SizedBox(height: 6),
           Wrap(
             spacing: Cobalt.space2,

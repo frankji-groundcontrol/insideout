@@ -223,6 +223,7 @@ class ProgressItem {
     this.pressure,
     this.acceptance = '',
     this.ownerName = '',
+    this.waitsOn = const [],
   });
 
   final String id;
@@ -235,6 +236,9 @@ class ProgressItem {
   final String acceptance;
   final String ownerName;
 
+  /// Titles of the unfinished nodes this item waits on (empty when ready).
+  final List<String> waitsOn;
+
   factory ProgressItem.fromJson(Map<String, dynamic> j) => ProgressItem(
     id: j['id'] as String,
     title: j['title'] as String,
@@ -243,6 +247,10 @@ class ProgressItem {
     pressure: j['pressure'] as String?,
     acceptance: (j['acceptance'] as String?) ?? '',
     ownerName: (j['ownerName'] as String?) ?? '',
+    waitsOn: [
+      for (final w in (j['waitsOn'] as List?) ?? const [])
+        (w as Map<String, dynamic>)['title'] as String,
+    ],
   );
 }
 
