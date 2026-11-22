@@ -24,6 +24,6 @@ Client only; the glance and node reads already exist.
 
 ## Checklist
 
-- [ ] W1 (client): the window layer, contents, opening from Canvas, Bands and
+- [x] W1 (client): the window layer, contents, opening from Canvas, Bands and
       Progress, the double-click drill, the phone sheet, and tests.
-- [ ] Gates green, a live check on the Spark data, records written, PR merged.
+- [x] Gates green, a live check on the Spark data, records written, PR merged.

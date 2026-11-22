@@ -17,7 +17,7 @@ dependency order, with pan and zoom, and the hierarchy is reached by opening
 a step. `GET /roadmap/steps`, `roadmap steps` and MCP `roadmap_steps` give
 the same order, pinned by one shared fixture. `mine` and the dashboard's "My
 work" open on what each person is in charge of, and agents brief on their
-human's work. Opening a node shows it as its person in charge sees it, with a banner of their first glance and a toggle for their nodes ([changelog](changelogs/2026-11-22-view-as-the-person-in-charge.md)). The local dev database has the dependencies migration applied.
+human's work. Opening a node shows it as its person in charge sees it, with a banner of their first glance and a toggle for their nodes ([changelog](changelogs/2026-11-22-view-as-the-person-in-charge.md)). A click on a node opens it in a movable, resizable window; a double-click drills in ([changelog](changelogs/2026-11-22-node-windows.md)). The local dev database has the dependencies migration applied.
 
 **2026-11-21: the review 5 remediation is merged to `main`** (#24,
 `a945784`). Every gate was green on the integrated tree

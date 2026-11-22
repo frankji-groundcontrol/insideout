@@ -25,4 +25,4 @@ The stated assumptions are in the
 
 ## Status
 
-In progress on `feat/node-windows`.
+Fixed: see the [changelog](../changelogs/2026-11-22-node-windows.md).
