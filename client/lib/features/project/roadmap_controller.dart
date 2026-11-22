@@ -59,6 +59,12 @@ class RoadmapController extends ChangeNotifier {
   /// it landed; null for the whole tree, before then, or when it failed.
   RoadmapGlance? glance;
 
+  /// The whole project's nodes, read once when someone else's view needs
+  /// their nodes outside the opened tree; the project route reuses [nodes].
+  Future<List<RoadmapNode>>? _projectNodes;
+  Future<List<RoadmapNode>> get projectNodes =>
+      _projectNodes ??= rootId == null ? nodes : _api.listRoadmap(projectId);
+
   /// Member names by user id, read only when an ancestor above the opened
   /// tree has an owner (the ancestor refs carry the id alone).
   Map<String, String> names = const {};
@@ -88,6 +94,7 @@ class RoadmapController extends ChangeNotifier {
   }
 
   void _fetch() {
+    _projectNodes = null;
     final root = rootId;
     nodes = root == null
         ? _api.listRoadmap(projectId)

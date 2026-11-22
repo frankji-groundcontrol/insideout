@@ -66,45 +66,59 @@ extension _RoadmapViews on _RoadmapPageState {
             },
           );
         }
-        final all = snap.data!;
-        // Mine's steps are the topmost nodes the caller, or on someone
-        // else's node its person in charge, owns; under an ancestor they
-        // own, the whole opened tree is theirs. The steps still read the
-        // whole list for links and counts.
-        final them = _theirs;
-        final uid = them?.userId ?? context.read<Session>().user?.id ?? '';
-        final mine = _view == _RoadmapView.mine;
-        final shown = mine ? _c.mine(all, uid) : all;
-        if (shown.isEmpty) {
-          return BlockEmpty(
-            icon: Icons.person_outline,
-            body: them == null
-                ? l10n.t('roadmap.mineEmpty')
-                : l10n.t('roadmap.theirsEmpty', {'name': them.firstName}),
+        // Someone else's view holds their nodes across the whole project,
+        // not only the opened tree.
+        if (_view == _RoadmapView.mine && _theirs != null) {
+          return FutureBuilder(
+            future: _c.projectNodes,
+            builder: (context, ps) => ps.hasData
+                ? _canvasBody(ps.data!, l10n)
+                : readGate(ps, _c.reload),
           );
         }
-        return RoadmapCanvas(
-          projectId: widget.projectId,
-          steps: mine ? roadmapRoots(shown) : roadmapSteps(all),
-          all: all,
-          titles: {..._c.outsideTitles, for (final n in all) n.id: n.title},
-          inheritedOwner: (n) => _inherited(n, all),
-          menu: (n) => RoadmapNodeMenu(
-            projectId: widget.projectId,
-            node: n,
-            onReload: _c.reload,
-            descendants: roadmapDescendantCount(all, n),
-            planWriter: _c.planWriter,
-            parentWritable: roadmapParentWritable(all, n),
-            inheritedOwner: _inherited(n, all),
-            openedRoot: n.id == widget.rootId,
-          ),
-          // Shared cursors live in the steps' flow; Mine lays out other
-          // steps, so it neither sends nor shows them.
-          onCursor: mine ? null : _c.sendCursor,
-          cursors: mine ? const [] : _c.cursors.values.toList(),
-        );
+        return _canvasBody(snap.data!, l10n);
       },
+    );
+  }
+
+  /// The Canvas over [all]: the steps, or Mine's (or theirs) owned roots.
+  Widget _canvasBody(List<RoadmapNode> all, Appearance l10n) {
+    // Mine's steps are the topmost nodes the caller, or on someone
+    // else's node its person in charge, owns; under an ancestor they
+    // own, the whole opened tree is theirs. The steps still read the
+    // whole list for links and counts.
+    final them = _theirs;
+    final uid = them?.userId ?? context.read<Session>().user?.id ?? '';
+    final mine = _view == _RoadmapView.mine;
+    final shown = mine ? _c.mine(all, uid) : all;
+    if (shown.isEmpty) {
+      return BlockEmpty(
+        icon: Icons.person_outline,
+        body: them == null
+            ? l10n.t('roadmap.mineEmpty')
+            : l10n.t('roadmap.theirsEmpty', {'name': them.firstName}),
+      );
+    }
+    return RoadmapCanvas(
+      projectId: widget.projectId,
+      steps: mine ? roadmapRoots(shown) : roadmapSteps(all),
+      all: all,
+      titles: {..._c.outsideTitles, for (final n in all) n.id: n.title},
+      inheritedOwner: (n) => _inherited(n, all),
+      menu: (n) => RoadmapNodeMenu(
+        projectId: widget.projectId,
+        node: n,
+        onReload: _c.reload,
+        descendants: roadmapDescendantCount(all, n),
+        planWriter: _c.planWriter,
+        parentWritable: roadmapParentWritable(all, n),
+        inheritedOwner: _inherited(n, all),
+        openedRoot: n.id == widget.rootId,
+      ),
+      // Shared cursors live in the steps' flow; Mine lays out other
+      // steps, so it neither sends nor shows them.
+      onCursor: mine ? null : _c.sendCursor,
+      cursors: mine ? const [] : _c.cursors.values.toList(),
     );
   }
 

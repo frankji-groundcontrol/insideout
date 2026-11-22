@@ -6,6 +6,7 @@ import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 import '../../theme/cobalt_theme.dart';
 import '../../theme/field_card.dart';
+import 'roadmap_band_scaffold.dart';
 import 'roadmap_glance_lines.dart';
 
 /// An opened node seen as its person in charge sees it: whose view this is
@@ -37,11 +38,11 @@ class RoadmapLensBanner extends StatelessWidget {
       if (via != null) t('roadmap.lens.via', {'title': via.title}),
       if (who?.projectOwner ?? false) t('roadmap.lens.projectOwner'),
     ];
+    // The same padding and 1120 column as the bands below, so the edges line up.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, Cobalt.space2, 28, Cobalt.space2),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 720),
-        child: FieldCard(
+      padding: const EdgeInsets.fromLTRB(24, Cobalt.space2, 24, Cobalt.space2),
+      child: RoadmapBandScaffold.capped(
+        FieldCard(
           key: const Key('roadmap-lens'),
           padding: const EdgeInsets.all(Cobalt.space4),
           child: Column(

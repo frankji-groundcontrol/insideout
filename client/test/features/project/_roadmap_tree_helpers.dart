@@ -51,6 +51,9 @@ class TreeApi extends ApiClient {
   Map<String, dynamic>? glance;
   final glanceCalls = <String>[];
 
+  /// The owner of Search, a sibling outside Payments' subtree.
+  String? searchOwner;
+
   RoadmapNode node(String id, String title, String? parent, {String? owner}) =>
       RoadmapNode(
         id: id,
@@ -69,7 +72,7 @@ class TreeApi extends ApiClient {
     node('r', 'Ship', null),
     node('a', 'Payments', 'r', owner: 'u-dana'),
     node('a1', 'Refunds', 'a'),
-    node('b', 'Search', 'r'),
+    node('b', 'Search', 'r', owner: searchOwner),
   ].where((n) => !_gone.contains(n.id)).toList();
 
   ApiException get _notFound =>

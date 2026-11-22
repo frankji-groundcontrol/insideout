@@ -192,6 +192,22 @@ void main() {
     expect(stepBox('b'), findsNothing);
   });
 
+  testWidgets("their nodes outside the opened tree show too", (tester) async {
+    // Priya (u-dana) is in charge of Payments and of Search, a sibling the
+    // opened subtree does not hold: her view still shows both.
+    final api = TreeApi()
+      ..glance = _glance()
+      ..searchOwner = 'u-dana';
+    final router = await pumpTreeRouter(tester, treeSession(api));
+    router.go('/projects/p1/roadmap/a');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text("Priya's"));
+    await tester.pumpAndSettle();
+    expect(stepBox('a'), findsOneWidget);
+    expect(stepBox('b'), findsOneWidget);
+  });
+
   testWidgets('a level narrower than the view opens centred across it', (
     tester,
   ) async {
