@@ -55,8 +55,11 @@ class RoadmapLensBody extends StatelessWidget {
     required this.glance,
     required this.viewerId,
     this.onOpen,
+    this.full = false,
   });
 
+  /// Show every linked title (a node's window), not two lines of them.
+  final bool full;
   final RoadmapGlance glance;
   final String viewerId;
   final void Function(ProgressItem item)? onOpen;
@@ -103,6 +106,7 @@ class RoadmapLensBody extends StatelessWidget {
             waitsOn: glance.waitsOn,
             blocking: glance.blocking,
             onOpen: onOpen,
+            full: full,
           ),
       ],
     );

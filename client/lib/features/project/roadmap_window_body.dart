@@ -54,6 +54,7 @@ class _RoadmapWindowBodyState extends State<RoadmapWindowBody> {
               ? RoadmapLensBody(
                   glance: snap.data!,
                   viewerId: _viewer,
+                  full: true,
                   onOpen: open == null ? null : (item) => open(item.id),
                 )
               : Text(

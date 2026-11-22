@@ -22,6 +22,10 @@ class _WindowApi extends TreeApi {
       'now': [
         {'id': 'a1', 'title': 'Refunds', 'status': 'in_progress'},
       ],
+      'waitsOn': [
+        for (var i = 0; i < 12; i++)
+          {'id': 'w$i', 'title': 'Upstream item $i', 'status': 'pending'},
+      ],
     };
   }
 
@@ -73,6 +77,18 @@ void main() {
     expect(inside(find.textContaining("PRIYA NAIR'S VIEW")), findsOneWidget);
     expect(inside(find.text('Refunds')), findsOneWidget);
     expect(inside(find.text('Assignment history')), findsOneWidget);
+  });
+
+  testWidgets('a window shows every waits-on title, unclamped', (tester) async {
+    await _open(tester);
+    await tapNode(tester, stepBox('a'));
+    final line = tester.widget<Text>(
+      find.descendant(
+        of: _window('a'),
+        matching: find.textContaining('Upstream item 11'),
+      ),
+    );
+    expect(line.maxLines, isNull);
   });
 
   testWidgets('the title bar drags the window; the corner resizes it', (

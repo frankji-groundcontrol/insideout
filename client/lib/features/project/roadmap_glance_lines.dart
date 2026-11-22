@@ -16,8 +16,12 @@ class RoadmapGlanceLines extends StatelessWidget {
     required this.waitsOn,
     required this.blocking,
     this.onOpen,
+    this.full = false,
   });
 
+  /// A node's window shows every waits-on and blocking title; the banner and
+  /// My work keep each to two lines.
+  final bool full;
   final List<ProgressItem> now;
   final List<RoadmapLink> waitsOn;
   final List<RoadmapLink> blocking;
@@ -33,9 +37,12 @@ class RoadmapGlanceLines extends StatelessWidget {
         for (final item in now)
           _NowRow(item, onTap: onOpen == null ? null : () => onOpen!(item)),
         if (waitsOn.isNotEmpty)
-          _LinkLine(t('roadmap.waitsOn', {'titles': _names(waitsOn)})),
+          _LinkLine(t('roadmap.waitsOn', {'titles': _names(waitsOn)}), full),
         if (blocking.isNotEmpty)
-          _LinkLine(t('home.myWork.blocking', {'titles': _names(blocking)})),
+          _LinkLine(
+            t('home.myWork.blocking', {'titles': _names(blocking)}),
+            full,
+          ),
       ],
     );
   }
@@ -84,9 +91,10 @@ class _NowRow extends StatelessWidget {
 }
 
 class _LinkLine extends StatelessWidget {
-  const _LinkLine(this.text);
+  const _LinkLine(this.text, this.full);
 
   final String text;
+  final bool full;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -94,8 +102,8 @@ class _LinkLine extends StatelessWidget {
     child: Text(
       text,
       style: Theme.of(context).textTheme.bodySmall,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
+      maxLines: full ? null : 2,
+      overflow: full ? null : TextOverflow.ellipsis,
     ),
   );
 }
