@@ -126,7 +126,7 @@ class _ScriptedApi extends ApiClient {
     if (call < progressScript.length) {
       throw ApiException('down', status: progressScript[call]);
     }
-    await _open.future;
+    await Future.any([_open.future, ?stop]);
   }
 
   @override
@@ -140,7 +140,7 @@ class _ScriptedApi extends ApiClient {
     presenceCalls++;
     onPresence = onChange;
     this.onCursor = onCursor;
-    await _open.future;
+    await Future.any([_open.future, ?stop]);
   }
 }
 
@@ -244,6 +244,37 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 10));
     expect(api.progressCalls, 1);
+    c.dispose();
+  });
+
+  testWidgets('a hidden tab lets its streams go; shown again, it reconnects', (
+    tester,
+  ) async {
+    // Every open stream holds one of the browser's six connections to the
+    // server (BUG 2026-11-22, forever loading).
+    final api = _ScriptedApi();
+    final c = RoadmapController(api, projectId: 'p1');
+    await tester.pump();
+    expect([api.progressCalls, api.presenceCalls], [1, 1]);
+
+    c.setVisible(false);
+    await tester.pump(const Duration(seconds: 10));
+    expect([api.progressCalls, api.presenceCalls], [1, 1]);
+
+    c.setVisible(true);
+    await tester.pump();
+    await tester.pump();
+    expect([api.progressCalls, api.presenceCalls], [2, 2]);
+    expect(api.reads, ['tree', 'tree'], reason: 'shown again, it reloads');
+    c.dispose();
+  });
+
+  testWidgets('a window controller opens no stream', (tester) async {
+    final api = _ScriptedApi();
+    final c = RoadmapController(api, projectId: 'p1', live: false);
+    await tester.pump(const Duration(seconds: 1));
+    expect([api.progressCalls, api.presenceCalls], [0, 0]);
+    expect(api.reads, ['tree']);
     c.dispose();
   });
 }
