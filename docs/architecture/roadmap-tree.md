@@ -147,6 +147,7 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | `POST /api/v1/roadmap/{nid}/dependencies`, `DELETE .../dependencies/{did}` | Make a node wait on another, or stop it (see Dependencies below) | `server/internal/api/roadmap_dependencies.go` |
 | `GET /api/v1/workspaces/{id}/roadmap/mine` | The topmost nodes the caller is in charge of in the workspace, each `{node, projectId, workspaceId, projectName, ancestors, now, waitsOn, blocking}`, by project then position (see People in charge below) | `server/internal/api/roadmap_mine.go`, `server/internal/store/roadmap_mine.go`, `roadmap_first_glance.go` |
 | `GET /api/v1/roadmap/mine` | The same across every workspace the caller is a member of | `server/internal/api/roadmap_mine.go` |
+| `GET /api/v1/roadmap/{nid}/glance` | One node as its person in charge sees it: `{node, inCharge, now, waitsOn, blocking}` (see People in charge below); 404 when not visible, 400 for a bad id; agent tokens may call it | `server/internal/api/roadmap_glance.go`, `server/internal/store/roadmap_glance.go` |
 | `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping; `?root={nid}` restricts it to one subtree, and a root-scoped agent token defaults to its root as the list does (`requestRoot`, `server/internal/api/roadmap_steps.go`); Next ranks ready items first (see People in charge below) | `server/internal/api/roadmap_progress.go` |
 | `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap_validation.go` |
 | `POST /api/v1/roadmap/{nid}/validate` | Human validation | `server/internal/api/roadmap_validation.go` |
@@ -253,6 +254,16 @@ Each person sees what they are in charge of at the first glance (owner,
   workspace of the caller's; agent tokens may call it. The Go client's
   `RoadmapMine("")`, the CLI `roadmap mine` with no id and MCP `roadmap_mine`
   without `workspace_id` use it.
+- **View as the person in charge.** `GET /api/v1/roadmap/{nid}/glance`
+  answers any visible node with `inCharge {userId, name, via, projectOwner}`:
+  the node's owner, else the nearest owned ancestor's owner with `via`
+  `{id, title}` naming that ancestor, else the project owner with
+  `projectOwner: true`, `null` only when none exists; `now`, `waitsOn` and
+  `blocking` mean what they mean on a `mine` root, for the node's subtree.
+  On Spark, Profile builder answers Priya via Onboarding & profiles and Spark
+  MVP answers Maya as project owner. The Go client's `RoadmapGlance`, the CLI
+  `roadmap glance <node>` and MCP `roadmap_glance` read it
+  (`server/internal/store/roadmap_glance.go`).
 - **Next order.** Every Progress item carries `waitsOn`, the unfinished nodes
   it waits on as `{id, title}`, omitted when none. Next puts the ready items
   (nothing unfinished to wait on) before the waiting ones, each group by

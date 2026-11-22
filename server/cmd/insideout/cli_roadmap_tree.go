@@ -21,6 +21,7 @@ var treeUsage = map[string]string{
 	"list":        "insideout roadmap list [--root node-id] <project-id>",
 	"progress":    "insideout roadmap progress [--root node-id] <project-id>",
 	"show":        "insideout roadmap show <node-id>",
+	"glance":      "insideout roadmap glance <node-id>",
 	"mine":        "insideout roadmap mine [workspace-id]",
 	"assignments": "insideout roadmap assignments <node-id>",
 	"delegate":    "insideout roadmap delegate --to <user-id> [--note N] <node-id>",
@@ -68,6 +69,8 @@ func runRoadmapTreeCommand(sub string, args []string) (handled bool, exitCode in
 		return printJSON(c.RoadmapProgress(id, *root))
 	case "show":
 		return printJSON(c.RoadmapNode(id))
+	case "glance":
+		return printJSON(c.RoadmapGlance(id))
 	case "mine":
 		return printJSON(c.RoadmapMine(id))
 	case "assignments":

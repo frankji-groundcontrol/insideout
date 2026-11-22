@@ -29,6 +29,11 @@ func addRoadmapTreeTools(ts toolSet) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.RoadmapNode(reqStr(req, "node_id")))
 		})
+	ts.add("roadmap_glance", "Open one node as its person in charge sees it: the node, inCharge (its owner; else the nearest owned ancestor's owner, with via naming that ancestor; else the project owner, with projectOwner true; null when none), its now items, the unfinished nodes it waitsOn and the unfinished nodes it is blocking",
+		nodeReq,
+		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
+			return call(c.RoadmapGlance(reqStr(req, "node_id")))
+		})
 	ts.add("roadmap_mine", "What the signed-in user is in charge of: the topmost nodes they own (an unowned project root counts for its project owner and workspace admins), each with its project, workspace and ancestors, its now items, the unfinished nodes it waitsOn and the unfinished nodes it is blocking",
 		[]mcp.ToolOption{strOpt("workspace_id", "workspace id; omit for every workspace of the user's")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {

@@ -916,6 +916,28 @@
       "openWorldHint": true,
       "readOnlyHint": false
     },
+    "description": "Open one node as its person in charge sees it: the node, inCharge (its owner; else the nearest owned ancestor's owner, with via naming that ancestor; else the project owner, with projectOwner true; null when none), its now items, the unfinished nodes it waitsOn and the unfinished nodes it is blocking",
+    "inputSchema": {
+      "properties": {
+        "node_id": {
+          "description": "roadmap node id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_id"
+      ],
+      "type": "object"
+    },
+    "name": "roadmap_glance"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
     "description": "List a project's roadmap nodes, or with root only that node and the nodes below it. Each node carries canWrite (whether you may write it) and rollup (leaves, done, validated, earliestDeadline)",
     "inputSchema": {
       "properties": {

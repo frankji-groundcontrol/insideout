@@ -93,6 +93,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"GET /api/v1/roadmap/{nid}/assignments":           agentOK,
 	"GET /api/v1/workspaces/{id}/roadmap/mine":        agentOK,
 	"GET /api/v1/roadmap/mine":                        agentOK,
+	"GET /api/v1/roadmap/{nid}/glance":                agentOK,
 	"POST /api/v1/prds/{pid}/build":                   agentOK,
 	"POST /api/v1/prds/{pid}/build/confirm":           agentOK,
 	"POST /api/v1/roadmap/{nid}/expand":               agentOK,

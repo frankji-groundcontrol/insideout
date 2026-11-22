@@ -15,6 +15,12 @@ func (c *Client) RoadmapNode(nodeID string) (json.RawMessage, error) {
 	return c.get(apiPath("roadmap", nodeID))
 }
 
+// RoadmapGlance reads one node as its person in charge sees it: who is in
+// charge and the node's now, waitsOn and blocking (GET /roadmap/{id}/glance).
+func (c *Client) RoadmapGlance(nodeID string) (json.RawMessage, error) {
+	return c.get(apiPath("roadmap", nodeID, "glance"))
+}
+
 // RoadmapMine lists the topmost nodes the caller is in charge of in a
 // workspace (GET /workspaces/{id}/roadmap/mine), or in every workspace of
 // theirs when workspaceID is "" (GET /roadmap/mine).

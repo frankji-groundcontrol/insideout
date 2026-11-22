@@ -17,6 +17,7 @@ func (s *Server) registerRoadmapRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap", s.requireAuth(s.handleListRoadmap))
 	mux.HandleFunc("GET /api/v1/projects/{pid}/roadmap/steps", s.requireAuth(s.handleRoadmapSteps))
 	mux.HandleFunc("GET /api/v1/roadmap/{nid}", s.requireAuth(s.handleReadRoadmapNode))
+	mux.HandleFunc("GET /api/v1/roadmap/{nid}/glance", s.requireAuth(s.handleRoadmapGlance))
 	mux.HandleFunc("GET /api/v1/workspaces/{id}/roadmap/mine", s.requireAuth(s.handleMyRoadmap))
 	mux.HandleFunc("GET /api/v1/roadmap/mine", s.requireAuth(s.handleAllMyRoadmap))
 	mux.HandleFunc("POST /api/v1/projects/{pid}/roadmap", s.requireAuth(s.handleCreateRoadmapNode))
