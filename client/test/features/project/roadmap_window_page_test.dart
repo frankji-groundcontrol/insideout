@@ -11,8 +11,8 @@ import '_roadmap_canvas_helpers.dart';
 import '_roadmap_tree_helpers.dart';
 
 // Node windows (2026-11-22): a tap on a node anywhere on the roadmap page
-// opens its information in a movable, resizable window; a double-click, or
-// the window's Open roadmap, goes to the node's own roadmap.
+// opens the node's own roadmap in a movable, resizable window; a
+// double-click, or the window's Open roadmap, goes to the node's roadmap.
 
 /// TreeApi with a glance for every node and Refunds due Now on Progress.
 class _WindowApi extends TreeApi {
@@ -56,6 +56,16 @@ Future<GoRouter> _open(WidgetTester tester, {String view = 'canvas'}) async {
 
 Finder _window(String id) => find.byKey(Key('roadmap-window-$id'));
 String _path(GoRouter r) => r.routerDelegate.currentConfiguration.uri.path;
+
+/// Drags [id]'s window down, clear of the steps and above the dock.
+Future<void> _lower(WidgetTester tester, String id) async {
+  await tester.drag(
+    find.byKey(Key('roadmap-window-bar-$id')),
+    const Offset(0, 500),
+  );
+  await tester.pumpAndSettle();
+}
+
 List<String> _order(WidgetTester tester) => [
   for (final f in tester.widgetList<RoadmapWindowFrame>(
     find.byType(RoadmapWindowFrame),
@@ -64,19 +74,17 @@ List<String> _order(WidgetTester tester) => [
 ];
 
 void main() {
-  testWidgets('a tap on a step opens its window with the glance', (
-    tester,
-  ) async {
+  testWidgets('a tap on a step opens its roadmap in a window', (tester) async {
     final router = await _open(tester);
     await tapNode(tester, stepBox('a'));
 
     expect(_path(router), '/projects/p1/roadmap');
     expect(_window('a'), findsOneWidget);
     Finder inside(Finder f) => find.descendant(of: _window('a'), matching: f);
-    expect(inside(find.text('Payments')), findsOneWidget);
+    final title = inside(find.byKey(const Key('roadmap-title')));
+    expect(tester.widget<Text>(title).data, 'Payments');
     expect(inside(find.textContaining("PRIYA NAIR'S VIEW")), findsOneWidget);
-    expect(inside(find.text('Refunds')), findsOneWidget);
-    expect(inside(find.text('Assignment history')), findsOneWidget);
+    expect(inside(find.text('Refunds')), findsWidgets);
   });
 
   testWidgets('a window shows every waits-on title, unclamped', (tester) async {
@@ -119,9 +127,16 @@ void main() {
   ) async {
     await _open(tester);
     await tapNode(tester, stepBox('a'));
+    await _lower(tester, 'a');
     await tapNode(tester, stepBox('b'));
     expect(_order(tester), ['a', 'b']);
 
+    // b to the left edge, so a's title bar shows beside it.
+    await tester.drag(
+      find.byKey(const Key('roadmap-window-bar-b')),
+      const Offset(-600, 0),
+    );
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('roadmap-window-bar-a')));
     await tester.pumpAndSettle();
     expect(_order(tester), ['b', 'a']);
@@ -130,6 +145,7 @@ void main() {
   testWidgets('the close button and Escape close windows', (tester) async {
     await _open(tester);
     await tapNode(tester, stepBox('a'));
+    await _lower(tester, 'a');
     await tapNode(tester, stepBox('b'));
 
     await tester.tap(find.byKey(const Key('roadmap-window-close-b')));
@@ -204,8 +220,14 @@ void main() {
       find.descendant(of: sheet, matching: find.byType(RoadmapWindowFrame)),
       findsOneWidget,
     );
+    // The node's own roadmap, its view toggles in the sheet.
+    final title = find.descendant(
+      of: sheet,
+      matching: find.byKey(const Key('roadmap-title')),
+    );
+    expect(tester.widget<Text>(title).data, 'Refunds');
     expect(
-      find.descendant(of: sheet, matching: find.text('Assignment history')),
+      find.descendant(of: sheet, matching: find.text('Canvas')),
       findsOneWidget,
     );
     expect(find.byKey(const Key('roadmap-window-resize-corner')), findsNothing);

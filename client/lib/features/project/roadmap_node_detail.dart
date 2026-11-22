@@ -37,7 +37,7 @@ String? roadmapOwnerLabel(
   });
 }
 
-/// The detail's content, which the detail modal and a node's window show.
+/// The detail's content, which the detail modal shows.
 class RoadmapNodeDetailBody extends StatefulWidget {
   const RoadmapNodeDetailBody({
     super.key,

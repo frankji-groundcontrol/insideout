@@ -193,8 +193,6 @@ const zhWorkspace = <String, String>{
   'roadmap.lens.quiet': '这里没有进行中、等待或阻塞的事项。',
   'roadmap.window.open': '打开路线图',
   'roadmap.window.close': '关闭窗口',
-  'roadmap.window.glanceLoading': '正在读取负责人…',
-  'roadmap.window.glanceFailed': '无法读取负责人。',
   'roadmap.rollupShort': '{leaves} 项中完成 {done} 项',
   'roadmap.ownerVia': '{name}（经由 {via}）',
   'roadmap.deleteHistoryTitle': '这个分支已有记录的工作',

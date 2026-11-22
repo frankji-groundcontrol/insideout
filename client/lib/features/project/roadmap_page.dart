@@ -32,6 +32,8 @@ class RoadmapPage extends StatefulWidget {
     required this.projectId,
     this.rootId,
     this.view,
+    this.embedded = false,
+    this.onReroot,
   });
 
   final String projectId;
@@ -43,6 +45,13 @@ class RoadmapPage extends StatefulWidget {
   /// The view to open on (`?view=canvas`). Progress when absent or
   /// unknown, as an opened node opens.
   final String? view;
+
+  /// Inside a node's window or phone sheet: no app chrome or dock, the view
+  /// toggles in the header, and nodes open on the page's window layer.
+  final bool embedded;
+
+  /// A breadcrumb ancestor inside a window: the window re-roots there.
+  final void Function(String nodeId)? onReroot;
 
   @override
   State<RoadmapPage> createState() => _RoadmapPageState();
@@ -110,8 +119,51 @@ class _RoadmapPageState extends State<RoadmapPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.watch<Appearance>();
+    final choices = _choices(l10n);
+    // Four toggles plus four utility icons run off a phone's left edge, so
+    // there the toggles move into the header; a window has no utility block.
+    final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
+    final header = _header(choices, narrow || widget.embedded);
+    final body = _view == _RoadmapView.progress
+        ? _progressBody(l10n)
+        : _treeBody(l10n);
+    // Progress and Bands scroll the header away with their content (roadmap
+    // critique 2026-11-21); the canvas pans under a pinned one, which
+    // scrolls itself past most of a short window.
+    final page = _view == _RoadmapView.progress || _view == _RoadmapView.bands
+        ? NestedScrollView(
+            headerSliverBuilder: (context, _) => [
+              SliverToBoxAdapter(child: header),
+            ],
+            body: body,
+          )
+        : LayoutBuilder(
+            builder: (context, box) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: box.maxHeight * 0.6),
+                  child: SingleChildScrollView(child: header),
+                ),
+                Expanded(child: body),
+              ],
+            ),
+          );
+    if (widget.embedded) return page;
+    return AppScaffold(
+      actions: narrow ? null : choices,
+      body: RoadmapWindowLayer(
+        projectId: widget.projectId,
+        resolve: _resolve,
+        child: page,
+      ),
+    );
+  }
+
+  /// Progress, Bands, Canvas, and Mine or the person in charge's.
+  List<Widget> _choices(Appearance l10n) {
     final them = _theirs;
-    final choices = [
+    return [
       for (final view in _RoadmapView.values)
         BlockChoice(
           label: l10n.t(
@@ -128,38 +180,6 @@ class _RoadmapPageState extends State<RoadmapPage> {
           onTap: () => setState(() => _view = view),
         ),
     ];
-    // Four toggles plus four utility icons run off a phone's left edge, so
-    // there the toggles move into the header.
-    final narrow = MediaQuery.sizeOf(context).width < Cobalt.bpNarrow;
-    final header = _header(choices, narrow);
-    final body = _view == _RoadmapView.progress
-        ? _progressBody(l10n)
-        : _treeBody(l10n);
-    // Progress and Bands scroll the header away with their content (roadmap
-    // critique 2026-11-21); the canvas pans under a pinned one.
-    final scrolls =
-        _view == _RoadmapView.progress || _view == _RoadmapView.bands;
-    return AppScaffold(
-      actions: narrow ? null : choices,
-      body: RoadmapWindowLayer(
-        projectId: widget.projectId,
-        resolve: _resolve,
-        child: scrolls
-            ? NestedScrollView(
-                headerSliverBuilder: (context, _) => [
-                  SliverToBoxAdapter(child: header),
-                ],
-                body: body,
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  header,
-                  Expanded(child: body),
-                ],
-              ),
-      ),
-    );
   }
 
   /// The title block, then who else is here: one chip per user, however
@@ -172,13 +192,18 @@ class _RoadmapPageState extends State<RoadmapPage> {
       children: [
         RoadmapHeader(
           compact: narrow,
+          top: widget.embedded ? Cobalt.space4 : 64,
           viewChoices: choices,
           onAdd: (widget.rootId == null ? _c.planWriter : _c.rootWritable)
               ? _addRoot
               : null,
           breadcrumb: _c.read == null
               ? null
-              : RoadmapBreadcrumb(projectId: widget.projectId, read: _c.read!),
+              : RoadmapBreadcrumb(
+                  projectId: widget.projectId,
+                  read: _c.read!,
+                  onAncestor: widget.onReroot,
+                ),
           title: widget.rootId == null ? null : _c.opened?.node.title,
         ),
         if (people.isNotEmpty)
@@ -202,6 +227,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
           Builder(
             builder: (context) => RoadmapLensBanner(
               glance: glance,
+              full: widget.embedded,
               viewerId: context.read<Session>().user?.id ?? '',
               onOpen: (item) =>
                   RoadmapWindowScope.maybeOf(context)?.open(item.id),

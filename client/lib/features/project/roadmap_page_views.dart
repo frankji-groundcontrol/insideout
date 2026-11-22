@@ -119,6 +119,7 @@ extension _RoadmapViews on _RoadmapPageState {
       // steps, so it neither sends nor shows them.
       onCursor: mine ? null : _c.sendCursor,
       cursors: mine ? const [] : _c.cursors.values.toList(),
+      docked: !widget.embedded,
     );
   }
 
@@ -130,15 +131,13 @@ extension _RoadmapViews on _RoadmapPageState {
     return who == null || who.userId.isEmpty || who.userId == uid ? null : who;
   }
 
-  /// The loaded node [id] for its window, with its inherited owner: from
-  /// the shown tree, else the whole project (someone else's view reads it).
-  Future<RoadmapWindowNode?> _resolve(String id) async {
+  /// The loaded node [id] for its window: from the shown tree, else the
+  /// whole project (someone else's view reads it).
+  Future<RoadmapNode?> _resolve(String id) async {
     for (final nodes in [_c.nodes, _c.projectNodes]) {
       final all = await nodes.catchError((_) => <RoadmapNode>[]);
       final node = all.where((n) => n.id == id).firstOrNull;
-      if (node != null) {
-        return (node: node, inheritedOwner: _inherited(node, all));
-      }
+      if (node != null) return node;
     }
     return null;
   }

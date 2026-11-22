@@ -19,7 +19,12 @@ class RoadmapHeader extends StatelessWidget {
     required this.onAdd,
     this.breadcrumb,
     this.title,
+    this.top = 64,
   });
+
+  /// The room above the title: the page clears the utility block; a node's
+  /// window has none.
+  final double top;
 
   final bool compact;
   final List<Widget> viewChoices;
@@ -58,7 +63,7 @@ class RoadmapHeader extends StatelessWidget {
             onPressed: onAdd,
           );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(28, 64, 28, 8),
+      padding: EdgeInsets.fromLTRB(28, top, 28, 8),
       child: compact
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,

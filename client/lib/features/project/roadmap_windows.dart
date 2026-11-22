@@ -5,13 +5,12 @@ import 'package:flutter/painting.dart';
 
 import '../../api/models.dart';
 
-/// One node's floating window: the node it shows, the owner it inherits, and
-/// where it sits over the roadmap page.
+/// One node's floating window: the node its roadmap is rooted at, and where
+/// it sits over the roadmap page.
 class RoadmapWindow {
-  RoadmapWindow({required this.node, this.inheritedOwner, required this.rect});
+  RoadmapWindow({required this.node, required this.rect});
 
   final RoadmapNode node;
-  final ({String name, String via})? inheritedOwner;
   Rect rect;
 }
 
@@ -19,7 +18,7 @@ class RoadmapWindow {
 /// is in front. Pure layout state; every move takes the viewport it lives in.
 class RoadmapWindows extends ChangeNotifier {
   static const minSize = Size(320, 240);
-  static const defaultSize = Size(440, 520);
+  static const defaultSize = Size(760, 600);
 
   /// The step each new window steps down and right from the last.
   static const cascade = 32.0;
@@ -39,11 +38,7 @@ class RoadmapWindows extends ChangeNotifier {
 
   /// Opens [node]'s window cascaded from the front one, or brings its open
   /// window to the front.
-  void open(
-    RoadmapNode node,
-    Size view, {
-    ({String name, String via})? inheritedOwner,
-  }) {
+  void open(RoadmapNode node, Size view) {
     if (_of(node.id) != null) return focus(node.id);
     final size = Size(
       math.min(defaultSize.width, view.width),
@@ -57,11 +52,7 @@ class RoadmapWindows extends ChangeNotifier {
       at = first;
     }
     windows.add(
-      RoadmapWindow(
-        node: node,
-        inheritedOwner: inheritedOwner,
-        rect: _clamp(at & size, view, whole: true),
-      ),
+      RoadmapWindow(node: node, rect: _clamp(at & size, view, whole: true)),
     );
     notifyListeners();
   }
@@ -73,6 +64,20 @@ class RoadmapWindows extends ChangeNotifier {
     windows
       ..remove(w)
       ..add(w);
+    notifyListeners();
+  }
+
+  /// Roots [id]'s window at [node] in place (a breadcrumb inside it); when
+  /// [node] has a window already, that one comes to the front instead.
+  void reroot(String id, RoadmapNode node) {
+    final w = _of(id);
+    if (w == null) return;
+    if (_of(node.id) != null) {
+      windows.remove(w);
+      notifyListeners();
+      return focus(node.id);
+    }
+    windows[windows.indexOf(w)] = RoadmapWindow(node: node, rect: w.rect);
     notifyListeners();
   }
 

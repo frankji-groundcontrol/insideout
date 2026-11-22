@@ -19,9 +19,13 @@ class RoadmapLensBanner extends StatelessWidget {
     required this.glance,
     required this.viewerId,
     this.onOpen,
+    this.full = false,
   });
 
   final RoadmapGlance glance;
+
+  /// Every linked title, in a node's window.
+  final bool full;
 
   /// The signed-in user: their own charge reads "Your view".
   final String viewerId;
@@ -40,6 +44,7 @@ class RoadmapLensBanner extends StatelessWidget {
             glance: glance,
             viewerId: viewerId,
             onOpen: onOpen,
+            full: full,
           ),
         ),
       ),
@@ -48,7 +53,7 @@ class RoadmapLensBanner extends StatelessWidget {
 }
 
 /// The lens's lines without its frame: whose view, where the charge comes
-/// from, then the glance or its quiet line. A node's window shows it too.
+/// from, then the glance or its quiet line.
 class RoadmapLensBody extends StatelessWidget {
   const RoadmapLensBody({
     super.key,
