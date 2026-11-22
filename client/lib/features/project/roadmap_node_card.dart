@@ -17,6 +17,7 @@ import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import '../../widgets/guarded_action.dart';
 import 'roadmap_completion_prompt.dart';
+import 'roadmap_dependency_picker.dart';
 import 'roadmap_node_detail.dart';
 
 part 'roadmap_expand_draft.dart';

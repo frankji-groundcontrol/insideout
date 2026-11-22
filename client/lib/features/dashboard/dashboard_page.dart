@@ -125,7 +125,6 @@ class _DashboardPageState extends State<DashboardPage> {
             // Keyed by the workspaces, so a create or join reads again.
             myWork: MyWorkSection(
               key: ValueKey(list.map((w) => w.id).join(',')),
-              workspaces: list,
             ),
           );
         },

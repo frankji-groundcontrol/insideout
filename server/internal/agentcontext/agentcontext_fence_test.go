@@ -30,7 +30,8 @@ func markedInputs(mode, focus string) Inputs {
 		LatestCommit: &CommitIn{Revision: 2, Name: marker + "versionName", Audience: "decision"},
 		Nodes: []NodeIn{
 			{ID: "root", Title: marker + "rootTitle", Status: "pending"},
-			{ID: "a", ParentID: "root", Title: marker + "aTitle", Status: "in_progress", Acceptance: marker + "aAcceptance", OwnerName: marker + "aOwner"},
+			{ID: "a", ParentID: "root", Title: marker + "aTitle", Status: "in_progress", Acceptance: marker + "aAcceptance", OwnerName: marker + "aOwner", DependsOn: []string{"b"}},
+			{ID: "a1", ParentID: "a", Title: marker + "a1Title", Status: "pending", Acceptance: marker + "a1Acceptance", OwnerName: marker + "a1Owner"},
 			{ID: "b", ParentID: "root", Title: marker + "bTitle", Status: "pending", Acceptance: marker + "bAcceptance", OwnerName: marker + "bOwner"},
 		},
 		EvidenceCounts: map[string]int{"a": 1},
@@ -66,16 +67,23 @@ func covers(field, path string) bool {
 }
 
 func TestAssemble_DeclaresEveryFieldThatCarriesPeoplesText(t *testing.T) {
-	cases := []struct{ name, mode, focus string }{
-		{"brainstorming", "brainstorming", ""},
-		{"review", "review", ""},
-		{"implementation with a focus", "implementation", "a"},
-		{"implementation without a focus", "implementation", ""},
+	cases := []struct {
+		name, mode, focus string
+		inCharge          []string
+	}{
+		{"brainstorming", "brainstorming", "", nil},
+		{"review", "review", "", nil},
+		{"implementation with a focus", "implementation", "a", nil},
+		{"implementation without a focus", "implementation", "", nil},
+		{"implementation on a node others wait on", "implementation", "b", nil},
+		{"implementation in charge of several", "implementation", "", []string{"a", "b"}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			in := markedInputs(tc.mode, tc.focus)
+			in.InCharge = tc.inCharge
 			// What the API writes is what a reader sees: go through JSON.
-			raw, err := json.Marshal(Assemble(markedInputs(tc.mode, tc.focus)))
+			raw, err := json.Marshal(Assemble(in))
 			if err != nil {
 				t.Fatalf("marshal: %v", err)
 			}

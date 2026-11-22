@@ -17,7 +17,7 @@ var projectUsage = map[string]string{
 	"project": "insideout project <project-id>",
 	"project update": "insideout project update [--title T] [--description D|clear] " +
 		"[--status planning|active|paused|done|archived] [--owner user-id|me|clear] <project-id>",
-	"updates":          "insideout updates [--before cursor] [--limit n] <project-id>",
+	"updates":          "insideout updates [--before cursor] [--limit n] [--node node-id] [--pending] <project-id>",
 	"update add":       "insideout update add --kind progress|blocker|note --content C <project-id>",
 	"workspace":        "insideout workspace <workspace-id>",
 	"workspace update": "insideout workspace update [--title T] [--description D|clear] [--cover URL|clear] <workspace-id>",
@@ -32,8 +32,9 @@ func runProjectCommand(verb string, args []string) (bool, int) {
 	}
 	fs := flag.NewFlagSet(verb, flag.ContinueOnError)
 	api := apiFlag(fs)
-	var title, desc, status, owner, cover, before, kind, content *string
+	var title, desc, status, owner, cover, before, node, kind, content *string
 	var limit *int
+	var pending *bool
 	switch verb {
 	case "project update", "workspace update":
 		title = fs.String("title", "", "new title")
@@ -47,6 +48,8 @@ func runProjectCommand(verb string, args []string) (bool, int) {
 	case "updates":
 		before = fs.String("before", "", "the nextCursor of the page before")
 		limit = fs.Int("limit", 0, "updates per page, 1 to 100 (default 50)")
+		node = fs.String("node", "", "only updates about this node and the nodes below it")
+		pending = fs.Bool("pending", false, "only proposals still waiting for your decision")
 	case "update add":
 		kind = fs.String("kind", "", "progress|blocker|note")
 		content = fs.String("content", "", "the update text")
@@ -60,7 +63,7 @@ func runProjectCommand(verb string, args []string) (bool, int) {
 	case "project":
 		return printJSON(c.Project(id))
 	case "updates":
-		return printJSON(c.ProjectUpdates(id, *before, *limit))
+		return printJSON(c.ProjectUpdates(id, apiclient.UpdatesQuery{Before: *before, Limit: *limit, Node: *node, Pending: *pending}))
 	case "update add":
 		return printJSON(c.AddProjectUpdate(id, apiclient.ProjectUpdate{Kind: *kind, Content: *content}))
 	case "workspace":

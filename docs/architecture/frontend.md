@@ -51,8 +51,11 @@ client/lib/
                       workspace, profile;
                       project (project page and the roadmap: page, its
                       controller (nodes, progress, presence, cursors, stream
-                      retries), header, breadcrumb, bands, canvas, minimap,
-                      progress view, node menu, edit, delegate and detail);
+                      retries), header, breadcrumb, bands, the canvas (one
+                      level of steps ordered by lifted dependencies in
+                      roadmap_step_flow.dart, step box, flow painter, lane
+                      routes, pan/zoom view), progress view, node menu,
+                      dependency picker, edit, delegate and detail);
                       prd (desk, coach, versions stack + commit details,
                       revisions, export)
   l10n/               zh-CN + en-US; en.dart and zh.dart spread four namespace

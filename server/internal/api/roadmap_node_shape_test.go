@@ -8,8 +8,8 @@ import (
 
 // rv5-COMP-02: a roadmap node with every optional field set (a parent, an
 // owner, a deadline and its pressure, acceptance, a completion reason,
-// canWrite, a rollup with an earliest deadline) keeps the shape captured in
-// testdata/roadmap_node_full.json from this same sequence.
+// canWrite, a rollup with an earliest deadline, a dependency) keeps the shape
+// captured in testdata/roadmap_node_full.json from this same sequence.
 // client/test/api/roadmap_node_fixture_test.dart fails when
 // RoadmapNode.fromJson leaves a key of that fixture unread, so a field the
 // server adds reaches the web model or a test says so. DATABASE_URL-gated.
@@ -32,6 +32,8 @@ func TestRoadmapNodeWithEveryFieldKeepsItsCapturedShape(t *testing.T) {
 	// Reopened: the reason stays as history, and unfinished work has pressure
 	// again, so every optional field is set at once.
 	patch(pilot, `{"status":"in_progress"}`)
+	// It waits on a node in another branch.
+	w.must(t, w.owner, http.MethodPost, "/api/v1/roadmap/"+pilot+"/dependencies", `{"dependsOnId":"`+w.roadmapNode(t, "Hiring")+`"}`, http.StatusCreated)
 
 	var got any
 	for _, n := range decodeAs[[]map[string]any](t, w.must(t, w.owner, http.MethodGet, w.proj()+"/roadmap", "", http.StatusOK)) {

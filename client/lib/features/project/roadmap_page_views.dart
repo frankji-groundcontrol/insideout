@@ -67,41 +67,54 @@ extension _RoadmapViews on _RoadmapPageState {
           );
         }
         final all = snap.data!;
-        // Mine lays out only the caller's branches, each topmost owned node
-        // a band; the cards still read the whole list for parent and count.
-        // Under an ancestor the caller owns, the whole opened tree is theirs.
+        // Mine's steps are the caller's topmost owned nodes; under an
+        // ancestor the caller owns, the whole opened tree is theirs. The
+        // steps still read the whole list for links and counts.
         final uid = context.read<Session>().user?.id ?? '';
-        final shown = _view == _RoadmapView.mine ? _c.mine(all, uid) : all;
+        final mine = _view == _RoadmapView.mine;
+        final shown = mine ? _c.mine(all, uid) : all;
         if (shown.isEmpty) {
           return BlockEmpty(
             icon: Icons.person_outline,
             body: l10n.t('roadmap.mineEmpty'),
           );
         }
-        // The minimap jumps between bands, so one band needs none.
-        final bands = roadmapRoots(shown).length;
-        return Column(
-          children: [
-            if (bands > 1)
-              RoadmapMinimap(nodes: shown, onTapBand: _scrollToBand),
-            Expanded(
-              child: RoadmapCanvas(
-                nodes: shown,
-                tileBuilder: (node, _) => _card(node, all),
-                controller: _canvasController,
-                // Shared cursors live in the whole canvas's layout; Mine
-                // lays out other bands, so it neither sends nor shows them.
-                onCursor: shown == all ? _c.sendCursor : null,
-                cursors: shown == all ? _c.cursors.values.toList() : const [],
-                collapsed: _collapsed,
-                onToggle: _toggleFold,
-              ),
-            ),
-          ],
+        return RoadmapCanvas(
+          projectId: widget.projectId,
+          steps: mine ? roadmapRoots(shown) : roadmapSteps(all),
+          all: all,
+          titles: {..._c.outsideTitles, for (final n in all) n.id: n.title},
+          inheritedOwner: (n) => _inherited(n, all),
+          menu: (n) => RoadmapNodeMenu(
+            projectId: widget.projectId,
+            node: n,
+            onReload: _c.reload,
+            descendants: roadmapDescendantCount(all, n),
+            planWriter: _c.planWriter,
+            parentWritable: roadmapParentWritable(all, n),
+            inheritedOwner: _inherited(n, all),
+            openedRoot: n.id == widget.rootId,
+          ),
+          // Shared cursors live in the steps' flow; Mine lays out other
+          // steps, so it neither sends nor shows them.
+          onCursor: mine ? null : _c.sendCursor,
+          cursors: mine ? const [] : _c.cursors.values.toList(),
         );
       },
     );
   }
+
+  /// The owner [node] holds through an ancestor, read against every loaded
+  /// node [all] and, in an opened tree, the ancestors above it.
+  ({String name, String via})? _inherited(
+    RoadmapNode node,
+    List<RoadmapNode> all,
+  ) => roadmapInheritedOwner(
+    all,
+    node,
+    above: _c.opened?.ancestors ?? const [],
+    names: _c.names,
+  );
 
   /// One node's card, read against every loaded node [all] and, in an
   /// opened tree, the ancestors above it.
@@ -117,12 +130,7 @@ extension _RoadmapViews on _RoadmapPageState {
     descendants: roadmapDescendantCount(all, node),
     planWriter: _c.planWriter,
     parentWritable: roadmapParentWritable(all, node),
-    inheritedOwner: roadmapInheritedOwner(
-      all,
-      node,
-      above: _c.opened?.ancestors ?? const [],
-      names: _c.names,
-    ),
+    inheritedOwner: _inherited(node, all),
     openedRoot: node.id == widget.rootId,
   );
 }

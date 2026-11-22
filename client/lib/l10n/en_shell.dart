@@ -43,6 +43,7 @@ const enShell = <String, String>{
   'home.loopTrail': 'Idea · Version · Commit · Roadmap · Evidence',
   'home.captureIdea': 'Capture an idea',
   'home.myWork': 'My work',
+  'home.myWork.blocking': 'Blocking: {titles}',
   'time.justNow': 'just now',
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',
@@ -61,6 +62,11 @@ const enShell = <String, String>{
       'That repository is already linked to another project',
   'error.prdNotApproved':
       'This PRD must be approved before its roadmap is built',
+  'error.dependencySelf': 'An item cannot wait on itself',
+  'error.dependencyCycle':
+      'That link would close a loop — an item would end up waiting on itself',
+  'error.dependencyInTree':
+      'One sits above the other in the tree, which already says that — no link needed',
   'error.throttled': 'Too many attempts — take a breath and retry shortly',
   'error.server': 'Server hiccup — try again',
   'error.network': 'Network problem — check the connection',

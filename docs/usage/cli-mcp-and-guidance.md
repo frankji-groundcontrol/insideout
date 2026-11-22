@@ -94,13 +94,13 @@ call and none for a human-only route (see [Agent scope](#agent-scope)).
 | --- | --- |
 | Auth | `register [--invite <invitation-code>] <email> [display-name]`, `login [--code\|--magic] <email>`, `logout`, `forgot-password <email>`, `reset-password`, `account delete` (the current password from the hidden prompt; see [account deletion](./account-deletion.md)) |
 | Authoring | `prd update [--title] [--section k=v]… [--status] <id>`, `evidence <node-id>`, `evidence add --detail D [--source URL] [--observed YYYY-MM-DD] <node-id>` (a validation observation on a leaf; the day defaults to today), `workspaces create --title [--desc]`, `workspace update [--title] [--description D\|clear] [--cover URL\|clear] <ws>`, `join <code>`, `projects create --title [--desc] <ws-id>`, `project update [--title] [--description D\|clear] [--status planning\|active\|paused\|done\|archived] [--owner user-id\|me\|clear] <proj>`, `project delete --yes <proj>` (workspace admins), `workspace delete --yes <ws>` (its creator), `update add --kind progress\|blocker\|note --content C <proj>`, `update edit --content C <update>`, `update delete <update>` (author or admin), `member role --role admin\|member <ws> <user>`, `member remove <ws> <user>` (admins), `profile update [--username U] [--bio B\|clear] [--keywords a,b\|clear] [--avatar URL\|clear]` |
-| Read surface | `whoami`, `workspaces`, `workspace <ws>`, `projects <ws>`, `project <proj>`, `updates [--before c] [--limit n] <proj>`, `prds <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>`, `export [--format markdown\|print] [--audience A] [--out FILE] <prd>` (the whole PRD on stdout or in a file, as MCP `prd_export` gives it) |
+| Read surface | `whoami`, `workspaces`, `workspace <ws>`, `projects <ws>`, `project <proj>`, `updates [--before c] [--limit n] [--node node] [--pending] <proj>`, `prds <ws>`, `prd <id>`, `revisions <prd>`, `view [--audience] [--export F] <prd>`, `export [--format markdown\|print] [--audience A] [--out FILE] <prd>` (the whole PRD on stdout or in a file, as MCP `prd_export` gives it) |
 | Versions | `commit --name --audience [--summary --unresolved… --note] <prd>`, `versions <prd>`, `readiness <prd>` |
 | Ideas | `ideas <ws>`, `idea create --title [--content] <ws>`, `idea update --title [--content C\|clear] <id>` (an absent or empty `--content` keeps the body), `idea delete <id>` (soft drop), `idea convert [--locale en\|zh] <id>` (the coach's language; default from `LC_ALL`, `LC_MESSAGES` or `LANG`, else `en`; the MCP tool `idea_convert` takes the same `locale`) |
 | Roadmap | `roadmap list [--root node] <proj>` (with `--root`, that node and the nodes below it), `roadmap add`, `roadmap update [--title] [--description D\|clear] [--status] [--deadline RFC3339\|clear] [--acceptance A\|clear] [--owner user-id\|me\|clear] [--completion-reason S\|clear] <node>`, `roadmap move [--parent id \| --root] [--position n] <node>` (no `--parent` keeps the parent; the MCP `roadmap_move` takes `parent_id` `"root"` for a root), `roadmap delete [--force] <node>` (a branch holding evidence or done or validated nodes is refused with the counts it would erase; `--force` deletes it anyway), `roadmap validate --reason R <node>` (confirm a done node as validated), `roadmap progress [--root node] <proj>`, `roadmap presence <proj>` |
-| Task tree | `roadmap show <node>` (the node, its ancestors root first, its project), `roadmap mine <ws>` (your topmost owned nodes), `members <ws>` (user ids for `--to` and `--owner`), `roadmap delegate --to <user-id> [--note N] <node>`, `roadmap handback [--note N] <node>`, `roadmap assignments <node>` (who held it, newest first). MCP: `roadmap_node`, `roadmap_mine`, `roadmap_assignments` (no MCP tool for `members`, delegate or hand-back: every MCP tool acts through an agent-scope token, which those routes refuse); `roadmap_update` takes `acceptance` (`"clear"` clears it) but no `owner_id` or `completion_reason`, which an agent token is refused, `roadmap_list` and `progress` take `root`. Node views carry `canWrite` and `rollup` ([roadmap tree](../architecture/roadmap-tree.md)) |
+| Task tree | `roadmap show <node>` (the node, its ancestors root first, its project), `roadmap mine [ws]` (the topmost nodes you are in charge of, each with `now`, `waitsOn` and `blocking`; without `ws`, every workspace of yours), `members <ws>` (user ids for `--to` and `--owner`), `roadmap delegate --to <user-id> [--note N] <node>`, `roadmap handback [--note N] <node>`, `roadmap assignments <node>` (who held it, newest first), `roadmap depend --on <node> <node>` (the second node waits on the first: any node of the same project outside its own ancestors and descendants; a cycle answers 409 `dependency_cycle`), `roadmap undepend --on <node> <node>` (prints `removed`), `roadmap steps [--root node] <proj>` (one level in dependency order: each step's `stage`, `loop`, `after` with link counts, `itemsInside` and `waitsOutside`; with no `--root`, an agent token's root, else the project's one root). MCP: `roadmap_steps` takes `project_id` and `root`; `roadmap_node`, `roadmap_mine` (`workspace_id` optional), `roadmap_assignments` (no MCP tool for `members`, delegate or hand-back: every MCP tool acts through an agent-scope token, which those routes refuse); `roadmap_update` takes `acceptance` (`"clear"` clears it) but no `owner_id` or `completion_reason`, which an agent token is refused, `roadmap_list` and `progress` take `root`; `roadmap_dependency_add` and `roadmap_dependency_remove` take `node_id` and `depends_on_id`. Node views carry `canWrite`, `rollup` and `dependsOn` ([roadmap tree](../architecture/roadmap-tree.md)) |
 | Build | `build <prd>` drafts a roadmap from an approved PRD and writes nothing (409 `prd_not_approved` otherwise); `build-confirm [-expected-count N] [-force] -tree '<json>' <prd>` writes it, creating and linking the project on the first build (PRD author or workspace admin only); over a roadmap with evidence or done or validated nodes it answers 409 `roadmap_replace_has_history` with the counts until `-force`; `expand <node>`, `expand-confirm -children '<json>' <node>` |
-| Agent | `agent-context [--mode M] [--focus node] <proj>`, `checkpoint [--node] <proj> <summary>`, `propose --kind K [--node id] [--item Title[@Parent]]… <proj> <summary>` (without `--node` only the project owner or a workspace admin may file; with it, anyone who may write that node, so a delegate files inside their subtree), `proposal decide --accept\|--reject [--no-apply] [--reason R] <update-id>` (acceptance applies the proposal's items unless `--no-apply`, as on the web; `idea proposal-decide` is the old spelling) |
+| Agent | `agent-context [--mode M] [--focus node] <proj>` (with no `--focus`, what you are in charge of: one node becomes the focus, several are listed in `inCharge`; the focus carries `steps`, `waitsOn` and `blocks`), `checkpoint [--node] <proj> <summary>`, `propose --kind K [--node id] [--item Title[@Parent]]… <proj> <summary>` (without `--node` only the project owner or a workspace admin may file; with it, anyone who may write that node, so a delegate files inside their subtree), `proposal decide --accept\|--reject [--no-apply] [--reason R] <update-id>` (acceptance applies the proposal's items unless `--no-apply`, as on the web; `idea proposal-decide` is the old spelling) |
 | Admin | `invite [--ttl hours] <email>` (1 to 720 hours, default 168; `POST /admin/invitations` answers 400 for another `ttlHours`), `invite revoke <id>`, `invites`, `signup-mode [invitation_only\|open\|closed]` (admin token required) |
 | Server operator | `migrate`, `seed`, `promote-admin <email>` (creates the account, password on stdin, when absent); these need the server config (`DATABASE_URL`, `INSIDEOUT_JWT_SECRET`), and `promote-admin` also the owner DSN (`DATABASE_OWNER_URL`) |
 | Front door | `help` (also `-h`, `--help`) and `version` (also `--version`) answer before any server config, so they work with no database; an unknown verb exits 2 with a pointer to `help` |
@@ -117,7 +117,8 @@ Where a CLI verb and its MCP tool are named differently:
 | `prds <ws>`, `updates <proj>`, `export <prd>` | `prd_list`, `project_updates`, `prd_export` |
 | `project update`, `update add`, `update edit`, `workspace update` | `project_update` (no `owner`), `update_add`, `update_edit`, `workspace_update` |
 | `roadmap list`, `roadmap show`, `roadmap mine`, `roadmap add`, `roadmap update`, `roadmap move`, `roadmap assignments` | `roadmap_list`, `roadmap_node`, `roadmap_mine`, `roadmap_add`, `roadmap_update`, `roadmap_move`, `roadmap_assignments` |
-| `roadmap progress`, `roadmap presence` | `progress`, `presence` |
+| `roadmap depend`, `roadmap undepend` | `roadmap_dependency_add`, `roadmap_dependency_remove` |
+| `roadmap progress`, `roadmap presence`, `roadmap steps` | `progress`, `presence`, `roadmap_steps` |
 | `repo set <proj> <url>` | `repo_set` |
 | `agent-context`, `build-confirm`, `expand-confirm` | `agent_context`, `build_confirm`, `expand_confirm` |
 | `signup-mode` (no argument) | `signup_mode` |
@@ -159,6 +160,13 @@ PRD sections are the exception: `prd update --section key=` and
   `before` it starts from the newest, and `limit` defaults to 50. A `before`
   that is not a UUID answers 400; a cursor whose update was deleted between
   pages (or that is no update of this project) answers 404, not an empty page.
+  `--node <node>` (MCP `node_id`, `?node=`) keeps the updates about that node
+  and the nodes below it: delegation, hand-back and done rows and proposals
+  filed about a node carry one, notes, progress and blockers carry none. A
+  node of another project answers 404. `--pending` (MCP `pending`,
+  `?pending=true`) keeps the proposals nobody has decided yet, and only for a
+  caller who may decide them (the project owner or a workspace admin); anyone
+  else gets an empty page. Flags come before the project id.
 - `project update`, `workspace update`, `profile update` and their MCP
   tools read the row first, because the server rewrites title, description,
   status, username and bio on every PATCH; what you leave out is sent as read.
@@ -248,8 +256,12 @@ Before any sign-in they are listed, so a process can still sign in.
 
 - `"env": { "INSIDEOUT_AGENT_ROOT": "<node-id>" }` confines the agent token to
   one node's subtree: node writes outside it answer 403 `agent_scope_denied`,
-  reads stay workspace-wide, and `agent_context` focuses on that node by
-  default.
+  reads stay workspace-wide, and `agent_context`, `roadmap_list`, `progress`
+  and `roadmap_steps` default to that node (`roadmap_steps` refuses a `root`
+  outside it).
+- Without a root, `agent_context` with no `focus` opens on what the signed-in
+  human is in charge of. The server instructions tell an agent to start there:
+  `roadmap_mine`, then `roadmap_steps` or `agent_context` on that node.
 - A failed exchange is a tool error and never falls back to the full token.
   An `INSIDEOUT_TOKEN` that already carries a scope is sent as it is (the
   server decides), so `INSIDEOUT_AGENT_ROOT` beside it does nothing and the

@@ -53,6 +53,14 @@ type Node struct {
 	Leaf       bool
 	Acceptance string
 	OwnerName  string
+	// WaitsOn: the unfinished nodes this one waits on.
+	WaitsOn []Ref
+}
+
+// Ref names a node another waits on.
+type Ref struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
 }
 
 // ProgressItem is one entry in the Progress view.
@@ -64,6 +72,7 @@ type ProgressItem struct {
 	Pressure   string     `json:"pressure,omitempty"`
 	Acceptance string     `json:"acceptance,omitempty"`
 	OwnerName  string     `json:"ownerName,omitempty"`
+	WaitsOn    []Ref      `json:"waitsOn,omitempty"`
 }
 
 // Progress is PRODUCT.md's default Roadmap view: Now is dominant,
@@ -81,8 +90,9 @@ type Progress struct {
 }
 
 // Assemble builds the Progress view. Now: in-progress leaves with a
-// deadline (pressure computed). Next: pending leaves with deadlines,
-// earliest three. Done: the finished leaves, listed.
+// deadline (pressure computed). Next: pending leaves with deadlines, the
+// ready ones (waiting on nothing unfinished) before the waiting ones, each
+// by deadline, first three. Done: the finished leaves, listed.
 func Assemble(nodes []Node, now time.Time) Progress {
 	p := Progress{Now: []ProgressItem{}, NeedsDeadline: []ProgressItem{}, Next: []ProgressItem{}, DoneItems: []ProgressItem{}}
 	var pending []Node
@@ -94,7 +104,7 @@ func Assemble(nodes []Node, now time.Time) Progress {
 		case n.Status == "in_progress":
 			item := item(n, now)
 			if n.Deadline == nil {
-				p.NeedsDeadline = append(p.NeedsDeadline, ProgressItem{ID: n.ID, Title: n.Title, Status: n.Status, Acceptance: n.Acceptance, OwnerName: n.OwnerName})
+				p.NeedsDeadline = append(p.NeedsDeadline, item)
 			} else {
 				p.Now = append(p.Now, item)
 			}
@@ -107,7 +117,10 @@ func Assemble(nodes []Node, now time.Time) Progress {
 			p.DoneItems = append(p.DoneItems, item(n, now))
 		}
 	}
-	sort.Slice(pending, func(i, j int) bool {
+	sort.SliceStable(pending, func(i, j int) bool {
+		if ri, rj := len(pending[i].WaitsOn) == 0, len(pending[j].WaitsOn) == 0; ri != rj {
+			return ri
+		}
 		return pending[i].Deadline.Before(*pending[j].Deadline)
 	})
 	for i := 0; i < len(pending) && i < 3; i++ {
@@ -122,7 +135,7 @@ func Assemble(nodes []Node, now time.Time) Progress {
 func Finished(status string) bool { return status == "done" || status == "validated" }
 
 func item(n Node, now time.Time) ProgressItem {
-	it := ProgressItem{ID: n.ID, Title: n.Title, Status: n.Status, Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName}
+	it := ProgressItem{ID: n.ID, Title: n.Title, Status: n.Status, Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName, WaitsOn: n.WaitsOn}
 	if n.Deadline != nil {
 		it.Pressure = NodePressure(n.Status, *n.Deadline, now)
 	}

@@ -35,6 +35,7 @@ func TestProjectVerbsSendTheirRequests(t *testing.T) {
 			[]sent{{"GET /me", nil}, {"GET /projects/p1", nil}, {"PATCH /projects/p1", with("ownerId", "u-me")}}},
 		{words("updates", "p1"), []sent{{"GET /projects/p1/updates", nil}}},
 		{words("updates", "--before", "c1", "--limit", "2", "p1"), []sent{{"GET /projects/p1/updates?before=c1&limit=2", nil}}},
+		{words("updates", "--node", "n1", "--pending", "p1"), []sent{{"GET /projects/p1/updates?node=n1&pending=true", nil}}},
 		{words("update", "add", "--kind", "blocker", "--content", "stuck", "p1"),
 			[]sent{{"POST /projects/p1/updates", map[string]any{"kind": "blocker", "content": "stuck"}}}},
 		{words("workspace", "ws1"), []sent{{"GET /workspaces/ws1", nil}}},

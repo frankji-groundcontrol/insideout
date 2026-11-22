@@ -102,8 +102,22 @@ func (u ProjectUpdate) Cursor() UpdateCursor {
 // history. Prefer ListProjectUpdatesBefore with ProjectUpdate.Cursor, which
 // needs no lookup and survives the deletion.
 func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.UUID, limit int, before *uuid.UUID) ([]ProjectUpdate, error) {
+	return s.ListProjectUpdatesWhere(ctx, actorID, projectID, limit, before, UpdateFilter{})
+}
+
+// UpdateFilter narrows a timeline page. Node keeps the rows about that node
+// or a node below it (node_* rows and proposals carry a node; notes, progress
+// and blockers carry none). Pending keeps the agent proposals with no
+// decision yet, and only for a plan writer, who may decide them.
+type UpdateFilter struct {
+	Node    *uuid.UUID
+	Pending bool
+}
+
+// ListProjectUpdatesWhere is ListProjectUpdates narrowed by f.
+func (s *Store) ListProjectUpdatesWhere(ctx context.Context, actorID, projectID uuid.UUID, limit int, before *uuid.UUID, f UpdateFilter) ([]ProjectUpdate, error) {
 	if before == nil {
-		return s.ListProjectUpdatesBefore(ctx, actorID, projectID, limit, nil)
+		return s.listProjectUpdates(ctx, actorID, projectID, limit, nil, f)
 	}
 	var at UpdateCursor
 	err := s.withUserContext(ctx, actorID, func(tx pgx.Tx) error {
@@ -119,7 +133,7 @@ func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.
 	if err != nil {
 		return nil, err
 	}
-	return s.ListProjectUpdatesBefore(ctx, actorID, projectID, limit, &at)
+	return s.listProjectUpdates(ctx, actorID, projectID, limit, &at, f)
 }
 
 // ListProjectUpdatesBefore requires the caller to have already verified
@@ -131,6 +145,10 @@ func (s *Store) ListProjectUpdates(ctx context.Context, actorID, projectID uuid.
 // written in one transaction share a statement-time timestamp (e.g. a GitHub
 // sync batch), so the id breaks ties and keeps the cursor stable across pages.
 func (s *Store) ListProjectUpdatesBefore(ctx context.Context, actorID, projectID uuid.UUID, limit int, before *UpdateCursor) ([]ProjectUpdate, error) {
+	return s.listProjectUpdates(ctx, actorID, projectID, limit, before, UpdateFilter{})
+}
+
+func (s *Store) listProjectUpdates(ctx context.Context, actorID, projectID uuid.UUID, limit int, before *UpdateCursor, f UpdateFilter) ([]ProjectUpdate, error) {
 	if limit <= 0 {
 		limit = ProjectUpdatesPageSize
 	}
@@ -148,8 +166,11 @@ func (s *Store) ListProjectUpdatesBefore(ctx context.Context, actorID, projectID
 				LEFT JOIN insideout.proposal_decisions pd ON pd.update_id = pu.id
 				WHERE pu.project_id = $1
 				  AND ($2::timestamptz IS NULL OR (pu.created_at, pu.id) < ($2::timestamptz, $3::uuid))
+				  AND ($5::uuid IS NULL OR pu.node_id IN (WITH RECURSIVE `+descendantsOf("$5")+` SELECT id FROM descendants))
+				  AND (NOT $6 OR (pu.kind = 'agent_proposal' AND pd.update_id IS NULL
+				                  AND insideout._is_plan_writer(pu.project_id, $7)))
 				ORDER BY pu.created_at DESC, pu.id DESC
-				LIMIT $4`, projectID, beforeAt, beforeID, limit,
+				LIMIT $4`, projectID, beforeAt, beforeID, limit, f.Node, f.Pending, actorID,
 		)
 		if err != nil {
 			return err

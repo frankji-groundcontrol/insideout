@@ -9,21 +9,22 @@ import (
 )
 
 // handleListRoadmap answers the project's nodes as a flat list, or with
-// ?root={nid} only that node and the nodes below it (rv5-TREEB-03).
+// ?root={nid} only that node and the nodes below it (rv5-TREEB-03); a
+// root-scoped agent token reads its root by default (requestRoot).
 func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	pid, ok := pathUUID(w, r, "pid")
 	if !ok {
 		return
 	}
+	root, ok := s.requestRoot(w, r, userID, pid)
+	if !ok {
+		return
+	}
 	var nodes []store.RoadmapNode
 	var err error
-	if raw := r.URL.Query().Get("root"); raw != "" {
-		root, ok := parseUUIDParam(w, "root", raw)
-		if !ok {
-			return
-		}
-		nodes, err = s.store.ListRoadmapSubtree(r.Context(), userID, pid, root)
+	if root != nil {
+		nodes, err = s.store.ListRoadmapSubtree(r.Context(), userID, pid, *root)
 	} else {
 		nodes, err = s.store.ListRoadmap(r.Context(), userID, pid)
 	}
@@ -92,46 +93,6 @@ func (s *Server) handleReadRoadmapNode(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, a := range read.Ancestors {
 		out.Ancestors[i] = nodeRefResponse(a)
-	}
-	httpx.WriteJSON(w, http.StatusOK, out)
-}
-
-type myRoadmapRootView struct {
-	Node        roadmapNodeView `json:"node"`
-	ProjectID   string          `json:"projectId"`
-	ProjectName string          `json:"projectName"`
-	Ancestors   []nodeRefView   `json:"ancestors"`
-}
-
-// handleMyRoadmap lists the caller's own work tree in one workspace: the
-// topmost nodes they own, each a root with its project and path
-// (rv5-TREEB-04). A workspace the caller is not in is 404.
-func (s *Server) handleMyRoadmap(w http.ResponseWriter, r *http.Request) {
-	userID, _ := UserID(r.Context())
-	wsID, ok := pathUUID(w, r, "id")
-	if !ok {
-		return
-	}
-	// Kept on purpose: a refusal answers 404 so a non-member cannot learn the row exists.
-	roots, err := s.store.ListMyRoadmapRoots(r.Context(), userID, wsID)
-	if errors.Is(err, store.ErrNotFound) || errors.Is(err, store.ErrForbidden) {
-		httpx.WriteError(w, http.StatusNotFound, "workspace not found", "", nil)
-		return
-	}
-	if err != nil {
-		s.writeStoreError(w, "list my roadmap", err, nil)
-		return
-	}
-	now := s.now()
-	out := make([]myRoadmapRootView, len(roots))
-	for i, root := range roots {
-		out[i] = myRoadmapRootView{
-			Node: roadmapNodeResponse(root.Node, now), ProjectID: root.Node.ProjectID.String(),
-			ProjectName: root.ProjectName, Ancestors: make([]nodeRefView, len(root.Ancestors)),
-		}
-		for j, a := range root.Ancestors {
-			out[i].Ancestors[j] = nodeRefResponse(a)
-		}
 	}
 	httpx.WriteJSON(w, http.StatusOK, out)
 }

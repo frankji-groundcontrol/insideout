@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/features/project/roadmap_node_card.dart';
+import 'package:insideout/features/project/roadmap_step_box.dart';
 
 import '_roadmap_tree_helpers.dart';
 
@@ -8,10 +9,23 @@ import '_roadmap_tree_helpers.dart';
 // person has read what goes with it, and then with force. rv5-TREEX-02:
 // deleting the opened root leaves for the parent's tree, not a dead route.
 
-Future<void> _deleteFromMenu(WidgetTester tester, String title) async {
-  await tester.tap(find.text('Canvas'));
+/// Deletes [title] from its menu in [view]: the Canvas shows steps, so an
+/// opened root is deleted from its Bands card.
+Future<void> _deleteFromMenu(
+  WidgetTester tester,
+  String title, {
+  String view = 'Canvas',
+}) async {
+  await tester.tap(find.text(view));
   await tester.pumpAndSettle();
-  final card = find.widgetWithText(RoadmapNodeCard, title).first;
+  final card = find
+      .ancestor(
+        of: find.text(title),
+        matching: find.byWidgetPredicate(
+          (w) => w is RoadmapNodeCard || w is RoadmapStepBox,
+        ),
+      )
+      .first;
   await tester.tap(
     find.descendant(of: card, matching: find.byType(PopupMenuButton<String>)),
   );
@@ -69,7 +83,7 @@ void main() {
     final router = await pumpTreeRouter(tester, treeSession(api));
     router.go('/projects/p1/roadmap/a');
     await tester.pumpAndSettle();
-    await _deleteFromMenu(tester, 'Payments');
+    await _deleteFromMenu(tester, 'Payments', view: 'Bands');
 
     expect(
       router.routeInformationProvider.value.uri.path,
@@ -87,7 +101,7 @@ void main() {
     final router = await pumpTreeRouter(tester, treeSession(api));
     router.go('/projects/p1/roadmap/r');
     await tester.pumpAndSettle();
-    await _deleteFromMenu(tester, 'Ship');
+    await _deleteFromMenu(tester, 'Ship', view: 'Bands');
 
     expect(
       router.routeInformationProvider.value.uri.path,

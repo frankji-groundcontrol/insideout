@@ -135,7 +135,8 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 
 | Route | Effect | Code |
 | --- | --- | --- |
-| `GET /api/v1/projects/{pid}/roadmap` | Whole tree as a flat list, any member; `?root={nid}` restricts it to that node and its descendants, root first (404 for a node outside the project) | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_read.go` |
+| `GET /api/v1/projects/{pid}/roadmap` | Whole tree as a flat list, any member; `?root={nid}` restricts it to that node and its descendants, root first (404 for a node outside the project); with no `?root`, a root-scoped agent token reads its root's subtree when the root is a node of the project | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_read.go` |
+| `GET /api/v1/projects/{pid}/roadmap/steps` | One level in dependency order (see Steps below); `?root={nid}` opens that node | `server/internal/api/roadmap_steps.go`, `server/internal/roadmaptime/steps.go` |
 | `GET /api/v1/roadmap/{nid}` | One node: `{node, ancestors: [{id, title, ownerId}] root first, projectId, projectName}` (`ownerId` is a user id or null, so a client sees that the caller owns the opened tree through an ancestor; `mine` ancestors carry it too); 404 when not visible | `server/internal/api/roadmap_read.go` |
 | `POST /api/v1/projects/{pid}/roadmap` | Create a node | `server/internal/api/roadmap.go` |
 | `PATCH /api/v1/roadmap/{nid}` | Edit fields, status and owner | `server/internal/api/roadmap.go` |
@@ -143,16 +144,18 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | `DELETE /api/v1/roadmap/{nid}` | Delete with subtree; 409 `roadmap_delete_has_history` with the counts unless `?force=true` (the CLI: `roadmap delete --force`) | `server/internal/api/roadmap.go`, `server/internal/store/roadmap_delete.go` |
 | `POST /api/v1/roadmap/{nid}/delegate`, `/handback` | Hand a node to a member (400 for a non-member), hand it back | `server/internal/api/roadmap_delegation.go` |
 | `GET /api/v1/roadmap/{nid}/assignments` | The node's owner history, newest first | `server/internal/api/roadmap_delegation.go` |
-| `GET /api/v1/workspaces/{id}/roadmap/mine` | The caller's topmost owned nodes in the workspace, each `{node, projectId, projectName, ancestors}`, by project then position | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_mine.go` |
-| `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping; `?root={nid}` restricts it to one subtree | `server/internal/api/roadmap_progress.go` |
+| `POST /api/v1/roadmap/{nid}/dependencies`, `DELETE .../dependencies/{did}` | Make a node wait on another, or stop it (see Dependencies below) | `server/internal/api/roadmap_dependencies.go` |
+| `GET /api/v1/workspaces/{id}/roadmap/mine` | The topmost nodes the caller is in charge of in the workspace, each `{node, projectId, workspaceId, projectName, ancestors, now, waitsOn, blocking}`, by project then position (see People in charge below) | `server/internal/api/roadmap_mine.go`, `server/internal/store/roadmap_mine.go`, `roadmap_first_glance.go` |
+| `GET /api/v1/roadmap/mine` | The same across every workspace the caller is a member of | `server/internal/api/roadmap_mine.go` |
+| `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping; `?root={nid}` restricts it to one subtree, and a root-scoped agent token defaults to its root as the list does (`requestRoot`, `server/internal/api/roadmap_steps.go`); Next ranks ready items first (see People in charge below) | `server/internal/api/roadmap_progress.go` |
 | `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap_validation.go` |
 | `POST /api/v1/roadmap/{nid}/validate` | Human validation | `server/internal/api/roadmap_validation.go` |
 | `POST /api/v1/prds/{pid}/build` and `/confirm` | Draft (read-only, approved PRD only) and replace the tree; confirm creates the project and refuses to erase evidence or done or validated nodes without `force` | `server/internal/api/roadmap_ai.go` |
 | `POST /api/v1/roadmap/{nid}/expand` and `/confirm` | Break a node down | `server/internal/api/roadmap_ai.go` |
-| `GET /api/v1/agent/context` | Agent briefing | `server/internal/api/agent_routes.go` |
+| `GET /api/v1/agent/context` | Agent briefing; with no focus it opens on what the caller is in charge of (see Agent context focus below) | `server/internal/api/agent_routes.go`, `server/internal/api/agent_context_charge.go` |
 
-Every node view carries `canWrite`, the caller's right under
-`_can_write_node`, and `rollup {leaves, done, validated, earliestDeadline}`
+Every node view carries `dependsOn` (see Dependencies below), `canWrite`, the
+caller's right under `_can_write_node`, and `rollup {leaves, done, validated, earliestDeadline}`
 over the leaves at or below it (a leaf counts itself; `done` counts done and
 validated, the Progress rule; `earliestDeadline` is the earliest deadline among
 the unfinished leaves). A list computes both in its one query plus Go
@@ -180,6 +183,92 @@ tree verbs and those three (`roadmap show`, `mine`, `delegate`,
 `members`; `server/cmd/insideout/cli_roadmap_tree.go`) over the Go client
 (`server/internal/apiclient/roadmap.go`, `roadmap_tree.go`).
 
+### Dependencies
+
+A node may wait on other nodes of its project, across branches, so parallel
+work can merge. `insideout.roadmap_dependencies (node_id, depends_on_id,
+created_by, created_at)` holds one row per link: `node_id` waits on
+`depends_on_id`. The pair is the primary key, both ids reference
+`roadmap_nodes` with `ON DELETE CASCADE` (deleting either node, or replacing
+the whole tree, drops the link), and a check refuses a node waiting on itself
+(`server/db/migrations/20261122100000_roadmap_dependencies.sql`). RLS follows
+the node's project: every member of its workspace reads the links; an insert
+needs `created_by` to be the caller, `_can_write_node` on `node_id`, and both
+ends in one project; a delete needs `_can_write_node` on `node_id`.
+
+The store (`server/internal/store/roadmap_dependencies.go`) adds and removes a
+link behind the per-project advisory lock and pings the progress streams. It
+refuses a link between a node and its own ancestor or descendant (the tree
+already says that, `ErrDependencyInTree`) and one that closes a cycle of
+waiting (`ErrDependencyCycle`); re-adding an existing link is no change. The
+writer of the waiting node decides; any node of the project the caller can see
+may be waited on.
+
+| Route | Answer |
+| --- | --- |
+| `POST /api/v1/roadmap/{nid}/dependencies {"dependsOnId"}` | 201 with the node view of `{nid}` |
+| `DELETE /api/v1/roadmap/{nid}/dependencies/{did}` | 204, or 404 `dependency not found` when there is no such link |
+
+Errors: 400 for a bad id or `dependency_self`; 403 for a caller who does not
+write `{nid}`; 404 for a node not visible or in another project; 409
+`dependency_in_tree` or `dependency_cycle`
+(`server/internal/api/roadmap_dependencies.go`). Agent tokens may call both
+routes; a root-scoped token needs `{nid}` inside its root (the waited-on node
+may lie anywhere in the project). Every node view carries `dependsOn`, the
+waited-on ids, oldest link first, `[]` when none. The agent context lists a
+node's unfinished dependencies (not done or validated) as `waitsOn` titles on
+each leaf, and on the focus what its whole subtree waits on (see Agent
+context focus below). The Go client has `AddRoadmapDependency` and
+`RemoveRoadmapDependency`, the CLI `roadmap depend --on <node> <node>` and
+`roadmap undepend --on <node> <node>`, MCP `roadmap_dependency_add` and
+`roadmap_dependency_remove`.
+
+Known limit: a move is not checked against existing links, so moving a node
+under the node it waits on (or the reverse) keeps a link the add would now
+refuse as `dependency_in_tree`.
+
+### People in charge
+
+Each person sees what they are in charge of at the first glance (owner,
+2026-11-22: "people-in-charge mode").
+
+- **In charge.** A person is in charge of the nodes they own and, for a
+  project root nobody owns, the project owner and every workspace admin are
+  (`insideout._is_plan_writer`). `mine` lists the topmost of these: a node
+  under one the caller is already in charge of is not listed again. On the
+  Spark demo Maya (project owner) and Jo (admin) both get "Spark MVP", Leo
+  gets Matching and Chat, Sam his three branches and leaves
+  (`server/internal/store/roadmap_mine.go`).
+- **First glance.** Each `mine` root carries `workspaceId`, `now` (the
+  in-progress dated leaves at or below it, as Progress picks its Now, earliest
+  deadline first, each a Progress item with `pressure`, `ownerName` and
+  `waitsOn`), `waitsOn` (unfinished nodes outside the root that unfinished
+  work inside waits on) and `blocking` (unfinished nodes outside that wait on
+  unfinished work inside), each `{id, title, status, ownerName}` by title,
+  `[]` when none. Unfinished means not done or validated, on the node's own
+  status. These sit on the `mine` wrapper; the node view is unchanged
+  (`server/internal/store/roadmap_first_glance.go`,
+  `server/internal/api/roadmap_mine.go`).
+- **Across workspaces.** `GET /api/v1/roadmap/mine` answers the same for every
+  workspace of the caller's; agent tokens may call it. The Go client's
+  `RoadmapMine("")`, the CLI `roadmap mine` with no id and MCP `roadmap_mine`
+  without `workspace_id` use it.
+- **Next order.** Every Progress item carries `waitsOn`, the unfinished nodes
+  it waits on as `{id, title}`, omitted when none. Next puts the ready items
+  (nothing unfinished to wait on) before the waiting ones, each group by
+  deadline, then keeps the first three, so a ready item due later outranks a
+  waiting one due sooner (`server/internal/roadmaptime/roadmaptime.go`). The
+  web Progress card shows "Waits on: <titles>"
+  (`client/lib/features/project/roadmap_progress_view.dart`).
+- **Feed.** `GET /api/v1/projects/{pid}/updates?node={nid}` keeps the updates
+  about that node and the nodes below it. Only delegation, hand-back and done
+  rows and proposals filed about a node carry `node_id`; notes, progress,
+  blockers and the decision notes carry none, so they never match. A node of
+  another project answers 404. `?pending=true` keeps the agent proposals
+  with no decision yet, and only for a caller who may decide them (a plan
+  writer); anyone else gets an empty page. Both combine with `before` and
+  `limit` (`server/internal/store/project_updates.go`).
+
 ### Agent context focus
 
 `GET /api/v1/agent/context?focus={nid}` answers 404 for a focus that is not a
@@ -188,6 +277,68 @@ node's description and `path` (ancestor titles, root first), and `leaves`
 lists only the leaves of the focus subtree (the focus itself when it is a
 leaf) (`server/internal/agentcontext/agentcontext.go`). With no `focus`, a
 root-scoped agent token is briefed on its root.
+
+Otherwise, with no `focus`, implementation mode opens on what the caller's
+human is in charge of in the project (owner decision, 2026-11-22: the nodes
+they own, and an unowned root when they are a plan writer, that is the
+project owner or a workspace admin; topmost only). One such node becomes the
+focus. Several are named in `inCharge: [{id, title}]` with no focus, and
+`leaves` keeps to the leaves below them. None leaves the whole-project
+briefing as before (`server/internal/api/agent_context_charge.go`). Human
+and agent tokens behave alike.
+
+The `focus` block also carries, as titles:
+
+- `waitsOn`: the unfinished nodes outside the focus that unfinished work
+  inside it waits on (for a leaf focus, its own unfinished dependencies).
+- `blocks`: the unfinished nodes outside the focus that wait on unfinished
+  work inside it.
+- `steps`: `[{id, title, stage}]`, the focus's steps in order (see Steps
+  below), when the focus has children.
+
+These live in `server/internal/agentcontext/across.go`, and each list is
+named in the `untrusted` block when present.
+
+### Steps
+
+The Canvas shows one level: the steps under the opened node, ordered by what
+they wait on. `GET /api/v1/projects/{pid}/roadmap/steps?root={nid}` gives the
+same answer from the server, so the web, CLI, MCP and agents read one order.
+It answers 200 with:
+
+```json
+{"root": <node view or null>,
+ "ancestors": [{"id", "title", "ownerId"}],
+ "steps": [{"node": <node view>, "stage": 0, "loop": null,
+            "after": ["<step id>"], "links": {"<step id>": 1},
+            "itemsInside": 3, "waitsOutside": [{"id", "title"}]}]}
+```
+
+- **Root.** `?root` opens that node; a leaf is its own one step. With no
+  `?root`, a root-scoped agent token opens its root (when it is a node of the
+  project), else a project with exactly one root opens that root, else
+  `root` is null and the project's roots are the steps. `ancestors` is the
+  opened node's path, root first, as `GET /roadmap/{nid}` gives it.
+- **Lifting.** Every dependency in the project is lifted to the steps that
+  hold its two ends. A link inside one step drops, and so does a link up or
+  down one branch. A link from a step's work to a node under no shown step
+  becomes `waitsOutside` on that step.
+- **Order.** Steps that reach each other through their links form a loop
+  group and share `loop` (numbered from 0 in order; null outside a loop) and
+  a stage. `stage` is the longest path to the step's group over the groups.
+  Steps come by stage, then group (by its first position), then position.
+  `after` and `links` name the steps of other groups a step waits on, with
+  their link counts, in step order. `itemsInside` counts the nodes below the
+  step.
+
+The order is the pure `roadmaptime.Steps` over the project's `ListRoadmap`
+(`server/internal/roadmaptime/steps.go`, the same rules as
+`client/lib/features/project/roadmap_step_flow.dart`); the handler is
+`server/internal/api/roadmap_steps.go`. Errors: 400 for a malformed root; 404
+for a project the caller cannot see or a root not in the project; 403
+`agent_scope_denied` for a root-scoped agent token asking for a root outside
+its subtree. The Go client has `RoadmapSteps`, the CLI `roadmap steps [--root
+node-id] <project-id>`, MCP `roadmap_steps(project_id, root?)`.
 
 ## Target
 

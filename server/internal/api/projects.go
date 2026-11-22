@@ -185,7 +185,7 @@ func (s *Server) handleGetProject(w http.ResponseWriter, r *http.Request) {
 
 	// Embed only the newest page; nextCursor reads the rest from
 	// GET /projects/{pid}/updates?before= (rv5-PARB-07).
-	updates, nextCursor, err := s.updatesPage(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil)
+	updates, nextCursor, err := s.updatesPage(r.Context(), userID, pid, store.ProjectUpdatesPageSize, nil, store.UpdateFilter{})
 	if err != nil {
 		s.writeStoreError(w, "list project updates", err, nil)
 		return

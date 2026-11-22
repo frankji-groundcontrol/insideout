@@ -70,6 +70,12 @@ func (c *Client) RoadmapList(projectID, root string) (json.RawMessage, error) {
 	return c.get(withRoot(apiPath("projects", projectID, "roadmap"), root))
 }
 
+// RoadmapSteps returns one level of the roadmap in dependency order
+// (GET /projects/{id}/roadmap/steps); a root other than "" opens that node.
+func (c *Client) RoadmapSteps(projectID, root string) (json.RawMessage, error) {
+	return c.get(withRoot(apiPath("projects", projectID, "roadmap", "steps"), root))
+}
+
 func withRoot(path, root string) string {
 	if root == "" {
 		return path

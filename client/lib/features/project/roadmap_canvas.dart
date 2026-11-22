@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
 import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
-import '../../theme/block_icon_button.dart';
 import '../../theme/cobalt.dart';
+import 'roadmap_canvas_view.dart';
+import 'roadmap_flow_routes.dart';
+import 'roadmap_painters.dart';
+import 'roadmap_step_box.dart';
+import 'roadmap_step_flow.dart';
 import 'roadmap_tree.dart';
 
-export 'roadmap_minimap.dart';
 export 'roadmap_painters.dart';
 
-/// Collaborative canvas v1: each root branch renders as a
-/// sibling band — a vertical column of its subtree — laid out
-/// horizontally, so parallel efforts read side by side. The minimap is
-/// a compact status-tinted overview that jumps to a band.
 class CursorDot {
   CursorDot({
     required this.sessionId,
@@ -30,231 +28,245 @@ class CursorDot {
   final double y;
 }
 
-class RoadmapCanvas extends StatelessWidget {
+/// The Canvas: one level of steps, in order. Steps run left to right in
+/// columns by their dependencies (RoadmapStepFlow), arrows join a step to
+/// the ones waiting on it, and opening a step shows its own steps. The view
+/// pans by drag and zooms by wheel, pinch or the zoom block.
+class RoadmapCanvas extends StatefulWidget {
   const RoadmapCanvas({
     super.key,
-    required this.nodes,
-    required this.tileBuilder,
-    required this.controller,
+    required this.projectId,
+    required this.steps,
+    required this.all,
+    this.titles = const {},
+    this.inheritedOwner,
+    this.menu,
     this.onCursor,
     this.cursors = const [],
-    this.collapsed = const {},
-    this.onToggle,
   });
 
-  final List<RoadmapNode> nodes;
+  final String projectId;
 
-  /// tileBuilder(node, indent) renders one node row (the same editing
-  /// affordances as the list view).
-  final Widget Function(RoadmapNode node, double indent) tileBuilder;
-  final ScrollController controller;
+  /// The steps to draw (roadmapSteps, or Mine's topmost owned nodes).
+  final List<RoadmapNode> steps;
 
-  /// onCursor receives pointer moves in canvas content space (nullable
-  /// for tests).
+  /// Every loaded node: the dependencies to lift and the items to count.
+  final List<RoadmapNode> all;
+
+  /// Node titles by id, beyond [all] too, to name what a step waits on.
+  final Map<String, String> titles;
+  final ({String name, String via})? Function(RoadmapNode node)? inheritedOwner;
+  final Widget Function(RoadmapNode node)? menu;
+
+  /// onCursor receives pointer moves in flow space: the view's pan and zoom
+  /// do not change it (nullable for tests).
   final void Function(double x, double y)? onCursor;
 
   /// Other sessions' live cursors, rendered as labeled pointers.
   final List<CursorDot> cursors;
 
-  /// Folded branches: their descendants stay off the canvas. The page holds
-  /// the set, so a fold survives a view switch or a reload.
-  final Set<String> collapsed;
-  final void Function(String nodeId)? onToggle;
-
-  static const bandWidth = 300.0;
-  static const bandSpacing = 16.0;
-
-  /// Up/Down scroll the band that holds focus on every platform. Flutter
-  /// binds the arrows to scrolling on the web only; elsewhere they move focus
-  /// to the neighboring card. PageUp/PageDown already scroll natively.
-  static const _arrowScroll = <ShortcutActivator, Intent>{
-    SingleActivator(LogicalKeyboardKey.arrowUp): ScrollIntent(
-      direction: AxisDirection.up,
-    ),
-    SingleActivator(LogicalKeyboardKey.arrowDown): ScrollIntent(
-      direction: AxisDirection.down,
-    ),
-  };
-
-  List<RoadmapNode> get _roots => roadmapRoots(nodes);
-
-  List<RoadmapNode> _subtree(RoadmapNode root) {
-    final out = <RoadmapNode>[root];
-    void walk(String parentId) {
-      if (collapsed.contains(parentId)) return;
-      final kids = nodes.where((n) => n.parentId == parentId).toList()
-        ..sort((a, b) => a.position.compareTo(b.position));
-      for (final k in kids) {
-        out.add(k);
-        walk(k.id);
-      }
-    }
-
-    walk(root.id);
-    return out;
-  }
-
   @override
-  Widget build(BuildContext context) {
-    final roots = _roots;
-    final content = Shortcuts(
-      shortcuts: _arrowScroll,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (var i = 0; i < roots.length; i++) ...[
-            if (i > 0) const SizedBox(width: bandSpacing),
-            _Band(
-              width: bandWidth,
-              nodes: _subtree(roots[i]),
-              all: nodes,
-              tileBuilder: tileBuilder,
-              collapsed: collapsed,
-              onToggle: onToggle,
-            ),
-          ],
-        ],
-      ),
-    );
-    return SingleChildScrollView(
-      controller: controller,
-      scrollDirection: Axis.horizontal,
-      padding: EdgeInsets.fromLTRB(
-        16,
-        16,
-        16,
-        ProductDock.height + 16 + MediaQuery.of(context).padding.bottom,
-      ),
-      child: MouseRegion(
-        onHover: onCursor == null
-            ? null
-            : (e) => onCursor!(e.localPosition.dx, e.localPosition.dy),
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            content,
-            for (final c in cursors)
-              Positioned(
-                left: c.x,
-                top: c.y,
-                child: IgnorePointer(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.navigation,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      Text(
-                        c.name,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+  State<RoadmapCanvas> createState() => _RoadmapCanvasState();
 }
 
-class _Band extends StatelessWidget {
-  const _Band({
-    required this.width,
-    required this.nodes,
-    required this.all,
-    required this.tileBuilder,
-    required this.collapsed,
-    required this.onToggle,
-  });
+class _RoadmapCanvasState extends State<RoadmapCanvas> {
+  final _view = TransformationController();
+  final _flowKey = GlobalKey();
+  final _keys = <String, GlobalKey>{};
+  var _viewport = Size.zero;
+  var _placed = false;
 
-  final double width;
-  final List<RoadmapNode> nodes;
+  @override
+  void dispose() {
+    _view.dispose();
+    super.dispose();
+  }
 
-  /// Every node on the canvas, folded ones included, for the fold counts.
-  final List<RoadmapNode> all;
-  final Widget Function(RoadmapNode node, double indent) tileBuilder;
-  final Set<String> collapsed;
-  final void Function(String nodeId)? onToggle;
+  Size? get _flowSize =>
+      (_flowKey.currentContext?.findRenderObject() as RenderBox?)?.size;
+
+  /// Where step [id] sits in flow space, once laid out.
+  Rect? _rectOf(String id) {
+    final box = _keys[id]?.currentContext?.findRenderObject() as RenderBox?;
+    final flow = _flowKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null || flow == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero, ancestor: flow) & box.size;
+  }
+
+  void _place() {
+    final size = _flowSize;
+    if (!mounted || _placed || size == null) return;
+    _placed = true;
+    _view.value = roadmapStartMatrix(size, _viewport);
+  }
+
+  void _fit() {
+    final size = _flowSize;
+    if (size != null) _view.value = roadmapFitMatrix(size, _viewport);
+  }
+
+  void _zoom(double factor) => _view.value = roadmapZoomAbout(
+    _view.value,
+    factor,
+    _viewport.center(Offset.zero),
+  );
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    bool isBranch(RoadmapNode node) =>
-        onToggle != null && all.any((n) => n.parentId == node.id);
-    // Only a band that holds a branch needs the fold gutter; a band of leaves
-    // gives its cards the full width.
-    final gutter = nodes.any(isBranch);
-    return Container(
-      width: width,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(Cobalt.radiusCard),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
-      ),
-      child: ListView.builder(
-        shrinkWrap: true,
-        // Explicit, so the list does not inherit the page's MediaQuery
-        // padding (the dock's height) and run on past its last card.
-        padding: const EdgeInsets.fromLTRB(8, 8, 12, 12),
-        itemCount: nodes.length,
-        itemBuilder: (context, i) {
-          final node = nodes[i];
-          final depth = _depth(node);
-          return Padding(
-            padding: EdgeInsets.only(left: depth * 18, top: i == 0 ? 0 : 8),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // The house icon button is 36 wide; the rest is the gutter.
-                if (gutter)
-                  SizedBox(
-                    width: 40,
-                    child: isBranch(node) ? _fold(context, node) : null,
-                  ),
-                Expanded(child: tileBuilder(node, 0)),
-              ],
+    final flow = _flow(context);
+    if (!_placed) WidgetsBinding.instance.addPostFrameCallback((_) => _place());
+    return LayoutBuilder(
+      builder: (context, box) {
+        // The dock floats over the foot of the view.
+        final dock = ProductDock.height + MediaQuery.paddingOf(context).bottom;
+        _viewport = Size(box.maxWidth, box.maxHeight - dock);
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: InteractiveViewer(
+                transformationController: _view,
+                constrained: false,
+                boundaryMargin: const EdgeInsets.all(double.infinity),
+                minScale: roadmapMinScale,
+                maxScale: roadmapMaxScale,
+                child: flow,
+              ),
             ),
-          );
-        },
-      ),
+            Positioned(
+              top: Cobalt.space3,
+              right: Cobalt.space3,
+              child: RoadmapZoomControls(
+                onZoomIn: () => _zoom(1.25),
+                onZoomOut: () => _zoom(0.8),
+                onFit: _fit,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  /// The fold toggle; a folded branch says how many nodes it hides.
-  Widget _fold(BuildContext context, RoadmapNode node) {
-    final folded = collapsed.contains(node.id);
+  Widget _flow(BuildContext context) {
     final t = context.watch<Appearance>().t;
-    return Column(
+    final theme = Theme.of(context);
+    final palette = Cobalt.of(context);
+    final flow = RoadmapStepFlow.of(widget.steps, widget.all);
+    String title(String id) => widget.titles[id] ?? t('roadmap.someItem');
+    final lanes = roadmapFlowLanes([
+      for (final column in flow.columns) [for (final s in column) s.id],
+    ], flow.edges);
+    final steps = Row(
+      spacing: 72,
       children: [
-        BlockIconButton(
-          key: Key('roadmap-collapse-${node.id}'),
-          tooltip: t(folded ? 'roadmap.expand' : 'roadmap.collapse'),
-          semanticLabel: t(folded ? 'roadmap.expand' : 'roadmap.collapse'),
-          icon: folded ? Icons.chevron_right : Icons.expand_more,
-          onPressed: () => onToggle!(node.id),
-        ),
-        if (folded)
-          Text(
-            '+${roadmapDescendantCount(all, node)}',
-            style: Theme.of(context).textTheme.labelSmall,
+        for (final (c, column) in flow.columns.indexed)
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: Cobalt.space6,
+            children: [
+              for (final s in column) _step(s, flow, title),
+              // Empty room a long link runs through, clear of every box.
+              for (final lane in lanes.byColumn[c] ?? const <String>[])
+                SizedBox(
+                  key: _keys.putIfAbsent(lane, GlobalKey.new),
+                  width: RoadmapStepBox.width,
+                  height: Cobalt.space6,
+                ),
+            ],
           ),
       ],
     );
+    final stack = Stack(
+      key: _flowKey,
+      clipBehavior: Clip.none,
+      children: [
+        Positioned.fill(
+          child: Semantics(
+            label: [
+              for (final e in flow.edges)
+                t('roadmap.dependencyEdge', {
+                  'to': title(e.to),
+                  'from': title(e.from),
+                }),
+              for (final group in flow.loops)
+                t('roadmap.dependencyLoop', {
+                  'steps': _list(t, [for (final id in group) title(id)]),
+                }),
+            ].join('. '),
+            child: CustomPaint(
+              painter: RoadmapFlowPainter(
+                edges: flow.edges,
+                lanes: lanes.byEdge,
+                loops: flow.loops,
+                loopLabel: t('roadmap.loop'),
+                rectOf: _rectOf,
+                color: palette.brand,
+                labelStyle: theme.textTheme.labelSmall!.copyWith(
+                  color: palette.fgBrand,
+                ),
+                labelFill: palette.surfaceRaised,
+              ),
+            ),
+          ),
+        ),
+        Padding(padding: const EdgeInsets.all(Cobalt.space6), child: steps),
+        for (final c in widget.cursors) _cursor(context, c),
+      ],
+    );
+    final onCursor = widget.onCursor;
+    if (onCursor == null) return stack;
+    return MouseRegion(
+      onHover: (e) => onCursor(e.localPosition.dx, e.localPosition.dy),
+      child: stack,
+    );
   }
 
-  int _depth(RoadmapNode node) {
-    var depth = 0;
-    var current = node;
-    while (current.parentId != null) {
-      final parent = nodes.where((n) => n.id == current.parentId).firstOrNull;
-      if (parent == null) break;
-      current = parent;
-      depth++;
-    }
-    return depth;
+  /// "A, B and C" in the active language.
+  static String _list(
+    String Function(String, [Map<String, Object?>?]) t,
+    List<String> items,
+  ) => items.length < 2
+      ? items.join()
+      : t('roadmap.listAnd', {
+          'rest': items.sublist(0, items.length - 1).join(t('roadmap.listSep')),
+          'last': items.last,
+        });
+
+  Widget _step(
+    RoadmapNode s,
+    RoadmapStepFlow flow,
+    String Function(String) title,
+  ) => KeyedSubtree(
+    key: _keys.putIfAbsent(s.id, GlobalKey.new),
+    child: RoadmapStepBox(
+      key: Key('roadmap-step-${s.id}'),
+      projectId: widget.projectId,
+      node: s,
+      inside: roadmapDescendantCount(widget.all, s),
+      waitsOn: [for (final d in flow.waitsOn[s.id] ?? const []) title(d)],
+      inheritedOwner: widget.inheritedOwner?.call(s),
+      menu: widget.menu?.call(s),
+    ),
+  );
+
+  Widget _cursor(BuildContext context, CursorDot c) {
+    final theme = Theme.of(context);
+    return Positioned(
+      left: c.x,
+      top: c.y,
+      child: IgnorePointer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.navigation,
+              size: 14,
+              color: theme.colorScheme.secondary,
+            ),
+            Text(c.name, style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -92,4 +92,16 @@ void main() {
     expect(node.canWrite, isTrue);
     expect(node.rollup.earliestDeadline, isNotNull);
   });
+
+  test('dependsOn reads the ids a node waits on, empty when absent', () {
+    Map<String, dynamic> j(Object? deps) => {
+      'id': 'n1',
+      'projectId': 'p1',
+      'title': 'Ship',
+      'status': 'pending',
+      'dependsOn': ?deps,
+    };
+    expect(RoadmapNode.fromJson(j(null)).dependsOn, isEmpty);
+    expect(RoadmapNode.fromJson(j(['a', 'b'])).dependsOn, ['a', 'b']);
+  });
 }

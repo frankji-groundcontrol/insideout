@@ -40,7 +40,9 @@ func Build(api string) *server.MCPServer {
 		server.WithToolFilter(withholdSessionSwapTools(api)),
 		server.WithInstructions("InsideOut: ideas → PRDs → roadmaps. `guide` scaffolds the "+
 			"repo-side insideout.yaml matching guide; roadmap_* manage branches; build/expand "+
-			"run the agent planner. Auth: INSIDEOUT_TOKEN env, or the auth_* tools — "+
+			"run the agent planner. Start from your human's work: roadmap_mine lists the nodes "+
+			"they own; open one with roadmap_steps (its steps in order) or agent_context with "+
+			"that node as focus (with no focus it opens on what they are in charge of). Auth: INSIDEOUT_TOKEN env, or the auth_* tools — "+
 			"prefer auth_login_code_request/auth_login_code_verify (the human supplies the "+
 			"emailed digits; no password in the conversation). Once signed in, the tools run on "+
 			"an agent-scope token: Commit, proposal decisions, deletes, delegation, the member list, admin "+

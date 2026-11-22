@@ -21,6 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-22 — Roadmap Canvas: an ordered flow of steps](./2026-11-22-roadmap-canvas-graph.md)
+  — "only things in order": one level of steps ordered by dependencies,
+  opening a step for the level below, with drag to pan and zoom.
+
 - [2026-11-21 — Roadmap views: impeccable critique](./2026-11-21-roadmap-critique.md)
   — "use impeccable to review": 18/40, three P1s (Now not emphasised, a
   Later dump, a one-column Canvas), waiting on the owner's choice.

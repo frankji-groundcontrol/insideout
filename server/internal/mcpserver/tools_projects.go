@@ -52,12 +52,16 @@ func addProjectTools(ts toolSet) {
 // addProjectUpdateTools registers a project's update feed: page through it,
 // post one, rewrite one. Deleting an update stays a human's.
 func addProjectUpdateTools(ts toolSet) {
-	ts.add("project_updates", "One page of a project's updates, newest first: {updates, nextCursor}. Pass nextCursor back as before for the next page; nextCursor null is the end",
+	ts.add("project_updates", "One page of a project's updates, newest first: {updates, nextCursor}. Pass nextCursor back as before for the next page; nextCursor null is the end. node_id keeps the updates about that node and the nodes below it; pending keeps the proposals still waiting for your decision",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strOpt("before", "the nextCursor of the page before; omit for the newest"),
-			mcp.WithNumber("limit", mcp.Description("updates per page, 1 to 100 (default 50)"))},
+			mcp.WithNumber("limit", mcp.Description("updates per page, 1 to 100 (default 50)")),
+			strOpt("node_id", "node id: only updates about this node and the nodes below it"),
+			mcp.WithBoolean("pending", mcp.Description("only proposals with no decision yet, when you may decide them"))},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			limit, _ := req.GetArguments()["limit"].(float64)
-			return call(c.ProjectUpdates(reqStr(req, "project_id"), optStr(req, "before"), int(limit)))
+			pending, _ := req.GetArguments()["pending"].(bool)
+			return call(c.ProjectUpdates(reqStr(req, "project_id"), apiclient.UpdatesQuery{Before: optStr(req, "before"),
+				Limit: int(limit), Node: optStr(req, "node_id"), Pending: pending}))
 		})
 	ts.add("update_add", "Post a progress, blocker or note update to a project",
 		[]mcp.ToolOption{strReq("project_id", "project id"), strReq("kind", "progress|blocker|note"), strReq("content", "the update text")},

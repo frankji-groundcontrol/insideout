@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:insideout/api/models.dart';
-import 'package:insideout/theme/block_icon_button.dart';
 
 import '_roadmap_tree_helpers.dart';
 
 // Wave 2 verifier follow-ups on the web. rv5-TREEX-03: Mine in an opened
 // tree counts an owned ancestor. rv5-TREEX-08: an unowned node names the
-// owner it inherits. rv5-TREEX-09: the fold chevron is the house button.
-// rv5-TREEX-10: the bar reads its numbers, and My work shows no roll-up for
+// owner it inherits. rv5-TREEX-10: the bar reads its numbers, and My work shows no roll-up for
 // a delegated leaf.
 
 Future<void> _view(WidgetTester tester, String label) async {
@@ -32,23 +30,25 @@ class _LeafMineApi extends TreeApi {
   ];
 
   @override
-  Future<List<RoadmapNodeRead>> listMyRoadmap(String workspaceId) async => [
-    RoadmapNodeRead(
-      node: RoadmapNode(
-        id: 'a1',
+  Future<List<MyRoadmapRoot>> listMyRoadmap() async => [
+    MyRoadmapRoot(
+      read: RoadmapNodeRead(
+        node: RoadmapNode(
+          id: 'a1',
+          projectId: 'p1',
+          parentId: 'a',
+          title: 'Refunds',
+          description: '',
+          status: 'pending',
+          position: 0,
+          ownerId: 'u-dana',
+          ownerName: 'dana',
+          rollup: const RoadmapRollup(leaves: 1),
+        ),
+        ancestors: const [RoadmapNodeRef(id: 'a', title: 'Payments')],
         projectId: 'p1',
-        parentId: 'a',
-        title: 'Refunds',
-        description: '',
-        status: 'pending',
-        position: 0,
-        ownerId: 'u-dana',
-        ownerName: 'dana',
-        rollup: const RoadmapRollup(leaves: 1),
+        projectName: 'Loop project',
       ),
-      ancestors: const [RoadmapNodeRef(id: 'a', title: 'Payments')],
-      projectId: 'p1',
-      projectName: 'Loop project',
     ),
   ];
 }
@@ -71,12 +71,14 @@ void main() {
 
   testWidgets('an unowned child names the owner it inherits', (tester) async {
     final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
-    router.go('/projects/p1/roadmap');
+    router.go('/projects/p1/roadmap?view=canvas');
     await tester.pumpAndSettle();
-    await _view(tester, 'Canvas');
-
-    expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
     expect(find.text('Owner: dana'), findsOneWidget);
+
+    // One step down, Payments' own step names it.
+    router.go('/projects/p1/roadmap/a?view=canvas');
+    await tester.pumpAndSettle();
+    expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
 
     // The leaf's detail says the same.
     await tester.tap(find.text('Refunds'));
@@ -93,19 +95,6 @@ void main() {
     await _view(tester, 'Canvas');
 
     expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
-  });
-
-  testWidgets('the fold chevron is a BlockIconButton', (tester) async {
-    final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
-    router.go('/projects/p1/roadmap');
-    await tester.pumpAndSettle();
-    await _view(tester, 'Canvas');
-
-    expect(
-      tester.widget(find.byKey(const Key('roadmap-collapse-a'))),
-      isA<BlockIconButton>(),
-    );
-    expect(find.widgetWithIcon(IconButton, Icons.expand_more), findsNothing);
   });
 
   testWidgets('the roll-up bar reads its numbers', (tester) async {

@@ -41,6 +41,9 @@ type Inputs struct {
 	ProjectID    string
 	Mode         string // brainstorming | implementation | review
 	FocusNodeID  string // optional; scopes the assembly
+	// InCharge: with no focus, the topmost nodes the human is in charge of;
+	// the briefing names them and keeps to the leaves below them.
+	InCharge     []string
 	PrdTitle     string
 	PrdSections  map[string]string
 	LatestCommit *CommitIn
@@ -72,6 +75,10 @@ type NodeIn struct {
 	// the one human owner of a Now execution item (both empty when unset).
 	Acceptance string
 	OwnerName  string
+	// DependsOn: the ids of the nodes this one waits on.
+	DependsOn []string
+	// Position orders siblings, for the focus's steps.
+	Position int
 }
 
 // Assemble returns the mode-shaped context map. Modes select fields:
@@ -118,9 +125,12 @@ func Assemble(in Inputs) map[string]any {
 				below := subtreeIDs(in.Nodes, n.ID)
 				leaves = slices.DeleteFunc(leaves, func(l NodeIn) bool { return !below[l.ID] })
 			}
+		} else if len(in.InCharge) > 0 {
+			out["inCharge"], leaves = inChargeContext(in, leaves)
 		}
 		out["leaves"] = leavesContext(leaves, in)
 		untrusted = append(untrusted, "leaves[].title", "leaves[].acceptance", "leaves[].owner")
+		untrusted = append(untrusted, acrossFields(out)...)
 		if in.FocusNodeID == "" && in.PrdTitle != "" {
 			out["prdTitle"] = in.PrdTitle
 			untrusted = append(untrusted, "prdTitle")
@@ -156,6 +166,7 @@ func nodeContext(n *NodeIn, in Inputs) map[string]any {
 	}
 	ctx["path"] = path
 	putDeadline(ctx, n, in)
+	putAcross(ctx, n, in)
 	var siblings []string
 	for _, other := range in.Nodes {
 		if other.ParentID == n.ParentID && other.ID != n.ID {
@@ -177,6 +188,7 @@ func leavesContext(leaves []NodeIn, in Inputs) []map[string]any {
 			"acceptance": n.Acceptance, "owner": n.OwnerName,
 		}
 		putDeadline(row, n, in)
+		putWaitsOn(row, n, in)
 		out = append(out, row)
 	}
 	return out
@@ -192,6 +204,20 @@ func putDeadline(ctx map[string]any, n *NodeIn, in Inputs) {
 	}
 	ctx["deadline"] = n.Deadline.UTC().Format(time.RFC3339)
 	ctx["pressure"] = roadmaptime.NodePressure(n.Status, *n.Deadline, now)
+}
+
+// putWaitsOn lists the titles of the node's unfinished dependencies (not done
+// or validated), when it has any.
+func putWaitsOn(ctx map[string]any, n *NodeIn, in Inputs) {
+	var titles []string
+	for _, id := range n.DependsOn {
+		if d := findNode(in.Nodes, id); d != nil && d.Status != "done" && d.Status != "validated" {
+			titles = append(titles, d.Title)
+		}
+	}
+	if titles != nil {
+		ctx["waitsOn"] = titles
+	}
 }
 
 func leafNodes(nodes []NodeIn) []NodeIn {

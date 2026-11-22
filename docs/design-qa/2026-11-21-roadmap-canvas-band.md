@@ -24,12 +24,16 @@ The owner's screenshot shows the roadmap's Canvas view with one node.
   explicit 8px padding, and spaces cards from the top.
 - **The minimap:** shows only when there are at least two bands.
 - **The rule:** removed.
-- **Pinned by:**
-  [`roadmap_canvas_band_layout_test.dart`](../../client/test/features/project/roadmap_canvas_band_layout_test.dart).
-  It failed first at 40px and 90px.
+- **Pinned by:** `roadmap_canvas_band_layout_test.dart`, which failed first at
+  40px and 90px.
+
+## Superseded
+
+On 2026-11-22 the band canvas was replaced by a hierarchy graph
+([canvas graph record](./2026-11-22-roadmap-canvas-graph.md)). The bands, the
+fold gutter, the minimap and this test are gone.
 
 ## Files
 
 - [`client/lib/features/project/roadmap_canvas.dart`](../../client/lib/features/project/roadmap_canvas.dart)
 - [`client/lib/features/project/roadmap_page_views.dart`](../../client/lib/features/project/roadmap_page_views.dart)
-- [`client/test/features/project/roadmap_canvas_band_layout_test.dart`](../../client/test/features/project/roadmap_canvas_band_layout_test.dart)

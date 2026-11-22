@@ -24,6 +24,10 @@ const _codeKeys = <String, String>{
   'github_repo_already_linked': 'error.githubRepoAlreadyLinked',
   // A 409 that a refresh cannot fix: the PRD needs an admin's approval.
   'prd_not_approved': 'error.prdNotApproved',
+  // A refused dependency link: the reason, since a refresh fixes nothing.
+  'dependency_self': 'error.dependencySelf',
+  'dependency_cycle': 'error.dependencyCycle',
+  'dependency_in_tree': 'error.dependencyInTree',
 };
 
 String localizedError(Object error, TFn t) {

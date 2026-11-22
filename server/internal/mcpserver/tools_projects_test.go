@@ -15,6 +15,7 @@ func TestProjectReadToolsSendTheirRequests(t *testing.T) {
 	}{
 		{"project_updates", `{"project_id":"p1"}`, treeRequest{"GET /projects/p1/updates", nil}},
 		{"project_updates", `{"project_id":"p1","before":"c1","limit":2}`, treeRequest{"GET /projects/p1/updates?before=c1&limit=2", nil}},
+		{"project_updates", `{"project_id":"p1","node_id":"n1","pending":true}`, treeRequest{"GET /projects/p1/updates?node=n1&pending=true", nil}},
 		{"prd_list", `{"workspace_id":"ws1"}`, treeRequest{"GET /workspaces/ws1/prds", nil}},
 	} {
 		res := drive(t, api.URL, []string{toolCall(1, tc.tool, tc.args)})

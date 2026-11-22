@@ -147,7 +147,9 @@ class Cobalt {
     strokeStrong: Color(0xFF5A6FE0),
     fgPrimary: lightInk,
     fgSecondary: Color(0xFF3A3F4A),
-    fgMuted: Color(0xFF6B7280),
+    // #6B7280 read 4.32:1 on the tinted roadmap lane (hue50); this clears
+    // 4.5:1 there (4.80) and on ground and white.
+    fgMuted: Color(0xFF646B78),
     fgInverse: darkType,
     fgBrand: hue500,
     fgDanger: hue700,

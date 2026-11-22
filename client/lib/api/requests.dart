@@ -125,6 +125,19 @@ ApiCall moveRoadmapNode(
 ApiCall deleteRoadmapNode(String nodeId, {bool force = false}) =>
     ApiCall('DELETE', '/roadmap/$nodeId${force ? '?force=true' : ''}');
 
+/// Makes [nodeId] wait on [dependsOnId]; the server answers the node view.
+/// It refuses a link to the node itself (400 `dependency_self`), to its own
+/// ancestor or descendant (409 `dependency_in_tree`) and one that closes a
+/// loop (409 `dependency_cycle`).
+ApiCall postRoadmapDependency(String nodeId, String dependsOnId) => ApiCall(
+  'POST',
+  '/roadmap/$nodeId/dependencies',
+  {'dependsOnId': dependsOnId},
+);
+
+ApiCall deleteRoadmapDependency(String nodeId, String dependsOnId) =>
+    ApiCall('DELETE', '/roadmap/$nodeId/dependencies/$dependsOnId');
+
 /// Hands a node to a workspace member, on the record (an assignment row and
 /// a feed update); the server answers the node view.
 ApiCall delegateRoadmapNode(String nodeId, String toUserId, String note) =>

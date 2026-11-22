@@ -106,6 +106,7 @@ var apiVerbs = []apiVerb{
 	{head: words("idea", "proposal-decide"), tail: words("--accept", "u1")},
 	{head: words("roadmap", "list"), tail: words("p1")},
 	{head: words("roadmap", "progress"), tail: words("p1")},
+	{head: words("roadmap", "steps"), tail: words("p1")},
 	{head: words("roadmap", "presence"), tail: words("p1")},
 	{head: words("roadmap", "add"), tail: words("--title", "T", "p1")},
 	{head: words("roadmap", "update"), tail: words("--title", "T", "n1")},

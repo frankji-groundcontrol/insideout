@@ -1,0 +1,1004 @@
+{
+ "cases": [
+  {
+   "name": "spark top level",
+   "root": "",
+   "nodes": [
+    {
+     "id": "spark",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "onboarding",
+     "parentId": "spark",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "signup",
+     "parentId": "onboarding",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "profile",
+     "parentId": "onboarding",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "photo",
+     "parentId": "profile",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "prompts",
+     "parentId": "profile",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "selfie",
+     "parentId": "onboarding",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "copy",
+     "parentId": "onboarding",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "matching",
+     "parentId": "spark",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "engine",
+     "parentId": "matching",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "embeddings",
+     "parentId": "engine",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "scoring",
+     "parentId": "engine",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "explain",
+     "parentId": "engine",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "limit",
+     "parentId": "matching",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "drop",
+     "parentId": "matching",
+     "position": 2,
+     "dependsOn": [
+      "scoring"
+     ]
+    },
+    {
+     "id": "dashboard",
+     "parentId": "matching",
+     "position": 3,
+     "dependsOn": [
+      "drop"
+     ]
+    },
+    {
+     "id": "chat",
+     "parentId": "spark",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "realtime",
+     "parentId": "chat",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "starters",
+     "parentId": "chat",
+     "position": 1,
+     "dependsOn": [
+      "embeddings"
+     ]
+    },
+    {
+     "id": "unmatch",
+     "parentId": "chat",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "safety",
+     "parentId": "spark",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "report",
+     "parentId": "safety",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "reportui",
+     "parentId": "report",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "modqueue",
+     "parentId": "report",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "block",
+     "parentId": "safety",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "photocheck",
+     "parentId": "safety",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "center",
+     "parentId": "safety",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "launch",
+     "parentId": "spark",
+     "position": 4,
+     "dependsOn": []
+    },
+    {
+     "id": "beta",
+     "parentId": "launch",
+     "position": 0,
+     "dependsOn": [
+      "engine",
+      "realtime",
+      "report",
+      "profile"
+     ]
+    },
+    {
+     "id": "store",
+     "parentId": "launch",
+     "position": 1,
+     "dependsOn": [
+      "selfie"
+     ]
+    },
+    {
+     "id": "metrics",
+     "parentId": "launch",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "privacy",
+     "parentId": "launch",
+     "position": 3,
+     "dependsOn": []
+    }
+   ],
+   "expect": [
+    {
+     "id": "onboarding",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "matching",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "safety",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "chat",
+     "stage": 1,
+     "after": [
+      "matching"
+     ],
+     "loop": []
+    },
+    {
+     "id": "launch",
+     "stage": 2,
+     "after": [
+      "onboarding",
+      "matching",
+      "safety",
+      "chat"
+     ],
+     "loop": []
+    }
+   ]
+  },
+  {
+   "name": "spark matching",
+   "root": "matching",
+   "nodes": [
+    {
+     "id": "spark",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "onboarding",
+     "parentId": "spark",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "signup",
+     "parentId": "onboarding",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "profile",
+     "parentId": "onboarding",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "photo",
+     "parentId": "profile",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "prompts",
+     "parentId": "profile",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "selfie",
+     "parentId": "onboarding",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "copy",
+     "parentId": "onboarding",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "matching",
+     "parentId": "spark",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "engine",
+     "parentId": "matching",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "embeddings",
+     "parentId": "engine",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "scoring",
+     "parentId": "engine",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "explain",
+     "parentId": "engine",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "limit",
+     "parentId": "matching",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "drop",
+     "parentId": "matching",
+     "position": 2,
+     "dependsOn": [
+      "scoring"
+     ]
+    },
+    {
+     "id": "dashboard",
+     "parentId": "matching",
+     "position": 3,
+     "dependsOn": [
+      "drop"
+     ]
+    },
+    {
+     "id": "chat",
+     "parentId": "spark",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "realtime",
+     "parentId": "chat",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "starters",
+     "parentId": "chat",
+     "position": 1,
+     "dependsOn": [
+      "embeddings"
+     ]
+    },
+    {
+     "id": "unmatch",
+     "parentId": "chat",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "safety",
+     "parentId": "spark",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "report",
+     "parentId": "safety",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "reportui",
+     "parentId": "report",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "modqueue",
+     "parentId": "report",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "block",
+     "parentId": "safety",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "photocheck",
+     "parentId": "safety",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "center",
+     "parentId": "safety",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "launch",
+     "parentId": "spark",
+     "position": 4,
+     "dependsOn": []
+    },
+    {
+     "id": "beta",
+     "parentId": "launch",
+     "position": 0,
+     "dependsOn": [
+      "engine",
+      "realtime",
+      "report",
+      "profile"
+     ]
+    },
+    {
+     "id": "store",
+     "parentId": "launch",
+     "position": 1,
+     "dependsOn": [
+      "selfie"
+     ]
+    },
+    {
+     "id": "metrics",
+     "parentId": "launch",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "privacy",
+     "parentId": "launch",
+     "position": 3,
+     "dependsOn": []
+    }
+   ],
+   "expect": [
+    {
+     "id": "engine",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "limit",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "drop",
+     "stage": 1,
+     "after": [
+      "engine"
+     ],
+     "loop": []
+    },
+    {
+     "id": "dashboard",
+     "stage": 2,
+     "after": [
+      "drop"
+     ],
+     "loop": []
+    }
+   ]
+  },
+  {
+   "name": "spark launch",
+   "root": "launch",
+   "nodes": [
+    {
+     "id": "spark",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "onboarding",
+     "parentId": "spark",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "signup",
+     "parentId": "onboarding",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "profile",
+     "parentId": "onboarding",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "photo",
+     "parentId": "profile",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "prompts",
+     "parentId": "profile",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "selfie",
+     "parentId": "onboarding",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "copy",
+     "parentId": "onboarding",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "matching",
+     "parentId": "spark",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "engine",
+     "parentId": "matching",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "embeddings",
+     "parentId": "engine",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "scoring",
+     "parentId": "engine",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "explain",
+     "parentId": "engine",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "limit",
+     "parentId": "matching",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "drop",
+     "parentId": "matching",
+     "position": 2,
+     "dependsOn": [
+      "scoring"
+     ]
+    },
+    {
+     "id": "dashboard",
+     "parentId": "matching",
+     "position": 3,
+     "dependsOn": [
+      "drop"
+     ]
+    },
+    {
+     "id": "chat",
+     "parentId": "spark",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "realtime",
+     "parentId": "chat",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "starters",
+     "parentId": "chat",
+     "position": 1,
+     "dependsOn": [
+      "embeddings"
+     ]
+    },
+    {
+     "id": "unmatch",
+     "parentId": "chat",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "safety",
+     "parentId": "spark",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "report",
+     "parentId": "safety",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "reportui",
+     "parentId": "report",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "modqueue",
+     "parentId": "report",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "block",
+     "parentId": "safety",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "photocheck",
+     "parentId": "safety",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "center",
+     "parentId": "safety",
+     "position": 3,
+     "dependsOn": []
+    },
+    {
+     "id": "launch",
+     "parentId": "spark",
+     "position": 4,
+     "dependsOn": []
+    },
+    {
+     "id": "beta",
+     "parentId": "launch",
+     "position": 0,
+     "dependsOn": [
+      "engine",
+      "realtime",
+      "report",
+      "profile"
+     ]
+    },
+    {
+     "id": "store",
+     "parentId": "launch",
+     "position": 1,
+     "dependsOn": [
+      "selfie"
+     ]
+    },
+    {
+     "id": "metrics",
+     "parentId": "launch",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "privacy",
+     "parentId": "launch",
+     "position": 3,
+     "dependsOn": []
+    }
+   ],
+   "expect": [
+    {
+     "id": "beta",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "store",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "metrics",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "privacy",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    }
+   ]
+  },
+  {
+   "name": "two-step loop",
+   "root": "",
+   "nodes": [
+    {
+     "id": "r",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a",
+     "parentId": "r",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a1",
+     "parentId": "a",
+     "position": 0,
+     "dependsOn": [
+      "b1"
+     ]
+    },
+    {
+     "id": "b",
+     "parentId": "r",
+     "position": 1,
+     "dependsOn": [
+      "a1"
+     ]
+    },
+    {
+     "id": "b1",
+     "parentId": "b",
+     "position": 0,
+     "dependsOn": []
+    }
+   ],
+   "expect": [
+    {
+     "id": "a",
+     "stage": 0,
+     "after": [],
+     "loop": [
+      "a",
+      "b"
+     ]
+    },
+    {
+     "id": "b",
+     "stage": 0,
+     "after": [],
+     "loop": [
+      "a",
+      "b"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "three-step loop then a follower",
+   "root": "",
+   "nodes": [
+    {
+     "id": "r",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a",
+     "parentId": "r",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a1",
+     "parentId": "a",
+     "position": 0,
+     "dependsOn": [
+      "c1"
+     ]
+    },
+    {
+     "id": "b",
+     "parentId": "r",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "b1",
+     "parentId": "b",
+     "position": 0,
+     "dependsOn": [
+      "a1"
+     ]
+    },
+    {
+     "id": "c",
+     "parentId": "r",
+     "position": 2,
+     "dependsOn": []
+    },
+    {
+     "id": "c1",
+     "parentId": "c",
+     "position": 0,
+     "dependsOn": [
+      "b1"
+     ]
+    },
+    {
+     "id": "d",
+     "parentId": "r",
+     "position": 3,
+     "dependsOn": [
+      "c1"
+     ]
+    }
+   ],
+   "expect": [
+    {
+     "id": "a",
+     "stage": 0,
+     "after": [],
+     "loop": [
+      "a",
+      "b",
+      "c"
+     ]
+    },
+    {
+     "id": "b",
+     "stage": 0,
+     "after": [],
+     "loop": [
+      "a",
+      "b",
+      "c"
+     ]
+    },
+    {
+     "id": "c",
+     "stage": 0,
+     "after": [],
+     "loop": [
+      "a",
+      "b",
+      "c"
+     ]
+    },
+    {
+     "id": "d",
+     "stage": 1,
+     "after": [
+      "c"
+     ],
+     "loop": []
+    }
+   ]
+  },
+  {
+   "name": "links inside a step and along a branch drop",
+   "root": "",
+   "nodes": [
+    {
+     "id": "r",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a",
+     "parentId": "r",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a1",
+     "parentId": "a",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "a2",
+     "parentId": "a",
+     "position": 1,
+     "dependsOn": [
+      "a1"
+     ]
+    },
+    {
+     "id": "b",
+     "parentId": "r",
+     "position": 1,
+     "dependsOn": [
+      "a2"
+     ]
+    }
+   ],
+   "expect": [
+    {
+     "id": "a",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "b",
+     "stage": 1,
+     "after": [
+      "a"
+     ],
+     "loop": []
+    }
+   ]
+  },
+  {
+   "name": "several roots are the steps",
+   "root": "",
+   "nodes": [
+    {
+     "id": "x",
+     "parentId": "",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "y",
+     "parentId": "",
+     "position": 1,
+     "dependsOn": []
+    },
+    {
+     "id": "y1",
+     "parentId": "y",
+     "position": 0,
+     "dependsOn": []
+    },
+    {
+     "id": "z",
+     "parentId": "",
+     "position": 2,
+     "dependsOn": [
+      "y1"
+     ]
+    }
+   ],
+   "expect": [
+    {
+     "id": "x",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "y",
+     "stage": 0,
+     "after": [],
+     "loop": []
+    },
+    {
+     "id": "z",
+     "stage": 1,
+     "after": [
+      "y"
+     ],
+     "loop": []
+    }
+   ]
+  }
+ ]
+}

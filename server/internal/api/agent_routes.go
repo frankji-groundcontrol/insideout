@@ -66,6 +66,9 @@ func (s *Server) handleAgentContext(w http.ResponseWriter, r *http.Request) {
 		Nodes:          nodesIn,
 		EvidenceCounts: evidence,
 	}
+	if focus == "" && RootOf(r.Context()) == nil && mode == "implementation" {
+		briefInCharge(&in, nodes, userID, project.CanWritePlan)
+	}
 	if project.ID != uuid.Nil {
 		s.addAgentContextPrd(r, userID, pid, &in)
 	}
@@ -105,6 +108,7 @@ func agentContextNodes(nodes []store.RoadmapNode, focus string) ([]agentcontext.
 		out = append(out, agentcontext.NodeIn{
 			ID: n.ID.String(), ParentID: parent, Title: n.Title, Description: n.Description, Status: n.Status,
 			Deadline: n.Deadline, Acceptance: n.Acceptance, OwnerName: n.OwnerName,
+			DependsOn: uuidStrings(n.DependsOn), Position: n.Position,
 		})
 		if n.ID.String() == focus {
 			focusFound = true

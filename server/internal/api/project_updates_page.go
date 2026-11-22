@@ -17,9 +17,9 @@ const maxUpdatesPage = 100
 // update before (nil: from the newest). nextCursor is the id of the page's
 // oldest update when older ones remain, else nil. The caller has checked
 // membership.
-func (s *Server) updatesPage(ctx context.Context, userID, pid uuid.UUID, limit int, before *uuid.UUID) ([]projectUpdateView, *string, error) {
+func (s *Server) updatesPage(ctx context.Context, userID, pid uuid.UUID, limit int, before *uuid.UUID, f store.UpdateFilter) ([]projectUpdateView, *string, error) {
 	// One row more than the page tells whether another page follows.
-	rows, err := s.store.ListProjectUpdates(ctx, userID, pid, limit+1, before)
+	rows, err := s.store.ListProjectUpdatesWhere(ctx, userID, pid, limit+1, before, f)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -38,7 +38,7 @@ func (s *Server) updatesPage(ctx context.Context, userID, pid uuid.UUID, limit i
 
 // handleListProjectUpdates is GET /projects/{pid}/updates?before=&limit=: the
 // page after the nextCursor the project page or an earlier page returned
-// (rv5-PARB-07).
+// (rv5-PARB-07). ?node= and ?pending=true narrow it (store.UpdateFilter).
 func (s *Server) handleListProjectUpdates(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	pid, ok := pathUUID(w, r, "pid")
@@ -66,7 +66,11 @@ func (s *Server) handleListProjectUpdates(w http.ResponseWriter, r *http.Request
 		s.writeStoreError(w, "get project", err, errMsgs{store.ErrNotFound: "project not found"})
 		return
 	}
-	updates, next, err := s.updatesPage(r.Context(), userID, pid, limit, before)
+	f, ok := s.updateFilter(w, r, userID, pid)
+	if !ok {
+		return
+	}
+	updates, next, err := s.updatesPage(r.Context(), userID, pid, limit, before, f)
 	if err != nil {
 		// A cursor that is no update of this project (deleted since) is not
 		// read as the end of history.
@@ -74,4 +78,34 @@ func (s *Server) handleListProjectUpdates(w http.ResponseWriter, r *http.Request
 		return
 	}
 	httpx.WriteJSON(w, http.StatusOK, map[string]any{"updates": updates, "nextCursor": next})
+}
+
+// updateFilter reads ?node= (a node of this project) and ?pending=true.
+func (s *Server) updateFilter(w http.ResponseWriter, r *http.Request, userID, pid uuid.UUID) (store.UpdateFilter, bool) {
+	var f store.UpdateFilter
+	q := r.URL.Query()
+	if raw := q.Get("pending"); raw != "" {
+		pending, err := strconv.ParseBool(raw)
+		if err != nil {
+			httpx.WriteError(w, http.StatusBadRequest, "pending must be true or false", "", nil)
+			return f, false
+		}
+		f.Pending = pending
+	}
+	if raw := q.Get("node"); raw != "" {
+		id, ok := parseUUIDParam(w, "node", raw)
+		if !ok {
+			return f, false
+		}
+		n, err := s.store.GetRoadmapNode(r.Context(), userID, id)
+		if err == nil && n.ProjectID != pid {
+			err = store.ErrNotFound
+		}
+		if err != nil {
+			s.writeStoreError(w, "updates node", err, errMsgs{store.ErrNotFound: "node not found in this project"})
+			return f, false
+		}
+		f.Node = &id
+	}
+	return f, true
 }

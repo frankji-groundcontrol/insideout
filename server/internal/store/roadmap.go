@@ -58,6 +58,9 @@ type RoadmapNode struct {
 	CanWrite bool
 	// Rollup counts the leaves at or below the node (rv5-TREEB-08).
 	Rollup roadmaptime.Rollup
+	// DependsOn lists the nodes this one waits on, oldest link first; set by
+	// every node view (roadmap_dependencies.go).
+	DependsOn []uuid.UUID
 }
 
 // RoadmapNodeFields are the mutable fields of a node (status transitions and

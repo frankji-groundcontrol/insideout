@@ -243,6 +243,19 @@ def agent_token(api, pid, prd, nodes):
     return refusals
 
 
+def dependencies(api, nodes):
+    n = lambda t: nodes[t]["id"]  # noqa: E731
+    for waiting, on in S.DEPENDENCIES:
+        api.must(S.CREATOR, "POST", f"/roadmap/{n(waiting)}/dependencies", {"dependsOnId": n(on)},
+                 expect=(201,), note=f"{waiting} waits on {on}")
+    first, on = S.DEPENDENCIES[0]
+    refused = [(n(on), n(first), 409, "a cycle"), (n(first), n(first), 400, "itself"),
+               (n(first), nodes[first]["parentId"], 409, "its own parent")]
+    for node, target, status, why in refused:
+        api.call(S.CREATOR, "POST", f"/roadmap/{node}/dependencies", {"dependsOnId": target},
+                 expect=(status,), note=f"a dependency on {why} is refused")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--api", default=os.environ.get("INSIDEOUT_API", "http://127.0.0.1:8080/api/v1"))
@@ -276,13 +289,14 @@ def main():
     nodes, counts, owner_of = run_tree(api, pid, ids, {"wid": wid})
     proposals_and_handback(api, pid, nodes, owner_of)
     nodes = nodes_by_title(api, pid)
+    dependencies(api, nodes)
     total, pages = updates_feed(api, pid)
     refusals = agent_token(api, pid, prd, nodes)
 
     members = api.must(S.CREATOR, "GET", f"/workspaces/{wid}/members", expect=(200,))
     print(f"\nBuilt: {len(S.PEOPLE)} users, {len(S.IDEAS)} ideas, {revisions} PRD revisions, 1 commit, "
           f"{len(nodes)} roadmap nodes, {counts['delegations']} delegations (+1 hand-back), "
-          f"{counts['evidence']} evidence rows, {len(S.PROPOSALS)} proposals, "
+          f"{counts['evidence']} evidence rows, {len(S.DEPENDENCIES)} dependencies, {len(S.PROPOSALS)} proposals, "
           f"{total} feed rows over {pages} pages ({len(S.UPDATES)} posted by people)")
     print("Agent token refusals: " + "; ".join(f"{k}: {v}" for k, v in refusals.items()))
     api.report()

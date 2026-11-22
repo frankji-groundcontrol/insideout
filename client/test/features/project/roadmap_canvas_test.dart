@@ -1,288 +1,187 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:insideout/api/client.dart';
 import 'package:insideout/api/models.dart';
-import 'package:insideout/chrome/loop_focus.dart';
 import 'package:insideout/features/project/roadmap_canvas.dart';
-import 'package:insideout/features/project/roadmap_page.dart';
-import 'package:insideout/session/appearance.dart';
-import 'package:insideout/session/session.dart';
-import 'package:insideout/theme/cobalt.dart';
-import 'package:provider/provider.dart';
 
-class _FakeApi extends ApiClient {
-  _FakeApi()
-    : super(
-        baseUrl: 'http://127.0.0.1:9/api/v1',
-        readAccess: () async => null,
-        readRefresh: () async => null,
-        writeTokens: (a, r) async {},
-        clearTokens: () async {},
-      );
+import '_roadmap_canvas_helpers.dart';
 
-  @override
-  Future<List<RoadmapNode>> listRoadmap(String projectId) async => [
-    RoadmapNode(
-      id: 'r1',
+// 2026-11-22, the owner: "I do not want to see hierarchy on canvas, only
+// things in order. Hierarchy is represented when I click into a certain
+// step." The Canvas draws one level, the steps, left to right by their
+// dependencies lifted to that level; opening a step shows its own steps.
+
+/// R > {A > {A1, A2}, B > B1, C > C1, D > {D1, D2}}: B1 waits on A1 (A→B),
+/// C1 waits on B1 (B→C), D waits on A, D1 and D2 wait on B1 (B→D twice), and
+/// A2 waits on A1 (inside A). C waits on X, outside every step.
+final _flow = [
+  canvasNode('R', null),
+  canvasNode('A', 'R'),
+  canvasNode('A1', 'A'),
+  canvasNode('A2', 'A', position: 1, dependsOn: ['A1']),
+  canvasNode('B', 'R', position: 1),
+  canvasNode('B1', 'B', dependsOn: ['A1']),
+  canvasNode('C', 'R', position: 2, dependsOn: ['X', 'gone']),
+  canvasNode('C1', 'C', dependsOn: ['B1']),
+  canvasNode('D', 'R', position: 3, dependsOn: ['A']),
+  canvasNode('D1', 'D', dependsOn: ['B1']),
+  canvasNode('D2', 'D', position: 1, dependsOn: ['B1']),
+];
+
+void main() {
+  testWidgets('one level only: the root\'s children, never their own', (
+    tester,
+  ) async {
+    await pumpCanvas(tester, _flow);
+    for (final id in ['A', 'B', 'C', 'D']) {
+      expect(stepBox(id), findsOneWidget, reason: '$id is a step');
+    }
+    for (final id in ['R', 'A1', 'B1', 'D2']) {
+      expect(stepBox(id), findsNothing, reason: '$id is not a step');
+    }
+    expect(find.text('2 items inside'), findsNWidgets(2));
+    expect(find.text('1 item inside'), findsNWidgets(2));
+    expect(find.textContaining('below'), findsNothing);
+  });
+
+  testWidgets('steps run left to right by their lifted dependencies', (
+    tester,
+  ) async {
+    await pumpCanvas(tester, _flow);
+    final a = stepCard(tester, 'A');
+    final b = stepCard(tester, 'B');
+    final c = stepCard(tester, 'C');
+    final d = stepCard(tester, 'D');
+    // A chain A → B → C, and D merges A and B: C and D share column 2.
+    expect(b.left, greaterThan(a.right));
+    expect(c.left, greaterThan(b.right));
+    expect(d.left, c.left);
+    expect(d.top, greaterThan(c.bottom), reason: 'position order');
+
+    // One arrow per pair, counting the links it carries; the link inside A
+    // is dropped.
+    expect(canvasEdges(tester).toSet(), {
+      (from: 'A', to: 'B', count: 1),
+      (from: 'B', to: 'C', count: 1),
+      (from: 'A', to: 'D', count: 1),
+      (from: 'B', to: 'D', count: 2),
+    });
+  });
+
+  testWidgets('screen readers hear every arrow', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await pumpCanvas(tester, _flow);
+    expect(find.bySemanticsLabel(RegExp('D waits on B')), findsOneWidget);
+    semantics.dispose();
+  });
+
+  testWidgets('a link out of view is a Waits on line on the step', (
+    tester,
+  ) async {
+    await pumpCanvas(tester, _flow, titles: {'X': 'Licences'});
+    expect(
+      find.descendant(
+        of: stepBox('C'),
+        matching: find.text('Waits on: Licences, another item'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: stepBox('D'), matching: find.textContaining('Wait')),
+      findsNothing,
+      reason: 'an in-view link is an arrow, not a line',
+    );
+  });
+
+  testWidgets('several roots are the steps', (tester) async {
+    await pumpCanvas(tester, [
+      canvasNode('R1', null),
+      canvasNode('R1a', 'R1'),
+      canvasNode('R2', null, position: 1),
+    ]);
+    expect(stepBox('R1'), findsOneWidget);
+    expect(stepBox('R2'), findsOneWidget);
+    expect(stepBox('R1a'), findsNothing);
+  });
+
+  testWidgets('a step box fits its content', (tester) async {
+    final full = RoadmapNode(
+      id: 'F',
       projectId: 'p1',
-      parentId: null,
-      title: 'Band A',
-      description: '',
-      status: 'pending',
-      position: 0,
-    ),
-    RoadmapNode(
-      id: 'r2',
-      projectId: 'p1',
-      parentId: null,
-      title: 'Band B',
-      description: '',
-      status: 'pending',
-      position: 1,
-    ),
-    RoadmapNode(
-      id: 'c1',
-      projectId: 'p1',
-      parentId: 'r1',
-      title: 'A leaf',
+      parentId: 'R',
+      title: 'A long title that runs well past one line of the step box',
       description: '',
       status: 'in_progress',
       position: 0,
-    ),
-  ];
-
-  @override
-  Future<RoadmapProgress> roadmapProgress(String projectId) async =>
-      RoadmapProgress.fromJson({
-        'now': [
-          {
-            'id': 'c1',
-            'title': 'A leaf',
-            'status': 'in_progress',
-            'deadline': '2026-10-10T00:00:00Z',
-            'pressure': 'near',
-          },
-        ],
-        'needsDeadline': [],
-        'next': [],
-        'doneCount': 0,
-      });
-
-  final _parked = Completer<void>();
-
-  @override
-  Future<void> progressStream(
-    String projectId,
-    void Function(RoadmapProgress progress) onProgress, {
-    Future<void>? stop,
-  }) {
-    return _parked.future;
-  }
-}
-
-void main() {
-  testWidgets('roadmap page toggles to the canvas with bands and minimap', (
-    tester,
-  ) async {
-    final session = Session();
-    session.ready = true;
-    session.api = _FakeApi();
-    await tester.binding.setSurfaceSize(const Size(1400, 900));
-    addTearDown(() => tester.binding.setSurfaceSize(null));
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider.value(value: session),
-          ChangeNotifierProvider(
-            create: (_) =>
-                Appearance(store: MemorySettingsStore(), locale: 'en-US'),
-          ),
-          ChangeNotifierProvider(create: (_) => LoopFocus()),
-        ],
-        child: const MaterialApp(home: RoadmapPage(projectId: 'p1')),
-      ),
+      deadline: '2026-12-01T00:00:00Z',
+      pressure: 'overdue',
+      ownerName: 'dana',
+      ownerId: 'u1',
+      rollup: const RoadmapRollup(leaves: 5, done: 3),
     );
-    await tester.pumpAndSettle();
-
-    // Progress view is the default (server-truth buckets): the deadlined
-    // in-progress leaf shows there, no canvas yet.
-    expect(find.text('A leaf'), findsOneWidget);
-    expect(find.byType(RoadmapMinimap), findsNothing);
-
-    // Toggle to bands.
-    await tester.tap(find.text('Bands'));
-    await tester.pumpAndSettle();
-    expect(find.text('Band A'), findsWidgets);
-
-    // Toggle to canvas.
-    await tester.tap(find.text('Canvas'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(RoadmapMinimap), findsOneWidget);
-    expect(find.byType(RoadmapCanvas), findsOneWidget);
-    // Both sibling bands render, with the child inside its band.
-    expect(find.text('Band A'), findsWidgets);
-    expect(find.text('Band B'), findsWidgets);
-    expect(find.text('A leaf'), findsOneWidget);
-
-    // Minimap tap jumps to a band without error.
-    await tester.tap(find.byType(RoadmapMinimap));
-    await tester.pumpAndSettle();
-    expect(find.byType(RoadmapCanvas), findsOneWidget);
+    await pumpCanvas(tester, [
+      canvasNode('R', null),
+      full,
+      canvasNode('F1', 'F'),
+      canvasNode('L', 'R', position: 1),
+    ], size: const Size(390, 844));
+    expect(tester.takeException(), isNull);
+    final card = stepCard(tester, 'F');
+    for (final text in [
+      'Owner: dana',
+      '3 of 5 done',
+      '1 item inside',
+      '2026-12-01 · overdue',
+    ]) {
+      final line = find.descendant(of: stepBox('F'), matching: find.text(text));
+      expect(line, findsOneWidget, reason: text);
+      expect(tester.getRect(line).bottom, lessThan(card.bottom), reason: text);
+    }
+    // A sparse step is short: its block ends just under its title.
+    final leaf = stepCard(tester, 'L');
+    final title = tester.getRect(
+      find.descendant(of: stepBox('L'), matching: find.text('L')),
+    );
+    expect(leaf.bottom - title.bottom, lessThan(20));
+    expect(leaf.height, lessThan(card.height));
   });
 
-  testWidgets(
-    'minimap marks encode state by shape and semantics, not color alone',
-    (tester) async {
-      final nodes = [
-        RoadmapNode(
-          id: 'r1',
-          projectId: 'p1',
-          parentId: null,
-          title: 'Alpha',
-          description: '',
-          status: 'done',
-          position: 0,
-        ),
-        RoadmapNode(
-          id: 'c1',
-          projectId: 'p1',
-          parentId: 'r1',
-          title: 'todo',
-          description: '',
-          status: 'pending',
-          position: 0,
-        ),
-        RoadmapNode(
-          id: 'c2',
-          projectId: 'p1',
-          parentId: 'r1',
-          title: 'doing',
-          description: '',
-          status: 'in_progress',
-          position: 1,
-        ),
-        RoadmapNode(
-          id: 'c3',
-          projectId: 'p1',
-          parentId: 'r1',
-          title: 'blocked',
-          description: '',
-          status: 'locked',
-          position: 2,
-        ),
-        RoadmapNode(
-          id: 'r2',
-          projectId: 'p1',
-          parentId: null,
-          title: 'Beta',
-          description: '',
-          status: 'locked',
-          position: 1,
-        ),
-      ];
+  testWidgets('a normal pressure is not shown', (tester) async {
+    await pumpCanvas(tester, [
+      RoadmapNode(
+        id: 'N',
+        projectId: 'p1',
+        title: 'N',
+        description: '',
+        status: 'pending',
+        position: 0,
+        deadline: '2026-12-01T00:00:00Z',
+        pressure: 'normal',
+      ),
+    ]);
+    expect(find.text('2026-12-01'), findsOneWidget);
+    expect(find.textContaining('normal'), findsNothing);
+  });
 
-      final semantics = tester.ensureSemantics();
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: RoadmapMinimap(nodes: nodes, onTapBand: (_) {}),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+  testWidgets('the canvas has no fold toggles', (tester) async {
+    await pumpCanvas(tester, _flow);
+    expect(find.byIcon(Icons.expand_more), findsNothing);
+    expect(find.byIcon(Icons.chevron_right), findsNothing);
+  });
 
-      // Screen readers (and hover tooltips) announce each mark's state.
-      expect(find.bySemanticsLabel('done'), findsOneWidget);
-      expect(find.bySemanticsLabel('pending'), findsOneWidget);
-      expect(find.bySemanticsLabel('in progress'), findsOneWidget);
-      expect(find.bySemanticsLabel('locked'), findsNWidgets(2));
-
-      // Fingerprints omit color. Two statuses that share one have collapsed
-      // to the same paint, even if their colors still differ.
-      final done = _paintFingerprint(tester, 'done');
-      final pending = _paintFingerprint(tester, 'pending');
-      final progress = _paintFingerprint(tester, 'in progress');
-      final locked = _paintFingerprint(tester, 'locked');
-      expect({done, pending, progress, locked}, hasLength(4));
-      expect(done, 'square-filled');
-      expect(pending, 'square-hollow');
-      expect(progress, 'square-half:0.5');
-      expect(locked, 'square-dashed');
-
-      final dashes = tester
-          .widgetList<CustomPaint>(
-            find.byWidgetPredicate(
-              (w) => w is CustomPaint && w.painter is MinimapDashMarkPainter,
-            ),
-          )
-          .toList();
-      expect(dashes, hasLength(2));
-      final dash = dashes.first.painter! as MinimapDashMarkPainter;
-      expect(dash.color, Cobalt.light.strokeStrong);
-      expect(
-        dash.shouldRepaint(MinimapDashMarkPainter(Cobalt.light.strokeStrong)),
-        isFalse,
-      );
-      expect(
-        dash.shouldRepaint(MinimapDashMarkPainter(Cobalt.dark.strokeStrong)),
-        isTrue,
-      );
-      semantics.dispose();
-    },
-  );
-}
-
-/// Color-free paint signature for every mark that announces [label].
-/// All marks with that label must share one signature.
-String _paintFingerprint(WidgetTester tester, String label) {
-  final marks = find.descendant(
-    of: find.bySemanticsLabel(label),
-    matching: find.byWidgetPredicate(_isStatusMark),
-  );
-  expect(marks, findsWidgets);
-  final fingerprints = tester.widgetList(marks).map(_fingerprintOf).toSet();
-  expect(fingerprints, hasLength(1));
-  return fingerprints.single;
-}
-
-bool _isStatusMark(Widget w) {
-  if (w is CustomPaint && w.painter is MinimapDashMarkPainter) return true;
-  return w is Container && w.constraints?.maxHeight == 4;
-}
-
-String _fingerprintOf(Widget w) {
-  if (w is CustomPaint && w.painter is MinimapDashMarkPainter) {
-    final sized = w.child;
-    expect(sized, isA<SizedBox>());
-    final box = sized! as SizedBox;
-    expect(box.width, double.infinity);
-    expect(box.height, 4);
-    return 'square-dashed';
-  }
-  final mark = w as Container;
-  final decoration = mark.decoration! as BoxDecoration;
-  expect(decoration.shape, BoxShape.rectangle);
-  expect(decoration.borderRadius, BorderRadius.zero);
-  if (decoration.color != null &&
-      decoration.border == null &&
-      mark.child == null) {
-    return 'square-filled';
-  }
-  if (decoration.color == null &&
-      decoration.border != null &&
-      mark.child is FractionallySizedBox) {
-    final half = mark.child! as FractionallySizedBox;
-    expect(half.alignment, Alignment.centerLeft);
-    return 'square-half:${half.widthFactor}';
-  }
-  if (decoration.color == null &&
-      decoration.border != null &&
-      mark.child == null) {
-    return 'square-hollow';
-  }
-  return 'collapsed:${decoration.color != null}:${decoration.border != null}:${mark.child?.runtimeType}';
+  testWidgets('a collaborator cursor label stays on the 12px floor', (
+    tester,
+  ) async {
+    await pumpCanvas(
+      tester,
+      [canvasNode('R', null)],
+      cursors: [CursorDot(sessionId: 's1', name: 'Dana', x: 20, y: 20)],
+    );
+    final style = tester.widget<Text>(find.text('Dana')).style;
+    final size =
+        style?.fontSize ??
+        Theme.of(
+          tester.element(find.text('Dana')),
+        ).textTheme.bodySmall!.fontSize!;
+    expect(size, greaterThanOrEqualTo(12));
+  });
 }

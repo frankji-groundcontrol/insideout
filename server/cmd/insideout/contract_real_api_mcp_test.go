@@ -99,7 +99,7 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 			"prd_export": {"prd_id": r.prd}, "progress": {"project_id": r.project},
 			"presence": {"project_id": r.project}, "guide": {"project_id": r.project}, "roadmap_evidence": {"node_id": r.node},
 			"roadmap_node": {"node_id": r.node}, "roadmap_mine": {"workspace_id": r.workspace},
-			"roadmap_assignments": {"node_id": r.node},
+			"roadmap_assignments": {"node_id": r.node}, "roadmap_steps": {"project_id": r.project},
 		} {
 			t.Run(name, func(t *testing.T) { toolData(t, s, name, args) })
 		}
@@ -144,6 +144,13 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 		}
 		if n, listed := nodes[child.ID]; !listed || n.ParentID != "" || n.Title != "Renamed "+r.sfx {
 			t.Fatalf("node after roadmap_move = %+v (listed %v), want it at the root with its new title", n, listed)
+		}
+		dep := kv{"node_id": child.ID, "depends_on_id": r.node}
+		if waits := toolJSON[struct{ DependsOn []string }](t, s, "roadmap_dependency_add", dep); len(waits.DependsOn) != 1 || waits.DependsOn[0] != r.node {
+			t.Fatalf("roadmap_dependency_add = %+v, want the node waiting on %s", waits, r.node)
+		}
+		if out := callTool(t, s, "roadmap_dependency_remove", dep); out.isError {
+			t.Fatalf("roadmap_dependency_remove failed: %s", out.text)
 		}
 
 		toolData(t, s, "prd_update", kv{"prd_id": r.prd, "sections_json": `{"goals":"Ship it"}`})

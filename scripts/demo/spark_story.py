@@ -162,6 +162,19 @@ PROPOSALS = [
      ["Liveness vendor evaluation"], "Photo verification checks", "rejected"),
 ]
 
+# Dependencies: (waiting node, node it waits on). Parallel streams merge: the
+# closed beta waits on work from four teams.
+DEPENDENCIES = [
+    ("Closed beta in two cities", "Prompt-based matching engine"),
+    ("Closed beta in two cities", "Realtime messaging service"),
+    ("Closed beta in two cities", "Report a member"),
+    ("Closed beta in two cities", "Profile builder"),
+    ("App Store listing and screenshots", "Selfie verification badge"),
+    ("Daily drop UI", "Compatibility scoring"),
+    ("Conversation starters from prompts", "Prompt answer embeddings"),
+    ("Matching quality dashboard", "Daily drop UI"),
+]
+
 # Project updates: (author, kind, content)
 UPDATES = [
     ("maya", "note", "Spark v1 baseline committed; the roadmap is built from it."),

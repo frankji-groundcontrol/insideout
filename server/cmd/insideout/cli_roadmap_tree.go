@@ -3,7 +3,8 @@ package main
 // The task tree on the CLI (docs/architecture/roadmap-tree.md): a project's
 // tree or one subtree, one node with its breadcrumb, the caller's own nodes,
 // node edits with owner and acceptance, delegation and its history, and the
-// workspace members a node can be handed to. Flags precede the positional id.
+// workspace members a node can be handed to, and the nodes one waits on.
+// Flags precede the positional id.
 
 import (
 	"encoding/json"
@@ -20,10 +21,12 @@ var treeUsage = map[string]string{
 	"list":        "insideout roadmap list [--root node-id] <project-id>",
 	"progress":    "insideout roadmap progress [--root node-id] <project-id>",
 	"show":        "insideout roadmap show <node-id>",
-	"mine":        "insideout roadmap mine <workspace-id>",
+	"mine":        "insideout roadmap mine [workspace-id]",
 	"assignments": "insideout roadmap assignments <node-id>",
 	"delegate":    "insideout roadmap delegate --to <user-id> [--note N] <node-id>",
 	"handback":    "insideout roadmap handback [--note N] <node-id>",
+	"depend":      "insideout roadmap depend --on <node-id> <node-id>",
+	"undepend":    "insideout roadmap undepend --on <node-id> <node-id>",
 	"update": "insideout roadmap update [--title T] [--description D|clear] [--status S] [--deadline RFC3339|clear] " +
 		"[--acceptance A|clear] [--owner user-id|me|clear] [--completion-reason SENTENCE|clear] <node-id>",
 }
@@ -37,7 +40,7 @@ func runRoadmapTreeCommand(sub string, args []string) (handled bool, exitCode in
 	}
 	fs := flag.NewFlagSet("roadmap "+sub, flag.ContinueOnError)
 	api := apiFlag(fs)
-	var root, to, note *string
+	var root, to, note, on *string
 	switch sub {
 	case "list", "progress":
 		root = fs.String("root", "", "limit to this node and the nodes below it")
@@ -46,14 +49,18 @@ func runRoadmapTreeCommand(sub string, args []string) (handled bool, exitCode in
 		note = fs.String("note", "", "a note for the record (at most 500 characters)")
 	case "handback":
 		note = fs.String("note", "", "a note for the record (at most 500 characters)")
+	case "depend", "undepend":
+		on = fs.String("on", "", "id of the node it waits on, in the same project")
 	case "update":
 		return runRoadmapUpdate(fs, api, args)
 	}
-	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 || (to != nil && *to == "") {
+	// `mine` with no workspace id reads every workspace of the caller's.
+	if err := fs.Parse(args); err != nil || len(fs.Args()) > 1 || (len(fs.Args()) == 0 && sub != "mine") ||
+		(to != nil && *to == "") || (on != nil && *on == "") {
 		fmt.Fprintln(os.Stderr, "usage: "+usage)
 		return true, 2
 	}
-	c, id := clientFromFlag(*api), fs.Args()[0]
+	c, id := clientFromFlag(*api), fs.Arg(0)
 	switch sub {
 	case "list":
 		return printJSON(c.RoadmapList(id, *root))
@@ -67,6 +74,15 @@ func runRoadmapTreeCommand(sub string, args []string) (handled bool, exitCode in
 		return printJSON(c.RoadmapAssignments(id))
 	case "delegate":
 		return printJSON(c.RoadmapDelegate(id, *to, *note))
+	case "depend":
+		return printJSON(c.AddRoadmapDependency(id, *on))
+	case "undepend":
+		if err := c.RemoveRoadmapDependency(id, *on); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return true, 1
+		}
+		fmt.Println("removed")
+		return true, 0
 	default: // handback
 		return printJSON(c.RoadmapHandBack(id, *note))
 	}

@@ -24,7 +24,7 @@ func (s *Server) handleRoadmapProgress(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	root, ok := progressRoot(w, r)
+	root, ok := s.requestRoot(w, r, userID, pid)
 	if !ok {
 		return
 	}
@@ -50,7 +50,7 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 		httpx.WriteError(w, http.StatusInternalServerError, "streaming unsupported", "", nil)
 		return
 	}
-	root, ok := progressRoot(w, r)
+	root, ok := s.requestRoot(w, r, userID, pid)
 	if !ok {
 		return
 	}
@@ -112,17 +112,6 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 	}
 }
 
-// progressRoot reads the optional ?root={nid} that scopes Progress to one
-// subtree (rv5-TREEB-08).
-func progressRoot(w http.ResponseWriter, r *http.Request) (*uuid.UUID, bool) {
-	raw := r.URL.Query().Get("root")
-	if raw == "" {
-		return nil, true
-	}
-	id, ok := parseUUIDParam(w, "root", raw)
-	return &id, ok
-}
-
 // roadmapProgress assembles Progress from the project's nodes, or from root
 // and the nodes below it: the leaves of a subtree are leaves of the project.
 func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *uuid.UUID) (roadmaptime.Progress, error) {
@@ -136,6 +125,10 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *u
 	if err != nil {
 		return roadmaptime.Progress{}, err
 	}
+	waits, err := s.store.RoadmapWaits(r.Context(), userID, pid)
+	if err != nil {
+		return roadmaptime.Progress{}, err
+	}
 	parents := make(map[string]bool, len(nodes))
 	for _, n := range nodes {
 		if n.ParentID != nil {
@@ -144,7 +137,7 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *u
 	}
 	in := make([]roadmaptime.Node, 0, len(nodes))
 	for _, n := range nodes {
-		in = append(in, roadmaptime.Node{ID: n.ID.String(), Title: n.Title, Status: n.Status, Deadline: n.Deadline, Leaf: !parents[n.ID.String()], Acceptance: n.Acceptance, OwnerName: n.OwnerName})
+		in = append(in, roadmaptime.Node{ID: n.ID.String(), Title: n.Title, Status: n.Status, Deadline: n.Deadline, Leaf: !parents[n.ID.String()], Acceptance: n.Acceptance, OwnerName: n.OwnerName, WaitsOn: waits[n.ID.String()]})
 	}
 	return roadmaptime.Assemble(in, s.now()), nil
 }

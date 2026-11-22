@@ -68,7 +68,8 @@ commits list, revisions list and create, and `POST /prds/{id}/status` to `draft`
 `reviewing` only); roadmap (list, with an optional `?root=` subtree, one-node
 read `GET /roadmap/{nid}`, the caller's own tree `GET /workspaces/{id}/roadmap/mine`,
 a node's owner history `GET /roadmap/{nid}/assignments`, add, update, move,
-guide, progress, evidence read) and
+dependencies, guide, progress, the ordered steps `GET /projects/{pid}/roadmap/steps`,
+evidence read) and
 the four AI build/expand routes; repo bind and GitHub sync;
 `agent/context`, `agent/checkpoint`, `agent/propose`; the presence snapshot.
 
@@ -115,14 +116,31 @@ rejected (401). The token's reads stay workspace-wide (owner decision 2), but
 its node writes stay inside the root and the nodes below it: `PATCH
 /roadmap/{nid}`, `POST /roadmap/{nid}/move` (the node and its new parent),
 `POST /projects/{pid}/roadmap` (the parent; a new root is outside),
+`POST /roadmap/{nid}/dependencies` and `DELETE /roadmap/{nid}/dependencies/{did}`
+(the waiting node only; the node waited on may lie anywhere in the project),
 `POST /roadmap/{nid}/expand` and `/expand/confirm` answer 403
 `agent_scope_denied` for a node outside (404 for a node the caller cannot see,
 as without a root), and `POST /prds/{pid}/build/confirm`
 refuses a root-scoped token outright, since a rebuild replaces the whole tree.
 The check is `agentRootRefuses` (`server/internal/api/agent_root.go`) over
 `Store.NodeInSubtree`; it runs in its own transaction before the write's, so a
-concurrent move can slip a node out between the two (a recorded shortcut). `GET /agent/context` with no `focus` defaults its focus
-to the root when the root is a node of the requested project. The MCP binary
+concurrent move can slip a node out between the two (a recorded shortcut).
+
+Reads default to the root too, so the agent sees what its human cares about
+first. When the root is a node of the requested project and the request names
+no root or focus:
+
+- `GET /agent/context` focuses on the root.
+- `GET /projects/{pid}/roadmap` and `/roadmap/progress` read the root's
+  subtree (`requestRoot`, `server/internal/api/roadmap_steps.go`).
+- `GET /projects/{pid}/roadmap/steps` opens the root.
+
+An explicit `?root` on the list and Progress still reads anywhere in the
+project (owner decision 2). On `/roadmap/steps` a `?root` outside the token's
+subtree answers 403 `agent_scope_denied`, because the steps route is how an
+agent walks its own level. A token without a root, and a full token, briefed
+with no focus, open on what the human is in charge of
+([roadmap tree](./roadmap-tree.md), "Agent context focus"). The MCP binary
 asks for a root when `INSIDEOUT_AGENT_ROOT` names one
 (`apiclient.AgentScopedTo`, called from `server/internal/mcpserver/server.go`);
 the held token is keyed by server, user and root.
