@@ -9,7 +9,11 @@ import (
 	"os"
 )
 
-func runRoadmapSteps(args []string) (bool, int) {
+// runRoadmapSteps runs `roadmap steps`; handled is false for any other sub.
+func runRoadmapSteps(sub string, args []string) (bool, int) {
+	if sub != "steps" {
+		return false, 0
+	}
 	fs := flag.NewFlagSet("roadmap steps", flag.ContinueOnError)
 	api := apiFlag(fs)
 	root := fs.String("root", "", "open this node (default: an agent token's root, else the project's one root)")

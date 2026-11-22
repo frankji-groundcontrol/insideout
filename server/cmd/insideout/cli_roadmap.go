@@ -23,11 +23,10 @@ func runRoadmapCommand(args []string) (bool, int) {
 		return true, 2
 	}
 	sub, rest := args[0], args[1:]
-	if sub == "steps" {
-		return runRoadmapSteps(rest)
-	}
-	if handled, code := runRoadmapTreeCommand(sub, rest); handled {
-		return handled, code
+	for _, run := range []func(string, []string) (bool, int){runRoadmapTreeCommand, runRoadmapSteps} {
+		if handled, code := run(sub, rest); handled {
+			return handled, code
+		}
 	}
 
 	switch sub {
