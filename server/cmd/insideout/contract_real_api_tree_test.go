@@ -101,6 +101,26 @@ func TestCLIDelegatesANodeOnTheRealAPI(t *testing.T) {
 		len(all[0].WaitsOn) != 1 || all[0].WaitsOn[0].ID != other.ID || all[0].WaitsOn[0].Status != "pending" {
 		t.Fatalf("roadmap mine (all workspaces) = %+v, want the branch waiting on Other", all)
 	}
+	// The unowned leaf opens as the delegate sees it, through the branch;
+	// the unowned root Other falls to the project owner.
+	type glanceOut struct {
+		Node     treeNode
+		InCharge *struct {
+			UserID       string
+			Via          *struct{ ID, Title string }
+			ProjectOwner bool
+		}
+		WaitsOn []struct{ ID string }
+	}
+	g := cliJSON[glanceOut](t, "roadmap", "glance", leaf.ID)
+	if g.Node.ID != leaf.ID || g.InCharge == nil || g.InCharge.UserID != delegateID || g.InCharge.Via == nil ||
+		g.InCharge.Via.ID != branch.ID || g.InCharge.ProjectOwner || len(g.WaitsOn) != 1 || g.WaitsOn[0].ID != other.ID {
+		t.Fatalf("roadmap glance leaf = %+v, want the delegate via the branch, waiting on Other", g)
+	}
+	if g := cliJSON[glanceOut](t, "roadmap", "glance", other.ID); g.InCharge == nil || g.InCharge.UserID != ownerID ||
+		!g.InCharge.ProjectOwner || g.InCharge.Via != nil {
+		t.Fatalf("roadmap glance Other = %+v, want the project owner", g.InCharge)
+	}
 	edited := cliJSON[treeNode](t, "roadmap", "update", "--acceptance", "Ships on Friday", "--owner", "me", leaf.ID)
 	if edited.Acceptance != "Ships on Friday" || edited.OwnerID == nil || *edited.OwnerID != delegateID {
 		t.Fatalf("roadmap update = %+v, want the acceptance and the delegate as owner of the leaf", edited)

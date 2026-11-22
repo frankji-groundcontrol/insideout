@@ -12,6 +12,7 @@ import 'package:insideout/router.dart';
 import 'package:insideout/session/appearance.dart';
 import 'package:insideout/session/session.dart';
 import 'package:provider/provider.dart';
+
 import '_project_model_helpers.dart';
 
 /// A scripted API over one project tree: Ship > {Payments > Refunds, Search}.
@@ -45,6 +46,14 @@ class TreeApi extends ApiClient {
   bool history = false;
   final _gone = <String>{};
 
+  /// GET /roadmap/{nid}/glance's body; null answers 404, as for a node the
+  /// caller cannot see. [glanceCalls] records the nodes asked for.
+  Map<String, dynamic>? glance;
+  final glanceCalls = <String>[];
+
+  /// The owner of Search, a sibling outside Payments' subtree.
+  String? searchOwner;
+
   RoadmapNode node(String id, String title, String? parent, {String? owner}) =>
       RoadmapNode(
         id: id,
@@ -63,7 +72,7 @@ class TreeApi extends ApiClient {
     node('r', 'Ship', null),
     node('a', 'Payments', 'r', owner: 'u-dana'),
     node('a1', 'Refunds', 'a'),
-    node('b', 'Search', 'r'),
+    node('b', 'Search', 'r', owner: searchOwner),
   ].where((n) => !_gone.contains(n.id)).toList();
 
   ApiException get _notFound =>
@@ -138,6 +147,13 @@ class TreeApi extends ApiClient {
       projectId: 'p1',
       projectName: 'Loop project',
     );
+  }
+
+  @override
+  Future<RoadmapGlance> roadmapGlance(String nodeId) async {
+    glanceCalls.add(nodeId);
+    if (glance == null) throw _notFound;
+    return RoadmapGlance.fromJson(glance!);
   }
 
   @override

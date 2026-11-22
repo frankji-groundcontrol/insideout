@@ -25,11 +25,12 @@ Matrix4 roadmapFitMatrix(Size graph, Size view) {
 }
 
 /// Where the Canvas opens: fitted when that still reads (0.75x or more),
-/// else at 1x with the first column at the left, centred down the view.
+/// else at 1x, centred down the view and across it when it is narrower,
+/// else with the first column at the left.
 Matrix4 roadmapStartMatrix(Size graph, Size view) {
   if (_fitScale(graph, view) >= 0.75) return roadmapFitMatrix(graph, view);
   return Matrix4.translationValues(
-    roadmapViewMargin,
+    math.max(roadmapViewMargin, (view.width - graph.width) / 2),
     math.max(roadmapViewMargin, (view.height - graph.height) / 2),
     0,
   );

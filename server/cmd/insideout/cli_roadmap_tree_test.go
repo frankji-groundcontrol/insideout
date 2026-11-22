@@ -81,6 +81,7 @@ func TestRoadmapTreeVerbsSendTheirRequests(t *testing.T) {
 		{words("roadmap", "update", "--title", "T", "n1"),
 			[]sent{{"PATCH /roadmap/n1", map[string]any{"title": "T"}}}},
 		{words("roadmap", "show", "n1"), []sent{{"GET /roadmap/n1", nil}}},
+		{words("roadmap", "glance", "n1"), []sent{{"GET /roadmap/n1/glance", nil}}},
 		{words("roadmap", "mine", "ws1"), []sent{{"GET /workspaces/ws1/roadmap/mine", nil}}},
 		{words("roadmap", "mine"), []sent{{"GET /roadmap/mine", nil}}},
 		{words("roadmap", "delegate", "--to", "u2", "--note", "yours", "n1"),
@@ -118,6 +119,7 @@ func TestRoadmapTreeVerbsRefuseMissingArguments(t *testing.T) {
 	for _, args := range [][]string{
 		words("roadmap", "delegate", "n1"),
 		words("roadmap", "show"),
+		words("roadmap", "glance"),
 		words("roadmap", "mine", "ws1", "ws2"),
 		words("roadmap", "steps"),
 		words("members"),

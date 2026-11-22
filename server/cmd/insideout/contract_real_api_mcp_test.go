@@ -100,6 +100,7 @@ func (w *contractWorld) mcpTools(t *testing.T, r ids) {
 			"presence": {"project_id": r.project}, "guide": {"project_id": r.project}, "roadmap_evidence": {"node_id": r.node},
 			"roadmap_node": {"node_id": r.node}, "roadmap_mine": {"workspace_id": r.workspace},
 			"roadmap_assignments": {"node_id": r.node}, "roadmap_steps": {"project_id": r.project},
+			"roadmap_glance": {"node_id": r.node},
 		} {
 			t.Run(name, func(t *testing.T) { toolData(t, s, name, args) })
 		}

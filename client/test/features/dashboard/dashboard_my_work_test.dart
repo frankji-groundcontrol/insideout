@@ -120,23 +120,24 @@ void main() {
     expect(find.textContaining('Blocking'), findsOneWidget);
   });
 
-  testWidgets('a root opens its Canvas; the project root the project roadmap', (
-    tester,
-  ) async {
-    final (router, _) = await _landing(tester);
+  testWidgets(
+    'a root opens on Progress; the project root the project roadmap',
+    (tester) async {
+      final (router, _) = await _landing(tester);
 
-    await tester.tap(find.text('Payments'));
-    await tester.pumpAndSettle();
-    final opened = router.routeInformationProvider.value.uri;
-    expect(opened.path, '/projects/p1/roadmap/a');
-    expect(opened.queryParameters['view'], 'canvas');
+      await tester.tap(find.text('Payments'));
+      await tester.pumpAndSettle();
+      final opened = router.routeInformationProvider.value.uri;
+      expect(opened.path, '/projects/p1/roadmap/a');
+      expect(opened.queryParameters['view'], isNull);
 
-    router.go('/dashboard');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Ship'));
-    await tester.pumpAndSettle();
-    final root = router.routeInformationProvider.value.uri;
-    expect(root.path, '/projects/p1/roadmap');
-    expect(root.queryParameters['view'], 'canvas');
-  });
+      router.go('/dashboard');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ship'));
+      await tester.pumpAndSettle();
+      final root = router.routeInformationProvider.value.uri;
+      expect(root.path, '/projects/p1/roadmap');
+      expect(root.queryParameters['view'], isNull);
+    },
+  );
 }

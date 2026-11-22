@@ -114,6 +114,7 @@ var apiVerbs = []apiVerb{
 	{head: words("roadmap", "move"), tail: words("--root", "n1")},
 	{head: words("roadmap", "delete"), tail: words("n1")},
 	{head: words("roadmap", "show"), tail: words("n1")},
+	{head: words("roadmap", "glance"), tail: words("n1")},
 	{head: words("roadmap", "mine"), tail: words("ws1")},
 	{head: words("roadmap", "delegate"), tail: words("--to", "u2", "n1")},
 	{head: words("roadmap", "handback"), tail: words("n1")},

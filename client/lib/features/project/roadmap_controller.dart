@@ -55,6 +55,16 @@ class RoadmapController extends ChangeNotifier {
   /// its tree inherits, for Mine and the inherited owner label.
   RoadmapNodeRead? opened;
 
+  /// The opened node's person in charge and their first glance at it, once
+  /// it landed; null for the whole tree, before then, or when it failed.
+  RoadmapGlance? glance;
+
+  /// The whole project's nodes, read once when someone else's view needs
+  /// their nodes outside the opened tree; the project route reuses [nodes].
+  Future<List<RoadmapNode>>? _projectNodes;
+  Future<List<RoadmapNode>> get projectNodes =>
+      _projectNodes ??= rootId == null ? nodes : _api.listRoadmap(projectId);
+
   /// Member names by user id, read only when an ancestor above the opened
   /// tree has an owner (the ancestor refs carry the id alone).
   Map<String, String> names = const {};
@@ -84,6 +94,7 @@ class RoadmapController extends ChangeNotifier {
   }
 
   void _fetch() {
+    _projectNodes = null;
     final root = rootId;
     nodes = root == null
         ? _api.listRoadmap(projectId)
@@ -93,6 +104,16 @@ class RoadmapController extends ChangeNotifier {
         : _api.roadmapSubtreeProgress(projectId, root);
     read = root == null ? null : _api.readRoadmapNode(root);
     nodes.then(_nameOutside, onError: (_) {});
+    if (root != null) {
+      _api
+          .roadmapGlance(root)
+          .then((g) {
+            glance = g;
+            _changed();
+          })
+          // Without it the page shows no banner and keeps Mine.
+          .catchError((_) {});
+    }
     read
         ?.then((r) {
           if (!_live) return;

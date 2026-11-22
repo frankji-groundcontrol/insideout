@@ -91,6 +91,12 @@ class _ScriptedApi extends ApiClient {
   ) async => progress(2);
 
   @override
+  Future<RoadmapGlance> roadmapGlance(String nodeId) async =>
+      RoadmapGlance.fromJson({
+        'inCharge': {'userId': 'u-dana', 'name': 'dana'},
+      });
+
+  @override
   Future<RoadmapNodeRead> readRoadmapNode(String nodeId) async =>
       RoadmapNodeRead.fromJson({
         'node': {
@@ -204,6 +210,7 @@ void main() {
     expect(c.rootWritable, isTrue);
     expect(c.opened?.ancestors.single.id, 'n1');
     expect(c.names, {'u-dana': 'dana'}, reason: 'an ancestor has an owner');
+    expect(c.glance?.inCharge?.userId, 'u-dana');
 
     final all = await c.nodes;
     // The caller owns the ancestor: the whole opened tree is theirs.
