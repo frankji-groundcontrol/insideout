@@ -21,6 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-22 — Node information in movable, resizable windows](./2026-11-22-node-windows.md)
+  — "a movable and sizable popup window": click a node for a floating
+  window; double-click or "Open roadmap" to drill in.
+
 - [2026-11-22 — Open a node as its person in charge sees it](./2026-11-22-open-a-node-as-its-person-in-charge.md)
   — "the view the person who's in charge": a banner with their first glance,
   Progress first, and a toggle for their own nodes.
