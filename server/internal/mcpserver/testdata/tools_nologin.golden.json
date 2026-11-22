@@ -772,7 +772,7 @@
       "openWorldHint": true,
       "readOnlyHint": false
     },
-    "description": "One page of a project's updates, newest first: {updates, nextCursor}. Pass nextCursor back as before for the next page; nextCursor null is the end",
+    "description": "One page of a project's updates, newest first: {updates, nextCursor}. Pass nextCursor back as before for the next page; nextCursor null is the end. node_id keeps the updates about that node and the nodes below it; pending keeps the proposals still waiting for your decision",
     "inputSchema": {
       "properties": {
         "before": {
@@ -782,6 +782,14 @@
         "limit": {
           "description": "updates per page, 1 to 100 (default 50)",
           "type": "number"
+        },
+        "node_id": {
+          "description": "node id: only updates about this node and the nodes below it",
+          "type": "string"
+        },
+        "pending": {
+          "description": "only proposals with no decision yet, when you may decide them",
+          "type": "boolean"
         },
         "project_id": {
           "description": "project id",
@@ -1114,17 +1122,14 @@
       "openWorldHint": true,
       "readOnlyHint": false
     },
-    "description": "The signed-in user's own work in a workspace: their topmost owned nodes, each with its project and ancestors",
+    "description": "What the signed-in user is in charge of: the topmost nodes they own (an unowned project root counts for its project owner and workspace admins), each with its project, workspace and ancestors, its now items, the unfinished nodes it waitsOn and the unfinished nodes it is blocking",
     "inputSchema": {
       "properties": {
         "workspace_id": {
-          "description": "workspace id",
+          "description": "workspace id; omit for every workspace of the user's",
           "type": "string"
         }
       },
-      "required": [
-        "workspace_id"
-      ],
       "type": "object"
     },
     "name": "roadmap_mine"

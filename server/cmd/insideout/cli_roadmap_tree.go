@@ -21,7 +21,7 @@ var treeUsage = map[string]string{
 	"list":        "insideout roadmap list [--root node-id] <project-id>",
 	"progress":    "insideout roadmap progress [--root node-id] <project-id>",
 	"show":        "insideout roadmap show <node-id>",
-	"mine":        "insideout roadmap mine <workspace-id>",
+	"mine":        "insideout roadmap mine [workspace-id]",
 	"assignments": "insideout roadmap assignments <node-id>",
 	"delegate":    "insideout roadmap delegate --to <user-id> [--note N] <node-id>",
 	"handback":    "insideout roadmap handback [--note N] <node-id>",
@@ -54,11 +54,13 @@ func runRoadmapTreeCommand(sub string, args []string) (handled bool, exitCode in
 	case "update":
 		return runRoadmapUpdate(fs, api, args)
 	}
-	if err := fs.Parse(args); err != nil || len(fs.Args()) != 1 || (to != nil && *to == "") || (on != nil && *on == "") {
+	// `mine` with no workspace id reads every workspace of the caller's.
+	if err := fs.Parse(args); err != nil || len(fs.Args()) > 1 || (len(fs.Args()) == 0 && sub != "mine") ||
+		(to != nil && *to == "") || (on != nil && *on == "") {
 		fmt.Fprintln(os.Stderr, "usage: "+usage)
 		return true, 2
 	}
-	c, id := clientFromFlag(*api), fs.Args()[0]
+	c, id := clientFromFlag(*api), fs.Arg(0)
 	switch sub {
 	case "list":
 		return printJSON(c.RoadmapList(id, *root))

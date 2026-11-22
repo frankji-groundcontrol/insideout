@@ -79,6 +79,7 @@ func TestCLIDelegatesANodeOnTheRealAPI(t *testing.T) {
 	if len(history) != 1 || history[0].Kind != "delegate" || history[0].ToUserID != delegateID || history[0].Note != "yours now" {
 		t.Fatalf("roadmap assignments = %+v, want the one delegation", history)
 	}
+	cliJSON[treeNode](t, "roadmap", "depend", "--on", other.ID, leaf.ID)
 
 	// The delegate, on the same machine, sees the branch as their tree.
 	writeClientConfig(t, clientconfig.Config{APIBase: w.base, Token: delegate.Token(), RefreshToken: delegate.RefreshToken()})
@@ -88,6 +89,17 @@ func TestCLIDelegatesANodeOnTheRealAPI(t *testing.T) {
 	}](t, "roadmap", "mine", ws.ID)
 	if len(mine) != 1 || mine[0].Node.ID != branch.ID || mine[0].ProjectID != pr.ID || !mine[0].Node.CanWrite || mine[0].Node.Rollup.Leaves != 1 {
 		t.Fatalf("roadmap mine = %+v, want the delegated branch, writable, over one leaf", mine)
+	}
+	// With no workspace id, mine reads every workspace; the branch's first
+	// glance names the unowned root its leaf waits on.
+	all := cliJSON[[]struct {
+		Node        treeNode
+		WorkspaceID string
+		WaitsOn     []struct{ ID, Title, Status string }
+	}](t, "roadmap", "mine")
+	if len(all) != 1 || all[0].Node.ID != branch.ID || all[0].WorkspaceID != ws.ID ||
+		len(all[0].WaitsOn) != 1 || all[0].WaitsOn[0].ID != other.ID || all[0].WaitsOn[0].Status != "pending" {
+		t.Fatalf("roadmap mine (all workspaces) = %+v, want the branch waiting on Other", all)
 	}
 	edited := cliJSON[treeNode](t, "roadmap", "update", "--acceptance", "Ships on Friday", "--owner", "me", leaf.ID)
 	if edited.Acceptance != "Ships on Friday" || edited.OwnerID == nil || *edited.OwnerID != delegateID {

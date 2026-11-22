@@ -75,3 +75,33 @@ func TestNextCapsAtThree(t *testing.T) {
 		t.Errorf("Next should cap at 3, got %d", got)
 	}
 }
+
+// Next puts ready work before work that waits (2026-11-22 plan, S2): on the
+// Spark Matching branch "Daily drop UI" is due first but waits on the
+// in-progress "Compatibility scoring", so the ready items lead; each group
+// keeps the deadline order.
+func TestNextPutsReadyItemsBeforeWaitingOnes(t *testing.T) {
+	now := time.Date(2026, 11, 22, 12, 0, 0, 0, time.UTC)
+	day := func(d int) *time.Time { return ptr(now.Add(time.Duration(d) * 24 * time.Hour)) }
+	scoring := Ref{ID: "cs", Title: "Compatibility scoring"}
+	nodes := []Node{
+		{ID: "cs", Title: "Compatibility scoring", Status: "in_progress", Deadline: day(4), Leaf: true},
+		{ID: "dd", Title: "Daily drop UI", Status: "pending", Deadline: day(9), Leaf: true, WaitsOn: []Ref{scoring}},
+		{ID: "me", Title: "Match explanation copy", Status: "pending", Deadline: day(18), Leaf: true},
+		{ID: "ps", Title: "Prompt picker", Status: "pending", Deadline: day(12), Leaf: true},
+	}
+	p := Assemble(nodes, now)
+	got := []string{}
+	for _, it := range p.Next {
+		got = append(got, it.ID)
+	}
+	if len(got) != 3 || got[0] != "ps" || got[1] != "me" || got[2] != "dd" {
+		t.Fatalf("Next = %v, want ready ps, me, then the waiting dd", got)
+	}
+	if w := p.Next[2].WaitsOn; len(w) != 1 || w[0] != scoring {
+		t.Errorf("Daily drop UI waitsOn = %+v, want Compatibility scoring", w)
+	}
+	if p.Next[0].WaitsOn != nil {
+		t.Errorf("a ready item carries no waitsOn: %+v", p.Next[0])
+	}
+}

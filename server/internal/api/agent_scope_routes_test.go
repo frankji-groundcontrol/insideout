@@ -70,6 +70,7 @@ var agentAllowedRoutes = []string{
 	"GET /api/v1/roadmap/{nid}/evidence",
 	"GET /api/v1/roadmap/{nid}/assignments",
 	"GET /api/v1/workspaces/{id}/roadmap/mine",
+	"GET /api/v1/roadmap/mine",
 	"POST /api/v1/prds/{pid}/build",
 	"POST /api/v1/prds/{pid}/build/confirm",
 	"POST /api/v1/roadmap/{nid}/expand",

@@ -15,9 +15,13 @@ func (c *Client) RoadmapNode(nodeID string) (json.RawMessage, error) {
 	return c.get(apiPath("roadmap", nodeID))
 }
 
-// RoadmapMine lists the caller's topmost owned nodes in a workspace
-// (GET /workspaces/{id}/roadmap/mine).
+// RoadmapMine lists the topmost nodes the caller is in charge of in a
+// workspace (GET /workspaces/{id}/roadmap/mine), or in every workspace of
+// theirs when workspaceID is "" (GET /roadmap/mine).
 func (c *Client) RoadmapMine(workspaceID string) (json.RawMessage, error) {
+	if workspaceID == "" {
+		return c.get(apiPath("roadmap", "mine"))
+	}
 	return c.get(apiPath("workspaces", workspaceID, "roadmap", "mine"))
 }
 

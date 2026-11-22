@@ -78,8 +78,11 @@ func TestMineListsTheTopmostOwnedNodesOfOneWorkspace(t *testing.T) {
 		t.Errorf("Ops entry: %+v, want project Another and no ancestors", got[0])
 	}
 
-	if owner := decodeAs[[]mineEntry](t, w.must(t, w.owner, "GET", w.ws()+"/roadmap/mine", "", http.StatusOK)); len(owner) != 0 {
-		t.Errorf("owner's mine: %d entries, want none (they own no node)", len(owner))
+	// The project owner owns no node but is in charge of the unowned Root
+	// (2026-11-22 owner decision); Ops, a root they handed on, is not theirs.
+	owner := decodeAs[[]mineEntry](t, w.must(t, w.owner, "GET", w.ws()+"/roadmap/mine", "", http.StatusOK))
+	if len(owner) != 1 || owner[0].Node["title"] != "Root" {
+		t.Errorf("owner's mine: %+v, want the unowned Root", owner)
 	}
 	w.must(t, w.asAgent(t, w.member), "GET", w.ws()+"/roadmap/mine", "", http.StatusOK)
 	w.must(t, w.outsider, "GET", w.ws()+"/roadmap/mine", "", http.StatusNotFound)

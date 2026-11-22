@@ -67,16 +67,32 @@ func (c *Client) DeleteProject(projectID string) error {
 	return c.do(http.MethodDelete, apiPath("projects", projectID), nil, &discard)
 }
 
+// UpdatesQuery narrows one page of a project's updates: Before is the
+// nextCursor of the previous page ("" for the newest), Limit 1 to 100 (0 for
+// the server's 50), Node keeps the updates about that node and the nodes
+// below it, Pending only the proposals still waiting for the caller's
+// decision.
+type UpdatesQuery struct {
+	Before, Node string
+	Limit        int
+	Pending      bool
+}
+
 // ProjectUpdates reads one page of a project's updates, newest first
-// (GET /projects/{id}/updates): before is the nextCursor of the previous page
-// ("" for the newest), limit 1 to 100 (0 for the server's 50).
-func (c *Client) ProjectUpdates(projectID, before string, limit int) (json.RawMessage, error) {
+// (GET /projects/{id}/updates).
+func (c *Client) ProjectUpdates(projectID string, q UpdatesQuery) (json.RawMessage, error) {
 	var kv []string
-	if before != "" {
-		kv = append(kv, "before", before)
+	if q.Before != "" {
+		kv = append(kv, "before", q.Before)
 	}
-	if limit > 0 {
-		kv = append(kv, "limit", strconv.Itoa(limit))
+	if q.Limit > 0 {
+		kv = append(kv, "limit", strconv.Itoa(q.Limit))
+	}
+	if q.Node != "" {
+		kv = append(kv, "node", q.Node)
+	}
+	if q.Pending {
+		kv = append(kv, "pending", "true")
 	}
 	return c.get(withQuery(apiPath("projects", projectID, "updates"), kv...))
 }

@@ -125,6 +125,10 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *u
 	if err != nil {
 		return roadmaptime.Progress{}, err
 	}
+	waits, err := s.store.RoadmapWaits(r.Context(), userID, pid)
+	if err != nil {
+		return roadmaptime.Progress{}, err
+	}
 	parents := make(map[string]bool, len(nodes))
 	for _, n := range nodes {
 		if n.ParentID != nil {
@@ -133,7 +137,7 @@ func (s *Server) roadmapProgress(r *http.Request, userID, pid uuid.UUID, root *u
 	}
 	in := make([]roadmaptime.Node, 0, len(nodes))
 	for _, n := range nodes {
-		in = append(in, roadmaptime.Node{ID: n.ID.String(), Title: n.Title, Status: n.Status, Deadline: n.Deadline, Leaf: !parents[n.ID.String()], Acceptance: n.Acceptance, OwnerName: n.OwnerName})
+		in = append(in, roadmaptime.Node{ID: n.ID.String(), Title: n.Title, Status: n.Status, Deadline: n.Deadline, Leaf: !parents[n.ID.String()], Acceptance: n.Acceptance, OwnerName: n.OwnerName, WaitsOn: waits[n.ID.String()]})
 	}
 	return roadmaptime.Assemble(in, s.now()), nil
 }

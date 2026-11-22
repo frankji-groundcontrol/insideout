@@ -29,10 +29,10 @@ func addRoadmapTreeTools(ts toolSet) {
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
 			return call(c.RoadmapNode(reqStr(req, "node_id")))
 		})
-	ts.add("roadmap_mine", "The signed-in user's own work in a workspace: their topmost owned nodes, each with its project and ancestors",
-		[]mcp.ToolOption{strReq("workspace_id", "workspace id")},
+	ts.add("roadmap_mine", "What the signed-in user is in charge of: the topmost nodes they own (an unowned project root counts for its project owner and workspace admins), each with its project, workspace and ancestors, its now items, the unfinished nodes it waitsOn and the unfinished nodes it is blocking",
+		[]mcp.ToolOption{strOpt("workspace_id", "workspace id; omit for every workspace of the user's")},
 		func(c *apiclient.Client, req mcp.CallToolRequest) (string, error) {
-			return call(c.RoadmapMine(reqStr(req, "workspace_id")))
+			return call(c.RoadmapMine(optStr(req, "workspace_id")))
 		})
 	// No owner or completion reason: the server refuses both to the agent-scope
 	// token every MCP call carries.

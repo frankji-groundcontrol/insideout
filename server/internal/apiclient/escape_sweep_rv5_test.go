@@ -10,8 +10,11 @@ var sweepRV5 = []sweepCase{
 		return drop(c.UpdateProject(h, ProjectPatch{Title: &h, Description: &h, Status: &h, OwnerID: &h}))
 	}},
 	{"DeleteProject", "DELETE", "/projects/{h}", func(c *Client, h string) error { return c.DeleteProject(h) }},
-	{"ProjectUpdates", "GET", "/projects/{h}/updates", func(c *Client, h string) error { return drop(c.ProjectUpdates(h, "", 0)) }},
-	{"ProjectUpdates", "GET", "/projects/{h}/updates?before={h}&limit=5", func(c *Client, h string) error { return drop(c.ProjectUpdates(h, h, 5)) }},
+	{"ProjectUpdates", "GET", "/projects/{h}/updates", func(c *Client, h string) error { return drop(c.ProjectUpdates(h, UpdatesQuery{})) }},
+	{"ProjectUpdates", "GET", "/projects/{h}/updates?before={h}&limit=5", func(c *Client, h string) error { return drop(c.ProjectUpdates(h, UpdatesQuery{Before: h, Limit: 5})) }},
+	{"ProjectUpdates", "GET", "/projects/{h}/updates?node={h}&pending=true", func(c *Client, h string) error {
+		return drop(c.ProjectUpdates(h, UpdatesQuery{Node: h, Pending: true}))
+	}},
 	{"AddProjectUpdate", "POST", "/projects/{h}/updates", func(c *Client, h string) error {
 		return drop(c.AddProjectUpdate(h, ProjectUpdate{Kind: h, Content: h}))
 	}},
