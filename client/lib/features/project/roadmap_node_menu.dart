@@ -12,6 +12,8 @@ class RoadmapNodeMenu extends _NodeMenu {
     required super.parentWritable,
     required super.inheritedOwner,
     required super.openedRoot,
+    super.onAddAfter,
+    super.onAddParallel,
   });
 }
 
@@ -26,6 +28,8 @@ class _NodeMenu extends StatelessWidget {
     required this.parentWritable,
     required this.inheritedOwner,
     required this.openedRoot,
+    this.onAddAfter,
+    this.onAddParallel,
   });
 
   final String projectId;
@@ -36,6 +40,11 @@ class _NodeMenu extends StatelessWidget {
   final bool parentWritable;
   final ({String name, String via})? inheritedOwner;
   final bool openedRoot;
+
+  /// On the Canvas, where the caller may add to the step's layer: a step
+  /// that waits on this one, and one beside it.
+  final VoidCallback? onAddAfter;
+  final VoidCallback? onAddParallel;
 
   /// Move, delete and change the owner: a plan writer, or the owner of a
   /// branch above this node — a delegate keeps the root they were handed.
@@ -53,6 +62,8 @@ class _NodeMenu extends StatelessWidget {
       itemBuilder: (_) => [
         item('open', 'roadmap.openTree'),
         item('details', 'roadmap.details'),
+        if (onAddAfter != null) item('after', 'roadmap.addAfter'),
+        if (onAddParallel != null) item('parallel', 'roadmap.addParallel'),
         if (node.canWrite) ...[
           item('edit', 'roadmap.edit'),
           item('child', 'roadmap.addChild'),
@@ -83,7 +94,11 @@ class _NodeMenu extends StatelessWidget {
   Future<void> _act(BuildContext context, String value) async {
     final api = context.read<Session>().api;
     final l10n = context.read<Appearance>();
-    if (value == 'open') {
+    if (value == 'after') {
+      onAddAfter?.call();
+    } else if (value == 'parallel') {
+      onAddParallel?.call();
+    } else if (value == 'open') {
       GoRouter.maybeOf(context)?.go('/projects/$projectId/roadmap/${node.id}');
     } else if (value == 'details') {
       await showRoadmapNodeDetail(

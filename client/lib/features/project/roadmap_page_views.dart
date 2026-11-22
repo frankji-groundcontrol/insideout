@@ -101,13 +101,15 @@ extension _RoadmapViews on _RoadmapPageState {
             : l10n.t('roadmap.theirsEmpty', {'name': them.firstName}),
       );
     }
+    final steps = mine ? roadmapRoots(shown) : roadmapSteps(all);
+    final layer = mine ? null : _layerParent(steps, all);
     return RoadmapCanvas(
       projectId: widget.projectId,
-      steps: mine ? roadmapRoots(shown) : roadmapSteps(all),
+      steps: steps,
       all: all,
       titles: {..._c.outsideTitles, for (final n in all) n.id: n.title},
       inheritedOwner: (n) => _inherited(n, all),
-      menu: (n) => RoadmapNodeMenu(
+      menu: (n, {addAfter, addParallel}) => RoadmapNodeMenu(
         projectId: widget.projectId,
         node: n,
         onReload: _c.reload,
@@ -116,13 +118,46 @@ extension _RoadmapViews on _RoadmapPageState {
         parentWritable: roadmapParentWritable(all, n),
         inheritedOwner: _inherited(n, all),
         openedRoot: n.id == widget.rootId,
+        onAddAfter: addAfter,
+        onAddParallel: addParallel,
       ),
+      onAddStep: layer == null
+          ? null
+          : (heading, after, before) => addRoadmapStep(
+              context,
+              projectId: widget.projectId,
+              parentId: layer.id,
+              heading: heading,
+              after: after,
+              before: before,
+              onReload: _c.reload,
+            ),
+      onLink: (from, to) async {
+        final api = context.read<Session>().api;
+        final done = await guardWrite(
+          context,
+          () => api.addRoadmapDependency(to.id, from.id),
+        );
+        if (done && mounted) await _c.reload();
+      },
       // Shared cursors live in the steps' flow; Mine lays out other
       // steps, so it neither sends nor shows them.
       onCursor: mine ? null : _c.sendCursor,
       cursors: mine ? const [] : _c.cursors.values.toList(),
       docked: !widget.embedded,
     );
+  }
+
+  /// The parent a new step of the shown layer goes under (id null: a
+  /// top-level goal), when the caller may write there. Null on an opened
+  /// leaf, whose only step is the node itself.
+  ({String? id})? _layerParent(List<RoadmapNode> steps, List<RoadmapNode> all) {
+    if (steps.isEmpty || steps.first.id == widget.rootId) return null;
+    final id = steps.first.parentId;
+    final writable = id == null
+        ? _c.planWriter
+        : all.any((n) => n.id == id && n.canWrite);
+    return writable ? (id: id) : null;
   }
 
   /// The opened node's person in charge when that is someone else: the

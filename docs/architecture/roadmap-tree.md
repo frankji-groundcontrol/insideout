@@ -351,6 +351,22 @@ for a project the caller cannot see or a root not in the project; 403
 its subtree. The Go client has `RoadmapSteps`, the CLI `roadmap steps [--root
 node-id] <project-id>`, MCP `roadmap_steps(project_id, root?)`.
 
+**Drawing (web Canvas only).** The stages above are the Canvas's columns, so
+column 0 is still "can start now". The order inside a column is for the
+picture only, so it is not part of the shared contract. The client lays the
+flow out in layers (`roadmap_flow_layout.dart` and
+`roadmap_flow_layout_order.dart`, placed by `roadmap_flow_layout_box.dart`):
+- A link that skips columns gets one lane per column it passes.
+- Barycenter sweeps reorder each column to cross as few links as they can,
+  with position as the tie-break; a loop group stays together.
+- Each box moves toward the weighted centre of the boxes it links to,
+  keeping a 24px gap.
+
+The Canvas also adds steps to the shown layer: the "+ Next step" slot, and
+"Add a step after" and "Add a parallel step" in a step's menu. It links two
+steps when a step's handle is dragged onto another. These use the
+create-node and add-dependency routes, which the CLI and MCP already offer.
+
 ## Target
 
 Decided by the owner on 2026-11-21:
