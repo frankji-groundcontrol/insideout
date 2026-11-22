@@ -20,6 +20,7 @@ import 'roadmap_header.dart';
 import 'roadmap_lens_banner.dart';
 import 'roadmap_node_card.dart';
 import 'roadmap_progress_view.dart';
+import 'roadmap_step_add.dart';
 import 'roadmap_step_flow.dart';
 import 'roadmap_tree.dart';
 import 'roadmap_window_layer.dart';

@@ -6,13 +6,19 @@ import '../../chrome/product_dock.dart';
 import '../../session/appearance.dart';
 import '../../theme/cobalt.dart';
 import 'roadmap_canvas_view.dart';
+import 'roadmap_flow_layout.dart';
+import 'roadmap_flow_layout_box.dart';
 import 'roadmap_flow_routes.dart';
 import 'roadmap_painters.dart';
+import 'roadmap_step_add.dart';
 import 'roadmap_step_box.dart';
 import 'roadmap_step_flow.dart';
+import 'roadmap_step_link.dart';
 import 'roadmap_tree.dart';
 
 export 'roadmap_painters.dart';
+
+part 'roadmap_canvas_edit.dart';
 
 class CursorDot {
   CursorDot({
@@ -44,7 +50,21 @@ class RoadmapCanvas extends StatefulWidget {
     this.onCursor,
     this.cursors = const [],
     this.docked = true,
+    this.onAddStep,
+    this.onLink,
   });
+
+  /// Adds a step to the shown layer under [heading], waiting on [after] and
+  /// waited on by [before]; null where the caller may not add one.
+  final void Function(
+    String heading,
+    List<RoadmapNode> after,
+    List<RoadmapNode> before,
+  )?
+  onAddStep;
+
+  /// Makes [to] wait on [from], from a link handle dragged between steps.
+  final void Function(RoadmapNode from, RoadmapNode to)? onLink;
 
   /// The product dock floats over the foot of the view; a node's window has
   /// none.
@@ -61,7 +81,12 @@ class RoadmapCanvas extends StatefulWidget {
   /// Node titles by id, beyond [all] too, to name what a step waits on.
   final Map<String, String> titles;
   final ({String name, String via})? Function(RoadmapNode node)? inheritedOwner;
-  final Widget Function(RoadmapNode node)? menu;
+  final Widget Function(
+    RoadmapNode node, {
+    VoidCallback? addAfter,
+    VoidCallback? addParallel,
+  })?
+  menu;
 
   /// onCursor receives pointer moves in flow space: the view's pan and zoom
   /// do not change it (nullable for tests).
@@ -80,6 +105,9 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
   final _keys = <String, GlobalKey>{};
   var _viewport = Size.zero;
   var _placed = false;
+
+  /// A link drag in flow space: the step it leaves and the pointer.
+  ({String from, Offset at})? _drag;
 
   @override
   void dispose() {
@@ -109,6 +137,8 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
     final size = _flowSize;
     if (size != null) _view.value = roadmapFitMatrix(size, _viewport);
   }
+
+  void _redraw(VoidCallback change) => setState(change);
 
   void _zoom(double factor) => _view.value = roadmapZoomAbout(
     _view.value,
@@ -163,26 +193,7 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
     final lanes = roadmapFlowLanes([
       for (final column in flow.columns) [for (final s in column) s.id],
     ], flow.edges);
-    final steps = Row(
-      spacing: 72,
-      children: [
-        for (final (c, column) in flow.columns.indexed)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            spacing: Cobalt.space6,
-            children: [
-              for (final s in column) _step(s, flow, title),
-              // Empty room a long link runs through, clear of every box.
-              for (final lane in lanes.byColumn[c] ?? const <String>[])
-                SizedBox(
-                  key: _keys.putIfAbsent(lane, GlobalKey.new),
-                  width: RoadmapStepBox.width,
-                  height: Cobalt.space6,
-                ),
-            ],
-          ),
-      ],
-    );
+    final steps = _laidOut(flow, lanes, title);
     final stack = Stack(
       key: _flowKey,
       clipBehavior: Clip.none,
@@ -218,6 +229,7 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
         ),
         Padding(padding: const EdgeInsets.all(Cobalt.space6), child: steps),
         for (final c in widget.cursors) _cursor(context, c),
+        ?_dragLine(palette.brand),
       ],
     );
     final onCursor = widget.onCursor;
@@ -252,7 +264,11 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
       inside: roadmapDescendantCount(widget.all, s),
       waitsOn: [for (final d in flow.waitsOn[s.id] ?? const []) title(d)],
       inheritedOwner: widget.inheritedOwner?.call(s),
-      menu: widget.menu?.call(s),
+      menu: widget.menu?.call(
+        s,
+        addAfter: _addAfter(s),
+        addParallel: _addParallel(s, flow),
+      ),
     ),
   );
 
