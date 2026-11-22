@@ -34,7 +34,8 @@ These are the coordinator's, stated to the owner:
     navigating the page.
 - **Size:** windows open at about 760×600, clamped to the viewport.
 - **Streams:** each embedded page keeps its own live streams, and closes them
-  when its window closes.
+  when its window closes. Superseded the same day: windows share the page's
+  streams ([node window streams](../2026-11-22-node-window-streams/2026-11-22-node-window-streams.md)).
 
 ## Checklist
 

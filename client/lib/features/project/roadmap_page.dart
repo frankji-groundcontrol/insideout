@@ -79,13 +79,38 @@ class _RoadmapPageState extends State<RoadmapPage> {
       context.read<Session>().api,
       projectId: widget.projectId,
       rootId: widget.rootId,
+      live: !widget.embedded,
     )..addListener(_changed);
+    // The page lets its streams go while its tab is hidden.
+    if (!widget.embedded) {
+      _lifecycle = AppLifecycleListener(
+        onHide: () => _c.setVisible(false),
+        onShow: () => _c.setVisible(true),
+      );
+    }
   }
+
+  AppLifecycleListener? _lifecycle;
+
+  /// A window reloads when the page's stream says the roadmap changed.
+  Listenable? _pageChanges;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!widget.embedded || _pageChanges != null) return;
+    _pageChanges = RoadmapWindowScope.maybeOf(context)?.changes
+      ?..addListener(_reloadFromPage);
+  }
+
+  void _reloadFromPage() => _c.reload();
 
   void _changed() => setState(() {});
 
   @override
   void dispose() {
+    _pageChanges?.removeListener(_reloadFromPage);
+    _lifecycle?.dispose();
     _c.dispose();
     super.dispose();
   }
@@ -155,6 +180,7 @@ class _RoadmapPageState extends State<RoadmapPage> {
       body: RoadmapWindowLayer(
         projectId: widget.projectId,
         resolve: _resolve,
+        changes: _c.changes,
         child: page,
       ),
     );

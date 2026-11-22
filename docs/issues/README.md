@@ -7,7 +7,7 @@ evidence get a dated folder. English only.
 
 Bug records keep their historical `BUG-NNN` identity in the filename and
 prose (they are cross-referenced by number throughout `docs/`); new bug
-records continue the numbering (next: BUG-031).
+records continue the numbering (next: BUG-032).
 
 ## Open
 
@@ -18,6 +18,7 @@ records, open and closed, follows under the later headings.
 
 | Record | Kind | Since | What is open |
 | --- | --- | --- | --- |
+| [BUG-031 follow-up: one live stream per tab](./2026-11-22-bug-031-node-window-loaded-forever.md#follow-up-open) | structural debt | 2026-11-22 | several visible tabs can still use up the six plain-HTTP connections |
 | [Per-Project roles](./2026-11-21-per-project-roles.md) | product slice | 2026-11-21 | Decision Owner, Driver, Contributor, Reviewer and Viewer have no storage or check |
 | [Review 5 open findings](./2026-11-21-review-5-open-findings.md) | review ledger | 2026-11-21 | the review 5 High defects not yet remediated, and the owner decisions on them (proposals inside a subtree: decision 7) |
 | [Review 4 open findings](./2026-10-18-review-4-open-findings.md) | review ledger | 2026-10-18 | review 4's open residue, gate notes and owner rows |
@@ -272,6 +273,10 @@ prompt. Open by design; no `BUG-NNN` number consumed.
   while building, and every section card refetched the whole PRD; the tests'
   fixtures had been written to match the page, not the wire. **Fixed
   2026-10-10**, with a server-side pin of the shape.
+- [BUG-031 — a node's window showed "Loading…" forever](./2026-11-22-bug-031-node-window-loaded-forever.md)
+  — every tab and window held its own SSE streams and used up the browser's six
+  connections to the server. **Fixed 2026-11-22**: windows share the page's
+  streams, hidden tabs release theirs. The follow-up, one stream per tab, is open.
 
 ## Other records
 

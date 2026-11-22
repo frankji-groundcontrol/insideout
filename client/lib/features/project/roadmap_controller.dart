@@ -15,7 +15,12 @@ import 'roadmap_tree.dart';
 /// tree ([rootId] null), an opened subtree, and the Mine view over either.
 /// The page keeps only layout and local UI state; it listens and rebuilds.
 class RoadmapController extends ChangeNotifier {
-  RoadmapController(this._api, {required this.projectId, this.rootId}) {
+  RoadmapController(
+    this._api, {
+    required this.projectId,
+    this.rootId,
+    this.live = true,
+  }) {
     project = _api.getProject(projectId);
     _fetch();
     project
@@ -27,10 +32,20 @@ class RoadmapController extends ChangeNotifier {
         // A failed read leaves the plan-writer items hidden; the server
         // refuses them anyway.
         .catchError((_) {});
+    // A node's window holds no stream: a browser gives one server only six
+    // connections, and every open stream keeps one (BUG 2026-11-22).
+    if (!live) return;
     // The live progress reading is project-wide: a subtree keeps its own.
     if (rootId == null) _progressLoop();
     _presenceLoop();
   }
+
+  /// Whether this controller holds the live streams; a node's window does
+  /// not, and reloads on the page's [changes] instead.
+  final bool live;
+
+  /// Ticks on every live progress reading: the roadmap changed somewhere.
+  final changes = ValueNotifier<int>(0);
 
   final ApiClient _api;
   final String projectId;
@@ -84,6 +99,26 @@ class RoadmapController extends ChangeNotifier {
 
   /// Completed on dispose: the live streams close their connections with it.
   final _stop = Completer<void>();
+
+  /// Completed while the tab is hidden: the streams close until it shows.
+  Completer<void> _hidden = Completer<void>();
+  Completer<void> _shown = Completer<void>()..complete();
+
+  /// A hidden tab lets its streams go, so other tabs keep connections; on
+  /// showing again it reconnects and reloads what it missed.
+  void setVisible(bool visible) {
+    if (visible == _shown.isCompleted || !_live) return;
+    if (visible) {
+      _hidden = Completer<void>();
+      _shown.complete();
+      reload();
+    } else {
+      _shown = Completer<void>();
+      _hidden.complete();
+    }
+  }
+
+  Future<void> get _sessionStop => Future.any([_stop.future, _hidden.future]);
   late final String _clientId = DateTime.now().microsecondsSinceEpoch
       .toRadixString(36);
 
@@ -190,12 +225,18 @@ class RoadmapController extends ChangeNotifier {
   Future<void> _retrying(Future<void> Function() session) async {
     var backoff = const Duration(milliseconds: 500);
     while (_live) {
+      if (!_shown.isCompleted) {
+        await Future.any([_shown.future, _stop.future]);
+        if (!_live) return;
+        backoff = const Duration(milliseconds: 500);
+      }
       try {
         await session();
       } on ApiException catch (e) {
         if (e.status == 401 || e.status == 403 || e.status == 404) return;
       } catch (_) {}
       if (!_live) return;
+      if (!_shown.isCompleted) continue;
       await _backoff(backoff);
       backoff = backoff * 2 > const Duration(seconds: 5)
           ? const Duration(seconds: 5)
@@ -206,8 +247,9 @@ class RoadmapController extends ChangeNotifier {
   Future<void> _progressLoop() => _retrying(
     () => _api.progressStream(projectId, (p) {
       liveProgress = p;
+      changes.value++;
       _changed();
-    }, stop: _stop.future),
+    }, stop: _sessionStop),
   );
 
   Future<void> _presenceLoop() => _retrying(
@@ -229,7 +271,7 @@ class RoadmapController extends ChangeNotifier {
         );
         _changed();
       },
-      stop: _stop.future,
+      stop: _sessionStop,
     ),
   );
 
@@ -239,6 +281,7 @@ class RoadmapController extends ChangeNotifier {
     for (final t in _retryTimers) {
       t.cancel();
     }
+    changes.dispose();
     super.dispose();
   }
 }

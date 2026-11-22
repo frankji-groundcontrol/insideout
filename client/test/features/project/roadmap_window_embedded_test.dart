@@ -26,6 +26,19 @@ class _EmbedApi extends TreeApi {
 
   final presenceStops = <Future<void>>[];
 
+  /// The page's progress stream callback: a reading means a change.
+  void Function(RoadmapProgress progress)? onProgress;
+
+  @override
+  Future<void> progressStream(
+    String projectId,
+    void Function(RoadmapProgress progress) onProgress, {
+    Future<void>? stop,
+  }) {
+    this.onProgress = onProgress;
+    return super.progressStream(projectId, onProgress, stop: stop);
+  }
+
   @override
   Future<RoadmapProgress> roadmapProgress(String projectId) async =>
       RoadmapProgress(
@@ -157,22 +170,21 @@ void main() {
     );
   });
 
-  testWidgets('closing a window stops its live stream, not the page\'s', (
+  testWidgets('a window holds no live stream; the page\'s change reloads it', (
     tester,
   ) async {
+    // A browser gives one server six connections; every open stream keeps
+    // one, so windows share the page's (BUG 2026-11-22, forever loading).
     final api = _EmbedApi();
     await _openPayments(tester, api);
-    expect(api.presenceStops, hasLength(2), reason: 'the page, the window');
-    final stopped = <int>{};
-    for (final (i, stop) in api.presenceStops.indexed) {
-      stop.then((_) => stopped.add(i));
-    }
-    await tester.pump();
-    expect(stopped, isEmpty);
+    expect(api.presenceStops, hasLength(1), reason: 'the page alone');
 
-    await tester.tap(find.byKey(const Key('roadmap-window-close-a')));
+    final before = api.subtreeRoots.where((r) => r == 'a').length;
+    api.onProgress!(
+      RoadmapProgress(now: [], needsDeadline: [], next: [], doneCount: 0),
+    );
     await tester.pumpAndSettle();
-    expect(stopped, {1});
+    expect(api.subtreeRoots.where((r) => r == 'a').length, before + 1);
   });
 
   testWidgets('no view overflows a default or a minimum window', (

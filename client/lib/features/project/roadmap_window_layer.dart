@@ -20,8 +20,13 @@ class RoadmapWindowScope extends InheritedWidget {
     required this.tap,
     required this.open,
     required this.drill,
+    required this.changes,
     required super.child,
   });
+
+  /// Ticks when the page's live stream says the roadmap changed: windows
+  /// hold no stream of their own and reload on it.
+  final Listenable changes;
 
   final void Function(String nodeId) tap;
   final void Function(String nodeId) open;
@@ -44,8 +49,12 @@ class RoadmapWindowLayer extends StatefulWidget {
     super.key,
     required this.projectId,
     required this.resolve,
+    required this.changes,
     required this.child,
   });
+
+  /// The page's change ticks, handed to every window (RoadmapWindowScope).
+  final Listenable changes;
 
   final String projectId;
 
@@ -180,8 +189,13 @@ class _RoadmapWindowLayerState extends State<RoadmapWindowLayer> {
 
   /// The dialog route of a sheet sits outside this layer, so its page gets
   /// the scope again.
-  Widget _scope(Widget child) =>
-      RoadmapWindowScope(tap: _tap, open: _open, drill: _drill, child: child);
+  Widget _scope(Widget child) => RoadmapWindowScope(
+    tap: _tap,
+    open: _open,
+    drill: _drill,
+    changes: widget.changes,
+    child: child,
+  );
 
   @override
   Widget build(BuildContext context) => _scope(
