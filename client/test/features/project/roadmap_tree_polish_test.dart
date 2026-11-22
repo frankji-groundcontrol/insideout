@@ -30,23 +30,25 @@ class _LeafMineApi extends TreeApi {
   ];
 
   @override
-  Future<List<RoadmapNodeRead>> listMyRoadmap(String workspaceId) async => [
-    RoadmapNodeRead(
-      node: RoadmapNode(
-        id: 'a1',
+  Future<List<MyRoadmapRoot>> listMyRoadmap() async => [
+    MyRoadmapRoot(
+      read: RoadmapNodeRead(
+        node: RoadmapNode(
+          id: 'a1',
+          projectId: 'p1',
+          parentId: 'a',
+          title: 'Refunds',
+          description: '',
+          status: 'pending',
+          position: 0,
+          ownerId: 'u-dana',
+          ownerName: 'dana',
+          rollup: const RoadmapRollup(leaves: 1),
+        ),
+        ancestors: const [RoadmapNodeRef(id: 'a', title: 'Payments')],
         projectId: 'p1',
-        parentId: 'a',
-        title: 'Refunds',
-        description: '',
-        status: 'pending',
-        position: 0,
-        ownerId: 'u-dana',
-        ownerName: 'dana',
-        rollup: const RoadmapRollup(leaves: 1),
+        projectName: 'Loop project',
       ),
-      ancestors: const [RoadmapNodeRef(id: 'a', title: 'Payments')],
-      projectId: 'p1',
-      projectName: 'Loop project',
     ),
   ];
 }

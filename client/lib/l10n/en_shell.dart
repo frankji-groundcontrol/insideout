@@ -43,6 +43,7 @@ const enShell = <String, String>{
   'home.loopTrail': 'Idea · Version · Commit · Roadmap · Evidence',
   'home.captureIdea': 'Capture an idea',
   'home.myWork': 'My work',
+  'home.myWork.blocking': 'Blocking: {titles}',
   'time.justNow': 'just now',
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',
