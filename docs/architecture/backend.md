@@ -202,7 +202,7 @@ Domain handlers live in `internal/api`, grouped by resource:
   `agent_root.go` the token mint and the root-scoped token's subtree check)
 - teams and work: `workspaces.go`, `members.go`, `projects.go`,
   `project_updates.go` and `project_updates_page.go` (the paged feed,
-  `GET /projects/{pid}/updates?before=&limit=`), `ideas.go`, `guide.go`
+  `GET /projects/{pid}/updates?before=&limit=&node=&pending=`), `ideas.go`, `guide.go`
 - PRDs: `prd*.go` (PRDs, audience views, readiness, Commit; `prd_list.go`
   the workspace's PRD list, `GET /workspaces/{id}/prds`, member-visible and
   agent-allowed; a project view's `prdId` names the PRD it was built from),

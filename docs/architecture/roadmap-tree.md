@@ -145,8 +145,9 @@ enforced only in the store (`requireNodeManager`, `requirePlanWriter`).
 | `POST /api/v1/roadmap/{nid}/delegate`, `/handback` | Hand a node to a member (400 for a non-member), hand it back | `server/internal/api/roadmap_delegation.go` |
 | `GET /api/v1/roadmap/{nid}/assignments` | The node's owner history, newest first | `server/internal/api/roadmap_delegation.go` |
 | `POST /api/v1/roadmap/{nid}/dependencies`, `DELETE .../dependencies/{did}` | Make a node wait on another, or stop it (see Dependencies below) | `server/internal/api/roadmap_dependencies.go` |
-| `GET /api/v1/workspaces/{id}/roadmap/mine` | The caller's topmost owned nodes in the workspace, each `{node, projectId, projectName, ancestors}`, by project then position | `server/internal/api/roadmap_read.go`, `server/internal/store/roadmap_mine.go` |
-| `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping; `?root={nid}` restricts it to one subtree, and a root-scoped agent token defaults to its root as the list does (`requestRoot`, `server/internal/api/roadmap_steps.go`) | `server/internal/api/roadmap_progress.go` |
+| `GET /api/v1/workspaces/{id}/roadmap/mine` | The topmost nodes the caller is in charge of in the workspace, each `{node, projectId, workspaceId, projectName, ancestors, now, waitsOn, blocking}`, by project then position (see People in charge below) | `server/internal/api/roadmap_mine.go`, `server/internal/store/roadmap_mine.go`, `roadmap_first_glance.go` |
+| `GET /api/v1/roadmap/mine` | The same across every workspace the caller is a member of | `server/internal/api/roadmap_mine.go` |
+| `GET /api/v1/projects/{pid}/roadmap/progress` and `/stream` | Progress view and its live ping; `?root={nid}` restricts it to one subtree, and a root-scoped agent token defaults to its root as the list does (`requestRoot`, `server/internal/api/roadmap_steps.go`); Next ranks ready items first (see People in charge below) | `server/internal/api/roadmap_progress.go` |
 | `GET`, `POST /api/v1/roadmap/{nid}/evidence` | Read evidence, add an observation | `server/internal/api/roadmap_validation.go` |
 | `POST /api/v1/roadmap/{nid}/validate` | Human validation | `server/internal/api/roadmap_validation.go` |
 | `POST /api/v1/prds/{pid}/build` and `/confirm` | Draft (read-only, approved PRD only) and replace the tree; confirm creates the project and refuses to erase evidence or done or validated nodes without `force` | `server/internal/api/roadmap_ai.go` |
@@ -225,6 +226,48 @@ context focus below). The Go client has `AddRoadmapDependency` and
 Known limit: a move is not checked against existing links, so moving a node
 under the node it waits on (or the reverse) keeps a link the add would now
 refuse as `dependency_in_tree`.
+
+### People in charge
+
+Each person sees what they are in charge of at the first glance (owner,
+2026-11-22: "people-in-charge mode").
+
+- **In charge.** A person is in charge of the nodes they own and, for a
+  project root nobody owns, the project owner and every workspace admin are
+  (`insideout._is_plan_writer`). `mine` lists the topmost of these: a node
+  under one the caller is already in charge of is not listed again. On the
+  Spark demo Maya (project owner) and Jo (admin) both get "Spark MVP", Leo
+  gets Matching and Chat, Sam his three branches and leaves
+  (`server/internal/store/roadmap_mine.go`).
+- **First glance.** Each `mine` root carries `workspaceId`, `now` (the
+  in-progress dated leaves at or below it, as Progress picks its Now, earliest
+  deadline first, each a Progress item with `pressure`, `ownerName` and
+  `waitsOn`), `waitsOn` (unfinished nodes outside the root that unfinished
+  work inside waits on) and `blocking` (unfinished nodes outside that wait on
+  unfinished work inside), each `{id, title, status, ownerName}` by title,
+  `[]` when none. Unfinished means not done or validated, on the node's own
+  status. These sit on the `mine` wrapper; the node view is unchanged
+  (`server/internal/store/roadmap_first_glance.go`,
+  `server/internal/api/roadmap_mine.go`).
+- **Across workspaces.** `GET /api/v1/roadmap/mine` answers the same for every
+  workspace of the caller's; agent tokens may call it. The Go client's
+  `RoadmapMine("")`, the CLI `roadmap mine` with no id and MCP `roadmap_mine`
+  without `workspace_id` use it.
+- **Next order.** Every Progress item carries `waitsOn`, the unfinished nodes
+  it waits on as `{id, title}`, omitted when none. Next puts the ready items
+  (nothing unfinished to wait on) before the waiting ones, each group by
+  deadline, then keeps the first three, so a ready item due later outranks a
+  waiting one due sooner (`server/internal/roadmaptime/roadmaptime.go`). The
+  web Progress card shows "Waits on: <titles>"
+  (`client/lib/features/project/roadmap_progress_view.dart`).
+- **Feed.** `GET /api/v1/projects/{pid}/updates?node={nid}` keeps the updates
+  about that node and the nodes below it. Only delegation, hand-back and done
+  rows and proposals filed about a node carry `node_id`; notes, progress,
+  blockers and the decision notes carry none, so they never match. A node of
+  another project answers 404. `?pending=true` keeps the agent proposals
+  with no decision yet, and only for a caller who may decide them (a plan
+  writer); anyone else gets an empty page. Both combine with `before` and
+  `limit` (`server/internal/store/project_updates.go`).
 
 ### Agent context focus
 
