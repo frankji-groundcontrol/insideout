@@ -21,6 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-22 — Open a node as its person in charge sees it](./2026-11-22-open-a-node-as-its-person-in-charge.md)
+  — "the view the person who's in charge": a banner with their first glance,
+  Progress first, and a toggle for their own nodes.
+
 - [2026-11-22 — Roadmap Canvas: an ordered flow of steps](./2026-11-22-roadmap-canvas-graph.md)
   — "only things in order": one level of steps ordered by dependencies,
   opening a step for the level below, with drag to pan and zoom.
