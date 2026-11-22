@@ -9,21 +9,22 @@ import (
 )
 
 // handleListRoadmap answers the project's nodes as a flat list, or with
-// ?root={nid} only that node and the nodes below it (rv5-TREEB-03).
+// ?root={nid} only that node and the nodes below it (rv5-TREEB-03); a
+// root-scoped agent token reads its root by default (requestRoot).
 func (s *Server) handleListRoadmap(w http.ResponseWriter, r *http.Request) {
 	userID, _ := UserID(r.Context())
 	pid, ok := pathUUID(w, r, "pid")
 	if !ok {
 		return
 	}
+	root, ok := s.requestRoot(w, r, userID, pid)
+	if !ok {
+		return
+	}
 	var nodes []store.RoadmapNode
 	var err error
-	if raw := r.URL.Query().Get("root"); raw != "" {
-		root, ok := parseUUIDParam(w, "root", raw)
-		if !ok {
-			return
-		}
-		nodes, err = s.store.ListRoadmapSubtree(r.Context(), userID, pid, root)
+	if root != nil {
+		nodes, err = s.store.ListRoadmapSubtree(r.Context(), userID, pid, *root)
 	} else {
 		nodes, err = s.store.ListRoadmap(r.Context(), userID, pid)
 	}

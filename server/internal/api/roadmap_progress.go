@@ -24,7 +24,7 @@ func (s *Server) handleRoadmapProgress(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	root, ok := progressRoot(w, r)
+	root, ok := s.requestRoot(w, r, userID, pid)
 	if !ok {
 		return
 	}
@@ -50,7 +50,7 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 		httpx.WriteError(w, http.StatusInternalServerError, "streaming unsupported", "", nil)
 		return
 	}
-	root, ok := progressRoot(w, r)
+	root, ok := s.requestRoot(w, r, userID, pid)
 	if !ok {
 		return
 	}
@@ -110,17 +110,6 @@ func (s *Server) handleRoadmapProgressStream(w http.ResponseWriter, r *http.Requ
 			flusher.Flush()
 		}
 	}
-}
-
-// progressRoot reads the optional ?root={nid} that scopes Progress to one
-// subtree (rv5-TREEB-08).
-func progressRoot(w http.ResponseWriter, r *http.Request) (*uuid.UUID, bool) {
-	raw := r.URL.Query().Get("root")
-	if raw == "" {
-		return nil, true
-	}
-	id, ok := parseUUIDParam(w, "root", raw)
-	return &id, ok
 }
 
 // roadmapProgress assembles Progress from the project's nodes, or from root

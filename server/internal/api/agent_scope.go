@@ -88,6 +88,7 @@ var agentRoutePolicy = map[string]agentAccess{
 	"DELETE /api/v1/roadmap/{nid}/dependencies/{did}": agentOK,
 	"GET /api/v1/projects/{pid}/guide":                agentOK,
 	"GET /api/v1/projects/{pid}/roadmap/progress":     agentOK,
+	"GET /api/v1/projects/{pid}/roadmap/steps":        agentOK,
 	"GET /api/v1/roadmap/{nid}/evidence":              agentOK,
 	"GET /api/v1/roadmap/{nid}/assignments":           agentOK,
 	"GET /api/v1/workspaces/{id}/roadmap/mine":        agentOK,

@@ -66,6 +66,7 @@ var agentAllowedRoutes = []string{
 	"DELETE /api/v1/roadmap/{nid}/dependencies/{did}",
 	"GET /api/v1/projects/{pid}/guide",
 	"GET /api/v1/projects/{pid}/roadmap/progress",
+	"GET /api/v1/projects/{pid}/roadmap/steps",
 	"GET /api/v1/roadmap/{nid}/evidence",
 	"GET /api/v1/roadmap/{nid}/assignments",
 	"GET /api/v1/workspaces/{id}/roadmap/mine",
