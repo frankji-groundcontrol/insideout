@@ -68,7 +68,8 @@ commits list, revisions list and create, and `POST /prds/{id}/status` to `draft`
 `reviewing` only); roadmap (list, with an optional `?root=` subtree, one-node
 read `GET /roadmap/{nid}`, the caller's own tree `GET /workspaces/{id}/roadmap/mine`,
 a node's owner history `GET /roadmap/{nid}/assignments`, add, update, move,
-guide, progress, evidence read) and
+dependencies, guide, progress, the ordered steps `GET /projects/{pid}/roadmap/steps`,
+evidence read) and
 the four AI build/expand routes; repo bind and GitHub sync;
 `agent/context`, `agent/checkpoint`, `agent/propose`; the presence snapshot.
 
@@ -123,8 +124,23 @@ as without a root), and `POST /prds/{pid}/build/confirm`
 refuses a root-scoped token outright, since a rebuild replaces the whole tree.
 The check is `agentRootRefuses` (`server/internal/api/agent_root.go`) over
 `Store.NodeInSubtree`; it runs in its own transaction before the write's, so a
-concurrent move can slip a node out between the two (a recorded shortcut). `GET /agent/context` with no `focus` defaults its focus
-to the root when the root is a node of the requested project. The MCP binary
+concurrent move can slip a node out between the two (a recorded shortcut).
+
+Reads default to the root too, so the agent sees what its human cares about
+first. When the root is a node of the requested project and the request names
+no root or focus:
+
+- `GET /agent/context` focuses on the root.
+- `GET /projects/{pid}/roadmap` and `/roadmap/progress` read the root's
+  subtree (`requestRoot`, `server/internal/api/roadmap_steps.go`).
+- `GET /projects/{pid}/roadmap/steps` opens the root.
+
+An explicit `?root` on the list and Progress still reads anywhere in the
+project (owner decision 2). On `/roadmap/steps` a `?root` outside the token's
+subtree answers 403 `agent_scope_denied`, because the steps route is how an
+agent walks its own level. A token without a root, and a full token, briefed
+with no focus, open on what the human is in charge of
+([roadmap tree](./roadmap-tree.md), "Agent context focus"). The MCP binary
 asks for a root when `INSIDEOUT_AGENT_ROOT` names one
 (`apiclient.AgentScopedTo`, called from `server/internal/mcpserver/server.go`);
 the held token is keyed by server, user and root.
