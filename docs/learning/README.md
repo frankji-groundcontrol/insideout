@@ -6,6 +6,7 @@ and when to apply it again.
 
 | Date | Record | Source |
 |------|--------|--------|
+| 2026-11-22 | [Lifted dependencies can loop, and a layout must be checked on real data](./2026-11-22-lifted-dependencies-can-loop.md) | [roadmap graph and dependencies](../changelogs/2026-11-22-roadmap-graph-and-dependencies.md) |
 | 2026-11-21 | [Map files before fanning out, and judge between steps](./2026-11-21-map-files-before-fanning-out-and-judge-between-steps.md) | [review 5 remediation](../changelogs/2026-11-21-rv5-remediation/index.md) |
 | 2026-10-20 | [A stored completion reason does not cover the next close](./2026-10-20-a-stored-reason-does-not-cover-the-next-close.md) | [completion evidence or sentence](../changelogs/2026-10-20-completion-evidence-or-reason.md) |
 | 2026-10-20 | [Pinned columns and a creator pin block the app role from erasing an account](./2026-10-20-pinned-columns-block-erasure.md) | [retention and erasure](../changelogs/2026-10-20-retention-and-erasure.md) |
