@@ -10,15 +10,14 @@ path and current warnings, never history.
 
 ## What to do next
 
-**2026-11-22: `feat/roadmap-graph` is in flight, not merged.** It holds the
-band polish, node dependencies on every surface, and the Canvas as one level
-of steps ordered by dependencies
+**2026-11-22: the roadmap follows "people in charge" on every surface**
 ([changelog](changelogs/2026-11-22-roadmap-graph-and-dependencies.md)).
-Server clusters S1 (ordered steps endpoint, agent defaults) and S2 (`mine`
-first glance, Next order, feed filters) are being integrated from the
-[plan](plans/2026-11-22-roadmap-canvas-graph-and-dependencies/2026-11-22-roadmap-canvas-graph-and-dependencies.md),
-then the gates run once and one PR merges with `[skip ci]`. The local dev
-database has the dependencies migration applied.
+Nodes can depend on each other. The Canvas shows one level of steps in
+dependency order, with pan and zoom, and the hierarchy is reached by opening
+a step. `GET /roadmap/steps`, `roadmap steps` and MCP `roadmap_steps` give
+the same order, pinned by one shared fixture. `mine` and the dashboard's "My
+work" open on what each person is in charge of, and agents brief on their
+human's work. The local dev database has the dependencies migration applied.
 
 **2026-11-21: the review 5 remediation is merged to `main`** (#24,
 `a945784`). Every gate was green on the integrated tree

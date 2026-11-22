@@ -111,12 +111,12 @@ resolves those by hand, reviews each diff, runs the full gates once on
   - `mine` works across all of a person's workspaces.
   - Progress Next puts ready items first.
   - The feed gains `?node=` and `?pending=`.
-- [ ] C5, client: My work shows Now, waits on and blocking. The Canvas keeps
+- [x] C5, client: My work shows Now, waits on and blocking. The Canvas keeps
       its Dart ordering, since Mine needs it, and one shared fixture pins it
       to the endpoint instead.
 - [x] The seed's Matching → Launch link, which made a loop, is replaced by
       one inside Matching.
 - [x] The Spark demo seed adds eight dependencies and checks three refusals.
-- [ ] Integrated gates green; design QA and changelog recorded; UI checked live
+- [x] Integrated gates green; design QA and changelog recorded; UI checked live
       on the Spark data.
 - [ ] PR merged.

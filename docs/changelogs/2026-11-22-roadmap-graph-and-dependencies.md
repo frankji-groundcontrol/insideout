@@ -1,7 +1,7 @@
 # 2026-11-22 — Roadmap: ordered-flow Canvas, node dependencies, band polish
 
 Plan: [roadmap canvas graph and dependencies](../plans/2026-11-22-roadmap-canvas-graph-and-dependencies/2026-11-22-roadmap-canvas-graph-and-dependencies.md).
-The work is on the branch `feat/roadmap-graph`. The owner asked that every
+Merged from `feat/roadmap-graph`. The owner asked that every
 surface follow the same product logic ("people-in-charge mode"). An audit
 found that every no-argument read returned the whole project, identical for
 everyone; S1 and S2 fix that.
@@ -15,6 +15,7 @@ everyone; S1 and S2 fix that.
 | Canvas (C3) | One level of steps, ordered left to right by dependencies lifted to that level. Loops are grouped. Links that skip a column run through reserved lanes. Opening a step shows its own steps, so that is how the hierarchy is reached. Drag pans, the wheel or a pinch zooms, and there are +/−/fit buttons. A "Depends on…" picker sits in the node menu. The minimap and the fold toggles are gone ([design QA](../design-qa/2026-11-22-roadmap-canvas-graph.md)). | `f717d78c`, `721daf0b` and earlier C3 commits |
 | Ordered steps and agents (S1) | `GET /projects/{pid}/roadmap/steps?root=` returns one level of steps in dependency order, with the Go client, CLI `roadmap steps` and MCP `roadmap_steps`. The agent context defaults to what its human is in charge of, and adds `waitsOn`, `blocks` and `steps` on the focus. Root-scoped tokens default list and progress to their root. The MCP instructions start from `roadmap_mine`. | `8c27250f`, `f0d72ab8`, `c430060c`, `d3375d91` |
 | First glance and order (S2) | `mine` counts the root you are in charge of: the nodes you own, plus an unowned project root for the project owner and workspace admins. Each root carries `now`, `waitsOn` and `blocking`. `GET /roadmap/mine` covers every workspace, and the CLI and MCP no longer need a workspace id. Progress Next puts ready items first, and a waiting item says what it waits on. The feed takes `?node=` and `?pending=`. | `b7229e57`, `c0d5eafe`, `44d1c3c9` |
+| Web first glance (C5) | The dashboard's "My work" makes one `GET /roadmap/mine` call. Each root the person is in charge of shows its Now items with pressure chips, plus "Waits on" and "Blocking" lines. Roots with overdue or high-risk work come first. A tap opens the root on the Canvas. | `fb777674` |
 | One step order everywhere | The Go `roadmaptime.Steps` and the Canvas's `roadmap_step_flow.dart` read one shared fixture (`server/internal/roadmaptime/testdata/steps_cases.json`, seven cases), so the API and the Canvas cannot drift apart. Mine still needs the Dart version, so the Canvas keeps its own instead of calling the endpoint. | `43bdfb8f` |
 | Demo data | The Spark seed adds eight dependencies, with the closed beta waiting on four teams, and checks the self, cycle and in-tree refusals. A link that made Matching and Launch wait on each other was replaced. | `53d823dd`, `d32720db` |
 
@@ -38,7 +39,7 @@ Full gates on the integrated branch, after S1 and S2:
 - `go build`, `go vet`, `gofmt`: clean.
 - `go test ./...`: passes without a database, and on a fresh database with 0
   skipped tests.
-- `flutter analyze`: 8 infos. `flutter test`: 713 passed.
+- `flutter analyze`: 8 infos. `flutter test`: 715 passed, after C5.
 - Every `check_*.py` and the redaction check: pass.
 
 The CLI was checked against the live server:
