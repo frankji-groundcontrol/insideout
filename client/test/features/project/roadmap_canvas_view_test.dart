@@ -88,8 +88,8 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('a step opens as its own tree, on Progress; a drag on it '
-      'pans instead', (tester) async {
+  testWidgets('a double-click opens a step as its own tree, on Progress; a '
+      'drag on it pans instead', (tester) async {
     final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
     router.go('/projects/p1/roadmap?view=canvas');
     await tester.pumpAndSettle();
@@ -106,8 +106,7 @@ void main() {
     );
     expect((_shift(tester) - before).dx, greaterThan(60));
 
-    await tester.tap(find.text('Payments'));
-    await tester.pumpAndSettle();
+    await doubleTapNode(tester, find.text('Payments'));
     final uri = router.routerDelegate.currentConfiguration.uri;
     expect(uri.path, '/projects/p1/roadmap/a');
     expect(uri.queryParameters['view'], isNull);
@@ -118,12 +117,12 @@ void main() {
     expect(stepBox('a'), findsNothing);
   });
 
-  testWidgets('a leaf step opens its detail', (tester) async {
+  testWidgets('a leaf step opens its window', (tester) async {
     final router = await pumpTreeRouter(tester, treeSession(TreeApi()));
     router.go('/projects/p1/roadmap?view=canvas');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Search'));
-    await tester.pumpAndSettle();
+    await tapNode(tester, find.text('Search'));
+    expect(find.byKey(const Key('roadmap-window-b')), findsOneWidget);
     expect(
       router.routerDelegate.currentConfiguration.uri.path,
       '/projects/p1/roadmap',

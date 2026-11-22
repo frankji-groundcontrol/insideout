@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -309,5 +310,21 @@ Future<void> pumpTreeCard(
 
 Future<void> openNodeMenu(WidgetTester tester) async {
   await tester.tap(find.byType(PopupMenuButton<String>));
+  await tester.pumpAndSettle();
+}
+
+/// One tap on a roadmap node: its window opens once a double-click's wait
+/// has passed.
+Future<void> tapNode(WidgetTester tester, Finder node) async {
+  await tester.tap(node);
+  await tester.pump(kDoubleTapTimeout);
+  await tester.pumpAndSettle();
+}
+
+/// A double-click on a roadmap node: it opens as its own roadmap.
+Future<void> doubleTapNode(WidgetTester tester, Finder node) async {
+  await tester.tap(node);
+  await tester.pump(const Duration(milliseconds: 50));
+  await tester.tap(node);
   await tester.pumpAndSettle();
 }

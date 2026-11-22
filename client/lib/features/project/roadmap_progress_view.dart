@@ -9,6 +9,7 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import 'roadmap_band_scaffold.dart';
+import 'roadmap_window_layer.dart';
 
 /// FEAT-05 — PRODUCT.md's default Progress view, rendered from
 /// GET /roadmap/progress (server truth): Now holds only deadlined
@@ -137,6 +138,7 @@ class _ProgressCard extends StatelessWidget {
     final theme = Theme.of(context);
     final pressure = item.pressure;
     return FieldCard(
+      onTap: () => RoadmapWindowScope.maybeOf(context)?.tap(item.id),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
