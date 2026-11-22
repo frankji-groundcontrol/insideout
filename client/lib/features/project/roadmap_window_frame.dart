@@ -102,6 +102,7 @@ class RoadmapWindowFrame extends StatelessWidget {
           Expanded(
             child: Text(
               node.title,
+              key: Key('roadmap-window-title-${node.id}'),
               style: Theme.of(context).textTheme.titleSmall,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

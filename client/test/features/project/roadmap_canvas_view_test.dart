@@ -127,11 +127,10 @@ void main() {
       router.routerDelegate.currentConfiguration.uri.path,
       '/projects/p1/roadmap',
     );
-    // The leaf's own roadmap, in the window.
-    final title = find.descendant(
-      of: find.byKey(const Key('roadmap-window-b')),
-      matching: find.byKey(const Key('roadmap-title')),
+    // The leaf's own roadmap, in the window, named by its title bar.
+    expect(
+      tester.widget<Text>(find.byKey(const Key('roadmap-window-title-b'))).data,
+      'Search',
     );
-    expect(tester.widget<Text>(title).data, 'Search');
   });
 }

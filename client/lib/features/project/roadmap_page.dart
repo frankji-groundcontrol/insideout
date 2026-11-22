@@ -192,7 +192,8 @@ class _RoadmapPageState extends State<RoadmapPage> {
       children: [
         RoadmapHeader(
           compact: narrow,
-          top: widget.embedded ? Cobalt.space4 : 64,
+          top: widget.embedded ? Cobalt.space3 : 64,
+          windowed: widget.embedded,
           viewChoices: choices,
           onAdd: (widget.rootId == null ? _c.planWriter : _c.rootWritable)
               ? _addRoot

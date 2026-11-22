@@ -19,7 +19,12 @@ class RoadmapBands extends StatelessWidget {
     this.progress,
     this.planWriter = false,
     this.card,
+    this.docked = true,
   });
+
+  /// Under the page's dock the list ends a dock's height lower; a node's
+  /// window has no dock.
+  final bool docked;
 
   final String projectId;
   final List<RoadmapNode> nodes;
@@ -114,7 +119,12 @@ class RoadmapBands extends StatelessWidget {
       card: card,
     );
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, ProductDock.clearance),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        8,
+        24,
+        docked ? ProductDock.clearance : 16,
+      ),
       children: [
         band('roadmap.bandNow', [(null, now)], now: true),
         const SizedBox(height: 16),

@@ -81,8 +81,10 @@ void main() {
     expect(_path(router), '/projects/p1/roadmap');
     expect(_window('a'), findsOneWidget);
     Finder inside(Finder f) => find.descendant(of: _window('a'), matching: f);
-    final title = inside(find.byKey(const Key('roadmap-title')));
-    expect(tester.widget<Text>(title).data, 'Payments');
+    expect(
+      tester.widget<Text>(find.byKey(const Key('roadmap-window-title-a'))).data,
+      'Payments',
+    );
     expect(inside(find.textContaining("PRIYA NAIR'S VIEW")), findsOneWidget);
     expect(inside(find.text('Refunds')), findsWidgets);
   });
@@ -221,11 +223,12 @@ void main() {
       findsOneWidget,
     );
     // The node's own roadmap, its view toggles in the sheet.
-    final title = find.descendant(
-      of: sheet,
-      matching: find.byKey(const Key('roadmap-title')),
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('roadmap-window-title-a1')))
+          .data,
+      'Refunds',
     );
-    expect(tester.widget<Text>(title).data, 'Refunds');
     expect(
       find.descendant(of: sheet, matching: find.text('Canvas')),
       findsOneWidget,

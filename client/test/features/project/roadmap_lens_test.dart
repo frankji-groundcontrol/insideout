@@ -158,11 +158,12 @@ void main() {
     await tester.pumpAndSettle();
     final window = find.byKey(const Key('roadmap-window-a1'));
     expect(window, findsOneWidget);
-    final title = find.descendant(
-      of: window,
-      matching: find.byKey(const Key('roadmap-title')),
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('roadmap-window-title-a1')))
+          .data,
+      'Refunds',
     );
-    expect(tester.widget<Text>(title).data, 'Refunds');
   });
 
   testWidgets('the project roadmap has no banner and keeps Mine', (

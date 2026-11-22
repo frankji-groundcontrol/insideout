@@ -16,6 +16,7 @@ extension _RoadmapViews on _RoadmapPageState {
         return FutureBuilder(
           future: _c.nodes,
           builder: (context, nodes) => RoadmapProgressView(
+            docked: !widget.embedded,
             progress: progress,
             // Blank until the goals are known, so the wrong
             // sentence never flashes.
@@ -56,6 +57,7 @@ extension _RoadmapViews on _RoadmapPageState {
                 return const BlockLoading();
               }
               return RoadmapBands(
+                docked: !widget.embedded,
                 projectId: widget.projectId,
                 nodes: snap.data!,
                 onReload: _c.reload,

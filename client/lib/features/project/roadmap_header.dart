@@ -20,7 +20,13 @@ class RoadmapHeader extends StatelessWidget {
     this.breadcrumb,
     this.title,
     this.top = 64,
+    this.windowed = false,
   });
+
+  /// In a node's window: the title bar already names the node, so the big
+  /// title and the lead line go, and the toggles share one row with the
+  /// button.
+  final bool windowed;
 
   /// The room above the title: the page clears the utility block; a node's
   /// window has none.
@@ -62,6 +68,31 @@ class RoadmapHeader extends StatelessWidget {
             icon: Icons.add,
             onPressed: onAdd,
           );
+    if (windowed) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(20, top, 20, 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ?breadcrumb,
+            const SizedBox(height: Cobalt.space2),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Wrap(
+                    spacing: Cobalt.space2,
+                    runSpacing: Cobalt.space2,
+                    children: viewChoices,
+                  ),
+                ),
+                if (add != null) ...[const SizedBox(width: Cobalt.space2), add],
+              ],
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: EdgeInsets.fromLTRB(28, top, 28, 8),
       child: compact

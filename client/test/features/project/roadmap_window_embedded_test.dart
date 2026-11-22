@@ -151,14 +151,9 @@ void main() {
     expect(_path(router), '/projects/p1/roadmap');
     expect(_window('a'), findsNothing);
     expect(_window('r'), findsOneWidget);
-    final title = _in('r', find.byKey(const Key('roadmap-title')));
-    expect(tester.widget<Text>(title).data, 'Ship');
     expect(
-      find.descendant(
-        of: find.byKey(const Key('roadmap-window-bar-r')),
-        matching: find.text('Ship'),
-      ),
-      findsOneWidget,
+      tester.widget<Text>(find.byKey(const Key('roadmap-window-title-r'))).data,
+      'Ship',
     );
   });
 
@@ -196,12 +191,27 @@ void main() {
     await _everyView(tester, 'a');
   });
 
+  testWidgets('a window leaves no room for a dock it does not have', (
+    tester,
+  ) async {
+    await _openPayments(tester);
+    final list = tester.widget<ListView>(
+      find
+          .descendant(
+            of: _in('a', find.byType(RoadmapProgressView)),
+            matching: find.byType(ListView),
+          )
+          .first,
+    );
+    expect((list.padding! as EdgeInsets).bottom, 16);
+  });
+
   testWidgets('the page in a window reads the window as its screen', (
     tester,
   ) async {
     await _openPayments(tester);
     MediaQueryData query() => MediaQuery.of(
-      tester.element(_in('a', find.byKey(const Key('roadmap-title')))),
+      tester.element(_in('a', find.byType(RoadmapProgressView))),
     );
     expect(query().size.width, 760);
     expect(query().size.height, lessThan(600));
