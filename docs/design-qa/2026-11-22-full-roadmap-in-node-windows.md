@@ -22,3 +22,15 @@ charge, with every view and action, and laid out to the window's size
 ## Status
 
 Fixed: see the [changelog](../changelogs/2026-11-22-full-roadmap-in-node-windows.md).
+
+## Forever loading
+
+> "forever loading"
+
+The owner's screenshot shows a node window on "Loading…", its toggle
+reading "Mine" and no breadcrumb. The browser had run out of connections
+to the server: every open tab and window held its own live streams.
+Windows now share the page's streams, and hidden tabs release theirs
+([BUG-031](../issues/2026-11-22-bug-031-node-window-loaded-forever.md)).
+
+Status: fixed; see the [changelog](../changelogs/2026-11-22-node-window-streams.md).

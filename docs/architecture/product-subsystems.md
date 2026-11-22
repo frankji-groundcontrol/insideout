@@ -94,6 +94,11 @@ views (PRODUCT.md principle 3).
   `event: cursor` frames (session, name, x/y in canvas content space)
   on the same stream; nothing is stored; the web canvas renders other
   sessions as labeled pointers and drops them when presence leaves.
+- Connections: a browser gives one server six HTTP/1.1 connections and
+  every SSE stream keeps one. So the roadmap page alone holds the
+  progress and presence streams. Node windows reload on the page's
+  progress ticks, and a hidden tab releases its streams
+  ([BUG-031](../issues/2026-11-22-bug-031-node-window-loaded-forever.md)).
 
 ## GitHub evidence loop
 
