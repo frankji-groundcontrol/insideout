@@ -53,8 +53,10 @@ client/lib/
                       controller (nodes, progress, presence, cursors, stream
                       retries), header, breadcrumb, bands, the canvas (one
                       level of steps ordered by lifted dependencies in
-                      roadmap_step_flow.dart, step box, flow painter, lane
-                      routes, pan/zoom view), progress view, node menu,
+                      roadmap_step_flow.dart, drawn by the layered layout in
+                      roadmap_flow_layout*.dart, step box, flow painter,
+                      lane routes, pan/zoom view, the add-step slot and
+                      drag-to-link), progress view, node menu,
                       dependency picker, edit, delegate and detail);
                       prd (desk, coach, versions stack + commit details,
                       revisions, export)

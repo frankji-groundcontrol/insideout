@@ -21,6 +21,7 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-22 — Adding, linking and laying out steps on the Canvas](./2026-11-22-canvas-add-link-and-layout.md)
 - [2026-11-22 — The full roadmap of a node inside its window](./2026-11-22-full-roadmap-in-node-windows.md)
   — "complete experiences like my own": the window holds the node's whole
   roadmap page, not a detail card.
