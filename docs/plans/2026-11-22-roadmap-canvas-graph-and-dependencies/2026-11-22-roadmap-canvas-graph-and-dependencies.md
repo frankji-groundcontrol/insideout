@@ -88,7 +88,8 @@ resolves those by hand, reviews each diff, runs the full gates once on
       real-PostgreSQL tests.
 - [x] C3, first pass: a two-level hierarchy graph, then superseded by the
       owner's later changes.
-- [ ] C3, Canvas as an ordered flow (client):
+- [x] C3, Canvas as an ordered flow (client), with lane routing for links
+      that skip a column:
   - One level of steps, ordered by lifted dependencies, with merge arrows.
   - Opening a step shows its own steps; a leaf opens its detail.
   - Drag to pan, wheel or pinch to zoom, and +/−/fit buttons.
