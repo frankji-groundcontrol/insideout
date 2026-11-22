@@ -123,6 +123,8 @@ var sweep = []sweepCase{
 	{"RoadmapProgress", "GET", "/projects/{h}/roadmap/progress?root={h}", func(c *Client, h string) error { return drop(c.RoadmapProgress(h, h)) }},
 	{"RoadmapList", "GET", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapList(h, "")) }},
 	{"RoadmapList", "GET", "/projects/{h}/roadmap?root={h}", func(c *Client, h string) error { return drop(c.RoadmapList(h, h)) }},
+	{"RoadmapSteps", "GET", "/projects/{h}/roadmap/steps", func(c *Client, h string) error { return drop(c.RoadmapSteps(h, "")) }},
+	{"RoadmapSteps", "GET", "/projects/{h}/roadmap/steps?root={h}", func(c *Client, h string) error { return drop(c.RoadmapSteps(h, h)) }},
 	{"RoadmapAdd", "POST", "/projects/{h}/roadmap", func(c *Client, h string) error { return drop(c.RoadmapAdd(h, h, h, &h)) }},
 	{"RoadmapUpdate", "PATCH", "/roadmap/{h}", func(c *Client, h string) error {
 		return drop(c.RoadmapUpdate(h, RoadmapPatch{Title: &h, Description: &h, Status: &h, Acceptance: &h, CompletionReason: &h, Deadline: &h, OwnerID: &h}))

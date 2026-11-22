@@ -1008,6 +1008,32 @@
       "openWorldHint": true,
       "readOnlyHint": false
     },
+    "description": "One level of a project's roadmap in order: the steps under root (default: your token's root, else the project's one root), each with its stage, its loop group, the steps it comes after with link counts, how many items it holds and what its work waits on outside the level. Open a step by passing its id as root",
+    "inputSchema": {
+      "properties": {
+        "project_id": {
+          "description": "project id",
+          "type": "string"
+        },
+        "root": {
+          "description": "node id: the steps under this node",
+          "type": "string"
+        }
+      },
+      "required": [
+        "project_id"
+      ],
+      "type": "object"
+    },
+    "name": "roadmap_steps"
+  },
+  {
+    "annotations": {
+      "destructiveHint": true,
+      "idempotentHint": false,
+      "openWorldHint": true,
+      "readOnlyHint": false
+    },
     "description": "Partially update a node: title, description, status, deadline, acceptance. An owner change or a completion reason is a human's: file a proposal (propose) for an owner, and move a node to done on evidence",
     "inputSchema": {
       "properties": {

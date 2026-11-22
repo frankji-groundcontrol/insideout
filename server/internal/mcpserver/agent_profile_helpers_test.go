@@ -31,7 +31,7 @@ var humanOnlyTools = []string{
 var agentTools = []string{
 	"whoami", "workspaces", "projects", "prd", "prd_update", "idea_create", "roadmap_add", "agent_context",
 	"checkpoint", "propose", "auth_login_code_request", "auth_magic_link_request",
-	"roadmap_node", "roadmap_mine", "roadmap_assignments",
+	"roadmap_node", "roadmap_mine", "roadmap_assignments", "roadmap_steps",
 }
 
 const exampleAPI = "http://api.example.com"

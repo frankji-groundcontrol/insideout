@@ -108,6 +108,26 @@ func TestCLIDelegatesANodeOnTheRealAPI(t *testing.T) {
 	if waits := cliJSON[treeNode](t, "roadmap", "depend", "--on", other.ID, leaf.ID); len(waits.DependsOn) != 1 || waits.DependsOn[0] != other.ID {
 		t.Fatalf("roadmap depend = %+v, want the leaf waiting on %s", waits, other.ID)
 	}
+	// The top level is the two roots, Branch after Other; Branch opens on its leaf.
+	type stepsOut struct {
+		Root  *treeNode
+		Steps []struct {
+			Node         treeNode
+			Stage        int
+			After        []string
+			WaitsOutside []struct{ ID string }
+		}
+	}
+	top := cliJSON[stepsOut](t, "roadmap", "steps", pr.ID)
+	if top.Root != nil || len(top.Steps) != 2 || top.Steps[0].Node.ID != other.ID || top.Steps[1].Node.ID != branch.ID ||
+		top.Steps[1].Stage != 1 || len(top.Steps[1].After) != 1 || top.Steps[1].After[0] != other.ID {
+		t.Fatalf("roadmap steps = %+v, want Other then Branch after it", top)
+	}
+	in := cliJSON[stepsOut](t, "roadmap", "steps", "--root", branch.ID, pr.ID)
+	if in.Root == nil || in.Root.ID != branch.ID || len(in.Steps) != 1 || in.Steps[0].Node.ID != leaf.ID ||
+		len(in.Steps[0].WaitsOutside) != 1 || in.Steps[0].WaitsOutside[0].ID != other.ID {
+		t.Fatalf("roadmap steps --root = %+v, want the leaf waiting outside on Other", in)
+	}
 	if out := cliOut(t, "roadmap", "undepend", "--on", other.ID, leaf.ID); strings.TrimSpace(out) != "removed" {
 		t.Fatalf("roadmap undepend printed %q", out)
 	}

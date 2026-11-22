@@ -23,6 +23,7 @@ func addProductTools(ts toolSet) {
 	addRoadmapTools(ts)
 	addDraftTools(ts)
 	addRoadmapTreeTools(ts)
+	addRoadmapStepsTools(ts)
 	addRepoTools(ts)
 	addAgentTools(ts)
 }

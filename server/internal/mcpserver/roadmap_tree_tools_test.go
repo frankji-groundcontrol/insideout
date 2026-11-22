@@ -84,6 +84,8 @@ func TestRoadmapTreeToolsSendTheirRequests(t *testing.T) {
 		{"roadmap_list", `{"project_id":"p1","root":"r1"}`, treeRequest{"GET /projects/p1/roadmap?root=r1", nil}},
 		{"roadmap_list", `{"project_id":"p1"}`, treeRequest{"GET /projects/p1/roadmap", nil}},
 		{"progress", `{"project_id":"p1","root":"r1"}`, treeRequest{"GET /projects/p1/roadmap/progress?root=r1", nil}},
+		{"roadmap_steps", `{"project_id":"p1","root":"r1"}`, treeRequest{"GET /projects/p1/roadmap/steps?root=r1", nil}},
+		{"roadmap_steps", `{"project_id":"p1"}`, treeRequest{"GET /projects/p1/roadmap/steps", nil}},
 	} {
 		res := drive(t, api.URL, []string{toolCall(1, tc.tool, tc.args)})
 		got := requests()
