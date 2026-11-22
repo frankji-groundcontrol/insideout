@@ -21,4 +21,4 @@ charge, with every view and action, and laid out to the window's size
 
 ## Status
 
-In progress on `feat/full-node-windows`.
+Fixed: see the [changelog](../changelogs/2026-11-22-full-roadmap-in-node-windows.md).

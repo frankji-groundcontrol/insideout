@@ -38,6 +38,6 @@ These are the coordinator's, stated to the owner:
 
 ## Checklist
 
-- [ ] F1 (client): embedded `RoadmapPage`, its window sizing, clicks inside
+- [x] F1 (client): embedded `RoadmapPage`, its window sizing, clicks inside
       windows, the breadcrumb re-root, tests.
-- [ ] Gates green, a live check on the Spark data, records written, PR merged.
+- [x] Gates green, a live check on the Spark data, records written, PR merged.
