@@ -94,8 +94,27 @@ resolves those by hand, reviews each diff, runs the full gates once on
   - Drag to pan, wheel or pinch to zoom, and +/−/fit buttons.
   - A "Depends on…" picker in the node menu.
   - Mine shows the caller's topmost owned nodes as the steps.
-- [ ] People-in-charge audit of the API, CLI, MCP and agent context; then the
-      owner chooses which changes to make.
+- [x] People-in-charge audit of the API, CLI, MCP and agent context. The owner
+      took all four proposals. "In charge" of an unowned root means the
+      project owner **and** the workspace admins.
+- [ ] S1, ordered steps and agents:
+  - `GET /projects/{pid}/roadmap/steps?root=` with the Go client, CLI
+    `roadmap steps` and MCP `roadmap_steps`.
+  - The agent context defaults to what its human is in charge of, with waits
+    and blocks across steps.
+  - Root-scoped tokens default list and progress to their root.
+  - The MCP instructions say where to start.
+- [ ] S2, first glance and order:
+  - `mine` counts the in-charge root, and each root carries its Now items,
+    what it waits on and what it blocks.
+  - `mine` works across all of a person's workspaces.
+  - Progress Next puts ready items first.
+  - The feed gains `?node=` and `?pending=`.
+- [ ] C5, client:
+  - The Canvas reads the steps endpoint.
+  - My work shows Now, waits on and blocking.
+- [x] The seed's Matching → Launch link, which made a loop, is replaced by
+      one inside Matching.
 - [x] The Spark demo seed adds eight dependencies and checks three refusals.
 - [ ] Integrated gates green; design QA and changelog recorded; UI checked live
       on the Spark data.

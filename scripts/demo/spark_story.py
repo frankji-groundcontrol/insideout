@@ -172,7 +172,7 @@ DEPENDENCIES = [
     ("App Store listing and screenshots", "Selfie verification badge"),
     ("Daily drop UI", "Compatibility scoring"),
     ("Conversation starters from prompts", "Prompt answer embeddings"),
-    ("Matching quality dashboard", "Launch metrics and success criteria"),
+    ("Matching quality dashboard", "Daily drop UI"),
 ]
 
 # Project updates: (author, kind, content)
