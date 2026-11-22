@@ -29,6 +29,40 @@ class RoadmapLensBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The same padding and 1120 column as the bands below, so the edges line up.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, Cobalt.space2, 24, Cobalt.space2),
+      child: RoadmapBandScaffold.capped(
+        FieldCard(
+          key: const Key('roadmap-lens'),
+          padding: const EdgeInsets.all(Cobalt.space4),
+          child: RoadmapLensBody(
+            glance: glance,
+            viewerId: viewerId,
+            onOpen: onOpen,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The lens's lines without its frame: whose view, where the charge comes
+/// from, then the glance or its quiet line. A node's window shows it too.
+class RoadmapLensBody extends StatelessWidget {
+  const RoadmapLensBody({
+    super.key,
+    required this.glance,
+    required this.viewerId,
+    this.onOpen,
+  });
+
+  final RoadmapGlance glance;
+  final String viewerId;
+  final void Function(ProgressItem item)? onOpen;
+
+  @override
+  Widget build(BuildContext context) {
     final t = context.watch<Appearance>().t;
     final small = Theme.of(context).textTheme.bodySmall;
     final who = glance.inCharge;
@@ -38,51 +72,39 @@ class RoadmapLensBanner extends StatelessWidget {
       if (via != null) t('roadmap.lens.via', {'title': via.title}),
       if (who?.projectOwner ?? false) t('roadmap.lens.projectOwner'),
     ];
-    // The same padding and 1120 column as the bands below, so the edges line up.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, Cobalt.space2, 24, Cobalt.space2),
-      child: RoadmapBandScaffold.capped(
-        FieldCard(
-          key: const Key('roadmap-lens'),
-          padding: const EdgeInsets.all(Cobalt.space4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (who != null)
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text:
-                            (who.userId == viewerId
-                                    ? t('roadmap.lens.yours')
-                                    : t('roadmap.lens.theirs', {
-                                        'name': who.name,
-                                      }))
-                                .toUpperCase(),
-                        style: eyebrow(context),
-                      ),
-                      TextSpan(text: notes.map((n) => ' · $n').join()),
-                    ],
-                  ),
-                  style: small,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (who != null)
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text:
+                      (who.userId == viewerId
+                              ? t('roadmap.lens.yours')
+                              : t('roadmap.lens.theirs', {'name': who.name}))
+                          .toUpperCase(),
+                  style: eyebrow(context),
                 ),
-              if (glance.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: Cobalt.space2),
-                  child: Text(t('roadmap.lens.quiet'), style: small),
-                )
-              else
-                RoadmapGlanceLines(
-                  now: glance.now,
-                  waitsOn: glance.waitsOn,
-                  blocking: glance.blocking,
-                  onOpen: onOpen,
-                ),
-            ],
+                TextSpan(text: notes.map((n) => ' · $n').join()),
+              ],
+            ),
+            style: small,
           ),
-        ),
-      ),
+        if (glance.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: Cobalt.space2),
+            child: Text(t('roadmap.lens.quiet'), style: small),
+          )
+        else
+          RoadmapGlanceLines(
+            now: glance.now,
+            waitsOn: glance.waitsOn,
+            blocking: glance.blocking,
+            onOpen: onOpen,
+          ),
+      ],
     );
   }
 }

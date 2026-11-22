@@ -19,7 +19,7 @@ Future<void> showRoadmapNodeDetail(
 }) => showBlockModal<void>(
   context: context,
   title: node.title,
-  body: _NodeDetail(node: node, inheritedOwner: inheritedOwner),
+  body: RoadmapNodeDetailBody(node: node, inheritedOwner: inheritedOwner),
 );
 
 /// Who holds [node]: its own owner, else the one it inherits and the
@@ -37,17 +37,22 @@ String? roadmapOwnerLabel(
   });
 }
 
-class _NodeDetail extends StatefulWidget {
-  const _NodeDetail({required this.node, this.inheritedOwner});
+/// The detail's content, which the detail modal and a node's window show.
+class RoadmapNodeDetailBody extends StatefulWidget {
+  const RoadmapNodeDetailBody({
+    super.key,
+    required this.node,
+    this.inheritedOwner,
+  });
 
   final RoadmapNode node;
   final ({String name, String via})? inheritedOwner;
 
   @override
-  State<_NodeDetail> createState() => _NodeDetailState();
+  State<RoadmapNodeDetailBody> createState() => _RoadmapNodeDetailBodyState();
 }
 
-class _NodeDetailState extends State<_NodeDetail> {
+class _RoadmapNodeDetailBodyState extends State<RoadmapNodeDetailBody> {
   late Future<List<NodeEvidence>> _evidence;
   late Future<List<NodeAssignment>> _history;
 

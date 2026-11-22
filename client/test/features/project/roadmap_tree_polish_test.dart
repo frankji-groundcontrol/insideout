@@ -80,9 +80,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
 
-    // The leaf's detail says the same.
-    await tester.tap(find.text('Refunds'));
-    await tester.pumpAndSettle();
+    // The leaf's window says the same.
+    await tapNode(tester, find.text('Refunds'));
     expect(find.text('dana (via Payments)'), findsOneWidget);
   });
 

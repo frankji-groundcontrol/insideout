@@ -151,11 +151,12 @@ void main() {
     expect(find.textContaining('Blocking:'), findsNothing);
   });
 
-  testWidgets('a Now item opens its detail', (tester) async {
+  testWidgets('a Now item opens its window', (tester) async {
     await _open(tester, '/projects/p1/roadmap/a', glance: _glance());
 
     await tester.tap(find.text('Refunds'));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('roadmap-window-a1')), findsOneWidget);
     expect(find.text('Assignment history'), findsOneWidget);
   });
 

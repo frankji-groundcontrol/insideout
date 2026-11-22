@@ -19,10 +19,10 @@ import 'roadmap_controller.dart';
 import 'roadmap_header.dart';
 import 'roadmap_lens_banner.dart';
 import 'roadmap_node_card.dart';
-import 'roadmap_node_detail.dart';
 import 'roadmap_progress_view.dart';
 import 'roadmap_step_flow.dart';
 import 'roadmap_tree.dart';
+import 'roadmap_window_layer.dart';
 
 part 'roadmap_page_views.dart';
 
@@ -141,20 +141,24 @@ class _RoadmapPageState extends State<RoadmapPage> {
         _view == _RoadmapView.progress || _view == _RoadmapView.bands;
     return AppScaffold(
       actions: narrow ? null : choices,
-      body: scrolls
-          ? NestedScrollView(
-              headerSliverBuilder: (context, _) => [
-                SliverToBoxAdapter(child: header),
-              ],
-              body: body,
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                header,
-                Expanded(child: body),
-              ],
-            ),
+      body: RoadmapWindowLayer(
+        projectId: widget.projectId,
+        resolve: _resolve,
+        child: scrolls
+            ? NestedScrollView(
+                headerSliverBuilder: (context, _) => [
+                  SliverToBoxAdapter(child: header),
+                ],
+                body: body,
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  header,
+                  Expanded(child: body),
+                ],
+              ),
+      ),
     );
   }
 
@@ -194,10 +198,14 @@ class _RoadmapPageState extends State<RoadmapPage> {
             ),
           ),
         if (glance != null)
-          RoadmapLensBanner(
-            glance: glance,
-            viewerId: context.read<Session>().user?.id ?? '',
-            onOpen: _openNow,
+          // Below the window layer, so a Now item opens in a window.
+          Builder(
+            builder: (context) => RoadmapLensBanner(
+              glance: glance,
+              viewerId: context.read<Session>().user?.id ?? '',
+              onOpen: (item) =>
+                  RoadmapWindowScope.maybeOf(context)?.open(item.id),
+            ),
           ),
       ],
     );

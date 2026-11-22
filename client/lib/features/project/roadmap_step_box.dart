@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../api/models.dart';
@@ -9,11 +8,12 @@ import '../../theme/cobalt.dart';
 import '../../theme/cobalt_chip.dart';
 import '../../theme/field_card.dart';
 import 'roadmap_node_detail.dart';
+import 'roadmap_window_layer.dart';
 
 /// One step on the Canvas: a block as tall as its content, with the status,
 /// title, owner, roll-up, how many items it holds, the deadline and pressure,
-/// and what it waits on out of view. A step with items opens as its own
-/// steps on the Canvas, the hierarchy one click down; a leaf opens its detail.
+/// and what it waits on out of view. A tap opens the step's window; a
+/// double-click opens it as its own steps, the hierarchy one level down.
 class RoadmapStepBox extends StatelessWidget {
   const RoadmapStepBox({
     super.key,
@@ -55,15 +55,7 @@ class RoadmapStepBox extends StatelessWidget {
     return SizedBox(
       width: width,
       child: FieldCard(
-        onTap: inside > 0
-            ? () => GoRouter.maybeOf(
-                context,
-              )?.go('/projects/$projectId/roadmap/${node.id}')
-            : () => showRoadmapNodeDetail(
-                context,
-                node,
-                inheritedOwner: inheritedOwner,
-              ),
+        onTap: () => RoadmapWindowScope.maybeOf(context)?.tap(node.id),
         padding: const EdgeInsets.fromLTRB(
           Cobalt.space3,
           Cobalt.space2,

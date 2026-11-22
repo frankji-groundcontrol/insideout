@@ -19,6 +19,7 @@ import '../../widgets/guarded_action.dart';
 import 'roadmap_completion_prompt.dart';
 import 'roadmap_dependency_picker.dart';
 import 'roadmap_node_detail.dart';
+import 'roadmap_window_layer.dart';
 
 part 'roadmap_expand_draft.dart';
 part 'roadmap_node_delegate.dart';
@@ -71,17 +72,8 @@ class RoadmapNodeCard extends StatelessWidget {
     final showRollup = descendants > 0 && rollup.leaves > 0;
     final ownerLabel = roadmapOwnerLabel(l10n.t, node, inheritedOwner);
     return FieldCard(
-      // A branch opens as its own tree; a leaf has nothing below it, so it
-      // opens its read-only detail instead.
-      onTap: descendants > 0
-          ? () => GoRouter.maybeOf(
-              context,
-            )?.go('/projects/$projectId/roadmap/${node.id}')
-          : () => showRoadmapNodeDetail(
-              context,
-              node,
-              inheritedOwner: inheritedOwner,
-            ),
+      // A tap opens the node's window; a double-click opens its own tree.
+      onTap: () => RoadmapWindowScope.maybeOf(context)?.tap(node.id),
       padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

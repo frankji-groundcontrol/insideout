@@ -49,15 +49,14 @@ void main() {
     expect(find.byKey(const Key('roadmap-breadcrumb')), findsNothing);
   });
 
-  testWidgets('tapping a parent card opens its tree', (tester) async {
+  testWidgets('double-clicking a parent card opens its tree', (tester) async {
     final api = TreeApi();
     final router = await pumpTreeRouter(tester, treeSession(api));
     router.go('/projects/p1/roadmap');
     await tester.pumpAndSettle();
     await _canvas(tester);
 
-    await tester.tap(find.text('Payments').first);
-    await tester.pumpAndSettle();
+    await doubleTapNode(tester, find.text('Payments').first);
 
     expect(
       router.routeInformationProvider.value.uri.path,

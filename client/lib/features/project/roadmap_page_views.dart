@@ -130,16 +130,17 @@ extension _RoadmapViews on _RoadmapPageState {
     return who == null || who.userId.isEmpty || who.userId == uid ? null : who;
   }
 
-  /// Opens a Now item of the banner's glance, when it is in the loaded tree.
-  Future<void> _openNow(ProgressItem item) async {
-    final all = await _c.nodes.catchError((_) => <RoadmapNode>[]);
-    final node = all.where((n) => n.id == item.id).firstOrNull;
-    if (node == null || !mounted) return;
-    await showRoadmapNodeDetail(
-      context,
-      node,
-      inheritedOwner: _inherited(node, all),
-    );
+  /// The loaded node [id] for its window, with its inherited owner: from
+  /// the shown tree, else the whole project (someone else's view reads it).
+  Future<RoadmapWindowNode?> _resolve(String id) async {
+    for (final nodes in [_c.nodes, _c.projectNodes]) {
+      final all = await nodes.catchError((_) => <RoadmapNode>[]);
+      final node = all.where((n) => n.id == id).firstOrNull;
+      if (node != null) {
+        return (node: node, inheritedOwner: _inherited(node, all));
+      }
+    }
+    return null;
   }
 
   /// The owner [node] holds through an ancestor, read against every loaded
