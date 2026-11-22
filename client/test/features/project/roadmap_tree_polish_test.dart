@@ -80,9 +80,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Owner: dana (via Payments)'), findsOneWidget);
 
-    // The leaf's window says the same.
+    // The leaf's window, on its Canvas, says the same.
     await tapNode(tester, find.text('Refunds'));
-    expect(find.text('dana (via Payments)'), findsOneWidget);
+    Finder inside(Finder f) => find.descendant(
+      of: find.byKey(const Key('roadmap-window-a1')),
+      matching: f,
+    );
+    await tester.tap(inside(find.text('Canvas')));
+    await tester.pumpAndSettle();
+    expect(inside(find.text('Owner: dana (via Payments)')), findsOneWidget);
   });
 
   testWidgets('an opened tree inherits from an ancestor above it', (

@@ -43,7 +43,12 @@ class RoadmapCanvas extends StatefulWidget {
     this.menu,
     this.onCursor,
     this.cursors = const [],
+    this.docked = true,
   });
+
+  /// The product dock floats over the foot of the view; a node's window has
+  /// none.
+  final bool docked;
 
   final String projectId;
 
@@ -118,7 +123,9 @@ class _RoadmapCanvasState extends State<RoadmapCanvas> {
     return LayoutBuilder(
       builder: (context, box) {
         // The dock floats over the foot of the view.
-        final dock = ProductDock.height + MediaQuery.paddingOf(context).bottom;
+        final dock = widget.docked
+            ? ProductDock.height + MediaQuery.paddingOf(context).bottom
+            : 0.0;
         _viewport = Size(box.maxWidth, box.maxHeight - dock);
         return Stack(
           children: [

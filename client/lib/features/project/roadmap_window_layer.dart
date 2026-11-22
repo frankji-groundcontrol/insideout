@@ -7,19 +7,13 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/models.dart';
 import '../../theme/cobalt.dart';
-import 'roadmap_window_body.dart';
+import 'roadmap_page.dart';
 import 'roadmap_window_frame.dart';
 import 'roadmap_windows.dart';
 
-/// What a node's window shows: the node and the owner it inherits.
-typedef RoadmapWindowNode = ({
-  RoadmapNode node,
-  ({String name, String via})? inheritedOwner,
-});
-
-/// How a node on the roadmap page opens its window: [tap] opens it after a
-/// double-click's wait and drills into the node on a second tap; [open]
-/// opens it now; [drill] goes to the node's own roadmap.
+/// How a node on the roadmap page, or in a window over it, opens its window:
+/// [tap] opens it after a double-click's wait and drills into the node on a
+/// second tap; [open] opens it now; [drill] goes to the node's own roadmap.
 class RoadmapWindowScope extends InheritedWidget {
   const RoadmapWindowScope({
     super.key,
@@ -42,8 +36,9 @@ class RoadmapWindowScope extends InheritedWidget {
 }
 
 /// The roadmap page's window layer: [child] with the node windows floating
-/// over it. Below the narrow breakpoint a node opens as a full-screen sheet
-/// instead. Windows live with the page, so another roadmap route closes them.
+/// over it, each the node's own roadmap page embedded. Below the narrow
+/// breakpoint a node opens as a full-screen sheet instead. Windows live with
+/// the page, so another roadmap route closes them.
 class RoadmapWindowLayer extends StatefulWidget {
   const RoadmapWindowLayer({
     super.key,
@@ -54,9 +49,8 @@ class RoadmapWindowLayer extends StatefulWidget {
 
   final String projectId;
 
-  /// The loaded node for an id, with its inherited owner; null when the page
-  /// has not loaded it.
-  final Future<RoadmapWindowNode?> Function(String nodeId) resolve;
+  /// The loaded node for an id; null when the page has not loaded it.
+  final Future<RoadmapNode?> Function(String nodeId) resolve;
   final Widget child;
 
   @override
@@ -117,32 +111,55 @@ class _RoadmapWindowLayerState extends State<RoadmapWindowLayer> {
     if (MediaQuery.sizeOf(context).width < Cobalt.bpNarrow) {
       return _sheet(found);
     }
-    _windows.open(found.node, _view, inheritedOwner: found.inheritedOwner);
+    _windows.open(found, _view);
+  }
+
+  /// A breadcrumb inside [id]'s window roots it at the ancestor [to].
+  Future<void> _reroot(String id, String to) async {
+    final found = await widget.resolve(to);
+    if (found != null && mounted) _windows.reroot(id, found);
   }
 
   void _drill(String id) => GoRouter.maybeOf(
     context,
   )?.go('/projects/${widget.projectId}/roadmap/$id');
 
-  /// The narrow screen's window: the same chrome and body, full screen, with
-  /// no drag or resize.
-  Future<void> _sheet(RoadmapWindowNode found) => showDialog<void>(
-    context: context,
-    builder: (ctx) => Dialog.fullscreen(
-      child: RoadmapWindowFrame(
-        node: found.node,
-        onClose: () => Navigator.of(ctx).pop(),
-        onOpenRoadmap: () {
-          Navigator.of(ctx).pop();
-          _drill(found.node.id);
-        },
-        body: _body(found.node, found.inheritedOwner),
+  /// The narrow screen's window: the same chrome and page, full screen,
+  /// with no drag or resize; a breadcrumb re-roots it in place.
+  Future<void> _sheet(RoadmapNode first) {
+    var node = first;
+    return showDialog<void>(
+      context: context,
+      builder: (_) => _scope(
+        StatefulBuilder(
+          builder: (ctx, setSheet) => Dialog.fullscreen(
+            child: RoadmapWindowFrame(
+              node: node,
+              onClose: () => Navigator.of(ctx).pop(),
+              onOpenRoadmap: () {
+                Navigator.of(ctx).pop();
+                _drill(node.id);
+              },
+              body: _page(node, (to) async {
+                final found = await widget.resolve(to);
+                if (found != null && ctx.mounted) setSheet(() => node = found);
+              }),
+            ),
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _body(RoadmapNode node, ({String name, String via})? owner) =>
-      RoadmapWindowBody(node: node, inheritedOwner: owner, onOpen: _open);
+  /// [node]'s own roadmap page, embedded; its breadcrumb calls [reroot].
+  Widget _page(RoadmapNode node, void Function(String to) reroot) =>
+      RoadmapPage(
+        key: ValueKey('roadmap-window-page-${node.id}'),
+        projectId: widget.projectId,
+        rootId: node.id,
+        embedded: true,
+        onReroot: reroot,
+      );
 
   Widget _window(RoadmapWindow w) {
     final id = w.node.id;
@@ -156,17 +173,19 @@ class _RoadmapWindowLayerState extends State<RoadmapWindowLayer> {
         onOpenRoadmap: () => _drill(id),
         onMove: (d) => _windows.move(id, d, _view),
         onResize: (d) => _windows.resize(id, d, _view),
-        body: _body(w.node, w.inheritedOwner),
+        body: _page(w.node, (to) => _reroot(id, to)),
       ),
     );
   }
 
+  /// The dialog route of a sheet sits outside this layer, so its page gets
+  /// the scope again.
+  Widget _scope(Widget child) =>
+      RoadmapWindowScope(tap: _tap, open: _open, drill: _drill, child: child);
+
   @override
-  Widget build(BuildContext context) => RoadmapWindowScope(
-    tap: _tap,
-    open: _open,
-    drill: _drill,
-    child: LayoutBuilder(
+  Widget build(BuildContext context) => _scope(
+    LayoutBuilder(
       builder: (context, box) {
         _view = box.biggest;
         return Stack(

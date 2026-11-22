@@ -21,10 +21,15 @@ class RoadmapProgressView extends StatelessWidget {
     super.key,
     required this.progress,
     required this.emptyLabel,
+    this.docked = true,
   });
 
   final RoadmapProgress progress;
   final String emptyLabel;
+
+  /// Under the page's dock the list ends a dock's height lower; a node's
+  /// window has no dock.
+  final bool docked;
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +42,12 @@ class RoadmapProgressView extends StatelessWidget {
         progress.needsDeadline.isEmpty &&
         progress.doneCount == 0;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, ProductDock.clearance),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        8,
+        24,
+        docked ? ProductDock.clearance : 16,
+      ),
       children: [
         if (empty)
           Center(child: Text(emptyLabel, style: theme.textTheme.bodyLarge))

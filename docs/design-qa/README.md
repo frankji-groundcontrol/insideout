@@ -21,6 +21,10 @@ English only.
 
 <!-- Entries are added here as QA threads accumulate; newest first. -->
 
+- [2026-11-22 — The full roadmap of a node inside its window](./2026-11-22-full-roadmap-in-node-windows.md)
+  — "complete experiences like my own": the window holds the node's whole
+  roadmap page, not a detail card.
+
 - [2026-11-22 — Node information in movable, resizable windows](./2026-11-22-node-windows.md)
   — "a movable and sizable popup window": click a node for a floating
   window; double-click or "Open roadmap" to drill in.

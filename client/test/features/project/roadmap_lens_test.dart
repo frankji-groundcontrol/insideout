@@ -156,8 +156,14 @@ void main() {
 
     await tester.tap(find.text('Refunds'));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('roadmap-window-a1')), findsOneWidget);
-    expect(find.text('Assignment history'), findsOneWidget);
+    final window = find.byKey(const Key('roadmap-window-a1'));
+    expect(window, findsOneWidget);
+    expect(
+      tester
+          .widget<Text>(find.byKey(const Key('roadmap-window-title-a1')))
+          .data,
+      'Refunds',
+    );
   });
 
   testWidgets('the project roadmap has no banner and keeps Mine', (

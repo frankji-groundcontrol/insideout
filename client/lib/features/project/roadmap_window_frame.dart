@@ -10,7 +10,8 @@ import '../../theme/field_card.dart';
 import 'roadmap_window_handles.dart';
 
 /// A node window's chrome: a squared card with a title bar (status, title,
-/// Open roadmap, close) over a body that scrolls inside it. With [onMove]
+/// Open roadmap, close) over a body sized to the window, which scrolls
+/// itself. With [onMove]
 /// the title bar drags it; with [onResize] its right and bottom edges and
 /// corner resize it. Without them it is the phone's full-screen sheet.
 class RoadmapWindowFrame extends StatelessWidget {
@@ -48,10 +49,19 @@ class RoadmapWindowFrame extends StatelessWidget {
             thickness: Cobalt.borderContainer,
             color: palette.strokeSubtle,
           ),
+          // The body lays out to the window, not the screen: a small
+          // window gets the phone layout.
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(Cobalt.space4),
-              child: body,
+            child: LayoutBuilder(
+              builder: (context, box) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  size: box.biggest,
+                  padding: EdgeInsets.zero,
+                  viewPadding: EdgeInsets.zero,
+                  viewInsets: EdgeInsets.zero,
+                ),
+                child: body,
+              ),
             ),
           ),
         ],
@@ -92,6 +102,7 @@ class RoadmapWindowFrame extends StatelessWidget {
           Expanded(
             child: Text(
               node.title,
+              key: Key('roadmap-window-title-${node.id}'),
               style: Theme.of(context).textTheme.titleSmall,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

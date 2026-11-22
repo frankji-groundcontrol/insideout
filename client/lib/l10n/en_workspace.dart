@@ -206,8 +206,6 @@ const enWorkspace = <String, String>{
   'roadmap.lens.quiet': 'Nothing due, waiting or blocked here.',
   'roadmap.window.open': 'Open roadmap',
   'roadmap.window.close': 'Close window',
-  'roadmap.window.glanceLoading': 'Reading who is in charge…',
-  'roadmap.window.glanceFailed': 'Could not read who is in charge.',
   'roadmap.rollupShort': '{done} of {leaves} done',
   'roadmap.ownerVia': '{name} (via {via})',
   'roadmap.deleteHistoryTitle': 'This branch has recorded work',

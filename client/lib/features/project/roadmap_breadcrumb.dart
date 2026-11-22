@@ -11,10 +11,14 @@ class RoadmapBreadcrumb extends StatelessWidget {
     super.key,
     required this.projectId,
     required this.read,
+    this.onAncestor,
   });
 
   final String projectId;
   final Future<RoadmapNodeRead> read;
+
+  /// In a node's window an ancestor re-roots the window, not the page.
+  final void Function(String nodeId)? onAncestor;
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +29,10 @@ class RoadmapBreadcrumb extends StatelessWidget {
       builder: (context, snap) {
         final r = snap.data;
         if (r == null) return const SizedBox.shrink();
-        Widget link(String label, String path) => InkWell(
-          onTap: () => GoRouter.maybeOf(context)?.go(path),
+        Widget link(String label, String path, [String? id]) => InkWell(
+          onTap: () => id != null && onAncestor != null
+              ? onAncestor!(id)
+              : GoRouter.maybeOf(context)?.go(path),
           child: Text(
             label,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -45,7 +51,7 @@ class RoadmapBreadcrumb extends StatelessWidget {
               link(r.projectName, '/projects/$projectId/roadmap'),
               for (final a in r.ancestors) ...[
                 sep,
-                link(a.title, '/projects/$projectId/roadmap/${a.id}'),
+                link(a.title, '/projects/$projectId/roadmap/${a.id}', a.id),
               ],
               sep,
               Text(r.node.title, style: theme.textTheme.bodyMedium),
